@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.todo;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -27,6 +26,10 @@ final class FileTree {
     myDirectory2Children = new ConcurrentHashMap<>();
     myFiles = ContainerUtil.newConcurrentSet();
     myStrictDirectory2Children = new ConcurrentHashMap<>();
+  }
+
+  int size() {
+    return myFiles.size();
   }
 
   void add(@NotNull VirtualFile file) {
@@ -175,8 +178,6 @@ final class FileTree {
   }
 
   boolean contains(@NotNull VirtualFile file) {
-    assertThreadIfNeeded();
-
     return myFiles.contains(file);
   }
 
@@ -203,6 +204,7 @@ final class FileTree {
    */
   @NotNull List<VirtualFile> getFiles(@NotNull VirtualFile dir) {
     assertThreadIfNeeded();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
 
     List<VirtualFile> filesList = new ArrayList<>();
     collectFiles(dir, filesList);
@@ -228,9 +230,7 @@ final class FileTree {
 
   static void assertThreadIfNeeded() {
     if (ASSERT_THREADS.asBoolean()) {
-      Application application = ApplicationManager.getApplication();
-      application.assertIsNonDispatchThread();
-      application.assertReadAccessAllowed();
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
     }
   }
 }

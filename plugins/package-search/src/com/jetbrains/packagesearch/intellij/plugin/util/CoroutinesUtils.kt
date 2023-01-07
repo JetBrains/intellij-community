@@ -47,6 +47,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -63,12 +64,14 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -137,32 +140,8 @@ internal fun <T> Flow<T>.throttle(time: Duration) =
 
 internal inline fun <reified T, reified R> Flow<T>.modifiedBy(
     modifierFlow: Flow<R>,
-    crossinline transform: suspend (T, R) -> T
-): Flow<T> = flow {
-    coroutineScope {
-        val queue = Channel<Any?>(capacity = 1)
-
-        val mutex = Mutex(locked = true)
-        this@modifiedBy.onEach {
-            queue.send(it)
-            if (mutex.isLocked) mutex.unlock()
-        }.launchIn(this)
-        mutex.lock()
-        modifierFlow.onEach { queue.send(it) }.launchIn(this)
-
-        var currentState: T = queue.receive() as T
-        emit(currentState)
-
-        for (e in queue) {
-            when (e) {
-                is T -> currentState = e
-                is R -> currentState = transform(currentState, e)
-                else -> continue
-            }
-            emit(currentState)
-        }
-    }
-}
+    noinline transform: suspend (T, R) -> T
+): Flow<T> = flatMapLatest { modifierFlow.scan(it, transform) }
 
 internal fun <T, R> Flow<T>.mapLatestTimedWithLoading(
     loggingContext: String,
@@ -374,15 +353,14 @@ fun <A, B, C, Z> combineLatest(
 ) = combine(flowA, flowB, flowC) { a, b, c -> CombineLatest3(a, b, c) }
     .mapLatest(transform)
 
-fun <T> Flow<T>.pauseOn(flow: Flow<Boolean>): Flow<T> = channelFlow {
-    val buffer = Channel<T>()
-    onEach { buffer.send(it) }.launchIn(this)
-    flow.flatMapLatest { if (!it) EMPTY_UNCLOSED_FLOW else buffer.receiveAsFlow() }
-        .onEach { send(it) }
-        .launchIn(this)
-    awaitClose { buffer.close() }
+fun <T> Flow<T>.pauseOn(flow: Flow<Boolean>): Flow<T> = flow {
+    coroutineScope {
+        val buffer = produce { collect { send(it) } }
+        flow.flatMapLatest { isOpen -> if (isOpen) buffer.receiveAsFlow() else EMPTY_UNCLOSED_FLOW }
+            .collect { emit(it) }
+    }
 }
 
-private val EMPTY_UNCLOSED_FLOW = channelFlow<Nothing> {
-    awaitClose()
+private val EMPTY_UNCLOSED_FLOW = flow<Nothing> {
+    suspendCancellableCoroutine { }
 }

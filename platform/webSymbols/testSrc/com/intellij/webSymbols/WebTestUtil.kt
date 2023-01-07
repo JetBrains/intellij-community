@@ -43,11 +43,14 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.assertInstanceOf
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation
 import com.intellij.usages.Usage
 import com.intellij.util.ObjectUtils.coalesce
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.webSymbols.declarations.WebSymbolDeclaration
+import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
+import com.intellij.webSymbols.registry.WebSymbolMatch
+import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
 import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.File
@@ -58,6 +61,9 @@ fun UsefulTestCase.enableAstLoadingFilter() {
   Registry.get("ast.loading.filter").setValue(true, testRootDisposable)
 }
 
+fun UsefulTestCase.enableIdempotenceChecksOnEveryCache() {
+  Registry.get("platform.random.idempotence.check.rate").setValue(1, testRootDisposable)
+}
 
 fun <T> noAutoComplete(code: () -> T): T {
   val old = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION
@@ -194,7 +200,7 @@ fun PsiFile.findOffsetBySignature(signature: String): Int {
   assert(caretOffset >= 0)
   str = str.substring(0, caretOffset) + str.substring(caretOffset + caretSignature.length)
   val pos = text.indexOf(str)
-  assertTrue("Failed to locate '$str'", pos >= 0)
+  assertTrue("Failed to locate '$str' in: \n $text", pos >= 0)
   return pos + caretOffset
 }
 

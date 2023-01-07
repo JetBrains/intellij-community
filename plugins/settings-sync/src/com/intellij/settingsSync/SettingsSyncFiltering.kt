@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.settingsSync.config.SettingsSyncUiGroup
+import com.intellij.settingsSync.config.EDITOR_FONT_SUBCATEGORY_ID
 
 internal fun isSyncEnabled(fileSpec: String, roamingType: RoamingType): Boolean {
   if (roamingType == RoamingType.DISABLED) return false
@@ -67,7 +67,7 @@ private fun getSchemeCategory(fileSpec: String): SettingsCategory? {
 private fun getSubCategory(componentClasses: List<Class<PersistentStateComponent<Any>>>): String? {
   for (componentClass in componentClasses) {
     if (AppEditorFontOptions::class.java.isAssignableFrom(componentClass)) {
-      return SettingsSyncUiGroup.EDITOR_FONT_ID
+      return EDITOR_FONT_SUBCATEGORY_ID
     }
   }
   return null

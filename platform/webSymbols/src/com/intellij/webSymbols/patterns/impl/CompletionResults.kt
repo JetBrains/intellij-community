@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.patterns.impl
 
-import com.intellij.webSymbols.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 
 internal data class CompletionResults(val items: List<WebSymbolCodeCompletionItem>,
                                       val required: Boolean = true) {

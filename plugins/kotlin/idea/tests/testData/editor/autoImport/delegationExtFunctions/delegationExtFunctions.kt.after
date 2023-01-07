@@ -1,0 +1,10 @@
+// WITH_STDLIB
+package my
+
+import pkg.A
+import pkg.getValue
+import pkg.setValue
+
+class Some(a: A) {
+    var x1 by a
+}<caret>

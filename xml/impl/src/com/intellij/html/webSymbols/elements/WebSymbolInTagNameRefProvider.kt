@@ -4,7 +4,7 @@ package com.intellij.html.webSymbols.elements
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.codeInsight.WebSymbolReferenceProvider
+import com.intellij.webSymbols.references.WebSymbolReferenceProvider
 import com.intellij.xml.util.XmlTagUtil
 
 class WebSymbolInTagNameRefProvider : WebSymbolReferenceProvider<XmlTag>() {

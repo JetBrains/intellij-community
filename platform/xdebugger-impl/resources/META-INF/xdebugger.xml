@@ -16,6 +16,8 @@
     <extensionPoint name="xdebugger.attachHostProvider" interface="com.intellij.xdebugger.attach.XAttachHostProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.attachDebuggerProvider" interface="com.intellij.xdebugger.attach.XAttachDebuggerProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.inlineValuePopupProvider" interface="com.intellij.xdebugger.impl.inline.InlineValuePopupProvider" dynamic="true"/>
+    <extensionPoint name="xdebugger.attachHostSettingsProvider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachHostSettingsProvider" dynamic="true"/>
+    <extensionPoint name="xdebugger.dialog.presentation.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogItemPresentationProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -85,6 +87,10 @@
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$EscHandler"
                          order="before hide-search" id="smart-step-into-escape"/>
     <applicationService serviceImplementation="com.intellij.xdebugger.memory.component.MemoryViewManager"/>
+
+    <applicationService serviceImplementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogPresentationService"/>
+
+    <projectService serviceImplementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessDialogFactory"/>
 
     <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
 

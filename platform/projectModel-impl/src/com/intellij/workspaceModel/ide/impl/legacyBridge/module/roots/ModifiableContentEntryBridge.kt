@@ -217,6 +217,14 @@ internal class ModifiableContentEntryBridge(
     return addSourceFolder(url, type, type.createDefaultProperties(), externalSource)
   }
 
+  override fun <P : JpsElement> addSourceFolder(url: String,
+                                                type: JpsModuleSourceRootType<P>,
+                                                useSourceOfContentRoot: Boolean): SourceFolder {
+    val contentRootSource = currentContentEntry.value.entity.entitySource
+    val source = if (useSourceOfContentRoot) contentRootSource else getInternalFileSource(contentRootSource) ?: contentRootSource
+    return addSourceFolder(virtualFileManager.fromUrl(url), type, type.createDefaultProperties(), source)
+  }
+
   override fun <P : JpsElement> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder {
     val contentRootSource = currentContentEntry.value.entity.entitySource
     val source: EntitySource = getInternalFileSource(contentRootSource) ?: contentRootSource

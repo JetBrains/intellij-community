@@ -1103,6 +1103,34 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/newJ2k/collections")
+    public static class Collections extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("common.java")
+        public void testCommon() throws Exception {
+            runTest("testData/newJ2k/collections/common.java");
+        }
+
+        @TestMetadata("listRestriction.java")
+        public void testListRestriction() throws Exception {
+            runTest("testData/newJ2k/collections/listRestriction.java");
+        }
+
+        @TestMetadata("literalRestriction.java")
+        public void testLiteralRestriction() throws Exception {
+            runTest("testData/newJ2k/collections/literalRestriction.java");
+        }
+
+        @TestMetadata("setRestriction.java")
+        public void testSetRestriction() throws Exception {
+            runTest("testData/newJ2k/collections/setRestriction.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/newJ2k/comments")
     public static class Comments extends AbstractNewJavaToKotlinConverterSingleFileTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -1472,6 +1500,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("AccessInGetterWithThis.java")
         public void testAccessInGetterWithThis() throws Exception {
             runTest("testData/newJ2k/detectProperties/AccessInGetterWithThis.java");
+        }
+
+        @TestMetadata("AccessorOverridesKotlinProperty.java")
+        public void testAccessorOverridesKotlinProperty() throws Exception {
+            runTest("testData/newJ2k/detectProperties/AccessorOverridesKotlinProperty.java");
         }
 
         @TestMetadata("AccessorsImplementInterface.java")

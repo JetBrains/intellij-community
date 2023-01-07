@@ -2,7 +2,7 @@
 package com.intellij.projectView;
 
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService;
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService.NestingRule;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
@@ -18,7 +18,7 @@ public class NestedFilesInProjectViewTest extends BasePlatformTestCase {
   private void doTest(@NotNull final String expected) {
     final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(getProject());
     final TestProjectTreeStructure structure = new TestProjectTreeStructure(getProject(), myFixture.getTestRootDisposable());
-    final AbstractProjectViewPSIPane pane = structure.createPane();
+    final AbstractProjectViewPane pane = structure.createPane();
     projectView.addProjectPane(pane);
     PlatformTestUtil.expandAll(pane.getTree());
     PlatformTestUtil.assertTreeEqual(pane.getTree(),

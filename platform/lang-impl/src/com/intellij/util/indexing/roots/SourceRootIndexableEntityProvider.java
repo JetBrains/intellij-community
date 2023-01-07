@@ -19,6 +19,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -41,13 +42,13 @@ class SourceRootIndexableEntityProvider implements IndexableEntityProvider.Paren
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableSetSelfDependentOrigin> getExistingEntityIteratorOrigins(@NotNull SourceRootEntity entity,
-                                                                                                         @NotNull EntityStorage storage,
-                                                                                                         @NotNull Project project) {
+  public @Nullable IndexableSetSelfDependentOrigin getExistingEntityIteratorOrigins(@NotNull SourceRootEntity entity,
+                                                                                                          @NotNull EntityStorage storage,
+                                                                                                          @NotNull Project project) {
     ModuleEntity moduleEntity = entity.getContentRoot().getModule();
     ModuleBridge module = ModuleEntityUtils.findModule(moduleEntity, storage);
     if (module == null) {
-      return Collections.emptyList();
+      return null;
     }
     List<ExcludeUrlEntity> excludedUrls = entity.getContentRoot().getExcludedUrls();
     VirtualFileUrl rootUrl = entity.getUrl();
@@ -57,7 +58,7 @@ class SourceRootIndexableEntityProvider implements IndexableEntityProvider.Paren
       VirtualFileUrl excludedUrl = excludedUrlEntity.getUrl();
       if (VirtualFileUrlManagerUtil.isEqualOrParentOf(excludedUrl, rootUrl)) {
         if (VirtualFileUrlManagerUtil.isEqualOrParentOf(rootUrl, excludedUrl)) {
-          return Collections.emptyList();
+          return null;
         }
         isExcluded = true;
       }
@@ -66,12 +67,11 @@ class SourceRootIndexableEntityProvider implements IndexableEntityProvider.Paren
       }
     }
     if (isExcluded) {
-      return Collections.singletonList(
-        new ModuleRootSelfDependentOriginImpl(module, Collections.singletonList(UtilsKt.getVirtualFile(entity.getUrl())),
-                                              ContainerUtil.map(excludedSourceUrlsFiles, url -> UtilsKt.getVirtualFile(url))));
+      return new ModuleRootSelfDependentOriginImpl(module, Collections.singletonList(UtilsKt.getVirtualFile(entity.getUrl())),
+                                              ContainerUtil.map(excludedSourceUrlsFiles, url -> UtilsKt.getVirtualFile(url)));
     }
     else {
-      return Collections.emptyList();
+      return null;
     }
   }
 

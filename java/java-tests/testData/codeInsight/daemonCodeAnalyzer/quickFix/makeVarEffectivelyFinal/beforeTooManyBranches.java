@@ -1,4 +1,4 @@
-// "Make variable effectively final" "false"
+// "Make 'x' effectively final by moving initializer to the 'if' statement" "false"
 class X {
   void test(boolean a, boolean b, boolean c, boolean d) {
     int x = 0;

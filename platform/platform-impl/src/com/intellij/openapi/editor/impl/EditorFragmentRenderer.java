@@ -20,6 +20,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -237,7 +238,7 @@ final class EditorFragmentRenderer {
         translateInstance.preConcatenate(transform);
         g2d.setTransform(translateInstance);
         UIUtil.drawImage(g2d, myCacheLevel2, -gutterWidth, 0, null);
-        Int2IntOpenHashMap rightEdges = new Int2IntOpenHashMap();
+        Int2IntMap rightEdges = new Int2IntOpenHashMap();
         int h = lineHeight - 2;
 
         EditorColorsScheme colorsScheme = myEditor.getColorsScheme();

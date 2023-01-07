@@ -9,11 +9,8 @@ import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.WindowsDistributionCustomizer
-import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.deleteDir
 import org.jetbrains.intellij.build.io.runProcess
@@ -41,7 +38,7 @@ private fun generateInstallationConfigFileForSilentMode(customizer: WindowsDistr
   }
 
   Files.createDirectories(targetFilePath.parent)
-  Files.copy(silentConfigTemplate, targetFilePath)
+  Files.copy(silentConfigTemplate, targetFilePath, StandardCopyOption.REPLACE_EXISTING)
 
   val extensionsList = getFileAssociations(customizer)
   var associations = "\n\n; List of associations. To create an association change value to 1.\n"
@@ -112,7 +109,12 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
     deleteDir(nsiLogDir)
     copyDir(nsiConfDir, nsiLogDir)
 
-    Decompressor.Zip(communityHome.resolve("build/tools/NSIS.zip")).withZipExtensions().extract(box)
+    val nsisZip = downloadFileToCacheLocation(
+      url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/org/jetbrains/intellij/deps/nsis/" +
+            "NSIS-${context.dependenciesProperties.property("nsisBuild")}.zip",
+      communityRoot = context.paths.communityHomeDirRoot,
+    )
+    Decompressor.Zip(nsisZip).withZipExtensions().extract(box)
     spanBuilder("run NSIS tool to build .exe installer for Windows").useWithScope2 {
       val timeout = 2.hours
       if (SystemInfoRt.isWindows) {
@@ -131,7 +133,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
         )
       }
       else {
-        val makeNsis = "${box}/NSIS/Bin/makensis"
+        val makeNsis = "${box}/NSIS/Bin/makensis${if (JvmArchitecture.currentJvmArch == JvmArchitecture.x64) "" else "-${JvmArchitecture.currentJvmArch.fileSuffix}"}"
         NioFiles.setExecutable(Path.of(makeNsis))
         runProcess(
           args = listOf(

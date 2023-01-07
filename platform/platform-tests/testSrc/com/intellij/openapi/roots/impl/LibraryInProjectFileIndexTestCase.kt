@@ -25,6 +25,8 @@ import com.intellij.util.io.generateInVirtualTempDir
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 @TestApplication
 @RunInEdt
@@ -62,9 +64,18 @@ abstract class LibraryInProjectFileIndexTestCase {
     ModuleRootModificationUtil.addDependency(module, library)
 
     fileIndex.assertScope(root, IN_LIBRARY)
+    assertEquals(root, fileIndex.getClassRootForFile(root))
+    assertNull(fileIndex.getSourceRootForFile(root))
+    
     fileIndex.assertScope(srcRoot, IN_LIBRARY or IN_SOURCE)
+    assertEquals(srcRoot, fileIndex.getSourceRootForFile(srcRoot))
+    assertNull(fileIndex.getClassRootForFile(srcRoot))
+    
     fileIndex.assertScope(docRoot, NOT_IN_PROJECT)
+    assertNull(fileIndex.getClassRootForFile(docRoot))
+    
     fileIndex.assertScope(excludedRoot, EXCLUDED)
+    assertNull(fileIndex.getClassRootForFile(excludedRoot))
   }
 
   @Test

@@ -278,7 +278,7 @@ public final class GitFileAnnotation extends FileAnnotation {
     }
   }
 
-  static class CommitInfo {
+  public static class CommitInfo {
     @NotNull private final Project myProject;
     @NotNull private final GitRevisionNumber myRevision;
     @NotNull private final FilePath myFilePath;
@@ -289,7 +289,7 @@ public final class GitFileAnnotation extends FileAnnotation {
     @NotNull private final VcsUser myAuthor;
     @NotNull private final @NlsSafe String mySubject;
 
-    CommitInfo(@NotNull Project project,
+    public CommitInfo(@NotNull Project project,
                @NotNull GitRevisionNumber revision,
                @NotNull FilePath path,
                @NotNull Date committerDate,
@@ -361,7 +361,7 @@ public final class GitFileAnnotation extends FileAnnotation {
     private final int myLineNumber;
     private final int myOriginalLineNumber;
 
-    LineInfo(@NotNull CommitInfo commitInfo, int lineNumber, int originalLineNumber) {
+    public LineInfo(@NotNull CommitInfo commitInfo, int lineNumber, int originalLineNumber) {
       this.myCommitInfo = commitInfo;
       this.myLineNumber = lineNumber;
       this.myOriginalLineNumber = originalLineNumber;

@@ -1139,9 +1139,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   public ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
     if (isCurrentSelectionObsolete(requestFocus)) return ActionCallback.REJECTED;
     final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-    if (viewPane instanceof AbstractProjectViewPSIPane) {
+    if (viewPane instanceof AsyncProjectViewPane) {
       myAutoScrollOnFocusEditor.set(!requestFocus);
-      return ((AbstractProjectViewPSIPane)viewPane).selectCB(element, file, requestFocus);
+      return ((AsyncProjectViewPane)viewPane).selectCB(element, file, requestFocus);
     }
     select(element, file, requestFocus);
     return ActionCallback.DONE;

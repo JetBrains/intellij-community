@@ -15,7 +15,7 @@
  */
 package com.intellij.uiDesigner.projectView;
 
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ClassesTreeStructureProvider;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,7 +33,7 @@ public class FormMergerTreeStructureProviderTest extends BaseProjectViewTestCase
   }
 
   public void testStandardProviders() {
-    final AbstractProjectViewPSIPane pane = myStructure.createPane();
+    final AbstractProjectViewPane pane = myStructure.createPane();
     getProjectTreeStructure().setProviders(new ClassesTreeStructureProvider(myProject),
                                            new FormMergerTreeStructureProvider(myProject));
 
@@ -61,7 +61,7 @@ public class FormMergerTreeStructureProviderTest extends BaseProjectViewTestCase
   }
 
   public void testStandardProvidersForm1() {
-    final AbstractProjectViewPSIPane pane = myStructure.createPane();
+    final AbstractProjectViewPane pane = myStructure.createPane();
     getProjectTreeStructure().setProviders(new ClassesTreeStructureProvider(myProject),
                                            new FormMergerTreeStructureProvider(myProject));
 

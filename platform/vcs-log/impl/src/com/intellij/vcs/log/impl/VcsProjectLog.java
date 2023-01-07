@@ -371,7 +371,7 @@ public final class VcsProjectLog implements Disposable {
     @Nullable
     @RequiresEdt
     public VcsLogManager dropValue() {
-      LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+      ApplicationManager.getApplication().assertIsDispatchThread();
       if (myValue != null) {
         VcsLogManager oldValue = myValue;
         myValue = null;

@@ -42,7 +42,6 @@ import com.intellij.ui.content.*
 import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.docking.DockManager
-import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor
 import com.intellij.util.ObjectUtils
 import com.intellij.util.SmartList
 import com.intellij.util.ui.EmptyIcon
@@ -283,7 +282,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
             content.icon = getLiveIndicator(descriptor.icon)
             var icon = toolWindowIdToBaseIcon[toolWindowId]
             if (ExperimentalUI.isNewUI() && icon is ScalableIcon) {
-              icon = IconLoader.loadCustomVersionOrScale(icon, 20f)
+              icon = IconLoader.loadCustomVersionOrScale(icon, 20)
             }
             toolWindow!!.setIcon(getLiveIndicator(icon))
           }

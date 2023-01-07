@@ -2,7 +2,6 @@
 package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.LoadingState;
@@ -45,6 +44,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
@@ -374,6 +374,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   public void loadState(@NotNull Element element) {
+    UIManager.LookAndFeelInfo oldLaF = myCurrentLaf;
+
     myCurrentLaf = loadLafState(element, ELEMENT_LAF);
     if (myCurrentLaf == null) {
       myCurrentLaf = loadDefaultLaf();
@@ -385,6 +387,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     if (autodetect) {
       getOrCreateLafDetector();
+    }
+
+    if (!isFirstSetup && !myCurrentLaf.equals(oldLaF)) {
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, myCurrentLaf, true, true);
     }
   }
 

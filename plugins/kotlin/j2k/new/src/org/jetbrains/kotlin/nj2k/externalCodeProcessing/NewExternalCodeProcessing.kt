@@ -26,9 +26,9 @@ class NewExternalCodeProcessing(
     private val referenceSearcher: ReferenceSearcher,
     private val inConversionContext: (PsiElement) -> Boolean
 ) : ExternalCodeProcessing {
-    private val members = mutableMapOf<FqName, JKMemberData<*>>()
+    private val members = mutableMapOf<FqName, JKMemberData>()
 
-    fun addMember(data: JKMemberData<*>) {
+    fun addMember(data: JKMemberData) {
         members[data.fqName ?: return] = data
     }
 
@@ -46,7 +46,7 @@ class NewExternalCodeProcessing(
             file.forEachDescendantOfType<KtDeclaration> { declaration ->
                 val member = getMember(declaration.fqNameWithoutCompanions) ?: return@forEachDescendantOfType
                 when {
-                    member is JKFieldData && declaration is KtProperty ->
+                    member is JKFieldData ->
                         member.kotlinElementPointer = SmartPointerManager.createPointer(declaration)
                     member is JKMethodData && declaration is KtNamedFunction ->
                         member.kotlinElementPointer = SmartPointerManager.createPointer(declaration)
@@ -94,10 +94,10 @@ class NewExternalCodeProcessing(
     }
 
 
-    private fun JKMemberData<*>.collectUsages(): ExternalUsagesFixer.JKMemberInfoWithUsages {
+    private fun JKMemberData.collectUsages(): ExternalUsagesFixer.JKMemberInfoWithUsages {
         val javaUsages = mutableListOf<PsiElement>()
         val kotlinUsages = mutableListOf<KtElement>()
-        if (this is JKMemberDataCameFromJava<*, *>) referenceSearcher.findUsagesForExternalCodeProcessing(
+        if (this is JKMemberDataCameFromJava<*>) referenceSearcher.findUsagesForExternalCodeProcessing(
             javaElement,
             searchJava = searchInJavaFiles,
             searchKotlin = searchInKotlinFiles

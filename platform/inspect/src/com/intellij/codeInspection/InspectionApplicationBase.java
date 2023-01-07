@@ -373,7 +373,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   private static void waitAllStartupActivitiesPassed(@NotNull Project project) throws InterruptedException, ExecutionException {
-    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     LOG.info("Waiting for startup activities");
     int timeout = Registry.intValue("batch.inspections.startup.activities.timeout", 180);
     try {

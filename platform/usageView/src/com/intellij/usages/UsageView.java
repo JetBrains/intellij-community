@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public interface UsageView extends Disposable {
   /**
    * Returns {@link UsageTarget} to look usages for
+   * @see com.intellij.ide.impl.dataRules.UsageTargetsRule
    */
   DataKey<UsageTarget[]> USAGE_TARGETS_KEY = DataKey.create("usageTarget");
 

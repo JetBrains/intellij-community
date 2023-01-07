@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.ApiStatus;
@@ -99,6 +100,7 @@ public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher i
     Point point = (Point) mouseEvent.getPoint().clone();
     SwingUtilities.convertPointToScreen(point, mouseEvent.getComponent());
 
+    boolean needStopFurtherEventProcessing = false;
     while (true) {
       if (popup != null && !popup.isDisposed()) {
         Window window = ComponentUtil.getWindow(mouseEvent.getComponent());
@@ -125,11 +127,14 @@ public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher i
           return false;
         }
 
+        if (needStopFurtherEventProcessing(popup, mouseEvent)) {
+          needStopFurtherEventProcessing = true;
+        }
         popup.cancel(mouseEvent);
       }
 
       if (myStack.isEmpty()) {
-        return false;
+        return needStopFurtherEventProcessing;
       }
 
       popup = (AbstractPopup)myStack.peek();
@@ -247,5 +252,21 @@ public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher i
       if (each != null && each.isFocused()) return each;
     }
     return null;
+  }
+
+  private static boolean needStopFurtherEventProcessing(@NotNull AbstractPopup popup, @NotNull MouseEvent mouseEvent) {
+    if (popup.isDisposed()) {
+      return false;
+    }
+    if (mouseEvent.getButton() != MouseEvent.BUTTON1) { // on right mouse in most cases we can customize corresponding toolbar
+      return false;
+    }
+    Component toggleButton = PopupImplUtil.getPopupToggleButton(popup);
+    Component c = mouseEvent.getComponent();
+    if (toggleButton == null || c == null) {
+      return false;
+    }
+    Point pointRelativeToButton = SwingUtilities.convertPoint(c, mouseEvent.getX(), mouseEvent.getY(), toggleButton);
+    return toggleButton.contains(pointRelativeToButton);
   }
 }

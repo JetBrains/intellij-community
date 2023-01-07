@@ -44,17 +44,23 @@ abstract class LazyLoadingAccountsDetailsProvider<A : Account, D : AccountDetail
   private fun requestDetails(account: A) = requestsMap.getOrPut(account) {
     scope.async {
       loadingCount++
-      val result = loadDetails(account)
-      resultsMap[account] = result
-      loadingCompletionFlow.emit(account)
-      loadingCount--
-      result
+      try {
+        val result = loadDetails(account)
+        resultsMap[account] = result
+        loadingCompletionFlow.emit(account)
+        result
+      }
+      finally {
+        loadingCount--
+      }
     }
   }
 
   internal fun clearDetails(account: A) {
     requestsMap.remove(account)?.cancel()
     resultsMap.remove(account)
+    //TODO: granular invalidation
+    delegateIconProvider.invalidateAll()
     loadingCompletionFlow.tryEmit(account)
   }
 

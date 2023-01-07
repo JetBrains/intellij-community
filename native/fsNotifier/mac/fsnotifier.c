@@ -114,25 +114,26 @@ static void PrintMountedFileSystems(CFArrayRef roots) {
 #define INPUT_BUF_LEN 2048
 static char input_buf[INPUT_BUF_LEN];
 
-static char* read_line(FILE* stream) {
-    char* result = fgets(input_buf, INPUT_BUF_LEN, stream);
-    if (result == NULL || feof(stream)) {
+static char *read_stdin() {
+    char* result = fgets(input_buf, INPUT_BUF_LEN, stdin);
+    if (result == NULL || feof(stdin)) {
         return NULL;
     }
-    size_t pos = strlen(input_buf) - 1;
-    if (input_buf[pos] == '\n') {
-        input_buf[pos] = '\0';
+    size_t length = strlen(input_buf);
+    if (length > 0 && input_buf[length - 1] == '\n') {
+        input_buf[length - 1] = '\0';
     }
     return input_buf;
 }
 
-static void ParseRoots() {
+static bool ParseRoots() {
     CFMutableArrayRef roots = CFArrayCreateMutable(NULL, 0, NULL);
     bool has_private_root = false;
 
     while (TRUE) {
-        char *command = read_line(stdin);
-        if (strcmp(command, "#") == 0 || feof(stdin)) break;
+        char *command = read_stdin();
+        if (command == NULL) return false;
+        if (strcmp(command, "#") == 0) break;
         char *path = command[0] == '|' ? command + 1 : command;
         CFArrayAppendValue(roots, strdup(path));
         if (strcmp(path, "/") == 0 || strncasecmp(path, PRIVATE_DIR, PRIVATE_LEN) == 0) {
@@ -151,6 +152,7 @@ static void ParseRoots() {
         free(value);
     }
     CFRelease(roots);
+    return true;
 }
 
 int main(void) {
@@ -178,9 +180,11 @@ int main(void) {
     }
 
     while (TRUE) {
-        char *command = read_line(stdin);
-        if (strcmp(command, "EXIT") == 0 || feof(stdin)) break;
-        if (strcmp(command, "ROOTS") == 0) ParseRoots();
+        char *command = read_stdin();
+        if (command == NULL || strcmp(command, "EXIT") == 0) break;
+        if (strcmp(command, "ROOTS") == 0) {
+            if (!ParseRoots()) break;
+        }
     }
 
     return 0;

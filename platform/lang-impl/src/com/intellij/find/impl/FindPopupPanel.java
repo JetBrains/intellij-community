@@ -1991,8 +1991,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
 
     private UsageTableCellRenderer() {
       if (ExperimentalUI.isNewUI()) {
-        PopupUtil.configSelectablePanel(this);
-        setPreferredHeight(JBUI.CurrentTheme.List.rowHeight());
+        PopupUtil.configListRendererFixedHeight(this);
         RendererPanelsUtilsKt.resetHorizontalInsets(myUsageRenderer);
         Insets ipad = myFileAndLineNumber.getIpad();
         //noinspection UseDPIAwareInsets

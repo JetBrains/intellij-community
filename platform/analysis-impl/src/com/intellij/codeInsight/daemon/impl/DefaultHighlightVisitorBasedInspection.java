@@ -176,13 +176,10 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
       });
     }
 
-    Tracer tracer = TraceManager.INSTANCE.getTracer("highlightVisitor", true);
     String fileName = file.getName();
     List<Pair<PsiFile, HighlightInfo>> result = new ArrayList<>();
     for (TextEditorHighlightingPass pass : gpasses) {
-      Span span = tracer.spanBuilder(pass.getClass().getSimpleName()).startSpan();
-      span.setAttribute("file", fileName);
-      try (Scope ignored = span.makeCurrent()) {
+      runAndRecordSpan(() -> {
         pass.doCollectInformation(progress);
         List<HighlightInfo> infos = pass.getInfos();
         for (HighlightInfo info : infos) {
@@ -190,11 +187,21 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
             result.add(Pair.create(file, info));
           }
         }
-      }
-      finally {
-        span.end();
-      }
+      }, fileName, pass.getClass().getSimpleName());
     }
+
     return result;
+  }
+
+  private static void runAndRecordSpan(@NotNull Runnable runnable, @NotNull String fileName, @NotNull String spanName) {
+    Tracer tracer = TraceManager.INSTANCE.getTracer("highlightVisitor", true);
+    Span span = tracer.spanBuilder(spanName).startSpan();
+    span.setAttribute("file", fileName);
+    try (Scope ignored = span.makeCurrent()) {
+      runnable.run();
+    }
+    finally {
+      span.end();
+    }
   }
 }

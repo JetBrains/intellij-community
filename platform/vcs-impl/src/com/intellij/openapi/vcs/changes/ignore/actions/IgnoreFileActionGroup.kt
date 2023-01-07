@@ -19,7 +19,6 @@ import com.intellij.psi.search.ProjectScope
 import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.Nls
-import kotlin.streams.toList
 
 open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
   ActionGroup(
@@ -84,10 +83,11 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
 
   override fun getChildren(e: AnActionEvent?) = actions.toTypedArray()
 
-  private fun filterSelectedFiles(project: Project, files: List<VirtualFile>) =
-    files.filter { file ->
-      VcsUtil.isFileUnderVcs(project, VcsUtil.getFilePath(file)) && !ChangeListManager.getInstance(project).isIgnoredFile(file)
-    }
+  private fun filterSelectedFiles(project: Project, files: List<VirtualFile>): List<VirtualFile> {
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+    val changeListManager = ChangeListManager.getInstance(project)
+    return files.filter { file -> vcsManager.getVcsFor(file) != null && !changeListManager.isIgnoredFile(file) }
+  }
 
   private fun findSuitableIgnoreFiles(project: Project, file: VirtualFile): Collection<VirtualFile> {
     val fileParent = file.parent

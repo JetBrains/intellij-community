@@ -28,6 +28,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
         runTest("../../uast-kotlin-fir/testData/declaration/annotationOnElvis.kt");
     }
 
+    @TestMetadata("commentsOnDataClass.kt")
+    public void testCommentsOnDataClass() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/commentsOnDataClass.kt");
+    }
+
     @TestMetadata("commentsOnProperties.kt")
     public void testCommentsOnProperties() throws Exception {
         runTest("../../uast-kotlin-fir/testData/declaration/commentsOnProperties.kt");

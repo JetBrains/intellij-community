@@ -46,6 +46,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
@@ -637,6 +638,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       getSettings().AUTOSCROLL_MODE = state;
     }
 
+    @RequiresEdt
     @Override
     protected void scrollToSource(@NotNull Component tree) {
       if (isDisposed()) return;

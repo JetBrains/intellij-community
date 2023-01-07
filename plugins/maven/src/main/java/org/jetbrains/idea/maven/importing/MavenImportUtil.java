@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
@@ -30,6 +31,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -240,10 +242,11 @@ public final class MavenImportUtil {
     return moduleName;
   }
 
-  public static Module createDummyModule(Project project, VirtualFile contentRoot) {
+  public static Module createPreviewModule(Project project, VirtualFile contentRoot) {
     return WriteAction.compute(() -> {
+      Path modulePath = contentRoot.toNioPath().resolve(project.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION);
       Module module = ModuleManager.getInstance(project)
-        .newModule(contentRoot.toNioPath(), ModuleTypeManager.getInstance().getDefaultModuleType().getId());
+        .newModule(modulePath, ModuleTypeManager.getInstance().getDefaultModuleType().getId());
       ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
       modifiableModel.addContentEntry(contentRoot);
       modifiableModel.commit();

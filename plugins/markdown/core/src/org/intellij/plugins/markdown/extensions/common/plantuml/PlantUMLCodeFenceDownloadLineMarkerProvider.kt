@@ -9,7 +9,8 @@ import java.util.*
 
 internal class PlantUMLCodeFenceDownloadLineMarkerProvider : CodeFenceDownloadLineMarkerProvider() {
   override fun shouldProcessElement(element: PsiElement): Boolean {
-    return (element as? MarkdownCodeFence)?.fenceLanguage == PlantUMLLanguage.INSTANCE.displayName.lowercase(Locale.getDefault())
+    val language = (element as? MarkdownCodeFence)?.fenceLanguage ?: return false
+    return PlantUMLCodeFenceLanguageProvider.isPlantUmlInfoString(language)
   }
 
   override fun getExtension(): MarkdownExtensionWithDownloadableFiles? {

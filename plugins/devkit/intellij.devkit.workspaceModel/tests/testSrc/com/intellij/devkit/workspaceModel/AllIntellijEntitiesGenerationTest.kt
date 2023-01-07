@@ -11,6 +11,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
@@ -86,7 +87,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
       File(sourceRoot.url.presentableUrl).walk().forEach {
         if (it.isFile && it.extension == "kt") {
           if (regex.containsMatchIn(it.readText())) {
-            val relativePath = Path.of(sourceRoot.url.presentableUrl).relativize(Path.of(it.parent)).toString()
+            val relativePath = Path.of(sourceRoot.url.presentableUrl).relativize(Path.of(it.parent)).systemIndependentPath
             if (moduleEntity.name to relativePath !in skippedModulePaths) {
               modulesToCheck.add(Triple(moduleEntity, sourceRoot, relativePath))
             }
@@ -124,7 +125,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   private fun generate(moduleEntity: ModuleEntity, sourceRoot: SourceRootEntity, pathToPackage: String, keepUnknownFields: Boolean = false) {
     val packagePath = pathToPackage.replace(".", "/")
     val relativize = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl))
-    myFixture.copyDirectoryToProject(relativize.toString(), "")
+    myFixture.copyDirectoryToProject(relativize.systemIndependentPath, "")
     LOG.info("Generating entities for module: ${moduleEntity.name}")
     val (srcRoot, genRoot) = generateCode(packagePath, keepUnknownFields)
     runWriteActionAndWait {
@@ -141,7 +142,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   private fun generateAndCompare(moduleEntity: ModuleEntity, sourceRoot: SourceRootEntity, pathToPackage: String, keepUnknownFields: Boolean = false) {
     val genSourceRoots = sourceRoot.contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.filter { it.generated }
     val relativize = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl))
-    myFixture.copyDirectoryToProject(relativize.toString(), "")
+    myFixture.copyDirectoryToProject(relativize.systemIndependentPath, "")
     val apiRootPath = Path.of(sourceRoot.url.presentableUrl, pathToPackage)
     val implRootPath = Path.of(genSourceRoots.first().sourceRoot.url.presentableUrl, pathToPackage)
     LOG.info("Generating entities for module: ${moduleEntity.name}")

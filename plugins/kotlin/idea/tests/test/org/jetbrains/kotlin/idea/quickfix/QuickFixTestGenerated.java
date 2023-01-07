@@ -3492,6 +3492,34 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/convertCollectionLiteralToIntArrayOf")
+    public static class ConvertCollectionLiteralToIntArrayOf extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("companionObject.kt")
+        public void testCompanionObject() throws Exception {
+            runTest("testData/quickfix/convertCollectionLiteralToIntArrayOf/companionObject.kt");
+        }
+
+        @TestMetadata("constructor.kt")
+        public void testConstructor() throws Exception {
+            runTest("testData/quickfix/convertCollectionLiteralToIntArrayOf/constructor.kt");
+        }
+
+        @TestMetadata("NestedClass.kt")
+        public void testNestedClass() throws Exception {
+            runTest("testData/quickfix/convertCollectionLiteralToIntArrayOf/NestedClass.kt");
+        }
+
+        @TestMetadata("NestedObject.kt")
+        public void testNestedObject() throws Exception {
+            runTest("testData/quickfix/convertCollectionLiteralToIntArrayOf/NestedObject.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/convertIllegalEscapeToUnicodeEscape")
     public static class ConvertIllegalEscapeToUnicodeEscape extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -11676,6 +11704,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public void testJvmOverloadsOnAnnotationClassConstructor() throws Exception {
             runTest("testData/quickfix/removeAnnotation/jvmOverloadsOnAnnotationClassConstructor.kt");
         }
+
+        @TestMetadata("wrongExtenstionFunctionType.kt")
+        public void testWrongExtenstionFunctionType() throws Exception {
+            runTest("testData/quickfix/removeAnnotation/wrongExtenstionFunctionType.kt");
+        }
+
+        @TestMetadata("wrongExtenstionFunctionTypeWarning.kt")
+        public void testWrongExtenstionFunctionTypeWarning() throws Exception {
+            runTest("testData/quickfix/removeAnnotation/wrongExtenstionFunctionTypeWarning.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -13185,6 +13223,19 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("typeMismatch.kt")
         public void testTypeMismatch() throws Exception {
             runTest("testData/quickfix/specifySuperType/typeMismatch.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/specifyTypeExplicitly")
+    public static class SpecifyTypeExplicitly extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("approximatedLocalTypeWillBecomeNullable.kt")
+        public void testApproximatedLocalTypeWillBecomeNullable() throws Exception {
+            runTest("testData/quickfix/specifyTypeExplicitly/approximatedLocalTypeWillBecomeNullable.kt");
         }
     }
 
@@ -16670,6 +16721,24 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("twoElseBranchesInWhen.kt")
         public void testTwoElseBranchesInWhen() throws Exception {
             runTest("testData/quickfix/when/twoElseBranchesInWhen.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/wrapArgumentWithParentheses")
+    public static class WrapArgumentWithParentheses extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ModifierFormForNonBuiltInSuspend.kt")
+        public void testModifierFormForNonBuiltInSuspend() throws Exception {
+            runTest("testData/quickfix/wrapArgumentWithParentheses/ModifierFormForNonBuiltInSuspend.kt");
+        }
+
+        @TestMetadata("ModifierFormForNonBuiltInSuspendFun.kt")
+        public void testModifierFormForNonBuiltInSuspendFun() throws Exception {
+            runTest("testData/quickfix/wrapArgumentWithParentheses/ModifierFormForNonBuiltInSuspendFun.kt");
         }
     }
 

@@ -3,7 +3,7 @@ package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolMatch
+import com.intellij.webSymbols.registry.WebSymbolMatch
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsContainer
 import com.intellij.webSymbols.patterns.WebSymbolsPattern

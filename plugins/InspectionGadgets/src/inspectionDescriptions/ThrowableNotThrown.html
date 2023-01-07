@@ -7,8 +7,10 @@ when the result of the method call is not thrown.
 <p>Calls to methods annotated with the Error Prone's or AssertJ's <code>@CanIgnoreReturnValue</code> annotation will not be reported.</p>
 <p><b>Example:</b></p>
 <pre><code>
-    void leftBehind() throws Throwable {
-        RuntimeException e = new RuntimeException("throw me");
+    void check(String s) {
+        if (s == null) {
+            new NullPointerException("s");
+        }
         // ...
     }
 </code></pre>

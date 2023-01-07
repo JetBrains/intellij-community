@@ -252,7 +252,7 @@ public class VcsLogManager implements Disposable {
   @RequiresEdt
   void disposeUi() {
     myDisposed = true;
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myTabsLogRefresher != null) Disposer.dispose(myTabsLogRefresher);
     Disposer.dispose(myStatusBarProgress);
   }
@@ -278,7 +278,7 @@ public class VcsLogManager implements Disposable {
     // since disposing log triggers flushing indexes on disk we do not want to do it in EDT
     // disposing of VcsLogManager is done by manually executing dispose(@Nullable Runnable callback)
     // the above method first disposes ui in EDT, than disposes everything else in background
-    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     LOG.debug("Disposed Vcs Log for " + VcsLogUtil.getProvidersMapText(myLogData.getLogProviders()));
   }
 

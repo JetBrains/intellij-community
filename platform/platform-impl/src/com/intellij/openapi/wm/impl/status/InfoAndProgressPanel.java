@@ -58,7 +58,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
 
-public final class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget, UISettingsListener {
+public final class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget, UISettingsListener, Disposable {
   @ApiStatus.Internal
   public enum AutoscrollLimit {
     NOT_ALLOWED, ALLOW_ONCE, UNLIMITED
@@ -95,6 +95,8 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     icon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     icon.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border());
     icon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.double.click"));
+    Disposer.register(this, icon);
+
     return icon;
   });
 

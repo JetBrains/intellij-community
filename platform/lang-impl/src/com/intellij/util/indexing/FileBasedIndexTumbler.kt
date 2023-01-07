@@ -30,7 +30,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
 
   fun turnOff() {
     val app = ApplicationManager.getApplication()
-    LOG.assertTrue(app.isDispatchThread)
+    ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(!app.isWriteAccessAllowed)
     try {
       if (nestedLevelCount == 0) {

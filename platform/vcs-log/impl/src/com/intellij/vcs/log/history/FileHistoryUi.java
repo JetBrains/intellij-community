@@ -36,15 +36,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.ui.JBColor.namedColor;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull @NonNls private static final String HELP_ID = "reference.versionControl.toolwindow.history";
   @NotNull private final FilePath myPath;
-  @NotNull private final VirtualFile myRoot;
   @Nullable private final Hash myRevision;
 
   @NotNull private final FileHistoryModel myFileHistoryModel;
@@ -67,7 +66,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     assert !path.isDirectory();
 
     myPath = path;
-    myRoot = root;
     myRevision = revision;
 
     myUiProperties = uiProperties;
@@ -85,7 +83,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
     getTable().addHighlighter(LOG_HIGHLIGHTER_FACTORY_EP.findExtensionOrFail(MyCommitsHighlighter.Factory.class).createHighlighter(getLogData(), this));
     if (myRevision != null) {
-      getTable().addHighlighter(new RevisionHistoryHighlighter(myLogData.getStorage(), myRevision, myRoot));
+      getTable().addHighlighter(new RevisionHistoryHighlighter(myLogData.getStorage(), myRevision, root));
     }
     else {
       getTable().addHighlighter(LOG_HIGHLIGHTER_FACTORY_EP.findExtensionOrFail(CurrentBranchHighlighter.Factory.class).createHighlighter(getLogData(), this));

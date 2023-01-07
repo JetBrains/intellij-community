@@ -79,6 +79,12 @@ fun lastBranchTrue2(obj2 : Any) {
         else -> return
     }
 }
+fun suppressSimilarTests1(a: Boolean) {
+    when {
+        a -> {}
+        !a -> {}
+    }
+}
 fun suppressSimilarTests2(a: Boolean, b: Boolean) {
     when {
         a && b -> {}

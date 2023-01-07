@@ -36,8 +36,12 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
     EditorUtil.disposeWithEditor(editor, this)
   }
 
+
+  /**
+   * @param priority impacts the visual order in which inlays are displayed. Components with higher priority will be shown higher
+   */
   @RequiresEdt
-  fun insertAfter(lineIndex: Int, component: JComponent): Disposable? {
+  fun insertAfter(lineIndex: Int, component: JComponent, priority: Int = 0): Disposable? {
     if (Disposer.isDisposed(this)) return null
 
     // Inlays added inside diff with aligned changes mode on, should conform the following rules to not break changes aligning:
@@ -46,7 +50,7 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
     val wrappedComponent = ComponentWrapper(component)
     val isLastLine = lineIndex == editor.document.lineCount - 1
     val offset = editor.document.getLineEndOffset(if (isLastLine) lineIndex else lineIndex + 1)
-    val priority = if (isLastLine) ALIGNED_CHANGE_INLAY_PRIORITY + 1 else ALIGNED_CHANGE_INLAY_PRIORITY - 1
+    val inlayPriority = if (isLastLine) ALIGNED_CHANGE_INLAY_PRIORITY + 1 + priority else ALIGNED_CHANGE_INLAY_PRIORITY - 1 - priority
 
     return EditorEmbeddedComponentManager.getInstance()
       .addComponent(editor, wrappedComponent,
@@ -54,7 +58,7 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
                                                               null,
                                                               isLastLine,
                                                               !isLastLine,
-                                                              priority,
+                                                              inlayPriority,
                                                               offset))?.also {
         managedInlays[wrappedComponent] = it
         Disposer.register(it, Disposable { managedInlays.remove(wrappedComponent) })

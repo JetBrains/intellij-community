@@ -131,14 +131,13 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
       });
     };
 
-    for (InlineValuePopupProvider popupProvider : InlineValuePopupProvider.EP_NAME.getExtensions()) {
-      if (popupProvider.accepts(myValueNode)) {
-        popupProvider.showPopup(myValueNode, mySession, myPosition, myTreeCreator, inlay.getEditor(), point, hidePopupRunnable);
-        return;
-      }
+    Editor editor = inlay.getEditor();
+    InlineValuePopupProvider popupProvider = InlineValuePopupProvider.EP_NAME.findFirstSafe(a -> a.accepts(myValueNode));
+    if (popupProvider != null) {
+      popupProvider.showPopup(myValueNode, mySession, myPosition, myTreeCreator, editor, point, hidePopupRunnable);
+    } else {
+      XDebuggerTreeInlayPopup.showTreePopup(myTreeCreator, descriptor, myValueNode, editor, point, myPosition, mySession, hidePopupRunnable);
     }
-
-    XDebuggerTreeInlayPopup.showTreePopup(myTreeCreator, descriptor, myValueNode, inlay.getEditor(), point, myPosition, mySession, hidePopupRunnable);
   }
 
   @NotNull

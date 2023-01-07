@@ -423,7 +423,12 @@ class MarketplaceRequests : PluginInfoProvider {
   @RequiresReadLockAbsence
   fun loadPluginMetadata(pluginNode: PluginNode): IntellijPluginMetadata? {
     val externalPluginId = pluginNode.externalPluginId ?: return null
+    return loadPluginMetadata(pluginNode, externalPluginId)
+  }
 
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
+  fun loadPluginMetadata(pluginNode: PluginNode, externalPluginId: String): IntellijPluginMetadata? {
     try {
       return readOrUpdateFile(
         Paths.get(PathManager.getPluginTempPath(), "${externalPluginId}-meta.json"),

@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 public class InsertVisitClassMethod {
 
   public void method(PsiElement element) {
-    element.accept(new <warning descr="Recursive visitors which visit return statements most probably should specifically process anonymous/local classes as well as lambda expressions">Java<caret>RecursiveElementVisitor</warning>() {
+    element.accept(new <warning descr="Recursive visitors with 'visitReturnStatement' most probably should specifically process anonymous/local classes ('visitClass') and lambda expressions ('visitLambdaExpression')">Java<caret>RecursiveElementVisitor</warning>() {
         @Override
         public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
           // do something

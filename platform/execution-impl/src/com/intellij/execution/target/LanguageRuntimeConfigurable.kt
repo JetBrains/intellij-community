@@ -47,7 +47,7 @@ abstract class LanguageRuntimeConfigurable(private val config: LanguageRuntimeCo
       targetVolumeContributions[volumeDescriptor] = it
       val component = it.createComponent()
       it.resetFrom(volumeDescriptor)
-      row(EMPTY_LABEL) {
+      row("") {
         cell(component)
           .horizontalAlign(HorizontalAlign.FILL)
       }

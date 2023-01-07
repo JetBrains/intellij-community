@@ -64,8 +64,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
       ActionPlaces.MAIN_MENU.equals(place) || 
       ActionPlaces.ACTION_SEARCH.equals(place) || 
       ActionPlaces.isShortcutPlace(place) ||
-      ActionPlaces.MAIN_MENU_IN_POPUP.equals(place) || 
-      ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION.equals(place) || 
+      ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION.equals(place) ||
       ActionPlaces.TOUCHBAR_GENERAL.equals(place)
     );
   }

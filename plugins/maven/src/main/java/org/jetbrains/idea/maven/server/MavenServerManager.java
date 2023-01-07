@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.externalSystem.issue.BuildIssueException;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -32,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenDisposable;
 import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
-import org.jetbrains.idea.maven.MavenVersionSupportUtil;
-import org.jetbrains.idea.maven.buildtool.quickfix.InstallMaven2BuildIssue;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.execution.SyncBundle;
@@ -57,8 +54,9 @@ public final class MavenServerManager implements Disposable {
 
   private final Map<String, MavenServerConnector> myMultimoduleDirToConnectorMap = new HashMap<>();
 
+  //TODO: should be replaced by map, where key is the indexing directory. (local/wsl)
   private MavenIndexingConnectorImpl myIndexingConnector = null;
-  // should be replaced by map, where key is the indexing directory. (local/wsl)
+
   private File eventListenerJar;
 
 
@@ -269,13 +267,24 @@ public final class MavenServerManager implements Disposable {
 
 
   public boolean shutdownConnector(MavenServerConnector connector, boolean wait) {
+    MavenServerConnector connectorToStop = removeConnector(connector);
+    if (connectorToStop == null) return false;
+    connectorToStop.stop(wait);
+    return true;
+  }
+
+  private MavenServerConnector removeConnector(@Nullable MavenServerConnector connector) {
+    if(connector == null) return null;
     synchronized (myMultimoduleDirToConnectorMap) {
+      if (myIndexingConnector == connector) {
+        myIndexingConnector = null;
+        return connector;
+      }
       if (!myMultimoduleDirToConnectorMap.values().remove(connector)) {
-        return false;
+        return null;
       }
     }
-    connector.stop(wait);
-    return true;
+    return connector;
   }
 
   /**
@@ -288,7 +297,9 @@ public final class MavenServerManager implements Disposable {
     }
 
 
+    shutdownConnector(myIndexingConnector, wait);
     values.forEach(c -> shutdownConnector(c, wait));
+
   }
 
   public static boolean verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion) {

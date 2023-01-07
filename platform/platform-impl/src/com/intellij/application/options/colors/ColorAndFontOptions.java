@@ -536,10 +536,20 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
                                               @NotNull MyColorScheme scheme) {
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
     for (ColorSettingsPage page : pages) {
-      initDescriptions(page, descriptions, scheme);
+      try {
+        initDescriptions(page, descriptions, scheme);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
     for (ColorAndFontDescriptorsProvider provider : ColorAndFontDescriptorsProvider.EP_NAME.getExtensionList()) {
-      initDescriptions(provider, descriptions, scheme);
+      try {
+        initDescriptions(provider, descriptions, scheme);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
   }
 

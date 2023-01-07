@@ -5,7 +5,6 @@ import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.project.Project;
@@ -45,14 +44,7 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     myImportingSettings = importingSettings;
 
     myIdeModifiableModelsProvider = modelsProvider;
-
-    if (MavenUtil.newModelEnabled(myProject) && modelsProvider instanceof IdeModifiableModelsProviderImpl) {
-      myModelsProvider =
-        new ModifiableModelsProviderProxyImpl(myProject, ((IdeModifiableModelsProviderImpl)modelsProvider).getActualStorageBuilder());
-    }
-    else {
-      myModelsProvider = new ModifiableModelsProviderProxyWrapper(myIdeModifiableModelsProvider);
-    }
+    myModelsProvider = new ModifiableModelsProviderProxyWrapper(myIdeModifiableModelsProvider);
   }
 
   protected Set<MavenProject> selectProjectsToImport(Collection<MavenProject> originalProjects) {

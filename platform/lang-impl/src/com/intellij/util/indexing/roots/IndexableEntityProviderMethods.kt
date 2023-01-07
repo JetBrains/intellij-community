@@ -34,8 +34,7 @@ object IndexableEntityProviderMethods {
   }
 
   fun createIterators(entity: ModuleEntity, entityStorage: EntityStorage, project: Project): Collection<IndexableFilesIterator> {
-    @Suppress("DEPRECATION")
-    if (DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders()) {
+    if (shouldIndexProjectBasedOnIndexableEntityProviders()) {
       if (entity.isModuleUnloaded(entityStorage)) return emptyList()
       val builders = mutableListOf<IndexableEntityProvider.IndexableIteratorBuilder>()
       for (provider in IndexableEntityProvider.EP_NAME.extensionList) {

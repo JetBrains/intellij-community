@@ -96,9 +96,10 @@ public final class IconLoader {
     return null;
   }
 
+  /** @param size the size before system scaling (without JBUIScale.scale) */
   @ApiStatus.Internal
-  public static Icon loadCustomVersionOrScale(@NotNull ScalableIcon icon, float size) {
-    if (icon.getIconWidth() == size) {
+  public static Icon loadCustomVersionOrScale(@NotNull ScalableIcon icon, int size) {
+    if (icon.getIconWidth() == JBUIScale.scale(size)) {
       return icon;
     }
 
@@ -107,11 +108,11 @@ public final class IconLoader {
       cachedIcon = ((RetrievableIcon)cachedIcon).retrieveIcon();
     }
     if (cachedIcon instanceof CachedImageIcon) {
-      Icon version = loadCustomVersion((CachedImageIcon)cachedIcon, (int)size, (int)size);
+      Icon version = loadCustomVersion((CachedImageIcon)cachedIcon, size, size);
       if (version != null) return version;
     }
 
-    return icon.scale(size / icon.getIconWidth());
+    return icon.scale(JBUIScale.scale(1.0f) * size / icon.getIconWidth());
   }
 
   @TestOnly

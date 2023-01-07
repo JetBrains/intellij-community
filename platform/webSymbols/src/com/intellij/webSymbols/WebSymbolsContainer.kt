@@ -4,7 +4,10 @@ package com.intellij.webSymbols
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.containers.Stack
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.impl.toCodeCompletionItems
+import com.intellij.webSymbols.registry.WebSymbolsCodeCompletionQueryParams
+import com.intellij.webSymbols.registry.WebSymbolsNameMatchQueryParams
 import java.util.*
 
 /*

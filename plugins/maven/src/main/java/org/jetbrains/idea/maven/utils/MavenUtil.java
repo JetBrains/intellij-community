@@ -133,8 +133,6 @@ public class MavenUtil {
     Pair.create(Pattern.compile("maven-model-builder-\\d+\\.\\d+\\.\\d+\\.jar"), "org/apache/maven/model/" + MavenConstants.SUPER_POM_XML)
   };
 
-  public static final String MAVEN_NEW_PROJECT_MODEL_KEY = "maven.new.project.model";
-
   private static volatile Map<String, String> ourPropertiesFromMvnOpts;
 
   public static Map<String, String> getPropertiesFromMavenOpts() {
@@ -1176,10 +1174,6 @@ public class MavenUtil {
     return res;
   }
 
-  public static boolean newModelEnabled(Project project) {
-    return Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY, false);
-  }
-
   public static boolean isProjectTrustedEnoughToImport(Project project) {
     return ExternalSystemUtil.confirmLoadingUntrustedProject(project, SYSTEM_ID);
   }
@@ -1588,10 +1582,13 @@ public class MavenUtil {
     Set<MavenRemoteRepository> repositories = projectsManager.getRemoteRepositories();
     MavenEmbeddersManager embeddersManager = projectsManager.getEmbeddersManager();
 
-    String baseDir = EMPTY;
+    String baseDir = project.getBasePath();
     List<MavenProject> projects = projectsManager.getRootProjects();
     if (!projects.isEmpty()) {
       baseDir = getBaseDir(projects.get(0).getDirectoryFile()).toString();
+    }
+    if (null == baseDir) {
+      baseDir = EMPTY;
     }
 
     MavenEmbedderWrapper embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir, baseDir);

@@ -19,7 +19,7 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 data class MavenImportingResult(
   val finishPromise: Promise<MavenImportFinishedContext>,
   val vfsRefreshPromise: Promise<Any?>?,
-  val dummyModulesCreated: Module?
+  val previewModulesCreated: Module?
 )
 
 abstract sealed class MavenImportContext(val project: Project) {
@@ -39,7 +39,7 @@ class MavenInitialImportContext internal constructor(project: Project,
                                                      val ignorePaths: List<String>,
                                                      val ignorePatterns: List<String>,
                                                      val importDisposable: Disposable,
-                                                     val dummyModule: Module?,
+                                                     val previewModule: Module?,
                                                      val startImportStackTrace: Exception
 ) : MavenImportContext(project) {
   override val indicator = MavenProgressIndicator(project, null)

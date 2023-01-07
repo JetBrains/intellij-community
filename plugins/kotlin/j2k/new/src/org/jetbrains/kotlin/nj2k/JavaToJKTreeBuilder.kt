@@ -8,6 +8,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import com.intellij.psi.JavaTokenType.SUPER_KEYWORD
 import com.intellij.psi.JavaTokenType.THIS_KEYWORD
+import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.impl.source.tree.ChildRole
 import com.intellij.psi.impl.source.tree.CompositeElement
 import com.intellij.psi.impl.source.tree.java.PsiClassObjectAccessExpressionImpl
@@ -369,7 +370,13 @@ class JavaToJKTreeBuilder constructor(
             val arguments = argumentList
             val typeArguments = getExplicitTypeArguments().toJK()
             val qualifier = methodExpression.qualifierExpression?.toJK()?.withLineBreaksFrom(methodExpression.qualifierExpression)
-            val target = methodExpression.resolve()
+            var target = methodExpression.resolve()
+            if (target is PsiMethodImpl && target.name.canBeGetterOrSetterName()) {
+                val baseCallable = target.findSuperMethods().firstOrNull()
+                if (baseCallable is KtLightMethod) {
+                    target = baseCallable
+                }
+            }
             val symbol = target?.let {
                 symbolProvider.provideDirectSymbol(it)
             } ?: JKUnresolvedMethod(methodExpression, typeFactory)

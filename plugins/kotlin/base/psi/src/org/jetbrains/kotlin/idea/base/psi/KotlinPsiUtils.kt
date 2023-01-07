@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelInFileOrScript
-import org.jetbrains.kotlin.util.takeWhileNotNull
 
 val KtClassOrObject.classIdIfNonLocal: ClassId?
     get() {

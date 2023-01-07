@@ -30,9 +30,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.webSymbols.WebSymbolReference
-import com.intellij.webSymbols.WebSymbolReferenceProblem
-import com.intellij.webSymbols.WebSymbolReferenceProblem.ProblemKind
+import com.intellij.webSymbols.references.WebSymbolReference
+import com.intellij.webSymbols.references.WebSymbolReferenceProblem
+import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
 import com.intellij.webSymbols.utils.applyIfNotNull

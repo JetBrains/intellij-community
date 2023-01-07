@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -9,10 +8,8 @@ import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
@@ -24,8 +21,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -81,9 +79,9 @@ public class RenameWrongRefFix implements IntentionAction, LowPriorityAction {
       }
     } else {
       class MyScopeProcessor implements PsiScopeProcessor {
-        final ArrayList<PsiElement> myResult = new ArrayList<>();
-        final boolean myFilterMethods;
-        boolean myFilterStatics;
+        private final Map<String, PsiElement> myResult = new HashMap<>();
+        private final boolean myFilterMethods;
+        private final boolean myFilterStatics;
 
         MyScopeProcessor(PsiReferenceExpression refExpression) {
           myFilterMethods = refExpression.getParent() instanceof PsiMethodCallExpression;
@@ -95,26 +93,34 @@ public class RenameWrongRefFix implements IntentionAction, LowPriorityAction {
             PsiModifierListOwner scope = PsiTreeUtil.getParentOfType(refExpression, PsiModifierListOwner.class);
             myFilterStatics = scope != null && scope.hasModifierProperty(PsiModifier.STATIC);
           }
+          else {
+            myFilterStatics = false;
+          }
         }
 
         @Override
         public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
           if (element instanceof PsiNamedElement
               && element instanceof PsiModifierListOwner
-              && myFilterMethods == element instanceof PsiMethod) {
-            if (((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC) == myFilterStatics) {
-              myResult.add(element);
-            }
+              && myFilterMethods == element instanceof PsiMethod
+              && ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC) == myFilterStatics
+              && isAccessible(element)) {
+            myResult.put(((PsiNamedElement)element).getName(), element);
           }
           return true;
         }
 
+        private boolean isAccessible(PsiElement element) {
+          if (!(element instanceof PsiCompiledElement) || !(element instanceof PsiMember)) return true;
+          final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
+          return resolveHelper.isAccessible((PsiMember)element, myRefExpr, null);
+        }
+
         public PsiElement[] getVariants () {
-          return PsiUtilCore.toPsiElementArray(myResult);
+          return PsiUtilCore.toPsiElementArray(myResult.values());
         }
       }
 
-      if (!ApplicationManager.getApplication().isUnitTestMode()) items.add(createLookupElement(myRefExpr, r -> r.getReferenceName()));
       MyScopeProcessor processor = new MyScopeProcessor(myRefExpr);
       myRefExpr.processVariants(processor);
       PsiElement[] variants = processor.getVariants();
@@ -139,7 +145,7 @@ public class RenameWrongRefFix implements IntentionAction, LowPriorityAction {
     LookupElement[] items = collectItems();
     ReferenceNameExpression refExpr = new ReferenceNameExpression(items, myRefExpr.getReferenceName());
 
-    TemplateBuilderImpl builder = new TemplateBuilderImpl(element);
+    TemplateBuilder builder = new TemplateBuilderImpl(element);
     for (PsiReferenceExpression expr : refs) {
       if (!expr.equals(myRefExpr)) {
         builder.replaceElement(expr.getReferenceNameElement(), OTHER_VARIABLE_NAME, INPUT_VARIABLE_NAME, false);
@@ -148,15 +154,8 @@ public class RenameWrongRefFix implements IntentionAction, LowPriorityAction {
         builder.replaceElement(expr.getReferenceNameElement(), INPUT_VARIABLE_NAME, refExpr, true);
       }
     }
-
     final float proportion = EditorUtil.calcVerticalScrollProportion(editor);
-    editor.getCaretModel().moveToOffset(element.getTextRange().getStartOffset());
-
-    Template template = builder.buildInlineTemplate();
-    editor.getCaretModel().moveToOffset(element.getTextRange().getStartOffset());
-
-    TemplateManager.getInstance(project).startTemplate(editor, template);
-
+    builder.run(editor, true);
     if (file.isPhysical()) {
       EditorUtil.setVerticalScrollProportion(editor, proportion);
     }

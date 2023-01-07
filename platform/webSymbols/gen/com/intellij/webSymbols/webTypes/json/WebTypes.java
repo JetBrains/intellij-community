@@ -21,11 +21,13 @@ import com.fasterxml.jackson.annotation.JsonValue;
 @JsonPropertyOrder({
     "$schema",
     "framework",
+    "context",
     "name",
     "version",
     "js-types-syntax",
     "description-markup",
     "framework-config",
+    "contexts-config",
     "default-icon",
     "contributions"
 })
@@ -40,6 +42,8 @@ public class WebTypes {
     @JsonProperty("framework")
     @JsonPropertyDescription("Framework, for which the components are provided by the library. If the library is not enabled in a particular context, all symbols from this file will not be available as well. If you want symbols to be always available do not specify framework.")
     private String framework;
+    @JsonProperty("context")
+    private ContextBase context;
     /**
      * Name of the library.
      * (Required)
@@ -78,11 +82,18 @@ public class WebTypes {
     @JsonPropertyDescription("Provide configuration for the specified web framework. This is an advanced feature, which is used to provide support for templating frameworks like Angular, Vue, Svelte, etc.")
     private FrameworkConfig frameworkConfig;
     /**
-     * Relative path to the icon representing the symbol.
+     * Provide configuration for Web Types contexts. This allows to contribute additional Web Types for example if a particular library is present in the project.
+     * 
+     */
+    @JsonProperty("contexts-config")
+    @JsonPropertyDescription("Provide configuration for Web Types contexts. This allows to contribute additional Web Types for example if a particular library is present in the project.")
+    private ContextsConfig contextsConfig;
+    /**
+     * Relative path to the icon representing the symbol or actual SVG of the icon.
      * 
      */
     @JsonProperty("default-icon")
-    @JsonPropertyDescription("Relative path to the icon representing the symbol.")
+    @JsonPropertyDescription("Relative path to the icon representing the symbol or actual SVG of the icon.")
     private String defaultIcon;
     /**
      * Symbol can be contributed to one of the 3 namespaces - HTML, CSS and JS. Within a particular namespace there can be different kinds of symbols. In each of the namespaces, there are several predefined kinds, which integrate directly with IDE, but providers are free to define their own.
@@ -118,6 +129,16 @@ public class WebTypes {
     @JsonProperty("framework")
     public void setFramework(String framework) {
         this.framework = framework;
+    }
+
+    @JsonProperty("context")
+    public ContextBase getContext() {
+        return context;
+    }
+
+    @JsonProperty("context")
+    public void setContext(ContextBase context) {
+        this.context = context;
     }
 
     /**
@@ -215,7 +236,25 @@ public class WebTypes {
     }
 
     /**
-     * Relative path to the icon representing the symbol.
+     * Provide configuration for Web Types contexts. This allows to contribute additional Web Types for example if a particular library is present in the project.
+     * 
+     */
+    @JsonProperty("contexts-config")
+    public ContextsConfig getContextsConfig() {
+        return contextsConfig;
+    }
+
+    /**
+     * Provide configuration for Web Types contexts. This allows to contribute additional Web Types for example if a particular library is present in the project.
+     * 
+     */
+    @JsonProperty("contexts-config")
+    public void setContextsConfig(ContextsConfig contextsConfig) {
+        this.contextsConfig = contextsConfig;
+    }
+
+    /**
+     * Relative path to the icon representing the symbol or actual SVG of the icon.
      * 
      */
     @JsonProperty("default-icon")
@@ -224,7 +263,7 @@ public class WebTypes {
     }
 
     /**
-     * Relative path to the icon representing the symbol.
+     * Relative path to the icon representing the symbol or actual SVG of the icon.
      * 
      */
     @JsonProperty("default-icon")

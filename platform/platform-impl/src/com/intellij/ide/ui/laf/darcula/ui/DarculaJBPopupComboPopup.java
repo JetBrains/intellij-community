@@ -6,9 +6,9 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ComboBoxPopup;
+import com.intellij.ui.popup.util.PopupImplUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -279,19 +279,9 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
   }
 
   protected ComboBoxPopup<T> createPopup(@Nullable T selectedItem) {
-    return new ComboBoxPopup<>(this, selectedItem, value -> myComboBox.setSelectedItem(value)) {
-      @Override
-      public void cancel(InputEvent e) {
-        if (e instanceof MouseEvent) {
-          // we want the second click on combo-box just to close
-          // and not to instantly show the popup again in the following
-          // DarculaJBPopupComboPopup#mousePressed()
-          Point point = new RelativePoint((MouseEvent)e).getPoint(myComboBox);
-          myJustClosedViaClick = new Rectangle(myComboBox.getSize()).contains(point);
-        }
-        super.cancel(e);
-      }
-    };
+    ComboBoxPopup<T> popup = new ComboBoxPopup<>(this, selectedItem, value -> myComboBox.setSelectedItem(value));
+    PopupImplUtil.setPopupToggleButton(popup, myComboBox);
+    return popup;
   }
 
   @Override

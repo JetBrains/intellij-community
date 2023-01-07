@@ -3,10 +3,10 @@ package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsContainer
-import com.intellij.webSymbols.impl.WebSymbolCodeCompletionItemImpl
+import com.intellij.webSymbols.completion.impl.WebSymbolCodeCompletionItemImpl
 
 internal fun WebSymbolCodeCompletionItem.withStopSequencePatternEvaluation(stop: Boolean): WebSymbolCodeCompletionItem =
   if ((this as WebSymbolCodeCompletionItemImpl).stopSequencePatternEvaluation != stop)

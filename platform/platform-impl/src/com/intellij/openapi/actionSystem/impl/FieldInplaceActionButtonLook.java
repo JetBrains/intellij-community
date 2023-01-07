@@ -10,6 +10,8 @@ import com.intellij.util.ui.JBUI;
 import javax.swing.*;
 import java.awt.*;
 
+import static java.lang.String.format;
+
 public class FieldInplaceActionButtonLook extends IdeaActionButtonLook {
 
   private static final JBColor BUTTON_SELECTED_BACKGROUND =
@@ -33,13 +35,11 @@ public class FieldInplaceActionButtonLook extends IdeaActionButtonLook {
 
   @Override
   public void paintBackground(Graphics g, JComponent component, int state) {
-    boolean isSelected = false;
-    boolean isRollover = false;
-    if (component instanceof ActionButton) {
-      ActionButton actionButton = (ActionButton)component;
-      isSelected = actionButton.isSelected();
-      isRollover = actionButton.isRollover();
-    }
+    if (!(component instanceof ActionButton)) failBecauseOfWrongComponent();
+
+    ActionButton actionButton = (ActionButton)component;
+    boolean isSelected = actionButton.isSelected();
+    boolean isRollover = actionButton.isRollover();
 
     if (isRollover) {
       super.paintBackground(g, component, state);
@@ -55,13 +55,23 @@ public class FieldInplaceActionButtonLook extends IdeaActionButtonLook {
 
   @Override
   protected Color getStateBackground(JComponent component, int state) {
+    if (!(component instanceof ActionButton)) failBecauseOfWrongComponent();
+
     if (ExperimentalUI.isNewUI()) {
       if (state == ActionButtonComponent.SELECTED) {
-        boolean isMouseDown = component instanceof ActionButton && ((ActionButton)component).isMouseDown();
+        ActionButton actionButton = (ActionButton)component;
+        boolean isMouseDown = actionButton.isMouseDown();
         return isMouseDown ? BUTTON_SELECTED_PRESSED_BACKGROUND : BUTTON_SELECTED_HOVERED_BACKGROUND;
       }
     }
 
     return super.getStateBackground(component, state);
   }
+
+
+  private static void failBecauseOfWrongComponent() {
+    throw new IllegalStateException(format("The look&feel %s can works only with %s, don't use it with other components",
+                                           FieldInplaceActionButtonLook.class.getSimpleName(), ActionButton.class.getSimpleName()));
+  }
+
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.Disposable
@@ -240,9 +240,11 @@ internal class CellImpl<T : JComponent>(
     return validationOnApply(*validations.map2Array { it(component) })
   }
 
-  override fun errorOnApply(message: String, condition: (T) -> Boolean): CellImpl<T> {
+  override fun addValidationRule(message: String, condition: (T) -> Boolean): Cell<T> {
     return validationOnApply { if (condition(it)) error(message) else null }
   }
+
+  override fun errorOnApply(message: String, condition: (T) -> Boolean) = addValidationRule(message, condition)
 
   private fun guessAndInstallValidationRequestor() {
     val stackTrace = Throwable()

@@ -40,7 +40,9 @@ import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import git4idea.remote.GitRememberedInputs
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
@@ -70,6 +72,8 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   private val LOG = GithubUtil.LOG
 
   private val githubGitHelper: GithubGitHelper = GithubGitHelper.getInstance()
+
+  private val cs = disposingMainScope() + modalityState.asContextElement()
 
   // UI
   private val wrapper: Wrapper = Wrapper()
@@ -135,7 +139,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     val parentDisposable: Disposable = this
     Disposer.register(parentDisposable, loader)
 
-    val accountDetailsProvider = GHAccountsDetailsProvider(disposingMainScope(), authenticationManager.accountManager)
+    val accountDetailsProvider = GHAccountsDetailsProvider(cs, authenticationManager.accountManager)
 
     val accountsPanel = CompactAccountsPanelFactory(accountListModel)
       .create(accountDetailsProvider, VcsCloneDialogUiSpec.Components.avatarSize, AccountsPopupConfig())
@@ -363,7 +367,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   private fun createAccountsModel(): ListModel<GithubAccount> {
     val accountsState = authenticationManager.accountManager.accountsState
     val model = CollectionListModel(accountsState.value.keys.filter(::isAccountHandled))
-    disposingMainScope().launch(modalityState.asContextElement()) {
+    cs.launch(Dispatchers.Main.immediate) {
       val prev = accountsState.value.filterKeys(::isAccountHandled)
       accountsState.collect {
         val new = it.filterKeys(::isAccountHandled)

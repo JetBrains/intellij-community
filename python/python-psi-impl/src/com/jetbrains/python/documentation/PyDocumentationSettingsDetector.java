@@ -1,6 +1,5 @@
 package com.jetbrains.python.documentation;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,8 +30,7 @@ final class PyDocumentationSettingsDetector
     if (module.isDisposed()) {
       return null;
     }
-    final Application application = ApplicationManager.getApplication();
-    assert !application.isDispatchThread() : "This method should not be called on AWT";
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     for (VirtualFile file : pair.second) {
       DocStringFormat docFormat = ReadAction.compute(() -> checkDocString(file, module));    // detect docstring type

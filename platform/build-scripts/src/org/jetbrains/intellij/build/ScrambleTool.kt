@@ -15,7 +15,7 @@ interface ScrambleTool {
   val additionalModulesToCompile: List<String>
 
   /**
-   * Scramble {@code mainJarName} in {@code "$buildContext.paths.distAll/lib"} directory
+   * Scramble [mainJarName] in "[BuildPaths.distAllDir]/lib" directory
    */
   suspend fun scramble(mainJarName: String, context: BuildContext)
 

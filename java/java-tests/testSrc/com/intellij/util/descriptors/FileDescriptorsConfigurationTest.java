@@ -16,7 +16,7 @@ public class FileDescriptorsConfigurationTest extends DescriptorsTestCase {
     assertSame(descriptor, assertOneElement(configuration.getConfigFileInfos()));
 
     configuration.removeConfigFile(descriptor);
-    assertEquals(0, configuration.getConfigFileInfos().length);
+    assertEquals(0, configuration.getConfigFileInfos().size());
   }
 
   public void testWriteReadExternal() throws IOException {

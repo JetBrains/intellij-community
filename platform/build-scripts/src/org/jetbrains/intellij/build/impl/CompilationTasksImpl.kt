@@ -8,9 +8,6 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.compilation.CompiledClasses
-import org.jetbrains.jps.model.artifact.JpsArtifactService
-import java.nio.file.Files
-import java.nio.file.Path
 
 class CompilationTasksImpl(private val context: CompilationContext) : CompilationTasks {
   override fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
@@ -34,15 +31,6 @@ class CompilationTasksImpl(private val context: CompilationContext) : Compilatio
       .setAttribute(AttributeKey.stringArrayKey("artifactNames"), artifactNames.toList())
       .useWithScope {
         jps.buildArtifacts(artifactNames, buildIncludedModules = false)
-        JpsArtifactService.getInstance().getArtifacts(context.project).asSequence()
-          .filter { artifactNames.contains(it.name) }.forEach {
-            if (it.outputFilePath?.let(Path::of)?.let(Files::exists) == true) {
-              context.messages.info("${it.name} was successfully built at ${it.outputFilePath}")
-            }
-            else {
-              context.messages.error("${it.name} is expected to be built at ${it.outputFilePath}")
-            }
-          }
       }
   }
 

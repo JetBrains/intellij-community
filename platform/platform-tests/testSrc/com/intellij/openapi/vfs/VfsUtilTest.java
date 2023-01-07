@@ -333,8 +333,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     );
   }
 
-  private void checkNewDirAndRefresh(@NotNull Consumer<? super Path> dirCreatedCallback,
-                                     @NotNull Consumer<? super AtomicBoolean> getAllExcludedCalledChecker) throws IOException {
+  private void checkNewDirAndRefresh(Consumer<Path> dirCreatedCallback, Consumer<AtomicBoolean> getAllExcludedCalledChecker) throws IOException {
     AtomicBoolean getAllExcludedCalled = new AtomicBoolean();
     ((ProjectManagerImpl)ProjectManager.getInstance()).testOnlyGetExcludedUrlsCallback(getTestRootDisposable(), () -> {
       getAllExcludedCalled.set(true);

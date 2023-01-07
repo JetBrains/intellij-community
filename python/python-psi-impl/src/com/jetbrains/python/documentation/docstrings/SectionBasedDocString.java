@@ -520,6 +520,39 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     return null;
   }
 
+  @Nullable
+  @Override
+  public String getAttributeDescription(@Nullable String name) {
+    if (name != null) {
+      final SectionField field = getFirstFieldForAttribute(name);
+      if (field != null) {
+        return field.getDescription();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public SectionField getFirstFieldForAttribute(@NotNull String name) {
+    return ContainerUtil.find(getAttributeFields(), field -> field.getNames().contains(name));
+  }
+
+  @NotNull
+  @Override
+  public List<String> getAttributes() {
+    return ContainerUtil.map(getAttributeSubstrings(), substring -> substring.toString());
+  }
+
+  @NotNull
+  @Override
+  public List<Substring> getAttributeSubstrings() {
+    final List<Substring> result = new ArrayList<>();
+    for (SectionField field : getAttributeFields()) {
+      ContainerUtil.addAllNotNull(result, field.getNamesAsSubstrings());
+    }
+    return result;
+  }
+
   @NotNull
   protected static Substring cleanUpName(@NotNull Substring name) {
     int firstNotStar = 0;

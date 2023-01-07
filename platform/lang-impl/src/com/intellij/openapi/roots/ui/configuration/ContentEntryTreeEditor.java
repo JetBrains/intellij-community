@@ -56,7 +56,6 @@ public class ContentEntryTreeEditor {
   protected final Tree myTree;
   private FileSystemTreeImpl myFileSystemTree;
   private final JPanel myTreePanel;
-  private final TreeNode EMPTY_TREE_ROOT = new DefaultMutableTreeNode(ProjectBundle.message("module.paths.empty.node"));
   protected final DefaultActionGroup myEditingActionsGroup;
   private ContentEntryEditor myContentEntryEditor;
   private final MyContentEntryEditorListener myContentEntryEditorListener = new MyContentEntryEditorListener();
@@ -148,7 +147,6 @@ public class ContentEntryTreeEditor {
       myContentEntryEditor = null;
     }
     if (contentEntryEditor == null) {
-      ((DefaultTreeModel)myTree.getModel()).setRoot(EMPTY_TREE_ROOT);
       myTreePanel.setVisible(false);
       if (myFileSystemTree != null) {
         Disposer.dispose(myFileSystemTree);
@@ -219,17 +217,6 @@ public class ContentEntryTreeEditor {
         myFileSystemTree.getTree().setCellRenderer(getContentEntryCellRenderer(entry));
       }
       myFileSystemTree.updateTree();
-      final DefaultTreeModel model = (DefaultTreeModel)myTree.getModel();
-      final int visibleRowCount = TreeUtil.getVisibleRowCount(myTree);
-      for (int row = 0; row < visibleRowCount; row++) {
-        final TreePath pathForRow = myTree.getPathForRow(row);
-        if (pathForRow != null) {
-          final TreeNode node = (TreeNode)pathForRow.getLastPathComponent();
-          if (node != null) {
-            model.nodeChanged(node);
-          }
-        }
-      }
     }
   }
 

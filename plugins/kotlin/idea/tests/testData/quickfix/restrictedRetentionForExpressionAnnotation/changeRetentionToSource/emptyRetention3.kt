@@ -1,4 +1,4 @@
-// "Change existent retention to SOURCE" "true"
+// "Change existing retention to SOURCE" "true"
 class AnnotationRetention
 
 <caret>@Retention()

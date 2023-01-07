@@ -80,7 +80,7 @@ internal class TipsOrderUtil {
 
   companion object {
     private fun sync() {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
       LOG.debug { "Fetching tips order from the server: $TIPS_SERVER_URL" }
       val allTips = TipAndTrickBean.EP_NAME.iterable.map { it.fileName }
       val actionsSummary = service<ActionsLocalSummary>().getActionsStats()

@@ -22,6 +22,10 @@ class CachingIconsProvider<T : Any>(private val delegate: IconsProvider<T>, cust
     var expiresAfterMinutes: Int? = 5
   }
 
+  fun invalidateAll() {
+    iconsCache.invalidateAll()
+  }
+
   fun cleanUp() {
     iconsCache.cleanUp()
   }

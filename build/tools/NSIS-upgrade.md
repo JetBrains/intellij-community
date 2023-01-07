@@ -29,3 +29,5 @@ compile the latter, and pack both together. **Note**: please make sure all archi
    - 'Plugins/x86-unicode/ShellLink.dll'
    - 'Plugins/x86-unicode/UAC.dll'
 1. Zip the 'NSIS' directory.
+1. Upload to https://jetbrains.team/p/ij/packages/files/intellij-build-dependencies/org/jetbrains/intellij/deps/nsis/.
+1. Update the version of 'nsisBuild' in community/build/dependencies/dependencies.properties.

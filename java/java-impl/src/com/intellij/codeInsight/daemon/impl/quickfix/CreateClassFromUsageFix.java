@@ -37,6 +37,9 @@ public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
       CreateFromUsageUtils.setupSuperClassReference(aClass, superClassName);
     }
     CreateFromUsageBaseFix.setupGenericParameters(aClass, element);
+    if (element.getParent() instanceof PsiTypeElement typeElement && typeElement.getParent() instanceof PsiDeconstructionPattern pattern) {
+      CreateInnerClassFromUsageFix.setupRecordFromDeconstructionPattern(aClass, pattern, getText());
+    }
     CodeStyleManager.getInstance(project).reformat(aClass);
     return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", aClass.getText());
   }
@@ -69,11 +72,15 @@ public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
         IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
-        Navigatable descriptor = PsiNavigationSupport.getInstance().createNavigatable(refElement.getProject(),
-                                                                                      aClass.getContainingFile()
-                                                                                            .getVirtualFile(),
-                                                                                      aClass.getTextOffset());
-        descriptor.navigate(true);
+        if (element.getParent() instanceof PsiTypeElement typeElement &&
+            typeElement.getParent() instanceof PsiDeconstructionPattern pattern) {
+          CreateInnerClassFromUsageFix.setupRecordFromDeconstructionPattern(aClass, pattern, getText());
+        }
+        else {
+          Navigatable descriptor = PsiNavigationSupport.getInstance()
+            .createNavigatable(refElement.getProject(), aClass.getContainingFile().getVirtualFile(), aClass.getTextOffset());
+          descriptor.navigate(true);
+        }
       }
     );
   }

@@ -97,46 +97,45 @@ public class PlaybackRunner {
       onStop();
     });
 
-    try {
-      myActionCallback = new ActionCallback();
-      myActionCallback.doWhenProcessed(() -> {
-        Disposer.dispose(myOnStop);
+    myActionCallback = new ActionCallback();
+    myActionCallback.doWhenProcessed(() -> {
+      Disposer.dispose(myOnStop);
 
-        SwingUtilities.invokeLater(() -> {
-          activityMonitor.setActive(false);
-          restoreRegistryValues();
-        });
+      SwingUtilities.invokeLater(() -> {
+        activityMonitor.setActive(false);
+        restoreRegistryValues();
       });
+    });
 
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        myRobot = new Robot();
-      }
-
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       try {
-        myCommands.addAll(includeScript(myScript, getScriptDir()));
+        myRobot = new Robot();
+      } catch (AWTException e){
+        LOG.info(e);
       }
-      catch (Exception e) {
-        String message = "Failed to parse script commands: " + myScript;
-        LOG.error(message, e);
-        myActionCallback.reject(message + ": " + e.getMessage());
-        return myActionCallback;
-      }
+    }
 
-      new Thread("playback runner") {
-        @Override
-        public void run() {
-          if (myUseDirectActionCall) {
-            executeFrom(0, getScriptDir());
-          }
-          else {
-            IdeEventQueue.getInstance().doWhenReady(() -> executeFrom(0, getScriptDir()));
-          }
+    try {
+      myCommands.addAll(includeScript(myScript, getScriptDir()));
+    }
+    catch (Exception e) {
+      String message = "Failed to parse script commands: " + myScript;
+      LOG.error(message, e);
+      myActionCallback.reject(message + ": " + e.getMessage());
+      return myActionCallback;
+    }
+
+    new Thread("playback runner") {
+      @Override
+      public void run() {
+        if (myUseDirectActionCall) {
+          executeFrom(0, getScriptDir());
         }
-      }.start();
-    }
-    catch (AWTException e) {
-      LOG.error(e);
-    }
+        else {
+          IdeEventQueue.getInstance().doWhenReady(() -> executeFrom(0, getScriptDir()));
+        }
+      }
+    }.start();
 
     return myActionCallback;
   }

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.formatter
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.ShortcutSet
@@ -195,6 +196,8 @@ class KotlinImportOrderLayoutPanel : BaseKotlinImportLayoutPanel(KotlinBundle.me
                     override fun getShortcut(): ShortcutSet {
                         return CommonShortcuts.getNewForDialogs()
                     }
+
+                    override fun getActionUpdateThread() = ActionUpdateThread.BGT
                 }
             )
             .setRemoveAction { removePackage() }

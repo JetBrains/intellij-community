@@ -2,7 +2,7 @@
 package com.intellij.html.webSymbols.attributes
 
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.WebSymbolTypeSupport
 
 interface WebSymbolHtmlAttributeValueTypeSupport : WebSymbolTypeSupport {

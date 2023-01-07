@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
+import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInspection.export.ExportToHTMLDialog;
 import com.intellij.coverage.view.CoverageViewExtension;
 import com.intellij.coverage.view.CoverageViewManager;
@@ -13,10 +14,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -118,7 +122,6 @@ public abstract class CoverageEngine {
   /**
    * Coverage suite is coverage settings & coverage data gather by coverage runner (for suites provided by TeamCity server)
    *
-   *
    * @param covRunner                Coverage Runner
    * @param name                     Suite name
    * @param coverageDataFileProvider Coverage raw data file provider
@@ -187,7 +190,6 @@ public abstract class CoverageEngine {
 
   /**
    * E.g. all *.class files for java source file with several classes
-   *
    *
    * @return files
    */
@@ -298,6 +300,16 @@ public abstract class CoverageEngine {
                                                        @NotNull final CoverageSuitesBundle currentSuite) {
     final ExportToHTMLDialog dialog = new ExportToHTMLDialog(project, true);
     dialog.setTitle(CoverageBundle.message("generate.coverage.report.for", currentSuite.getPresentableName()));
+    final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
+    if (StringUtil.isEmpty(settings.OUTPUT_DIRECTORY)) {
+      final VirtualFile file = ProjectUtil.guessProjectDir(project);
+      if (file != null) {
+        final String path = file.getCanonicalPath();
+        if (path != null) {
+          settings.OUTPUT_DIRECTORY = FileUtil.toSystemDependentName(path) + File.separator + "htmlReport";
+        }
+      }
+    }
 
     return dialog;
   }

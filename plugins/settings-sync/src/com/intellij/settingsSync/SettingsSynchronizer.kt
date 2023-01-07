@@ -15,7 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-internal class SettingsSynchronizer : ApplicationInitializedListener, ApplicationActivationListener, SettingsSyncEnabledStateListener {
+internal class SettingsSynchronizer : ApplicationInitializedListener, ApplicationActivationListener, SettingsSyncEnabledStateListener, SettingsSyncCategoriesChangeListener {
 
   private val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("Settings Sync Update", 1)
   private val autoSyncDelay get() = Registry.intValue("settingsSync.autoSync.frequency.sec", 60).toLong()
@@ -58,7 +58,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     }
 
     if (Registry.`is`("settingsSync.autoSync.on.focus", true)) {
-      scheduleSyncing("Syncing settings on app focus")
+      scheduleSyncingOnAppFocus()
     }
   }
 
@@ -74,16 +74,24 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
   }
 
   override fun enabledStateChanged(syncEnabled: Boolean) {
-    // syncEnabled part is handled inside SettingsSyncEnabler
-    if (!syncEnabled) {
+    if (syncEnabled) {
+      SettingsSyncEvents.getInstance().addCategoriesChangeListener(this)
+      // actual start of the sync is handled inside SettingsSyncEnabler
+    }
+    else {
+      SettingsSyncEvents.getInstance().removeCategoriesChangeListener(this)
       stopSyncingByTimer()
       SettingsSyncMain.getInstance().disableSyncing()
     }
   }
 
-  private fun scheduleSyncing(logMessage: String) {
+  override fun categoriesStateChanged() {
+    syncSettings()
+  }
+
+  private fun scheduleSyncingOnAppFocus() {
     executorService.schedule(Runnable {
-      LOG.info(logMessage)
+      LOG.debug("Syncing settings on app focus")
       syncSettings()
     }, 0, TimeUnit.SECONDS)
   }
@@ -92,7 +100,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
   private fun setupSyncingByTimer(): ScheduledFuture<*> {
     val delay = autoSyncDelay
     return executorService.scheduleWithFixedDelay(Runnable {
-      LOG.info("Syncing settings by timer")
+      LOG.debug("Syncing settings by timer")
       syncSettings()
     }, delay, delay, TimeUnit.SECONDS)
   }
@@ -127,7 +135,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
           LOG.info("No file on server")
         }
         ServerState.UpToDate -> {
-          LOG.info("Updating settings is not needed, will check if push is needed")
+          LOG.debug("Updating settings is not needed, will check if push is needed")
           SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.PingRequest)
         }
         is ServerState.Error -> {

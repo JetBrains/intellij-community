@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Pair
-import com.intellij.ui.dsl.builder.EMPTY_LABEL
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -63,7 +62,7 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
           .horizontalAlign(HorizontalAlign.FILL)
           .customize(Gaps.EMPTY)
       }
-      row(EMPTY_LABEL) {
+      row("") {
         label(IdeBundle.message("browse.custom.icon.hint"))
           .applyToComponent {
             font = JBUI.Fonts.smallFont()

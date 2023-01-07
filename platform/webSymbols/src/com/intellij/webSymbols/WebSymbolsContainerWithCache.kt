@@ -11,7 +11,9 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.impl.SearchMap
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.registry.impl.SearchMap
+import com.intellij.webSymbols.registry.*
 import com.intellij.webSymbols.utils.psiModificationCount
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap

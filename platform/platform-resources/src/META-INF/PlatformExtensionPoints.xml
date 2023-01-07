@@ -325,6 +325,10 @@
     <extensionPoint name="diff.tools.combined.diffBlockFactory" interface="com.intellij.diff.tools.combined.CombinedDiffBlockFactory" dynamic="true"/>
     <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener"/>
 
+    <extensionPoint name="execution.syntheticConfigurationTypeProvider"
+                    interface="com.intellij.execution.SyntheticConfigurationTypeProvider"
+                    dynamic="true"/>
+
     <extensionPoint name="executionActionSuppressor"
                     interface="com.intellij.execution.ExecutionActionSuppressor"
                     dynamic="true"/>
@@ -448,7 +452,10 @@
     <extensionPoint name="projectOriginInfoProvider" interface="com.intellij.ide.impl.ProjectOriginInfoProvider" dynamic="true"/>
     <extensionPoint name="trustedHostsConfigurablePanelProvider" interface="com.intellij.ide.impl.TrustedHostsConfigurablePanelProvider"
                     dynamic="true"/>
+    <extensionPoint name="trustedHostsConfigurableProvider" interface="com.intellij.ide.impl.TrustedHostsConfigurableProvider"
+                    dynamic="true"/>
     <extensionPoint name="settingsEntryPointActionProvider" interface="com.intellij.ide.actions.SettingsEntryPointAction$ActionProvider" dynamic="true"/>
+    <extensionPoint name="settingsEntryPointIconCustomizer" interface="com.intellij.ide.actions.SettingsEntryPointAction$IconCustomizer" dynamic="true"/>
     <extensionPoint name="jbProtocolRevisionResolver" interface="com.intellij.navigation.JBProtocolRevisionResolver" dynamic="true"/>
 
     <!--suppress PluginXmlValidity -->

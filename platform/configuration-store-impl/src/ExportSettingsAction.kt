@@ -29,6 +29,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.putValue
 import com.intellij.util.io.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
@@ -152,15 +153,21 @@ fun exportSettings(exportableItems: Set<ExportableItem>,
     }
 }
 
-data class FileSpec(@NlsSafe val relativePath: String, val isDirectory: Boolean = false)
+@ApiStatus.Internal
+data class FileSpec(@NlsSafe val relativePath: String,
+                    /* File spec as written in the class annotation */ val rawFileSpec: String,
+                    val isDirectory: Boolean = false)
 
+@ApiStatus.Internal
 data class ExportableItem(val fileSpec: FileSpec,
                           val presentableName: String,
                           @NonNls val componentName: String? = null,
                           val roamingType: RoamingType = RoamingType.DEFAULT)
 
+@ApiStatus.Internal
 data class LocalExportableItem(val file: Path, val presentableName: String, val roamingType: RoamingType = RoamingType.DEFAULT)
 
+@ApiStatus.Internal
 fun exportInstalledPlugins(zip: Compressor) {
   val pluginIds = PluginManagerCore.getLoadedPlugins()
     .asSequence()
@@ -171,6 +178,7 @@ fun exportInstalledPlugins(zip: Compressor) {
   }
 }
 
+@ApiStatus.Internal
 fun getExportableComponentsMap(isComputePresentableNames: Boolean,
                                storageManager: StateStorageManager = getAppStorageManager(),
                                withDeprecated: Boolean = false,
@@ -182,7 +190,7 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
     for (file in component.exportFiles) {
       val path = getRelativePathOrNull(file.toPath())
       if (path != null) {
-        val fileSpec = FileSpec(path, looksLikeDirectory(file.name))
+        val fileSpec = FileSpec(relativePath = path, rawFileSpec = path, isDirectory = looksLikeDirectory(file.name))
         val item = ExportableItem(fileSpec, component.presentableName)
         result.putValue(fileSpec, item)
       }
@@ -220,7 +228,7 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
         thereIsExportableStorage = true
         val paths = getRelativePaths(storage, storageManager, withDeprecated)
         for (path in paths) {
-          val fileSpec = FileSpec(path, looksLikeDirectory(storage))
+          val fileSpec = FileSpec(relativePath = path, rawFileSpec = storage.path, isDirectory = looksLikeDirectory(storage))
           result.putValue(fileSpec, ExportableItem(fileSpec, presentableName, stateAnnotation.name, storage.roamingType))
         }
       }
@@ -229,7 +237,7 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
     if (thereIsExportableStorage) {
       val additionalExportFile = getAdditionalExportFile(stateAnnotation)
       if (additionalExportFile != null) {
-        val additionalFileSpec = FileSpec(additionalExportFile, true)
+        val additionalFileSpec = FileSpec(relativePath = additionalExportFile, rawFileSpec = additionalExportFile, isDirectory = true)
         result.putValue(additionalFileSpec, ExportableItem(additionalFileSpec, "$presentableName (schemes)"))
       }
     }
@@ -238,7 +246,7 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
   // must be in the end - because most of SchemeManager clients specify additionalExportFile in the State spec
   (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
     if (it.roamingType != RoamingType.DISABLED && it.fileSpec.getOrNull(0) != '$') {
-      val fileSpec = FileSpec(it.fileSpec, true)
+      val fileSpec = FileSpec(relativePath = it.fileSpec, rawFileSpec = it.fileSpec, isDirectory = true)
       if (!result.containsKey(fileSpec)) {
         result.putValue(fileSpec, ExportableItem(fileSpec, it.presentableName ?: "", null, it.roamingType))
       }

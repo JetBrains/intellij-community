@@ -46,17 +46,26 @@ internal val AnActionEvent.contextBookmark: Bookmark?
   get() {
     val editor = getData(CommonDataKeys.EDITOR) ?: getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE)
     val project = editor?.project ?: project ?: return null
+    val manager = BookmarksManager.getInstance(project) ?: return null
+
+    if (place == ActionPlaces.EDITOR_TAB_POPUP || place == ActionPlaces.PROJECT_VIEW_POPUP) {
+      // Create file bookmark
+      val file = getData(CommonDataKeys.VIRTUAL_FILE) ?: return null
+      return manager.createBookmark(file)
+    }
+
     if (editor != null) {
       val provider = LineBookmarkProvider.find(project) ?: return null
       val line = getData(EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR)
       return provider.createBookmark(editor, line)
     }
-    val manager = BookmarksManager.getInstance(project) ?: return null
+
     val window = getData(PlatformDataKeys.TOOL_WINDOW)
     if (window?.id == ToolWindowId.BOOKMARKS) return null
     val component = getData(PlatformDataKeys.CONTEXT_COMPONENT)
     val allowed = UIUtil.getClientProperty(component, BookmarksManager.ALLOWED) ?: (window?.id == ToolWindowId.PROJECT_VIEW)
     if (!allowed) return null
+
     // TODO mouse shortcuts as in gutter/LOGICAL_LINE_AT_CURSOR
     val items = getData(PlatformDataKeys.SELECTED_ITEMS)
     if (items != null && items.size > 1) return null
@@ -68,7 +77,6 @@ internal val AnActionEvent.contextBookmark: Bookmark?
       else -> manager.createBookmark(item)
     }
   }
-
 
 internal val Bookmark.bookmarksManager
   get() = BookmarksManager.getInstance(provider.project)

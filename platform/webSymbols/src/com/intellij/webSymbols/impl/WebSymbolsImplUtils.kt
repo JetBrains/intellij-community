@@ -5,7 +5,12 @@ import com.intellij.util.containers.Stack
 import com.intellij.util.ui.JBUI
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.impl.applyIcons
+import com.intellij.webSymbols.registry.WebSymbolNamesProvider
+import com.intellij.webSymbols.registry.WebSymbolsCodeCompletionQueryParams
+import com.intellij.webSymbols.registry.WebSymbolsNameMatchQueryParams
+import com.intellij.webSymbols.registry.WebSymbolsRegistryQueryParams
 import javax.swing.Icon
 
 internal fun Icon.scaleToHeight(height: Int): Icon {
@@ -80,5 +85,5 @@ internal fun WebSymbol.toCodeCompletionItems(name: String?,
     }
   }
   ?: params.registry.namesProvider
-    .getNames(namespace, kind, matchedName, com.intellij.webSymbols.WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
+    .getNames(namespace, kind, matchedName, WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
     .map { WebSymbolCodeCompletionItem.create(it, 0, symbol = this) }

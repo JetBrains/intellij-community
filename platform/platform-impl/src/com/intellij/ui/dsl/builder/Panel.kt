@@ -16,7 +16,8 @@ import javax.swing.JLabel
 /**
  * Empty label parameter for [Panel.row] method in case label is omitted.
  */
-val EMPTY_LABEL = String()
+@Deprecated("Use \"\" instead of this constant")
+val EMPTY_LABEL = ""
 
 @ApiStatus.NonExtendable
 interface Panel : CellBase<Panel> {
@@ -49,7 +50,7 @@ interface Panel : CellBase<Panel> {
   /**
    * Adds row with [RowLayout.LABEL_ALIGNED] layout and [label]. The label can contain mnemonic and is assigned
    * to the first component in the row via [JLabel.labelFor] property.
-   * Do not use row(""), because it creates unnecessary label component in layout, use [EMPTY_LABEL] instead.
+   * Use row("") if label is empty
    */
   fun row(@Nls label: String, init: Row.() -> Unit): Row
 

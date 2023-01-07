@@ -149,6 +149,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testSwitchRulesWithPattern6() { doParserTest("case Integer i when true -> { }"); }
   public void testSwitchRulesWithPattern7() { doParserTest("case R(int i) when true -> {}"); }
   public void testSwitchRulesWithPattern8() { doParserTest("case R(int i) when a < b -> {}"); }
+  public void testSwitchRulesWithPattern9() { doParserTest("case A when when when.foo() -> {}"); }
   public void testSwitchRulesWithPatternIncomplete0() { doParserTest("case Integer i &&  -> { }"); }
   public void testSwitchRulesWithPatternIncomplete1() { doParserTest("case (Integer i  -> { }"); }
   public void testSwitchRulesWithPatternIncomplete2() { doParserTest("case Integer i, -> { }"); }

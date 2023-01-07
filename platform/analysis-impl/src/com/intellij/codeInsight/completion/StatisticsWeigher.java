@@ -180,7 +180,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
     @NotNull
     private StatisticsInfo calcBaseInfo(LookupElement item) {
       if (!ApplicationManager.getApplication().isUnitTestMode() && !myLocation.getCompletionParameters().isTestingMode()) {
-        LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
       }
       for (var serializer : mySerializers) {
         StatisticsInfo info = serializer.apply(item);
@@ -211,7 +211,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
   @NotNull
   private static StatisticsInfo calcBaseInfo(LookupElement item, @NotNull CompletionLocation location) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && !location.getCompletionParameters().isTestingMode()) {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
     }
     StatisticsInfo info = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, location);
     return info == null ? StatisticsInfo.EMPTY : info;

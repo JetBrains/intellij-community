@@ -870,7 +870,12 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
         window.setupToolWindowPane();
       }
 
-      UIUtil.invokeLaterIfNeeded(window::show);
+      // If the window exists, it's already visible. Don't show multiple times as this will set up additional listeners and window decoration
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (!window.getFrame().isVisible()) {
+          window.show();
+        }
+      });
     }
   }
 }

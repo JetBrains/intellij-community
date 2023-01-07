@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 
 class KotlinHighLevelExpressionTypeProvider : KotlinExpressionTypeProvider() {
@@ -15,8 +16,11 @@ class KotlinHighLevelExpressionTypeProvider : KotlinExpressionTypeProvider() {
 
     // this method gets called from the non-blocking read action
     override fun getInformationHint(element: KtExpression): String = analyze(element) {
-        val ktType = element.getKtType()
-            ?: return@analyze KotlinBundle.message("type.provider.unknown.type")
+        val ktType = if (element is KtDeclaration) {
+            element.getReturnKtType()
+        } else {
+            element.getKtType() ?: return KotlinBundle.message("type.provider.unknown.type")
+        }
         @NlsSafe
         val rendered = ktType.render()
         StringUtil.escapeXmlEntities(rendered)

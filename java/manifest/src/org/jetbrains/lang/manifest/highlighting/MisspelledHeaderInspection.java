@@ -104,7 +104,7 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
 
       private void addMatches(String headerName, Collection<String> headers, SortedSet<? super Suggestion> matches) {
         for (String candidate : headers) {
-          int distance = EditDistance.optimalAlignment(headerName, candidate, false);
+          int distance = EditDistance.optimalAlignment(headerName, candidate, false, MAX_DISTANCE);
           if (distance <= MAX_DISTANCE) {
             matches.add(new Suggestion(candidate, distance));
           }

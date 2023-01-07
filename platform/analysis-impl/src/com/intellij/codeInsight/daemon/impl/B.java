@@ -166,7 +166,7 @@ class B implements AnnotationBuilder {
     if (!currentElementRange.contains(range)) {
       markNotAbandoned();
       String message = "Range must be inside element being annotated: " + currentElementRange + "; but got: " + range;
-      throw PluginException.createByClass(message, null, myCurrentElement.getClass());
+      throw PluginException.createByClass(message, null, myCurrentAnnotator.getClass());
     }
 
     this.range = range;
@@ -318,9 +318,10 @@ class B implements AnnotationBuilder {
 
   void assertAnnotationCreated() {
     if (!created) {
-      throw new IllegalStateException(
+      IllegalStateException exception = new IllegalStateException(
         "Abandoned AnnotationBuilder - its 'create()' method was never called: " + this +
         (myDebugCreationPlace == null ? "" : "\nSee cause for the AnnotationBuilder creation stacktrace"), myDebugCreationPlace);
+      throw PluginException.createByClass(exception, myCurrentAnnotator.getClass());
     }
   }
 

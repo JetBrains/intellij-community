@@ -471,7 +471,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
   }
 
   private static @Nullable <T> T computeAfterLSTManagerUpdate(@NotNull Project project, final @NotNull Computable<T> computation) {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     FutureResult<T> ref = new FutureResult<>();
     LineStatusTrackerManager.getInstance(project).invokeAfterUpdate(() -> {
       try {

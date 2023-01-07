@@ -2484,7 +2484,7 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   private ActionCallback doRemoveTab(TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean isDropTarget) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread(), "This method should be invoked on EDT");
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (myRemoveNotifyInProgress) {
       LOG.warn(new IllegalStateException("removeNotify in progress"));

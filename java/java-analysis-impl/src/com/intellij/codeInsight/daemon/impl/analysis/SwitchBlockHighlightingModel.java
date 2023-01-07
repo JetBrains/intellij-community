@@ -320,8 +320,8 @@ public class SwitchBlockHighlightingModel {
     return ContainerUtil.exists(labelElements, st -> st instanceof PsiPattern || isNullType(st));
   }
 
-  public static boolean isNullType(@NotNull PsiElement element) {
-    return element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType());
+  private static boolean isNullType(@NotNull PsiElement element) {
+    return element instanceof PsiExpression expression && TypeConversionUtil.isNullType(expression.getType());
   }
 
   private static <T> List<T> dropFirst(List<T> list) {

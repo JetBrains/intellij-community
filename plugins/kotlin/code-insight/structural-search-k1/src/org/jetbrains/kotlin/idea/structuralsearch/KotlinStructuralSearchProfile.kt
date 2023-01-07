@@ -107,7 +107,9 @@ class KotlinStructuralSearchProfile : StructuralSearchProfile() {
                 })
             }
         } else {
-            val fragment = factory.createBlockCodeFragment("Unit\n$text", null)
+            val fragment = factory.createBlockCodeFragment("Unit\n$text", null).let {
+                if (physical) it else it.copy() // workaround to create non-physical code fragment
+            }
             elements = when (fragment.lastChild) {
                 is PsiComment -> getNonWhitespaceChildren(fragment).drop(1)
                 else -> getNonWhitespaceChildren(fragment.firstChild).drop(1)

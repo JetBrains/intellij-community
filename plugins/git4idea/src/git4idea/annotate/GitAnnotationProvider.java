@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.annotate;
 
 import com.intellij.idea.ActionsBundle;
@@ -51,6 +51,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.StringScanner;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,11 +152,29 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     return fileAnnotation;
   }
 
+  @ApiStatus.Experimental
+  public interface GitRawAnnotationProvider {
+    @Nullable
+    GitFileAnnotation annotate(@NotNull Project project,
+                               @NotNull VirtualFile root,
+                               @NotNull FilePath filePath,
+                               @Nullable VcsRevisionNumber revision,
+                               @NotNull VirtualFile file) throws VcsException;
+  }
+
   @NotNull
   private GitFileAnnotation doAnnotate(@NotNull VirtualFile root,
                                        @NotNull FilePath filePath,
                                        @Nullable VcsRevisionNumber revision,
                                        @NotNull VirtualFile file) throws VcsException {
+    GitRawAnnotationProvider another = myProject.getService(GitRawAnnotationProvider.class);
+    if (another != null) {
+      GitFileAnnotation res = another.annotate(myProject, root, filePath, revision, file);
+      if (res != null) {
+        return res;
+      }
+    }
+
     if (revision == null) {
       LOG.warn("Computing annotations for implicitly passed HEAD revision");
     }

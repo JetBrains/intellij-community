@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.branch;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * For instance, it could be used for branches in Git repositories to also specify tracking branch information.
  */
 public interface LinkedBranchData extends BranchData {
+  @NlsSafe
   @Nullable
   String getLinkedBranchName();
 }

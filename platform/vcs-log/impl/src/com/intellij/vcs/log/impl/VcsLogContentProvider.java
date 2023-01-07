@@ -76,6 +76,8 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @Override
   public void initTabContent(@NotNull Content content) {
+    if (myProjectLog.isDisposing()) return;
+
     myContent = content;
     // Display name is always used for presentation, tab name is used as an id.
     // See com.intellij.vcs.log.impl.VcsLogContentUtil.selectMainLog.
@@ -93,7 +95,7 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @RequiresEdt
   private void addMainUi(@NotNull VcsLogManager logManager) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myUi == null) {
       myUi = logManager.createLogUi(MAIN_LOG_ID, VcsLogTabLocation.TOOL_WINDOW, false);
       VcsLogPanel panel = new VcsLogPanel(logManager, myUi);
@@ -118,7 +120,7 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @RequiresEdt
   private void disposeMainUi() {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     myContainer.removeAll();
     DataManager.removeDataProvider(myContainer);
@@ -141,7 +143,7 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
    */
   @RequiresEdt
   public void executeOnMainUiCreated(@NotNull Consumer<? super MainVcsLogUi> consumer) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     ListenableFuture<MainVcsLogUi> future = waitMainUiCreation();
     future.addListener(() -> {
@@ -156,7 +158,7 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @RequiresEdt
   public ListenableFuture<MainVcsLogUi> waitMainUiCreation() {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (myUi == null) {
       if (myLogCreationCallback != null) {

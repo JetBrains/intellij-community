@@ -141,5 +141,6 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.platform.tips" scope="RUNTIME" />
+    <orderEntry type="library" name="HdrHistogram" level="project" />
   </component>
 </module>

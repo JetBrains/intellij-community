@@ -23,5 +23,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="miglayout-swing" level="project" />
   </component>
 </module>

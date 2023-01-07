@@ -16,7 +16,7 @@ class A
 infix operator fun A.plus(<warning descr="[UNUSED_PARAMETER] Parameter 'a' is never used">a</warning> : Any) {
 
   1.foo()
-  true.<error descr="[NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER] Not enough information to infer type variable E">foo</error>(<error descr="[NO_VALUE_FOR_PARAMETER] No value passed for parameter 'x'"><error descr="[NO_VALUE_FOR_PARAMETER] No value passed for parameter 'y'">)</error></error>
+  true.<error descr="[NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER] Not enough information to infer type variable E">foo</error><error descr="[NO_VALUE_FOR_PARAMETER] No value passed for parameter 'x'"><error descr="[NO_VALUE_FOR_PARAMETER] No value passed for parameter 'y'">()</error></error>
 
   <warning descr="[UNUSED_EXPRESSION] The expression is unused">1</warning>
 }

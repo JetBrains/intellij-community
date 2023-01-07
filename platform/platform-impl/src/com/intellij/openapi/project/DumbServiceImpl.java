@@ -443,7 +443,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   public void waitForSmartMode() {
     if (ALWAYS_SMART) return;
     Application application = ApplicationManager.getApplication();
-    if (application.isReadAccessAllowed() || application.isDispatchThread()) {
+    if (application.isReadAccessAllowed()) {
       throw new AssertionError("Don't invoke waitForSmartMode from inside read action in dumb mode");
     }
     if (myWaitIntolerantThread == Thread.currentThread()) {

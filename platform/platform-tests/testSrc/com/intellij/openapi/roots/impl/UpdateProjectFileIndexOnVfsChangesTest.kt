@@ -7,7 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.EXCLUDED
-import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertInModule
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -54,12 +54,12 @@ class UpdateProjectFileIndexOnVfsChangesTest {
     }
     val created = ArrayList<VirtualFile>()
     val listener = FileCreationListener(excludedName) { file ->
-      fileIndex.assertScope(file, EXCLUDED, module)
+      fileIndex.assertInModule(file, module, root, EXCLUDED)
       created.add(file)
     }
     projectModel.project.messageBus.connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, listener)
     val excluded = HeavyPlatformTestCase.createChildDirectory(root, excludedName)
-    fileIndex.assertScope(excluded, EXCLUDED, module)
+    fileIndex.assertInModule(excluded, module, root, EXCLUDED)
     assertEquals(1, created.size, created.toString())
     listener.assertNoErrors()
   }
@@ -75,8 +75,8 @@ class UpdateProjectFileIndexOnVfsChangesTest {
 
     val listener = FileCreationListener("dir") { file ->
       assertEquals("dir", file.name)
-      fileIndex.assertScope(file.findFileByRelativePath("excluded")!!, EXCLUDED, module)
-      fileIndex.assertScope(file.findFileByRelativePath("excluded/foo")!!, EXCLUDED, module)
+      fileIndex.assertInModule(file.findFileByRelativePath("excluded")!!, module, root, EXCLUDED)
+      fileIndex.assertInModule(file.findFileByRelativePath("excluded/foo")!!, module, root, EXCLUDED)
     }
     projectModel.project.messageBus.connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, listener)
     if (async) {

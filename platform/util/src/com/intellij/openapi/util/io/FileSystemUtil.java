@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.PosixFileAttributes;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
@@ -311,14 +310,13 @@ public final class FileSystemUtil {
   }
 
   private static class Nio2MediatorImpl implements Mediator {
-    private final Class<? extends BasicFileAttributes> mySchema = SystemInfo.isWindows ? BasicFileAttributes.class : PosixFileAttributes.class;
     private final LinkOption[] myNoFollowLinkOptions = {LinkOption.NOFOLLOW_LINKS};
 
     @Override
     public FileAttributes getAttributes(@NotNull String pathStr) {
       try {
         Path path = Paths.get(pathStr);
-        BasicFileAttributes attributes = Files.readAttributes(path, mySchema, myNoFollowLinkOptions);
+        BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class, myNoFollowLinkOptions);
         return FileAttributes.fromNio(path, attributes);
       }
       catch (IOException | InvalidPathException e) {

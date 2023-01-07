@@ -10,9 +10,11 @@ import com.intellij.webSymbols.webTypes.json.WebTypes
 import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
+import org.jetbrains.annotations.ApiStatus
 import java.io.*
 import java.net.URI
 
+@ApiStatus.Internal
 class WebTypesJsonFilesCache {
 
   companion object {

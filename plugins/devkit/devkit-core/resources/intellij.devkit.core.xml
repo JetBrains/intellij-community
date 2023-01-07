@@ -109,11 +109,11 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UseGrayInspection"
                      key="inspection.inspection.using.gray.colors.display.name"/>
-    <localInspection language="JAVA" shortName="InspectionUniqueToolbarId"
+    <localInspection language="UAST" shortName="UnspecifiedActionsPlace"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.UniqueToolbarIdInspection"
-                     key="inspection.inspection.unique.toolbar.id.display.name"/>
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UnspecifiedActionsPlaceInspection"
+                     key="inspection.inspection.unspecified.actions.place.display.name"/>
     <localInspection language="UAST" shortName="IntentionDescriptionNotFoundInspection"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.description.file"
                      enabledByDefault="true" level="WARNING"
@@ -147,7 +147,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.MissingAccessibleContextInspection"
                      key="inspection.missing.accessible.context.display.name"/>
-    <localInspection language="JAVA" shortName="UnsafeVfsRecursion"
+    <localInspection language="UAST" shortName="UnsafeVfsRecursion"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeVfsRecursionInspection"
@@ -183,7 +183,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePluginIdEqualsInspection"
                      key="inspection.use.plugin.id.equals.display.name"/>
-    <localInspection language="JAVA" shortName="UnsafeReturnStatementVisitor"
+    <localInspection language="UAST" shortName="UnsafeReturnStatementVisitor"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection"

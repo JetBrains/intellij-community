@@ -1,14 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.containers
 
+import com.intellij.util.containers.CollectionFactory
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlin.collections.component1
 import kotlin.collections.component2
 
-internal class BidirectionalSetMap<K, V> private constructor(private val keyToValueMap: Object2ObjectOpenHashMap<K, V>,
+internal class BidirectionalSetMap<K, V> private constructor(private val keyToValueMap: MutableMap<K, V>,
                                                              private val valueToKeysMap: MutableMap<V, MutableSet<K>>) : MutableMap<K, V> {
 
-  constructor() : this(Object2ObjectOpenHashMap<K, V>(), HashMap<V, MutableSet<K>>())
+  constructor() : this(CollectionFactory.createSmallMemoryFootprintMap(), HashMap<V, MutableSet<K>>())
 
   override fun put(key: K, value: V): V? {
     val oldValue = keyToValueMap.put(key, value)
@@ -92,11 +93,6 @@ internal class BidirectionalSetMap<K, V> private constructor(private val keyToVa
   override val entries: MutableSet<MutableMap.MutableEntry<K, V>>
     get() = keyToValueMap.entries
 
-  fun copy(): BidirectionalSetMap<K, V> {
-    val valueToKeys = HashMap<V, MutableSet<K>>(valueToKeysMap.size)
-    valueToKeysMap.forEach { (key, value) -> valueToKeys[key] = HashSet(value) }
-    return BidirectionalSetMap(keyToValueMap.clone(), valueToKeys)
-  }
 
   override fun toString(): String {
     return keyToValueMap.toString()

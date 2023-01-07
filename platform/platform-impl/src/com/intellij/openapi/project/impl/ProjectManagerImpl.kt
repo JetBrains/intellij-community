@@ -338,7 +338,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   override suspend fun forceCloseProjectAsync(project: Project, save: Boolean): Boolean {
-    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (save) {
       // HeadlessSaveAndSyncHandler doesn't save, but if `save` is requested,
       // it means that we must save in any case (for example, see GradleSourceSetsTest)

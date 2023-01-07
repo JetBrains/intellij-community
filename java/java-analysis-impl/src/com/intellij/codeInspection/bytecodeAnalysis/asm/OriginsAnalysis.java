@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -87,7 +88,7 @@ public final class OriginsAnalysis {
     HashSet<InsnLocation> queued = new HashSet<>();
     for (int from = 0; from < instructions.size(); from++) {
       for (int to : graph.transitions[from]) {
-        IntArrayList froms = backTransitions[to];
+        IntList froms = backTransitions[to];
         froms.add(from);
         int opcode = instructions.get(to).getOpcode();
         if (opcode >= Opcodes.IRETURN && opcode <= Opcodes.ARETURN) {
@@ -114,7 +115,7 @@ public final class OriginsAnalysis {
         }
       }
       else {
-        IntArrayList froms = backTransitions[insnIndex];
+        IntList froms = backTransitions[insnIndex];
         for (int i = 0; i < froms.size(); i++) {
           InsnLocation preILoc = new InsnLocation(preLocation.local, froms.getInt(i), preLocation.slot);
           if (queued.add(preILoc)) {

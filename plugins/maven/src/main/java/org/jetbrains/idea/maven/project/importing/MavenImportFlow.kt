@@ -52,7 +52,7 @@ class MavenImportFlow {
     if (isVeryNewProject) {
       ExternalStorageConfigurationManager.getInstance(project).isEnabled = true
     }
-    val dummyModule = if (isVeryNewProject) createDummyModule(importPaths, project) else null
+    val previewModule = if (isVeryNewProject) createPreviewModule(importPaths, project) else null
 
     val manager = MavenProjectsManager.getInstance(project)
     val profiles = MavenExplicitProfiles(enabledProfiles, disabledProfiles)
@@ -64,16 +64,16 @@ class MavenImportFlow {
 
     return MavenInitialImportContext(project, importPaths, profiles, generalSettings, importingSettings, ignorePaths, ignorePatterns,
                                      importDisposable,
-                                     dummyModule, Exception())
+                                     previewModule, Exception())
   }
 
-  private fun createDummyModule(importPaths: ImportPaths, project: Project): Module? {
+  private fun createPreviewModule(importPaths: ImportPaths, project: Project): Module? {
     if (Registry.`is`("maven.create.dummy.module.on.first.import")) {
       val contentRoot = when (importPaths) {
         is FilesList -> ContainerUtil.getFirstItem(importPaths.poms).parent
         is RootPath -> importPaths.path
       }
-      return MavenImportUtil.createDummyModule(project, contentRoot)
+      return MavenImportUtil.createPreviewModule(project, contentRoot)
     }
     return null
   }
@@ -292,7 +292,7 @@ class MavenImportFlow {
                                                                 it to MavenProjectChanges.ALL
                                                               }.toMap(), context.initialContext.importingSettings.isCreateModuleGroups,
                                                               modelsProvider, context.initialContext.importingSettings,
-                                                              context.initialContext.dummyModule, importingActivity)
+                                                              context.initialContext.previewModule, importingActivity)
     val postImportTasks = projectImporter.importProject()
     val modulesCreated = projectImporter.createdModules()
     return MavenImportedContext(context.project, modulesCreated, postImportTasks, context.readContext, context)

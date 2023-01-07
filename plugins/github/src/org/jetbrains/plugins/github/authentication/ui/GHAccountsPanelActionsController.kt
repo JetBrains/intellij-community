@@ -2,11 +2,11 @@
 package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.collaboration.auth.ui.AccountsPanelActionsController
+import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.JBPopupMenu
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.awt.RelativePoint
 import org.jetbrains.plugins.github.authentication.GHLoginRequest
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
@@ -22,11 +22,12 @@ internal class GHAccountsPanelActionsController(private val project: Project, pr
 
   override fun addAccount(parentComponent: JComponent, point: RelativePoint?) {
     val group = actionManager.getAction("Github.Accounts.AddAccount") as ActionGroup
-    val popup = actionManager.createActionPopupMenu("GitHub.Accounts.Panel", group)
-
+    
     val actualPoint = point ?: RelativePoint.getCenterOf(parentComponent)
-    popup.setTargetComponent(parentComponent)
-    JBPopupMenu.showAt(actualPoint, popup.component)
+    JBPopupFactory.getInstance()
+      .createActionGroupPopup(null, group, DataManager.getInstance().getDataContext(parentComponent),
+                              JBPopupFactory.ActionSelectionAid.MNEMONICS, false)
+      .show(actualPoint)
   }
 
   override fun editAccount(parentComponent: JComponent, account: GithubAccount) {

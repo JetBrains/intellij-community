@@ -8,7 +8,6 @@ import org.jetbrains.intellij.build.ConsoleSpanExporter
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.TracerProviderManager
 import org.jetbrains.intellij.build.closeKtorClient
-import java.util.function.Supplier
 
 object DevIdeaBuilder {
   @JvmStatic
@@ -16,7 +15,7 @@ object DevIdeaBuilder {
     initLog()
     runBlocking(Dispatchers.Default) {
       // don't use JaegerJsonSpanExporter - not needed for clients, should be enabled only if needed to avoid writing ~500KB JSON file
-      TracerProviderManager.spanExporterProvider = Supplier { listOf(ConsoleSpanExporter()) }
+      TracerProviderManager.spanExporterProvider = { listOf(ConsoleSpanExporter()) }
       try {
         buildProductInProcess(request = BuildRequest(
           homePath = getHomePath(),

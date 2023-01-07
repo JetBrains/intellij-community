@@ -3,7 +3,7 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.GroupByTypeComparator;
 import com.intellij.lang.properties.projectView.ResourceBundleGrouper;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -32,7 +32,7 @@ public class PropertiesProjectViewTest extends BasePlatformTestCase {
 
   public void testBundle() {
     myFixture.copyDirectoryToProject(getTestName(true), getTestName(true));
-    final AbstractProjectViewPSIPane pane = setupPane(true);
+    final AbstractProjectViewPane pane = setupPane(true);
 
     String structure = """
       -Project
@@ -51,7 +51,7 @@ public class PropertiesProjectViewTest extends BasePlatformTestCase {
 
   public void testStandAlone() {
     myFixture.copyDirectoryToProject(getTestName(true), getTestName(true));
-    final AbstractProjectViewPSIPane pane = setupPane(true);
+    final AbstractProjectViewPane pane = setupPane(true);
 
     String structure = """
       -Project
@@ -70,7 +70,7 @@ public class PropertiesProjectViewTest extends BasePlatformTestCase {
 
   public void testSortByType() {
     myFixture.copyDirectoryToProject(getTestName(true), getTestName(true));
-    AbstractProjectViewPSIPane pane = setupPane(true);
+    AbstractProjectViewPane pane = setupPane(true);
 
     String structure = """
       -Project
@@ -116,7 +116,7 @@ public class PropertiesProjectViewTest extends BasePlatformTestCase {
     });
     ResourceBundleManager.getInstance(getProject()).combineToResourceBundle(customBundleFiles, "some");
 
-    final AbstractProjectViewPSIPane pane = setupPane(true);
+    final AbstractProjectViewPane pane = setupPane(true);
     String structure = """
       -Project
        -PsiDirectory: src
@@ -142,7 +142,7 @@ public class PropertiesProjectViewTest extends BasePlatformTestCase {
     });
     ResourceBundleManager.getInstance(getProject()).combineToResourceBundle(customBundleFiles, "custom");
 
-    final AbstractProjectViewPSIPane pane = setupPane(true);
+    final AbstractProjectViewPane pane = setupPane(true);
     String structure = """
       -Project
        -PsiDirectory: src
@@ -163,9 +163,9 @@ public class PropertiesProjectViewTest extends BasePlatformTestCase {
     PlatformTestUtil.assertTreeEqual(pane.getTree(), structure);
   }
 
-  private AbstractProjectViewPSIPane setupPane(final boolean sortByType) {
+  private AbstractProjectViewPane setupPane(final boolean sortByType) {
     myStructure.setProviders(new ResourceBundleGrouper(getProject()));
-    final AbstractProjectViewPSIPane pane = myStructure.createPane();
+    final AbstractProjectViewPane pane = myStructure.createPane();
     pane.installComparator(new GroupByTypeComparator(sortByType));
     PropertiesReferenceManager.getInstance(getProject()).processAllPropertiesFiles((baseName, propertiesFile) -> {
       pane.select(propertiesFile, propertiesFile.getVirtualFile(), sortByType);

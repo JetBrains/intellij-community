@@ -74,7 +74,7 @@ public class ChooseLocaleAction extends ComboBoxAction {
     private final boolean myUpdateText;
 
     SetLocaleAction(final GuiEditor editor, final Locale locale, final boolean updateText) {
-      super(getLocaleText(locale));
+      getTemplatePresentation().setText(getLocaleText(locale), false);
       myUpdateText = updateText;
       myEditor = editor;
       myLocale = locale;

@@ -60,7 +60,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
     catch (e: Exception) {
       val description = e.message?.lineSequence()?.first()?.replace("'", "\"")
-      context.messages.warning("##teamcity[buildProblem identity='$name' description='$description']")
+      println("##teamcity[buildProblem identity='${name.replace(" ", "_")}' description='$description']")
       emptyList()
     }
   }

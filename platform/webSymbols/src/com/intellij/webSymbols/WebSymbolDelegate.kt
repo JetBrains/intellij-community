@@ -9,7 +9,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.symbol.RenameableSymbol
 import com.intellij.util.containers.Stack
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.documentation.WebSymbolDocumentation
+import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.registry.WebSymbolsCodeCompletionQueryParams
+import com.intellij.webSymbols.registry.WebSymbolsNameMatchQueryParams
 import javax.swing.Icon
 
 abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {

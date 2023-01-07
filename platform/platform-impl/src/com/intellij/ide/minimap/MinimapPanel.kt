@@ -189,7 +189,6 @@ class MinimapPanel(private val parentDisposable: Disposable, private val editor:
 
   private fun isInResizeArea(x: Int): Boolean {
     return when {
-      !state.resizable -> false
       state.rightAligned -> x in 0..RESIZE_TOLERANCE
       else -> x in (state.width - RESIZE_TOLERANCE)..state.width
     }
@@ -210,7 +209,6 @@ class MinimapPanel(private val parentDisposable: Disposable, private val editor:
   }
 
   private fun createPopupActionGroup() = DefaultActionGroup(
-    ActionManager.getInstance().getAction("ToggleMinimapResizable"),
     ActionManager.getInstance().getAction("MoveMinimap"),
     ActionManager.getInstance().getAction("OpenMinimapSettings"),
     // Filters are currently disabled.

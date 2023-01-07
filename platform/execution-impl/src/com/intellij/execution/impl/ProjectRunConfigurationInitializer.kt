@@ -4,6 +4,7 @@ package com.intellij.execution.impl
 import com.intellij.diagnostic.runActivity
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunManager.Companion.IS_RUN_MANAGER_INITIALIZED
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -25,7 +26,9 @@ private class ProjectRunConfigurationInitializer : ProjectServiceContainerInitia
       runActivity("RunManager initialization") {
         // we must not fire beginUpdate here, because message bus will fire queued parent message bus messages (and, so, SOE may occur because all other projectOpened will be processed before us)
         // simply, you should not listen changes until project opened
-        (project as ComponentManagerEx).getServiceAsync(RunManager::class.java).join()
+        readAction {
+          RunManager.getInstance(project)
+        }
         IS_RUN_MANAGER_INITIALIZED.set(project, true)
       }
     }

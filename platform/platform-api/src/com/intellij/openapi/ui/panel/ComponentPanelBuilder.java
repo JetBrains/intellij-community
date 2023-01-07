@@ -316,7 +316,11 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   }
 
   public static Font getCommentFont(Font font) {
-    return new FontUIResource(RelativeFont.NORMAL.fromResource("ContextHelp.fontSizeOffset", -2).derive(font));
+    if (ExperimentalUI.isNewUI()) {
+      return JBFont.medium();
+    } else {
+      return new FontUIResource(RelativeFont.NORMAL.fromResource("ContextHelp.fontSizeOffset", -2).derive(font));
+    }
   }
 
   private static void setCommentText(@NotNull JLabel component,

@@ -27,7 +27,7 @@ class PlantUMLCodeGeneratingProvider(
     get() = dowloadableFiles
 
   override fun isApplicable(language: String): Boolean {
-    return isEnabled && isAvailable && language.lowercase() in extensions
+    return isEnabled && isAvailable && PlantUMLCodeFenceLanguageProvider.isPlantUmlInfoString(language.lowercase())
   }
 
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
@@ -83,8 +83,6 @@ class PlantUMLCodeGeneratingProvider(
     const val jarFilename = "plantuml.jar"
     private val ownFiles = listOf(jarFilename)
     private val dowloadableFiles = listOf(FileEntry(jarFilename) { Registry.stringValue("markdown.plantuml.download.link") })
-
-    private val extensions = setOf("puml", "plantuml")
 
     private fun storeDiagram(source: String, file: File) {
       try {

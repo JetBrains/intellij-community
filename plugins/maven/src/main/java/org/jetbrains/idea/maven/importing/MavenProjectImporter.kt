@@ -25,10 +25,10 @@ interface MavenProjectImporter {
                        importModuleGroupsRequired: Boolean,
                        modelsProvider: IdeModifiableModelsProvider,
                        importingSettings: MavenImportingSettings,
-                       dummyModule: Module?,
+                       previewModule: Module?,
                        importingActivity: StructuredIdeActivity): MavenProjectImporter {
       val importer = createImporter(project, projectsTree, projectsToImportWithChanges, importModuleGroupsRequired, modelsProvider,
-                                    importingSettings, dummyModule)
+                                    importingSettings, previewModule)
       return object : MavenProjectImporter {
         override fun importProject(): List<MavenProjectsProcessorTask>? {
           val activity = MavenImportStats.startApplyingModelsActivity(project, importingActivity)
@@ -58,7 +58,7 @@ interface MavenProjectImporter {
                                importModuleGroupsRequired: Boolean,
                                modelsProvider: IdeModifiableModelsProvider,
                                importingSettings: MavenImportingSettings,
-                               dummyModule: Module?): MavenProjectImporter {
+                               previewModule: Module?): MavenProjectImporter {
       if (isImportToWorkspaceModelEnabled(project)) {
         return WorkspaceProjectImporter(projectsTree, projectsToImportWithChanges,
                                         importingSettings, modelsProvider, project)
@@ -70,7 +70,7 @@ interface MavenProjectImporter {
       }
 
       return MavenProjectImporterImpl(project, projectsTree, projectsToImportWithChanges, importModuleGroupsRequired,
-                                      modelsProvider, importingSettings, dummyModule)
+                                      modelsProvider, importingSettings, previewModule)
     }
 
     @JvmStatic

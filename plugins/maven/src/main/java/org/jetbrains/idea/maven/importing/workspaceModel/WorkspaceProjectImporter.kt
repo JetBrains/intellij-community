@@ -58,6 +58,8 @@ internal class WorkspaceProjectImporter(
   private val createdModulesList = java.util.ArrayList<Module>()
 
   override fun importProject(): List<MavenProjectsProcessorTask> {
+    MavenLog.LOG.info("Importing Maven project using Workspace API")
+
     val storageBeforeImport = WorkspaceModel.getInstance(myProject).entityStorage.current
 
     val (hasChanges, projectToImport) = collectProjectsAndChanges(storageBeforeImport, projectsToImportWithChanges)
@@ -427,20 +429,14 @@ internal class WorkspaceProjectImporter(
           prepareInBackground(builder)
           durationInBackground += System.nanoTime() - beforeBG
 
-          if (!snapshot.areEntitiesChanged()) {
-            updated = true
-            MavenUtil.invokeAndWaitWriteAction(project) {
-              val beforeWA = System.nanoTime()
-              //we need this e.g. to update Java compiler settings
-              afterApplyInWriteAction(workspaceModel.entityStorage.current)
-              durationInWriteAction += System.nanoTime() - beforeWA
-            }
-            break
-          }
-          
           MavenUtil.invokeAndWaitWriteAction(project) {
             val beforeWA = System.nanoTime()
-            updated = workspaceModel.replaceProjectModel(snapshot.getStorageReplacement())
+            if (!snapshot.areEntitiesChanged()) {
+              updated = true
+            }
+            else {
+              updated = workspaceModel.replaceProjectModel(snapshot.getStorageReplacement())
+            }
             if (updated) afterApplyInWriteAction(workspaceModel.entityStorage.current)
             durationInWriteAction += System.nanoTime() - beforeWA
           }

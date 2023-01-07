@@ -91,7 +91,7 @@ abstract class Node extends DefaultMutableTreeNode {
 
   final void update(@NotNull Consumer<? super Node> edtFireTreeNodesChangedQueue) {
     // performance: always update in background because smart pointer' isValid() can cause PSI chameleons expansion which is ridiculously expensive in cpp
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     boolean isDataValid = isDataValid();
     boolean isReadOnly = isDataReadOnly();
     String text = getNodeText();

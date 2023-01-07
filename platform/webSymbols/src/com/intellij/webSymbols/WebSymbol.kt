@@ -13,8 +13,11 @@ import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
-import com.intellij.webSymbols.impl.WebSymbolDocumentationTargetImpl
+import com.intellij.webSymbols.documentation.WebSymbolDocumentation
+import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationTargetImpl
+import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.registry.WebSymbolsRegistry
 import java.util.*
 import javax.swing.Icon
 

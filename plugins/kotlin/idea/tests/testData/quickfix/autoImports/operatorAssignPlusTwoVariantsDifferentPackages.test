@@ -1,5 +1,5 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import extension function 'Some.plusAssign'" "true"
 // ERROR: Unresolved reference. None of the following candidates is applicable because of receiver type mismatch: <br>public operator fun String?.plus(other: Any?): String defined in kotlin
 /* IGNORE_FIR */
 
@@ -31,7 +31,7 @@ operator fun Some.plus(i: Int) : Some = this
 
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import extension function 'Some.plusAssign'" "true"
 // ERROR: Unresolved reference. None of the following candidates is applicable because of receiver type mismatch: <br>public operator fun String?.plus(other: Any?): String defined in kotlin
 /* IGNORE_FIR */
 

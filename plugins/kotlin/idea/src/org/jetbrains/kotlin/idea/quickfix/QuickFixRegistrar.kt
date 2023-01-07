@@ -1,5 +1,3 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -171,6 +169,8 @@ class QuickFixRegistrar : QuickFixContributor {
         NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER.registerFactory(ImportForMismatchingArgumentsFix)
         TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER.registerFactory(ImportForMismatchingArgumentsFix)
 
+        INFERRED_INTO_DECLARED_UPPER_BOUNDS.registerFactory(InsertExplicitTypeArgumentsIntention)
+
         UNRESOLVED_REFERENCE_WRONG_RECEIVER.registerFactory(ImportFix)
 
         FUNCTION_EXPECTED.registerFactory(InvokeImportFix)
@@ -196,6 +196,12 @@ class QuickFixRegistrar : QuickFixContributor {
         INVISIBLE_REFERENCE.registerFactory(MakeVisibleFactory)
         INVISIBLE_MEMBER.registerFactory(MakeVisibleFactory)
         INVISIBLE_SETTER.registerFactory(MakeVisibleFactory)
+
+        UNSUPPORTED_WARNING.registerFactory(ConvertCollectionLiteralToIntArrayOfFix)
+        UNSUPPORTED.registerFactory(ConvertCollectionLiteralToIntArrayOfFix)
+
+        MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN.registerFactory(WrapWithParenthesesFix.ModifierFormForNonBuiltInSuspend)
+        MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND.registerFactory(WrapWithParenthesesFix.ModifierFormForNonBuiltInSuspend)
 
         for (exposed in listOf(
             EXPOSED_FUNCTION_RETURN_TYPE, EXPOSED_PARAMETER_TYPE, EXPOSED_PROPERTY_TYPE,
@@ -283,6 +289,7 @@ class QuickFixRegistrar : QuickFixContributor {
         RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(ReplaceInfixOrOperatorCallFixFactory)
         RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(ReplaceWithSafeCallForScopeFunctionFixFactory)
 
+        APPROXIMATED_LOCAL_TYPE_WILL_BECOME_NULLABLE.registerActions(SpecifyTypeExplicitlyFix(convertToNullable = true))
         AMBIGUOUS_ANONYMOUS_TYPE_INFERRED.registerActions(SpecifyTypeExplicitlyFix())
         PROPERTY_WITH_NO_TYPE_NO_INITIALIZER.registerActions(SpecifyTypeExplicitlyFix())
         MUST_BE_INITIALIZED.registerActions(SpecifyTypeExplicitlyFix())
@@ -758,5 +765,8 @@ class QuickFixRegistrar : QuickFixContributor {
 
         ABSTRACT_SUPER_CALL.registerFactory(AbstractSuperCallFix)
         ABSTRACT_SUPER_CALL_WARNING.registerFactory(AbstractSuperCallFix)
+
+        WRONG_EXTENSION_FUNCTION_TYPE.registerFactory(RemoveAnnotationFix.ExtensionFunctionType)
+        WRONG_EXTENSION_FUNCTION_TYPE_WARNING.registerFactory(RemoveAnnotationFix.ExtensionFunctionType)
     }
 }

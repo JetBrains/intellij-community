@@ -46,7 +46,12 @@ public final class CanonicalTypes {
     AnnotatedType(@NotNull TypeAnnotationProvider provider) {
       PsiAnnotation[] annotations = ContainerUtil.map(
         provider.getAnnotations(),
-        annotation -> (PsiAnnotation)Objects.requireNonNull(annotation.copy(), () -> annotation.getClass().getName()),
+        annotation -> {
+          PsiElement copy = annotation.copy();
+          if (copy instanceof PsiAnnotation) return (PsiAnnotation)copy;
+          // copy is not implemented (e.g., for KtUltraLightSimpleAnnotation)
+          return JavaPsiFacade.getElementFactory(annotation.getProject()).createAnnotationFromText(annotation.getText(), annotation);
+        },
         PsiAnnotation.EMPTY_ARRAY);
       myProvider = TypeAnnotationProvider.Static.create(annotations);
     }

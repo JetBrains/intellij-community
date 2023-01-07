@@ -577,6 +577,11 @@
     <keyboard-shortcut first-keystroke="alt PERIOD"/>
   </action>
 
+  <action id="ExpandCollapseToggleAction">
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="M"/>
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="control M"/>
+  </action>
+
   <action id="EditorDecreaseFontSizeGlobal"/>
   <action id="EditorIncreaseFontSizeGlobal"/>
 

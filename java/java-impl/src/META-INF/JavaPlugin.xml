@@ -129,6 +129,8 @@
     <extensionPoint qualifiedName="com.intellij.jreProvider" interface="com.intellij.execution.ui.JreProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.sdkEditorAdditionalOptionsProvider" interface="com.intellij.openapi.SdkEditorAdditionalOptionsProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.exceptionFilter" interface="com.intellij.execution.filters.ExceptionFilterFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.effectively.final.fixer"
+                    interface="com.intellij.codeInsight.daemon.impl.quickfix.makefinal.EffectivelyFinalFixer" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.compiler.buildTargetScopeProvider"
                     interface="com.intellij.compiler.impl.BuildTargetScopeProvider" dynamic="true"/>
@@ -2356,6 +2358,8 @@
     <registryKey defaultValue="true" description="Show no usages in Java reference code lenses" key="code.lens.java.show.0.usages"/>
     <debugger.dfaAssistProvider language="JAVA" implementationClass="com.intellij.debugger.engine.dfaassist.java.JavaDfaAssistProvider"/>
     <dataflowIRProvider language="JAVA" implementationClass="com.intellij.codeInspection.dataFlow.java.JavaDataFlowIRProvider"/>
+    <java.effectively.final.fixer implementation="com.intellij.codeInsight.daemon.impl.quickfix.makefinal.MoveInitializerToIfBranchFixer"/>
+    <java.effectively.final.fixer implementation="com.intellij.codeInspection.streamMigration.ConvertToStreamFixer"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.checkin.CommitCheck
 import com.intellij.openapi.vcs.checkin.CommitProblem
-import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -40,12 +39,6 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
   }
 
   suspend fun runBackgroundBeforeCommitChecks(commitInfo: DynamicCommitInfo): CommitProblem? {
-    return PartialChangesUtil.underChangeList(project, getBeforeCommitChecksChangelist()) {
-      runCommitHandlers(commitInfo)
-    }
-  }
-
-  private suspend fun runCommitHandlers(commitInfo: DynamicCommitInfo): CommitProblem? {
     try {
       val handlers = commitHandlers
       val commitChecks = handlers
@@ -54,10 +47,15 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
 
       runCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }
 
-      runMetaHandlers(handlers.filterIsInstance<CheckinMetaHandler>())
-
-      runCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION])?.let { return it }
-      FileDocumentManager.getInstance().saveAllDocuments()
+      val modificationChecks = commitChecks[CommitCheck.ExecutionOrder.MODIFICATION].orEmpty()
+      val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
+      if (metaHandlers.isNotEmpty() || modificationChecks.isNotEmpty()) {
+        runModificationCommitChecks {
+          runMetaHandlers(metaHandlers)
+          runCommitChecks(commitInfo, modificationChecks)
+        }?.let { return it }
+        FileDocumentManager.getInstance().saveAllDocuments()
+      }
 
       runCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.LATE])?.let { return it }
 

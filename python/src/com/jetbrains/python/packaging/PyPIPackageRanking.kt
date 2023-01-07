@@ -23,7 +23,7 @@ object PyPIPackageRanking {
     get() = myPackageRank.asSequence().map { it.key }
 
   fun reload() {
-    assert(!ApplicationManager.getApplication().isDispatchThread)
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     val gson = Gson()
     val resource = PyPIPackageRanking::class.java.getResource("/packaging/pypi-ranking.json") ?: error("Python package ranking not found")
     val array = Resources.asCharSource(resource, Charsets.UTF_8).openBufferedStream().use {

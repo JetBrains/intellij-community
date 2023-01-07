@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -45,11 +47,23 @@ public class CreateRecordFromNewFix extends CreateClassFromNewFix {
     return templateBuilder;
   }
 
+  /**
+   * @param header      header to set up record components
+   * @param builder     builder to use
+   * @param list        <ul>
+   *                    <li>{@code PsiExpressionList} if the record is created from a new expression</li>
+   *                    <li>{@code PsiDeconstructionList} if the record is created from a record pattern</li>
+   *                    </ul>
+   * @param substitutor substitutor to use
+   * @throws IncorrectOperationException if setting up of record components fails
+   */
   static void setupRecordComponents(@Nullable PsiRecordHeader header, @NotNull TemplateBuilder builder,
-                                    @NotNull PsiExpressionList argumentList, @NotNull PsiSubstitutor substitutor)
+                                    @NotNull PsiElement list, @NotNull PsiSubstitutor substitutor)
     throws IncorrectOperationException {
-    if (header == null) return;
-    PsiExpression[] args = argumentList.getExpressions();
+    if (header == null || !(list instanceof PsiExpressionList || list instanceof PsiDeconstructionList)) return;
+    PsiCaseLabelElement[] elements = list instanceof PsiExpressionList argumentList
+                                     ? argumentList.getExpressions()
+                                     : ((PsiDeconstructionList)list).getDeconstructionComponents();
     final PsiManager psiManager = header.getManager();
     final Project project = psiManager.getProject();
 
@@ -75,20 +89,19 @@ public class CreateRecordFromNewFix extends CreateClassFromNewFix {
     }
     List<ComponentData> components = new ArrayList<>();
     //255 is the maximum number of record components
-    for (int i = 0; i < Math.min(args.length, 255); i++) {
-      PsiExpression exp = args[i];
-
-      PsiType argType = CommonJavaRefactoringUtil.getTypeByExpression(exp);
-      SuggestedNameInfo suggestedInfo = JavaCodeStyleManager.getInstance(project).suggestVariableName(
-        VariableKind.PARAMETER, null, exp, argType);
-      @NonNls String[] names = suggestedInfo.names;
+    for (int i = 0; i < Math.min(elements.length, 255); i++) {
+      PsiCaseLabelElement element = elements[i];
+      PsiType type = element instanceof PsiExpression expression
+                     ? CommonJavaRefactoringUtil.getTypeByExpression(expression)
+                     : JavaPsiPatternUtil.getPatternType(element);
+      @NonNls String[] names = suggestVariableName(project, element, type).names;
 
       if (names.length == 0) {
         names = new String[]{"c" + i};
       }
 
-      argType = CreateFromUsageUtils.getParameterTypeByArgumentType(argType, psiManager, resolveScope);
-      components.add(new ComponentData(argType, names));
+      type = CreateFromUsageUtils.getParameterTypeByArgumentType(type, psiManager, resolveScope);
+      components.add(new ComponentData(type, names));
     }
     PsiRecordHeader newHeader = factory.createRecordHeaderFromText(StringUtil.join(components, ", "), containingClass);
     PsiRecordHeader replacedHeader = (PsiRecordHeader)header.replace(newHeader);
@@ -100,11 +113,22 @@ public class CreateRecordFromNewFix extends CreateClassFromNewFix {
 
       ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(data.myType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, data.myType, TailType.NONE);
 
-      PsiElement context = PsiTreeUtil.getParentOfType(argumentList, PsiClass.class, PsiMethod.class);
+      PsiElement context = PsiTreeUtil.getParentOfType(list, PsiClass.class, PsiMethod.class);
       guesser.setupTypeElement(Objects.requireNonNull(component.getTypeElement()), new ExpectedTypeInfo[]{info}, context, containingClass);
 
       Expression expression = new CreateFromUsageUtils.ParameterNameExpression(data.myNames);
       builder.replaceElement(Objects.requireNonNull(component.getNameIdentifier()), expression);
     }
+  }
+
+  private static SuggestedNameInfo suggestVariableName(@NotNull Project project,
+                                                       @NotNull PsiCaseLabelElement element,
+                                                       @Nullable PsiType type) {
+    if (element instanceof PsiExpression expression) {
+      return JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, expression, type);
+    }
+    PsiPatternVariable variable = JavaPsiPatternUtil.getPatternVariable(element);
+    List<String> semanticNames = variable != null ? Collections.singletonList(variable.getName()) : Collections.emptyList();
+    return JavaCodeStyleManager.getInstance(project).suggestNames(semanticNames, VariableKind.PARAMETER, type);
   }
 }

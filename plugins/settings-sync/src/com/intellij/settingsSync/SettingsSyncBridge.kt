@@ -1,13 +1,17 @@
 package com.intellij.settingsSync
 
+import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.settingsSync.SettingsSyncBridge.PushRequestMode.*
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -49,6 +53,8 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
   @RequiresBackgroundThread
   internal fun initialize(initMode: InitMode) {
+    saveIdeSettings()
+
     settingsLog.initialize()
 
     // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
@@ -58,6 +64,12 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     applyInitialChanges(initMode)
 
     queue.activate()
+  }
+
+  private fun saveIdeSettings() {
+    runBlockingMaybeCancellable {
+      saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = true)
+    }
   }
 
   private fun applyInitialChanges(initMode: InitMode) {
@@ -103,12 +115,18 @@ class SettingsSyncBridge(parentDisposable: Disposable,
         val snapshot = updateResult.settingsSnapshot
         masterPosition = settingsLog.forceWriteToMaster(snapshot, "Remote changes to overwrite migration data by settings from cloud")
         SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = updateResult.serverVersionId
+        pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
       }
       else {
         // otherwise we place our migrated data to the cloud
         forcePushToCloud(masterPosition)
+
+        pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
+        migration.migrateCategoriesSyncStatus(appConfigPath, SettingsSyncSettings.getInstance())
+        runBlocking {
+          saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = true)
+        }
       }
-      pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
       settingsLog.setCloudPosition(masterPosition)
     }
     else {
@@ -273,7 +291,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
       })
     }
     else {
-      LOG.info("Nothing to push")
+      LOG.debug("Nothing to push")
     }
   }
 

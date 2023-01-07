@@ -2,7 +2,6 @@
 package com.intellij.projectView;
 
 import com.intellij.ide.projectView.*;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
@@ -23,7 +22,7 @@ import java.util.Map;
 
 public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
   private ProjectView myProjectView;
-  private AbstractProjectViewPSIPane myPane;
+  private TestProjectViewPSIPane myPane;
   private boolean myOriginalManualOrder;
   private boolean myOriginalSortByType;
   private boolean myOriginalFoldersAlwaysOnTop;

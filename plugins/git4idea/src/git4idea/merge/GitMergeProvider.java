@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.*;
@@ -72,6 +73,8 @@ public class GitMergeProvider implements MergeProvider2 {
 
   @NotNull
   private static Set<VirtualFile> findReverseRoots(@NotNull Project project, @NotNull ReverseRequest reverseOrDetect) {
+    if (Registry.is("git.do.not.swap.merge.conflict.sides")) return Collections.emptySet();
+
     Set<VirtualFile> reverseMap = new HashSet<>();
     for (GitRepository repository : GitUtil.getRepositoryManager(project).getRepositories()) {
       boolean reverse;

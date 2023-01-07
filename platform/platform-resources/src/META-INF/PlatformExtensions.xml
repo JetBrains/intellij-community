@@ -458,7 +458,7 @@
     Android Studio: don't register IntelliJ fork -->
 
     <applicationService serviceInterface="com.intellij.diagnostic.EventWatcher"
-                        serviceImplementation="com.intellij.diagnostic.EventWatcherImpl" headlessImplementation=""/>
+                        serviceImplementation="com.intellij.diagnostic.EventWatcherService" headlessImplementation=""/>
     <toolWindow id="Events Watcher" anchor="bottom" canCloseContents="false" doNotActivateOnStart="true"
                 factoryClass="com.intellij.diagnostic.ui.EventWatcherToolWindowFactory"/>
 
@@ -614,6 +614,8 @@
                         serviceImplementation="com.intellij.ide.plugins.DynamicPluginEnabler"
                         headlessImplementation="com.intellij.ide.plugins.DisabledPluginsState"
                         testServiceImplementation="com.intellij.ide.plugins.DynamicPluginEnabler"
+                        preload="true"/>
+    <applicationService serviceImplementation="com.intellij.ide.plugins.BundledPluginsState"
                         preload="true"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.EnabledOnDemandPluginsState"
                         preload="true"/>
@@ -1253,6 +1255,8 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <projectService serviceInterface="com.intellij.ui.EditorNotifications" serviceImplementation="com.intellij.ui.EditorNotificationsImpl" preload="true"/>
 
     <applicationService serviceImplementation="com.intellij.ui.WindowDeactivationManager" client="local"/>
+    <applicationService serviceInterface="com.intellij.ui.AutoScrollToSourceTaskManager"
+                        serviceImplementation="com.intellij.ui.AutoScrollToSourceTaskManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService" headlessImplementation=""/>
     <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService$MyActivity" order="last"/>

@@ -47,7 +47,7 @@ internal class ShowLineBookmarksAction : DumbAwareAction(BookmarkBundle.messageP
       .setRequestFocus(true)
       .setMovable(true)
       .setResizable(true)
-      .setCancelOnOtherWindowOpen(true)
+      .setNormalWindowLevel(true)
       .createPopup()
 
     Disposer.register(popup, panel)

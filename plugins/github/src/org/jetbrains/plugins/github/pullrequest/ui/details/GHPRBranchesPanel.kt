@@ -57,7 +57,7 @@ internal object GHPRBranchesPanel {
     }
   }
 
-  private fun createLabel() = JBLabel(CollaborationToolsIcons.Branch).also {
+  private fun createLabel() = JBLabel(CollaborationToolsIcons.Review.Branch).also {
     CollaborationToolsUIUtil.overrideUIDependentProperty(it) {
       foreground = CurrentBranchComponent.TEXT_COLOR
       background = CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground())
@@ -91,7 +91,7 @@ internal object GHPRBranchesPanel {
       from.icon = when {
         currentBranchCheckedOut -> DvcsImplIcons.CurrentBranchFavoriteLabel
         localBranch != null -> GithubIcons.LocalBranch
-        else -> CollaborationToolsIcons.Branch
+        else -> CollaborationToolsIcons.Review.Branch
       }
 
       branchesTooltipFactory.apply {

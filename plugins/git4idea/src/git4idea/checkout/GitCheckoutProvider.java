@@ -31,6 +31,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandlerListener;
 import git4idea.commands.GitStandardProgressAnalyzer;
+import git4idea.i18n.GitBundle;
 import git4idea.ui.GitCloneDialogComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,8 +53,8 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
   private static final List<@NonNls String> NON_ERROR_LINE_PREFIXES = Arrays.asList("Cloning into", "remote:", "submodule");
 
   @Override
-  public String getVcsName() {
-    return "_Git";
+  public @NotNull String getVcsName() {
+    return GitBundle.message("git4idea.vcs.name.with.mnemonic");
   }
 
   @Override

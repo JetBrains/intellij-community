@@ -41,7 +41,10 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcs.commit.CommitMessageUi;
 import com.intellij.vcs.commit.message.BodyLimitSettings;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -67,16 +70,22 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   private static final @NotNull EditorCustomization COLOR_SCHEME_FOR_CURRENT_UI_THEME_CUSTOMIZATION = editor -> {
     editor.setBackgroundColor(null); // to use background from set color scheme
-    editor.setColorsScheme(getCommitMessageColorScheme());
+    editor.setColorsScheme(getCommitMessageColorScheme(editor));
   };
 
   @NotNull
-  private static EditorColorsScheme getCommitMessageColorScheme() {
+  private static EditorColorsScheme getCommitMessageColorScheme(EditorEx editor) {
     boolean isLaFDark = ColorUtil.isDark(UIUtil.getPanelBackground());
     boolean isEditorDark = EditorColorsManager.getInstance().isDarkEditor();
-    return isLaFDark == isEditorDark
-           ? EditorColorsManager.getInstance().getGlobalScheme()
-           : EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
+    EditorColorsScheme colorsScheme = isLaFDark == isEditorDark
+                                      ? EditorColorsManager.getInstance().getGlobalScheme()
+                                      : EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
+
+    // We have to wrap the colorsScheme into a scheme delegate in order to avoid editing the global scheme
+    colorsScheme = editor.createBoundColorSchemeDelegate(colorsScheme);
+    colorsScheme.setEditorFontSize(editor.getColorsScheme().getEditorFontSize());
+
+    return colorsScheme;
   }
 
   @NotNull private final EditorTextField myEditorField;

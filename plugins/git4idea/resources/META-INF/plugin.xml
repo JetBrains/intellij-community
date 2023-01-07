@@ -546,6 +546,8 @@
                  description="Show branches tree in a popup instead of a list"/>
     <registryKey key="git.branches.panel.persist.tree.state" defaultValue="true"
                  description="Persist branches panel tree state between restarts"/>
+    <registryKey key="git.do.not.swap.merge.conflict.sides" defaultValue="false"
+                 description="Do not inverse 'ours' and 'theirs' conflict sides during rebase"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
@@ -555,7 +557,9 @@
     <vcsIgnoreChecker implementation="git4idea.ignore.GitIgnoreChecker"/>
     <vcsRepositoryCreator implementation="git4idea.repo.GitRepositoryCreator"/>
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
-    <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitCheckinHandlerFactory"/>
+    <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitUserNameCheckinHandlerFactory"/>
+    <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitCRLFCheckinHandlerFactory"/>
+    <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitDetachedRootCheckinHandlerFactory"/>
     <vcsCheckinHandlerFactory implementation="git4idea.rebase.GitRebaseCheckinHandlerFactory"/>
     <checkinHandlerFactory implementation="git4idea.checkin.GitSkipHooksCommitHandlerFactory" order="last"/>
     <unresolvedMergeCheckProvider implementation="git4idea.checkin.GitUnresolvedMergeCheckProvider"/>

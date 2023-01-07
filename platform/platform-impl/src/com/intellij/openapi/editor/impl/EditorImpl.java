@@ -8,6 +8,7 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.MouseDragSelectionEventHandler;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -80,6 +81,7 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import kotlin.Unit;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
@@ -257,6 +259,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private MyInputMethodHandler myInputMethodRequestsHandler;
   private InputMethodRequests myInputMethodRequestsSwingWrapper;
   private boolean myIsOneLineMode;
+  private final MouseDragSelectionEventHandler mouseDragHandler = new MouseDragSelectionEventHandler(e -> {
+    processMouseDragged(e);
+    return Unit.INSTANCE;
+  });
   private boolean myIsRendererMode;
   private VirtualFile myVirtualFile;
   private boolean myIsColumnMode;
@@ -2492,7 +2498,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myCommandProcessor == null || e.isConsumed() || myMousePressedEvent != null && myMousePressedEvent.isConsumed()) {
       return;
     }
-    myCommandProcessor.executeCommand(myProject, () -> processMouseDragged(e), "", MOUSE_DRAGGED_COMMAND_GROUP,
+    myCommandProcessor.executeCommand(myProject, () -> mouseDragHandler.mouseDragged(e), "", MOUSE_DRAGGED_COMMAND_GROUP,
                                       UndoConfirmationPolicy.DEFAULT, getDocument());
   }
 
@@ -2931,6 +2937,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void setOneLineMode(boolean isOneLineMode) {
     if (isOneLineMode == myIsOneLineMode) return;
     myIsOneLineMode = isOneLineMode;
+    mouseDragHandler.setNativeSelectionEnabled(isOneLineMode);
     getScrollPane().setInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, null);
     JBScrollPane pane = ObjectUtils.tryCast(getScrollPane(), JBScrollPane.class);
     JComponent component = pane == null ? null : pane.getStatusComponent();

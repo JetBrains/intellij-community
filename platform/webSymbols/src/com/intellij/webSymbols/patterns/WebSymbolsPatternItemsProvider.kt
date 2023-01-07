@@ -3,6 +3,8 @@ package com.intellij.webSymbols.patterns
 
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.registry.WebSymbolsRegistry
 
 interface WebSymbolsPatternItemsProvider {
   @JvmDefault

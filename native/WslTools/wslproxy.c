@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include <strings.h>
 #include <errno.h>
+#include <netinet/tcp.h>
 
 
 // See svg file and wslproxy_test_client.py
@@ -54,6 +55,12 @@ static int jb_create_srv_socket(const in_addr_t listen_to, uint16_t *port) {
     const int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
         perror("can't open socket");
+        exit(-1);
+    }
+    // Ktor sets it to decrease delay, so do we
+    const int flags = 1;
+    if (setsockopt(sock, SOL_TCP, TCP_NODELAY, (void *) &flags, sizeof(flags)) != 0) {
+        perror("Can't set sock opt");
         exit(-1);
     }
     struct sockaddr_in addr_p = {0};

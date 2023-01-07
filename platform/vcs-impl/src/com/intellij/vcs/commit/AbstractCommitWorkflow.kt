@@ -207,8 +207,12 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   protected fun fireBeforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) =
     eventDispatcher.multicaster.beforeCommitChecksEnded(sessionInfo, result)
 
+  suspend fun <T> runModificationCommitChecks(modifications: suspend () -> T): T {
+    return PartialChangesUtil.underChangeList(project, getBeforeCommitChecksChangelist(), modifications)
+  }
+
   private suspend fun runModalBeforeCommitChecks(commitInfo: DynamicCommitInfo): CommitChecksResult {
-    return PartialChangesUtil.underChangeList(project, getBeforeCommitChecksChangelist()) {
+    return runModificationCommitChecks {
       runCommitHandlers(commitInfo)
     }
   }

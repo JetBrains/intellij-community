@@ -3,13 +3,12 @@
 
 package org.jetbrains.intellij.build
 
+import com.intellij.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.openapi.util.text.Formats
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.data.SpanData
-import io.opentelemetry.sdk.trace.export.SpanExporter
 import io.opentelemetry.semconv.trace.attributes.SemanticAttributes
 import java.io.File
 import java.nio.file.Path
@@ -21,9 +20,8 @@ import java.time.temporal.ChronoField
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
 
-class ConsoleSpanExporter : SpanExporter {
+class ConsoleSpanExporter : AsyncSpanExporter {
   companion object {
-    @JvmStatic
     fun setPathRoot(dir: Path) {
       val s1 = dir.toString() + File.separatorChar
       val s2 = dir.toRealPath().toString() + File.separatorChar
@@ -31,7 +29,7 @@ class ConsoleSpanExporter : SpanExporter {
     }
   }
 
-  override fun export(spans: Collection<SpanData>): CompletableResultCode {
+  override suspend fun export(spans: Collection<SpanData>) {
     val sb = StringBuilder()
     for (span in spans) {
       val attributes = span.attributes
@@ -44,14 +42,7 @@ class ConsoleSpanExporter : SpanExporter {
       // System.out.print is synchronized - buffer content to reduce calls
       print(sb.toString())
     }
-    return CompletableResultCode.ofSuccess()
   }
-
-  override fun flush(): CompletableResultCode = CompletableResultCode.ofSuccess()
-
-  override fun shutdown(): CompletableResultCode = CompletableResultCode.ofSuccess()
-
-  override fun close() {}
 }
 
 private val EXCLUDED_EVENTS_FROM_CONSOLE = java.util.Set.of("include module outputs")
@@ -101,9 +92,8 @@ private fun writeSpan(sb: StringBuilder, span: SpanData, duration: Long, endEpoc
       sb.append(prefix)
       sb.append(event.name)
       sb.append(" (")
-      writeAttributesAsHumanReadable(event.attributes, sb, writeFirstComma = false)
-
       if (!event.attributes.isEmpty) {
+        writeAttributesAsHumanReadable(event.attributes, sb, writeFirstComma = false)
         sb.append(", ")
       }
       sb.append("time=")
@@ -133,14 +123,19 @@ private fun writeValueAsHumanReadable(s: String, sb: StringBuilder) {
 }
 
 private fun writeAttributesAsHumanReadable(attributes: Attributes, sb: StringBuilder, writeFirstComma: Boolean) {
+  var writeComma = writeFirstComma
   attributes.forEach(BiConsumer { k, v ->
     if (k == SemanticAttributes.THREAD_NAME || k == SemanticAttributes.THREAD_ID) {
       return@BiConsumer
     }
 
-    if (writeFirstComma) {
+    if (writeComma) {
       sb.append(", ")
     }
+    else {
+      writeComma = true
+    }
+
     sb.append(k.key)
     sb.append('=')
     if (k == SemanticAttributes.EXCEPTION_STACKTRACE) {

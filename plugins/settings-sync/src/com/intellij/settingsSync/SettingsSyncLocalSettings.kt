@@ -16,6 +16,12 @@ internal class SettingsSyncLocalSettings : SimplePersistentStateComponent<Settin
   class State : BaseState() {
     var applicationId: String? by string(UUID.randomUUID().toString())
     var knownAndAppliedServerId: String? by string(null)
+
+    @TestOnly
+    internal fun reset() {
+      applicationId = UUID.randomUUID().toString()
+      knownAndAppliedServerId = null
+    }
   }
 
   val applicationId: UUID get() = UUID.fromString(state.applicationId)
@@ -25,9 +31,4 @@ internal class SettingsSyncLocalSettings : SimplePersistentStateComponent<Settin
     set(value) {
       state.knownAndAppliedServerId = value
     }
-
-  @TestOnly
-  internal fun resetState() {
-    state.knownAndAppliedServerId = null
-  }
 }

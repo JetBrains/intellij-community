@@ -97,9 +97,7 @@ public final class ProgressIndicatorUtils {
    */
   public static boolean runWithWriteActionPriority(@NotNull Runnable action, @NotNull ProgressIndicator progressIndicator) {
     ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      throw new IllegalStateException("Must not call from EDT");
-    }
+    application.assertIsNonDispatchThread();
     Runnable cancellation = indicatorCancellation(progressIndicator);
     if (isWriteActionRunningOrPending(application)) {
       cancellation.run();
@@ -245,9 +243,7 @@ public final class ProgressIndicatorUtils {
     if (application.isReadAccessAllowed()) {
       throw new IllegalStateException("Mustn't be called from within read action");
     }
-    if (application.isDispatchThread()) {
-      throw new IllegalStateException("Mustn't be called from EDT");
-    }
+    application.assertIsNonDispatchThread();
     Semaphore semaphore = new Semaphore(1);
     application.invokeLater(semaphore::up, ModalityState.any());
     awaitWithCheckCanceled(semaphore, indicator);

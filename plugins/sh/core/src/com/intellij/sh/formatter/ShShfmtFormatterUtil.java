@@ -183,7 +183,7 @@ public final class ShShfmtFormatterUtil {
   }
 
   private static void checkForUpdateInBackgroundThread(@NotNull Project project) {
-    if (ApplicationManager.getApplication().isDispatchThread()) LOG.error("Must not be in event-dispatch thread");
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (!isNewVersionAvailable()) return;
     Notification notification = NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.fmt.update.question"),
                                                  NotificationType.INFORMATION);

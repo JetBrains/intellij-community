@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import function 'Companion.foo'" "true"
 
 package import_intention
 

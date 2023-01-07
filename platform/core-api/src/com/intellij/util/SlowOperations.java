@@ -86,10 +86,10 @@ public final class SlowOperations {
         throw new ProcessCanceledException();
       }
     }
-    boolean forceAssert = isInsideActivity(FORCE_ASSERT);
-    if (!forceAssert && isAlwaysAllowed()) {
+    if (isAlwaysAllowed()) {
       return;
     }
+    boolean forceAssert = isInsideActivity(FORCE_ASSERT);
     if (!forceAssert && !Registry.is("ide.slow.operations.assertion", true)) {
       return;
     }
@@ -150,7 +150,8 @@ public final class SlowOperations {
     boolean result = System.getenv("TEAMCITY_VERSION") != null ||
                      application.isUnitTestMode() ||
                      application.isCommandLine() ||
-                     !application.isEAP() && !application.isInternal();
+                     !application.isEAP() && !application.isInternal() && !SystemProperties
+                       .getBooleanProperty(IDEA_PLUGIN_SANDBOX_MODE, false);
     ourAlwaysAllow = result ? 1 : 0;
     return result;
   }

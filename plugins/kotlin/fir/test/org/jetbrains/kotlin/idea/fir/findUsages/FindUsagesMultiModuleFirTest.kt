@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.nio.file.Paths
 
 class FindUsagesMultiModuleFirTest : FindUsagesMultiModuleTest() {
-    override val isFirPlugin: Boolean = true
+    override fun isFirPlugin() = true
 
     override fun tearDown() {
         runAll(

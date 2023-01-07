@@ -1728,6 +1728,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/collections/simplifiableCall/primitiveArrayFlatMap.kt");
             }
 
+            @TestMetadata("sequenceListFlatMap.kt")
+            public void testSequenceListFlatMap() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCall/sequenceListFlatMap.kt");
+            }
+
             @TestMetadata("set.kt")
             public void testSet() throws Exception {
                 runTest("testData/inspectionsLocal/collections/simplifiableCall/set.kt");
@@ -10252,6 +10257,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("functionType.kt")
         public void testFunctionType() throws Exception {
             runTest("testData/inspectionsLocal/removeExplicitTypeArguments/functionType.kt");
+        }
+
+        @TestMetadata("inferredIntoUpperBounds.kt")
+        public void testInferredIntoUpperBounds() throws Exception {
+            runTest("testData/inspectionsLocal/removeExplicitTypeArguments/inferredIntoUpperBounds.kt");
         }
 
         @TestMetadata("ktij-10623.kt")

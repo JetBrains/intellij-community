@@ -190,8 +190,9 @@
     },
     {
       "key": "ContextHelp.fontSizeOffset",
-      "description": "Font size offset for comments (usually gray description text under components)",
-      "since": "2022.1"
+      "description": "Font size offset for comments (usually gray description text under components), used only in legacy UI",
+      "since": "2022.1",
+      "deprecated": true
     },
     {
       "key": "Counter.background",

@@ -33,6 +33,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -149,8 +150,8 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
     calculator.calculate();
     int[] lineIndents = calculator.lineIndents;
 
-    var lines = new IntArrayList();
-    var indents = new IntArrayList();
+    IntStack lines = new IntArrayList();
+    IntStack indents = new IntArrayList();
 
     lines.push(0);
     indents.push(0);

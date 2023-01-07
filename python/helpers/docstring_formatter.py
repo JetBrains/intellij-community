@@ -8,6 +8,9 @@ from six import text_type, u
 
 ENCODING = 'utf-8'
 
+# regexp from sphinxcontrib/napoleon/docstring.py:35 and py2only/docutils/parsers/rst/states.py:1107
+TAGS_START = re.compile(
+    r'(\.\. \S+::)|:(?![: ])([^:\\]|\\.|:(?!([ `]|$)))*(?<! ):( +|$)')
 
 def format_rest(docstring):
     from docutils import nodes
@@ -208,6 +211,7 @@ def format_rest(docstring):
             self.output = ''
 
     writer = _DocumentPseudoWriter()
+    docstring = add_blank_line_before_first_tag(docstring)
     publish_string(docstring, writer=writer, settings_overrides={'report_level': 10000,
                                                                  'halt_level': 10000,
                                                                  'warning_stream': None,
@@ -217,6 +221,16 @@ def format_rest(docstring):
     visitor = RestHTMLTranslator(document)
     document.walkabout(visitor)
     return u('').join(visitor.body)
+
+
+def add_blank_line_before_first_tag(docstring):
+    input_lines = docstring.splitlines()
+    for i, line in enumerate(input_lines):
+        if TAGS_START.match(line):
+            if i > 0 and not input_lines[i - 1].isspace():
+                input_lines.insert(i, '')
+            break
+    return '\n'.join(input_lines)
 
 
 def format_google(docstring):

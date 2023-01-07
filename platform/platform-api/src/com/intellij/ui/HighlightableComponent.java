@@ -447,7 +447,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
     return fontMetrics.stringWidth(text);
   }
 
-  public String getRegionText(HighlightedRegion hRegion) {
+  public @Nls String getRegionText(HighlightedRegion hRegion) {
     String text;
     if (hRegion.endOffset > myText.length()) {
       if (hRegion.startOffset < myText.length()) {

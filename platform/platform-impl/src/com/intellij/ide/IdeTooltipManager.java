@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.Disposable;
@@ -28,6 +31,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.*;
 
@@ -86,10 +90,17 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   public IdeTooltipManager() {
     Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
 
-    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(AnActionListener.TOPIC, new AnActionListener() {
+    SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
+    connection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
         hideCurrent(null, action, event);
+      }
+    });
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      @Override
+      public void projectClosing(@NotNull Project project) {
+        hideCurrentNow(false);
       }
     });
 

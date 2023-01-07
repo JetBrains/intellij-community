@@ -59,7 +59,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
 
           <properties>
               <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-              <junit.version>5.8.2</junit.version>
+              <junit.version>5.9.1</junit.version>
           </properties>
 
           <dependencies>

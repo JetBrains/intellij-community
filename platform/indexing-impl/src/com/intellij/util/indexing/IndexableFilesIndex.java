@@ -15,9 +15,8 @@ public interface IndexableFilesIndex {
   @VisibleForTesting Key<Boolean> ENABLE_IN_TESTS = new Key<>("enable.IndexableFilesIndex");
 
   /**
-   * See {@link com.intellij.util.indexing.roots.DefaultProjectIndexableFilesContributor.Companion#indexProjectBasedOnIndexableEntityProviders()}
+   * See {@link com.intellij.util.indexing.roots.StandardContributorsKt#shouldIndexProjectBasedOnIndexableEntityProviders()}
    */
-  @SuppressWarnings("KotlinInternalInJava")
   static boolean shouldBeUsed() {
     return (Registry.is("indexing.use.indexable.files.index") ||
             (ApplicationManager.getApplication().isUnitTestMode() && TestModeFlags.is(ENABLE_IN_TESTS))) &&

@@ -15,6 +15,7 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ex.MultiLineLabel
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.LicensingFacade
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.components.JBCheckBox
@@ -24,12 +25,15 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.put
 import java.awt.event.ActionEvent
+import java.text.SimpleDateFormat
 import java.util.function.Predicate
 import javax.swing.Action
 import javax.swing.Action.NAME
@@ -42,13 +46,17 @@ class NewUIFeedbackDialog(
 ) : DialogWrapper(project) {
 
   /** Increase the additional number when feedback format is changed */
-  private val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 0
-
+  private val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 1
+  
   private val TICKET_TITLE_ZENDESK = "New UI in-IDE Feedback"
   private val FEEDBACK_TYPE_ZENDESK = "New UI in-IDE Feedback"
   private val FEEDBACK_REPORT_ID_VALUE = "new_ui_feedback"
 
-  private val commonSystemInfoData: Lazy<CommonFeedbackSystemInfoData> = lazy { CommonFeedbackSystemInfoData.getCurrentData() }
+  private val newUISystemInfoData: Lazy<NewUIFeedbackSystemInfoData> = lazy { 
+    val state = NewUIInfoService.getInstance().state
+    createNewUIFeedbackSystemInfoData(Registry.get("ide.experimental.ui").asBoolean(),
+                                      state.enableNewUIDate, state.disableNewUIDate) 
+  }
 
   private val propertyGraph = PropertyGraph()
   private val ratingProperty = propertyGraph.property(0)
@@ -110,7 +118,7 @@ class NewUIFeedbackDialog(
       appendLine(textAreaDislikeFeedbackProperty.get())
       appendLine()
       appendLine()
-      appendLine(commonSystemInfoData.value.toString())
+      appendLine(newUISystemInfoData.value.toString())
     }
   }
 
@@ -121,7 +129,7 @@ class NewUIFeedbackDialog(
       put("rating", ratingProperty.get())
       put("like_most", textAreaLikeMostFeedbackProperty.get())
       put("dislike", textAreaDislikeFeedbackProperty.get())
-      put("system_info", jsonConverter.encodeToJsonElement(commonSystemInfoData.value))
+      put("system_info", jsonConverter.encodeToJsonElement(newUISystemInfoData.value))
     }
     return jsonConverter.encodeToString(collectedData)
   }
@@ -204,7 +212,7 @@ class NewUIFeedbackDialog(
 
       row {
         cell(createFeedbackAgreementComponent(project) {
-          showFeedbackSystemInfoDialog(project, commonSystemInfoData.value)
+          showNewUIFeedbackSystemInfoDialog(project, newUISystemInfoData.value)
         })
       }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
     }.also { dialog ->
@@ -244,4 +252,51 @@ class NewUIFeedbackDialog(
     cancelAction.putValue(NAME, NewUIFeedbackBundle.message("dialog.cancel.label"))
     return cancelAction
   }
+}
+
+@Serializable
+private data class NewUIFeedbackSystemInfoData(
+  val isNewUINowEnabled: Boolean,
+  val enableNewUIDate: LocalDateTime?,
+  val disableNewUIDate: LocalDateTime?,
+  val commonSystemInfo: CommonFeedbackSystemInfoData
+) {
+  override fun toString(): String {
+    return buildString {
+      appendLine(NewUIFeedbackBundle.message("dialog.system.info.isNewUIEnabled"))
+      appendLine()
+      appendLine(if (isNewUINowEnabled) "True" else "False")
+      appendLine()
+      appendLine(NewUIFeedbackBundle.message("dialog.system.info.enableNewUIDate"))
+      appendLine()
+      appendLine(enableNewUIDate?.date.toString())
+      appendLine()
+      appendLine(NewUIFeedbackBundle.message("dialog.system.info.disableNewUIDate"))
+      appendLine()
+      appendLine(disableNewUIDate?.date.toString())
+      appendLine()
+      commonSystemInfo.toString()
+    }
+  }
+}
+
+private fun showNewUIFeedbackSystemInfoDialog(project: Project?,
+                                              systemInfoData: NewUIFeedbackSystemInfoData
+) = showFeedbackSystemInfoDialog(project, systemInfoData.commonSystemInfo) {
+  row(NewUIFeedbackBundle.message("dialog.system.info.isNewUIEnabled")) {
+    label(if (systemInfoData.isNewUINowEnabled) "True" else "False") //NON-NLS
+  }
+  row(NewUIFeedbackBundle.message("dialog.system.info.enableNewUIDate")) {
+    label(systemInfoData.enableNewUIDate?.date.toString())
+  }
+  row(NewUIFeedbackBundle.message("dialog.system.info.disableNewUIDate")) {
+    label(systemInfoData.disableNewUIDate?.date.toString())
+  }
+}
+
+private fun createNewUIFeedbackSystemInfoData(isNewUINowEnabled: Boolean,
+                                              enableNewUIDate: LocalDateTime?,
+                                              disableNewUIDate: LocalDateTime?): NewUIFeedbackSystemInfoData {
+  return NewUIFeedbackSystemInfoData(isNewUINowEnabled, enableNewUIDate, disableNewUIDate,
+                                     CommonFeedbackSystemInfoData.getCurrentData())
 }

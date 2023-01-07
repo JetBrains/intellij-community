@@ -95,6 +95,7 @@ interface TestContainer<T> : Closeable {
         .disableGitLogIndexing()
         .enableSlowOperationsInEdtInTests()
         .collectOpenTelemetry()
+        .enableAsyncProfiler()
         .addVMOptionsPatch {
           overrideDirectories(paths)
         }

@@ -42,5 +42,6 @@
     <orderEntry type="module" module-name="intellij.tools.ide.starter" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.ide.metricsCollector" scope="TEST" />
   </component>
 </module>

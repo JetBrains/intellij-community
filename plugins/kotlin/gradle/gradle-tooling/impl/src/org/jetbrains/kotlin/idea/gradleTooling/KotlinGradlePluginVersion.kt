@@ -15,7 +15,15 @@ sealed interface KotlinGradlePluginVersion : Serializable {
 
     companion object {
         fun parse(version: String): KotlinGradlePluginVersion? {
-            return KotlinGradlePluginVersionImpl(KotlinToolingVersionOrNull(version) ?: return null)
+            /*
+            TODO Sellmair: Remove catch workaround after 1.8.0 release
+            https://youtrack.jetbrains.com/issue/KT-54301/KotlinToolingVersionOrNull-IllegalArgumentException
+             */
+            return try {
+                KotlinGradlePluginVersionImpl(KotlinToolingVersionOrNull(version) ?: return null)
+            } catch (t: IllegalArgumentException) {
+                null
+            }
         }
     }
 }

@@ -89,6 +89,7 @@
     <!--  NotificationGroup-->
 
     <<warning descr="Extract text/description for i18n">notificationGroup</warning> id="Non I18n Group" displayType="BALLOON"/>
+    <notificationGroup id="Hidden Group" displayType="BALLOON" hideFromSettings="true"/>
 
   </extensions>
 </idea-plugin>

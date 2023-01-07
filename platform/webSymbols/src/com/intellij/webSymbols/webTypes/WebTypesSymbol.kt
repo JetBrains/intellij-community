@@ -10,6 +10,8 @@ interface WebTypesSymbol : PsiSourcedWebSymbol {
 
   val location: Location?
 
+  override val origin: WebTypesJsonOrigin
+
   sealed interface Location
 
   interface FileLocation {

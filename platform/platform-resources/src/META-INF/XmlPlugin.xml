@@ -661,11 +661,11 @@
     <webSymbols.inspectionToolMapping symbolNamespace="html" symbolKind="elements" problemKind="DeprecatedSymbol"
                                       toolShortName="HtmlDeprecatedTag"/>
 
-    <webSymbols.additionalContextProvider
-      implementation="com.intellij.html.webSymbols.WebSymbolsHtmlAdditionalContextProvider"/>
+    <webSymbols.registryExtension
+      implementation="com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension"/>
     <webSymbols.codeCompletionItemCustomizer
       id="html"
-      implementation="com.intellij.html.webSymbols.WebSymbolsHtmlAdditionalContextProvider$HtmlSymbolsCodeCompletionItemCustomizer"/>
+      implementation="com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension$HtmlSymbolsCodeCompletionItemCustomizer"/>
     <xml.attributeDescriptorsProvider
       implementation="com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptorsProvider"/>
     <xml.elementDescriptorProvider

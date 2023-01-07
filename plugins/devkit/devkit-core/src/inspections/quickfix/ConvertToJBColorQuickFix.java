@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -22,7 +22,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 public class ConvertToJBColorQuickFix implements LocalQuickFix {
   @Override
   public @IntentionFamilyName @NotNull String getFamilyName() {
-    return DevKitBundle.message("inspections.use.jb.color.new.color.fix.family.name");
+    return DevKitBundle.message("inspections.awt.color.used.fix.use.jb.color.fix.family.name");
   }
 
   @Override

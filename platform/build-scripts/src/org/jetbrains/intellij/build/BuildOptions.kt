@@ -274,8 +274,6 @@ class BuildOptions {
 
   @Internal
   var printFreeSpace = true
-  @Internal
-  var setupTracer = true
 
   /**
    * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be

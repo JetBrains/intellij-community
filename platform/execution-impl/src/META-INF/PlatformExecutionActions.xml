@@ -55,6 +55,10 @@
     <postStartupActivity implementation="com.intellij.execution.ui.ExecutionReasonableHistoryManager" order="last"/>
     <registryKey key="ide.experimental.ui.redesigned.run.widget"
                  description="Use redesigned run widget"
+                 defaultValue="TRUE"
+                 restartRequired="false"/>
+    <registryKey key="ide.experimental.ui.redesigned.run.popup"
+                 description="Use redesigned run popup"
                  defaultValue="FALSE"
                  restartRequired="false"/>
 

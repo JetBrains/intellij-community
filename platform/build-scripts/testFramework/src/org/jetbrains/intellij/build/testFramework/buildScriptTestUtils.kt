@@ -9,7 +9,6 @@ import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.ExceptionUtilRt
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -26,17 +25,6 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.util.function.Supplier
-
-private val initializeTracer by lazy {
-  val endpoint = System.getenv("JAEGER_ENDPOINT")
-  if (endpoint != null) {
-    val defaultExporters = TracerProviderManager.spanExporterProvider.get()
-    TracerProviderManager.spanExporterProvider = Supplier {
-      defaultExporters + JaegerGrpcSpanExporter.builder().setEndpoint(endpoint).build()
-    }
-  }
-}
 
 fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: ProductProperties, skipDependencySetup: Boolean = false) {
   options.skipDependencySetup = skipDependencySetup
@@ -154,8 +142,6 @@ private fun testBuild(
 
 // FIXME: test reproducibility
 suspend fun runTestBuild(context: BuildContext, traceSpanName: String? = null, onFinish: suspend (context: BuildContext) -> Unit = {}) {
-  initializeTracer
-
   val productProperties = context.productProperties
 
   // to see in Jaeger as a one trace

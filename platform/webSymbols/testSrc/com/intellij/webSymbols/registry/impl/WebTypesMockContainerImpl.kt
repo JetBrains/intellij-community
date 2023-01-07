@@ -29,5 +29,4 @@ internal class WebTypesMockContainerImpl : WebTypesSymbolsContainerBase() {
   override fun createPointer(): Pointer<out WebTypesSymbolsContainerBase> =
     Pointer.hardPointer(this)
 
-
 }

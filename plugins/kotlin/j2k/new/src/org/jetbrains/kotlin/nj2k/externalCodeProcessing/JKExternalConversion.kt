@@ -42,7 +42,6 @@ internal class AccessorToPropertyKotlinExternalConversion(
     }
 }
 
-@Suppress("unused") // Try to use this class to fix KTIJ-21287
 internal class AccessorToPropertyJavaExternalConversion(
     private val name: String,
     private val accessorKind: AccessorKind,

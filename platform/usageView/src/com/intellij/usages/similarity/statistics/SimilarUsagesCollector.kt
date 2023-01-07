@@ -12,7 +12,7 @@ class SimilarUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("similar.usages", 4)
+    private val GROUP = EventLogGroup("similar.usages", 5)
     private val NUMBER_OF_LOADED = EventFields.Int("number_of_loaded")
     private val MOST_COMMON_USAGE_PATTERNS_SHOWN = GROUP.registerEvent("most.common.usages.shown", USAGE_VIEW)
     private val MOST_COMMON_USAGE_PATTERNS_REFRESH_CLICKED = GROUP.registerEvent("most.common.usage.patterns.refresh.clicked", USAGE_VIEW)
@@ -23,7 +23,7 @@ class SimilarUsagesCollector : CounterUsagesCollector() {
     private val MORE_NON_CLUSTERED_USAGES_LOADED = GROUP.registerEvent("more.non.clustered.usage.loaded", USAGE_VIEW, NUMBER_OF_LOADED)
 
     @JvmStatic
-    fun logMostCommonUsagePatternsShow(project: Project, usageView: UsageView) {
+    fun logMostCommonUsagePatternsShown(project: Project, usageView: UsageView) {
       MOST_COMMON_USAGE_PATTERNS_SHOWN.log(project, usageView)
     }
 

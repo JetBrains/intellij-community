@@ -8,10 +8,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.applyIf
 import com.intellij.workspaceModel.ide.BuilderSnapshot
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
+import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -28,6 +30,12 @@ import kotlin.io.path.relativeTo
  * For technical details, see [this article](https://jetbrains.team/p/wm/documents/Development/a/Workspace-model-custom-entities-creation).
  */
 
+fun KotlinScriptEntity.listDependencies(rootTypeId: LibraryRootTypeId? = null): List<VirtualFile> = dependencies.asSequence()
+    .flatMap { it.roots }
+    .applyIf(rootTypeId != null) { filter { it.type == rootTypeId } }
+    .mapNotNull { it.url.virtualFile }
+    .filter { it.isValid }
+    .toList()
 
 /**
  *  Warning! Function requires platform write-lock acquisition to complete.
@@ -61,6 +69,13 @@ private fun BuilderSnapshot.syncScriptEntities(filesToAddOrUpdate: Sequence<Virt
                 this.dependencies = scriptDependencies
             })
         } else {
+            val outdatedDependencies =
+                builder.entitiesBySource { it == scriptEntity.entitySource }[scriptEntity.entitySource]
+                    ?.get(LibraryEntity::class.java)
+                    ?.let { it.toSet() - scriptDependencies.toSet() }
+
+            outdatedDependencies?.forEach { builder.removeEntity(it) }
+
             builder.modifyEntity(scriptEntity) {
                 this.dependencies = scriptDependencies
             }
@@ -99,7 +114,7 @@ private fun MutableEntityStorage.addOrUpdateScriptDependencies(scriptFile: Virtu
     val scriptSdk = configurationManager.getScriptSdk(scriptFile)
     val projectSdk = ProjectRootManager.getInstance(project).projectSdk
 
-    if (scriptSdk != projectSdk) {
+    if (scriptSdk?.homePath != projectSdk?.homePath) {
         val sdkClassFiles = configurationManager.getScriptSdkDependenciesClassFiles(scriptFile)
         val sdkSourceFiles = configurationManager.getScriptSdkDependenciesSourceFiles(scriptFile)
 

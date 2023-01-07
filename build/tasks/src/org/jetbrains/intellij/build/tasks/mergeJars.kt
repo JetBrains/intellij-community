@@ -42,10 +42,10 @@ data class ZipSource(val file: Path,
   }
 }
 
-data class DirSource(val dir: Path,
-                     val excludes: List<PathMatcher> = emptyList(),
+data class DirSource(@JvmField val dir: Path,
+                     @JvmField val excludes: List<PathMatcher> = emptyList(),
                      override val sizeConsumer: IntConsumer? = null,
-                     val prefix: String = "") : Source {
+                     @JvmField val prefix: String = "") : Source {
   override fun toString(): String {
     val shortPath = if (dir.startsWith(USER_HOME)) {
       "~/" + USER_HOME.relativize(dir)
@@ -57,7 +57,8 @@ data class DirSource(val dir: Path,
   }
 }
 
-data class InMemoryContentSource(val relativePath: String, val data: ByteArray, override val sizeConsumer: IntConsumer? = null) : Source {
+data class InMemoryContentSource(@JvmField val relativePath: String,
+                                 @JvmField val data: ByteArray, override val sizeConsumer: IntConsumer? = null) : Source {
   override fun toString() = "inMemory(relativePath=$relativePath)"
 
   override fun equals(other: Any?): Boolean {
@@ -184,14 +185,17 @@ private fun isNative(name: String): Boolean {
   return name.endsWith(".jnilib") ||
          name.endsWith(".dylib") ||
          name.endsWith(".so") ||
+         name.endsWith(".exe") ||
          name.endsWith(".dll") ||
          name.endsWith(".tbd")
 }
 
+@Suppress("SpellCheckingInspection")
 private fun getIgnoredNames(): Set<String> {
   val set = HashSet<String>()
   // compilation cache on TC
   set.add(".hash")
+  set.add("classpath.index")
   @Suppress("SpellCheckingInspection")
   set.add(".gitattributes")
   set.add("pom.xml")
@@ -201,6 +205,14 @@ private fun getIgnoredNames(): Set<String> {
   set.add("META-INF/services/javax.xml.stream.XMLEventFactory")
   set.add("META-INF/services/javax.xml.parsers.DocumentBuilderFactory")
   set.add("META-INF/services/javax.xml.datatype.DatatypeFactory")
+
+  // duplicates in maven-resolver-transport-http and maven-resolver-transport-file
+  set.add("META-INF/sisu/javax.inject.Named")
+  // duplicates in recommenders-jayes-io-2.5.5 and recommenders-jayes-2.5.5.jar
+  set.add("OSGI-INF/l10n/bundle.properties")
+  // groovy
+  set.add("META-INF/groovy-release-info.properties")
+
   set.add("native-image")
   set.add("native")
   set.add("licenses")
@@ -234,6 +246,7 @@ private fun checkName(name: String,
          (includeManifest || name != "META-INF/MANIFEST.MF") &&
          !name.startsWith("license/") &&
          !name.startsWith("META-INF/license/") &&
+         !name.startsWith("META-INF/LICENSE-") &&
          !name.startsWith("native-image/") &&
          !name.startsWith("native/") &&
          !name.startsWith("licenses/") &&

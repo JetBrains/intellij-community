@@ -26,8 +26,8 @@ import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -311,13 +311,14 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return isOppositeCondition(left, templateLeft, expression)
         }
 
-        private fun hasOppositeCondition(whenExpression: KtWhenExpression, topAnd: KtBinaryExpression, expression: KtExpression): Boolean {
+        private fun hasOppositeCondition(whenExpression: KtWhenExpression, topCondition: KtExpression, expression: KtExpression): Boolean {
             for (entry in whenExpression.entries) {
                 for (condition in entry.conditions) {
                     if (condition is KtWhenConditionWithExpression) {
                         val candidate = condition.expression
-                        if (candidate === topAnd) return false
-                        if (isOppositeCondition(candidate, topAnd, expression)) return true
+                        if (candidate === topCondition) return false
+                        if (topCondition is KtBinaryExpression && isOppositeCondition(candidate, topCondition, expression)) return true
+                        if (candidate != null && areEquivalent(expression.negate(false), candidate)) return true
                     }
                 }
             }
@@ -350,6 +351,12 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                     if (whenExpression != null && hasOppositeCondition(whenExpression, topAnd, expression)) {
                         return true
                     }
+                }
+            }
+            if (parent is KtWhenConditionWithExpression) {
+                val whenExpression = (parent.parent as? KtWhenEntry)?.parent as? KtWhenExpression
+                if (whenExpression != null && hasOppositeCondition(whenExpression, expression, expression)) {
+                    return true
                 }
             }
             return false

@@ -97,6 +97,8 @@ public class PatternParser {
         isFirst = false;
       }
       else {
+        int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD | ReferenceParser.VAR_TYPE;
+        myParser.getReferenceParser().parseType(builder, flags);
         error(builder, JavaPsiBundle.message("expected.pattern"));
         if (builder.getTokenType() == JavaTokenType.RPARENTH) {
           break;
@@ -128,7 +130,8 @@ public class PatternParser {
     }
 
     final boolean hasIdentifier;
-    if (builder.getTokenType() == JavaTokenType.IDENTIFIER && !PsiKeyword.WHEN.equals(builder.getTokenText())) { // pattern variable after the record structure pattern
+    if (builder.getTokenType() == JavaTokenType.IDENTIFIER && (!PsiKeyword.WHEN.equals(builder.getTokenText()) || isWhenAfterWhen(builder))) {
+      // pattern variable after the record structure pattern
       if (isRecord) {
         PsiBuilder.Marker variable = builder.mark();
         builder.advanceLexer();
@@ -154,5 +157,17 @@ public class PatternParser {
       done(pattern, JavaElementType.TYPE_TEST_PATTERN);
     }
     return pattern;
+  }
+
+  // There may be a valid code sample:
+  // Rec(int i) when  when     when.foo() -> {}
+  //            ^name ^keyword ^guard expr
+  private static boolean isWhenAfterWhen(final PsiBuilder builder) {
+    if (builder.lookAhead(1) != JavaTokenType.IDENTIFIER) return false;
+    PsiBuilder.Marker mark = builder.mark();
+    builder.advanceLexer();
+    boolean isWhenAfterWhen = builder.getTokenType() == JavaTokenType.IDENTIFIER && PsiKeyword.WHEN.equals(builder.getTokenText());
+    mark.rollbackTo();
+    return isWhenAfterWhen;
   }
 }

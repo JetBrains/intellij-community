@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.laf.MouseDragSelectionEventHandler;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -19,6 +20,7 @@ import com.intellij.util.FontUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -706,21 +708,23 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   static class MouseDragAwareCaret extends MarginAwareCaret {
+
+    private final MouseDragSelectionEventHandler handler = new MouseDragSelectionEventHandler(e -> {
+      super.mouseDragged(e);
+      return Unit.INSTANCE;
+    });
+
     @Override
     public void mouseDragged(MouseEvent e) {
-      if (e.getID() == MouseEvent.MOUSE_DRAGGED && !isMultiline(getComponent())) {
-        boolean consumed = e.isConsumed();
-        e = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers() | ((InputEvent)e).getModifiersEx(), e.getX(),
-                           getComponent().getHeight() / 2, e.getClickCount(), e.isPopupTrigger(), e.getButton());
-        if (consumed) e.consume();
-      }
-      super.mouseDragged(e);
+      handler.setNativeSelectionEnabled(!isMultiline(getComponent()));
+      handler.mouseDragged(e);
     }
 
     public boolean isMultiline(JTextComponent component) {
       return component.getText().contains("\n")
              || (component instanceof JTextArea && ((JTextArea) component).getLineWrap());
     }
+
   }
 
   public static boolean isSearchFieldWithHistoryPopup(Component c) {

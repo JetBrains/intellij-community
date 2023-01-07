@@ -26,7 +26,7 @@ private class OnDemandPluginFeatureEnablerImpl(private val project: Project) : P
 
   override suspend fun enableSuggested(): Boolean {
     val application = ApplicationManager.getApplication()
-    LOG.assertTrue(!application.isDispatchThread && !application.isReadAccessAllowed
+    LOG.assertTrue(!application.isReadAccessAllowed
                    || application.isUnitTestMode)
 
     if (!IdeaPluginDescriptorImpl.isOnDemandEnabled) {

@@ -1,33 +1,21 @@
 package com.intellij.settingsSync
 
-import com.intellij.application.options.editor.EditorOptionsPanel
-import com.intellij.codeInsight.hints.ParameterHintsPassFactory
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
-import com.intellij.ide.projectView.ProjectView
-import com.intellij.ide.ui.LafManager
-import com.intellij.ide.ui.UISettings.Companion.getInstance
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.SchemeManagerFactory
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.IconLoader
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
-import com.intellij.ui.JBColor
-import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.*
-import com.intellij.util.ui.StartupUiUtil
 import java.io.InputStream
 import java.nio.file.Path
 import java.time.Instant
@@ -79,8 +67,6 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     // 3. after that update the rest of changed settings
     val regularFileStates = snapshot.fileStates.filter { it != settingsSyncFileState }
     writeStatesToAppConfig(regularFileStates)
-
-    invokeLater { updateUI() }
   }
 
   override fun activateStreamProvider() {
@@ -94,10 +80,11 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   override fun getInitialSnapshot(appConfigPath: Path, lastSavedSnapshot: SettingsSnapshot): SettingsSnapshot {
     val exportableItems = getExportableComponentsMap(isComputePresentableNames = false, componentStore.storageManager,
                                                      withExportable = false)
+      .filterKeys { isSyncEnabled(it.rawFileSpec, RoamingType.DEFAULT) }
     val filesToExport = getExportableItemsFromLocalStorage(exportableItems, componentStore.storageManager).keys
 
     val fileStates = collectFileStatesFromFiles(filesToExport, appConfigPath)
-    LOG.debug("Collected files for the following fileSpecs: $fileStates")
+    LOG.debug("Collected files for the following fileSpecs: ${fileStates.map { it.file }}")
 
     val pluginsState = SettingsSyncPluginManager.getInstance().updateStateFromIdeOnStart(lastSavedSnapshot.plugins)
     LOG.debug("Collected following plugin state: $pluginsState")
@@ -257,15 +244,11 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     val storageManager = componentStore.storageManager as StateStorageManagerImpl
     val (changed, deleted) = storageManager.getCachedFileStorages(changedFileSpecs, deletedFileSpecs, null)
 
-    val schemeManagersToReload = SmartList<SchemeManagerImpl<*, *>>()
-    schemeManagerFactory.process {
-      schemeManagersToReload.add(it)
-    }
-
     val changedComponentNames = LinkedHashSet<String>()
     updateStateStorage(changedComponentNames, changed, false)
     updateStateStorage(changedComponentNames, deleted, true)
 
+    val schemeManagersToReload = calcSchemeManagersToReload(changedFileSpecs + deletedFileSpecs, schemeManagerFactory)
     for (schemeManager in schemeManagersToReload) {
       if (schemeManager.fileSpec == "colors") {
         EditorColorsManager.getInstance().reloadKeepingActiveScheme()
@@ -291,25 +274,21 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     }
   }
 
-  // todo copypasted from the CloudConfigManager
-  private fun updateUI() {
-    // TODO: separate and move this code to specific managers
-    val lafManager = LafManager.getInstance()
-    val lookAndFeel = lafManager.currentLookAndFeel
-    if (lookAndFeel != null) {
-      lafManager.setCurrentLookAndFeel(lookAndFeel, true)
+  private fun calcSchemeManagersToReload(pathsToCheck: List<String>,
+                                         schemeManagerFactory: SchemeManagerFactoryBase): List<SchemeManagerImpl<*, *>> {
+    val schemeManagersToReload = mutableListOf<SchemeManagerImpl<*, *>>()
+    schemeManagerFactory.process {
+      if (shouldReloadSchemeManager(it, pathsToCheck)) {
+        schemeManagersToReload.add(it)
+      }
     }
-    val darcula = StartupUiUtil.isUnderDarcula()
-    JBColor.setDark(darcula)
-    IconLoader.setUseDarkIcons(darcula)
-    ActionToolbarImpl.updateAllToolbarsImmediately()
-    lafManager.updateUI()
-    getInstance().fireUISettingsChanged()
-    ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
-    EditorOptionsPanel.reinitAllEditors()
-    EditorOptionsPanel.restartDaemons()
-    for (project in ProjectManager.getInstance().openProjects) {
-      ProjectView.getInstance(project).refresh()
+    return schemeManagersToReload
+  }
+
+  private fun shouldReloadSchemeManager(schemeManager: SchemeManagerImpl<*, *>, pathsToCheck: Collection<String>): Boolean {
+    val fileSpec = schemeManager.fileSpec
+    return pathsToCheck.any { path ->
+      fileSpec == path || path.startsWith("$fileSpec/")
     }
   }
 }

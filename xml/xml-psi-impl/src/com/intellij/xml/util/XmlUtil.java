@@ -99,6 +99,13 @@ public final class XmlUtil {
   @NonNls public static final String JSF_PASSTHROUGH_URI = "http://xmlns.jcp.org/jsf/passthrough";
 
   @NonNls public static final String JSF_PASSTHROUGH_URI_JAKARTA_10 = "jakarta.faces.passthrough";
+
+  @NonNls public static final String JSF_JAKARTA_TAGLIB_10 = "jakarta.faces";
+
+  @NonNls public static final String JSF_JAKARTA_FACELETS_10 = "jakarta.faces.facelets";
+
+  @NonNls public static final String JSF_JAKARTA_TAGS_TAGLIB_10 = "jakarta.tags.core";
+  @NonNls public static final String JSF_JAKARTA_FUNCTIONS_TAGLIB_10 = "jakarta.tags.functions";
   @NonNls public static final String JSF_PASSTHROUGH_ATTR_URI_JAKARTA_10 = "jakarta.faces.passthrough";
   @NonNls public static final String JSTL_FORMAT_URI = "http://java.sun.com/jsp/jstl/fmt";
   @NonNls public static final String JSTL_FORMAT_URI2 = "http://java.sun.com/jstl/fmt";

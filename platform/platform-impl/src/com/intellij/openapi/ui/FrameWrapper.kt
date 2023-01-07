@@ -108,9 +108,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       override fun windowOpened(e: WindowEvent) {
         val focusManager = IdeFocusManager.getInstance(project)
         val toFocus = focusManager.getLastFocusedFor(e.window) ?: preferredFocusedComponent ?: focusManager.getFocusTargetFor(component!!)
-        if (toFocus != null) {
-          focusManager.requestFocus(toFocus, true)
-        }
+        toFocus?.requestFocusInWindow()
       }
     }
     frame.addWindowListener(focusListener)

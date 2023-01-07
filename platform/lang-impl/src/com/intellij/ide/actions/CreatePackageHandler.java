@@ -83,10 +83,6 @@ class CreatePackageHandler extends CreateGroupHandler {
   @Override
   public boolean canClose(String packageName) {
     if (packageName.isEmpty() || packageName.equals(myInitialText)) {
-      Messages.showMessageDialog(myProject,
-                                 IdeBundle.message("error.name.should.be.specified"),
-                                 CommonBundle.getErrorTitle(),
-                                 Messages.getErrorIcon());
       return false;
     }
 

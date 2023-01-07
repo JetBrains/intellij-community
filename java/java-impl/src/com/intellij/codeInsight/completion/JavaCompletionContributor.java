@@ -171,7 +171,11 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE);
     }
 
-    if (psiElement().afterLeaf(PsiKeyword.INSTANCEOF).accepts(position)) {
+    if (psiElement().afterLeaf(PsiKeyword.INSTANCEOF).accepts(position) ||
+        position.getParent() instanceof PsiJavaCodeReferenceElement ref &&
+        ref.getParent() instanceof PsiTypeElement typeElement &&
+        (typeElement.getParent() instanceof PsiPatternVariable ||
+         typeElement.getParent() instanceof PsiDeconstructionList)) {
       return new ElementFilter() {
         @Override
         public boolean isAcceptable(Object element, @Nullable PsiElement context) {
@@ -179,7 +183,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         }
 
         @Override
-        public boolean isClassAcceptable(Class hintClass) {
+        public boolean isClassAcceptable(Class<?> hintClass) {
           return PsiClass.class.isAssignableFrom(hintClass) && !PsiTypeParameter.class.isAssignableFrom(hintClass);
         }
       };
@@ -723,7 +727,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         }
 
         @Override
-        public boolean isClassAcceptable(Class hintClass) {
+        public boolean isClassAcceptable(Class<?> hintClass) {
           return true;
         }
       });
@@ -975,23 +979,20 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     String lookupString = annoMethod.getName() + (value == null ? "" : space + "=" + space + value);
     return LookupElementBuilder.create(annoMethod, lookupString).withIcon(annoMethod.getIcon(0))
       .withStrikeoutness(PsiImplUtil.isDeprecated(annoMethod))
-      .withInsertHandler(new InsertHandler<>() {
-        @Override
-        public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
-          Editor editor = context.getEditor();
-          if (value == null) {
-            EqTailType.INSTANCE.processTail(editor, editor.getCaretModel().getOffset());
-          }
-          context.setAddCompletionChar(false);
+      .withInsertHandler((context, item) -> {
+        Editor editor = context.getEditor();
+        if (value == null) {
+          EqTailType.INSTANCE.processTail(editor, editor.getCaretModel().getOffset());
+        }
+        context.setAddCompletionChar(false);
 
-          context.commitDocument();
-          PsiAnnotationParameterList paramList =
-            PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiAnnotationParameterList.class, false);
-          if (paramList != null && paramList.getAttributes().length > 0 && paramList.getAttributes()[0].getName() == null) {
-            int valueOffset = paramList.getAttributes()[0].getTextRange().getStartOffset();
-            context.getDocument().insertString(valueOffset, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
-            EqTailType.INSTANCE.processTail(editor, valueOffset + PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.length());
-          }
+        context.commitDocument();
+        PsiAnnotationParameterList paramList =
+          PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiAnnotationParameterList.class, false);
+        if (paramList != null && paramList.getAttributes().length > 0 && paramList.getAttributes()[0].getName() == null) {
+          int valueOffset = paramList.getAttributes()[0].getTextRange().getStartOffset();
+          context.getDocument().insertString(valueOffset, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+          EqTailType.INSTANCE.processTail(editor, valueOffset + PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.length());
         }
       });
   }
@@ -1372,7 +1373,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
 
     @Override
-    public boolean isClassAcceptable(Class hintClass) {
+    public boolean isClassAcceptable(Class<?> hintClass) {
       return true;
     }
   }
@@ -1388,7 +1389,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
 
     @Override
-    public boolean isClassAcceptable(Class hintClass) {
+    public boolean isClassAcceptable(Class<?> hintClass) {
       return true;
     }
   }

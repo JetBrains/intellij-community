@@ -39,6 +39,9 @@ import java.util.List;
  */
 @Deprecated
 public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
+  /**
+   * {@link InjectedLanguageManager#FRANKENSTEIN_INJECTION}
+   */
   public static final Key<Boolean> FRANKENSTEIN_INJECTION = InjectedLanguageManager.FRANKENSTEIN_INJECTION;
 
   private static final Comparator<PsiFile> LONGEST_INJECTION_HOST_RANGE_COMPARATOR = Comparator.comparing(

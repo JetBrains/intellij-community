@@ -132,7 +132,7 @@ fun jvmAnnotation(name: String, symbolProvider: JKSymbolProvider) =
         symbolProvider.provideClassSymbol("kotlin.jvm.$name")
     )
 
-fun throwAnnotation(throws: List<JKType>, symbolProvider: JKSymbolProvider) =
+fun throwsAnnotation(throws: List<JKType>, symbolProvider: JKSymbolProvider) =
     JKAnnotation(
         symbolProvider.provideClassSymbol(KOTLIN_THROWS_ANNOTATION_FQ_NAME.asString()),
         throws.map {

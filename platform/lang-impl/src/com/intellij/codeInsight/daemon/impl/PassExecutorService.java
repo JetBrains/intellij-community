@@ -105,7 +105,7 @@ final class PassExecutorService implements Disposable {
                     @NotNull List<? extends DaemonCodeAnalyzerImpl.FileEditorInfo> fileEditorInfos,
                     @NotNull DaemonProgressIndicator updateProgress) {
     if (isDisposed()) return;
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     Map<FileEditor, List<TextEditorHighlightingPass>> documentBoundPasses = new HashMap<>();
     Map<FileEditor, List<EditorBoundHighlightingPass>> editorBoundPasses = new HashMap<>();

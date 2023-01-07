@@ -15,7 +15,7 @@ abstract class BuildPaths(
   /**
    * All log and debug files should be written to this directory. It will be automatically published to TeamCity artifacts
    */
-  val logDir: Path,
+  internal val logDir: Path,
   /**
    * Path to a base directory of the project which will be compiled
    */

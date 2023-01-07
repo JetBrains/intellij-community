@@ -2,7 +2,6 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.SystemProperties;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,14 +9,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
-import java.nio.file.attribute.PosixFileAttributes;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.Objects;
 
 import static com.intellij.util.BitUtil.isSet;
 
@@ -219,8 +214,7 @@ public final class FileAttributes {
 
     if (isSymbolicLink) {
       try {
-        Class<? extends BasicFileAttributes> schema = SystemInfo.isWindows ? BasicFileAttributes.class : PosixFileAttributes.class;
-        attrs = Files.readAttributes(path, schema);
+        attrs = Files.readAttributes(path, BasicFileAttributes.class);
       }
       catch (IOException e) {
         return BROKEN_SYMLINK;
@@ -232,12 +226,6 @@ public final class FileAttributes {
     if (SystemInfo.isWindows) {
       isHidden = path.getParent() != null && ((DosFileAttributes)attrs).isHidden();
       isWritable = attrs.isDirectory() || !((DosFileAttributes)attrs).isReadOnly();
-    }
-    else if (attrs instanceof PosixFileAttributes &&
-             path.getFileSystem() == FileSystems.getDefault() &&
-             Objects.equals(((PosixFileAttributes)attrs).owner().getName(), SystemProperties.getUserName()) &&
-             ((PosixFileAttributes)attrs).permissions().contains(PosixFilePermission.OWNER_WRITE)) {
-      isWritable = true;
     }
     else {
       try { isWritable = Files.isWritable(path); }

@@ -10,6 +10,9 @@
       "description": "Framework, for which the components are provided by the library. If the library is not enabled in a particular context, all symbols from this file will not be available as well. If you want symbols to be always available do not specify framework.",
       "type": "string"
     },
+    "context": {
+      "$ref": "#/definitions/context"
+    },
     "name": {
       "description": "Name of the library.",
       "type": "string"
@@ -26,6 +29,9 @@
     },
     "framework-config": {
       "$ref": "#/definitions/framework-config"
+    },
+    "contexts-config": {
+      "$ref": "#/definitions/contexts-config"
     },
     "default-icon": {
       "$ref": "#/definitions/icon"
@@ -70,6 +76,68 @@
         "none"
       ]
     },
+    "context": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "anyOf": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/context"
+              }
+            }
+          },
+          "required": [
+            "anyOf"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "allOf": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/context"
+              }
+            }
+          },
+          "required": [
+            "allOf"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "not": {
+              "$ref": "#/definitions/context"
+            }
+          },
+          "required": [
+            "not"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
     "framework-config": {
       "description": "Provide configuration for the specified web framework. This is an advanced feature, which is used to provide support for templating frameworks like Angular, Vue, Svelte, etc.",
       "type": "object",
@@ -93,6 +161,33 @@
           "$ref": "#/definitions/name-conversion-rules-multiple"
         }
       },
+      "additionalProperties": false
+    },
+    "contexts-config": {
+      "description": "Provide configuration for Web Types contexts. This allows to contribute additional Web Types for example if a particular library is present in the project.",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/context-config"
+      }
+    },
+    "context-config": {
+      "description": "Provide configuration for a specified Web Types context. This allows to contribute additional Web Types for example if a particular library is present in the project.",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "description": "Context kind. Only a single context of the particular kind will be enabled. An example of context kind is framework, which has dedicated support in Web Types.",
+          "type": "string"
+        },
+        "enable-when": {
+          "$ref": "#/definitions/enablement-rules"
+        },
+        "disable-when": {
+          "$ref": "#/definitions/disablement-rules"
+        }
+      },
+      "required": [
+        "kind"
+      ],
       "additionalProperties": false
     },
     "enablement-rules": {
@@ -161,7 +256,7 @@
     "name-conversion-rules-single": {
       "type": "object",
       "patternProperties": {
-        "^/(html|css|js)/[^/\\n\\r]+$": {
+        "^/[^/\\n\\r]+/[^/\\n\\r]+$": {
           "$ref": "#/definitions/name-converter"
         }
       },
@@ -170,7 +265,7 @@
     "name-conversion-rules-multiple": {
       "type": "object",
       "patternProperties": {
-        "^/(html|css|js)/[^/\\n\\r]+$": {
+        "^/[^/\\n\\r]+/[^/\\n\\r]+$": {
           "$ref": "#/definitions/name-converters"
         }
       },
@@ -195,7 +290,7 @@
       ]
     },
     "icon": {
-      "description": "Relative path to the icon representing the symbol.",
+      "description": "Relative path to the icon representing the symbol or actual SVG of the icon.",
       "type": "string"
     },
     "base-contribution": {
@@ -458,7 +553,7 @@
       "type": "array",
       "items": {
         "type": "string",
-        "pattern": "/(html|js|css)/[^/\\n\\r]+"
+        "pattern": "/[^/\\n\\r]+/[^/\\n\\r]+"
       }
     },
     "name-pattern": {

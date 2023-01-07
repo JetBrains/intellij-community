@@ -440,17 +440,19 @@ public final class BuildDependenciesUtil {
     return s.substring(start, end);
   }
 
+  public static void deleteFileOrFolder(Path file) {
+    try {
+      MoreFiles.deleteRecursively(file, RecursiveDeleteOption.ALLOW_INSECURE);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public static void cleanDirectory(Path directory) throws IOException {
     Files.createDirectories(directory);
     try (Stream<Path> stream = Files.list(directory)) {
-      stream.forEach(path -> {
-        try {
-          MoreFiles.deleteRecursively(path, RecursiveDeleteOption.ALLOW_INSECURE);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      });
+      stream.forEach(BuildDependenciesUtil::deleteFileOrFolder);
     }
   }
 

@@ -3,19 +3,13 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.ImportFilter
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
-import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass
-import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInspection.HintAction
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
@@ -31,11 +25,12 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.idea.actions.KotlinAddImportAction
+import org.jetbrains.kotlin.idea.actions.*
 import org.jetbrains.kotlin.idea.actions.createGroupedImportsAction
 import org.jetbrains.kotlin.idea.actions.createSingleImportAction
 import org.jetbrains.kotlin.idea.actions.createSingleImportActionForConstructor
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -57,6 +52,7 @@ import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.KtPsiUtil.isSelectorInQualified
@@ -80,6 +76,7 @@ import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import java.util.TreeSet
 
 /**
  * Check possibility and perform fix for unresolved references.
@@ -101,19 +98,6 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
         suggestions.value
     }
 
-    protected fun doFixSilently(editor: Editor): Boolean {
-        assert(this is HintAction) { "doFixSilently is available for HintAction only" }
-
-        if (isOutdated()) return false
-        val element = element ?: return false
-        val project = element.project
-        val addImportAction = createActionWithAutoImportsFilter(project, editor, element)
-        return if (addImportAction.isUnambiguous()) {
-            addImportAction.execute()
-            true
-        } else false
-    }
-
     protected fun suggestions() = suggestions.value
 
     protected open val supportedErrors = factory.supportedErrors.toSet()
@@ -122,53 +106,81 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
     protected abstract fun getCallTypeAndReceiver(): CallTypeAndReceiver<*, *>?
     protected open fun getReceiverTypeFromDiagnostic(): KotlinType? = null
 
-    open fun showHint(editor: Editor): Boolean {
-        val element = element?.takeIf(PsiElement::isValid) ?: return false
-
-        if (isOutdated()) return false
-
-        if (ApplicationManager.getApplication().isHeadlessEnvironment || HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) return false
-
-        if (!suggestions.isInitialized() || suggestions().isEmpty()) return false
-
-        return createAction(project, editor, element).showHint()
-    }
-
     private fun calculateText(): String {
-        val descriptor = suggestionDescriptors.value.mapTo(hashSetOf()) { it.original }.singleOrNull()
+        val descriptors  =
+            suggestionDescriptors.value.mapTo(hashSetOf()) { it.original }
 
-        val kind = when {
-            descriptor?.isExtensionProperty == true -> KotlinBundle.message("text.extension.property")
-            descriptor is PropertyDescriptor -> KotlinBundle.message("text.property")
-            descriptor is ClassConstructorDescriptor -> KotlinBundle.message("text.class")
-            descriptor is FunctionDescriptor && descriptor.isExtension -> KotlinBundle.message("text.extension.function")
-            descriptor is FunctionDescriptor -> KotlinBundle.message("text.function")
-            descriptor != null && DescriptorUtils.isObject(descriptor) -> KotlinBundle.message("text.object")
-            descriptor is ClassDescriptor -> KotlinBundle.message("text.class")
-            else -> null
-        } ?: return KotlinBundle.message("fix.import")
+        val ktFile = element?.containingKtFile ?: return KotlinBundle.message("fix.import")
+        val languageVersionSettings = ktFile.languageVersionSettings
+        val prioritizer = Prioritizer(ktFile)
 
-        val name = buildString {
-            descriptor.safeAs<CallableDescriptor>()?.let { callableDescriptor ->
-                val extensionReceiverParameter = callableDescriptor.extensionReceiverParameter
-                if (extensionReceiverParameter != null) {
-                    extensionReceiverParameter.type.constructor.declarationDescriptor.safeAs<ClassDescriptor>()?.name?.let {
-                        append(it.asString())
-                    }
-                } else {
-                    callableDescriptor.containingDeclaration.safeAs<ClassDescriptor>()?.name?.let {
-                        append(it.asString())
+        val kindNameGroupedByKind = descriptors.mapNotNull { descriptor ->
+            val kind = when {
+                descriptor.isExtensionProperty -> ImportKind.EXTENSION_PROPERTY
+                descriptor is PropertyDescriptor -> ImportKind.PROPERTY
+                descriptor is ClassConstructorDescriptor -> ImportKind.CLASS
+                descriptor is FunctionDescriptor && descriptor.isExtension -> ImportKind.EXTENSION_FUNCTION
+                descriptor is FunctionDescriptor -> ImportKind.FUNCTION
+                DescriptorUtils.isObject(descriptor) -> ImportKind.OBJECT
+                descriptor is ClassDescriptor -> ImportKind.CLASS
+                else -> null
+            } ?: return@mapNotNull null
+
+            val name = buildString {
+                descriptor.safeAs<CallableDescriptor>()?.let { callableDescriptor ->
+                    val extensionReceiverParameter = callableDescriptor.extensionReceiverParameter
+                    if (extensionReceiverParameter != null) {
+                        extensionReceiverParameter.type.constructor.declarationDescriptor.safeAs<ClassDescriptor>()?.name?.let {
+                            append(it.asString())
+                        }
+                    } else {
+                        callableDescriptor.containingDeclaration.safeAs<ClassDescriptor>()?.name?.let {
+                            append(it.asString())
+                        }
                     }
                 }
-            }
 
-            descriptor?.name?.takeUnless { it.isSpecial }?.let {
-                if (this.isNotEmpty()) append('.')
-                append(it.asString())
+                descriptor.name.takeUnless { it.isSpecial }?.let {
+                    if (this.isNotEmpty()) append('.')
+                    append(it.asString())
+                }
             }
+            ImportName(kind, name, prioritizer.priority(descriptor, languageVersionSettings))
+        }.groupBy(keySelector = { it.kind }) { it }
+
+        return if (kindNameGroupedByKind.size == 1) {
+            val (kind, names) = kindNameGroupedByKind.entries.first()
+            val sortedNames = TreeSet<ImportName>(compareBy({ it.priority }, { it.kind }, { it.name }))
+            sortedNames.addAll(names)
+            val firstName = sortedNames.first().name
+            val singlePackage = suggestions.value.groupBy { it.parentOrNull() ?: FqName.ROOT }.size == 1
+
+            if (singlePackage) {
+                val size = sortedNames.size
+                if (size == 2) {
+                    KotlinBundle.message("fix.import.kind.0.name.1.and.name.2", kind.toText(size), firstName, sortedNames.last().name)
+                } else {
+                    KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(size), firstName, size - 1)
+                }
+            } else {
+                KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(1), firstName, 0)
+            }
+        } else {
+            KotlinBundle.message("fix.import")
         }
+    }
 
-        return KotlinBundle.message("fix.import.kind.0.name.1", kind, name)
+    private class ImportName(val kind: ImportKind, val name: String, val priority: ComparablePriority)
+
+    private enum class ImportKind(private val key: String) {
+        CLASS("text.class.0"),
+        PROPERTY("text.property.0"),
+        OBJECT("text.object.0"),
+        FUNCTION("text.function.0"),
+        EXTENSION_PROPERTY("text.extension.property.0"),
+        EXTENSION_FUNCTION("text.extension.function.0");
+
+        fun toText(number: Int) = KotlinBundle.message(key, if (number == 1) 1 else 2)
     }
 
     override fun getText(): String = text.value
@@ -303,11 +315,7 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 
         final override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             return try {
-                createImportAction(diagnostic)?.apply {
-                    if (AbstractImportFixInfo.isHintsEnabled(diagnostic.psiFile)) {
-                        computeSuggestions()
-                    }
-                }
+                createImportAction(diagnostic)
             } catch (ex: KotlinExceptionWithAttachments) {
                 // Sometimes fails with
                 // <production sources for module light_idea_test_case> is a module[ModuleDescriptorImpl@508c55a2] is not contained in resolver...
@@ -627,13 +635,10 @@ internal class IteratorImportFix(expression: KtExpression) : OrdinaryImportFixBa
 
 internal open class ArrayAccessorImportFix(
     element: KtArrayAccessExpression,
-    override val importNames: Collection<Name>,
-    private val showHint: Boolean
+    override val importNames: Collection<Name>
 ) : OrdinaryImportFixBase<KtArrayAccessExpression>(element, MyFactory) {
 
     override fun getCallTypeAndReceiver() = element?.let { CallTypeAndReceiver.OPERATOR(it.arrayExpression!!) }
-
-    override fun showHint(editor: Editor) = showHint && super.showHint(editor)
 
     companion object MyFactory : FactoryWithUnresolvedReferenceQuickFix() {
         private fun importName(diagnostic: Diagnostic): Name {
@@ -650,7 +655,7 @@ internal open class ArrayAccessorImportFix(
 
             val element = diagnostic.psiElement
             if (element is KtArrayAccessExpression && element.arrayExpression != null) {
-                return ArrayAccessorImportFix(element, listOf(importName(diagnostic)), true)
+                return ArrayAccessorImportFix(element, listOf(importName(diagnostic)))
             }
 
             return null
@@ -857,7 +862,7 @@ internal object ImportForMissingOperatorFactory : ImportFixBase.Factory() {
         when (val name = operatorDescriptor.name) {
             OperatorNameConventions.GET, OperatorNameConventions.SET -> {
                 if (element is KtArrayAccessExpression) {
-                    return object : ArrayAccessorImportFix(element, listOf(name), false) {
+                    return object : ArrayAccessorImportFix(element, listOf(name)) {
                         override val supportedErrors = setOf(Errors.OPERATOR_MODIFIER_REQUIRED)
                     }
                 }
@@ -894,17 +899,10 @@ object AbstractImportFixInfo {
     @Volatile
     internal var IGNORE_MODULE_ERROR = false
 
-    private val lazyImportSuggestionCalculation = Registry.`is`("kotlin.lazy.import.suggestions", false)
-
     @TestOnly
     fun ignoreModuleError(disposable: Disposable) {
         IGNORE_MODULE_ERROR = true
         Disposer.register(disposable) { IGNORE_MODULE_ERROR = false }
     }
 
-    fun isHintsEnabled(file: PsiFile): Boolean {
-        return !lazyImportSuggestionCalculation ||
-                DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled ||
-                ShowAutoImportPass.isAddUnambiguousImportsOnTheFlyEnabled(file)
-    }
 }

@@ -791,7 +791,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/built-in-server/client/node-rpc-client/intellij.nodeRpcClient.iml" filepath="$PROJECT_DIR$/platform/built-in-server/client/node-rpc-client/intellij.nodeRpcClient.iml" />
       <module fileurl="file://$PROJECT_DIR$/notebooks/visualization/intellij.notebooks.visualization.iml" filepath="$PROJECT_DIR$/notebooks/visualization/intellij.notebooks.visualization.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/package-search/intellij.packageSearch.iml" filepath="$PROJECT_DIR$/plugins/package-search/intellij.packageSearch.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/package-search/compat/intellij.packageSearch.compat.iml" filepath="$PROJECT_DIR$/plugins/package-search/compat/intellij.packageSearch.compat.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/package-search/gradle/intellij.packageSearch.gradle.iml" filepath="$PROJECT_DIR$/plugins/package-search/gradle/intellij.packageSearch.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/package-search/gradle/tooling/intellij.packageSearch.gradle.tooling.iml" filepath="$PROJECT_DIR$/plugins/package-search/gradle/tooling/intellij.packageSearch.gradle.tooling.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/package-search/kotlin/intellij.packageSearch.kotlin.iml" filepath="$PROJECT_DIR$/plugins/package-search/kotlin/intellij.packageSearch.kotlin.iml" />
@@ -892,6 +891,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/markdown-utils/intellij.platform.markdown.utils.iml" filepath="$PROJECT_DIR$/platform/markdown-utils/intellij.platform.markdown.utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ml-api/intellij.platform.ml.iml" filepath="$PROJECT_DIR$/platform/ml-api/intellij.platform.ml.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ml-impl/intellij.platform.ml.impl.iml" filepath="$PROJECT_DIR$/platform/ml-impl/intellij.platform.ml.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/notebook-ui/intellij.platform.notebook.ui.iml" filepath="$PROJECT_DIR$/platform/notebook-ui/intellij.platform.notebook.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.iml" filepath="$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.annotations.iml" filepath="$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.annotations.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.tests.iml" filepath="$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.tests.iml" />
@@ -1252,6 +1252,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/scripting/kotlin.scripting.iml" filepath="$PROJECT_DIR$/plugins/kotlin/scripting/kotlin.scripting.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/scripting-support/kotlin.scripting-support.iml" filepath="$PROJECT_DIR$/plugins/kotlin/scripting-support/kotlin.scripting-support.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.search/kotlin.search.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.search/kotlin.search.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.search/kotlin.search.test/kotlin.search.test.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.search/kotlin.search.test/kotlin.search.test.k2.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/spellchecker/kotlin.spellchecker.iml" filepath="$PROJECT_DIR$/plugins/kotlin/spellchecker/kotlin.spellchecker.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/test-framework/kotlin.test-framework.iml" filepath="$PROJECT_DIR$/plugins/kotlin/test-framework/kotlin.test-framework.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/tests-common/kotlin.tests-common.iml" filepath="$PROJECT_DIR$/plugins/kotlin/tests-common/kotlin.tests-common.iml" />

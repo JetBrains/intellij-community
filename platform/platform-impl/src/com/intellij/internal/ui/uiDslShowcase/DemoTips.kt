@@ -75,13 +75,13 @@ fun demoTips(parentDisposable: Disposable): DialogPanel {
         .rowComment("Last textField occupies only one column like the previous textField")
     }
 
-    group("Use Panel.row(EMPTY_LABEL) if label is empty") {
+    group("""Use Panel.row("") if label is empty""") {
       row("Row 1:") {
         textField()
       }
-      row(EMPTY_LABEL) {
+      row("") {
         textField()
-      }.rowComment("""Don't use row(""), because it creates unnecessary label component in layout""")
+      }
     }
     group("Use Cell.widthGroup to use the same width") {
       row {

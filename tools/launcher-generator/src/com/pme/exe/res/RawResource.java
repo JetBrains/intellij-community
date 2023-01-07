@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,20 +23,39 @@ package com.pme.exe.res;
  * Time: 3:12:58 PM
  */
 public class RawResource extends LevelEntry {
+  private final Bytes myRawResource;
+  private final DWord myVirtualAddress;
+  private final DWord mySize;
+  private final Value myRawOffset;
 
   public RawResource(ResourceSectionReader section, DWord rva, DWord size) {
     super("Raw Resource");
-    Value offsetHolder = new ValuesAdd(rva, section.getMainSectionsOffset());
-    Bytes bytes = new Bytes("Raw Resource", offsetHolder, size);
-    bytes.addOffsetHolder(offsetHolder);
-    bytes.addSizeHolder(size);
-    addMember(bytes);
+    myVirtualAddress = rva;
+    mySize = size;
+    myRawOffset = new ValuesAdd(myVirtualAddress, section.getSectionVAtoRawOffset());
+    myRawResource = new Bytes("Raw Resource Data", myRawOffset, size);
+    myRawResource.addOffsetHolder(myRawOffset);
+    myRawResource.addSizeHolder(size);
+    addMember(myRawResource);
+    addMember(new Padding("Resource Padding", 8));
   }
-  public Bytes getBytes(){
-    return (Bytes)getMember( "Raw Resource" );
+  public byte[] getBytes(){
+    return myRawResource.getBytes();
   }
   public void setBytes( byte[] bytes ){
-    Bytes mem = (Bytes) getMember("Raw Resource");
-    mem.setBytes( bytes );
+    myRawResource.setBytes(bytes);
+  }
+
+  public Value getRawOffset() {
+    return myRawOffset;
+  }
+
+  @Override
+  public String toString() {
+    return "RawResource{" +
+           "VirtualAddress=" + myVirtualAddress +
+           ", RawOffset=" + myRawOffset +
+           ", Size=" + mySize +
+           '}';
   }
 }

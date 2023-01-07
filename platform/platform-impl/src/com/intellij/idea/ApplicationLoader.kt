@@ -69,7 +69,7 @@ fun initApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
   }
 }
 
-suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
+private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
   val initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization")
   val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
     PluginManagerCore.getInitPluginFuture().await()

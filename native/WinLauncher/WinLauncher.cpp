@@ -45,12 +45,12 @@ void TrimLine(char* line);
 
 static std::string EncodeWideACP(const std::wstring &str)
 {
-  const int cbANSI = WideCharToMultiByte(CP_ACP, 0, str.c_str(), str.size(), NULL, 0, NULL, NULL);
+  const int cbANSI = WideCharToMultiByte(CP_ACP, 0, str.c_str(), (int)str.size(), NULL, 0, NULL, NULL);
   if (cbANSI <= 0)
     return std::string();
 
   char* ansiBuf = new char[cbANSI];
-  WideCharToMultiByte(CP_ACP, 0, str.c_str(), str.size(), ansiBuf, cbANSI, NULL, NULL);
+  WideCharToMultiByte(CP_ACP, 0, str.c_str(), (int)str.size(), ansiBuf, cbANSI, NULL, NULL);
   std::string result(ansiBuf, cbANSI);
   delete[] ansiBuf;
   return result;
@@ -139,8 +139,8 @@ bool FindJVMInSettings() {
     ExpandEnvironmentStrings(buffer, copy, _MAX_PATH - 1);
     std::wstring path(copy);
     path += module.substr(module.find_last_of('\\')) + L".jdk";
-    FILE *f = _tfopen(path.c_str(), _T("rt"));
-    if (!f) return false;
+    FILE *f;
+    if (!_wfopen_s(&f, path.c_str(), L"rt")) return false;
 
     char line[_MAX_PATH];
     if (!fgets(line, _MAX_PATH, f)) {
@@ -153,77 +153,6 @@ bool FindJVMInSettings() {
 
     return FindValidJVM(line);
   }
-  return false;
-}
-
-bool FindJVMInRegistryKey(const char* key, bool wow64_32)
-{
-  HKEY hKey;
-  int flags = KEY_READ;
-  if (wow64_32) flags |= KEY_WOW64_32KEY;
-  if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_READ, &hKey) != ERROR_SUCCESS) return false;
-  char javaHome[_MAX_PATH];
-  DWORD javaHomeSize = _MAX_PATH - 1;
-  bool success = false;
-  if (RegQueryValueExA(hKey, "JavaHome", NULL, NULL, (LPBYTE)javaHome, &javaHomeSize) == ERROR_SUCCESS)
-  {
-    success = FindValidJVM(javaHome);
-  }
-  RegCloseKey(hKey);
-  return success;
-}
-
-bool FindJVMInRegistryWithVersion(const char* version, bool wow64_32)
-{
-  char* keyName = "Java Runtime Environment";
-  // starting from java 9 key name has been changed
-  char* jreKeyName = "JRE";
-  char* jdkKeyName = "JDK";
-
-  bool foundJava = false;
-  char buf[_MAX_PATH];
-  //search jre in registry if the product doesn't require tools.jar
-  if (LoadStdString(IDS_JDK_ONLY) != std::string("true")) {
-    sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", keyName, version);
-    foundJava = FindJVMInRegistryKey(buf, wow64_32);
-    if (!foundJava) {
-      sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", jreKeyName, version);
-      foundJava = FindJVMInRegistryKey(buf, wow64_32);
-    }
-  }
-
-  //search jdk in registry if the product requires tools.jar or jre isn't installed.
-  if (!foundJava) {
-    keyName = "Java Development Kit";
-    sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", keyName, version);
-    foundJava = FindJVMInRegistryKey(buf, wow64_32);
-    if (!foundJava) {
-      sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", jdkKeyName, version);
-      foundJava = FindJVMInRegistryKey(buf, wow64_32);
-    }
-  }
-  return foundJava;
-}
-
-bool FindJVMInRegistry()
-{
-#ifndef _M_X64
-  if (FindJVMInRegistryWithVersion("1.8", true))
-    return true;
-  if (FindJVMInRegistryWithVersion("9", true))
-    return true;
-  if (FindJVMInRegistryWithVersion("10", true))
-    return true;
-#endif
-
-  if (FindJVMInRegistryWithVersion("1.8", false))
-    return true;
-  if (FindJVMInRegistryWithVersion("9", false))
-    return true;
-  if (FindJVMInRegistryWithVersion("10", false))
-    return true;
-  if (FindJVMInRegistryWithVersion("11", false))
-    return true;
   return false;
 }
 
@@ -241,11 +170,6 @@ static bool LocateJVM(const std::string &homeDir) {
   if (FindJVMInEnvVar("JAVA_HOME", result))
   {
     return result;
-  }
-
-  if (FindJVMInRegistry())
-  {
-    return true;
   }
 
   std::string jvmError;
@@ -272,8 +196,8 @@ void TrimLine(char* line)
 }
 
 static bool LoadVMOptionsFile(const char* path, std::vector<std::string>& vmOptionLines) {
-  FILE *f = fopen(path, "rt");
-  if (!f) return false;
+  FILE *f;
+  if (!fopen_s(&f, path, "rt")) return false;
 
   char line[4096];
   while (fgets(line, sizeof(line), f)) {
@@ -701,10 +625,10 @@ DWORD WINAPI SingleInstanceThread(LPVOID args)
     if (!view) continue;
     void *cmdView = (char*)view + FILE_MAPPING_CMD_OFFSET;
     std::wstring command(static_cast<wchar_t *>(cmdView));
-    int pos = command.find('\n');
+    size_t pos = command.find('\n');
     if (pos >= 0)
     {
-      int second_pos = command.find('\n', pos + 1);
+      size_t second_pos = command.find('\n', pos + 1);
       std::wstring curDir = command.substr(0, pos);
       std::wstring args = command.substr(pos + 1, second_pos - pos - 1);
       std::wstring response_id = command.substr(second_pos + 1);
@@ -739,17 +663,27 @@ DWORD WINAPI SingleInstanceThread(LPVOID args)
   return 0;
 }
 
+std::wstring GetCurrentDirectoryAsString()
+{
+  DWORD length = GetCurrentDirectoryW(0, NULL);
+  wchar_t* buffer = new wchar_t[length];
+  length = GetCurrentDirectoryW(length, buffer);
+
+  std::wstring str = std::wstring(buffer, length);
+  delete[] buffer;
+  return str;
+}
+
 void SendCommandLineToFirstInstance(int response_id)
 {
-  wchar_t curDir[_MAX_PATH];
-  GetCurrentDirectoryW(_MAX_PATH - 1, curDir);
-  std::string resultFileName = std::to_string(static_cast<long long>(response_id));
+  std::wstring curDir = GetCurrentDirectoryAsString();
+  std::wstring resultFileName = std::to_wstring(static_cast<long long>(response_id));
 
   std::wstring command(curDir);
   command += _T("\n");
   command += GetCommandLineW();
   command += _T("\n");
-  command += std::wstring(resultFileName.begin(), resultFileName.end());
+  command += std::wstring(resultFileName);
 
   void *view = MapViewOfFile(hFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
   if (view)
@@ -871,19 +805,6 @@ int CheckSingleInstance()
     CloseHandle(hResultFileMapping);
     return exitCode;
   }
-}
-
-std::wstring GetCurrentDirectoryAsString()
-{
-  std::vector<wchar_t> buffer(_MAX_PATH);
-  DWORD sizeWithoutTerminatingZero = GetCurrentDirectoryW(buffer.size(), buffer.data());
-  if (sizeWithoutTerminatingZero >= buffer.size())
-  {
-    buffer.resize(sizeWithoutTerminatingZero + 1);
-    sizeWithoutTerminatingZero = GetCurrentDirectoryW(buffer.size(), buffer.data());
-  }
-
-  return std::wstring(buffer.data(), sizeWithoutTerminatingZero);
 }
 
 static void SetPathVariable(const wchar_t *varName, REFKNOWNFOLDERID rfId)

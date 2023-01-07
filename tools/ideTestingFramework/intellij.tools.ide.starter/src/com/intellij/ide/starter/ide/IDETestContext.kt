@@ -177,6 +177,10 @@ data class IDETestContext(
     addSystemProperty("idea.skip.indices.initialization", value)
   }
 
+  fun enableAsyncProfiler() = addVMOptionsPatch {
+    addSystemProperty("integrationTests.profiler", "async")
+  }
+
   fun doRefreshAfterJpsLibraryDownloaded(value: Boolean = true) = addVMOptionsPatch {
     addSystemProperty("idea.do.refresh.after.jps.library.downloaded", value)
   }

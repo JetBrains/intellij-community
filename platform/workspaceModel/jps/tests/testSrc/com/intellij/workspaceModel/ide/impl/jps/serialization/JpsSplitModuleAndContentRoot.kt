@@ -46,6 +46,16 @@ class JpsSplitModuleAndContentRoot {
   }
 
   @Test
+  fun `add local content root local save`() {
+    checkSaveProjectAfterChange("before/addContentRootLocalSave", "after/addContentRootLocalSave", false) { builder, configLocation ->
+      val moduleEntity = builder.entities(ModuleEntity::class.java).single()
+      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
+      builder.addContentRootEntity(virtualFileManager.fromPath(path), emptyList(), emptyList(), moduleEntity,
+                                   (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
+    }
+  }
+
+  @Test
   fun `add multiple local content roots`() {
     checkSaveProjectAfterChange("before/addContentRoot", "after/addMultipleContentRoot") { builder, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
@@ -410,12 +420,13 @@ class JpsSplitModuleAndContentRoot {
 
   private fun checkSaveProjectAfterChange(dirBefore: String,
                                           dirAfter: String,
+                                          externalStorage: Boolean = true,
                                           change: (MutableEntityStorage, JpsProjectConfigLocation) -> Unit) {
 
     val initialDir = PathManagerEx.findFileUnderCommunityHome(
       "platform/workspaceModel/jps/tests/testData/serialization/splitModuleAndContentRoot/$dirBefore")
     val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(projectModel.project)
-    externalStorageConfigurationManager.isEnabled = true
+    externalStorageConfigurationManager.isEnabled = externalStorage
     checkSaveProjectAfterChange(initialDir, dirAfter, change, virtualFileManager, "serialization/splitModuleAndContentRoot", false,
                                 externalStorageConfigurationManager)
   }

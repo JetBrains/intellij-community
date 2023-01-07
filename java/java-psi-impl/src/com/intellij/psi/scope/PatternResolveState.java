@@ -36,7 +36,7 @@ public enum PatternResolveState {
     for (PsiElement prev = pattern, current = prev.getParent(); prev != parent; prev = current, current = current.getParent()) {
       if (current instanceof PsiInstanceOfExpression || current instanceof PsiParenthesizedExpression ||
           current instanceof PsiDeconstructionList || current instanceof PsiDeconstructionPattern ||
-          current instanceof PsiPolyadicExpression &&
+          current instanceof PsiParenthesizedPattern || current instanceof PsiPolyadicExpression &&
           (((PsiPolyadicExpression)current).getOperationTokenType() == JavaTokenType.ANDAND ||
            ((PsiPolyadicExpression)current).getOperationTokenType() == JavaTokenType.OROR)) {
         continue;

@@ -909,4 +909,17 @@ public class StringUtilTest {
     UsefulTestCase.assertThrows(IllegalArgumentException.class, ()->assertFalse(StringUtil.endsWith("text", -1, 4, "t")));
     assertFalse(StringUtil.endsWith("text", "-->"));
   }
+
+  @Test
+  public void testIsJavaIdentifier() {
+    assertFalse(StringUtil.isJavaIdentifier(""));
+    assertTrue(StringUtil.isJavaIdentifier("x"));
+    assertFalse(StringUtil.isJavaIdentifier("0"));
+    assertFalse(StringUtil.isJavaIdentifier("0x"));
+    assertTrue(StringUtil.isJavaIdentifier("x0"));
+    assertTrue(StringUtil.isJavaIdentifier("\uD835\uDEFCA"));
+    assertTrue(StringUtil.isJavaIdentifier("A\uD835\uDEFC"));
+    //noinspection UnnecessaryUnicodeEscape
+    assertTrue(StringUtil.isJavaIdentifier("\u03B1A"));
+  }
 }

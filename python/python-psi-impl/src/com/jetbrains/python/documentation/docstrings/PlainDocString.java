@@ -151,4 +151,20 @@ public class PlainDocString extends DocStringLineParser implements StructuredDoc
   public String getAttributeDescription() {
     return null;
   }
+
+  @Nullable
+  @Override
+  public String getAttributeDescription(@Nullable String name) {
+    return null;
+  }
+
+  @Override
+  public @NotNull List<String> getAttributes() {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public @NotNull List<Substring> getAttributeSubstrings() {
+    return Collections.emptyList();
+  }
 }

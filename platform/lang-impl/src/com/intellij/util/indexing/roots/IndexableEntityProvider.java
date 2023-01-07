@@ -3,12 +3,14 @@ package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.indexing.IndexableFilesIndex;
 import com.intellij.util.indexing.roots.kind.IndexableSetSelfDependentOrigin;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -116,10 +118,10 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
      * Equivalent of {@link Existing#getExistingEntityIteratorBuilder(WorkspaceEntity, Project)} for {@link IndexableFilesIndex}
      * Is expected to be merged back after API stabilisation.
      */
-    @NotNull
-    Collection<? extends IndexableSetSelfDependentOrigin> getExistingEntityIteratorOrigins(@NotNull E entity,
-                                                                                           @NotNull EntityStorage storage,
-                                                                                           @NotNull Project project);
+    @Nullable
+    IndexableSetSelfDependentOrigin getExistingEntityIteratorOrigins(@NotNull E entity,
+                                                                     @NotNull EntityStorage storage,
+                                                                     @NotNull Project project);
   }
 
   /**

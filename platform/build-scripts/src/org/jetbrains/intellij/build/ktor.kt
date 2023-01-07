@@ -47,7 +47,6 @@ const val SPACE_REPO_HOST = "packages.jetbrains.team"
 private val httpClient = SynchronizedClearableLazy {
   // HttpTimeout is not used - CIO engine handles that
   HttpClient(CIO) {
-    // we have custom error handler
     expectSuccess = true
 
     engine {

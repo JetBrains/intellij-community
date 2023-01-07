@@ -167,14 +167,14 @@ public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
       if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
       if (element.isQualified()) return null;
       PsiElement container = PsiTreeUtil.getParentOfType(element, PsiReferenceList.class, PsiClass.class, PsiMethod.class, PsiClassInitializer.class, PsiStatement.class);
-      if (container == null || container instanceof PsiClass) return null;
+      if (container == null || (container instanceof PsiClass aClass && !aClass.isRecord())) return null;
       PsiElement parent = element.getParent();
       if (parent instanceof PsiMethodCallExpression ||
           parent instanceof PsiJavaCodeReferenceElement ||
           parent instanceof PsiReferenceList ||
           parent instanceof PsiNewExpression ||
           parent instanceof PsiAnnotation ||
-          (parent instanceof PsiTypeElement && parent.getParent() instanceof PsiClassObjectAccessExpression) ||
+          (parent instanceof PsiTypeElement && typeParameterIsNotValidInTypeElementContext((PsiTypeElement)parent)) ||
           element instanceof PsiReferenceExpression) {
         return null;
       }
@@ -184,6 +184,14 @@ public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
       if (name == null) return null;
       return new Context(candidates, name);
     }
+  }
+
+  private static boolean typeParameterIsNotValidInTypeElementContext(@NotNull PsiTypeElement parent) {
+    PsiElement grandParent = parent.getParent();
+    return grandParent instanceof PsiClassObjectAccessExpression ||
+           grandParent instanceof PsiDeconstructionPattern ||
+           grandParent instanceof PsiPatternVariable ||
+           grandParent instanceof PsiInstanceOfExpression;
   }
 
 

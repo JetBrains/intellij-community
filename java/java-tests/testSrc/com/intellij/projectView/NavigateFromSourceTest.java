@@ -3,10 +3,7 @@ package com.intellij.projectView;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
-import com.intellij.ide.projectView.impl.ProjectViewImpl;
-import com.intellij.ide.projectView.impl.ProjectViewPane;
-import com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory;
+import com.intellij.ide.projectView.impl.*;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.WriteAction;
@@ -21,7 +18,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -37,7 +33,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
     sortClassesByName(classes);
     PsiClass psiClass = classes[0];
 
-    final AbstractProjectViewPSIPane pane = myStructure.createPane();
+    final AbstractProjectViewPane pane = myStructure.createPane();
     final PsiFile containingFile = psiClass.getContainingFile();
     final VirtualFile virtualFile = containingFile.getVirtualFile();
 
@@ -104,7 +100,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
     assertThat(((PsiJavaFile)element).getName()).isEqualTo("Class1.java");
   }
 
-  private static void doTestMultipleSelection(@NotNull AbstractProjectViewPSIPane pane, PsiClass psiClass) {
+  private static void doTestMultipleSelection(AbstractProjectViewPane pane, PsiClass psiClass) {
     JTree tree = pane.getTree();
     int rowCount = tree.getRowCount();
     for (int i = 0; i < rowCount; i++) {
@@ -118,7 +114,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
 
   private static void changeClassTextAndTryToNavigate(String newClassString,
                                                       PsiJavaFile psiFile,
-                                                      AbstractProjectViewPSIPane pane,
+                                                      AbstractProjectViewPane pane,
                                                       String expected) {
     PsiClass psiClass = psiFile.getClasses()[0];
     VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
@@ -147,7 +143,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
     WriteAction.runAndWait(() -> archive.move(project, moduleRoot));
     PsiTestUtil.addLibrary(module, archive.getPath()); // only libraries are expanded now
 
-    AbstractProjectViewPSIPane pane = myStructure.createPane();
+    AbstractProjectViewPane pane = myStructure.createPane();
     // select archived file in the Project View
     VirtualFile file = JarFileSystem.getInstance().getJarRootForLocalFile(archive).findChild("Main.class");
     pane.select(PsiManager.getInstance(project).findFile(file), file, false);

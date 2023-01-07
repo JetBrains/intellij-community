@@ -3,7 +3,7 @@ package com.intellij.html.webSymbols.attributes
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
-import com.intellij.html.webSymbols.WebSymbolsHtmlAdditionalContextProvider
+import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -14,7 +14,7 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.util.ArrayUtil
 import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.utils.unwrapMatchedSymbols
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor
@@ -120,12 +120,12 @@ open class WebSymbolAttributeDescriptor private constructor(val tag: XmlTag?,
 
   override fun hasIdType(): Boolean =
     symbol.unwrapMatchedSymbols()
-      .filterIsInstance<WebSymbolsHtmlAdditionalContextProvider.HtmlAttributeDescriptorBasedSymbol>()
+      .filterIsInstance<WebSymbolsHtmlRegistryExtension.HtmlAttributeDescriptorBasedSymbol>()
       .any { it.descriptor.hasIdType() }
 
   override fun hasIdRefType(): Boolean =
     symbol.unwrapMatchedSymbols()
-      .filterIsInstance<WebSymbolsHtmlAdditionalContextProvider.HtmlAttributeDescriptorBasedSymbol>()
+      .filterIsInstance<WebSymbolsHtmlRegistryExtension.HtmlAttributeDescriptorBasedSymbol>()
       .any { it.descriptor.hasIdRefType() }
 
   private fun matchEnum(value: String): List<WebSymbolCodeCompletionItem> =

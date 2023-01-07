@@ -6,7 +6,6 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -51,7 +50,7 @@ class RedundantAsSequenceInspection : AbstractKotlinInspection() {
                 registerProblem(holder, qualified, callee)
             }
             else -> {
-                if (!receiverType.isIterable(DefaultBuiltIns.Instance)) return
+                if (!receiverType.isIterable()) return
                 val parent = qualified.getQualifiedExpressionForReceiver()
                 val parentCall = parent?.callExpression ?: return
                 if (!parentCall.isTermination(context)) return

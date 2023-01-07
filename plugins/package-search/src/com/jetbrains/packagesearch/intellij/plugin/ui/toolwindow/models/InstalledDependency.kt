@@ -21,7 +21,8 @@ import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 
 internal data class InstalledDependency(val groupId: String, val artifactId: String) {
 
-    val coordinatesString = "$groupId:$artifactId"
+    val coordinatesString
+        get() = "$groupId:$artifactId"
 
     companion object {
 

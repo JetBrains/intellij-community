@@ -14,8 +14,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 abstract class AbstractFindUsagesMultiModuleTest : AbstractMultiModuleTest() {
-    protected open val isFirPlugin: Boolean = false
-
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("multiModuleFindUsages")
 
     protected val mainFile: KtFile
@@ -54,7 +52,7 @@ abstract class AbstractFindUsagesMultiModuleTest : AbstractMultiModuleTest() {
             options,
             project,
             alwaysAppendFileName = true,
-            testType = if (isFirPlugin) FindUsageTestType.FIR else FindUsageTestType.DEFAULT,
+            testType = if (isFirPlugin()) FindUsageTestType.FIR else FindUsageTestType.DEFAULT,
         )
     }
 }

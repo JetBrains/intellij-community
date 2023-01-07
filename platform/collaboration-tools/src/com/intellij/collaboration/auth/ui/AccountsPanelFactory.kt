@@ -108,11 +108,11 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
     val accountsList = JBList(accountsModel.accountsListModel).apply {
       val renderer = listCellRendererFactory()
       cellRenderer = renderer
-      JListHoveredRowMaterialiser.install(this, listCellRendererFactory())
       UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
 
       selectionMode = ListSelectionModel.SINGLE_SELECTION
     }
+    val rowMaterialiser = JListHoveredRowMaterialiser.install(accountsList, listCellRendererFactory())
 
     scope.launch {
       detailsLoadingVm.loadingState.collect {
@@ -123,6 +123,7 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
     scope.launch {
       detailsLoadingVm.loadingCompletionFlow.collect {
         repaint(accountsList, it)
+        rowMaterialiser.update()
       }
     }
 

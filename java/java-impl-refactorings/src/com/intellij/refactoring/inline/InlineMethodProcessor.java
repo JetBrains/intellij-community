@@ -755,18 +755,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return null;
   }
 
-  @NotNull
-  private PsiExpression inlineParameterReference(@NotNull PsiReferenceExpression expression, BlockData blockData) {
-    if (expression.getQualifierExpression() != null) return expression;
-    PsiElement resolve = expression.resolve();
-    if (!(resolve instanceof PsiParameter)) return expression;
-    int paramIdx = ArrayUtil.find(myMethod.getParameterList().getParameters(), resolve);
-    if (paramIdx < 0) return expression;
-    PsiExpression initializer = blockData.parmVars[paramIdx].getInitializer();
-    if (initializer == null) return expression;
-    return InlineUtil.inlineInitializer((PsiVariable)resolve, initializer, expression);
-  }
-
   private void substituteMethodTypeParams(PsiElement scope, final PsiSubstitutor substitutor) {
     InlineUtil.substituteTypeParams(scope, substitutor, myFactory);
   }

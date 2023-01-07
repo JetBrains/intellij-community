@@ -18,6 +18,11 @@ public class FirUastCommentsTest extends AbstractFirUastCommentsTest {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("commentsOnDataClass.kt")
+    public void testCommentsOnDataClass() throws Exception {
+        runTest("testData/declaration/commentsOnDataClass.kt");
+    }
+
     @TestMetadata("commentsOnProperties.kt")
     public void testCommentsOnProperties() throws Exception {
         runTest("testData/declaration/commentsOnProperties.kt");

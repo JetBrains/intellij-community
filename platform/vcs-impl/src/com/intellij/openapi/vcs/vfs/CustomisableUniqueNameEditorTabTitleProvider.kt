@@ -22,8 +22,7 @@ abstract class CustomisableUniqueNameEditorTabTitleProvider : UniqueNameEditorTa
     return null
   }
 
-  @Nls
-  private fun getBaseUniqueName(project: Project, file: VirtualFile): String? {
+  private fun getBaseUniqueName(project: Project, file: VirtualFile): @Nls String? {
     var baseName = super.getEditorTabTitle(project, file)
     if (baseName == null && UISettings.getInstance().hideKnownExtensionInTabs && !file.isDirectory) {
       baseName = file.nameWithoutExtension.ifEmpty { file.name }

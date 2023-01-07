@@ -79,6 +79,8 @@ class BuildSystemTypeSettingComponent(
             e.presentation.isEnabled = validationResult.isOk
             e.presentation.description = validationResult.safeAs<ValidationResult.ValidationError>()?.messages?.firstOrNull()
         }
+
+        override fun getActionUpdateThread() = ActionUpdateThread.BGT
     }
 
     private inner class BuildSystemToolbar(

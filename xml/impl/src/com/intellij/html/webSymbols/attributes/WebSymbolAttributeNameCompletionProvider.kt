@@ -5,8 +5,8 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.XmlAttributeInsertHandler
 import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
-import com.intellij.html.webSymbols.WebSymbolsHtmlAdditionalContextProvider
-import com.intellij.html.webSymbols.WebSymbolsHtmlAdditionalContextProvider.Companion.getStandardHtmlAttributeDescriptors
+import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension
+import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension.Companion.getStandardHtmlAttributeDescriptors
 import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.html.HtmlTag
@@ -17,10 +17,10 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.WebSymbolsRegistry
-import com.intellij.webSymbols.WebSymbolsRegistryManager
-import com.intellij.webSymbols.codeInsight.AsteriskAwarePrefixMatcher
-import com.intellij.webSymbols.codeInsight.WebSymbolsCompletionProviderBase
+import com.intellij.webSymbols.registry.WebSymbolsRegistry
+import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
+import com.intellij.webSymbols.completion.AsteriskAwarePrefixMatcher
+import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
 
 class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBase<XmlElement>() {
 
@@ -58,7 +58,7 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
       symbols,
       providedAttributes,
       filter = { item ->
-        if (item.symbol is WebSymbolsHtmlAdditionalContextProvider.StandardHtmlSymbol
+        if (item.symbol is WebSymbolsHtmlRegistryExtension.StandardHtmlSymbol
             && item.offset == 0
             && item.symbol?.name == item.name) {
           filteredOutStandardSymbols.remove(item.name)

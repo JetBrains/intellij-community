@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl
 
+import com.intellij.ProjectTopics
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -8,13 +9,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
 
 internal class UnknownSdkStartupChecker : StartupActivity.DumbAware {
   override fun runActivity(project: Project) {
@@ -33,11 +32,9 @@ internal class UnknownSdkStartupChecker : StartupActivity.DumbAware {
       }
     }, project)
 
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(project.messageBus.connect(), object: WorkspaceModelChangeListener {
-      override fun changed(event: VersionedStorageChange) {
-        if (event.getChanges(SourceRootEntity::class.java).any()) {
-          checkUnknownSdks(project)
-        }
+    project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object: ModuleRootListener {
+      override fun rootsChanged(event: ModuleRootEvent) {
+        checkUnknownSdks(event.project)
       }
     })
 

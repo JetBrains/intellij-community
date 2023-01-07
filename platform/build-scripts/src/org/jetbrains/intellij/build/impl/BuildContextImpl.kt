@@ -98,8 +98,9 @@ class BuildContextImpl private constructor(
       val compilationContext = CompilationContextImpl.createCompilationContext(
         communityHome = communityHome,
         projectHome = projectHome,
+        setupTracer = true,
         buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome, productProperties, options),
-        options = options
+        options = options,
       )
       return createContext(compilationContext = compilationContext,
                            projectHome = projectHome,

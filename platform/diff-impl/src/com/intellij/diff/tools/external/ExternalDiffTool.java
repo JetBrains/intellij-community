@@ -8,7 +8,6 @@ import com.intellij.diff.chains.*;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.execution.ExecutionException;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.ListSelection;
@@ -146,7 +145,7 @@ public final class ExternalDiffTool {
   @RequiresEdt
   private static void showRequests(@Nullable Project project,
                                    @NotNull List<DiffRequest> requests,
-                                   @NotNull DiffDialogHints hints) throws IOException, ExecutionException {
+                                   @NotNull DiffDialogHints hints) throws IOException {
     List<DiffRequest> showInBuiltin = new ArrayList<>();
     for (DiffRequest request : requests) {
       boolean success = tryShowRequestInExternal(project, request);
@@ -160,8 +159,7 @@ public final class ExternalDiffTool {
     }
   }
 
-  private static boolean tryShowRequestInExternal(@Nullable Project project, @NotNull DiffRequest request)
-    throws IOException, ExecutionException {
+  private static boolean tryShowRequestInExternal(@Nullable Project project, @NotNull DiffRequest request) throws IOException {
     if (!canShow(request)) return false;
 
     ExternalDiffSettings.ExternalTool externalTool = getExternalToolFor(((ContentDiffRequest)request));
@@ -234,12 +232,12 @@ public final class ExternalDiffTool {
 
   public static void showRequest(@Nullable Project project,
                                  @NotNull DiffRequest request,
-                                 @NotNull ExternalDiffSettings.ExternalTool externalDiffTool) throws ExecutionException, IOException {
+                                 @NotNull ExternalDiffSettings.ExternalTool externalDiffTool) throws IOException {
     request.onAssigned(true);
     try {
       List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
       List<String> titles = ((ContentDiffRequest)request).getContentTitles();
-      ExternalDiffToolUtil.execute(project, externalDiffTool, contents, titles, request.getTitle());
+      ExternalDiffToolUtil.executeDiff(project, externalDiffTool, contents, titles, request.getTitle());
     }
     finally {
       request.onAssigned(false);

@@ -103,12 +103,12 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
              queryProviders(
                elements.inside, root, providersList, (__, info) -> {
                  lineMarkers.add(info);
-               ApplicationManager.getApplication().invokeLater(() -> {
-                 if (isValid()) {
-                   LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info);
-                 }
-               }, myProject.getDisposed());
-             });
+                 ApplicationManager.getApplication().invokeLater(() -> {
+                   if (isValid()) {
+                     LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info);
+                   }
+                 }, myProject.getDisposed());
+               });
              queryProviders(elements.outside, root, providersList, (__, info) -> lineMarkers.add(info));
              return true;
            });

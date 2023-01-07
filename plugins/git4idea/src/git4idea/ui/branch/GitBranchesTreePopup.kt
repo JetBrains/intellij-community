@@ -434,7 +434,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
 
   private fun isMainIconAt(point: Point, selected: Any): Boolean {
     val row = tree.getRowForLocation(point.x, point.y)
-    val rowBounds = tree.getRowBounds(row)
+    val rowBounds = tree.getRowBounds(row) ?: return false
     point.translate(-rowBounds.x, -rowBounds.y)
 
     val rowComponent = tree.cellRenderer
@@ -468,7 +468,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
   override fun getPreferredFocusableComponent(): JComponent = tree
 
   override fun onChildSelectedFor(value: Any) {
-    val path = value as TreePath
+    val path = value as? TreePath ?: return
     if (tree.selectionPath != path) {
       tree.selectionPath = path
     }

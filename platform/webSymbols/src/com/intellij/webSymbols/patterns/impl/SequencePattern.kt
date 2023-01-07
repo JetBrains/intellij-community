@@ -5,9 +5,11 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.impl.CompoundInsertHandler
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.impl.CompoundInsertHandler
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
+import com.intellij.webSymbols.registry.WebSymbolMatch
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.withOffset
 

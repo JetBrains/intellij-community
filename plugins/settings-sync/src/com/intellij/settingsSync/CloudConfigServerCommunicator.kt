@@ -95,7 +95,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   override fun checkServerState(): ServerState {
     try {
       val latestVersion = client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP)
-      LOG.info("Latest version info: $latestVersion")
+      LOG.debug("Latest version info: $latestVersion")
       when (latestVersion?.versionId) {
         null -> return ServerState.FileNotExists
         SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId -> return ServerState.UpToDate

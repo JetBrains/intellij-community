@@ -297,8 +297,6 @@ object PlatformModules {
       "intellij.platform.statistics.config",
     ), productLayout, layout)
 
-    layout.excludedModuleLibraries.putValue("intellij.platform.credentialStore", "dbus-java")
-
     addModule("intellij.platform.statistics.devkit", productLayout, layout)
     addModule("intellij.platform.objectSerializer.annotations", productLayout, layout)
     if (!productLayout.excludedModuleNames.contains("intellij.java.guiForms.rt")) {

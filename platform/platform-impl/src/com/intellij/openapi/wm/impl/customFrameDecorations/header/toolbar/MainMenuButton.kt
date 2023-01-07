@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.keymap.Keymap
@@ -20,6 +21,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.IconManager
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupImpl
+import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -136,10 +138,11 @@ internal class MainMenuButton {
       val mainMenu = getMainMenuGroup()
       val popup = JBPopupFactory.getInstance()
         .createActionGroupPopup(null, mainMenu, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
-                                ActionPlaces.MAIN_MENU_IN_POPUP)
+                                ActionPlaces.MAIN_MENU)
         .apply { setShowSubmenuOnHover(true) }
         .apply { setMinimumSize(Dimension(JBUI.CurrentTheme.CustomFrameDecorations.menuPopupMinWidth(), 0)) }
         as ListPopupImpl
+      PopupImplUtil.setPopupToggleButton(popup, button)
       popup.showUnderneathOf(button)
 
       if (actionToShow != null) {
@@ -167,7 +170,7 @@ internal class MainMenuButton {
 
 private fun createMenuButton(action: AnAction): ActionButton {
   val button = object : ActionButton(action, PresentationFactory().getPresentation(action),
-                                     ActionPlaces.MAIN_MENU_IN_POPUP, Dimension(40, 40)) {
+                                     ActionPlaces.MAIN_MENU, Dimension(40, 40)) {
     override fun getDataContext(): DataContext {
       return DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200) ?: super.getDataContext()
     }
@@ -177,8 +180,30 @@ private fun createMenuButton(action: AnAction): ActionButton {
   return button
 }
 
-private fun getMainMenuGroup() =
-  CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup
+private fun getMainMenuGroup(): ActionGroup {
+  val mainMenuGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU)
+  mainMenuGroup as ActionGroup
+  return DefaultActionGroup(
+    mainMenuGroup.getChildren(null).mapNotNull { child ->
+      if (child is ActionGroup) {
+        // Wrap action groups to force them to be popup groups,
+        // otherwise they end up as separate items in the burger menu (IDEA-294669).
+        ActionGroupPopupWrapper(child)
+      } else {
+        LOG.error("A top-level child of the main menu is not an action group: $child")
+        null
+      }
+    }
+  )
+}
+
+private class ActionGroupPopupWrapper(action: ActionGroup) : ActionGroupWrapper(action) {
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isPopupGroup = true
+  }
+}
 
 const val MAIN_MENU_ACTION_ID = "MainMenuButton.ShowMenu"
 
+private val LOG = Logger.getInstance(MainMenuButton::class.java)

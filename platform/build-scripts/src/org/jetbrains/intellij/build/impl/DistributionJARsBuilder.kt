@@ -210,7 +210,7 @@ Android Studio: don't patch ApplicationNamesInfo yet */
   suspend fun createIdeClassPath(context: BuildContext): LinkedHashSet<String> {
     // for some reasons maybe duplicated paths - use set
     val classPath = LinkedHashSet<String>()
-
+    val pluginLayouts = context.productProperties.productLayout.pluginLayouts
     val pluginLayoutRoot: Path = withContext(Dispatchers.IO) {
       Files.createDirectories(context.paths.tempDir)
       Files.createTempDirectory(context.paths.tempDir, "pluginLayoutRoot")
@@ -232,7 +232,14 @@ Android Studio: don't patch ApplicationNamesInfo yet */
     }
     for (entry in (nonPluginsEntries + pluginsEntries)) {
       when (entry) {
-        is ModuleOutputEntry -> classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)).toString())
+        is ModuleOutputEntry -> {
+          classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)).toString())
+          pluginLayouts.firstOrNull { it.mainModule == entry.moduleName }
+            ?.scrambleClasspathPlugins
+            ?.asSequence()?.map { it.first }
+            ?.map { directoryName -> pluginLayouts.single { it.directoryName == directoryName } }
+            ?.forEach { classPath.add(context.getModuleOutputDir(context.findRequiredModule(it.mainModule)).toString()) }
+        }
         is LibraryFileEntry -> classPath.add(entry.libraryFile.toString())
         else -> throw UnsupportedOperationException("Entry $entry is not supported")
       }

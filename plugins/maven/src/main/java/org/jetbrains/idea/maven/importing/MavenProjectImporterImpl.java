@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.module.impl.ModulePathKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -44,7 +43,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
   private volatile Set<MavenProject> myAllProjects;
   private final boolean myImportModuleGroupsRequired;
 
-  private Module myDummyModule;
+  private Module myPreviewModule;
 
   private final List<Module> myCreatedModules = new ArrayList<>();
 
@@ -58,16 +57,18 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
                            boolean importModuleGroupsRequired,
                            @NotNull IdeModifiableModelsProvider modelsProvider,
                            @NotNull MavenImportingSettings importingSettings,
-                           @Nullable Module dummyModule) {
+                           @Nullable Module previewModule) {
     super(p, projectsTree, importingSettings, projectsToImportWithChanges, modelsProvider);
-    myFileToModuleMapping = getFileToModuleMapping(p, dummyModule, modelsProvider);
+    myFileToModuleMapping = getFileToModuleMapping(p, previewModule, modelsProvider);
     myImportModuleGroupsRequired = importModuleGroupsRequired;
-    myDummyModule = dummyModule;
+    myPreviewModule = previewModule;
   }
 
   @Override
   @Nullable
   public List<MavenProjectsProcessorTask> importProject() {
+    MavenLog.LOG.info("Importing Maven project using Legacy API");
+
     List<MavenProjectsProcessorTask> postTasks = new ArrayList<>();
     boolean hasChanges;
 
@@ -113,9 +114,9 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
         ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
           setMavenizedModules(obsoleteModules, false);
           List<Module> toDelete = new ArrayList<>();
-          if (myDummyModule != null) {
-            toDelete.add(myDummyModule);
-            myDummyModule = null;
+          if (myPreviewModule != null) {
+            toDelete.add(myPreviewModule);
+            myPreviewModule = null;
           }
           if (isDeleteObsoleteModules) {
             toDelete.addAll(obsoleteModules);
@@ -307,7 +308,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
     List<Module> obsolete = new ArrayList<>();
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(myProject);
     for (Module each : remainingModules) {
-      if (manager.isMavenizedModule(each) && myDummyModule != each) {
+      if (manager.isMavenizedModule(each) && myPreviewModule != each) {
         obsolete.add(each);
       }
     }
@@ -351,6 +352,13 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
 
     Set<MavenProject> projectsWithNewlyCreatedModules = new HashSet<>();
 
+    if (projectsWithChanges.size() > 0) {
+      if (null != myPreviewModule) {
+        deleteModules(List.of(myPreviewModule));
+        myPreviewModule = null;
+      }
+    }
+
     for (MavenProject each : projectsWithChanges.keySet()) {
       if (ensureModuleCreated(each)) {
         projectsWithNewlyCreatedModules.add(each);
@@ -389,24 +397,9 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
 
   private boolean ensureModuleCreated(MavenProject project) {
     Module existingModule = myMavenProjectToModule.get(project);
-    if (existingModule != null && existingModule != myDummyModule) return false;
+    if (existingModule != null && existingModule != myPreviewModule) return false;
     final String path = myMavenProjectToModulePath.get(project);
     String moduleName = ModulePathKt.getModuleNameByFilePath(path);
-    if (isForTheDummyModule(project, existingModule)) {
-      try {
-        if (!myDummyModule.getName().equals(moduleName)) {
-          myModuleModel.renameModule(myDummyModule, moduleName);
-        }
-      }
-      catch (ModuleWithNameAlreadyExists e) {
-        MavenLog.LOG.error("Cannot rename dummy module:", e);
-      }
-      myMavenProjectToModule.put(project, myDummyModule);
-      myCreatedModules.add(myDummyModule);
-      myDummyModule = null;
-      return true;
-    }
-
 
     // for some reason newModule opens the existing iml file, so we
     // have to remove it beforehand.
@@ -417,13 +410,6 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
     myMavenProjectToModule.put(project, module);
     myCreatedModules.add(module);
     return true;
-  }
-
-  private boolean isForTheDummyModule(MavenProject project, Module existingModule) {
-    if (myDummyModule == null) return false;
-    if (existingModule == myDummyModule) return true;
-    return myProjectsTree.getRootProjects().size() == 1 &&
-           myProjectsTree.findRootProject(project) == project;
   }
 
   private void deleteExistingModuleByName(final String name) {
@@ -571,13 +557,13 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
 
   private static Map<VirtualFile, Module> getFileToModuleMapping(
     Project project,
-    Module myDummyModule,
+    Module myPreviewModule,
     IdeModifiableModelsProvider modelsProvider) {
     return MavenProjectsManager.getInstance(project)
       .getFileToModuleMapping(new MavenModelsProvider() {
         @Override
         public Module[] getModules() {
-          return ArrayUtil.remove(modelsProvider.getModules(), myDummyModule);
+          return ArrayUtil.remove(modelsProvider.getModules(), myPreviewModule);
         }
 
         @Override

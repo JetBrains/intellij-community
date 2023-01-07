@@ -8,7 +8,9 @@ grade: $GRADE$
 confinement: classic
 base: core18
 compression: lzo
-architectures: [amd64]
+architectures:
+  - build-on: [amd64, arm64]
+    run-on: amd64
 
 apps:
   $NAME$:

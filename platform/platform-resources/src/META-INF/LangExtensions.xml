@@ -1362,7 +1362,7 @@
                           implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.DefaultMoveElementLeftRightHandler"
                           order="last"/>
 
-    <printHandler implementation="com.intellij.codeEditor.printing.TextPrintHandler"/>
+    <printHandler implementation="com.intellij.codeEditor.printing.TextPrintHandler" id="TextPrintHandler"/>
     <customFileDropHandler implementation="com.intellij.application.options.colors.EditorColorSchemeDropHandler"/>
 
     <editorNotificationProvider implementation="com.intellij.internal.retype.RetypeEditorNotificationProvider"/>
@@ -1486,6 +1486,8 @@
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.SyntheticLibraryIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler
       implementation="com.intellij.util.indexing.roots.builders.IndexableSetContributorIndexableIteratorHandler"/>
+    <indexableEntityInducedChangesProvider implementation="com.intellij.util.indexing.roots.ExcludeUrlEntityInducedChangesProvider"/>
+    <indexableEntityInducedChangesProvider implementation="com.intellij.util.indexing.roots.ContentRootEntityInducedChangesProvider"/>
 
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor$Factory"/>
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor$Factory"/>

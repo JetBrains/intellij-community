@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.scratch.ui
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
@@ -56,6 +57,8 @@ class ModulesComboBoxAction(private val scratchFile: ScratchFile) :
 
         e.presentation.isVisible = isModuleSelectorVisible()
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     @TestOnly
     fun isModuleSelectorVisible(): Boolean {

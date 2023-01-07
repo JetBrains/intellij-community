@@ -8,6 +8,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.FilterComponent
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -63,9 +64,10 @@ class DropDownComponentFactory<T : Any>(private val state: MutableStateFlow<T?>)
       addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0)) {
         state.value = null
       }
-    }.initUi()
+    }.initUi().apply {
+      UIUtil.setTooltipRecursively(this, filterName)
+    }
   }
-
 
   fun create(vmScope: CoroutineScope,
              filterName: @Nls String,
@@ -85,5 +87,4 @@ class DropDownComponentFactory<T : Any>(private val state: MutableStateFlow<T?>)
     create(vmScope, filterName, valuePresenter) { point, popupState ->
       ChooserPopupUtil.showChooserPopup(point, popupState, items, popupItemPresenter)
     }
-
 }

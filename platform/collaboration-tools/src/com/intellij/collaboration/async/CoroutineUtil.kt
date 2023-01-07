@@ -11,29 +11,29 @@ import kotlin.coroutines.CoroutineContext
 
 @ApiStatus.Experimental
 @Suppress("FunctionName")
-fun DisposingMainScope(parentDisposable: Disposable): CoroutineScope =
-  MainScope().also {
+fun DisposingMainScope(parentDisposable: Disposable): CoroutineScope {
+  return MainScope().also {
     Disposer.register(parentDisposable) {
       it.cancel()
     }
   }
+}
 
 @ApiStatus.Experimental
-fun Disposable.disposingMainScope(): CoroutineScope =
-  DisposingMainScope(this)
+fun Disposable.disposingMainScope(): CoroutineScope = DisposingMainScope(this)
 
 @ApiStatus.Experimental
 @Suppress("FunctionName")
-fun DisposingScope(parentDisposable: Disposable, context: CoroutineContext = SupervisorJob()): CoroutineScope =
-  CoroutineScope(context).also {
+fun DisposingScope(parentDisposable: Disposable, context: CoroutineContext = SupervisorJob()): CoroutineScope {
+  return CoroutineScope(context).also {
     Disposer.register(parentDisposable) {
       it.cancel()
     }
   }
+}
 
 @ApiStatus.Experimental
-fun Disposable.disposingScope(context: CoroutineContext = SupervisorJob()): CoroutineScope =
-  DisposingScope(this, context)
+fun Disposable.disposingScope(context: CoroutineContext = SupervisorJob()): CoroutineScope = DisposingScope(this, context)
 
 @OptIn(InternalCoroutinesApi::class)
 @ApiStatus.Experimental

@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.webSymbols
 
-import com.intellij.html.webSymbols.WebSymbolsHtmlAdditionalContextProvider.Companion.hasOnlyStandardHtmlSymbols
+import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension.Companion.hasOnlyStandardHtmlSymbols
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.lang.injection.MultiHostInjector
@@ -20,7 +20,7 @@ import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlText
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolsRegistryManager
+import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
 import com.intellij.webSymbols.utils.asSingleSymbol
 import java.util.*
 

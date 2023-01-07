@@ -5,8 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ReadConstraint;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -18,14 +17,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
@@ -36,12 +33,13 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.ArrayList;
+import java.util.List;
 
 @State(name = "TodoView", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public class TodoView implements PersistentStateComponent<TodoView.State>, Disposable {
-  private final Project myProject;
+
+  private final @NotNull Project myProject;
 
   private ContentManager myContentManager;
   private TodoPanel myAllTodos;
@@ -115,19 +113,6 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     ChangeList,
     CurrentFile,
     ScopeBased
-  }
-
-  @TestOnly
-  public TodoTreeBuilder getBuilderAndAllowUpdatesOnIt(Scope scope) {
-    TodoTreeBuilder builder = switch (scope) {
-      case AllTodos -> myAllTodos.myTodoTreeBuilder;
-      case ChangeList -> myChangeListTodosPanel.myTodoTreeBuilder;
-      case CurrentFile -> myCurrentFileTodosPanel.myTodoTreeBuilder;
-      case ScopeBased -> myScopeBasedTodosPanel.myTodoTreeBuilder;
-    };
-
-    builder.setUpdatable(true);
-    return builder;
   }
 
   public void initToolWindow(@NotNull ToolWindow toolWindow) {
@@ -217,16 +202,6 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     myPanels.add(myScopeBasedTodosPanel);
   }
 
-  @TestOnly
-  public void disposePanels() {
-    Disposer.dispose(myAllTodos);
-    if (myChangeListTodosPanel != null) {
-      Disposer.dispose(myChangeListTodosPanel);
-    }
-    Disposer.dispose(myCurrentFileTodosPanel);
-    Disposer.dispose(myScopeBasedTodosPanel);
-  }
-
   protected @NotNull AllTodosTreeBuilder createAllTodoBuilder(@NotNull JTree tree,
                                                               @NotNull Project project) {
     return new AllTodosTreeBuilder(tree, project);
@@ -257,36 +232,14 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     }
   }
 
-  public void refresh() {
-    ReadAction.nonBlocking((Callable<Void>)() -> {
-        Map<TodoPanel, Set<VirtualFile>> files = new HashMap<>();
-        if (myAllTodos != null) {
-          for (TodoPanel panel : myPanels) {
-            panel.myTodoTreeBuilder.collectFiles(virtualFile -> {
-              files.computeIfAbsent(panel, __ -> new HashSet<>()).add(virtualFile);
-              return true;
-            });
-          }
-        }
-
-        for (TodoPanel panel : myPanels) {
-          panel.rebuildCache(files.getOrDefault(panel, Set.of()));
-          panel.updateTree();
-        }
-
-        return null;
-      })
-      .finishOnUiThread(ModalityState.NON_MODAL, o -> {
-        for (TodoPanel ignored : myPanels) {
-          notifyUpdateFinished();
-        }
-      })
-      .inSmartMode(myProject)
-      .submit(NonUrgentExecutor.getInstance());
-  }
-
-  protected void notifyUpdateFinished() {
-    //do nothing
+  public final void refresh() {
+    if (myAllTodos != null) {
+      for (TodoPanel panel : myPanels) {
+        panel.getTreeBuilder()
+          .getCoroutineHelper()
+          .scheduleCacheAndTreeUpdate(ReadConstraint.Companion.inSmartMode(myProject));
+      }
+    }
   }
 
   public void addCustomTodoView(final TodoTreeBuilderFactory factory, @NlsContexts.TabTitle final String title, final TodoPanelSettings settings) {

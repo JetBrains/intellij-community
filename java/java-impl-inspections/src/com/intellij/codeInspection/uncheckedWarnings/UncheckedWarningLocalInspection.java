@@ -425,7 +425,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
                                               PsiExpression expression, PsiType parameterType,
                                               PsiType itemType,
                                               final Supplier<LocalQuickFix[]> fixesSupplier) {
-      if (GenericsHighlightUtil.checkArrayWithEmptyDiamondCreation(parameter, parameterType) != null) return;
+      if (GenericsHighlightUtil.checkGenericArrayCreation(expression, expression.getType()) != null) return;
       if (parameterType == null || itemType == null) return;
       if (!TypeConversionUtil.isAssignable(parameterType, itemType)) return;
       if (JavaGenericsUtil.isRawToGeneric(parameterType, itemType)) {

@@ -16,8 +16,10 @@ import io.netty.bootstrap.ServerBootstrap
 import io.netty.buffer.ByteBuf
 import io.netty.channel.*
 import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.channel.oio.OioEventLoopGroup
 import io.netty.channel.socket.ServerSocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
+import io.netty.channel.socket.oio.OioServerSocketChannel
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpRequest
@@ -45,18 +47,18 @@ inline fun Bootstrap.handler(crossinline task: (Channel) -> Unit): Bootstrap {
 fun serverBootstrap(group: EventLoopGroup): ServerBootstrap {
   val bootstrap = ServerBootstrap()
     .group(group)
-    .channel(group.serverSocketChannelClass())
+    .channel(serverSocketChannelClass(group))
   bootstrap.childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.SO_KEEPALIVE, true)
   return bootstrap
 }
 
 @Suppress("DEPRECATION")
-private fun EventLoopGroup.serverSocketChannelClass(): Class<out ServerSocketChannel> {
-  return when (this) {
+private fun serverSocketChannelClass(eventLoopGroup: EventLoopGroup): Class<out ServerSocketChannel> {
+  return when (eventLoopGroup) {
     is NioEventLoopGroup -> NioServerSocketChannel::class.java
-    is io.netty.channel.oio.OioEventLoopGroup -> io.netty.channel.socket.oio.OioServerSocketChannel::class.java
+    is OioEventLoopGroup -> OioServerSocketChannel::class.java
     //  SystemInfo.isMacOSSierra && this is KQueueEventLoopGroup -> KQueueServerSocketChannel::class.java
-    else -> throw Exception("Unknown event loop group type: ${this.javaClass.name}")
+    else -> throw Exception("Unknown event loop group type: ${eventLoopGroup.javaClass.name}")
   }
 }
 

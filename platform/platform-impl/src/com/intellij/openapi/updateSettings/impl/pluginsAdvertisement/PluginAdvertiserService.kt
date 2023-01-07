@@ -147,18 +147,19 @@ open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdv
       MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds),
       customPlugins,
       true,
-    ).filterNot { loadedPlugin ->
-      val pluginId = loadedPlugin.pluginId
-      val compareVersions = PluginManagerCore.getPlugin(pluginId)?.let {
-        PluginDownloader.compareVersionsSkipBrokenAndIncompatible(loadedPlugin.version, it) <= 0
-      } ?: false
-
-      compareVersions
-      || !pluginIds.contains(pluginId)
-      || PluginManagerCore.isDisabled(pluginId)
-      || PluginManagerCore.isBrokenPlugin(loadedPlugin)
-    }.filter { org.allowInstallingPlugin(it) }
+    ).asSequence()
+      .filter { pluginIds.contains(it.pluginId) }
+      .filterNot { PluginManagerCore.isDisabled(it.pluginId) }
+      .filterNot { PluginManagerCore.isBrokenPlugin(it) }
+      .filter { loadedPlugin ->
+        when (val installedPlugin = PluginManagerCore.getPluginSet().findInstalledPlugin(loadedPlugin.pluginId)) {
+          null -> true
+          else -> (!installedPlugin.isBundled || installedPlugin.allowBundledUpdate())
+                  && PluginDownloader.compareVersionsSkipBrokenAndIncompatible(loadedPlugin.version, installedPlugin) > 0
+        }
+      }.filter { org.allowInstallingPlugin(it) }
       .map { PluginDownloader.createDownloader(it) }
+      .toList()
   }
 
   private fun notifyUser(

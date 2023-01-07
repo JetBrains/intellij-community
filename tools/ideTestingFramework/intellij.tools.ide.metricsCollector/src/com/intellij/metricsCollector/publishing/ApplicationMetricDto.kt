@@ -18,6 +18,8 @@ data class ApplicationMetricDto(
    * Used for "counter" metrics.
    */
   val c: Long? = null,
+
+  val v: Long? = d ?: c
 ) {
   init {
     require((d != null) xor (c != null))

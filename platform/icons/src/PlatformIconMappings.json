@@ -297,6 +297,7 @@
     "gutter": {
       "bookmark.svg": "gutter/bookmark.svg",
       "colors.svg": "gutter/colors.svg",
+      "dataSchema.svg" : "gutter/dataSchema.svg",
       "extAnnotation.svg": "gutter/extAnnotation.svg",
       "javadocEdit.svg": "gutter/javadocEdit.svg",
       "javadocRead.svg":  "gutter/javadocRead.svg",

@@ -9,10 +9,9 @@ import com.intellij.openapi.vcs.changes.ui.ChangesTreeCellRenderer
 import com.intellij.ui.*
 import com.intellij.ui.paint.PaintUtil.RoundingMode
 import com.intellij.util.ui.JBUI.Borders.emptyRight
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.FontSize
 import com.intellij.util.ui.UIUtil.getFontSize
-import icons.CollaborationToolsIcons.*
+import icons.CollaborationToolsIcons
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
@@ -70,16 +69,16 @@ internal class CodeReviewProgressRenderer(
     return getReadingStateWithDiscussionsIcon(isRead, discussionsCount)
   }
 
-  private fun getReadingStateIcon(isRead: Boolean): Icon? = if (!isRead) FileUnread else null
+  private fun getReadingStateIcon(isRead: Boolean): Icon? = if (!isRead) CollaborationToolsIcons.Review.FileUnread else null
 
   private fun getReadingStateWithDiscussionsIcon(isRead: Boolean, discussionsCount: Int): Icon {
     require(discussionsCount > 0)
 
     if (discussionsCount > 9) {
-      return if (!isRead) CommentUnreadMany else CommentReadMany
+      return if (!isRead) CollaborationToolsIcons.Review.CommentUnreadMany else CollaborationToolsIcons.Review.CommentReadMany
     }
 
-    val backgroundIcon = if (!isRead) CommentUnread else CommentUnresolved
+    val backgroundIcon = if (!isRead) CollaborationToolsIcons.Review.CommentUnread else CollaborationToolsIcons.Review.CommentUnresolved
     // use only two colors to be consistent with unread/read many icons
     val textIconColor = JBColor(Color.white, Color(0x3C3F41))
     val discussionsCountIcon = createDiscussionsCountIcon(discussionsCount, textIconColor)

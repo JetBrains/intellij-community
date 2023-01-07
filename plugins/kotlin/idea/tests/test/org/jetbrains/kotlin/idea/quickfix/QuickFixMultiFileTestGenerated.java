@@ -423,6 +423,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/importAliasPropertyAlreadyExists.before.Main.kt");
             }
 
+            @TestMetadata("importClass.before.Main.kt")
+            public void testImportClass() throws Exception {
+                runTest("testData/quickfix/autoImports/importClass.before.Main.kt");
+            }
+
+            @TestMetadata("importDelegateFunctions.before.Main.kt")
+            public void testImportDelegateFunctions() throws Exception {
+                runTest("testData/quickfix/autoImports/importDelegateFunctions.before.Main.kt");
+            }
+
             @TestMetadata("importFromRoot.before.Main.kt")
             public void testImportFromRoot() throws Exception {
                 runTest("testData/quickfix/autoImports/importFromRoot.before.Main.kt");

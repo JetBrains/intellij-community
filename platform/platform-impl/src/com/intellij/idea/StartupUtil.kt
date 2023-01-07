@@ -54,6 +54,7 @@ import com.intellij.util.ui.EDT
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.io.BuiltInServer
 import sun.awt.AWTAutoShutdown
@@ -205,10 +206,11 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   loadSystemLibsAndLogInfoAndInitMacApp(logDeferred, appInfoDeferred, initLafJob, args)
 
-  val telemetryInitJob = launch {
+  // async - handle error separatly
+  val telemetryInitJob = async {
     appInfoDeferred.join()
     runActivity("opentelemetry configuration") {
-      TraceManager.init()
+      TraceManager.init(mainScope)
     }
   }
 
@@ -248,7 +250,15 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
 
     runActivity("telemetry waiting") {
-      telemetryInitJob.join()
+      try {
+        telemetryInitJob.await()
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        log.error("Can't initialize OpenTelemetry: will use default (noop) SDK impl", e)
+      }
     }
 
     app to initLafJob

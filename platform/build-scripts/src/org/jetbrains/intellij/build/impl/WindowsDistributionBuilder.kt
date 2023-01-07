@@ -265,7 +265,6 @@ internal class WindowsDistributionBuilder(
     spanBuilder("build Windows executable").useWithScope2 {
       val executableBaseName = "${context.productProperties.baseFileName}64"
       val launcherPropertiesPath = context.paths.tempDir.resolve("launcher-${arch.dirName}.properties")
-      val upperCaseProductName = context.applicationInfo.upperCaseProductName
 
       @Suppress("SpellCheckingInspection")
       val vmOptions = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch) + listOf("-Dide.native.launcher=true")
@@ -279,11 +278,9 @@ internal class WindowsDistributionBuilder(
       Files.writeString(launcherPropertiesPath, """
         IDS_JDK_ONLY=${context.productProperties.toolsJarRequired}
         IDS_JDK_ENV_VAR=${envVarBaseName}_JDK
-        IDS_APP_TITLE=${productName} Launcher
         IDS_VM_OPTIONS_PATH=%APPDATA%\\\\${context.applicationInfo.shortCompanyName}\\\\${context.systemSelector}
         IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\\\java_error_in_${executableBaseName}_%p.log
         IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\\\java_error_in_${executableBaseName}.hprof
-        IDC_WINLAUNCHER=${upperCaseProductName}_LAUNCHER
         IDS_PROPS_ENV_VAR=${envVarBaseName}_PROPERTIES
         IDS_VM_OPTIONS_ENV_VAR=${envVarBaseName}_VM_OPTIONS
         IDS_ERROR_LAUNCHING_APP=Error launching $productName

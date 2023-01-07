@@ -58,7 +58,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext, private va
     }
 
     internal fun scopedDependencies(module: JpsModule): Map<JpsDependencyElement, DependencyScope> {
-      val result = HashMap<JpsDependencyElement, DependencyScope>()
+      val result = LinkedHashMap<JpsDependencyElement, DependencyScope>()
       for (dependency in module.dependenciesList.dependencies) {
         val extension = JpsJavaExtensionService.getInstance().getDependencyExtension(dependency) ?: continue
         result.put(dependency, when (extension.scope) {
@@ -112,7 +112,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext, private va
       val moduleCoordinates = modules.mapTo(HashSet()) { aModule -> generateMavenCoordinatesForModule(aModule) }
       val dependencies = modules
         .asSequence()
-        .flatMap { aModule -> squashingMavenArtifactsData.get(aModule)!!.dependencies }
+        .flatMap { aModule -> squashingMavenArtifactsData.getValue(aModule).dependencies }
         .distinct()
         .filter { !moduleCoordinates.contains(it.coordinates) }
         .toList()

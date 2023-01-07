@@ -6,8 +6,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.RefactoringHelper
 import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.usageView.UsageInfo
-import com.intellij.webSymbols.findUsages.PsiSourcedWebSymbolReference
-import com.intellij.webSymbols.findUsages.PsiSourcedWebSymbolReference.RenameHandler
+import com.intellij.webSymbols.search.PsiSourcedWebSymbolReference
+import com.intellij.webSymbols.search.PsiSourcedWebSymbolReference.RenameHandler
 
 class PsiSourcedWebSymbolRefactoringHelper : RefactoringHelper<List<RenameHandler>> {
 

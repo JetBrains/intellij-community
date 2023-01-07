@@ -59,50 +59,189 @@ suspend fun createCompilationContext(communityHome: BuildDependenciesCommunityRo
                                      projectHome: Path,
                                      defaultOutputRoot: Path,
                                      options: BuildOptions = BuildOptions()): CompilationContextImpl {
+  val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() }
+               ?: (options.outputRootPath ?: defaultOutputRoot).resolve("log")
+  TracerProviderManager.setOutput(logDir.resolve("trace.json"))
   return CompilationContextImpl.createCompilationContext(communityHome = communityHome,
                                                          projectHome = projectHome,
+                                                         setupTracer = false,
                                                          buildOutputRootEvaluator = { defaultOutputRoot },
                                                          options = options)
 }
 
+private fun computeBuildPaths(options: BuildOptions,
+                              project: JpsProject,
+                              communityHome: BuildDependenciesCommunityRoot,
+                              buildOutputRootEvaluator: (JpsProject) -> Path,
+                              projectHome: Path): BuildPaths {
+  val buildOut = options.outputRootPath ?: buildOutputRootEvaluator(project)
+  val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() } ?: buildOut.resolve("log")
+  return BuildPathsImpl(communityHome = communityHome, projectHome = projectHome, buildOut = buildOut, logDir = logDir)
+}
+
 @Internal
-class CompilationContextImpl private constructor(model: JpsModel,
-                                                 private val communityHome: BuildDependenciesCommunityRoot,
-                                                 projectHome: Path,
-                                                 override val messages: BuildMessages,
-                                                 buildOutputRootEvaluator: (JpsProject) -> Path,
-                                                 override val options: BuildOptions) : CompilationContext {
+class CompilationContextImpl private constructor(
+  model: JpsModel,
+  private val communityHome: BuildDependenciesCommunityRoot,
+  override val messages: BuildMessages,
+  override val paths: BuildPaths,
+  override val options: BuildOptions,
+) : CompilationContext {
+  val global: JpsGlobal
+  private val nameToModule: Map<String?, JpsModule>
+
+  override var classesOutputDirectory: Path
+    get() {
+      val url = JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl
+      return Path.of(JpsPathUtil.urlToOsPath(url))
+    }
+    set(outputDirectory) {
+      val url = "file://" + FileUtilRt.toSystemIndependentName(outputDirectory.toString())
+      JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl = url
+    }
+
+  override val project: JpsProject
+  override val projectModel: JpsModel = model
+  override val dependenciesProperties: DependenciesProperties
+  override val bundledRuntime: BundledRuntime
+  override lateinit var compilationData: JpsCompilationData
+
+  override val stableJdkHome: Path by lazy {
+    JdkDownloader.getJdkHome(communityHome, Span.current()::addEvent)
+  }
+
+  override val stableJavaExecutable: Path by lazy {
+    JdkDownloader.getJavaExecutable(stableJdkHome)
+  }
+
+  init {
+    project = model.project
+    global = model.global
+    val modules = project.modules
+    nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
+    dependenciesProperties = DependenciesProperties(paths.communityHomeDirRoot)
+    bundledRuntime = BundledRuntimeImpl(options = options,
+                                        paths = paths,
+                                        dependenciesProperties = dependenciesProperties,
+                                        error = messages::error,
+                                        info = messages::info)
+  }
+
+  companion object {
+    suspend fun createCompilationContext(communityHome: BuildDependenciesCommunityRoot,
+                                         projectHome: Path,
+                                         buildOutputRootEvaluator: (JpsProject) -> Path,
+                                         options: BuildOptions,
+                                         setupTracer: Boolean): CompilationContextImpl {
+      check(sequenceOf("platform/build-scripts", "bin/idea.properties", "build.txt").all {
+        Files.exists(communityHome.communityRoot.resolve(it))
+      }) {
+        "communityHome ($communityHome) doesn\'t point to a directory containing IntelliJ Community sources"
+      }
+
+      val messages = BuildMessagesImpl.create()
+      if (options.printEnvironmentInfo) {
+        messages.block("Environment info") {
+          messages.info("Community home: ${communityHome.communityRoot}")
+          messages.info("Project home: $projectHome")
+          printEnvironmentDebugInfo()
+        }
+      }
+
+      if (options.printFreeSpace) {
+        logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
+      }
+
+      val isCompilationRequired = CompiledClasses.isCompilationRequired(options)
+
+      // this is not a proper place to initialize tracker for downloader but this is the only place which is called in most build scripts
+      val model = coroutineScope {
+        launch {
+          BuildDependenciesDownloader.TRACER = BuildDependenciesOpenTelemetryTracer.INSTANCE
+        }
+
+        loadProject(projectHome = projectHome, kotlinBinaries = KotlinBinaries(communityHome, messages), isCompilationRequired)
+      }
+
+      val buildPaths = computeBuildPaths(project = model.project,
+                                         communityHome = communityHome,
+                                         options = options,
+                                         buildOutputRootEvaluator = buildOutputRootEvaluator,
+                                         projectHome = projectHome)
+
+      // not as part of prepareForBuild because prepareForBuild may be called several times per each product or another flavor
+      // (see createCopyForProduct)
+      if (setupTracer) {
+        TracerProviderManager.setOutput(buildPaths.logDir.resolve("trace.json"))
+      }
+
+      val context = CompilationContextImpl(model = model,
+                                           communityHome = communityHome,
+                                           messages = messages,
+                                           paths = buildPaths,
+                                           options = options)
+      if (isCompilationRequired) {
+        spanBuilder("define JDK").useWithScope2 {
+          defineJavaSdk(context)
+        }
+      }
+      spanBuilder("prepare for build").useWithScope2 {
+        context.prepareForBuild()
+      }
+
+      messages.setDebugLogPath(context.paths.logDir.resolve("debug.log"))
+
+      // this is not a proper place to initialize logging but this is the only place which is called in most build scripts
+      BuildMessagesHandler.initLogging(messages)
+      return context
+    }
+  }
 
   fun createCopy(messages: BuildMessages,
                  options: BuildOptions,
                  buildOutputRootEvaluator: (JpsProject) -> Path): CompilationContextImpl {
     val copy = CompilationContextImpl(model = projectModel,
                                       communityHome = paths.communityHomeDirRoot,
-                                      projectHome = paths.projectHome,
                                       messages = messages,
-                                      buildOutputRootEvaluator = buildOutputRootEvaluator,
+                                      paths = computeBuildPaths(options = options,
+                                                                project = project,
+                                                                communityHome = communityHome,
+                                                                buildOutputRootEvaluator = buildOutputRootEvaluator,
+                                                                projectHome = paths.projectHome),
                                       options = options)
     copy.compilationData = compilationData
     return copy
   }
 
-  fun prepareForBuild() {
+  internal fun prepareForBuild() {
     CompiledClasses.checkOptions(this)
-    NioFiles.deleteRecursively(paths.logDir)
-    Files.createDirectories(paths.logDir)
+
+    val logDir = paths.logDir
+    if (Files.exists(logDir)) {
+      Files.newDirectoryStream(logDir).use { stream ->
+        for (file in stream) {
+          if (!file.endsWith("trace.json")) {
+            NioFiles.deleteRecursively(file)
+          }
+        }
+      }
+    }
+    else {
+      Files.createDirectories(logDir)
+    }
+
     if (!this::compilationData.isInitialized) {
       compilationData = JpsCompilationData(
         dataStorageRoot = paths.buildOutputDir.resolve(".jps-build-data"),
-        buildLogFile = paths.logDir.resolve("compilation.log"),
+        buildLogFile = logDir.resolve("compilation.log"),
         categoriesWithDebugLevelNullable = System.getProperty("intellij.build.debug.logging.categories", "")
       )
     }
     overrideClassesOutputDirectory()
-    JpsArtifactService.getInstance().getArtifacts(project).forEach {
-      it.outputPath = "${paths.jpsArtifacts.resolve(PathUtilRt.getFileName(it.outputPath))}"
+    for (artifact in JpsArtifactService.getInstance().getArtifacts(project)) {
+      artifact.outputPath = "${paths.jpsArtifacts.resolve(PathUtilRt.getFileName(artifact.outputPath))}"
     }
     suppressWarnings(project)
-    TracerProviderManager.flush()
     ConsoleSpanExporter.setPathRoot(paths.buildOutputDir)
     cleanOutput(keepCompilationState = CompiledClasses.keepCompilationState(options))
   }
@@ -119,16 +258,6 @@ class CompilationContextImpl private constructor(model: JpsModel,
     Span.current().addEvent("set class output directory",
                             Attributes.of(AttributeKey.stringKey("classOutputDirectory"), classesOutputDirectory.toString()))
   }
-
-  override var classesOutputDirectory: Path
-    get() {
-      val url = JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl
-      return Path.of(JpsPathUtil.urlToOsPath(url))
-    }
-    set(outputDirectory) {
-      val url = "file://" + FileUtilRt.toSystemIndependentName("$outputDirectory")
-      JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl = url
-    }
 
   override fun findRequiredModule(name: String): JpsModule {
     val module = findModule(name)
@@ -182,102 +311,6 @@ class CompilationContextImpl private constructor(model: JpsModel,
       pathToReport += "=>$targetDirectoryPath"
     }
     messages.artifactBuilt(pathToReport)
-  }
-
-  override val paths: BuildPaths
-
-  override val project: JpsProject
-  val global: JpsGlobal
-  override val projectModel: JpsModel = model
-  private val nameToModule: Map<String?, JpsModule>
-  override val dependenciesProperties: DependenciesProperties
-  override val bundledRuntime: BundledRuntime
-  override lateinit var compilationData: JpsCompilationData
-
-  override val stableJdkHome: Path by lazy {
-    JdkDownloader.getJdkHome(communityHome, Span.current()::addEvent)
-  }
-
-  override val stableJavaExecutable: Path by lazy {
-    JdkDownloader.getJavaExecutable(stableJdkHome)
-  }
-
-  companion object {
-    suspend fun createCompilationContext(communityHome: BuildDependenciesCommunityRoot,
-                                         projectHome: Path,
-                                         buildOutputRootEvaluator: (JpsProject) -> Path,
-                                         options: BuildOptions = BuildOptions()): CompilationContextImpl {
-      val messages = BuildMessagesImpl.create()
-      check(sequenceOf("platform/build-scripts", "bin/idea.properties", "build.txt").all {
-        Files.exists(communityHome.communityRoot.resolve(it))
-      }) {
-        "communityHome ($communityHome) doesn\'t point to a directory containing IntelliJ Community sources"
-      }
-      if (options.printEnvironmentInfo) {
-        messages.block("Environment info") {
-          messages.info("Community home: ${communityHome.communityRoot}")
-          messages.info("Project home: $projectHome")
-          printEnvironmentDebugInfo()
-        }
-      }
-
-      if (options.printFreeSpace) {
-        logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
-      }
-
-      val isCompilationRequired = CompiledClasses.isCompilationRequired(options)
-
-      // This is not a proper place to initialize tracker for downloader
-      // but this is the only place which is called in most build scripts
-      val model = coroutineScope {
-        launch {
-          BuildDependenciesDownloader.TRACER = BuildDependenciesOpenTelemetryTracer.INSTANCE
-        }
-
-        loadProject(projectHome = projectHome, kotlinBinaries = KotlinBinaries(communityHome, messages), isCompilationRequired)
-      }
-      val context = CompilationContextImpl(model = model,
-                                           communityHome = communityHome,
-                                           projectHome = projectHome,
-                                           messages = messages,
-                                           buildOutputRootEvaluator = buildOutputRootEvaluator,
-                                           options = options)
-      if (isCompilationRequired) {
-        spanBuilder("define JDK").useWithScope2 {
-          defineJavaSdk(context)
-        }
-      }
-      spanBuilder("prepare for build").useWithScope2 {
-        context.prepareForBuild()
-      }
-
-      // not as part of prepareForBuild because prepareForBuild may be called several times per each product or another flavor
-      // (see createCopyForProduct)
-      if (options.setupTracer) {
-        TracerProviderManager.setOutput(context.paths.logDir.resolve("trace.json"))
-      }
-      messages.setDebugLogPath(context.paths.logDir.resolve("debug.log"))
-
-      // this is not a proper place to initialize logging but this is the only place which is called in most build scripts
-      BuildMessagesHandler.initLogging(messages)
-      return context
-    }
-  }
-
-  init {
-    project = model.project
-    global = model.global
-    val modules = model.project.modules
-    this.nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
-    val buildOut = options.outputRootPath ?: buildOutputRootEvaluator(project)
-    val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() } ?: buildOut.resolve("log")
-    paths = BuildPathsImpl(communityHome = communityHome, projectHome = projectHome, buildOut = buildOut, logDir = logDir)
-    dependenciesProperties = DependenciesProperties(paths.communityHomeDirRoot)
-    bundledRuntime = BundledRuntimeImpl(options = options,
-                                        paths = paths,
-                                        dependenciesProperties = dependenciesProperties,
-                                        error = messages::error,
-                                        info = messages::info)
   }
 }
 

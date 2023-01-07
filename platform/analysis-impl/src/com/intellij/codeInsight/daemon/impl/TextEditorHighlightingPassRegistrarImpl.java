@@ -167,9 +167,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   public @NotNull List<@NotNull TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile,
                                                                               @NotNull Editor editor,
                                                                               int @NotNull [] passesToIgnore) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      throw new IllegalStateException("Must not instantiate passes in EDT");
-    }
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     Document document = editor.getDocument();
     PsiFile fileFromDoc = documentManager.getPsiFile(document);

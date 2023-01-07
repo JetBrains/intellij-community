@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 public interface ConfigFileInfoSet extends JDOMExternalizable {
   void addConfigFile(ConfigFileInfo descriptor);
@@ -33,7 +34,7 @@ public interface ConfigFileInfoSet extends JDOMExternalizable {
 
   void removeConfigFiles(ConfigFileMetaData... metaData);
 
-  ConfigFileInfo[] getConfigFileInfos();
+  List<ConfigFileInfo> getConfigFileInfos();
 
   void setConfigFileInfos(Collection<? extends ConfigFileInfo> descriptors);
 

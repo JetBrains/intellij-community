@@ -44,9 +44,14 @@ public abstract class BaseNavigateToSourceAction extends DumbAwareAction {
                                    (myFocusEditor || !(target instanceof NavigatableWithText)));
     e.getPresentation().setEnabled(enabled);
 
-    String navigateActionText = myFocusEditor && target instanceof NavigatableWithText?
+    String navigateActionText = myFocusEditor && target instanceof NavigatableWithText ?
                                 ((NavigatableWithText)target).getNavigateActionText(true) : null;
-    e.getPresentation().setText(navigateActionText == null ? getTemplatePresentation().getText() : navigateActionText);
+    if (navigateActionText != null) {
+      e.getPresentation().setText(navigateActionText);
+    }
+    else {
+      e.getPresentation().setTextWithMnemonic(getTemplatePresentation().getTextWithPossibleMnemonic());
+    }
   }
 
   @Nullable

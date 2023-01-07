@@ -66,6 +66,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private String externalPluginId;
   private PageContainer<PluginReviewComment> reviewComments;
   private List<String> screenShots;
+  private String externalPluginIdForScreenShots;
 
   /**
    * @deprecated Use {@link #PluginNode(PluginId)}
@@ -564,6 +565,14 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public @Nullable List<String> getScreenShots() {
     return screenShots;
+  }
+
+  public @Nullable String getExternalPluginIdForScreenShots() {
+    return externalPluginIdForScreenShots;
+  }
+
+  public void setExternalPluginIdForScreenShots(@Nullable String externalPluginId) {
+    externalPluginIdForScreenShots = externalPluginId;
   }
 
   public void setScreenShots(@NotNull List<String> screenshots) {

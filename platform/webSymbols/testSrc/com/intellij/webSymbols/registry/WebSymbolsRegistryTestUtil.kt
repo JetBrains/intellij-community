@@ -3,7 +3,7 @@ package com.intellij.webSymbols.registry
 
 import com.intellij.webSymbols.DebugOutputPrinter
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.PlatformTestUtil

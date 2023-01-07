@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.text.nullize
 import org.freedesktop.dbus.annotations.DBusInterfaceName
 import org.freedesktop.dbus.connections.impl.DBusConnection
+import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder
 import org.freedesktop.dbus.errors.NoReply
 import org.freedesktop.dbus.errors.ServiceUnknown
 import org.freedesktop.dbus.exceptions.DBusException
@@ -23,7 +24,7 @@ internal class KWalletCredentialStore private constructor(private val connection
 
     fun create(): KWalletCredentialStore? {
       try {
-        val connection = DBusConnection.getConnection(DBusConnection.DBusBusType.SESSION)
+        val connection = DBusConnectionBuilder.forSessionBus().build()
         try {
           val wallet = connection.getRemoteObject("org.kde.kwalletd5", "/modules/kwalletd5", KWallet::class.java, true)
           wallet.localWallet() //ping

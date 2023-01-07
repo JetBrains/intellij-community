@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,56 +26,19 @@ import java.io.IOException;
  * Time: 7:10:10 PM
  */
 public class BitsUtil {
-  public static int revertBytesOfShort( short shortValue ){
-    return ((shortValue << 8) & 0xff00) + ((shortValue >> 8) & 0xff);
-  }
-
-  public static long revertBytesOfInt( int intValue ){
-    long result = (intValue & 0x000000ff);
-    result <<= 24;
-    result += ((intValue & 0x0000ff00) << 8) + ((intValue & 0x00ff0000) >> 8) + ((intValue >> 24) & 0xff);
-    return result;
-  }
-
-  public static long revertBytesOfLong(long longValue) {
-    long ms = revertBytesOfInt((int) (longValue >> 32));
-    long ls = revertBytesOfInt((int) longValue);
-    return ms | ls << 32;
-  }
-
-  public static int unsignedByte( byte byteValue ){
-    int result = byteValue;
-    return (result & 0xff);
-  }
-  private static String toHexString( long value, int size ){
-    String strValue = Long.toHexString( value );
-    if ( strValue.length() > size ){
-      strValue = strValue.substring( strValue.length() - size );
-    }
-    StringBuilder buffer = new StringBuilder(strValue.length() + 1 + size );
-    buffer.append( "0x" );
-    int dif = size - strValue.length();
-    for ( int i = 0; i < dif; ++i ){
-      buffer.append( "0" );
-    }
-    buffer.append( strValue );
-    return buffer.toString();
-  }
-
   public static String intToHexString( long value ){
-    return toHexString( value, 8 );
+    return String.format("0x%08x", (int)value);
   }
   public static String shortToHexString( int value ){
-    return toHexString( value, 4 );
+    return String.format("0x%04x", (short)value);
   }
   public static String byteToHexString( int value ){
-    return toHexString( value, 2 );
+    return String.format("0x%02x", (byte)value);
   }
 
   public static char readChar(DataInput stream) throws IOException {
     int b1 = stream.readByte();
     int b2 = stream.readByte();
-    return (char) (b1 + (b2 << 8));
-
+    return (char) (b1 & 0xFF | ((b2 & 0xFF) << 8));
   }
 }

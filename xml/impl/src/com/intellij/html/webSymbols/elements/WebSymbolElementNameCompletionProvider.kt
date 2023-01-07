@@ -5,16 +5,16 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.LegacyCompletionContributor
 import com.intellij.codeInsight.completion.XmlTagInsertHandler
-import com.intellij.html.webSymbols.WebSymbolsHtmlAdditionalContextProvider
+import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension
 import com.intellij.psi.PsiElement
 import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.impl.source.xml.TagNameReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.WebSymbolCodeCompletionItem
-import com.intellij.webSymbols.WebSymbolsRegistry
-import com.intellij.webSymbols.codeInsight.WebSymbolsCompletionProviderBase
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.registry.WebSymbolsRegistry
+import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
 
 class WebSymbolElementNameCompletionProvider : WebSymbolsCompletionProviderBase<HtmlTag>() {
 
@@ -44,7 +44,7 @@ class WebSymbolElementNameCompletionProvider : WebSymbolsCompletionProviderBase<
   companion object {
 
     fun filterStandardHtmlSymbols(item: WebSymbolCodeCompletionItem) =
-      item.symbol !is WebSymbolsHtmlAdditionalContextProvider.StandardHtmlSymbol
+      item.symbol !is WebSymbolsHtmlRegistryExtension.StandardHtmlSymbol
       || item.offset != 0
       || item.symbol?.name != item.name
 

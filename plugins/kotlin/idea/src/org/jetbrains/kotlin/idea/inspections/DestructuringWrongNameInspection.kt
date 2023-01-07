@@ -19,6 +19,7 @@ class DestructuringWrongNameInspection : AbstractKotlinInspection() {
             val type = initializer.analyze().getType(initializer) ?: return
 
             val classDescriptor = type.constructor.declarationDescriptor as? ClassDescriptor ?: return
+            if (!classDescriptor.isData) return
 
             val primaryParameterNames = classDescriptor.constructors
                 .firstOrNull { it.isPrimary }

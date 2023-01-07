@@ -19,17 +19,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-/**
- * @author Gregory.Shrago
- */
-public class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLevel> {
+public final class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLevel> {
   public static void pushLanguageLevel(@NotNull final Project project) {
-    PushedFilePropertiesUpdater instance = PushedFilePropertiesUpdater.getInstance(project);
-    for (FilePropertyPusher<?> pusher : EP_NAME.getExtensionList()) {
-      if (pusher instanceof JavaLanguageLevelPusher) {
-        instance.pushAll(pusher);
-      }
-    }
+    JavaLanguageLevelPusher pusher = EP_NAME.findExtension(JavaLanguageLevelPusher.class);
+    PushedFilePropertiesUpdater.getInstance(project).pushAll(pusher);
   }
 
   @Override
@@ -51,7 +44,7 @@ public class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLe
 
   @Override
   public LanguageLevel getImmediateValue(@NotNull Project project, @Nullable VirtualFile file) {
-    return null;
+    return JavaLanguageLevelPusherCustomizer.getImmediateValueImpl(project, file);
   }
 
   @Override
@@ -105,7 +98,7 @@ public class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLe
   public @NlsContexts.DetailedDescription String getInconsistencyLanguageLevelMessage(@NotNull String message,
                                                                                       @NotNull LanguageLevel level,
                                                                                       @NotNull PsiFile file) {
-    return null;
+    return JavaLanguageLevelPusherCustomizer.getInconsistencyLanguageLevelMessageImpl(message, level, file);
   }
 
   @Nullable

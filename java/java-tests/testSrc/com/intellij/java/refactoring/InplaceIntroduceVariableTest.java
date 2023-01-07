@@ -320,6 +320,10 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     doTest(null);
   }
 
+  public void testPatternUsedInSubsequentCondition() {
+    doTest(null);
+  }
+
   private void doTestStopEditing(Consumer<? super AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());

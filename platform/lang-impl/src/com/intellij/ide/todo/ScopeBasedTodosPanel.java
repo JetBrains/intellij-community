@@ -33,12 +33,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class ScopeBasedTodosPanel extends TodoPanel {
+
   private static final @NonNls String SELECTED_SCOPE = "TODO_SCOPE";
   private final Alarm myAlarm;
   private ScopeChooserCombo myScopes;
 
-  public ScopeBasedTodosPanel(final Project project, TodoPanelSettings settings, Content content){
-    super(project,settings,false,content);
+  public ScopeBasedTodosPanel(@NotNull Project project,
+                              @NotNull TodoPanelSettings settings,
+                              @NotNull Content content) {
+    super(project, settings, false, content);
+
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     myScopes.getChildComponent().addActionListener(new ActionListener() {
       @Override

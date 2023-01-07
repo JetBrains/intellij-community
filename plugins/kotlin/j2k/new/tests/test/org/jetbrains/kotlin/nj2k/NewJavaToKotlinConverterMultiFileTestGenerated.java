@@ -38,6 +38,11 @@ public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJ
         runTest("testData/multiFile/DetectPropertiesMultipleFiles/");
     }
 
+    @TestMetadata("FieldToPrimaryConstructorProperty")
+    public void testFieldToPrimaryConstructorProperty() throws Exception {
+        runTest("testData/multiFile/FieldToPrimaryConstructorProperty/");
+    }
+
     @TestMetadata("FieldToProperty")
     public void testFieldToProperty() throws Exception {
         runTest("testData/multiFile/FieldToProperty/");
@@ -56,6 +61,11 @@ public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJ
     @TestMetadata("InterfaceWithGetterInOtherFile")
     public void testInterfaceWithGetterInOtherFile() throws Exception {
         runTest("testData/multiFile/InterfaceWithGetterInOtherFile/");
+    }
+
+    @TestMetadata("JavaUsageOfBothFieldAndAccessor")
+    public void testJavaUsageOfBothFieldAndAccessor() throws Exception {
+        runTest("testData/multiFile/JavaUsageOfBothFieldAndAccessor/");
     }
 
     @TestMetadata("KT11952")

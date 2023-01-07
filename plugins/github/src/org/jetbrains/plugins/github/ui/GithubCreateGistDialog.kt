@@ -8,7 +8,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.EMPTY_LABEL
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -65,7 +64,7 @@ class GithubCreateGistDialog(
         .verticalAlign(VerticalAlign.FILL)
     }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
 
-    row(EMPTY_LABEL) {
+    row("") {
       cell(secretCheckBox)
       cell(browserCheckBox)
       cell(copyLinkCheckBox)

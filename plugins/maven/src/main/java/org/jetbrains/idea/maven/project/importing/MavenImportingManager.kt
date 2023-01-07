@@ -164,7 +164,7 @@ class MavenImportingManager(val project: Project) {
     VirtualFileManager.getInstance().asyncRefresh {
       vfsRefreshPromise.setResult(null)
     }
-    return MavenImportingResult(getImportFinishPromise(), vfsRefreshPromise, initialImportContext.dummyModule)
+    return MavenImportingResult(getImportFinishPromise(), vfsRefreshPromise, initialImportContext.previewModule)
   }
 
   private fun setProjectSettings(initialImportContext: MavenInitialImportContext) {

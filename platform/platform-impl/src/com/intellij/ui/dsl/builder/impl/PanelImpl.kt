@@ -36,7 +36,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   private var enabled = true
 
   override fun row(label: String, init: Row.() -> Unit): RowImpl {
-    if (label === EMPTY_LABEL) {
+    if (label.isEmpty()) {
       val result = RowImpl(dialogPanelConfig, panelContext, this, RowLayout.LABEL_ALIGNED)
       result.cell()
       result.init()
@@ -44,10 +44,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
       return result
     }
     else {
-      if (label.isEmpty()) {
-        warn("Row is created with empty label")
-      }
-
       return row(Label(label), init)
     }
   }

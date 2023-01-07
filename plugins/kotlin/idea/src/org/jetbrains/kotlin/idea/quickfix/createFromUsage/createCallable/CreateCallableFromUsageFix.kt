@@ -97,24 +97,9 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
         val callableInfos = notEmptyCallableInfos() ?: return ""
         val callableInfo = callableInfos.first()
         val receiverTypeInfo = callableInfo.receiverTypeInfo
-        val renderedCallables = callableInfos.map {
+        val renderedCallablesByKind = callableInfos.groupBy({ it.kind }, valueTransform = {
             buildString {
-                if (it.isAbstract) {
-                    append(KotlinBundle.message("text.abstract"))
-                    append(' ')
-                }
-
-                val kind = when (it.kind) {
-                    CallableKind.FUNCTION -> KotlinBundle.message("text.function")
-                    CallableKind.PROPERTY -> KotlinBundle.message("text.property")
-                    CallableKind.CONSTRUCTOR -> KotlinBundle.message("text.secondary.constructor")
-                    else -> throw AssertionError("Unexpected callable info: $it")
-                }
-                append(kind)
-
                 if (it.name.isNotEmpty()) {
-                    append(" '")
-
                     val receiverType = if (!receiverTypeInfo.isOfThis) {
                         CallableBuilderConfiguration(callableInfos, element, isExtension = isExtension)
                             .createBuilder()
@@ -140,16 +125,17 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
                         }
                     }
 
-                    append("${it.name}'")
+                    append(it.name)
                 }
             }
-        }
+        })
 
         return buildString {
             append(KotlinBundle.message("text.create"))
             append(' ')
 
-            if (!callableInfos.any { it.isAbstract }) {
+            val isAbstract = callableInfos.any { it.isAbstract }
+            if (!isAbstract) {
                 if (isExtension) {
                     append(KotlinBundle.message("text.extension"))
                     append(' ')
@@ -157,9 +143,24 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
                     append(KotlinBundle.message("text.member"))
                     append(' ')
                 }
+            } else {
+                append(KotlinBundle.message("text.abstract"))
+                append(' ')
             }
 
-            renderedCallables.joinTo(this)
+            renderedCallablesByKind.entries.joinTo(this) {
+                val kind = it.key
+                val names = it.value.filter { name -> name.isNotEmpty() }
+                val pluralIndex = if (names.size > 1) 2 else 1
+                val kindText =
+                    when(kind) {
+                        CallableKind.FUNCTION -> KotlinBundle.message("text.function.0", pluralIndex)
+                        CallableKind.CONSTRUCTOR -> KotlinBundle.message("text.secondary.constructor")
+                        CallableKind.PROPERTY -> KotlinBundle.message("text.property.0", pluralIndex)
+                        else -> throw AssertionError("Unexpected callable info: $it")
+                    }
+                if (names.isEmpty()) kindText else "$kindText ${names.joinToString { name -> "'$name'" }}"
+            }
         }
     })
 

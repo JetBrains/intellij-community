@@ -66,11 +66,11 @@ public abstract class BaseContribution implements GenericContributionsHost
     @JsonPropertyDescription("Link to online documentation.")
     private String docUrl;
     /**
-     * Relative path to the icon representing the symbol.
+     * Relative path to the icon representing the symbol or actual SVG of the icon.
      * 
      */
     @JsonProperty("icon")
-    @JsonPropertyDescription("Relative path to the icon representing the symbol.")
+    @JsonPropertyDescription("Relative path to the icon representing the symbol or actual SVG of the icon.")
     private String icon;
     /**
      * Allows to specify the source of the entity. For Vue.js component this may be for instance a class.
@@ -212,7 +212,7 @@ public abstract class BaseContribution implements GenericContributionsHost
     }
 
     /**
-     * Relative path to the icon representing the symbol.
+     * Relative path to the icon representing the symbol or actual SVG of the icon.
      * 
      */
     @JsonProperty("icon")
@@ -221,7 +221,7 @@ public abstract class BaseContribution implements GenericContributionsHost
     }
 
     /**
-     * Relative path to the icon representing the symbol.
+     * Relative path to the icon representing the symbol or actual SVG of the icon.
      * 
      */
     @JsonProperty("icon")

@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.EMPTY_LABEL
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import java.nio.file.Path
@@ -31,7 +30,7 @@ class GitNewProjectWizardStep(
   override fun setupUI(builder: Panel) {
     if (gitRepositoryInitializer != null) {
       with(builder) {
-        row(EMPTY_LABEL) {
+        row("") {
           checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
             .bindSelected(gitProperty)
         }.bottomGap(BottomGap.SMALL)

@@ -336,6 +336,37 @@ public final class JavaPsiPatternUtil {
     return components[index];
   }
 
+  public static @Nullable PsiType getDeconstructedImplicitPatternVariableType(@NotNull PsiPatternVariable parameter) {
+    PsiRecordComponent recordComponent = getRecordComponentForPattern(parameter.getPattern());
+    if (recordComponent != null) {
+      PsiTypeTestPattern pattern = (PsiTypeTestPattern)parameter.getParent();
+      PsiDeconstructionList deconstructionList = ObjectUtils.tryCast(pattern.getParent(), PsiDeconstructionList.class);
+      if (deconstructionList == null) return null;
+      PsiDeconstructionPattern deconstructionPattern = (PsiDeconstructionPattern)deconstructionList.getParent();
+      PsiTypeElement typeElement = deconstructionPattern.getTypeElement();
+      PsiClassType patternType = (PsiClassType)typeElement.getType();
+      PsiType[] parameters = patternType.getParameters();
+      PsiType recordComponentType = recordComponent.getType();
+      PsiClass recordClass = recordComponent.getContainingClass();
+      if (recordClass != null) {
+        PsiTypeParameter[] typeParameters = recordClass.getTypeParameters();
+        HashMap<PsiTypeParameter, PsiType> substitutor = new HashMap<>();
+        int index = Math.min(typeParameters.length, parameters.length);
+        for (int i = 0; i < index; i++) {
+          PsiTypeParameter typeParameter = typeParameters[i];
+          PsiType param = parameters[i];
+          substitutor.put(typeParameter, param);
+        }
+        for (int i = index; i < typeParameters.length; i++) {
+          PsiTypeParameter typeParam = typeParameters[i];
+          substitutor.put(typeParam, null);
+        }
+        return PsiSubstitutor.createSubstitutor(substitutor).substitute(recordComponentType);
+      }
+    }
+    return null;
+  }
+
   private static void collectPatternVariableCandidates(@NotNull PsiExpression scope, @NotNull PsiExpression expression,
                                                        Collection<PatternVariableWrapper> candidates, boolean strict) {
     while (true) {

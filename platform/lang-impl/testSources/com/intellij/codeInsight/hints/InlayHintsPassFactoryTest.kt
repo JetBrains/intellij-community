@@ -21,7 +21,7 @@ class InlayHintsPassFactoryTest : BasePlatformTestCase() {
     val language = PlainTextLanguage.INSTANCE
     val key = SettingsKey<NoSettings>("key")
     ExtensionTestUtil.maskExtensions(InlayHintsProviderFactory.EP, listOf(object : InlayHintsProviderFactory {
-      override fun getProvidersInfo(project: Project): List<ProviderInfo<out Any>> {
+      override fun getProvidersInfo(): List<ProviderInfo<out Any>> {
         return listOf(ProviderInfo(language, DummyProvider(key, object : InlayHintsCollector {
           override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
             sink.addInlineElement(0, true, SpacePresentation(1, 1), false)
@@ -43,7 +43,7 @@ class InlayHintsPassFactoryTest : BasePlatformTestCase() {
     myFixture.configureByText("file.txt", "text")
     val language = PlainTextLanguage.INSTANCE
     ExtensionTestUtil.maskExtensions(InlayHintsProviderFactory.EP, listOf(object : InlayHintsProviderFactory {
-      override fun getProvidersInfo(project: Project): List<ProviderInfo<out Any>> {
+      override fun getProvidersInfo(): List<ProviderInfo<out Any>> {
         val smart = ProviderInfo(language, DummyProvider(SettingsKey("smart.key"), object : InlayHintsCollector {
           override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
             sink.addInlineElement(1, true, SpacePresentation(1, 1), false)

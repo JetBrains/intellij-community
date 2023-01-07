@@ -72,7 +72,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
                                          IconManager.getInstance().getIcon("expui/general/closeSmallHovered.svg", AllIcons.class) :
                                          AllIcons.Actions.CloseHovered;
 
-  public static final ActionButtonLook FIELD_INPLACE_LOOK = new FieldInplaceActionButtonLook();
+  private static final ActionButtonLook FIELD_INPLACE_LOOK = new FieldInplaceActionButtonLook();
 
   private static final Border EMPTY_SCROLL_BORDER = JBUI.Borders.empty(2, 0, 2, 2);
 

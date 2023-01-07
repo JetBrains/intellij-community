@@ -738,6 +738,111 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::checkHTMLOnly);
   }
 
+  // PY-33341
+  public void testClassAndInstanceAttributesInOneSectionGoogle() {
+    checkHTMLOnly();
+  }
+
+  // PY-33341
+  public void testClassAndInstanceAttributesInOneSectionNumpy() {
+    checkHTMLOnly();
+  }
+
+  // PY-33341
+  public void testClassAndInstanceAttributesInOneSectionRest() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> checkHTMLOnly());
+  }
+
+  // PY-33341
+  public void testClassAndInstanceAttributesInOneSectionEpydoc() {
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> checkHTMLOnly());
+  }
+
+  // PY-33341
+  public void testAttributesOrderGoogle() {
+    checkHTMLOnly();
+  }
+
+  // PY-33341
+  public void testClassAndInstanceAttributesWithSameNameNotDuplicatedGoogle() {
+    checkHTMLOnly();
+  }
+
+  // PY-33341
+  public void testInheritedAttributesGoogle() {
+    checkHTMLOnly();
+  }
+
+  // PY-33341
+  public void testAttributesDescriptionFromClassDocstringGoogle() {
+    checkHTMLOnly();
+  }
+
+  // PY-33341
+  public void testArgsDescriptionFromClassAndInitNotMixedGoogle() {
+    checkHTMLOnly();
+  }
+
+  // PY-33341
+  public void testArgsDescriptionFromClassDocstringGoogle() {
+    checkHTMLOnly();
+  }
+
+  // PY-33341
+  public void testArgsFromInitNotTakenInClassDocstringGoogle() {
+    checkHTMLOnly();
+  }
+
+  // PY-33341
+  public void testArgsInClassDocGoogle() {
+    checkHTMLOnly();
+  }
+
+  // PY-33341
+  public void testInitEmptyDocstringOverClassDocstringGoogle() {
+    checkHTMLOnly();
+  }
+
+  // PY-33341
+  public void testAttributeDescriptionEmptyGoogle() {
+    checkHTMLOnly();
+  }
+
+  // PY-56416
+  public void testInstanceAttributeDescriptionFromClassDocstringGoogle() {
+    checkHTMLOnly();
+  }
+
+  // PY-56416
+  public void testClassAttributeDescriptionFromClassDocstringGoogle() {
+    checkHTMLOnly();
+  }
+
+  // PY-56416
+  public void testClassAttributeDescriptionFromClassDocstringRest() {
+    checkHTMLOnly();
+  }
+
+  // PY-56416
+  public void testInstanceAttributeDescriptionFromClassDocstringRest() {
+    checkHTMLOnly();
+  }
+
+  // PY-56416
+  public void testAttributeDocsNotMixed() {
+    checkHTMLOnly();
+  }
+
+  // PY-28900
+  public void testParameterDescriptionFromClassDocstringGoogle() {
+    checkHTMLOnly();
+  }
+
+  // PY-28900
+  public void testParameterDescriptionFromInitDocstringOverClassDocstringGoogle() {
+    checkHTMLOnly();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/quickdoc/";

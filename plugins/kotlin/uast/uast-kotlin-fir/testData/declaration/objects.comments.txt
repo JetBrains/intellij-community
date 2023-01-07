@@ -20,7 +20,6 @@ KotlinUFile:objects.kt(
         KotlinUField:tasks(
         )
         KotlinUField:INSTANCE(
-            UComment(// Single-line comment bound to object)
         )
         KotlinUMethod:getTasks(
         )
@@ -31,7 +30,6 @@ KotlinUFile:objects.kt(
         KotlinUMethod:runAll(
         )
         KotlinConstructorUMethod:RunnableManager(
-            UComment(// Single-line comment bound to object)
         )
     )
 )
