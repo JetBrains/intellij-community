@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -430,5 +431,21 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
     TimeoutUtil.sleep(delay + 1000);
     canContinue.countDown();
     assertTrue(startedExecuting2.await(10, TimeUnit.SECONDS));
+  }
+  public void testQueueInsideQueueMustNotInterfereWithWaitForAllExecuted() throws Exception {
+    MergingUpdateQueue queue = new MergingUpdateQueue(getTestName(false), 100, true, null, getTestRootDisposable(), null, Alarm.ThreadToUse.POOLED_THREAD);
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicBoolean secondExecuted = new AtomicBoolean();
+    queue.queue(Update.create("first", () -> {
+      queue.queue(Update.create("second", () -> {
+        secondExecuted.set(true);
+      }));
+      TimeoutUtil.sleep(1000);
+      latch.countDown();
+    }));
+
+    queue.waitForAllExecuted(10, TimeUnit.SECONDS);
+    assertEquals(0, latch.getCount());
+    assertTrue(secondExecuted.get());
   }
 }
