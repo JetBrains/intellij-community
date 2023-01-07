@@ -30,6 +30,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
+import org.jetbrains.intellij.build.io.suspendingRetryWithExponentialBackOff
 import org.jetbrains.xxh3.Xx3UnencodedString
 import java.nio.channels.FileChannel
 import java.nio.charset.StandardCharsets
@@ -40,7 +41,6 @@ import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.FileTime
 import java.time.Instant
 import java.util.*
-import java.util.concurrent.locks.*
 import kotlin.time.Duration.Companion.hours
 
 const val SPACE_REPO_HOST = "packages.jetbrains.team"
@@ -157,48 +157,51 @@ suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDepende
     }
 
     return spanBuilder("download").setAttribute("url", url).setAttribute("target", targetPath).useWithScope2 {
-      // save to the same disk to ensure that move will be atomic and not as a copy
-      val tempFile = target.parent
-        .resolve("${target.fileName}-${(now.epochSecond - 1634886185).toString(36)}-${now.nano.toString(36)}".take(255))
-      try {
-        val response = httpSpaceClient.value.prepareGet(url).execute {
-          coroutineScope {
-            it.bodyAsChannel().copyAndClose(writeChannel(tempFile))
-          }
-          it
-        }
-        val statusCode = response.status.value
-        if (statusCode != 200) {
-          val builder = StringBuilder("Cannot download\n")
-          val headers = response.headers
-          headers.names()
-            .asSequence()
-            .sorted()
-            .flatMap { headerName -> headers.getAll(headerName)!!.map { value -> "Header: $headerName: $value\n" } }
-            .forEach(builder::append)
-          builder.append('\n')
-          if (Files.exists(tempFile)) {
-            Files.newInputStream(tempFile).use { inputStream ->
-              // yes, not trying to guess encoding
-              // string constructor should be exception free,
-              // so at worse we'll get some random characters
-              builder.append(inputStream.readNBytes(1024).toString(StandardCharsets.UTF_8))
-            }
-          }
-          throw BuildDependenciesDownloader.HttpStatusException(builder.toString(), statusCode, url)
-        }
-
-        val contentLength = response.headers.get(HttpHeaders.ContentLength)?.toLongOrNull() ?: -1
-        check(contentLength > 0) { "Header '${HttpHeaders.ContentLength}' is missing or zero for $url" }
-        val fileSize = Files.size(tempFile)
-        check(fileSize == contentLength) {
-          "Wrong file length after downloading uri '$url' to '$tempFile': expected length $contentLength " +
-          "from Content-Length header, but got $fileSize on disk"
-        }
-        Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
-      }
-      finally {
+      suspendingRetryWithExponentialBackOff {
+        // save to the same disk to ensure that move will be atomic and not as a copy
+        val tempFile = target.parent
+          .resolve("${target.fileName}-${(now.epochSecond - 1634886185).toString(36)}-${now.nano.toString(36)}".take(255))
         Files.deleteIfExists(tempFile)
+        try {
+          val response = httpSpaceClient.value.prepareGet(url).execute {
+            coroutineScope {
+              it.bodyAsChannel().copyAndClose(writeChannel(tempFile))
+            }
+            it
+          }
+          val statusCode = response.status.value
+          if (statusCode != 200) {
+            val builder = StringBuilder("Cannot download\n")
+            val headers = response.headers
+            headers.names()
+              .asSequence()
+              .sorted()
+              .flatMap { headerName -> headers.getAll(headerName)!!.map { value -> "Header: $headerName: $value\n" } }
+              .forEach(builder::append)
+            builder.append('\n')
+            if (Files.exists(tempFile)) {
+              Files.newInputStream(tempFile).use { inputStream ->
+                // yes, not trying to guess encoding
+                // string constructor should be exception free,
+                // so at worse we'll get some random characters
+                builder.append(inputStream.readNBytes(1024).toString(StandardCharsets.UTF_8))
+              }
+            }
+            throw BuildDependenciesDownloader.HttpStatusException(builder.toString(), statusCode, url)
+          }
+
+          val contentLength = response.headers.get(HttpHeaders.ContentLength)?.toLongOrNull() ?: -1
+          check(contentLength > 0) { "Header '${HttpHeaders.ContentLength}' is missing or zero for $url" }
+          val fileSize = Files.size(tempFile)
+          check(fileSize == contentLength) {
+            "Wrong file length after downloading uri '$url' to '$tempFile': expected length $contentLength " +
+            "from Content-Length header, but got $fileSize on disk"
+          }
+          Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+        }
+        finally {
+          Files.deleteIfExists(tempFile)
+        }
       }
 
       target
