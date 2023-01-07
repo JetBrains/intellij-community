@@ -1,11 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SmallStreamlinedBlobStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
 import com.intellij.util.IntPair;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
-import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.StorageLockContext;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
@@ -23,26 +21,25 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.INLINE_ATTRIBUTE_SMALLER_THAN;
-import static com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfStreamlinedBlobStorageTest.AttributeRecord.*;
+import static com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase.AttributeRecord.*;
 import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID;
 import static org.junit.Assert.*;
 
 /**
  *
  */
-public class AttributesStorageOnTheTopOfStreamlinedBlobStorageTest {
+public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase {
 
-  private static final int PAGE_SIZE = 1 << 15;
-  private static final StorageLockContext LOCK_CONTEXT = new StorageLockContext(true, true);
+  protected static final int PAGE_SIZE = 1 << 15;
+  protected static final StorageLockContext LOCK_CONTEXT = new StorageLockContext(true, true);
 
   /**
    * Not so much records because each of them could be up to 64k, which leads to OoM quite quickly
    */
-  private static final int ENOUGH_RECORDS = 1 << 15;
+  protected static final int ENOUGH_RECORDS = 1 << 15;
 
-  private static final int ARBITRARY_FILE_ID = 157;
-  private static final int ARBITRARY_ATTRIBUTE_ID = 10;
-  private Attributes attributes;
+  protected static final int ARBITRARY_FILE_ID = 157;
+  protected static final int ARBITRARY_ATTRIBUTE_ID = 10;
 
 
   @BeforeClass
@@ -53,17 +50,20 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageTest {
   @Rule
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private Path storagePath;
-  private SmallStreamlinedBlobStorage storage;
 
-  private AttributesStorageOnTheTopOfBlobStorage attributesStorage;
+  protected Path storagePath;
+  protected StreamlinedBlobStorage storage;
+
+  protected AttributesStorageOnTheTopOfBlobStorage attributesStorage;
+
+  protected Attributes attributes;
 
   @Before
   public void setUp() throws Exception {
     attributes = new Attributes();
 
     storagePath = temporaryFolder.newFile().toPath();
-    openStorage();
+    attributesStorage = openAttributesStorage(storagePath);
   }
 
   @After
@@ -83,7 +83,7 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageTest {
   }
 
   @Test
-  public void singleSmallRecordInserted_ExistsInStorage_AndCouldBeReadBack() throws IOException {
+  public void singleSmallRecordInserted_AreAllReportedExistInStorage_AndCouldBeReadBack() throws IOException {
     final AttributeRecord record = newAttributeRecord(ARBITRARY_FILE_ID, ARBITRARY_ATTRIBUTE_ID)
       .withRandomAttributeBytes(INLINE_ATTRIBUTE_SMALLER_THAN - 1);
 
@@ -102,7 +102,7 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageTest {
   }
 
   @Test
-  public void singleBigRecordInserted_ExistsInStorage_AndCouldBeReadBack() throws IOException {
+  public void singleBigRecordInserted_ReportedExistInStorage_AndCouldBeReadBack() throws IOException {
     final AttributeRecord record = newAttributeRecord(ARBITRARY_FILE_ID, ARBITRARY_ATTRIBUTE_ID)
       .withRandomAttributeBytes(INLINE_ATTRIBUTE_SMALLER_THAN + 1);
 
@@ -121,7 +121,7 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageTest {
   }
 
   @Test
-  public void fewAttributesInsertedForFile_ExistsInStorage_AndCouldBeReadBack() throws IOException {
+  public void fewAttributesInsertedForFile_AreAllReportedExistInStorage_AndCouldBeReadBack() throws IOException {
     final AttributeRecord[] records = {
       newAttributeRecord(ARBITRARY_FILE_ID, 1)
         .withRandomAttributeBytes(16),
@@ -147,7 +147,7 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageTest {
   }
 
   @Test
-  public void fewAttributesInsertedForFile_ExistsInStorage_AndCouldBeReadBack_EvenAfterReload() throws IOException {
+  public void fewAttributesInsertedForFile_AreAllReportedExistInStorage_AndCouldBeReadBack_EvenAfterReload() throws IOException {
     final int version = 47;
     attributesStorage.setVersion(version);
 
@@ -162,8 +162,7 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageTest {
 
     final AttributeRecord[] insertedRecords = attributes.insertOrUpdateAll(records, attributesStorage);
 
-    closeStorage();
-    openStorage();
+    reopenAttributesStorage();
 
     assertEquals(
       "Expect to read same version as was written",
@@ -208,7 +207,7 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageTest {
   }
 
   @Test
-  public void manyAttributesInserted_Exists_AndCouldBeReadBackAsIs() throws IOException {
+  public void manyAttributesInserted_AreAllReportedExistInStorage_AndCouldBeReadBackAsIs() throws IOException {
     final int maxAttributeValueSize = Short.MAX_VALUE / 2;
     final int differentAttributesCount = 1024;
     final AttributeRecord[] records = generateManyRandomRecords(
@@ -233,7 +232,7 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageTest {
   }
 
   @Test
-  public void manyAttributesInserted_Exists_AndCouldBeReadBackAsIs_WithForEach() throws IOException {
+  public void manyAttributesInserted_CouldAllBeReadBackAsIs_WithForEach() throws IOException {
     final int maxAttributeValueSize = Short.MAX_VALUE / 2;
     final int differentAttributesCount = 1024;
     final AttributeRecord[] records = generateManyRandomRecords(
@@ -356,7 +355,7 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageTest {
   }
 
   @Test
-  public void manySmallRecordInserted_ExistsInStorage_AndCouldBeReadBack() throws IOException {
+  public void manySmallRecordInserted_AreAllReportedExistInStorage_AndCouldBeReadBack() throws IOException {
     final int inlineAttributeSize = INLINE_ATTRIBUTE_SMALLER_THAN - 1;
     final int fileId = ARBITRARY_FILE_ID;
     final AttributeRecord[] records = IntStream.range(0, 100)
@@ -380,24 +379,16 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageTest {
   }
 
 
-  /* ======================== infrastructure ============================================================== */
+  // ======================== infrastructure: ============================================================== //
 
-  private void openStorage() throws IOException {
-    final PagedFileStorage pagedStorage = new PagedFileStorage(
-      storagePath,
-      LOCK_CONTEXT,
-      PAGE_SIZE,
-      true,
-      true
-    );
-    storage = new SmallStreamlinedBlobStorage(
-      pagedStorage,
-      new DataLengthPlusFixedPercentStrategy(256, 64, 30)
-    );
-    attributesStorage = new AttributesStorageOnTheTopOfBlobStorage(storage);
+  protected abstract AttributesStorageOnTheTopOfBlobStorage openAttributesStorage(final Path storagePath) throws IOException;
+
+  protected void reopenAttributesStorage() throws IOException {
+    closeStorage();
+    attributesStorage = openAttributesStorage(storagePath);
   }
 
-  private void closeStorage() throws IOException {
+  protected void closeStorage() throws IOException {
     if (attributesStorage != null) {
       attributesStorage.close();
     }
@@ -406,9 +397,9 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageTest {
     }
   }
 
-  private static AttributeRecord[] generateManyRandomRecords(final int size,
-                                                             final int differentAttributesCount,
-                                                             final int maxAttributeValueSize) {
+  protected static AttributeRecord[] generateManyRandomRecords(final int size,
+                                                               final int differentAttributesCount,
+                                                               final int maxAttributeValueSize) {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
 
     final int[] fileIds = rnd.ints()
@@ -591,8 +582,8 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageTest {
     }
   }
 
-  private static byte[] generateBytes(final ThreadLocalRandom rnd,
-                                      final int size) {
+  protected static byte[] generateBytes(final ThreadLocalRandom rnd,
+                                        final int size) {
     final byte[] attributeBytes = new byte[size];
     rnd.nextBytes(attributeBytes);
     return attributeBytes;

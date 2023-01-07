@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfStreamlinedBlobStorageTest.AttributeRecord;
-import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfStreamlinedBlobStorageTest.Attributes;
+import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase.AttributeRecord;
+import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase.Attributes;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SmallStreamlinedBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
@@ -24,9 +24,6 @@ import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStora
 import static org.jetbrains.jetCheck.Generator.constant;
 import static org.junit.Assert.*;
 
-/**
- *
- */
 public class AttributesStorageOnTheTopOfStreamlinedBlobStoragePropertyBasedTest {
 
   private static final int PAGE_SIZE = 1 << 14;
@@ -69,7 +66,7 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStoragePropertyBasedTest 
           final Attributes attributes = new Attributes();
           try (AttributesStorageOnTheTopOfBlobStorage storage = createStorage(temporaryFolder.newFile().toPath())) {
             final List<AttributeRecord> records = new ArrayList<>();
-            //updates 10x against insert/delete
+            //updates count 10x of inserts/deletes
             final Generator<ImperativeCommand> commandsGenerator = Generator.frequency(
               1, constant(new InsertAttribute(attributes, storage, records)),
               10, constant(new UpdateAttribute(attributes, storage, records)),
@@ -84,6 +81,8 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStoragePropertyBasedTest 
         };
       });
   }
+
+  /* ======================== infrastructure ============================================================== */
 
   public static class InsertAttribute implements ImperativeCommand {
     private final Attributes attributes;
@@ -214,7 +213,4 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStoragePropertyBasedTest 
       }
     }
   }
-
-
-  /* ======================== infrastructure ============================================================== */
 }
