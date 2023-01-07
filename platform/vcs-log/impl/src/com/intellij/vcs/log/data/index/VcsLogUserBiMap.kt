@@ -11,12 +11,10 @@ internal interface VcsLogUserBiMap {
   @Throws(IOException::class)
   fun isEmpty(): Boolean
 
-  @Throws(IOException::class)
   fun getAuthorForCommit(commit: Int): VcsUser?
 
   fun getUserId(user: VcsUser): Int
 
-  @Throws(IOException::class)
   fun getUserById(id: Int): VcsUser?
 
   fun update(index: Int, detail: VcsLogIndexer.CompressedDetails)

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.function.IntConsumer;
 import java.util.function.Predicate;
@@ -73,14 +74,9 @@ public final class IndexDataGetter {
 
   public @Nullable VcsUser getCommitter(int commit) {
     return executeAndCatch(() -> {
-      Integer committer = myIndexStorage.store.getCommitter(commit);
-      if (committer != null) {
-        return myIndexStorage.users.getUserById(committer);
-      }
-      if (myIndexStorage.store.containsCommit(commit)) {
-        return myIndexStorage.users.getAuthorForCommit(commit);
-      }
-      return null;
+      return myIndexStorage.store.getCommitterOrAuthor(commit,
+                                                       myIndexStorage.users::getUserById,
+                                                       myIndexStorage.users::getAuthorForCommit);
     });
   }
 
@@ -441,7 +437,7 @@ public final class IndexDataGetter {
     try {
       return computable.compute();
     }
-    catch (IOException | StorageException | CorruptedDataException e) {
+    catch (IOException | UncheckedIOException | StorageException | CorruptedDataException e) {
       myIndexStorage.markCorrupted();
       myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
     }

@@ -66,7 +66,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   static final int VERSION = 18;
   public static final VcsLogProgress.ProgressKey INDEXING = new VcsLogProgress.ProgressKey("index");
 
-  private static final boolean useMvStore = SystemProperties.getBooleanProperty("vcs.log.sqlite", false);
+  private static final boolean useSqlite = SystemProperties.getBooleanProperty("vcs.log.sqlite", false);
 
   private final @NotNull Project myProject;
   private final @NotNull VcsLogErrorHandler myErrorHandler;
@@ -343,7 +343,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
       try {
         StorageLockContext storageLockContext = new StorageLockContext();
-        if (useMvStore) {
+        if (useSqlite) {
           store = new SqliteVcsLogStore(project);
         }
         else {
@@ -488,7 +488,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   }
 
   private final class IndexingRequest {
-    private static final int BATCH_SIZE = 20000;
+    private static final int BATCH_SIZE = 20_000;
     private static final int FLUSHED_COMMITS_NUMBER = 15000;
     private static final int LOGGED_ERRORS_COUNT = 5;
     private static final int STOPPING_ERROR_COUNT = 30;

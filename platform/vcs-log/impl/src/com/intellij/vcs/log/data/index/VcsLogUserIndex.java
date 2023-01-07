@@ -54,7 +54,7 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
                          @NotNull Disposable disposableParent) throws IOException {
     super(storageId,
           USERS,
-          new UserIndexer(createUsersEnumerator(storageId, storageLockContext, userRegistry)),
+          new UserIndexer(createUserEnumerator(storageId, storageLockContext, userRegistry)),
           VoidDataExternalizer.INSTANCE,
           storageLockContext,
           errorHandler,
@@ -74,9 +74,9 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
                       new KeyCollectionForwardIndexAccessor<>(new IntCollectionDataExternalizer()));
   }
 
-  private static @NotNull PersistentEnumerator<VcsUser> createUsersEnumerator(@NotNull StorageId storageId,
-                                                                              @Nullable StorageLockContext storageLockContext,
-                                                                              @NotNull VcsUserRegistry userRegistry) throws IOException {
+  private static @NotNull PersistentEnumerator<VcsUser> createUserEnumerator(@NotNull StorageId storageId,
+                                                                             @Nullable StorageLockContext storageLockContext,
+                                                                             @NotNull VcsUserRegistry userRegistry) throws IOException {
     Path storageFile = storageId.getStorageFile(USERS_IDS);
     return new PersistentEnumerator<>(storageFile, new VcsUserKeyDescriptor(userRegistry), AbstractStorage.PAGE_SIZE, storageLockContext,
                                       storageId.getVersion());
@@ -92,11 +92,18 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
   }
 
   @Override
-  public @Nullable VcsUser getAuthorForCommit(int commit) throws IOException {
-    Collection<Integer> userIds = getKeysForCommit(commit);
-    if (userIds == null || userIds.isEmpty()) return null;
-    LOG.assertTrue(userIds.size() == 1);
-    return myUserIndexer.getUserById(Objects.requireNonNull(getFirstItem(userIds)));
+  public @Nullable VcsUser getAuthorForCommit(int commit) {
+    try {
+      Collection<Integer> userIds = getKeysForCommit(commit);
+      if (userIds == null || userIds.isEmpty()) {
+        return null;
+      }
+      LOG.assertTrue(userIds.size() == 1);
+      return myUserIndexer.getUserById(Objects.requireNonNull(getFirstItem(userIds)));
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   @Override
@@ -110,8 +117,13 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
   }
 
   @Override
-  public @Nullable VcsUser getUserById(int id) throws IOException {
-    return myUserIndexer.getUserById(id);
+  public @Nullable VcsUser getUserById(int id) {
+    try {
+      return myUserIndexer.getUserById(id);
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   @Override

@@ -29,6 +29,7 @@ import java.sql.PreparedStatement
 import java.sql.Types
 import java.util.*
 import java.util.function.IntConsumer
+import java.util.function.IntFunction
 import java.util.function.ToIntFunction
 
 private fun createTables(connection: Connection) {
@@ -174,7 +175,7 @@ internal class SqliteVcsLogStore(project: Project) : VcsLogStore {
     return result
   }
 
-  override fun getCommitter(commitId: Int): Int? {
+  override fun getCommitterOrAuthor(commitId: Int, commitToCommitter: IntFunction<VcsUser>, commitToAuthor: IntFunction<VcsUser>): VcsUser? {
     //language=SQLite
     val statement = connection.prepareStatement("select committerId from log where commitId = ?")
     statement.setInt(1, commitId)
@@ -185,11 +186,11 @@ internal class SqliteVcsLogStore(project: Project) : VcsLogStore {
 
     val result = resultSet.getInt(1)
     if (resultSet.wasNull()) {
-      return null
+      return commitToAuthor.apply(commitId)
     }
 
     statement.close()
-    return result
+    return commitToCommitter.apply(result)
   }
 
   override fun getTimestamp(commitId: Int): LongArray? {

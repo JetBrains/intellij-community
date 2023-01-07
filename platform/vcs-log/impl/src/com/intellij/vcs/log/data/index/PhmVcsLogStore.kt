@@ -23,6 +23,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.util.*
 import java.util.function.IntConsumer
+import java.util.function.IntFunction
 import java.util.function.ToIntFunction
 
 internal class PhmVcsLogStore(
@@ -155,7 +156,15 @@ internal class PhmVcsLogStore(
 
   override fun getMessage(commitId: Int): String? = messages.get(commitId)
 
-  override fun getCommitter(commitId: Int): Int? = committers.get(commitId)
+  override fun getCommitterOrAuthor(commitId: Int, commitToCommitter: IntFunction<VcsUser>, commitToAuthor: IntFunction<VcsUser>): VcsUser? {
+    val committer = committers.get(commitId)
+    if (committer != null) {
+      return commitToCommitter.apply(committer)
+    }
+    else {
+      return if (messages.containsMapping(commitId)) commitToAuthor.apply(commitId) else null
+    }
+  }
 
   override fun getTimestamp(commitId: Int): LongArray? = timestamps.get(commitId)
 

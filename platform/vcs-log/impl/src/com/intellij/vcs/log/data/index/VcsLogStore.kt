@@ -6,6 +6,7 @@ import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.io.IOException
+import java.util.function.IntFunction
 import java.util.function.ToIntFunction
 
 internal interface VcsLogStore {
@@ -14,7 +15,7 @@ internal interface VcsLogStore {
 
   fun getMessage(commitId: Int): String?
 
-  fun getCommitter(commitId: Int): Int?
+  fun getCommitterOrAuthor(commitId: Int, commitToCommitter: IntFunction<VcsUser>, commitToAuthor: IntFunction<VcsUser>): VcsUser?
 
   fun getTimestamp(commitId: Int): LongArray?
 
