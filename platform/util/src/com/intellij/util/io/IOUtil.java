@@ -301,7 +301,7 @@ public final class IOUtil {
 
   public static <T> T openCleanOrResetBroken(@NotNull ThrowableComputable<T, ? extends IOException> factoryComputable,
                                              @NotNull Path file) throws IOException {
-    return openCleanOrResetBroken(factoryComputable, file.toFile());
+    return openCleanOrResetBroken(factoryComputable, () -> deleteAllFilesStartingWith(file));
   }
 
   public static <T> T openCleanOrResetBroken(@NotNull ThrowableComputable<T, ? extends IOException> factoryComputable,

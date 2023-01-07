@@ -12,14 +12,11 @@ import com.intellij.util.Function;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.data.index.MyCommitIdKeyDescriptor;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.StorageId;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -60,17 +58,16 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
                            @NotNull Disposable parent) throws IOException {
     myErrorHandler = errorHandler;
 
-    List<VirtualFile> roots = StreamEx.ofKeys(logProviders).sortedBy(VirtualFile::getPath).toList();
-
     String logId = PersistentUtil.calcLogId(project, logProviders);
 
+    List<VirtualFile> roots = logProviders.keySet().stream().sorted(Comparator.comparing(VirtualFile::getPath)).toList();
     MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
     myHashesStorageId = new StorageId(project.getName(), HASHES_STORAGE, logId, VERSION);
     StorageLockContext storageLockContext = new StorageLockContext();
 
     myCommitIdEnumerator = IOUtil.openCleanOrResetBroken(() -> new MyPersistentBTreeEnumerator(myHashesStorageId, commitIdKeyDescriptor,
                                                                                                storageLockContext),
-                                                         myHashesStorageId.getStorageFile(STORAGE).toFile());
+                                                         myHashesStorageId.getStorageFile(STORAGE));
 
     VcsRefKeyDescriptor refsKeyDescriptor = new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor);
     myRefsStorageId = new StorageId(project.getName(), REFS_STORAGE, logId, VERSION + REFS_VERSION);
@@ -84,8 +81,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   public static @NotNull Function<Integer, Hash> createHashGetter(@NotNull VcsLogStorage storage) {
     return commitIndex -> {
       CommitId commitId = storage.getCommitId(commitIndex);
-      if (commitId == null) return null;
-      return commitId.getHash();
+      return commitId == null ? null : commitId.getHash();
     };
   }
 
@@ -206,49 +202,6 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   private void checkDisposed() {
     if (myDisposed) throw new ProcessCanceledException();
-  }
-
-  private static class MyCommitIdKeyDescriptor implements KeyDescriptor<CommitId> {
-    private final @NotNull List<? extends VirtualFile> myRoots;
-    private final @NotNull Object2IntMap<VirtualFile> myRootsReversed;
-
-    MyCommitIdKeyDescriptor(@NotNull List<? extends VirtualFile> roots) {
-      myRoots = roots;
-
-      myRootsReversed = new Object2IntOpenHashMap<>();
-      for (int i = 0; i < roots.size(); i++) {
-        myRootsReversed.put(roots.get(i), i);
-      }
-    }
-
-    @Override
-    public void save(@NotNull DataOutput out, CommitId value) throws IOException {
-      ((HashImpl)value.getHash()).write(out);
-      out.writeInt(myRootsReversed.getInt(value.getRoot()));
-    }
-
-    @Override
-    public CommitId read(@NotNull DataInput in) throws IOException {
-      Hash hash = HashImpl.read(in);
-      VirtualFile root = myRoots.get(in.readInt());
-      if (root == null) return null;
-      return new CommitId(hash, root);
-    }
-
-    @Override
-    public int getHashCode(CommitId value) {
-      int result = value.getHash().hashCode();
-      result = 31 * result + myRootsReversed.getInt(value);
-      return result;
-    }
-
-    @Override
-    public boolean isEqual(@Nullable CommitId val1, @Nullable CommitId val2) {
-      if (val1 == val2) return true;
-      if (val1 == null || val2 == null) return false;
-      return val1.getHash().equals(val2.getHash()) &&
-             myRootsReversed.getInt(val1.getRoot()) == myRootsReversed.getInt(val2.getRoot());
-    }
   }
 
   private static class EmptyLogStorage implements VcsLogStorage {
