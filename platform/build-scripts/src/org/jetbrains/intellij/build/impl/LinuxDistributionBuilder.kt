@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.diagnostic.telemetry.useWithScope2
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -191,6 +192,10 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     spanBuilder("build Linux .snap package")
       .setAttribute("snapName", snapName)
       .useWithScope { span ->
+        if (SystemInfoRt.isWindows) {
+          span.addEvent(".snap cannot be built on Windows, skipped")
+          return@useWithScope
+        }
         check(iconPngPath != null) { context.messages.error("'iconPngPath' not set") }
         check(!customizer.snapDescription.isNullOrBlank()) { context.messages.error("'snapDescription' not set") }
 
