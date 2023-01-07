@@ -571,7 +571,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
     Place oldPlace = oldDocumentWindow.getShreds();
     // can be different from newText if decode fails in the middle and we'll have to shrink the document
     StringBuilder newDocumentText = new StringBuilder(newText.length());
-    // we need escaper but it only works with committed PSI,
+    // we need escaper, but it only works with committed PSI,
     // so we get the committed (but not yet applied) PSI from the commit-document-in-the-background process
     // and find the corresponding injection host there
     // and create literal escaper from that new (dummy) psi
@@ -579,17 +579,24 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
     StringBuilder chars = new StringBuilder();
     for (PsiLanguageInjectionHost.Shred shred : oldPlace) {
       PsiLanguageInjectionHost oldHost = shred.getHost();
-      if (oldHost == null) return null;
+      if (oldHost == null) {
+        return null;
+      }
       SmartPsiElementPointer<PsiLanguageInjectionHost> hostPointer = ((ShredImpl)shred).getSmartPointer();
-      Segment newInjectionHostRange = calcActualRange(hostPsiFile, hostDocument, hostPointer.getPsiRange());
-      if (newInjectionHostRange == null) return null;
+      Segment hostPsiRange = hostPointer.getPsiRange();
+      Segment newInjectionHostRange = SelfElementInfo.calcActualRangeAfterDocumentEvents(hostPsiFile, hostDocument, hostPsiRange, true);
+      if (newInjectionHostRange == null) {
+        return null;
+      }
       PsiLanguageInjectionHost newDummyInjectionHost = findNewInjectionHost(hostPsiFile, oldRoot, newRoot, oldHost, newInjectionHostRange);
       if (newDummyInjectionHost == null) {
         return null;
       }
       newInjectionHostRange = newDummyInjectionHost.getTextRange().shiftRight(oldRoot.getTextRange().getStartOffset());
       Segment hostInjectionRange = shred.getHostRangeMarker(); // in the new document
-      if (hostInjectionRange == null) return null;
+      if (hostInjectionRange == null) {
+        return null;
+      }
       TextRange rangeInsideHost = TextRange.create(hostInjectionRange).shiftLeft(newInjectionHostRange.getStartOffset());
 
       PlaceInfo info = new PlaceInfo(shred.getPrefix(), shred.getSuffix(), newDummyInjectionHost, rangeInsideHost);
@@ -652,12 +659,6 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
         return true;
       };
     }
-  }
-
-  private static Segment calcActualRange(@NotNull PsiFile containingFile,
-                                         @NotNull Document document,
-                                         @NotNull Segment range) {
-    return SelfElementInfo.calcActualRangeAfterDocumentEvents(containingFile, document, range, true);
   }
 
   private static ASTNode @NotNull [] parseFile(@NotNull Language language, Language forcedLanguage,
