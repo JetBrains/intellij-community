@@ -25,6 +25,7 @@ import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcsUtil.VcsUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -134,7 +135,7 @@ public final class VcsLogUtil {
     return new HashSet<>(ContainerUtil.intersection(fromRootFilter, fromStructureFilter));
   }
 
-  // for given root returns files that are selected in it
+  // for given root returns files that are selected in it,
   // if a root is visible as a whole returns empty set
   // same if root is invisible as a whole
   // so check that before calling this method
@@ -358,7 +359,10 @@ public final class VcsLogUtil {
     }
     ProjectLevelVcsManager.getInstance(project).runAfterInitialization(() -> {
       ApplicationManager.getApplication().invokeLater(() -> {
-        VcsProjectLog.runWhenLogIsReady(project, action);
+        VcsProjectLog.Companion.runWhenLogIsReady(project, manager -> {
+          action.consume(logManager);
+          return Unit.INSTANCE;
+        });
       }, project.getDisposed());
     });
   }

@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
 
-public class VcsLogManager implements Disposable {
+public final class VcsLogManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogManager.class);
 
   private final @NotNull Project myProject;
@@ -54,7 +54,7 @@ public class VcsLogManager implements Disposable {
   private final @NotNull VcsLogStatusBarProgress myStatusBarProgress;
   private boolean myDisposed;
 
-  public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties, @NotNull Collection<? extends VcsRoot> roots) {
+  public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties, @NotNull Collection<VcsRoot> roots) {
     this(project, uiProperties, findLogProviders(roots, project), true, null);
   }
 
@@ -91,7 +91,7 @@ public class VcsLogManager implements Disposable {
   }
 
   /**
-   * Checks if this Log has full data pack and there are no postponed refreshes. Does not check if there are refreshes in progress.
+   * Checks if this Log has a full data pack and there are no postponed refreshes. Does not check if there are refreshes in progress.
    */
   @ApiStatus.Internal
   @RequiresEdt
@@ -100,7 +100,7 @@ public class VcsLogManager implements Disposable {
   }
 
   /**
-   * Schedules Log initialization and update even when none on the log tabs is visible and power save mode is enabled.
+   * Schedules Log initialization and update even when none on the log tabs is visible and a power save mode is enabled.
    *
    * @see PostponableLogRefresher#canRefreshNow()
    */
@@ -212,7 +212,7 @@ public class VcsLogManager implements Disposable {
     }
   }
 
-  public static @NotNull Map<VirtualFile, VcsLogProvider> findLogProviders(@NotNull Collection<? extends VcsRoot> roots, @NotNull Project project) {
+  public static @NotNull Map<VirtualFile, VcsLogProvider> findLogProviders(@NotNull Collection<VcsRoot> roots, @NotNull Project project) {
     if (roots.isEmpty()) return Collections.emptyMap();
 
     Map<VirtualFile, VcsLogProvider> logProviders = new HashMap<>();
@@ -246,7 +246,7 @@ public class VcsLogManager implements Disposable {
   /**
    * Dispose VcsLogManager and execute some activity after it.
    *
-   * @param callback activity to run after log is disposed. Is executed in background thread. null means execution of additional activity after dispose is not required.
+   * @param callback activity to run after log is disposed. Is executed in background thread. null means execution of additional activity after disposing is not required.
    */
   @RequiresEdt
   public void dispose(@Nullable Runnable callback) {
@@ -263,7 +263,7 @@ public class VcsLogManager implements Disposable {
   public void dispose() {
     // since disposing log triggers flushing indexes on disk we do not want to do it in EDT
     // disposing of VcsLogManager is done by manually executing dispose(@Nullable Runnable callback)
-    // the above method first disposes ui in EDT, than disposes everything else in background
+    // the above method first disposes ui in EDT, then disposes everything else in a background
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     LOG.debug("Disposed Vcs Log for " + VcsLogUtil.getProvidersMapText(myLogData.getLogProviders()));
   }
