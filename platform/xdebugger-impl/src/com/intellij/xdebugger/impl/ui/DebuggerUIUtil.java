@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -462,6 +463,7 @@ public final class DebuggerUIUtil {
     public void evaluated(@NotNull final String fullValue, @Nullable final Font font) {
       AppUIUtil.invokeOnEdt(() -> {
         try {
+          myPanel.removeAll();
           JComponent component = myEvaluator.createComponent(fullValue);
           if (component == null) {
             EditorTextField textArea = createTextViewer(fullValue, myProject);
@@ -471,6 +473,8 @@ public final class DebuggerUIUtil {
             component = textArea;
           }
           myPanel.add(component);
+          myPanel.revalidate();
+          myPanel.repaint();
         } catch (Exception e) {
           errorOccurred(e.toString());
         }
@@ -480,6 +484,7 @@ public final class DebuggerUIUtil {
     @Override
     public void errorOccurred(@NotNull final String errorMessage) {
       AppUIUtil.invokeOnEdt(() -> {
+        myPanel.removeAll();
         EditorTextField textArea = createTextViewer(errorMessage, myProject);
         textArea.setForeground(XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.getFgColor());
         myPanel.add(textArea);
