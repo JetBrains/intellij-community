@@ -748,6 +748,36 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/constructor.kt");
         }
 
+        @TestMetadata("definitelyNonNullType.kt")
+        public void testDefinitelyNonNullType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/definitelyNonNullType.kt");
+        }
+
+        @TestMetadata("definitelyNonNullTypeAsReturnFunctionType.kt")
+        public void testDefinitelyNonNullTypeAsReturnFunctionType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/definitelyNonNullTypeAsReturnFunctionType.kt");
+        }
+
+        @TestMetadata("definitelyNonNullTypeFunctionType.kt")
+        public void testDefinitelyNonNullTypeFunctionType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/definitelyNonNullTypeFunctionType.kt");
+        }
+
+        @TestMetadata("definitelyNonNullTypeInGenericClass.kt")
+        public void testDefinitelyNonNullTypeInGenericClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/definitelyNonNullTypeInGenericClass.kt");
+        }
+
+        @TestMetadata("definitelyNonNullTypeOverrideProperty1.kt")
+        public void testDefinitelyNonNullTypeOverrideProperty1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/definitelyNonNullTypeOverrideProperty1.kt");
+        }
+
+        @TestMetadata("definitelyNonNullTypeOverrideProperty2.kt")
+        public void testDefinitelyNonNullTypeOverrideProperty2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/definitelyNonNullTypeOverrideProperty2.kt");
+        }
+
         @TestMetadata("destructuringInLambda.kt")
         public void testDestructuringInLambda() throws Exception {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/destructuringInLambda.kt");
@@ -2175,6 +2205,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/lambdaInitializer5.kt");
         }
 
+        @TestMetadata("lambdaInitializer6.kt")
+        public void testLambdaInitializer6() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/lambdaInitializer6.kt");
+        }
+
         @TestMetadata("lambdaInitializerWithAlias.kt")
         public void testLambdaInitializerWithAlias() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/lambdaInitializerWithAlias.kt");
@@ -2198,6 +2233,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("needTypeArgument2.kt")
         public void testNeedTypeArgument2() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/needTypeArgument2.kt");
+        }
+
+        @TestMetadata("needTypeArgument3.kt")
+        public void testNeedTypeArgument3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/needTypeArgument3.kt");
         }
 
         @TestMetadata("needTypeArgumentInFunctionDefinition.kt")
@@ -2228,6 +2268,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("nullableExplicitTypeVar2.kt")
         public void testNullableExplicitTypeVar2() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/nullableExplicitTypeVar2.kt");
+        }
+
+        @TestMetadata("nullableExplicitTypeVar3.kt")
+        public void testNullableExplicitTypeVar3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/nullableExplicitTypeVar3.kt");
         }
 
         @TestMetadata("onLoopParameter.kt")
@@ -2663,6 +2708,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("inferredTypeFromElvis.kt")
         public void testInferredTypeFromElvis() throws Exception {
             runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/inferredTypeFromElvis.kt");
+        }
+
+        @TestMetadata("insertDefinitelyNonNullTypeClass.kt")
+        public void testInsertDefinitelyNonNullTypeClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertDefinitelyNonNullTypeClass.kt");
+        }
+
+        @TestMetadata("insertDefinitelyNonNullTypeInFunction.kt")
+        public void testInsertDefinitelyNonNullTypeInFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertDefinitelyNonNullTypeInFunction.kt");
+        }
+
+        @TestMetadata("insertDefinitelyNonNullTypeWithVarargs.kt")
+        public void testInsertDefinitelyNonNullTypeWithVarargs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertDefinitelyNonNullTypeWithVarargs.kt");
         }
 
         @TestMetadata("insertImportForArg.kt")

@@ -1,0 +1,9 @@
+// IS_APPLICABLE: true
+// AFTER-WARNING: Parameter 't' is never used
+// AFTER-WARNING: Variable 'x' is never used
+
+fun <K> foo(l: K) {
+    val x = Box<caret>(l!!)
+}
+
+class Box<T>(t: T & Any)
