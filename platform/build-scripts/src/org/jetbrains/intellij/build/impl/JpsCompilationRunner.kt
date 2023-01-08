@@ -66,6 +66,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
       // Produces Kotlin compiler incremental cache which can be reused later.
       // Unrelated to force rebuild controlled by JPS.
       setSystemPropertyIfUndefined("kotlin.incremental.compilation", "true")
+      setSystemPropertyIfUndefined("kotlin.daemon.enabled", "true")
 
       // Required for JPS Portable Caches
       setSystemPropertyIfUndefined(JavaBackwardReferenceIndexWriter.PROP_KEY, "true")
