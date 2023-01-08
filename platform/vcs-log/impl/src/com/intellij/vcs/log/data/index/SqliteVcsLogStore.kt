@@ -202,7 +202,7 @@ internal class SqliteVcsLogStore(project: Project) : VcsLogStore {
     return result
   }
 
-  override fun getCommitterOrAuthor(commitId: Int, commitToCommitter: IntFunction<VcsUser>, commitToAuthor: IntFunction<VcsUser>): VcsUser? {
+  override fun getCommitterOrAuthor(commitId: Int, getUserById: IntFunction<VcsUser>, getAuthorForCommit: IntFunction<VcsUser>): VcsUser? {
     //language=SQLite
     val statement = connection.prepareStatement("select committerId from log where commitId = ?")
     statement.setInt(1, commitId)
@@ -213,11 +213,11 @@ internal class SqliteVcsLogStore(project: Project) : VcsLogStore {
 
     val result = resultSet.getInt(1)
     if (resultSet.wasNull()) {
-      return commitToAuthor.apply(commitId)
+      return getAuthorForCommit.apply(commitId)
     }
 
     statement.close()
-    return commitToCommitter.apply(result)
+    return getUserById.apply(result)
   }
 
   override fun getTimestamp(commitId: Int): LongArray? {

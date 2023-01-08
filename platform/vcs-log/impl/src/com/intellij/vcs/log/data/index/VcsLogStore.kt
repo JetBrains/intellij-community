@@ -24,7 +24,7 @@ internal interface VcsLogStore {
 
   fun getMessage(commitId: Int): String?
 
-  fun getCommitterOrAuthor(commitId: Int, commitToCommitter: IntFunction<VcsUser>, commitToAuthor: IntFunction<VcsUser>): VcsUser?
+  fun getCommitterOrAuthor(commitId: Int, getUserById: IntFunction<VcsUser>, getAuthorForCommit: IntFunction<VcsUser>): VcsUser?
 
   fun getTimestamp(commitId: Int): LongArray?
 

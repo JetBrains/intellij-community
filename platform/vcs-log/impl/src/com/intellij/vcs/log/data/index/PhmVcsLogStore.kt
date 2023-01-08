@@ -169,13 +169,13 @@ internal class PhmVcsLogStore(
 
   override fun getMessage(commitId: Int): String? = messages.get(commitId)
 
-  override fun getCommitterOrAuthor(commitId: Int, commitToCommitter: IntFunction<VcsUser>, commitToAuthor: IntFunction<VcsUser>): VcsUser? {
+  override fun getCommitterOrAuthor(commitId: Int, commitToCommitter: IntFunction<VcsUser>, getAuthorForCommit: IntFunction<VcsUser>): VcsUser? {
     val committer = committers.get(commitId)
     if (committer != null) {
       return commitToCommitter.apply(committer)
     }
     else {
-      return if (messages.containsMapping(commitId)) commitToAuthor.apply(commitId) else null
+      return if (messages.containsMapping(commitId)) getAuthorForCommit.apply(commitId) else null
     }
   }
 
