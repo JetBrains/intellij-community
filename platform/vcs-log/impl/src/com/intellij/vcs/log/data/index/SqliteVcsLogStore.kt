@@ -22,11 +22,10 @@ import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntSet
 import kotlinx.coroutines.*
 import org.h2.mvstore.*
-import org.sqlite.SQLiteConfig
-import org.sqlite.jdbc4.JDBC4Connection
+import org.jetbrains.sqlite.SQLiteConfig
+import org.jetbrains.sqlite.core.SqliteConnection
+import org.jetbrains.sqlite.core.SqlitePreparedStatement
 import java.nio.file.Files
-import java.sql.Connection
-import java.sql.PreparedStatement
 import java.sql.Types
 import java.util.*
 import java.util.function.IntConsumer
@@ -36,7 +35,7 @@ import java.util.function.ToIntFunction
 private const val DB_VERSION = 1
 
 // don't forget to change DB_VERSION if you change database scheme
-private fun createTables(connection: Connection) {
+private fun createTables(connection: SqliteConnection) {
   val statement = connection.createStatement()
   statement.executeUpdate("drop table if exists data")
   //language=SQLite
@@ -89,7 +88,7 @@ private fun createTables(connection: Connection) {
 @Service(Service.Level.PROJECT)
 private class ProjectLevelStoreManager(project: Project) : Disposable {
   @JvmField
-  val connection: Connection
+  val connection: SqliteConnection
 
   @Suppress("DEPRECATION")
   private val coroutineScope: CoroutineScope = ApplicationManager.getApplication().coroutineScope.childScope()
@@ -109,8 +108,7 @@ private class ProjectLevelStoreManager(project: Project) : Disposable {
     config.setJournalMode(SQLiteConfig.JournalMode.WAL)
     config.setSynchronous(SQLiteConfig.SynchronousMode.NORMAL)
 
-    connection = JDBC4Connection("jdbc:sqlite:$dbPath", dbPath, config.toProperties())
-    connection.autoCommit = false
+    connection = SqliteConnection("jdbc:sqlite:$dbPath", dbPath, config)
 
     var success = false
     try {
@@ -258,7 +256,7 @@ internal class SqliteVcsLogStore(project: Project) : VcsLogStore {
     var statement = connection.prepareStatement("delete from rename where parent = ? and child = ?")
     statement.setInt(1, parent)
     statement.setInt(2, child)
-    statement.executeUpdate()
+    statement.executeUpdate(false)
     statement.close()
 
     //language=SQLite
@@ -269,7 +267,7 @@ internal class SqliteVcsLogStore(project: Project) : VcsLogStore {
       statement.setInt(3, rename)
       statement.addBatch()
     }
-    statement.executeBatch()
+    statement.executeBatch(false)
     statement.close()
   }
 
@@ -333,7 +331,7 @@ internal class SqliteVcsLogStore(project: Project) : VcsLogStore {
 }
 
 @Suppress("SqlResolve")
-private class SqliteVcsLogWriter(private val connection: Connection) : VcsLogWriter {
+private class SqliteVcsLogWriter(private val connection: SqliteConnection) : VcsLogWriter {
   //language=SQLite
   private val logStatement = connection.prepareStatement("""
     insert into log(commitId, message, authorTime, commitTime, committerId) 
@@ -374,10 +372,10 @@ private class SqliteVcsLogWriter(private val connection: Connection) : VcsLogWri
   }
 
   override fun flush() {
-    logStatement.executeBatch()
+    logStatement.executeBatch(false)
 
-    parentDeleteStatement.executeBatch()
-    parentStatement.executeBatch()
+    parentDeleteStatement.executeBatch(false)
+    parentStatement.executeBatch(false)
   }
 
   override fun close(success: Boolean) {
@@ -395,7 +393,7 @@ private class SqliteVcsLogWriter(private val connection: Connection) : VcsLogWri
   }
 }
 
-private fun readIntArray(statement: PreparedStatement): IntArray {
+private fun readIntArray(statement: SqlitePreparedStatement): IntArray {
   val resultSet = statement.executeQuery()
   if (!resultSet.next()) {
     // not a null because we cannot distinguish "no rows at all" vs "empty array was a value"

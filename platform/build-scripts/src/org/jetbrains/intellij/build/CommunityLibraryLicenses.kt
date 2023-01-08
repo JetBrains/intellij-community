@@ -851,9 +851,12 @@ object CommunityLibraryLicenses {
       .apache("https://xalan.apache.org/xalan-j/#license"),
     LibraryLicense(libraryName = "Xerces", url = "https://xerces.apache.org/xerces2-j/")
       .apache("https://svn.apache.org/repos/asf/xerces/java/trunk/LICENSE"),
-    LibraryLicense(name = "Xerial SQLite JDBC", libraryName = "sqlite",
-                   url = "https://github.com/xerial/sqlite-jdbc")
+
+    LibraryLicense(name = "Xerial SQLite JDBC", libraryName = "sqlite", url = "https://github.com/xerial/sqlite-jdbc")
       .apache("https://github.com/xerial/sqlite-jdbc/blob/master/LICENSE"),
+    LibraryLicense(name = "Xerial SQLite JDBC", libraryName = "sqlite-native", url = "https://github.com/xerial/sqlite-jdbc")
+      .apache("https://github.com/xerial/sqlite-jdbc/blob/master/LICENSE"),
+
     LibraryLicense(name = "xml-apis-ext", libraryName = "xml-apis-ext",
                    url = "https://xerces.apache.org/xml-commons/components/external").apache(),
     LibraryLicense(name = "xml-resolver", libraryName = "xml-resolver",
