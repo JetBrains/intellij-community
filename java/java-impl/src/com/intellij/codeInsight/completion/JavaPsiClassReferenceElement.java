@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class JavaPsiClassReferenceElement extends LookupItem<Object> implements TypedLookupItem {
   public static final ClassConditionKey<JavaPsiClassReferenceElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaPsiClassReferenceElement.class);
   private final SmartPsiElementPointer<PsiClass> myClass;

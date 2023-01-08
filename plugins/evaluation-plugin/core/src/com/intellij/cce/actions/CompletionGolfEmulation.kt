@@ -69,15 +69,6 @@ class CompletionGolfEmulation(private val settings: Settings = Settings(), priva
     }
   }
 
-  private fun firstToken(line: String): String {
-    var firstToken = ""
-    for (ch in line) {
-      if (ch.isLetter() || ch == '_' || ch.isDigit() && firstToken.isNotBlank()) firstToken += ch
-      else break
-    }
-    return firstToken
-  }
-
   /**
    * @param checkLine Check if expected line starts with suggestion from completion
    * @param checkToken In case first token in suggestion equals to first token in expected string, we can pick only first token from suggestion.
@@ -110,10 +101,19 @@ private fun List<Suggestion>.ofSource(source: SuggestionSource?): List<Suggestio
 }
 
 fun Lookup.selectedWithoutPrefix(): String? {
-  if (selectedPosition == -1) {
-    return null
-  }
+  if (selectedPosition == -1) return null
 
-  return suggestions[selectedPosition].text.drop(prefix.length)
+  return suggestions.getOrNull(selectedPosition)?.let {
+    if (it.kind == SuggestionKind.TOKEN) firstToken(it.text) else it.text
+  }?.drop(prefix.length)?.takeIf { it.isNotEmpty() }
+}
+
+fun firstToken(line: String): String {
+  var firstToken = ""
+  for (ch in line) {
+    if (ch.isLetter() || ch == '_' || ch.isDigit() && firstToken.isNotBlank()) firstToken += ch
+    else break
+  }
+  return firstToken
 }
 

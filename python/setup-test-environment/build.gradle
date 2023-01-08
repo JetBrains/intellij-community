@@ -51,7 +51,7 @@ envs {
     zipRepository = new URL(System.getenv().get("PYCHARM_ZIP_REPOSITORY"))
     shouldUseZipsFromRepository = isWindows
   }
-  Boolean shouldUseCondaInterpreters = System.getenv().getOrDefault("PYCHARM_USE_CONDA", false)
+  Boolean shouldUseCondaInterpreters = System.getenv().getOrDefault("PYCHARM_USE_CONDA", "false").toBoolean()
 
   Closure createPython = { String pythonName,
                            String version,
@@ -209,3 +209,4 @@ task build {
   mustRunAfter prepare
   dependsOn prepare, 'build_envs', tasks.findAll { it.name.startsWith("Misc") }
 }
+

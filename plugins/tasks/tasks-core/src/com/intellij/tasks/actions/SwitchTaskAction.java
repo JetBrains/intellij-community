@@ -55,12 +55,6 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     };
   }
 
-  @NotNull
-  @Override
-  protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-    return new DefaultActionGroup();
-  }
-
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();

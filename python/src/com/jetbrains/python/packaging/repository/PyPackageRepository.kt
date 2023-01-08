@@ -7,9 +7,9 @@ import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.BaseState
 import com.intellij.util.xmlb.annotations.Transient
+import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.PythonSimplePackageSpecification
 import org.jetbrains.annotations.ApiStatus
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
 @ApiStatus.Experimental
 open class PyPackageRepository() : BaseState() {
@@ -56,5 +56,10 @@ open class PyPackageRepository() : BaseState() {
     this.name = name
     this.repositoryUrl = repositoryUrl
     this.login = username
+  }
+
+  open fun createPackageSpecification(packageName: String,
+                                 version: String? = null): PythonPackageSpecification {
+    return PythonSimplePackageSpecification(packageName, version, this)
   }
 }

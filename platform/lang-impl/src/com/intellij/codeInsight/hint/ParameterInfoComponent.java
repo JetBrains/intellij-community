@@ -188,13 +188,14 @@ public class ParameterInfoComponent extends JPanel {
 
   @Override
   public Dimension getPreferredSize() {
-    long visibleRows = Stream.of(myPanels).filter(Component::isVisible).count();
     final Dimension preferredSize = super.getPreferredSize();
-    if (visibleRows <= myMaxVisibleRows) {
+    int panelsHeight = Stream.of(myPanels).filter(Component::isVisible).mapToInt(panel -> panel.getPreferredSize().height).sum();
+    int visibleRowsHeight = getFontMetrics(BOLD_FONT).getHeight() * myMaxVisibleRows;
+    if (panelsHeight <= visibleRowsHeight) {
       return preferredSize;
     }
     else {
-      return new Dimension(preferredSize.width + 20, 200);
+      return new Dimension(preferredSize.width + 20, visibleRowsHeight);
     }
   }
 
@@ -475,6 +476,15 @@ public class ParameterInfoComponent extends JPanel {
       for (int i = 0; i < texts.length; i++) {
         String paramText = escapeString(texts[i], escapeFunction);
         if (paramText == null) break;
+        FontMetrics fontMetrics = getFontMetrics(BOLD_FONT);
+        if (fontMetrics.stringWidth(line + texts[i]) >= myWidthLimit) {
+          OneLineComponent component = getOneLineComponent(index);
+          buf.append(component.setup(escapeString(line.toString(), escapeFunction), flagsMap, background));
+          index += 1;
+          flagsMap.clear();
+          curOffset = 0;
+          line = new StringBuilder();
+        }
         startOffsets.add(fullLine.length());
         fullLine.append(texts[i]);
         endOffsets.add(fullLine.length());
@@ -494,14 +504,6 @@ public class ParameterInfoComponent extends JPanel {
         }
 
         curOffset += paramText.length();
-        if (line.length() >= 50) {
-          OneLineComponent component = getOneLineComponent(index);
-          buf.append(component.setup(escapeString(line.toString(), escapeFunction), flagsMap, background));
-          index += 1;
-          flagsMap.clear();
-          curOffset = 0;
-          line = new StringBuilder();
-        }
       }
       ParameterInfoControllerBase.SignatureItem item = new ParameterInfoControllerBase.SignatureItem(fullLine.toString(), false, false,
                                                                                                      startOffsets, endOffsets);

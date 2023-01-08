@@ -50,7 +50,10 @@ public class TestMethod extends TestObject {
 
   @Override
   public String suggestActionName() {
-    return ProgramRunnerUtil.shortenName(getConfiguration().getPersistentData().getMethodName(), 2) + "()";
+    String parameters = getConfiguration().getPersistentData().getProgramParameters();
+    Integer index = JUnitConfiguration.Data.getIndexFromParameters(parameters);
+    String indexStr = index == null ? "" : JUnitBundle.message("junit.config.with.parameter.0", index + 1);
+    return ProgramRunnerUtil.shortenName(getConfiguration().getPersistentData().getMethodName(), 2) + "()" + indexStr;
   }
 
   @Override
@@ -128,7 +131,7 @@ public class TestMethod extends TestObject {
       }
       return false;
     };
-    
+
     if (!hasMethod.test(methodName) && !hasMethod.test(methodNameWithSignature)) {
       throw new RuntimeConfigurationWarning(JUnitBundle.message("test.method.doesnt.exist.error.message", methodName));
     }

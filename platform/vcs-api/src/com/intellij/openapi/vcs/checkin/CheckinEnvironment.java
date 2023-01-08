@@ -108,4 +108,9 @@ public interface CheckinEnvironment {
    * (for example, due to keyword substitution in SVN or read-only status in Perforce).
    */
   boolean isRefreshAfterCommitNeeded();
+
+  @Nullable
+  default PostCommitChangeConverter getPostCommitChangeConverter() {
+    return null;
+  }
 }

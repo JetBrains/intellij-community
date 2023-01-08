@@ -14,7 +14,7 @@ public class XmlProductivityFeatureProvider extends ProductivityFeaturesProvider
   public FeatureDescriptor[] getFeatureDescriptors() {
     return new FeatureDescriptor[]{new FeatureDescriptor(XmlCompletionContributor.TAG_NAME_COMPLETION_FEATURE,
                                                          "completion",
-                                                         "TagNameCompletion.html",
+                                                         "TagNameCompletion",
                                                          XmlBundle.message("tag.name.completion.display.name"),
                                                          0,
                                                          1,

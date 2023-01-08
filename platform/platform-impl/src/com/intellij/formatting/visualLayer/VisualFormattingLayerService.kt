@@ -23,7 +23,7 @@ abstract class VisualFormattingLayerService {
     get() = getUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS)
     private set(value) = putUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS, value)
 
-  val enabledByRegistry: Boolean
+  val isEnabledByRegistry: Boolean
     get() = RegistryManager.getInstance().`is`(REGISTRY_KEY)
 
   fun enabledForEditor(editor: Editor) = editor.visualFormattingLayerEnabled
@@ -36,7 +36,9 @@ abstract class VisualFormattingLayerService {
     editor.visualFormattingLayerCodeStyleSettings = null
   }
 
-  abstract fun getVisualFormattingLayerElements(editor: Editor): List<VisualFormattingLayerElement>
+  abstract fun collectVisualFormattingLayerElements(editor: Editor): List<VisualFormattingLayerElement>
+
+  abstract fun applyVisualFormattingLayerElementsToEditor(editor: Editor, elements: List<VisualFormattingLayerElement>)
 
   companion object {
     @JvmStatic
@@ -76,15 +78,13 @@ sealed class VisualFormattingLayerElement {
 
   data class Folding(val offset: Int, val length: Int) : VisualFormattingLayerElement() {
     override fun applyToEditor(editor: Editor) {
-      editor.foldingModel.runBatchFoldingOperation {
-        editor.foldingModel
-          .addFoldRegion(offset, offset + length, "")
-          ?.apply {
-            isExpanded = false
-            shouldNeverExpand()
-            putUserData(visualFormattingElementKey, true)
-          }
-      }
+      editor.foldingModel
+        .addFoldRegion(offset, offset + length, "")
+        ?.apply {
+          isExpanded = false
+          shouldNeverExpand()
+          putUserData(visualFormattingElementKey, true)
+        }
     }
   }
 }

@@ -26,6 +26,7 @@ class GitStageCommitWorkflowHandler(
 
     workflow.addListener(this, this)
     workflow.addVcsCommitListener(GitStageCommitStateCleaner(), this)
+    workflow.addVcsCommitListener(PostCommitChecksRunner(), this)
 
     ui.addExecutorListener(this, this)
     ui.addDataProvider(createDataProvider())

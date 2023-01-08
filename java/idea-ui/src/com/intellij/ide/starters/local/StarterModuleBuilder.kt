@@ -291,6 +291,15 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   }
 
   @Throws(ConfigurationException::class)
+  protected open fun validateConfiguration() {
+  }
+
+  @Throws(ConfigurationException::class)
+  internal fun validateConfigurationInternal() {
+    return validateConfiguration()
+  }
+
+  @Throws(ConfigurationException::class)
   private fun startGenerator(module: Module) {
     val moduleContentRoot =
       if (!ApplicationManager.getApplication().isUnitTestMode) {

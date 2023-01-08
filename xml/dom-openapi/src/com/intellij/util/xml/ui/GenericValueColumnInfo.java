@@ -22,9 +22,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 
-/**
- * @author peter
- */
 public class GenericValueColumnInfo<T> extends DomColumnInfo<GenericDomValue<T>, String> {
   private final Class<T> myColumnClass;
   private final TableCellEditor myEditor;

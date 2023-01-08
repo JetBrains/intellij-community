@@ -2,7 +2,8 @@ package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
-import org.jetbrains.plugins.notebooks.visualization.NotebookEditorAppearance.Companion.NOTEBOOK_APPEARANCE_KEY
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearance
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearance.Companion.NOTEBOOK_APPEARANCE_KEY
 
 
 private const val ID = "org.jetbrains.plugins.notebooks.editor.notebookEditorAppearanceProvider"

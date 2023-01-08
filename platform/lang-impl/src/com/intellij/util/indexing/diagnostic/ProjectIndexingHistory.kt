@@ -4,6 +4,7 @@ package com.intellij.util.indexing.diagnostic
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
+import com.intellij.util.messages.Topic
 import java.time.Duration
 import java.time.ZonedDateTime
 
@@ -16,6 +17,10 @@ typealias BytesNumber = Long
  * (e.g.: indexed file count, indexation speed, etc.) after each **dumb** indexation task was performed.
  */
 interface ProjectIndexingHistoryListener {
+  companion object {
+    @Topic.AppLevel
+    val TOPIC = Topic(ProjectIndexingHistoryListener::class.java, Topic.BroadcastDirection.NONE)
+  }
   fun onStartedIndexing(projectIndexingHistory: ProjectIndexingHistory) = Unit
 
   fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory)

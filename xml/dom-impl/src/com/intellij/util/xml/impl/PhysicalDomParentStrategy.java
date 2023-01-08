@@ -11,9 +11,6 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class PhysicalDomParentStrategy implements DomParentStrategy {
   private static final Logger LOG = Logger.getInstance(PhysicalDomParentStrategy.class);
   private XmlElement myElement;

@@ -309,8 +309,8 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     return header;
   }
 
-  private static @NotNull JPanel createHeaderWithLocationLink(@NotNull UsageInfo info) {
-    final LocationLinkComponent component = new LocationLinkComponent(info);
+  private @NotNull JPanel createHeaderWithLocationLink(@NotNull UsageInfo info) {
+    final LocationLinkComponent component = new LocationLinkComponent(this, myUsageView, info);
     final JPanel header = new JPanel();
     header.setBackground(UIUtil.getTextFieldBackground());
     header.setLayout(new FlowLayout(FlowLayout.LEFT));

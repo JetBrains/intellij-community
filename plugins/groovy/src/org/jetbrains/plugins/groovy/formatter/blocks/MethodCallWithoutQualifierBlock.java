@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class MethodCallWithoutQualifierBlock extends GroovyBlock {
   private final boolean myTopLevel;
   private final List<ASTNode> myChildren;

@@ -39,9 +39,8 @@ public class LombokElementFinder extends PsiElementFinder {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+  public PsiClass @NotNull [] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     return PsiClass.EMPTY_ARRAY;
   }
 }

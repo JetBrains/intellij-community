@@ -33,10 +33,7 @@ import java.nio.file.*
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
 import java.util.*
-import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Function
-import java.util.function.Supplier
 
 private const val PATHS_EOT_RESPONSE = "---"
 private const val ACTIVATE_COMMAND = "activate "
@@ -58,9 +55,9 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
     ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE
   }
 
-  private val commandProcessorRef: AtomicReference<Function<List<String>, Future<CliResult>>> = AtomicReference(Function {
-    CliResult.error(AppExitCodes.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized"))
-  })
+  private val commandProcessorRef: AtomicReference<(List<String>) -> Deferred<CliResult>> = AtomicReference {
+    CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized")))
+  }
 
   private val lockedFiles = ArrayList<AutoCloseable>(4)
 
@@ -74,7 +71,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
     }
   }
 
-  fun setCommandProcessor(processor: Function<List<String>, Future<CliResult>>) {
+  fun setCommandProcessor(processor: (List<String>) -> Deferred<CliResult>) {
     commandProcessorRef.set(processor)
   }
 
@@ -128,7 +125,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
       val token = UUID.randomUUID().toString()
       val lockedPaths = arrayOf(configPath, systemPath)
       val server = BuiltInServer.start(firstPort = 6942, portsCount = 50, tryAnyPort = false) {
-        MyChannelInboundHandler(lockedPaths, commandProcessorRef::get, token)
+        MyChannelInboundHandler(lockedPaths = lockedPaths, commandProcessor = { commandProcessorRef.get() }, token = token)
       }
       val portBytes = server.port.toString().toByteArray(StandardCharsets.UTF_8)
       Files.write(configPath.resolve(SpecialConfigFiles.PORT_FILE), portBytes)
@@ -330,7 +327,7 @@ private fun log(e: Exception) {
 }
 
 private class MyChannelInboundHandler(lockedPaths: Array<Path>,
-                                      private val commandProcessorRef: Supplier<Function<List<String>, Future<CliResult>>>,
+                                      private val commandProcessor: () -> (List<String>) -> Deferred<CliResult>,
                                       private val token: String) : MessageDecoder() {
   private enum class State {
     HEADER, CONTENT
@@ -366,7 +363,15 @@ private class MyChannelInboundHandler(lockedPaths: Array<Path>,
               while (tokenizer.hasMoreTokens()) {
                 list.add(tokenizer.nextToken())
               }
-              CliResult.unmap(commandProcessorRef.get().apply(list), AppExitCodes.ACTIVATE_ERROR)
+
+              try {
+                runBlocking {
+                  commandProcessor()(list).await()
+                }
+              }
+              catch (e: Exception) {
+                CliResult(AppExitCodes.ACTIVATE_ERROR, e.message)
+              }
             }
             else {
               log(UnsupportedOperationException("unauthorized request: $command"))

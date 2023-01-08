@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -50,6 +51,10 @@ public class GrContainerTypeConverter extends GrTypeConverter {
                                                   @NotNull PsiType actualType,
                                                   @NotNull GroovyPsiElement context) {
     if (targetType instanceof PsiArrayType && actualType instanceof PsiArrayType) {
+      if (((PsiArrayType)targetType).getComponentType() instanceof PsiPrimitiveType != ((PsiArrayType)actualType).getComponentType() instanceof PsiPrimitiveType) {
+        // groovy 3.0.13 disallows boxing in array components
+        return null;
+      }
       return TypesUtil.isAssignableByParameter(((PsiArrayType)targetType).getComponentType(), ((PsiArrayType)actualType).getComponentType(),
                                                context) ? ConversionResult.OK : ConversionResult.ERROR;
     }

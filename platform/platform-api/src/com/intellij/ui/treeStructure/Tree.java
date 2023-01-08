@@ -115,6 +115,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     setSelectionModel(mySelectionModel);
     setOpaque(false);
+
+    putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, myEmptyText.getWrappedFragmentsIterable());
   }
 
   @Override

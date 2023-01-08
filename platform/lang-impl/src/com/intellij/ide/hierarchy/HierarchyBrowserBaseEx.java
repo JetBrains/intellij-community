@@ -665,7 +665,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       HierarchyBrowserBaseEx browser = event.getData(HIERARCHY_BROWSER);
       if (browser == null) return;
 
-      PsiElement selectedElement = browser.getSelectedElement();
+      PsiElement selectedElement = browser.getSelectedElement(event.getDataContext());
       if (selectedElement == null || !browser.isApplicableElementForBaseOn(selectedElement)) return;
 
       @Nls String currentViewType = browser.getCurrentViewType();
@@ -696,7 +696,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
       presentation.setVisible(true);
 
-      PsiElement selectedElement = browser.getSelectedElement();
+      PsiElement selectedElement = browser.getSelectedElement(event.getDataContext());
       if (selectedElement == null || !browser.isApplicableElementForBaseOn(selectedElement)) {
         presentation.setEnabledAndVisible(false);
       }
@@ -775,7 +775,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     @Override
     @NotNull
-    protected final DefaultActionGroup createPopupActionGroup(JComponent button) {
+    protected final DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       DefaultActionGroup group = new DefaultActionGroup();
 
       for(NamedScope namedScope: getValidScopes()) {

@@ -25,8 +25,6 @@ import java.util.TreeSet;
 
 /**
  * Holds shared project-level gradle-related settings (should be kept at the '*.ipr' or under '.idea').
- *
- * @author peter
  */
 @State(name = "GradleSettings", storages = @Storage("gradle.xml"))
 public class GradleSettings extends AbstractExternalSystemSettings<GradleSettings, GradleProjectSettings, GradleSettingsListener>

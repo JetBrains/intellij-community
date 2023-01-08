@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory
-import com.intellij.icons.AllIcons
 import com.intellij.ide.presentation.Presentation
 import com.intellij.openapi.util.Key
 import com.intellij.psi.OriginInfoAwareElement
@@ -26,7 +25,11 @@ class GradleGroovyProperty(
 
   override fun getIcon(flags: Int): Icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.Property)
 
-  override fun getOriginInfo(): String = "via ext"
+  companion object {
+    internal const val EXTENSION_PROPERTY : String = "via ext"
+  }
+
+  override fun getOriginInfo(): String = EXTENSION_PROPERTY
 
   private val doc by lazyPub {
     val result = StringBuilder()

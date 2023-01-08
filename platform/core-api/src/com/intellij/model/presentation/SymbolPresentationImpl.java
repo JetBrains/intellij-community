@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.presentation;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,6 +12,11 @@ import javax.swing.*;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
+/**
+ * @deprecated see {@link PresentableSymbol} deprecation notice
+ */
+@ScheduledForRemoval
+@Deprecated
 final class SymbolPresentationImpl implements SymbolPresentation {
 
   private final @Nullable Icon myIcon;

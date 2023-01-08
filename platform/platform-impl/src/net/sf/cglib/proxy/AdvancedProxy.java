@@ -15,9 +15,6 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public final class AdvancedProxy {
   public static final Method FINALIZE_METHOD;
   public static final Method EQUALS_METHOD;

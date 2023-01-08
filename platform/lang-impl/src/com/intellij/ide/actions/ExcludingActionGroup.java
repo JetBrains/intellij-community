@@ -26,9 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class ExcludingActionGroup extends ActionGroup {
   private final ActionGroup myDelegate;
   private final Set<AnAction> myExcludes;

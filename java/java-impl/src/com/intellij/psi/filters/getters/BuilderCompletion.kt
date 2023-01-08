@@ -11,9 +11,6 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.ui.IconManager
 import com.intellij.util.IncorrectOperationException
 
-/**
- * @author peter
- */
 
 internal class BuilderCompletion(private val expectedType: PsiClassType, private val expectedClass: PsiClass, private val place: PsiElement) {
   fun suggestBuilderVariants(): List<LookupElement> {

@@ -41,9 +41,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-/**
- * @author peter
- */
 public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiReference> implements HintAction, PriorityAction {
   @NotNull
   private final T myReferenceElement;

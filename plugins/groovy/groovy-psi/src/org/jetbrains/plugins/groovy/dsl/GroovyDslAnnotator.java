@@ -22,9 +22,6 @@ import org.jetbrains.plugins.groovy.util.GrFileIndexUtil;
 
 import static org.jetbrains.plugins.groovy.dsl.DslActivationStatus.Status.*;
 
-/**
- * @author peter
- */
 public class GroovyDslAnnotator implements Annotator {
 
   @Override

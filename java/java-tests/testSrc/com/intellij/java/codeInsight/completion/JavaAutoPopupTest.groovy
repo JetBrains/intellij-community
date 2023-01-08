@@ -51,9 +51,6 @@ import org.jetbrains.annotations.NotNull
 
 import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement
 
-/**
- * @author peter
- */
 @NeedsIndex.SmartMode(reason = "AutoPopup shouldn't work in dumb mode")
 class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   void testNewItemsOnLongerPrefix() {

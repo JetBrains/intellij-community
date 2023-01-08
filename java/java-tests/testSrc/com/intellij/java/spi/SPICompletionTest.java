@@ -24,9 +24,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 import java.io.IOException;
 
-/**
- * @author peter
- */
 public class SPICompletionTest extends LightJavaCodeInsightFixtureTestCase {
 
   @NeedsIndex.SmartMode(reason = "Smart completion in dumb mode is not supported for SPI")

@@ -27,9 +27,6 @@ import java.util.*;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
-* @author peter
-*/
 class SameSignatureCallParametersProvider {
   static final PsiElementPattern.Capture<PsiElement> IN_CALL_ARGUMENT =
     psiElement().afterLeaf("(").withParent(

@@ -15,11 +15,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.CellBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
@@ -93,8 +92,7 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
       .createPanel()
 
     cell(component)
-      .horizontalAlign(HorizontalAlign.FILL)
-      .verticalAlign(VerticalAlign.FILL)
+      .align(Align.FILL)
       .onApply {
         setValuesToSettings(model.items)
       }.onIsModified {

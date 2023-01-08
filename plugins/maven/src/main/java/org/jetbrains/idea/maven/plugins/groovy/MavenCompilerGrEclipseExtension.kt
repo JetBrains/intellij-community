@@ -59,7 +59,7 @@ class MavenCompilerGrEclipseExtension : MavenCompilerExtension {
     }
 
     val repositoryFile = MavenUtil.getRepositoryFile(project, eclipseBatchId, "jar", null)
-    if (repositoryFile.exists()) {
+    if (null != repositoryFile && repositoryFile.exists()) {
       return repositoryFile.absolutePath
     }
     return null

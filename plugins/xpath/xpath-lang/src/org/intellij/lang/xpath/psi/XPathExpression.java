@@ -15,9 +15,10 @@
  */
 package org.intellij.lang.xpath.psi;
 
+import com.intellij.model.psi.PsiExternalReferenceHost;
 import org.jetbrains.annotations.NotNull;
 
-public interface XPathExpression extends XPathElement {
+public interface XPathExpression extends XPathElement, PsiExternalReferenceHost {
     XPathExpression[] EMPTY_ARRAY = new XPathExpression[0];
     
     @NotNull

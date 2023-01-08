@@ -1161,8 +1161,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addInstruction(ControlTransferInstruction(trapTracker.transferValue(DfaControlTransferValue.RETURN_TRANSFER)))
         } else {
             val body = if (expr is KtBreakExpression) targetLoop else targetLoop.body!!
-            val transfer = factory.controlTransfer(createTransfer(body, body, factory.unknown), trapTracker.getTrapsInsideElement(body))
-            addInstruction(ControlTransferInstruction(transfer))
+            val transfer = createTransfer(body, body, factory.unknown, expr is KtBreakExpression)
+            val transferValue = factory.controlTransfer(transfer, trapTracker.getTrapsInsideElement(body))
+            addInstruction(ControlTransferInstruction(transferValue))
         }
     }
 

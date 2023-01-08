@@ -19,7 +19,6 @@ import com.intellij.openapi.startup.StartupActivity;
  * <li> {@link com.intellij.openapi.wm.ToolWindowFactory}s
  * <li> {@link com.intellij.lang.injection.MultiHostInjector}s
  *
- * @author peter
  * @see DumbService
  * @see DumbAwareRunnable
  * @see PossiblyDumbAware

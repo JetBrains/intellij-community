@@ -576,8 +576,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     TargetedCommandLine targetedCommandLine = PythonScripts.buildTargetedCommandLine(pythonConsoleExecution,
                                                                                      targetEnvironment,
                                                                                      sdk,
-                                                                                     interpreterOptions,
-                                                                                     usePty);
+                                                                                     interpreterOptions
+    );
 
     // The environment is now prepared and ide server port should be resolved, so let's start the server
     ResolvedPortBinding resolvedServerPortBinding = targetEnvironment.getLocalPortBindings().get(ideServerPortBinding);

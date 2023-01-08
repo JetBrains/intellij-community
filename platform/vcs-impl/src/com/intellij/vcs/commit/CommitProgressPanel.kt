@@ -43,7 +43,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import java.awt.Font
 import javax.swing.BoxLayout
@@ -212,7 +211,15 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     }
 }
 
-class CommitCheckFailure(@Nls val text: String?, val detailsViewer: (() -> Unit)?)
+sealed class CommitCheckFailure {
+  object Unknown : CommitCheckFailure()
+
+  open class WithDescription(val text: @NlsContexts.NotificationContent String) : CommitCheckFailure()
+
+  class WithDetails(text: @NlsContexts.NotificationContent String,
+                    val viewDetailsActionText: @NlsContexts.NotificationContent String,
+                    val viewDetails: () -> Unit) : WithDescription(text)
+}
 
 private class FailuresPanel : JBPanel<FailuresPanel>() {
   private var nextFailureId = 0
@@ -281,12 +288,10 @@ private class FailuresDescriptionPanel : HtmlPanel() {
     if (failures.isEmpty()) return HtmlChunk.empty()
 
     val failureLinks = formatNarrowAndList(failures.mapNotNull {
-      val text = it.value.text ?: return@mapNotNull null
-      if (it.value.detailsViewer != null) {
-        HtmlChunk.link(it.key.toString(), text)
-      }
-      else {
-        HtmlChunk.text(text)
+      when (val failure = it.value) {
+        is CommitCheckFailure.WithDetails -> HtmlChunk.link(it.key.toString(), failure.text)
+        is CommitCheckFailure.WithDescription -> HtmlChunk.text(failure.text)
+        else -> null
       }
     })
     if (failureLinks.isBlank()) return HtmlChunk.text(message("label.commit.checks.failed.unknown.reason"))
@@ -296,8 +301,8 @@ private class FailuresDescriptionPanel : HtmlPanel() {
   private fun showDetails(event: HyperlinkEvent) {
     if (event.eventType != HyperlinkEvent.EventType.ACTIVATED) return
 
-    val failure = failures[event.description.toInt()] ?: return
-    failure.detailsViewer!!.invoke()
+    val failure = failures[event.description.toInt()] as? CommitCheckFailure.WithDetails ?: return
+    failure.viewDetails()
   }
 }
 

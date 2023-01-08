@@ -76,13 +76,7 @@ public final class FileAttributes {
    *                        When {@code isDirectory == false}, the caseSensitivity argument is ignored
    *                        (set to {@link CaseSensitivity#UNKNOWN}), because case sensitivity is configured on a directory level.
    */
-  public FileAttributes(boolean isDirectory,
-                        boolean isSpecial,
-                        boolean isSymlink,
-                        boolean isHidden,
-                        long length,
-                        long lastModified,
-                        boolean isWritable,
+  public FileAttributes(boolean isDirectory, boolean isSpecial, boolean isSymlink, boolean isHidden, long length, long lastModified, boolean isWritable,
                         @NotNull CaseSensitivity caseSensitivity) {
     this(flags(isDirectory, isSpecial, isSymlink, isHidden, isWritable, caseSensitivity), length, lastModified);
   }

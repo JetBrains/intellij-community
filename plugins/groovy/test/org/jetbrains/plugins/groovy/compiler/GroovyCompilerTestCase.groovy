@@ -53,7 +53,6 @@ import java.nio.file.Paths
 
 /**
  * @author aalmiray
- * @author peter
  */
 @Slow
 @CompileStatic

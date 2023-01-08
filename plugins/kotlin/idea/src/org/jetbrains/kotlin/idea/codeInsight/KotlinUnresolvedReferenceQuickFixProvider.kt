@@ -7,7 +7,6 @@ import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider
-import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -23,11 +22,13 @@ class KotlinUnresolvedReferenceQuickFixProvider: UnresolvedReferenceQuickFixProv
 
         val quickFixProvider = Fe10QuickFixProvider.getInstance(project)
         diagnostics.groupBy { it.psiElement }.forEach { (psiElement, sameElementDiagnostics) ->
-            sameElementDiagnostics.groupBy { it.factory }.forEach { (_, sameTypeDiagnostic) ->
-                val quickFixes = quickFixProvider.createUnresolvedReferenceQuickFixes(sameTypeDiagnostic)
-                val textRange = psiElement.textRange
-                quickFixes.values().forEach {
-                    registrar.register(textRange, it, null)
+            val textRange = psiElement.textRange
+            if (textRange in element.textRange) {
+                sameElementDiagnostics.groupBy { it.factory }.forEach { (_, sameTypeDiagnostic) ->
+                    val quickFixes = quickFixProvider.createUnresolvedReferenceQuickFixes(sameTypeDiagnostic)
+                    quickFixes.values().forEach {
+                        registrar.register(textRange, it, null)
+                    }
                 }
             }
         }

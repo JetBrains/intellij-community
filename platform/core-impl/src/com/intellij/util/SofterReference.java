@@ -28,8 +28,6 @@ import java.lang.ref.WeakReference;
 /**
  * A reference whose referent may be garbage-collected when there's low free memory, not only when there's none.
  * Use for objects which retain lots of memory and whose loss is not very expensive.
- *
- * @author peter
  */
 public class SofterReference<T> {
   private volatile Reference<T> myRef;

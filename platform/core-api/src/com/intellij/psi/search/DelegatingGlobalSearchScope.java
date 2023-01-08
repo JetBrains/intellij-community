@@ -15,9 +15,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author peter
- */
 public class DelegatingGlobalSearchScope extends GlobalSearchScope {
   protected final GlobalSearchScope myBaseScope;
   private final Object myEquality;

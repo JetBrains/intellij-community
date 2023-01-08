@@ -6,9 +6,6 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class OuterLanguageElementImpl extends LeafPsiElement implements OuterLanguageElement {
   public OuterLanguageElementImpl(@NotNull IElementType type, CharSequence text) {
     super(type, text);

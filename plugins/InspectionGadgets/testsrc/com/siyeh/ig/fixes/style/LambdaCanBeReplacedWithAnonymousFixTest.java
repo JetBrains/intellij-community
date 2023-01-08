@@ -59,6 +59,10 @@ public class LambdaCanBeReplacedWithAnonymousFixTest extends IGQuickFixesTestCas
     doTest();
   }
 
+  public void testInnerClass() {
+    doTest();
+  }
+
   public void testCyclicInference() {
     doTest();
   }

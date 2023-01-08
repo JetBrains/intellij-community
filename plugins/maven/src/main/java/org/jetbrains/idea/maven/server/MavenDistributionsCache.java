@@ -54,10 +54,21 @@ public final class MavenDistributionsCache {
   }
 
   public @NotNull MavenDistribution getSettingsDistribution() {
+    var projectsManager = MavenProjectsManager.getInstance(myProject);
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings();
     MavenDistribution distribution = new MavenDistributionConverter().fromString(settings.getGeneralSettings().getMavenHome());
     if (distribution == null) {
-      MavenProjectsManager.getInstance(myProject).getSyncConsole().addWarning(SyncBundle.message("cannot.resolve.maven.home"), SyncBundle
+      if (useWrapper()) {
+        var baseDir = myProject.getBasePath();
+        var projects = projectsManager.getProjects();
+        if (projects.size() > 0) {
+          baseDir = projects.get(0).getDirectory();
+        }
+        distribution = getMavenDistribution(baseDir);
+      }
+    }
+    if (distribution == null) {
+      projectsManager.getSyncConsole().addWarning(SyncBundle.message("cannot.resolve.maven.home"), SyncBundle
         .message("is.not.correct.maven.home.reverting.to.embedded", settings.getGeneralSettings().getMavenHome()));
       return resolveEmbeddedMavenHome();
     }

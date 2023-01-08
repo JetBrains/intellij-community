@@ -19,6 +19,7 @@ import com.intellij.webcore.packaging.*;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
@@ -109,7 +110,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         if (selectedSdk == getSelectedSdk()) {
           myNotificationArea.hide();
           if (problem != null) {
-            final boolean invalid = PythonSdkUtil.isInvalid(selectedSdk);
+            final boolean invalid = !PySdkExtKt.getSdkSeemsValid(selectedSdk);
             if (!invalid) {
               HtmlBuilder builder = new HtmlBuilder();
               builder.append(problem.getMessage()).append(". ");

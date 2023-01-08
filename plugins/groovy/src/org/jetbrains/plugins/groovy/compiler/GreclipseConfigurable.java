@@ -17,9 +17,6 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import javax.swing.*;
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public class GreclipseConfigurable implements Configurable {
   private final GreclipseSettings mySettings;
   private TextFieldWithBrowseButton myJarPath;

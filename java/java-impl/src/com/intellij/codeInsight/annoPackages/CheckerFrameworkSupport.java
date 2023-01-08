@@ -16,9 +16,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 class CheckerFrameworkSupport implements AnnotationPackageSupport {
   private static final String DEFAULT_QUALIFIER = "org.checkerframework.framework.qual.DefaultQualifier";
   private static final String DEFAULT_QUALIFIERS = "org.checkerframework.framework.qual.DefaultQualifiers";

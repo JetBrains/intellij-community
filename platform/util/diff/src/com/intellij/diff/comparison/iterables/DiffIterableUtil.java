@@ -62,7 +62,9 @@ public final class DiffIterableUtil {
    * Compare two lists, basing on equals() and hashCode() of it's elements
    */
   @NotNull
-  public static <T> FairDiffIterable diff(@NotNull List<? extends T> objects1, @NotNull List<? extends T> objects2, @NotNull CancellationChecker indicator)
+  public static <T> FairDiffIterable diff(@NotNull List<? extends T> objects1,
+                                          @NotNull List<? extends T> objects2,
+                                          @NotNull CancellationChecker indicator)
     throws DiffTooBigException {
     // TODO: compare lists instead of arrays in Diff
     return diff(objects1.toArray(), objects2.toArray(), indicator);
@@ -175,6 +177,12 @@ public final class DiffIterableUtil {
         throw new UnsupportedOperationException();
       }
     };
+  }
+
+  public static int getRangeDelta(@NotNull Range range) {
+    int deleted = range.end1 - range.start1;
+    int inserted = range.end2 - range.start2;
+    return inserted - deleted;
   }
 
   //

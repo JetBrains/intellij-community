@@ -52,13 +52,16 @@ class TodoCheckinHandlerFactory : CheckinHandlerFactory() {
 class TodoCommitProblem(val worker: TodoCheckinHandlerWorker) : CommitProblemWithDetails {
   override val text: String get() = message("label.todo.items.found", worker.inOneList().size)
 
-  override fun showDetails(project: Project, commitInfo: CommitInfo) {
+  override fun showDetails(project: Project) {
     TodoCheckinHandler.showTodoItems(project, worker.changes, worker.inOneList())
   }
 
   override fun showModalSolution(project: Project, commitInfo: CommitInfo): CheckinHandler.ReturnResult {
     return showDialog(project, worker, commitInfo.commitActionText)
   }
+
+  override val showDetailsAction: String
+    get() = message("todo.in.new.review.button")
 }
 
 class TodoCheckinHandler(private val project: Project) : CheckinHandler(), CommitCheck, DumbAware {

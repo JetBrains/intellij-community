@@ -58,10 +58,12 @@ public interface StatusBarWidget extends Disposable {
 
   interface MultipleTextValuesPresentation extends WidgetPresentation {
     /**
-     * @deprecated use {@link #getPopup()}
+     * @deprecated implement {@link #getPopup()}
      */
     @Deprecated(forRemoval = true)
-    @Nullable("null means the widget is unable to show the popup") ListPopup getPopupStep();
+    default @Nullable("null means the widget is unable to show the popup") ListPopup getPopupStep() {
+      return null;
+    }
 
     @Nullable("null means the widget is unable to show the popup")
     default JBPopup getPopup() {
@@ -77,6 +79,13 @@ public interface StatusBarWidget extends Disposable {
     default @Nullable Icon getIcon() {
       return null;
     }
+
+    /**
+     * @deprecated not used
+     */
+    @Override
+    @Deprecated
+    default @Nullable Consumer<MouseEvent> getClickConsumer() { return null; }
   }
 
   //<editor-fold desc="Deprecated stuff">

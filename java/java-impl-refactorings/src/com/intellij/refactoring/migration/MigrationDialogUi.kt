@@ -4,10 +4,10 @@ package com.intellij.refactoring.migration
 import com.intellij.application.options.ModulesComboBox
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.ui.JBUI
 import javax.swing.JComponent
 import javax.swing.JEditorPane
@@ -38,7 +38,7 @@ class MigrationDialogUi(map: MigrationMap?) {
     row(JavaRefactoringBundle.message("migration.dialog.scope.label")) {
       modulesCombo = cell(ModulesComboBox())
         .applyToComponent { setMinimumAndPreferredWidth(JBUI.scale(380)) }
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
         .component
       bottomGap(BottomGap.SMALL)
     }

@@ -19,9 +19,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.extensions.ExtensionPointName;
 
-/**
- * @author peter
- */
 public abstract class CompletionPreselectSkipper {
   public static final ExtensionPointName<CompletionPreselectSkipper> EP_NAME = ExtensionPointName.create("com.intellij.completion.skip");
 

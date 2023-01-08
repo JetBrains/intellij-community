@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class RemoveSingleLambdaParameterFix(element: KtParameter) : KotlinQuickFixAction<KtParameter>(element) {
@@ -37,6 +38,8 @@ class RemoveSingleLambdaParameterFix(element: KtParameter) : KotlinQuickFixActio
 
             val lambdaParent = lambda.parent
             if (lambdaParent is KtWhenEntry || lambdaParent is KtContainerNodeForControlStructureBody) return null
+
+            if (lambda.getQualifiedExpressionForReceiver() != null) return null
 
             val property = lambda.getStrictParentOfType<KtProperty>()
             if (property != null && property.typeReference == null) return null

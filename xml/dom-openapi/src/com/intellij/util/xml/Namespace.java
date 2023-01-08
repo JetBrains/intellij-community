@@ -21,7 +21,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @author peter
  * @see DomFileDescription#getAllowedNamespaces(String, com.intellij.psi.xml.XmlFile)
  * @see DomFileDescription#registerNamespacePolicy(String, String...)
  */

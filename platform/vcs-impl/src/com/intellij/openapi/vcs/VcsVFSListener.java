@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -15,6 +16,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -540,7 +542,8 @@ public abstract class VcsVFSListener implements Disposable {
    */
   protected @NotNull Collection<FilePath> selectFilePathsToDelete(@NotNull List<FilePath> deletedFiles) {
     return selectFilesForOption(myRemoveOption, deletedFiles, getDeleteTitle(), getSingleFileDeleteTitle(),
-                                getSingleFileDeletePromptTemplate());
+                                getSingleFileDeletePromptTemplate(),
+                                CommonBundle.message("button.delete"), CommonBundle.getCancelButtonText());
   }
 
   /**
@@ -550,14 +553,17 @@ public abstract class VcsVFSListener implements Disposable {
    * @return selected files or empty if {@link VcsShowConfirmationOption.Value#DO_NOTHING_SILENTLY}
    */
   protected @NotNull Collection<FilePath> selectFilePathsToAdd(@NotNull List<FilePath> addFiles) {
-    return selectFilesForOption(myAddOption, addFiles, getAddTitle(), getSingleFileAddTitle(), getSingleFileAddPromptTemplate());
+    return selectFilesForOption(myAddOption, addFiles, getAddTitle(), getSingleFileAddTitle(), getSingleFileAddPromptTemplate(),
+                                CommonBundle.getAddButtonText(), CommonBundle.getCancelButtonText());
   }
 
   private @NotNull Collection<FilePath> selectFilesForOption(@NotNull VcsShowConfirmationOption option,
                                                              @NotNull List<FilePath> files,
                                                              @NlsContexts.DialogTitle String title,
                                                              @NlsContexts.DialogTitle String singleFileTitle,
-                                                             @NlsContexts.DialogMessage String singleFilePromptTemplate) {
+                                                             @NlsContexts.DialogMessage String singleFilePromptTemplate,
+                                                             @NlsActions.ActionText @Nullable String okActionName,
+                                                             @NlsActions.ActionText @Nullable String cancelActionName) {
     VcsShowConfirmationOption.Value optionValue = option.getValue();
     if (optionValue == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
       return emptyList();
@@ -570,7 +576,7 @@ public abstract class VcsVFSListener implements Disposable {
     Ref<Collection<FilePath>> ref = Ref.create();
     ApplicationManager.getApplication()
       .invokeAndWait(() -> ref.set(helper.selectFilePathsToProcess(files, title, null, singleFileTitle,
-                                                                   singleFilePromptTemplate, option)));
+                                                                   singleFilePromptTemplate, option, okActionName, cancelActionName)));
     Collection<FilePath> selectedFilePaths = ref.get();
     return selectedFilePaths != null ? selectedFilePaths : emptyList();
   }

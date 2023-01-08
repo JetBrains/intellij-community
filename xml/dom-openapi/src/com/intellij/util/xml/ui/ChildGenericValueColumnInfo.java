@@ -27,9 +27,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 
-/**
- * @author peter
- */
 public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumnInfo<T, String> {
   private final TableCellEditor myEditor;
   private final DomFixedChildDescription myChildDescription;

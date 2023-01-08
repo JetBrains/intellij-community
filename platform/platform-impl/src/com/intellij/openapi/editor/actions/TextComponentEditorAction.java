@@ -20,6 +20,10 @@ import javax.swing.text.JTextComponent;
 
 
 public abstract class TextComponentEditorAction extends EditorAction {
+  static {
+    TextComponentEditorImpl.ensureRequiredClassesAreLoaded();
+  }
+
   private final boolean allowSpeedSearch;
 
   protected TextComponentEditorAction(@NotNull EditorActionHandler defaultHandler) {
@@ -29,6 +33,11 @@ public abstract class TextComponentEditorAction extends EditorAction {
   protected TextComponentEditorAction(@NotNull EditorActionHandler defaultHandler, boolean allowSpeedSearch) {
     super(defaultHandler);
     this.allowSpeedSearch = allowSpeedSearch;
+    ensureHandlerChainIsLoaded();
+  }
+
+  private void ensureHandlerChainIsLoaded() {
+    getHandler().runForAllCarets(); // triggers DynamicEditorActionHandler.getHandlerChain
   }
 
   @Override

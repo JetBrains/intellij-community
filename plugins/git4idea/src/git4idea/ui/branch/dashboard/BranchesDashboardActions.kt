@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
+import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.diverged
@@ -119,7 +120,7 @@ internal object BranchesDashboardActions {
     fun build(): ActionGroup? {
       val selectedBranches = tree.getSelectedBranches()
       val multipleBranchSelection = selectedBranches.size > 1
-      val guessRepo = GitBranchUtil.guessWidgetRepository(project) ?: return null
+      val guessRepo = GitBranchUtil.guessWidgetRepository(project, DvcsUtil.getSelectedFile(project)) ?: return null
       if (multipleBranchSelection) {
         return MultipleLocalBranchActions()
       }

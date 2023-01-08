@@ -468,7 +468,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       return RunCurrentFileActionStatus.createEnabled(myExecutor.getStartActionText(psiFile.getName()), icon, runnableConfigs);
     }
 
-    private static List<RunnerAndConfigurationSettings> getRunConfigsForCurrentFile(@NotNull PsiFile psiFile, boolean resetCache) {
+    @ApiStatus.Internal
+    public static List<RunnerAndConfigurationSettings> getRunConfigsForCurrentFile(@NotNull PsiFile psiFile, boolean resetCache) {
       if (resetCache) {
         psiFile.putUserData(CURRENT_FILE_RUN_CONFIGS_KEY, null);
       }

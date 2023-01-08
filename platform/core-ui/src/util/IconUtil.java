@@ -1002,7 +1002,18 @@ public final class IconUtil {
   }
 
   public static @NotNull Icon toStrokeIcon(@NotNull Icon original, @NotNull Color resultColor) {
-    List<String> strokeColors = List.of("#000000", "#6c707e", "#3574f0", "#5fb865", "#e35252", "#eb7171", "#e3ae4d", "#fcc75b", "#f28c35", "#955ae0");
+    List<String> strokeColors = List.of("black", "#000000",
+                                        "white", "#ffffff",
+                                        "#818594",
+                                        "#6c707e",
+                                        "#3574f0",
+                                        "#5fb865",
+                                        "#e35252",
+                                        "#eb7171",
+                                        "#e3ae4d",
+                                        "#fcc75b",
+                                        "#f28c35",
+                                        "#955ae0");
     List<String> backgroundColors = List.of("#ebecf0", "#e7effd", "#dff2e0", "#f2fcf3", "#ffe8e8", "#fff5f5", "#fff8e3", "#fff4eb", "#eee0ff");
     SVGLoader.SvgElementColorPatcherProvider palettePatcher = getStrokePatcher(resultColor, strokeColors, backgroundColors);
     SVGLoader.SvgElementColorPatcherProvider strokeReplacer = getStrokePatcher(resultColor, List.of("white", "#ffffff"), List.of());

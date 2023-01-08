@@ -8,6 +8,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.SeverityEditorDialog;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -42,7 +43,7 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
 
   @NotNull
   @Override
-  public DefaultActionGroup createPopupActionGroup(final JComponent anchor) {
+  public DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     final DefaultActionGroup group = new DefaultActionGroup();
     for (final HighlightSeverity severity : getSeverities(mySeverityRegistrar, myIncludeDoNotShow)) {
       final HighlightSeverityAction action = new HighlightSeverityAction(severity);

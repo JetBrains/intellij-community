@@ -31,9 +31,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class TemplateDataLanguageConfigurable extends PerFileConfigurableBase<Language> {
   public TemplateDataLanguageConfigurable(@NotNull Project project) {
     super(project, TemplateDataLanguageMappings.getInstance(project));

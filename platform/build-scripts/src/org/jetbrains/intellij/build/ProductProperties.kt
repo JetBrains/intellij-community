@@ -294,4 +294,11 @@ abstract class ProductProperties() {
    * It's particularly useful when you want to limit modules used to calculate compatible plugins on the marketplace.
    */
   open fun customizeBuiltinModules(context: BuildContext, builtinModulesFile: Path) {}
+
+  /**
+   * When set to true, invokes keymap and inspections description generators during build.
+   * These generators produce artifacts utilized by documentation
+   * authoring tools and builds.
+   */
+  var buildDocAuthoringAssets: Boolean = false
 }

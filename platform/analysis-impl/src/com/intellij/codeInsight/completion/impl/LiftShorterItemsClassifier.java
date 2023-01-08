@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
-* @author peter
-*/
 public final class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   private final TreeSet<String> mySortedStrings = new TreeSet<>();
   private final MultiMap<String, LookupElement> myElements = createMultiMap(false);

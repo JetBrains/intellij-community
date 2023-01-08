@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui
 
 import com.intellij.collaboration.api.page.SequentialListLoader
-import com.intellij.collaboration.api.page.SequentialListLoader.*
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -10,6 +9,8 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestsListViewModel.*
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
 import org.jetbrains.plugins.gitlab.testutil.MainDispatcherRule
 import org.junit.ClassRule
 import org.junit.Test
@@ -27,7 +28,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
   @Test
   fun `loading state`() = runTest {
     val cs = childScope()
-    val vm = GitLabMergeRequestsListViewModelImpl(cs, delayingLoader {
+    val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), delayingLoader {
       emptyList<GitLabMergeRequestShortDTO>() to true
     })
 
@@ -48,7 +49,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
   @Test
   fun `reset while loading`() = runTest {
     val cs = childScope()
-    val vm = GitLabMergeRequestsListViewModelImpl(cs, delayingLoader {
+    val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), delayingLoader {
       emptyList<GitLabMergeRequestShortDTO>() to true
     })
 
@@ -71,7 +72,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
   @Test
   fun `reset after loading`() = runTest {
     val cs = childScope()
-    val vm = GitLabMergeRequestsListViewModelImpl(cs, delayingLoader {
+    val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), delayingLoader {
       emptyList<GitLabMergeRequestShortDTO>() to true
     })
 
@@ -95,7 +96,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
   @Test
   fun `request processing continues after loading cancellation`() = runTest {
     val cs = childScope()
-    val vm = GitLabMergeRequestsListViewModelImpl(cs, delayingLoader {
+    val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), delayingLoader {
       throw CancellationException()
     })
 
@@ -115,7 +116,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
   @Test
   fun `error state`() = runTest {
     val cs = childScope()
-    val vm = GitLabMergeRequestsListViewModelImpl(cs, delayingLoader {
+    val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), delayingLoader {
       error("test")
     })
 
@@ -129,16 +130,20 @@ internal class GitLabMergeRequestsListViewModelImplTest {
     }
     cs.cancel()
   }
+
+  private fun filterVmMock(): GitLabMergeRequestsFiltersViewModel = mock {
+    on(it.searchState).thenReturn(MutableStateFlow(GitLabMergeRequestsFiltersValue.EMPTY))
+  }
 }
 
 private fun delayingLoader(delay: Long = 2000,
                            loader: suspend () -> Pair<List<GitLabMergeRequestShortDTO>, Boolean>)
-  : () -> SequentialListLoader<GitLabMergeRequestShortDTO> = {
+  : (GitLabMergeRequestsFiltersValue) -> SequentialListLoader<GitLabMergeRequestShortDTO> = {
   mock {
     onBlocking { loadNext() } doSuspendableAnswer {
       delay(delay)
       val (data, hasMore) = loader()
-      ListBatch(data, hasMore)
+      SequentialListLoader.ListBatch(data, hasMore)
     }
   }
 }

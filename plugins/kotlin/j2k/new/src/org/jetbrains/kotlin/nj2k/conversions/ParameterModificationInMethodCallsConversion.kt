@@ -2,14 +2,12 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.j2k.ast.Nullability
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.blockStatement
 import org.jetbrains.kotlin.nj2k.hasWritableUsages
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.*
-import org.jetbrains.kotlin.nj2k.types.JKVarianceTypeParameterType.Variance
 
 class ParameterModificationInMethodCallsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
@@ -43,25 +41,11 @@ class ParameterModificationInMethodCallsConversion(context: NewJ2kConverterConte
         parameters.mapNotNull { parameter ->
             if (parameter.hasWritableUsages(scope, context)) {
                 JKLocalVariable(
-                    JKTypeElement(parameter.determineType()),
+                    JKTypeElement(parameter.determineType(symbolProvider)),
                     JKNameIdentifier(parameter.name.value),
                     JKFieldAccessExpression(symbolProvider.provideUniverseSymbol(parameter)),
                     JKMutabilityModifierElement(Mutability.MUTABLE)
                 )
             } else null
         }
-
-    private fun JKParameter.determineType(): JKType =
-        if (isVarArgs) {
-            val typeParameters = if (type.type is JKJavaPrimitiveType) {
-                emptyList()
-            } else {
-                listOf(JKVarianceTypeParameterType(Variance.OUT, type.type))
-            }
-            JKClassType(
-                symbolProvider.provideClassSymbol(type.type.arrayFqName()),
-                typeParameters,
-                Nullability.NotNull
-            )
-        } else type.type
 }

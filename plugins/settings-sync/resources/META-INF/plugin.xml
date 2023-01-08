@@ -12,6 +12,8 @@
     <module name="intellij.settingsSync.git"/>
   </content>
 
+  <depends>com.intellij.modules.platform</depends>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncMain"/>
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncSettings"/>

@@ -1,7 +1,11 @@
 package org.jetbrains.completion.full.line.settings.ui.panels
 
 import com.intellij.lang.Language
-import com.intellij.ui.layout.*
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.and
+import com.intellij.ui.layout.panel
+import com.intellij.ui.layout.selected
 import org.jetbrains.completion.full.line.language.KeepKind
 import org.jetbrains.completion.full.line.models.ModelType
 import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle.Companion.message
@@ -75,8 +79,9 @@ class ExtendedSettingsPanel(
         row(message("fl.server.completion.deduplication.keep.kinds")) {
           cell {
             KeepKind.values().map { kind ->
+              @NlsSafe val text = kind.name.toLowerCase().capitalize()
               checkBox(
-                kind.name.toLowerCase().capitalize(),
+                text,
                 { state.keepKinds.contains(kind) },
                 { if (it) state.keepKinds.add(kind) else state.keepKinds.remove(kind) }
               )

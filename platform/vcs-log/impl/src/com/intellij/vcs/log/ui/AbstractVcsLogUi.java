@@ -43,7 +43,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   @NotNull protected final VcsLogColorManager myColorManager;
   @NotNull protected final VcsLogImpl myLog;
   @NotNull protected final VisiblePackRefresher myRefresher;
-  @NotNull private final CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
+  @NotNull protected final CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
 
   @NotNull protected final Collection<VcsLogListener> myLogListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @NotNull protected final VisiblePackChangeListener myVisiblePackChangeListener;

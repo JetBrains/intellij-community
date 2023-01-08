@@ -38,9 +38,6 @@ import java.lang.reflect.Field
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-/**
- * @author peter
- */
 abstract class GroovyFormatterTestCase extends LightJavaCodeInsightFixtureTestCase {
   private static final Logger LOG = Logger.getInstance(GroovyFormatterTestCase.class)
   private static final String OPTION_START = "<option>"

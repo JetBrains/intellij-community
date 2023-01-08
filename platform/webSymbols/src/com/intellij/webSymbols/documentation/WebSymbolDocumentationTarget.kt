@@ -15,13 +15,12 @@ interface WebSymbolDocumentationTarget : DocumentationTarget {
 
   val symbol: WebSymbol
 
-  @JvmDefault
-  override val presentation: TargetPresentation
-    get() = TargetPresentation.builder(symbol.name)
+  override fun presentation(): TargetPresentation {
+    return TargetPresentation.builder(symbol.name)
       .icon(symbol.icon)
       .presentation()
+  }
 
-  @JvmDefault
   override fun computeDocumentation(): DocumentationResult? =
     symbol.documentation
       ?.takeIf { it.isNotEmpty() }

@@ -44,9 +44,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class DomInvocationHandler extends UserDataHolderBase implements InvocationHandler, DomElement {
   private static final Logger LOG = Logger.getInstance(DomInvocationHandler.class);
   public static final Method ACCEPT_METHOD = ReflectionUtil.getMethod(DomElement.class, "accept", DomElementVisitor.class);

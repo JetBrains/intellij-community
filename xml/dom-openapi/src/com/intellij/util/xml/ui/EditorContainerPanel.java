@@ -26,8 +26,6 @@ import java.awt.*;
  *
  * Adds an empty disable JTextField to itself to be visible if unbound (or in UI designer), which
  * should be removed on binding.
- *
- * @author peter
  */
 public class EditorContainerPanel extends JPanel {
   public EditorContainerPanel() {

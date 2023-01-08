@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.impl.compilation.cache
 import com.google.common.hash.Hashing
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import org.jetbrains.intellij.build.impl.compilation.BuildTargetState
+import org.jetbrains.jps.cache.model.BuildTargetState
 import org.jetbrains.intellij.build.impl.compilation.CompilationOutput
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files

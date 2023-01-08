@@ -9,9 +9,6 @@ import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author peter
- */
 @SuppressWarnings(["JUnitTestClassNamingConvention"])
 class Groovy16HighlightingTest extends LightJavaCodeInsightFixtureTestCase {
 

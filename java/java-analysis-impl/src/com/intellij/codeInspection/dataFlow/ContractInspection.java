@@ -29,9 +29,6 @@ import java.util.Map;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ParseException;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.parseContract;
 
-/**
- * @author peter
- */
 public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override

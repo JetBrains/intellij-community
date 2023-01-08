@@ -10,9 +10,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.FileElement
 import java.util.function.Supplier
 
-/**
- * @author peter
- */
 class OffsetsInFile(val file: PsiFile, val offsets: OffsetMap) {
   constructor(file: PsiFile) : this(file, OffsetMap(file.viewProvider.document!!))
 

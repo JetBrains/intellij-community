@@ -33,9 +33,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class TemplateLanguageErrorQuickFixProvider implements ErrorQuickFixProvider{
 
   @Override

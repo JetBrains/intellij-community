@@ -43,6 +43,7 @@ public class JavaSpellcheckerInspectionTest extends LightJavaCodeInsightFixtureT
   public void testNonNlsLocalVariable() { doTest(); }
   public void testNonNlsLocalVariableAndComment() { doTest(); }
   public void testFieldComment() { doTest(); }
+  public void testDoNotCheckDerivedNames() { doTest(); }
 
   private void doTest() {
     myFixture.enableInspections(SpellcheckerInspectionTestCase.getInspectionTools());

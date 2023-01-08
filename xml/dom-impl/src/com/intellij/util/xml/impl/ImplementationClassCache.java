@@ -16,9 +16,6 @@ import java.util.Comparator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-/**
- * @author peter
- */
 final class ImplementationClassCache {
   private static final Comparator<Class<?>> CLASS_COMPARATOR = (o1, o2) -> {
     if (o1.isAssignableFrom(o2)) return 1;

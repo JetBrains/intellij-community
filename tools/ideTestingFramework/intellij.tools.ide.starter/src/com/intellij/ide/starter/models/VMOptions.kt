@@ -157,8 +157,11 @@ data class VMOptions(
     .addSystemProperty("jb.consents.confirmation.enabled", false)
     .addSystemProperty("jb.privacy.policy.text", "<!--999.999-->")
 
-  fun takeScreenshotIfFailure(logsDir: Path) = this
-    .addSystemProperty("ide.performance.screenshot.before.kill", logsDir.resolve("screenshot_beforeKill.jpg").toString())
+  fun takeScreenshotsPeriodically(logsDir: Path) = this
+    .addSystemProperty("ide.performance.screenshot", logsDir.resolve("screenshot.png").toString())
+
+  fun takeScreenshotOnFailure(logsDir: Path) = this
+    .addSystemProperty("ide.performance.screenshot.on.failure", logsDir.resolve("screenshot_onFailure.jpg").toString())
 
   fun installTestScript(testName: String,
                         paths: IDEDataPaths,

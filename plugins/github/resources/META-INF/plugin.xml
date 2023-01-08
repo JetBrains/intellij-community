@@ -75,6 +75,7 @@
     <fileIconProvider implementation="org.jetbrains.plugins.github.extensions.GithubYamlIconProvider"/>
 
     <registryKey defaultValue="true" description="Applying suggested changes" key="github.suggested.changes.apply"/>
+    <iconMapper mappingFile="GithubIconMappings.json"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

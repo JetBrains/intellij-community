@@ -54,9 +54,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 
-/**
- * @author peter
- */
 class LookupUi {
   private static final Logger LOG = Logger.getInstance(LookupUi.class);
 

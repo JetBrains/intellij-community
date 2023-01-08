@@ -8,8 +8,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import javax.swing.JLabel
 
 @Suppress("DialogTitleCapitalization")
@@ -128,11 +126,11 @@ fun demoComponents(parentDisposable: Disposable): DialogPanel {
 
     row {
       label("textArea:")
-        .verticalAlign(VerticalAlign.TOP)
+        .align(AlignY.TOP)
         .gap(RightGap.SMALL)
       textArea()
         .rows(5)
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
     }.layout(RowLayout.PARENT_GRID)
 
     row("comboBox:") {

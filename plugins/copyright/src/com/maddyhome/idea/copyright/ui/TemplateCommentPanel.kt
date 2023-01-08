@@ -14,14 +14,8 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.RowLayout
-import com.intellij.ui.dsl.builder.columns
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.selected
 import com.maddyhome.idea.copyright.CopyrightUpdaters
 import com.maddyhome.idea.copyright.DEFAULT_COPYRIGHT_NOTICE
 import com.maddyhome.idea.copyright.options.LanguageOptions
@@ -146,7 +140,7 @@ class TemplateCommentPanel(_fileType: FileType?,
           }
         }
       }.resizableColumn()
-        .verticalAlign(VerticalAlign.TOP)
+        .align(AlignY.TOP)
         .gap(RightGap.COLUMNS)
 
       panel {
@@ -193,7 +187,7 @@ class TemplateCommentPanel(_fileType: FileType?,
           }
         }
       }.resizableColumn()
-        .verticalAlign(VerticalAlign.TOP)
+        .align(AlignY.TOP)
     }
 
     if (locations.isNotEmpty()) {
@@ -210,8 +204,7 @@ class TemplateCommentPanel(_fileType: FileType?,
 
     row {
       preview = textArea()
-        .horizontalAlign(HorizontalAlign.FILL)
-        .verticalAlign(VerticalAlign.FILL)
+        .align(Align.FILL)
         .applyToComponent {
           isEditable = false
           font = EditorFontType.getGlobalPlainFont()

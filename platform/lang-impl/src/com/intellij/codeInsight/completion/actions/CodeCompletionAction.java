@@ -23,9 +23,6 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 
-/**
- *  @author peter
- */
 public class CodeCompletionAction extends BaseCodeCompletionAction implements LightEditCompatible {
 
   @Override

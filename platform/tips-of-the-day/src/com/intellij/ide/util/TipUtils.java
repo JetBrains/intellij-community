@@ -66,22 +66,17 @@ public final class TipUtils {
   }
 
   public static @Nullable TipAndTrickBean getTip(@Nullable FeatureDescriptor feature) {
-    if (feature == null) {
-      return null;
-    }
-    String tipFileName = feature.getTipFileName();
-    if (tipFileName == null) {
+    if (feature == null) return null;
+    String tipId = feature.getTipId();
+    if (tipId == null) {
       LOG.warn("No Tip of the day for feature " + feature.getId());
       return null;
     }
 
-    TipAndTrickBean tip = TipAndTrickBean.findByFileName("neue-" + tipFileName);
-    if (tip == null && StringUtil.isNotEmpty(tipFileName)) {
-      tip = TipAndTrickBean.findByFileName(tipFileName);
-    }
-    if (tip == null && StringUtil.isNotEmpty(tipFileName)) {
+    TipAndTrickBean tip = TipAndTrickBean.findById(tipId);
+    if (tip == null && StringUtil.isNotEmpty(tipId)) {
       tip = new TipAndTrickBean();
-      tip.fileName = tipFileName;
+      tip.fileName = tipId + TipAndTrickBean.TIP_FILE_EXTENSION;
     }
     return tip;
   }

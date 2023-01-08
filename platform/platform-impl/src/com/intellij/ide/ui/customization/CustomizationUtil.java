@@ -77,7 +77,16 @@ public final class CustomizationUtil {
       }
     }
 
-    return new CustomisedActionGroup(text, group, schema, defaultGroupName, rootGroupName);
+    ActionGroup correctedGroup = new CustomisedActionGroup(text, group, schema, defaultGroupName, rootGroupName);
+    String groupId = ActionManager.getInstance().getId(group);
+    schema.getActions().stream()
+      .map(actionUrl -> actionUrl.getComponent() instanceof Group g ? g : null)
+      .filter(g -> g != null && Objects.equals(g.getId(), groupId))
+      .findFirst()
+      .ifPresent(g -> {
+        if (g.isForceShowAsPopup()) correctedGroup.setPopup(true);
+      });
+    return correctedGroup;
   }
 
 

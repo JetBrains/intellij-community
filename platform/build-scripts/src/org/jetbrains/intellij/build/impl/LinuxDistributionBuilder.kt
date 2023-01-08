@@ -92,7 +92,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
       checkExecutablePermissions(tarGzPath, rootDirectoryName, includeRuntime = true)
 
       if (arch == JvmArchitecture.x64) {
-        buildSnapPackage(jreDirectoryPath = runtimeDir, unixDistPath = osAndArchSpecificDistPath, arch = arch)
+        buildSnapPackage(runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, arch = arch)
       }
       else {
         // TODO: Add snap for aarch64
@@ -145,17 +145,6 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     return patterns.addAll(context.getExtraExecutablePattern(OsFamily.LINUX))
   }
 
-  override fun getArtifactNames(context: BuildContext): List<String> {
-    val suffixes = ArrayList<String>()
-    if (customizer.buildTarGzWithoutBundledRuntime) {
-      suffixes.add(NO_JBR_SUFFIX)
-    }
-    if (!customizer.buildOnlyBareTarGz) {
-      suffixes.add("")
-    }
-    return suffixes.map { artifactName(context, it) }
-  }
-
   private val rootDirectoryName: String
     get() = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
 
@@ -193,7 +182,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     return tarPath
   }
 
-  private suspend fun buildSnapPackage(jreDirectoryPath: Path, unixDistPath: Path, arch: JvmArchitecture) {
+  private suspend fun buildSnapPackage(runtimeDir: Path, unixDistPath: Path, arch: JvmArchitecture) {
     val snapName = customizer.snapName ?: return
     if (!context.options.buildUnixSnaps) {
       return
@@ -224,7 +213,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
             Pair("WM_CLASS", getLinuxFrameClass(context))
           )
         )
-        moveFile(iconPngPath, snapDir.resolve("$snapName.png"))
+        copyFile(iconPngPath, snapDir.resolve("$snapName.png"))
         val snapcraftTemplate = context.paths.communityHomeDir.resolve(
           "platform/build-scripts/resources/linux/snap/snapcraft-template.yaml")
         val versionSuffix = appInfo.versionSuffix?.replace(' ', '-') ?: ""
@@ -249,7 +238,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           .include("bin/fsnotifier*")
           .enumerate().forEach(::makeFileExecutable)
 
-        FileSet(jreDirectoryPath)
+        FileSet(runtimeDir)
           .include("jbr/bin/*")
           .enumerate().forEach(::makeFileExecutable)
 
@@ -262,7 +251,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         }
         validateProductJson(jsonText = generateProductJson(unixSnapDistPath, arch = arch, "jbr/bin/java", context),
                             relativePathToProductJson = "",
-                            installationDirectories = listOf(context.paths.distAllDir, unixSnapDistPath, jreDirectoryPath),
+                            installationDirectories = listOf(context.paths.distAllDir, unixSnapDistPath, runtimeDir),
                             installationArchives = listOf(),
                             context = context)
         val resultDir = snapDir.resolve("result")
@@ -277,7 +266,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
             "--volume=$snapDir/result:/build/result",
             "--volume=${context.paths.getDistAll()}:/build/dist.all:ro",
             "--volume=$unixSnapDistPath:/build/dist.unix:ro",
-            "--volume=$jreDirectoryPath:/build/jre:ro",
+            "--volume=$runtimeDir:/build/jre:ro",
             "--workdir=/build",
             context.options.snapDockerImage,
             "snapcraft",

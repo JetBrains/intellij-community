@@ -17,10 +17,11 @@ except:
 
 import inspect
 from _pydevd_bundle.pydevd_constants import BUILTINS_MODULE_NAME, IS_PY38_OR_GREATER, dict_iter_items, get_global_debugger, IS_PY3K, LOAD_VALUES_POLICY, \
-    ValuesPolicy, GET_FRAME_RETURN_GROUP, GET_FRAME_NORMAL_GROUP
+    ValuesPolicy, GET_FRAME_RETURN_GROUP, GET_FRAME_NORMAL_GROUP, IS_ASYNCIO_DEBUGGER_ENV
 import sys
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
+from _pydevd_asyncio_util.pydevd_asyncio_utils import eval_async_expression_in_context
 
 
 def _normpath(filename):
@@ -652,3 +653,9 @@ def is_current_thread_main_thread():
     else:
         return isinstance(threading.current_thread(), threading._MainThread)
 
+
+def eval_expression(expression, globals, locals):
+    if IS_ASYNCIO_DEBUGGER_ENV:
+        return eval_async_expression_in_context(expression, globals, locals, False)
+    else:
+        return eval(expression, globals, locals)

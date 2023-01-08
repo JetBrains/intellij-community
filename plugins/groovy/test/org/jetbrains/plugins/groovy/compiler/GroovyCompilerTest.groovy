@@ -39,9 +39,6 @@ import org.jetbrains.org.objectweb.asm.Opcodes
 
 import java.nio.file.Files
 
-/**
- * @author peter
- */
 @CompileStatic
 abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override

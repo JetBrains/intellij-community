@@ -3,16 +3,16 @@ package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.codeVision.CodeVisionProvider
 import com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider
-import com.intellij.codeInsight.hints.InlayHintsProviderFactory
-import com.intellij.codeInsight.hints.InlayHintsSettings
-import com.intellij.codeInsight.hints.InlayParameterHintsExtension
+import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.settings.language.SingleLanguageInlayHintsConfigurable
-import com.intellij.codeInsight.hints.withSettings
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
 
 private class InlayHintsSettingsSearchableContributor : SearchableOptionContributor() {
   override fun processOptions(processor: SearchableOptionProcessor) {
+    for (inlayGroup in InlayGroup.values()) {
+      addOption(processor, inlayGroup.toString(), null)
+    }
     for (settingsProvider in CodeVisionGroupSettingProvider.EP.EXTENSION_POINT_NAME.extensionList) {
       addOption(processor, settingsProvider.description, null)
       addOption(processor, settingsProvider.groupName, null)

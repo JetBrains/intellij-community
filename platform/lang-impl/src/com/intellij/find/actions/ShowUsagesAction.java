@@ -386,7 +386,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     AtomicBoolean manuallyResized = new AtomicBoolean();
 
     Predicate<? super Usage> originUsageCheck = originUsageCheck(parameters.editor);
-    var renderer = new ShowUsagesTableCellRenderer(project, originUsageCheck, outOfScopeUsages, searchScope);
+    var renderer = new ShowUsagesTableCellRenderer(originUsageCheck, outOfScopeUsages, searchScope);
     var table = new ShowUsagesTable(renderer, usageView);
 
     addUsageNodes(usageView.getRoot(), usageView, new ArrayList<>());
@@ -1007,6 +1007,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     scopeChooserCombo.getComboBox().putClientProperty("JComboBox.isBorderless", Boolean.TRUE);
     if (ExperimentalUI.isNewUI()) {
       scopeChooserCombo.getComboBox().putClientProperty("JComboBox.noPaintBorder", Boolean.TRUE);
+      scopeChooserCombo.setOpaque(false);
+      scopeChooserCombo.getComboBox().setOpaque(false);
     }
     scopeChooserCombo
       .initialize(project, false, false, initialScope.getDisplayName(), null)
@@ -1025,8 +1027,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         });
       });
     scopeChooserCombo.setButtonVisible(false);
-    scopeChooserCombo.setOpaque(false);
-    scopeChooserCombo.getComboBox().setOpaque(false);
     return scopeChooserCombo;
   }
 

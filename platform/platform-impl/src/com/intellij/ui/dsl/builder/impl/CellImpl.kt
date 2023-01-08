@@ -62,6 +62,11 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  override fun align(align: Align): CellImpl<T> {
+    super.align(align)
+    return this
+  }
+
   override fun resizableColumn(): CellImpl<T> {
     super.resizableColumn()
     return this

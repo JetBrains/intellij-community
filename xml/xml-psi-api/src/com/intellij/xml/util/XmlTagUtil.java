@@ -18,9 +18,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public final class XmlTagUtil {
   private static final ObjectIntMap<String> ourCharacterEntities = new ObjectIntHashMap<>(6);
 

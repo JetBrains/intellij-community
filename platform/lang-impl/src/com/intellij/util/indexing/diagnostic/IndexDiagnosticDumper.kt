@@ -37,6 +37,11 @@ import kotlin.streams.asSequence
 private const val DIAGNOSTIC_LIMIT_OF_FILES_PROPERTY = "intellij.indexes.diagnostics.limit.of.files"
 
 class IndexDiagnosticDumper : Disposable {
+  private val indexingHistoryListenerPublisher = ApplicationManager
+    .getApplication()
+    .messageBus
+    .syncPublisher(ProjectIndexingHistoryListener.TOPIC)
+
   companion object {
     @JvmStatic
     fun getInstance(): IndexDiagnosticDumper = service()
@@ -159,7 +164,8 @@ class IndexDiagnosticDumper : Disposable {
     val listeners = ProgressManager.getInstance().computeInNonCancelableSection<List<ProjectIndexingHistoryListener>, Exception> {
       projectIndexingHistoryListenerEpName.extensionList
     }
-    for (listener in listeners) {
+
+    for (listener in listeners.asSequence() + indexingHistoryListenerPublisher) {
       try {
         listener.block()
       }

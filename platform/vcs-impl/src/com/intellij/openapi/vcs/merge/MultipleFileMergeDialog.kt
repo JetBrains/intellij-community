@@ -40,8 +40,6 @@ import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
@@ -149,21 +147,20 @@ open class MultipleFileMergeDialog(
 
       row {
         scrollCell(table)
-          .verticalAlign(VerticalAlign.FILL)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(Align.FILL)
           .resizableColumn()
 
         panel {
           row {
             acceptYoursButton = button(VcsBundle.message("multiple.file.merge.accept.yours")) {
               acceptRevision(MergeSession.Resolution.AcceptedYours)
-            }.horizontalAlign(HorizontalAlign.FILL)
+            }.align(AlignX.FILL)
               .component
           }
           row {
             acceptTheirsButton = button(VcsBundle.message("multiple.file.merge.accept.theirs")) {
               acceptRevision(MergeSession.Resolution.AcceptedTheirs)
-            }.horizontalAlign(HorizontalAlign.FILL)
+            }.align(AlignX.FILL)
               .component
           }
           row {
@@ -175,9 +172,9 @@ open class MultipleFileMergeDialog(
             mergeAction.putValue(DEFAULT_ACTION, java.lang.Boolean.TRUE)
             mergeButton = createJButtonForAction(mergeAction)
             cell(mergeButton)
-              .horizontalAlign(HorizontalAlign.FILL)
+              .align(AlignX.FILL)
           }
-        }.verticalAlign(VerticalAlign.TOP)
+        }.align(AlignY.TOP)
       }.resizableRow()
 
       if (project != null) {

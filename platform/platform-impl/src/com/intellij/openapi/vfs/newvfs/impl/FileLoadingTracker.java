@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * @author peter
- */
 final class FileLoadingTracker {
   private static final Logger LOG = Logger.getInstance(FileLoadingTracker.class);
   private static final Set<String> ourPaths;

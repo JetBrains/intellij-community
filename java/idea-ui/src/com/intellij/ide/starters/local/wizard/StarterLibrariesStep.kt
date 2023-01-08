@@ -8,16 +8,17 @@ import com.intellij.ide.starters.shared.*
 import com.intellij.ide.starters.shared.ui.LibraryDescriptionPanel
 import com.intellij.ide.starters.shared.ui.SelectedLibrariesPanel
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
+import com.intellij.ide.wizard.CommitStepException
 import com.intellij.ide.wizard.withVisualPadding
+import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -68,6 +69,19 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
 
   override fun getComponent(): JComponent {
     return topLevelPanel
+  }
+
+  override fun _commit(finishChosen: Boolean) {
+    super._commit(finishChosen)
+
+    try {
+      if (finishChosen) {
+        updateDataModel()
+        moduleBuilder.validateConfigurationInternal()
+      }
+    } catch (e: ConfigurationException) {
+      throw CommitStepException(e.message)
+    }
   }
 
   @NlsSafe
@@ -212,8 +226,7 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
               addToCenter(selectedLibrariesPanel)
             }, gridConstraint(0, 1))
           }, gridConstraint(1, 0))
-        }).horizontalAlign(HorizontalAlign.FILL)
-          .verticalAlign(VerticalAlign.FILL)
+        }).align(Align.FILL)
       }.resizableRow()
     }.withVisualPadding()
   }

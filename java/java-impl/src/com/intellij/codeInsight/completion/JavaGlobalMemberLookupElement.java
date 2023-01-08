@@ -15,9 +15,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class JavaGlobalMemberLookupElement extends LookupElement implements StaticallyImportable {
   private final MemberLookupHelper myHelper;
   private final InsertHandler<JavaGlobalMemberLookupElement> myQualifiedInsertion;

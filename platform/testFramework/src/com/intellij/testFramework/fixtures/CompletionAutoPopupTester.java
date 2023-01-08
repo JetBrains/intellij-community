@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
-/**
- * @author peter
- */
 public class CompletionAutoPopupTester {
   private final CodeInsightTestFixture myFixture;
 

@@ -21,8 +21,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * For completion FAQ, see {@link CompletionContributor}.
- *
- * @author peter
  */
 public abstract class CompletionService {
   public static final Key<CompletionStatistician> STATISTICS_KEY = Key.create("completion");

@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-/**
- * @author peter
- */
 public class StripTestDataMarkup extends ActionOnFile {
   private static final String[] MARKUP = {"<caret>", "<ref>", "<selection>", "</selection>"};
 

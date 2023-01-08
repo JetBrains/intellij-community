@@ -28,7 +28,10 @@ import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataP
 import org.jetbrains.intellij.build.impl.SVGPreBuilder.createPrebuildSvgIconsJob
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.*
-import org.jetbrains.intellij.build.tasks.*
+import org.jetbrains.intellij.build.tasks.ZipSource
+import org.jetbrains.intellij.build.tasks.buildJar
+import org.jetbrains.intellij.build.tasks.generateClasspath
+import org.jetbrains.intellij.build.tasks.injectAppInfo
 import org.jetbrains.jps.model.artifact.JpsArtifact
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.artifact.elements.JpsLibraryFilesPackagingElement
@@ -257,7 +260,7 @@ Android Studio: don't patch ApplicationNamesInfo yet */
       .useWithScope2 { span ->
         val pluginsToBundle = ArrayList<PluginLayout>(plugins.size)
         plugins.filterTo(pluginsToBundle) {
-          satisfiesBundlingRequirements(plugin = it, osFamily = null, arch = null, context = context) &&
+          satisfiesBundlingRequirements(plugin = it, osFamily = null, arch = null, withEphemeral = false, context = context) &&
           !pluginDirectoriesToSkip.contains(it.directoryName)
         }
 
@@ -294,7 +297,7 @@ Android Studio: don't patch ApplicationNamesInfo yet */
               return@mapNotNull null
             }
 
-            val osSpecificPlugins = pluginLayouts.filter { satisfiesBundlingRequirements(it, osFamily, arch, context) }
+            val osSpecificPlugins = pluginLayouts.filter { satisfiesBundlingRequirements(it, osFamily, arch, withEphemeral = false, context) }
             if (osSpecificPlugins.isEmpty()) {
               return@mapNotNull null
             }
@@ -423,7 +426,7 @@ Android Studio: don't patch ApplicationNamesInfo yet */
     spanBuilder("build help plugin").setAttribute("dir", directory).useWithScope2 {
       buildPlugins(moduleOutputPatcher = moduleOutputPatcher,
                    plugins = listOf(helpPlugin),
-                   targetDir = pluginsToPublishDir,
+                   targetDir = pluginsToPublishDir.resolve(directory),
                    state = state,
                    context = context,
                    buildPlatformJob = null)
@@ -446,7 +449,7 @@ internal suspend fun generateProjectStructureMapping(context: BuildContext,
                                                       productLayout = context.productProperties.productLayout)
     val entries = ArrayList<DistributionFileEntry>()
     for (plugin in allPlugins) {
-      if (satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = null, context = context)) {
+      if (satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = null, withEphemeral = true, context = context)) {
         entries.addAll(layoutDistribution(layout = plugin,
                                           targetDirectory = pluginLayoutRoot,
                                           copyFiles = false,
@@ -853,10 +856,16 @@ private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: List<Dis
 fun satisfiesBundlingRequirements(plugin: PluginLayout,
                                   osFamily: OsFamily?,
                                   arch: JvmArchitecture?,
+                                  withEphemeral: Boolean,
                                   context: BuildContext): Boolean {
   val bundlingRestrictions = plugin.bundlingRestrictions
   if (bundlingRestrictions.includeInEapOnly && !context.applicationInfo.isEAP) {
     return false
+  }
+
+  if (bundlingRestrictions === PluginBundlingRestrictions.EPHEMERAL) {
+    if (!withEphemeral) return false
+    else return osFamily == null && arch == null
   }
 
   return when {
@@ -941,9 +950,10 @@ suspend fun layoutDistribution(layout: BaseLayout,
   val entries = withContext(Dispatchers.IO) {
     val tasks = ArrayList<Deferred<Collection<DistributionFileEntry>>>(3)
     tasks.add(async {
-      spanBuilder("pack").useWithScope2 {
+      val outputDir = targetDirectory.resolve("lib")
+      spanBuilder("pack").setAttribute("outputDir", outputDir.toString()).useWithScope2 {
         JarPackager.pack(jarToModules = jarToModule,
-                         outputDir = targetDirectory.resolve("lib"),
+                         outputDir = outputDir,
                          layout = layout,
                          moduleOutputPatcher = moduleOutputPatcher,
                          dryRun = !copyFiles,

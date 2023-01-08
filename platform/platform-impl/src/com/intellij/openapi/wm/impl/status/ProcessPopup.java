@@ -178,6 +178,7 @@ class ProcessPopup {
       }
     });
 
+    builder.setNormalWindowLevel(true);
     builder.setMovable(true);
     builder.setResizable(true);
     builder.setTitle(IdeBundle.message("progress.window.title"));
@@ -201,6 +202,6 @@ class ProcessPopup {
       return true;
     });
 
-    myPopup = builder.addUserData("SIMPLE_WINDOW").createPopup();
+    myPopup = builder.createPopup();
   }
 }

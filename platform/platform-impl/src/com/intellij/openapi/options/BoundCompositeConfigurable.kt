@@ -2,10 +2,8 @@
 package com.intellij.openapi.options
 
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
-import org.jetbrains.annotations.ApiStatus
 
 abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
   @NlsContexts.ConfigurableName displayName: String,
@@ -57,7 +55,7 @@ abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
       if (panel != null) {
         row {
           cell(panel)
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
       }
     }

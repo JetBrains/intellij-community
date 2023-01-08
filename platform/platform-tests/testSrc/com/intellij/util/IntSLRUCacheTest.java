@@ -17,9 +17,6 @@ package com.intellij.util;
 
 import junit.framework.TestCase;
 
-/**
- * @author peter
- */
 public class IntSLRUCacheTest extends TestCase {
 
   private static IntSLRUCache<String> createCache(int prot, int prob) {

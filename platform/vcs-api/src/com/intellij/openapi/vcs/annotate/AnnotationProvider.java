@@ -8,6 +8,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @see com.intellij.vcs.AnnotationProviderEx
+ */
 public interface AnnotationProvider {
   @NotNull
   FileAnnotation annotate(@NotNull VirtualFile file) throws VcsException;
@@ -22,6 +25,7 @@ public interface AnnotationProvider {
   /**
    * Check whether the annotation retrieval is valid (or possible) for the
    * particular file revision (or version in the repository).
+   *
    * @param rev File revision to be checked.
    * @return true if annotation it valid for the given revision.
    */

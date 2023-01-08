@@ -35,9 +35,6 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement
-/**
- * @author peter
- */
 @CompileStatic
 class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
 

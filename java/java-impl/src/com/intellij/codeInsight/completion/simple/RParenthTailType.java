@@ -31,9 +31,6 @@ import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public abstract class RParenthTailType extends TailType {
   private static final Logger LOG = Logger.getInstance(RParenthTailType.class);
 

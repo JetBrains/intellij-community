@@ -35,12 +35,12 @@ public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier
   }
 
   @Override
-  public int startRunnerWithArgs(String[] args, String name, int count, boolean sendTree) {
+  public int startRunnerWithArgs(String[] args, String programParam, int count, boolean sendTree) {
     try {
       JUnit5TestExecutionListener listener = myExecutionListeners.get(0);
       listener.initializeIdSuffix(!sendTree);
       final String[] packageNameRef = new String[1];
-      final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, packageNameRef);
+      final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, packageNameRef, programParam);
       List<TestExecutionListener> listeners = new ArrayList<>();
       listeners.add(listener);
       for (String listenerClassName : myListeners) {
@@ -72,7 +72,7 @@ public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier
   private static final TestIdentifier FAKE_ROOT = TestIdentifier.from(new EngineDescriptor(UniqueId.forEngine("FAKE_ENGINE"), "FAKE ENGINE"));
   @Override
   public TestIdentifier getTestToStart(String[] args, String name) {
-    final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, new String[1]);
+    final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, new String[1], "");
     myForkedTestPlan = LauncherFactory.create().discover(discoveryRequest);
     final Set<TestIdentifier> roots = myForkedTestPlan.getRoots();
     if (roots.isEmpty()) return null;
@@ -95,7 +95,7 @@ public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier
   }
 
   /**
-   * {@link com.intellij.execution.junit.TestClass#getForkMode()} 
+   * {@link com.intellij.execution.junit.TestClass#getForkMode()}
    */
   @Override
   public String getStartDescription(TestIdentifier child) {

@@ -11,8 +11,12 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestsListViewModel.ListDataUpdate
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
 
 internal interface GitLabMergeRequestsListViewModel {
+  val filterVm: GitLabMergeRequestsFiltersViewModel
+
   val listDataFlow: Flow<ListDataUpdate>
   val canLoadMoreState: StateFlow<Boolean>
 
@@ -31,12 +35,11 @@ internal interface GitLabMergeRequestsListViewModel {
 
 internal class GitLabMergeRequestsListViewModelImpl(
   parentCs: CoroutineScope,
-  private val loaderSupplier: () -> SequentialListLoader<GitLabMergeRequestShortDTO>)
+  override val filterVm: GitLabMergeRequestsFiltersViewModel,
+  private val loaderSupplier: (GitLabMergeRequestsFiltersValue) -> SequentialListLoader<GitLabMergeRequestShortDTO>)
   : GitLabMergeRequestsListViewModel {
 
   private val scope = parentCs.childScope(Dispatchers.Main)
-
-  private val loaderState = MutableStateFlow(loaderSupplier())
 
   private val listState = mutableListOf<GitLabMergeRequestShortDTO>()
   private val _listDataFlow: MutableSharedFlow<ListDataUpdate> = MutableSharedFlow()
@@ -48,6 +51,8 @@ internal class GitLabMergeRequestsListViewModelImpl(
   override val loadingState: StateFlow<Boolean> = _loadingState.asStateFlow()
   private val _errorState: MutableStateFlow<Throwable?> = MutableStateFlow(null)
   override val errorState: StateFlow<Throwable?> = _errorState.asStateFlow()
+
+  private val loaderState = MutableStateFlow(loaderSupplier(filterVm.searchState.value))
 
   override val canLoadMoreState: StateFlow<Boolean> =
     combineState(scope, loaderHasMoreState, loadingState, errorState) { loaderHasMore, loading, error ->
@@ -68,6 +73,15 @@ internal class GitLabMergeRequestsListViewModelImpl(
           }
         }
       }
+    }
+
+    scope.launch {
+      filterVm.searchState
+        .drop(1) // Skip initial emit
+        .collect {
+          doReset()
+          requestMore()
+        }
     }
   }
 
@@ -98,10 +112,14 @@ internal class GitLabMergeRequestsListViewModelImpl(
 
   override fun reset() {
     scope.launch {
-      loaderState.value = loaderSupplier()
-      listState.clear()
-      _errorState.value = null
-      _listDataFlow.emit(ListDataUpdate.Clear)
+      doReset()
     }
+  }
+
+  private suspend fun doReset() {
+    loaderState.value = loaderSupplier(filterVm.searchState.value)
+    listState.clear()
+    _errorState.value = null
+    _listDataFlow.emit(ListDataUpdate.Clear)
   }
 }

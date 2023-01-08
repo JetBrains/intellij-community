@@ -101,12 +101,12 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
 
     // remove all modules without content root
     val modules = plugin.includedModuleNames
-      .filter { it != plugin.mainModule && context.findRequiredModule(it).contentRootsList.urls.isEmpty() }
+      .filter { it == plugin.mainModule || !context.findRequiredModule(it).contentRootsList.urls.isEmpty() }
       .toList()
     val pluginBuildDescriptor = PluginBuildDescriptor(dir = pluginRootDir.resolve(plugin.directoryName),
                                                       layout = plugin,
                                                       moduleNames = modules)
-    for (name in pluginBuildDescriptor.moduleNames) {
+    for (name in modules) {
       moduleNameToPluginBuildDescriptor.put(name, pluginBuildDescriptor)
     }
     pluginBuildDescriptors.add(pluginBuildDescriptor)
@@ -179,10 +179,12 @@ private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: Plug
   return satisfiesBundlingRequirements(plugin = plugin,
                                        osFamily = OsFamily.currentOs,
                                        arch = JvmArchitecture.currentJvmArch,
+                                       withEphemeral = false,
                                        context = context) ||
          satisfiesBundlingRequirements(plugin = plugin,
                                        osFamily = null,
                                        arch = JvmArchitecture.currentJvmArch,
+                                       withEphemeral = false,
                                        context = context)
 }
 
@@ -191,8 +193,6 @@ private suspend fun createProductProperties(productConfiguration: ProductConfigu
 
   val classLoader = spanBuilder("create product properties classloader").useWithScope2 {
     PathClassLoader(UrlClassLoader.build().files(classPathFiles).parent(IdeBuilder::class.java.classLoader))
-
-    //URLClassLoader.newInstance(classPathFiles.map { it.toUri().toURL() }.toTypedArray())
   }
 
   val productProperties = spanBuilder("create product properties").useWithScope2 {
@@ -217,6 +217,7 @@ private fun checkBuildModulesModificationAndMark(productConfiguration: ProductCo
   // intellij.platform.devBuildServer
   var isApplicable = true
   for (module in getBuildModules(productConfiguration) + sequenceOf("intellij.platform.devBuildServer",
+                                                                    "intellij.platform.buildScripts",
                                                                     "intellij.platform.buildScripts.downloader",
                                                                     "intellij.idea.community.build.tasks")) {
     val markFile = outDir.resolve(module).resolve(UNMODIFIED_MARK_FILE_NAME)

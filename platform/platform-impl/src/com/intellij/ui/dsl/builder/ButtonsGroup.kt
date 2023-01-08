@@ -30,3 +30,7 @@ inline fun <reified T : Any> ButtonsGroup.bind(noinline getter: () -> T, noinlin
 inline fun <reified T : Any> ButtonsGroup.bind(prop: KMutableProperty0<T>): ButtonsGroup {
   return bind(prop.toMutableProperty(), T::class.java)
 }
+
+inline fun <reified T : Any> ButtonsGroup.bind(prop: MutableProperty<T>): ButtonsGroup {
+  return bind(prop, T::class.java)
+}

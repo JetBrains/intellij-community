@@ -33,9 +33,6 @@ import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author peter
- */
 final class InProcessGroovyc implements GroovycFlavor {
   private static final Logger LOG = Logger.getInstance(InProcessGroovyc.class);
   private static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-(.*))?\\.jar");

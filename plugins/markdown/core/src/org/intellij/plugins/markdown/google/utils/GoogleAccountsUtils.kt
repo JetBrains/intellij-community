@@ -18,9 +18,8 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.alsoIfNull
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -145,8 +144,7 @@ internal object GoogleAccountsUtils {
     return panel {
       row {
         panelFactory.accountsPanelCell(this, detailsProvider, actionsController)
-          .horizontalAlign(HorizontalAlign.FILL)
-          .verticalAlign(VerticalAlign.FILL)
+          .align(Align.FILL)
       }.resizableRow()
     }
   }

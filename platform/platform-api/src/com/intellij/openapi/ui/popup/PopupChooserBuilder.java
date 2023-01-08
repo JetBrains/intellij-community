@@ -627,7 +627,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
    */
   private void applyInsets(JComponent contentComponent) {
     if (contentComponent instanceof ListWithFilter<?> listWithFilter) {
-      Insets insets = PopupUtil.getListInsets(myTitle != null, StringUtil.isNotEmpty(myAd));
+      Insets insets = PopupUtil.getListInsets(StringUtil.isNotEmpty(myTitle), StringUtil.isNotEmpty(myAd));
       listWithFilter.getList().setBorder(new EmptyBorder(insets));
     }
   }

@@ -4,9 +4,6 @@ package com.intellij.openapi.diagnostic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
 public class RuntimeExceptionWithAttachments extends RuntimeException implements ExceptionWithAttachments {
   private final String myUserMessage;

@@ -7,6 +7,8 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.JBColor
@@ -59,7 +61,7 @@ class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.complet
           cell {
             flccEnabled = checkBox(message("fl.server.completion.display"), generalState::enable).selected
             if (settingsAuth.isVerified()) {
-              label("(Verified)").component.apply {
+              label(message("full.line.label.verified.text")).component.apply {
                 foreground = JBColor(JBColor.GREEN.darker(), JBColor.GREEN.brighter())
               }
             }
@@ -160,7 +162,8 @@ class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.complet
         label(message("full.line.settings.model.type"))
         modelType = comboBox(CollectionComboBoxModel(ModelType.values().toList()), generalState::modelType).also {
           it.component.renderer = listCellRenderer { value, _, _ ->
-            text = value.name
+            @NlsSafe val valueName = value.name
+            text = valueName
             icon = value.icon
           }
         }
@@ -264,8 +267,9 @@ class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.complet
         row(message("fl.server.completion.deduplication.keep.kinds")) {
           cell {
             KeepKind.values().map { kind ->
+              @NlsSafe val text = kind.name.toLowerCase().capitalize()
               checkBox(
-                kind.name.toLowerCase().capitalize(),
+                text,
                 { modelStates.first().keepKinds.contains(kind) },
                 { action ->
                   modelStates.forEach {
@@ -372,14 +376,18 @@ class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.complet
 
   override fun getHelpTopic() = "full.line.completion.reduced"
   override fun getId() = helpTopic
-  override fun getDisplayName() = "Full Line Code Completion"
+  override fun getDisplayName() = message("full.line.configurable.name")
 
   // Below listed component wrappers to create settings for all language/modeltype states.
   // Taking value from first language (sorted by id)
   // Setting value for all states at ones
 
   @JvmName("checkBoxLang")
-  private fun Cell.checkBox(text: String, prop: KMutableProperty1<LangState, Boolean>, comment: String? = null): CellBuilder<JBCheckBox> {
+  private fun Cell.checkBox(
+    @NlsContexts.Checkbox text: String,
+    prop: KMutableProperty1<LangState, Boolean>,
+    @NlsContexts.DetailedDescription comment: String? = null
+  ): CellBuilder<JBCheckBox> {
     val bindings = langStates.map { prop.toBinding(it) }
     val component = JBCheckBox(text, bindings.first().get())
     return component(comment = comment).withSelectedBinding(bindings)
@@ -387,9 +395,9 @@ class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.complet
 
   @JvmName("checkBoxModel")
   private fun Cell.checkBox(
-    text: String,
+    @NlsContexts.Checkbox text: String,
     prop: KMutableProperty1<ModelState, Boolean>,
-    comment: String? = null
+    @NlsContexts.DetailedDescription comment: String? = null
   ): CellBuilder<JBCheckBox> {
     val bindings = modelStates.map { prop.toBinding(it) }
     val component = JBCheckBox(text, bindings.first().get())

@@ -17,9 +17,6 @@ package com.intellij.util.xml;
 
 import java.lang.annotation.Annotation;
 
-/**
- * @author peter
-*/
 @SuppressWarnings({"ClassExplicitlyAnnotation"})
 public abstract class ExtendClassImpl implements ExtendClass {
 

@@ -209,7 +209,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
   @Override
   @NotNull
-  protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
+  protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     final DefaultActionGroup allActionsGroup = new DefaultActionGroup();
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
     if (project == null) {
@@ -231,6 +231,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     addRunConfigurations(allActionsGroup, project,
                          settings -> createFinalAction(settings, project),
                          folderName -> DefaultActionGroup.createPopupGroup(() -> folderName));
+    allActionsGroup.addSeparator();
     return allActionsGroup;
   }
 
@@ -254,7 +255,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
 
       allActionsGroup.add(actionGroup);
-      allActionsGroup.addSeparator();
     }
   }
 

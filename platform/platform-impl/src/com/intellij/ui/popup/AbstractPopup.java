@@ -1098,10 +1098,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     window.setAutoRequestFocus(myRequestFocus);
 
-    final String data = getUserData(String.class);
-    final boolean popupIsSimpleWindow = "TRUE".equals(getContent().getClientProperty("BookmarkPopup"));
-    myContent.getRootPane().putClientProperty("SIMPLE_WINDOW", "SIMPLE_WINDOW".equals(data) || popupIsSimpleWindow);
-
     if (WindowRoundedCornersManager.isAvailable()) {
       PopupCornerType cornerType = getUserData(PopupCornerType.class);
       if (cornerType == null) {

@@ -63,11 +63,12 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     renderUsage(myOriginalUsage);
   }
 
-  public static @NotNull JPanel getHeaderPanelForUsage(@NotNull UsageInfo originalUsage,
-                                                       @NotNull UsageInfo usageInfo, @NotNull Color backGroundColor) {
+  public @NotNull JPanel getHeaderPanelForUsage(@NotNull UsageInfo originalUsage,
+                                                @NotNull UsageInfo usageInfo,
+                                                @NotNull Color backGroundColor) {
     final JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT));
     header.setBackground(backGroundColor);
-    final JComponent link = new LocationLinkComponent(usageInfo).getComponent();
+    final JComponent link = new LocationLinkComponent(this, myUsageView, usageInfo).getComponent();
     header.add(link);
     if (usageInfo == originalUsage) {
       final SimpleColoredComponent component = new SimpleColoredComponent();

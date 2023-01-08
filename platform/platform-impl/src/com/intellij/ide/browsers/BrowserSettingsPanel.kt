@@ -11,9 +11,9 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Comparing
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.Function
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.ColumnInfo
@@ -104,8 +104,7 @@ internal class BrowserSettingsPanel {
 
     row {
       browsersTable = cell(browsersEditor.createComponent())
-        .verticalAlign(VerticalAlign.FILL)
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(Align.FILL)
         .component
     }.resizableRow()
 
@@ -139,7 +138,7 @@ internal class BrowserSettingsPanel {
       }.component
       alternativeBrowserPathField = cell(TextFieldWithBrowseButton()).applyToComponent {
         addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, APP_FILE_CHOOSER_DESCRIPTOR)
-      }.horizontalAlign(HorizontalAlign.FILL)
+      }.align(AlignX.FILL)
         .component
     }
 

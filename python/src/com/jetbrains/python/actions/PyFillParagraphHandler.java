@@ -29,7 +29,7 @@ public class PyFillParagraphHandler extends ParagraphFillHandler {
     if (stringLiteralExpression != null) {
       final String text = stringLiteralExpression.getText();
       final Pair<String,String> quotes =
-        PyStringLiteralUtil.getQuotes(text);
+        PyStringLiteralCoreUtil.getQuotes(text);
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(stringLiteralExpression, PyDocStringOwner.class);
       if (docStringOwner != null && stringLiteralExpression.equals(docStringOwner.getDocStringExpression())) {
         String indent = getIndent(stringLiteralExpression);
@@ -73,7 +73,7 @@ public class PyFillParagraphHandler extends ParagraphFillHandler {
     if (stringLiteralExpression != null) {
       final String text = stringLiteralExpression.getText();
       final Pair<String,String> quotes =
-        PyStringLiteralUtil.getQuotes(text);
+        PyStringLiteralCoreUtil.getQuotes(text);
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(stringLiteralExpression, PyDocStringOwner.class);
       if (docStringOwner != null && stringLiteralExpression.equals(docStringOwner.getDocStringExpression())) {
         String indent = getIndent(stringLiteralExpression);

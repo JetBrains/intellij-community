@@ -389,7 +389,7 @@
     </group>
 
     <action id="ShowGutterIconsSettings" class="com.intellij.application.options.editor.GutterIconsConfigurable$ShowSettingsAction">
-      <add-to-group group-id="EditorGutterPopupMenu"/>
+      <add-to-group group-id="EditorGutterPopupMenu.Appearance" anchor="last"/>
       <add-to-group group-id="DocCommentGutterIconContextMenu"/>
     </action>
 

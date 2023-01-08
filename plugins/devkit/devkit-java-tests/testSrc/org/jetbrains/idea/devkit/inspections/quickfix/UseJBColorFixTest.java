@@ -41,4 +41,8 @@ public class UseJBColorFixTest extends UseJBColorFixTestBase {
   public void testUseJBColorConstantInVariable() {
     doTest(CONVERT_TO_JB_COLOR_CONSTANT_FIX_NAME);
   }
+
+  public void testUseJBColorConstantStaticImportInVariable() {
+    doTest(CONVERT_TO_JB_COLOR_CONSTANT_FIX_NAME);
+  }
 }

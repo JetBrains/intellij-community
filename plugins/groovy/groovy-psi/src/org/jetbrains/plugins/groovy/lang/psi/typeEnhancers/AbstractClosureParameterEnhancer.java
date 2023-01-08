@@ -13,9 +13,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 
-/**
- * @author peter
- */
 public abstract class AbstractClosureParameterEnhancer extends GrVariableEnhancer {
   @Override
   public final PsiType getVariableType(GrVariable variable) {

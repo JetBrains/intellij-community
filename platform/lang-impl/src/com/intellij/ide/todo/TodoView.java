@@ -29,12 +29,14 @@ import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @State(name = "TodoView", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public class TodoView implements PersistentStateComponent<TodoView.State>, Disposable {
@@ -232,14 +234,19 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     }
   }
 
-  public final void refresh() {
-    if (myAllTodos != null) {
-      for (TodoPanel panel : myPanels) {
-        panel.getTreeBuilder()
-          .getCoroutineHelper()
-          .scheduleCacheAndTreeUpdate(ReadConstraint.Companion.inSmartMode(myProject));
-      }
+  @VisibleForTesting
+  public final @NotNull CompletableFuture<Void> refresh() {
+    if (myAllTodos == null) {
+      return CompletableFuture.completedFuture(null);
     }
+
+    ReadConstraint inSmartMode = ReadConstraint.Companion.inSmartMode(myProject);
+    CompletableFuture<?>[] futures = myPanels.stream()
+      .map(TodoPanel::getTreeBuilder)
+      .map(TodoTreeBuilder::getCoroutineHelper)
+      .map(helper -> helper.scheduleCacheAndTreeUpdate(inSmartMode))
+      .toArray(CompletableFuture[]::new);
+    return CompletableFuture.allOf(futures);
   }
 
   public void addCustomTodoView(final TodoTreeBuilderFactory factory, @NlsContexts.TabTitle final String title, final TodoPanelSettings settings) {

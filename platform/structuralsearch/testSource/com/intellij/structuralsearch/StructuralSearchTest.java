@@ -125,6 +125,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "}";
     assertEquals("Find cast to array", 1, findMatchesCount(s5, "('_T[])'_expr"));
 
+    String s6 = "import java.util.HashMap;" +
+                "class X {" +
+                "  HashMap x() {" +
+                "    x();" +
+                "    return null;" +
+                "  }" +
+                "}";
+    assertEquals("Find expression only once for method call", 1, findMatchesCount(s6, "'Clz:[exprtype( java.util.HashMap )]"));
+
     String s7 = "import java.math.BigDecimal;\n" +
                 "\n" +
                 "public class Prorator {\n" +
@@ -3452,7 +3461,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   }
 
   public void testFindSwitchExpressions() {
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
     final String in = "class X {" +
                       "  void dummy(int i) {" +
                       "    int j = switch (i) {\n" +

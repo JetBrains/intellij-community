@@ -20,9 +20,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class PriorityWeigher extends CompletionWeigher {
   @Override
   public Double weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {

@@ -22,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.groovy.GroovyResourceChecker;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
-/**
- * @author peter
- */
 public abstract class CheckResourcesAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

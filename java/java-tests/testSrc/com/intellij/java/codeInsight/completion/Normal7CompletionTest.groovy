@@ -3,9 +3,6 @@ package com.intellij.java.codeInsight.completion
 
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
-/**
- * @author peter
- */
 @CompileStatic
 class Normal7CompletionTest extends NormalCompletionTestCase {
   final LightProjectDescriptor projectDescriptor = JAVA_1_7

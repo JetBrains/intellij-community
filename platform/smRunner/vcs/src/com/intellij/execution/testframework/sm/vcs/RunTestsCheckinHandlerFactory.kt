@@ -109,9 +109,12 @@ class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitPr
       return str
     }
 
-  override fun showDetails(project: Project, commitInfo: CommitInfo) {
+  override fun showDetails(project: Project) {
     showFailedTests(project, this)
   }
+
+  override val showDetailsAction: String
+    get() = ExecutionBundle.message("commit.checks.run.configuration.failed.show.details.action")
 }
 
 data class FailureDescription(val historyFileName: String, val failed: Int, val ignored: Int, val configuration: RunnerAndConfigurationSettings?, val configName: String?)
@@ -122,7 +125,7 @@ private fun createCommitProblem(descriptions: List<FailureDescription>): FailedT
 class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandler(), CommitCheck {
   private val settings: TestsVcsConfiguration get() = project.getService(TestsVcsConfiguration::class.java)
 
-  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.LATE
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.POST_COMMIT
 
   override fun isEnabled(): Boolean = settings.myState.enabled
 

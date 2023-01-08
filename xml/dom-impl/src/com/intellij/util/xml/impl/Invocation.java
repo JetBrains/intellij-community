@@ -17,9 +17,6 @@ package com.intellij.util.xml.impl;
 
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 @FunctionalInterface
 interface Invocation {
   @Nullable

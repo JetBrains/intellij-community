@@ -26,8 +26,6 @@ import java.util.stream.Stream;
 /**
  * A method contract which is described by {@link ValueConstraint} constraints on arguments.
  * Such contract can be created from {@link org.jetbrains.annotations.Contract} annotation.
- *
- * @author peter
  */
 public final class StandardMethodContract extends MethodContract {
   private final ValueConstraint @NotNull [] myParameters;

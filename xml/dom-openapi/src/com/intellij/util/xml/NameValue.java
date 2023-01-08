@@ -22,8 +22,6 @@ import java.lang.annotation.RetentionPolicy;
  * Annotate a method returning either {@link String} or {@link GenericValue} with @NameValue,
  * and {@link ElementPresentationManager#getElementName(Object)} will return the resulting String
  * or {@link GenericValue#getStringValue()}.
- *
- * @author peter
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface NameValue {

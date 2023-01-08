@@ -132,7 +132,9 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
         .showUnderneathOf(parentComponent)
     }
 
-    private inner class FilterPopupMenuAction(private val quickFilters: List<Q>) : AnActionButton(), DumbAware {
+    private inner class FilterPopupMenuAction(private val quickFilters: List<Q>)
+      : AnActionButton(CollaborationToolsBundle.message("review.list.filter.quick.title")),
+        DumbAware {
       override fun updateButton(e: AnActionEvent) {
         e.presentation.icon = FILTER_ICON.getLiveIndicatorIcon(vm.searchState.value.filterCount != 0)
       }

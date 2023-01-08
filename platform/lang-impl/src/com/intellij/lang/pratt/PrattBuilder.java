@@ -11,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.ListIterator;
 
-/**
- * @author peter
- */
 public abstract class PrattBuilder {
   public abstract Lexer getLexer();
 

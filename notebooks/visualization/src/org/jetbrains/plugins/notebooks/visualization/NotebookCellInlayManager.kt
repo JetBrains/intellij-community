@@ -28,6 +28,7 @@ import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import java.awt.Graphics
 import javax.swing.JComponent
 import kotlin.math.max
@@ -65,21 +66,16 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
     }
   }
 
+  fun updateAll() {
+    updateQueue.queue(UpdateInlaysTask(this, updateAll = true))
+  }
+
   fun update(pointers: Collection<NotebookIntervalPointer>) {
     updateQueue.queue(UpdateInlaysTask(this, pointers = pointers))
   }
 
   fun update(pointer: NotebookIntervalPointer) {
     updateQueue.queue(UpdateInlaysTask(this, pointers = SmartList(pointer)))
-  }
-
-  fun update(interval: NotebookCellLines.Interval) {
-    update(interval.lines)
-  }
-
-  fun update(lines: IntRange) {
-    // TODO Hypothetically, there can be a race between cell addition/deletion and updating of old cells.
-    updateQueue.queue(UpdateInlaysTask(this, lines))
   }
 
   private fun addViewportChangeListener() {
@@ -408,14 +404,19 @@ private object NotebookCellHighlighterRenderer : CustomHighlighterRenderer {
 }
 
 private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
-                               lines: IntRange? = null,
-                               pointers: Collection<NotebookIntervalPointer>? = null) : Update(Any()) {
-  private val linesList = lines?.let{ SmartList<IntRange>(lines) } ?: SmartList()
+                               pointers: Collection<NotebookIntervalPointer>? = null,
+                               private var updateAll: Boolean = false) : Update(Any()) {
   private val pointersSet = pointers?.let{ SmartHashSet(pointers) } ?: SmartHashSet()
 
   override fun run() {
-    val pointersLines = pointersSet.mapNotNull { it.get()?.lines }.sortedBy { it.first }
-    linesList.mergeAndJoinIntersections(pointersLines)
+    if (updateAll) {
+      manager.updateAllImmediately()
+      return
+    }
+
+    val linesList = pointersSet.mapNotNullTo(mutableListOf()){ it.get()?.lines }
+    linesList.sortBy { it.first }
+    linesList.mergeAndJoinIntersections(listOf())
 
     for (lines in linesList) {
       manager.updateImmediately(lines)
@@ -424,7 +425,10 @@ private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
 
   override fun canEat(update: Update): Boolean {
     update as UpdateInlaysTask
-    linesList.mergeAndJoinIntersections(update.linesList)
+
+    updateAll = updateAll || update.updateAll
+    if (updateAll) return true
+
     pointersSet.addAll(update.pointersSet)
     return true
   }

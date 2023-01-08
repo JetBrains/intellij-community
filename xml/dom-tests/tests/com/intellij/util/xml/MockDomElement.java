@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
-/**
- * @author peter
- */
 public class MockDomElement extends UserDataHolderBase implements DomElement {
   @Override
   @Nullable

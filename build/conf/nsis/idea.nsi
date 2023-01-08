@@ -1422,7 +1422,7 @@ Function un.onInit
   Call un.UninstallFeedback
 
 ; Uninstallation was run from installation dir?
-  IfFileExists "$INSTDIR\IdeaWin64.dll" 0 end_of_uninstall
+  IfFileExists "$INSTDIR\fsnotifier.exe" 0 end_of_uninstall
   IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" 0 end_of_uninstall
 
 get_reg_key:

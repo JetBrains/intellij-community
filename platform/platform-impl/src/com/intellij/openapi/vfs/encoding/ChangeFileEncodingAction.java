@@ -110,29 +110,36 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
                                               Document document,
                                               byte[] bytes,
                                               @Nullable @NlsActions.ActionText String clearItemText) {
-    return new ChooseFileEncodingAction(myFile) {
-     @Override
-     public void update(@NotNull final AnActionEvent e) {
-     }
+    class MyAction extends ChooseFileEncodingAction {
+      MyAction(@Nullable VirtualFile virtualFile) {
+        super(virtualFile);
+      }
+
+      @Override
+      public void update(@NotNull final AnActionEvent e) {
+      }
 
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {
         return ActionUpdateThread.BGT;
       }
 
-      @NotNull
-     @Override
-     protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-       return createCharsetsActionGroup(clearItemText, null, charset -> IdeBundle.message("action.text.change.encoding", charset.displayName()));
-       // no 'clear'
-     }
+      @Override
+      protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext dataContext) {
+        return createMyActionGroup();
+      }
+
+      @NotNull DefaultActionGroup createMyActionGroup() {
+        return createCharsetsActionGroup(clearItemText, null,
+                                         charset -> IdeBundle.message("action.text.change.encoding", charset.displayName()));
+      }
 
       @Override
       protected void chosen(@Nullable VirtualFile virtualFile, @NotNull Charset charset) {
         ChangeFileEncodingAction.this.chosen(document, editor, virtualFile, bytes, charset);
       }
-   }
-   .createPopupActionGroup(null);
+    }
+    return new MyAction(myFile).createMyActionGroup();
   }
 
   // returns true if charset was changed, false if failed

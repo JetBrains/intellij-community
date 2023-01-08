@@ -32,9 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class RehighlightAllEditors implements MadTestingAction {
   private static final Logger LOG = Logger.getInstance(RehighlightAllEditors.class);
   private final Project myProject;

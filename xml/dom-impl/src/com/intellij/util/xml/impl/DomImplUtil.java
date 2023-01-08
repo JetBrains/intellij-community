@@ -24,9 +24,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public final class DomImplUtil {
   private static final Logger LOG = Logger.getInstance(DomImplUtil.class);
 

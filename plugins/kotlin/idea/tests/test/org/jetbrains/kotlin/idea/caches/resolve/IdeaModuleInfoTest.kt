@@ -8,10 +8,7 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.roots.DependencyScope
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.LowMemoryWatcher
@@ -54,6 +51,7 @@ import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.moduleLibrary
 import org.jetbrains.kotlin.test.util.projectLibrary
 import org.jetbrains.kotlin.types.typeUtil.closure
+import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import org.junit.Assert
 import org.junit.Assert.assertNotEquals
@@ -67,35 +65,80 @@ import kotlin.test.assertContains
 class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     private var vfsDisposable: Ref<Disposable>? = null
 
+    private fun getModuleInfoFromIdeaModuleWithJvmPlatformCheck(): List<IdeaModuleInfo> {
+        val common = getModuleInfosFromIdeaModel(project)
+        val jvm = getModuleInfosFromIdeaModel(project, JvmPlatforms.defaultJvmPlatform)
+        val commonAsSet = common.toHashSet()
+        assertEquals(commonAsSet.size, jvm.size)
+        for (fromJvm in jvm) {
+            assertContains(commonAsSet, fromJvm)
+        }
+
+        common.forEach(IdeaModuleInfo::checkValidity)
+        return common
+    }
+
+    fun testMutateLibraryRoots() {
+        val library = projectLibrary(
+            libraryName = "myLib",
+            classesRoot = TestKotlinArtifacts.kotlinDaemon.jarRoot,
+            sourcesRoot = TestKotlinArtifacts.kotlinDaemon.jarRoot,
+        )
+
+        val a = module("a")
+        a.addDependency(library)
+        getModuleInfoFromIdeaModuleWithJvmPlatformCheck()
+
+        runWriteAction {
+            val modifiableModel = library.modifiableModel
+            modifiableModel.removeRoot(TestKotlinArtifacts.kotlinDaemon.jarRoot.url, OrderRootType.SOURCES)
+            modifiableModel.commit()
+        }
+
+        assertEmpty(library.cast<LibraryEx>().getUrls(OrderRootType.SOURCES))
+
+        getModuleInfoFromIdeaModuleWithJvmPlatformCheck()
+
+        runWriteAction {
+            val modifiableModel = library.modifiableModel
+            modifiableModel.addRoot(TestKotlinArtifacts.kotlinDaemon.jarRoot.url, OrderRootType.SOURCES)
+            modifiableModel.commit()
+        }
+
+        assertNotEmpty(library.cast<LibraryEx>().getUrls(OrderRootType.SOURCES).toList())
+
+        getModuleInfoFromIdeaModuleWithJvmPlatformCheck()
+    }
+
     fun testAllModulesCache() {
         val stdlib = stdlibJvm()
         module.addDependency(stdlib)
 
         val daemon = projectLibrary("daemon", TestKotlinArtifacts.kotlinDaemon.jarRoot)
-        assertEquals(2 /* sdk + stdlib */, getModuleInfosFromIdeaModel(project).size)
+        assertEquals(2 /* sdk + stdlib */, getModuleInfoFromIdeaModuleWithJvmPlatformCheck().size)
 
         module.addDependency(daemon)
-        assertEquals(3 /* sdk + stdlib + daemon */, getModuleInfosFromIdeaModel(project).size)
+        assertEquals(3 /* sdk + stdlib + daemon */, getModuleInfoFromIdeaModuleWithJvmPlatformCheck().size)
 
         val fakeLib = projectLibraryWithFakeRoot("f")
         fakeLib.toLibraryInfo()
 
-        assertEquals(3 /* sdk + stdlib + daemon */, getModuleInfosFromIdeaModel(project).size)
+        assertEquals(3 /* sdk + stdlib + daemon */, getModuleInfoFromIdeaModuleWithJvmPlatformCheck().size)
 
         module.addDependency(fakeLib)
-        assertEquals(4 /* sdk + stdlib + daemon + fakeLib */, getModuleInfosFromIdeaModel(project).size)
+        assertEquals(4 /* sdk + stdlib + daemon + fakeLib */, getModuleInfoFromIdeaModuleWithJvmPlatformCheck().size)
 
         module("a", hasProductionRoot = true, hasTestRoot = true)
-        assertEquals(6 /* sdk + stdlib + daemon + fakeLib + 2 roots of a */, getModuleInfosFromIdeaModel(project).size)
+        assertEquals(6 /* sdk + stdlib + daemon + fakeLib + 2 roots of a */, getModuleInfoFromIdeaModuleWithJvmPlatformCheck().size)
 
         ModuleRootModificationUtil.removeDependency(module, fakeLib)
-        assertEquals(5 /* sdk + stdlib + daemon + 2 roots of a */, getModuleInfosFromIdeaModel(project).size)
+        assertEquals(5 /* sdk + stdlib + daemon + 2 roots of a */, getModuleInfoFromIdeaModuleWithJvmPlatformCheck().size)
 
         runWriteAction {
             LibraryTablesRegistrar.getInstance().getLibraryTable(project).removeLibrary(daemon)
         }
 
-        assertEquals(4 /* sdk + stdlib + 2 roots of a */, getModuleInfosFromIdeaModel(project).size)
+        assertEquals(4 /* sdk + stdlib + 2 roots of a */, getModuleInfoFromIdeaModuleWithJvmPlatformCheck().size)
     }
 
     fun testLowMemory() {
@@ -103,8 +146,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         val stdlib = stdlibJvm()
         moduleA.addDependency(stdlib)
 
-        val modelBefore = getModuleInfosFromIdeaModel(project)
-        modelBefore.forEach(IdeaModuleInfo::checkValidity)
+        val modelBefore = getModuleInfoFromIdeaModuleWithJvmPlatformCheck()
 
         val stdlibInfoBefore = stdlib.toLibraryInfo()
 
@@ -112,8 +154,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
 
         LowMemoryWatcher.onLowMemorySignalReceived(true)
 
-        val modelAfter = getModuleInfosFromIdeaModel(project)
-        modelAfter.forEach(IdeaModuleInfo::checkValidity)
+        val modelAfter = getModuleInfoFromIdeaModuleWithJvmPlatformCheck()
 
         val stdlibInfoAfter = stdlib.toLibraryInfo()
 
@@ -182,8 +223,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         val stdlibCopy = projectLibrary("kotlin-stdlib-copy", TestKotlinArtifacts.kotlinStdlib.jarRoot)
         moduleB.addDependency(stdlibCopy)
 
-        val modelBefore = getModuleInfosFromIdeaModel(project)
-        modelBefore.forEach(IdeaModuleInfo::checkValidity)
+        val modelBefore = getModuleInfoFromIdeaModuleWithJvmPlatformCheck()
 
         val stdlibCopyInfoBefore = stdlibCopy.toLibraryInfo()
 
@@ -194,8 +234,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             libraryTable.removeLibrary(stdlib)
         }
 
-        val modelAfter = getModuleInfosFromIdeaModel(project)
-        modelAfter.forEach(IdeaModuleInfo::checkValidity)
+        val modelAfter = getModuleInfoFromIdeaModuleWithJvmPlatformCheck()
 
         val stdlibCopyInfoAfter = stdlibCopy.toLibraryInfo()
         assertNotEquals(stdlibCopyInfoBefore, stdlibCopyInfoAfter)

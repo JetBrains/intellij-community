@@ -9,9 +9,6 @@ import com.intellij.openapi.util.NlsContexts;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author peter
- */
 public class BigStringComponent extends TextFieldWithBrowseButton {
   private final @NlsContexts.DialogTitle String myWindowTitle;
 

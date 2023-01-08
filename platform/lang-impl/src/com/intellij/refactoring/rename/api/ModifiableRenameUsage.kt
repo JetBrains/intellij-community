@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.api
 
 import com.intellij.model.Pointer
@@ -12,11 +12,9 @@ interface ModifiableRenameUsage : RenameUsage {
 
   override fun createPointer(): Pointer<out ModifiableRenameUsage>
 
-  @JvmDefault
   val fileUpdater: FileUpdater?
     get() = null
 
-  @JvmDefault
   val modelUpdater: ModelUpdater?
     get() = null
 
@@ -40,7 +38,6 @@ interface ModifiableRenameUsage : RenameUsage {
      * @param newName new name of the [RenameTarget] for which the [usages] were found
      * @return operations which are needed to be applied to update the [usages]
      */
-    @JvmDefault
     fun prepareFileUpdateBatch(
       usages: Collection<ModifiableRenameUsage>,
       newName: String
@@ -57,7 +54,6 @@ interface ModifiableRenameUsage : RenameUsage {
      * @param newName new name of the [RenameTarget] for which the [usage] was found
      * @return operations which are needed to be applied to update the [usage]
      */
-    @JvmDefault
     fun prepareFileUpdate(usage: ModifiableRenameUsage, newName: String): Collection<FileOperation> = emptyList()
   }
 
@@ -67,7 +63,6 @@ interface ModifiableRenameUsage : RenameUsage {
    */
   interface ModelUpdater {
 
-    @JvmDefault
     fun prepareModelUpdateBatch(usages: Collection<ModifiableRenameUsage>): Collection<ModelUpdate> {
       return usages.mapNotNull { usage ->
         ProgressManager.checkCanceled()
@@ -75,7 +70,6 @@ interface ModifiableRenameUsage : RenameUsage {
       }
     }
 
-    @JvmDefault
     fun prepareModelUpdate(usage: ModifiableRenameUsage): ModelUpdate? = null
   }
 

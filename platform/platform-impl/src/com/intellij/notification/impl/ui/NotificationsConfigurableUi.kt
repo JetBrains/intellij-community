@@ -12,13 +12,8 @@ import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
-import com.intellij.ui.dsl.builder.LabelPosition
-import com.intellij.ui.dsl.builder.TopGap
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.selected
 import org.jetbrains.annotations.Nullable
 import javax.swing.JCheckBox
 import javax.swing.ListSelectionModel
@@ -61,14 +56,13 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
         notificationSettings = NotificationSettingsUi(notificationsList.model.getElementAt(0), useBalloonNotifications.selected)
         scrollCell(notificationsList)
         cell(notificationSettings.ui)
-          .verticalAlign(VerticalAlign.TOP)
+          .align(AlignY.TOP)
       }
       if (ActionCenter.isEnabled()) {
         row {
           cell(myDoNotAskConfigurableUi.createComponent())
             .label(IdeBundle.message("notifications.configurable.do.not.ask.title"), LabelPosition.TOP)
-            .horizontalAlign(HorizontalAlign.FILL)
-            .verticalAlign(VerticalAlign.FILL)
+            .align(Align.FILL)
         }.topGap(TopGap.SMALL)
           .resizableRow()
       }

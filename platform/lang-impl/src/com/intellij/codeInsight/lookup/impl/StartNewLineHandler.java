@@ -23,9 +23,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class StartNewLineHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
 

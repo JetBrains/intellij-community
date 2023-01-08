@@ -33,9 +33,6 @@ import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.lang.reflect.Type;
 
-/**
- * @author peter
- */
 public class DomUIFactoryImpl extends DomUIFactory {
 
   private final ClassMap<Function<DomWrapper<String>, BaseControl>> myCustomControlCreators = new ClassMap<>();

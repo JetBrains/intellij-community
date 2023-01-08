@@ -30,7 +30,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
@@ -215,7 +214,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
                                                         return@textFieldWithBrowseButton File(path).path
                                                       })
               .resizableColumn()
-              .horizontalAlign(HorizontalAlign.FILL)
+              .align(AlignX.FILL)
               .gap(RightGap.SMALL)
               .apply {
                 if (!SystemInfo.isWindows) comment(CredentialStoreBundle.message("passwordSafeConfigurable.weak.encryption"))

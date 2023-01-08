@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class PsiJavaPatterns extends StandardPatterns{
 
   public static IElementTypePattern elementType() {

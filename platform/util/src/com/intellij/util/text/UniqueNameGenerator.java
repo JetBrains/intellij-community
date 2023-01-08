@@ -12,9 +12,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class UniqueNameGenerator implements Condition<String> {
   private final Set<String> myExistingNames = new HashSet<>();
 

@@ -49,6 +49,7 @@ public final class MemoryAgentUtil {
     if (SystemInfo.isLinux && arch == CpuArch.X86_64) return AgentExtractor.AgentLibraryType.LINUX_X64;
     if (SystemInfo.isLinux && arch == CpuArch.ARM64) return AgentExtractor.AgentLibraryType.LINUX_AARCH64;
     if (SystemInfo.isMac) return AgentExtractor.AgentLibraryType.MACOS;
+    if (SystemInfo.isWindows && arch == CpuArch.ARM64) return AgentExtractor.AgentLibraryType.WINDOWS_ARM64;
     if (SystemInfo.isWindows && arch == CpuArch.X86_64) return AgentExtractor.AgentLibraryType.WINDOWS64;
     if (SystemInfo.isWindows && arch == CpuArch.X86) return AgentExtractor.AgentLibraryType.WINDOWS32;
     throw new IllegalStateException("Unsupported OS and arch: " + SystemInfo.getOsNameAndVersion() + " " + arch);
@@ -83,7 +84,7 @@ public final class MemoryAgentUtil {
   }
 
   public static boolean isPlatformSupported() {
-    return SystemInfo.isWindows && (CpuArch.isIntel32() || CpuArch.isIntel64()) ||
+    return SystemInfo.isWindows && (CpuArch.isIntel32() || CpuArch.isIntel64() || CpuArch.isArm64()) ||
            SystemInfo.isMac && (CpuArch.isIntel64() || CpuArch.isArm64()) ||
            SystemInfo.isLinux && (CpuArch.isIntel64() || CpuArch.isArm64());
   }

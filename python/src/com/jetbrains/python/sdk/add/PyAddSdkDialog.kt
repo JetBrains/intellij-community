@@ -61,7 +61,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
 
   override fun createCenterPanel(): JComponent {
     val sdks = existingSdks
-      .filter { it.sdkType is PythonSdkType && !PythonSdkUtil.isInvalid(it) }
+      .filter { it.sdkType is PythonSdkType && it.sdkSeemsValid }
       .sortedWith(PreferredSdkComparator())
     val panels = createPanels(sdks).toMutableList()
     val extendedPanels = PyAddSdkProvider.EP_NAME.extensions

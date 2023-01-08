@@ -38,8 +38,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   @FixType
   private final int myFixType;
   private static final int MAKE_FINAL = 0;
-  private static final int MAKE_ARRAY = 1;
-  private static final int COPY_TO_FINAL = 2;
+  private static final int COPY_TO_FINAL = 1;
+  private static final int MAKE_ARRAY = 2;
   private static final int UNKNOWN = -1;
   @MagicConstant(intValues = {MAKE_FINAL, COPY_TO_FINAL, MAKE_ARRAY, UNKNOWN})
   @interface FixType { }
@@ -235,7 +235,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
       }
       PsiElement element = statement;
       while (element != declarationScope && !(element instanceof PsiFile)) {
-        if (element instanceof PsiClass || element instanceof PsiLambdaExpression) {
+        if (element instanceof PsiClass || element instanceof PsiLambdaExpression || element instanceof PsiSwitchLabelStatementBase) {
           statement = statement.getParent();
           continue nextInnerClass;
         }
@@ -299,7 +299,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     int type = MAKE_FINAL;
     for (PsiReferenceExpression expression : outerReferences) {
       // if it happens that variable referenced from another inner class, make sure it can be make final from there
-      PsiElement innerScope = HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, expression);
+      PsiElement innerScope = HighlightControlFlowUtil.getElementVariableReferencedFrom(variable, expression);
 
       if (innerScope != null) {
         @FixType int thisType = MAKE_FINAL;

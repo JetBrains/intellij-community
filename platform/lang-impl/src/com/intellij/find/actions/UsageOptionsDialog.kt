@@ -5,12 +5,9 @@ import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
 import com.intellij.find.FindBundle.message
 import com.intellij.find.FindSettings
-import com.intellij.find.usages.api.UsageHandler
 import com.intellij.find.usages.api.UsageOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo
-import com.intellij.openapi.options.OptionEditor
-import com.intellij.openapi.options.OptionEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
@@ -19,7 +16,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.search.SearchScope
 import com.intellij.ui.UserActivityWatcher
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.event.ItemEvent
@@ -27,11 +24,10 @@ import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class UsageOptionsDialog<O>(
+internal class UsageOptionsDialog(
   private val project: Project,
   @NlsContexts.Label presentableText: String?,
-  private val handler: UsageHandler<O>,
-  allOptions: AllSearchOptions<O>,
+  allOptions: AllSearchOptions,
   private val showScopeChooser: Boolean,
   canReuseTab: Boolean
 ) : DialogWrapper(project) {
@@ -40,10 +36,6 @@ internal class UsageOptionsDialog<O>(
   private var myFindUsages: Boolean = allOptions.options.isUsages
   private var myScope: SearchScope = allOptions.options.searchScope
   private var myTextSearch: Boolean? = allOptions.textSearch
-  private val myOptionEditor: OptionEditor<O & Any>? = allOptions.customOptions?.let { OptionEditorProvider.forOptions(it) }
-
-  @Suppress("UNCHECKED_CAST")
-  private fun customResult(): O = myOptionEditor?.result() as O
 
   // ui
   private val myDialogPanel: DialogPanel = panel {
@@ -56,16 +48,6 @@ internal class UsageOptionsDialog<O>(
     titledRow(message("find.what.group")) {
       row {
         checkBox(CheckboxDescriptor(message("find.what.usages.checkbox"), ::myFindUsages))
-      }
-      row {
-        myOptionEditor?.component?.let { editorComponent ->
-          if (editorComponent is DialogPanel) {
-            onGlobalApply {
-              editorComponent.apply()
-            }
-          }
-          editorComponent.invoke()
-        }
       }
       myTextSearch?.let {
         row {
@@ -117,7 +99,7 @@ internal class UsageOptionsDialog<O>(
 
   private fun stateChanged() {
     myDialogPanel.apply() // for some reason DSL UI implementation only updates model from UI only within apply()
-    isOKActionEnabled = myFindUsages || myTextSearch == true || handler.hasAnythingToSearch(customResult())
+    isOKActionEnabled = myFindUsages || myTextSearch == true
   }
 
   override fun createCenterPanel(): JComponent = myDialogPanel
@@ -143,9 +125,8 @@ internal class UsageOptionsDialog<O>(
     }
   }
 
-  fun result(): AllSearchOptions<O> = AllSearchOptions(
+  fun result(): AllSearchOptions = AllSearchOptions(
     options = UsageOptions.createOptions(myFindUsages, myScope),
     textSearch = myTextSearch,
-    customOptions = customResult()
   )
 }

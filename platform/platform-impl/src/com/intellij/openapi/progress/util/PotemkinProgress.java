@@ -32,8 +32,6 @@ import java.util.function.Consumer;
 /**
  * A progress indicator for write actions. Paints itself explicitly, without resorting to normal Swing's delayed repaint API.
  * Doesn't dispatch Swing events, except for handling manually those that can cancel it or affect the visual presentation.
- *
- * @author peter
  */
 public final class PotemkinProgress extends ProgressWindow implements PingProgress {
   private final Application myApp = ApplicationManager.getApplication();

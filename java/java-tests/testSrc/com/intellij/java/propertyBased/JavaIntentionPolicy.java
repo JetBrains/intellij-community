@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
 class JavaIntentionPolicy extends IntentionPolicy {
   @Override
   protected boolean shouldSkipIntention(@NotNull String actionText) {

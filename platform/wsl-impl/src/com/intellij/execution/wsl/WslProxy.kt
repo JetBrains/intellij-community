@@ -2,7 +2,6 @@
 package com.intellij.execution.wsl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
@@ -98,7 +97,7 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
   private suspend fun readPortFromChannel(channel: ByteReadChannel): Int = readToBuffer(channel, 2).short.toUShort().toInt()
 
   init {
-    val wslCommandLine =  distro.getTool("wslproxy")
+    val wslCommandLine = runBlocking { distro.getTool("wslproxy") }
     val process = Runtime.getRuntime().exec(wslCommandLine.commandLineString)
     val log = Logger.getInstance(WslProxy::class.java)
 

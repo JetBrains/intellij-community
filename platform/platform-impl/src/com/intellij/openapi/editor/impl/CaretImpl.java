@@ -1295,7 +1295,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
       try {
         EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
-        DataContext context = AnActionEvent.getInjectedDataContext(new CaretSpecificDataContext(myEditor.getDataContext(), this));
+        DataContext context = AnActionEvent.getInjectedDataContext(CaretSpecificDataContext.create(myEditor.getDataContext(), this));
         Caret caret = context.getData(CommonDataKeys.CARET);
         assert caret != null;
         handler.execute(caret.getEditor(), caret, context);

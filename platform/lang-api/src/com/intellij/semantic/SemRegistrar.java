@@ -14,7 +14,6 @@ import java.util.function.BiFunction;
 import static java.util.Collections.emptyList;
 
 /**
- * @author peter
  * @see SemContributor#registerSemProviders(SemRegistrar, Project)
  */
 public interface SemRegistrar {

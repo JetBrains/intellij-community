@@ -97,7 +97,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
   @NotNull
   public static String getFileHistoryLogId(@NotNull FilePath path, @Nullable Hash revision) {
-    return path.getPath() + (revision == null ? "" : revision.asString());
+    return path.getPath() + (revision == null ? "" : ":" + revision.asString());
   }
 
   @Override

@@ -20,9 +20,6 @@ import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public class CharTailType extends TailType {
   private final char myChar;
   private final boolean myOverwrite;

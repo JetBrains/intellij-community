@@ -28,9 +28,6 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class ExcludeFromCompletionLookupActionProvider implements LookupActionProvider {
   @Override
   public void fillActions(@NotNull LookupElement element, @NotNull Lookup lookup, @NotNull Consumer<@NotNull LookupElementAction> consumer) {

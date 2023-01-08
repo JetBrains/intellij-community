@@ -23,7 +23,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Stack;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.gradle.GradleScript;
-import org.gradle.util.GUtil;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.WrapperConfiguration;
 import org.gradle.wrapper.WrapperExecutor;
@@ -38,6 +37,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -46,7 +46,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
@@ -104,8 +103,10 @@ public final class GradleUtil {
     if (wrapperPropertiesFile == null) return null;
 
     final WrapperConfiguration wrapperConfiguration = new WrapperConfiguration();
-    try {
-      final Properties props = GUtil.loadProperties(Files.newInputStream(wrapperPropertiesFile));
+
+    try (Reader wrapperPropertiesReader = Files.newBufferedReader(wrapperPropertiesFile)) {
+      final Properties props = new Properties();
+      props.load(wrapperPropertiesReader);
       String distributionUrl = props.getProperty(WrapperExecutor.DISTRIBUTION_URL_PROPERTY);
       if (isEmpty(distributionUrl)) {
         throw new ExternalSystemException("Wrapper 'distributionUrl' property does not exist!");

@@ -12,6 +12,7 @@ internal class DeleteBookmarkTypeAction : DumbAwareAction(messagePointer("mnemon
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
+    if (checkMultipleSelectionAndDisableAction(event)) return
     val manager = event.bookmarksManager
     val bookmark = event.contextBookmark
     val type = bookmark?.let { manager?.getType(it) }

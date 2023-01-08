@@ -3,10 +3,10 @@ package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.util.function.Function
@@ -26,7 +26,7 @@ internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, short
     panel = panel {
       row {
         tabbedPane = tabbedPaneHeader()
-          .verticalAlign(VerticalAlign.BOTTOM)
+          .align(AlignY.BOTTOM)
           .customize(Gaps.EMPTY)
           .applyToComponent {
             font = JBFont.regular()
@@ -36,7 +36,7 @@ internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, short
           .component
         cell(toolbar)
           .resizableColumn()
-          .horizontalAlign(HorizontalAlign.RIGHT)
+          .align(AlignX.RIGHT)
       }
     }
 

@@ -27,9 +27,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class InvokeTemplateAction extends DefaultActionGroup {
   private final TemplateImpl myTemplate;
   private final Editor myEditor;

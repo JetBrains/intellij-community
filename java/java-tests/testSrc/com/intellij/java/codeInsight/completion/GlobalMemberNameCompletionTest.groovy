@@ -28,9 +28,6 @@ import groovy.transform.CompileStatic
 
 import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement
 
-/**
- * @author peter
- */
 @CompileStatic
 class GlobalMemberNameCompletionTest extends LightJavaCodeInsightFixtureTestCase {
 

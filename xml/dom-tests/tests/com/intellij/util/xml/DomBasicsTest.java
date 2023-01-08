@@ -40,9 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.ParameterizedType;
 import java.util.*;
 
-/**
- * @author peter
- */
 public class DomBasicsTest extends DomTestCase {
   @Override
   protected void runTestRunnable(final @NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {

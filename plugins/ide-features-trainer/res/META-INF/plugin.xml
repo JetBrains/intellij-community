@@ -66,6 +66,7 @@
       serviceImplementation="training.statistic.LearnProjectState"/>
 
     <interactiveCourseFactory id="IFTInteractiveCourse" implementation="training.ui.welcomeScreen.IFTInteractiveCourse" order="first"/>
+    <interactiveCourseFactory id="EduToolsInteractiveCourse" implementation="training.ui.welcomeScreen.EduToolsInteractiveCourse" order="after IFTInteractiveCourse"/>
 
     <tipAndTrickPromotionFactory implementation="training.ui.IftTipAndTrickPromoter"/>
 

@@ -9,9 +9,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class SmartExtensionPoint<Extension, V> {
   private final Collection<V> myExplicitExtensions;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")

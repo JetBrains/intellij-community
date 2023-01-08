@@ -23,9 +23,9 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBOptionButton
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
@@ -201,13 +201,12 @@ class GHPRReviewSuggestedChangeComponentFactory(
         override fun getComponent(): JComponent = panel {
           row {
             cell(commitEditor)
-              .verticalAlign(VerticalAlign.FILL)
-              .horizontalAlign(HorizontalAlign.FILL)
+              .align(Align.FILL)
           }.resizableRow()
           row(errorLabel) { }
           row {
-            cell(commitButton).horizontalAlign(HorizontalAlign.LEFT)
-            cell(cancelButton).horizontalAlign(HorizontalAlign.LEFT)
+            cell(commitButton).align(AlignX.LEFT)
+            cell(cancelButton).align(AlignX.LEFT)
           }
         }.apply {
           background = EditorColorsManager.getInstance().globalScheme.defaultBackground

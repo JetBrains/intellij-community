@@ -32,9 +32,6 @@ import java.util.function.Supplier;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
- * @author peter
- */
 public class JavaInheritorsGetter {
   private static final Logger LOG = Logger.getInstance(JavaInheritorsGetter.class);
   private final ConstructorInsertHandler myConstructorInsertHandler;

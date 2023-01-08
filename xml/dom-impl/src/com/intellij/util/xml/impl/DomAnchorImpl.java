@@ -16,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T> {
   private static final Logger LOG = Logger.getInstance(DomAnchorImpl.class);
 

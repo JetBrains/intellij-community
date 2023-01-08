@@ -16,9 +16,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
-/**
- * @author peter
- */
 public final class JavaMethodSignature {
   private static final Set<String> OBJECT_METHOD_NAMES = ContainerUtil.map2Set(Object.class.getDeclaredMethods(), Method::getName);
   private final String myMethodName;

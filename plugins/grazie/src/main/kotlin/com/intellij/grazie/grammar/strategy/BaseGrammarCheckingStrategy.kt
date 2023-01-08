@@ -16,7 +16,6 @@ interface BaseGrammarCheckingStrategy : GrammarCheckingStrategy {
    */
   fun isStealth(element: PsiElement) = false
 
-  @JvmDefault
   override fun getElementBehavior(root: PsiElement, child: PsiElement) = when {
     isAbsorb(child) -> ABSORB
     isStealth(child) -> STEALTH

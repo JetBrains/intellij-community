@@ -84,7 +84,9 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.find.findUsages.similarity.MostCommonUsagePatternsComponent.findClusteringSessionInUsageView;
 import static com.intellij.usages.impl.UsageFilteringRuleActions.usageFilteringRuleActions;
+import static com.intellij.usages.similarity.clustering.ClusteringSearchSession.isSimilarUsagesClusteringEnabled;
 
 public class UsageViewImpl implements UsageViewEx {
   private final int myUniqueIdentifier;
@@ -1654,15 +1656,20 @@ public class UsageViewImpl implements UsageViewEx {
     if (!myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(() -> {
         if (isDisposed()) return;
-        UsageNode firstUsageNode = myModel.getFirstUsageNode();
-        if (firstUsageNode == null) return;
-
+        Node nodeToSelect;
+        if (isSimilarUsagesClusteringEnabled() && findClusteringSessionInUsageView(this) != null) {
+          nodeToSelect = myModel.getFirstGroupNode();
+        }
+        else {
+          nodeToSelect = myModel.getFirstUsageNode();
+        }
+        if (nodeToSelect == null) return;
         Node node = getSelectedNode();
         if (node != null && !Comparing.equal(new TreePath(node.getPath()), TreeUtil.getFirstNodePath(myTree))) {
           // user has selected node already
           return;
         }
-        showNode(firstUsageNode);
+        showNode(nodeToSelect);
         if (getUsageViewSettings().isExpanded() && myUsageNodes.size() < 10000) {
           expandAll();
         }
@@ -1674,7 +1681,7 @@ public class UsageViewImpl implements UsageViewEx {
     return isDisposed || myProject.isDisposed();
   }
 
-  private void showNode(@NotNull UsageNode node) {
+  private void showNode(@NotNull Node node) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!isDisposed() && !myPresentation.isDetachedMode()) {
       fireEvents();

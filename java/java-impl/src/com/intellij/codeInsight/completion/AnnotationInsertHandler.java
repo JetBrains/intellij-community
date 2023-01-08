@@ -7,9 +7,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author peter
-*/
 class AnnotationInsertHandler implements InsertHandler<JavaPsiClassReferenceElement> {
   private static final Logger LOG = Logger.getInstance(AnnotationInsertHandler.class);
   static final AnnotationInsertHandler INSTANCE = new AnnotationInsertHandler();

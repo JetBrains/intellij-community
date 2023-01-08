@@ -29,9 +29,10 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
@@ -148,22 +149,20 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       row {
         cell(searchField.textEditor)
           .resizableColumn()
-          .verticalAlign(VerticalAlign.FILL)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(Align.FILL)
         cell(JSeparator(JSeparator.VERTICAL))
-          .verticalAlign(VerticalAlign.FILL)
+          .align(AlignY.FILL)
         cell(accountsPanel)
-          .verticalAlign(VerticalAlign.FILL)
+          .align(AlignY.FILL)
       }
       row {
         scrollCell(repositoryList)
           .resizableColumn()
-          .verticalAlign(VerticalAlign.FILL)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(Align.FILL)
       }.resizableRow()
       row(GithubBundle.message("clone.dialog.directory.field")) {
         cell(directoryField)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .validationOnApply {
             CloneDvcsValidationUtils.checkDirectory(it.text, it.textField)
           }

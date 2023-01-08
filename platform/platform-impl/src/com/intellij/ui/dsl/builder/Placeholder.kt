@@ -25,6 +25,8 @@ interface Placeholder : CellBase<Placeholder> {
 
   override fun verticalAlign(verticalAlign: VerticalAlign): Placeholder
 
+  override fun align(align: Align): Placeholder
+
   override fun resizableColumn(): Placeholder
 
   override fun gap(rightGap: RightGap): Placeholder

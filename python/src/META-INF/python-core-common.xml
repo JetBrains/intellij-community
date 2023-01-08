@@ -215,6 +215,7 @@
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyClassNameMacro"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyFunctionNameMacro"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyIterableVariableMacro"/>
+    <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyVerSpecificSuperSignatureMacro"/>
 
     <codeInsight.overrideMethod language="Python" implementationClass="com.jetbrains.python.codeInsight.override.PyOverrideMethodsHandler"/>
     <codeInsight.implementMethod language="Python"
@@ -383,6 +384,9 @@
     <registryKey key="python.create.namespace.package.action" defaultValue="false"
                  description="Possibility to create namespace packages from New | Python Package"/>
 
+    <!-- asyncio REPL for Python Console/Debugger -->
+    <registryKey key="python.debug.asyncio.repl" defaultValue="true" restartRequired="false" description="Possibility to write await outside of function"/>
+
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
 
@@ -479,6 +483,8 @@
     <notificationGroup id="ConfiguredPythonInterpreter" displayType="BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="sdk.has.been.configured.notification.name"/>
     <notificationGroup id="Packaging" displayType="BALLOON" bundle="messages.PyBundle" key="notification.group.packaging"/>
+    <notificationGroup id="PythonPackages" displayType="TOOL_WINDOW" toolWindowId="Python Packages"
+                       bundle="messages.PyBundle" key="notification.group.packaging.toolwindow"/>
     <notificationGroup id="pyproject.toml Watcher" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="python.sdk.poetry.pip.file.watcher"/>
 
@@ -494,6 +500,8 @@
 
     <!--  Code vision -->
     <vcs.codeVisionLanguageContext language="Python" implementationClass="com.jetbrains.python.vcs.PyVcsContextProvider"/>
+
+    <backgroundPostStartupActivity implementation="com.jetbrains.python.packaging.management.PythonPackagesUpdater"/>
   </extensions>
 
   <extensionPoints>
@@ -585,6 +593,10 @@
 
     <extensionPoint qualifiedName="Pythonid.connectionCredentialsToTargetConfigurationConverter"
                     interface="com.jetbrains.python.run.target.ConnectionCredentialsToTargetConfigurationConverter"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.PythonPackagingToolwindowActionProvider"
+                    interface="com.jetbrains.python.packaging.toolwindow.PythonPackagingToolwindowActionProvider"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -681,6 +693,9 @@
 
     <runConfigurationEditorExtension implementation="com.jetbrains.python.run.PyRunConfigurationTargetOptions"/>
     <remoteSdkValidator implementation="com.jetbrains.python.target.PyTargetSdkValidator"/>
+
+    <PythonPackagingToolwindowActionProvider implementation="com.jetbrains.python.packaging.pip.PipPackagingToolwindowActionProvider"/>
+    <PythonPackagingToolwindowActionProvider implementation="com.jetbrains.python.packaging.conda.CondaPackagingToolwindowActionProvider"/>
   </extensions>
 
   <actions>

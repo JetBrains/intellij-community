@@ -11,9 +11,6 @@ import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public final class JavaMethod implements AnnotatedElement {
   public static final JavaMethod[] EMPTY_ARRAY = new JavaMethod[0];
   private static final Object NONE = new Object();

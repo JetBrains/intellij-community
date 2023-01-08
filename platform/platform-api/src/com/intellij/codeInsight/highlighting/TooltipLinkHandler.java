@@ -7,9 +7,6 @@ import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class TooltipLinkHandler {
 
   /**

@@ -155,6 +155,9 @@ fun KtDeclarationWithBody.singleExpressionBody(): KtExpression? =
         else -> body
     }
 
+fun KtNamedDeclaration.isConstructorDeclaredProperty(): Boolean =
+    this is KtParameter && ownerFunction is KtPrimaryConstructor && hasValOrVar()
+
 fun KtExpression.getCallChain(): List<KtExpression> =
     generateSequence(this) { (it as? KtDotQualifiedExpression)?.receiverExpression }
         .map { (it as? KtDotQualifiedExpression)?.selectorExpression ?: it }

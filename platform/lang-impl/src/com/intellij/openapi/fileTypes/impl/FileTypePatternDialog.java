@@ -27,9 +27,6 @@ import javax.swing.*;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author peter
- */
 class FileTypePatternDialog {
   private JTextField myPatternField;
   private JComboBox<Language> myLanguageCombo;

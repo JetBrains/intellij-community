@@ -26,9 +26,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.PairFunction
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 class FragmentCompletionTest extends LightJavaCodeInsightFixtureTestCase {
   void testDontCompleteFieldsAndMethodsInReferenceCodeFragment() throws Throwable {

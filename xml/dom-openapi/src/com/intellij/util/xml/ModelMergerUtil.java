@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public class ModelMergerUtil {
 
   @Nullable

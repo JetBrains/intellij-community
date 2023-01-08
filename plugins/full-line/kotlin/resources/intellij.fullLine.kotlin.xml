@@ -1,0 +1,9 @@
+<idea-plugin package="org.jetbrains.completion.full.line.kotlin">
+  <dependencies>
+    <plugin id="org.jetbrains.kotlin"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="org.jetbrains.completion.full.line">
+    <fullLineLanguageSupport implementation="org.jetbrains.completion.full.line.kotlin.supporters.KotlinSupporter"/>
+  </extensions>
+</idea-plugin>

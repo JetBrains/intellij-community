@@ -7,9 +7,6 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public final class ElementManipulators extends ClassExtension<ElementManipulator> {
 
   @NonNls public static final String EP_NAME = "com.intellij.lang.elementManipulator";

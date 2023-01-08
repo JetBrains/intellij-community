@@ -23,7 +23,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -168,24 +167,15 @@ internal class GHPRListPanelFactory(private val project: Project,
       emptyText.clear()
       if (listLoader.loading || listLoader.error != null) return
 
-
       val search = searchVm.searchState.value
-      if (search == GHPRListSearchValue.DEFAULT) {
-        emptyText.appendText(GithubBundle.message("pull.request.list.no.matches"))
-          .appendSecondaryText(GithubBundle.message("pull.request.list.filters.clear"),
-                               SimpleTextAttributes.LINK_ATTRIBUTES) {
-            searchVm.searchState.update { GHPRListSearchValue.EMPTY }
-          }
-      }
-      else if (search.filterCount == 0) {
+      if (search.filterCount == 0) {
         emptyText.appendText(GithubBundle.message("pull.request.list.nothing.loaded", repository))
       }
       else {
-        emptyText.appendText(GithubBundle.message("pull.request.list.no.matches"))
-          .appendSecondaryText(GithubBundle.message("pull.request.list.filters.reset.to.default",
-                                                    GHPRListSearchValue.DEFAULT.toQuery().toString()),
-                               SimpleTextAttributes.LINK_ATTRIBUTES) {
-            searchVm.searchState.update { GHPRListSearchValue.DEFAULT }
+        emptyText
+          .appendText(GithubBundle.message("pull.request.list.no.matches"))
+          .appendSecondaryText(GithubBundle.message("pull.request.list.filters.clear"), SimpleTextAttributes.LINK_ATTRIBUTES) {
+            searchVm.searchState.value = GHPRListSearchValue.EMPTY
           }
       }
     }

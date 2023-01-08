@@ -47,7 +47,9 @@ internal class KotlinDocumentationTarget(val element: PsiElement, private val or
         }
     }
 
-    override val presentation: TargetPresentation get() = targetPresentation(element)
+    override fun presentation(): TargetPresentation {
+        return targetPresentation(element)
+    }
 
     override fun computeDocumentationHint(): String? {
         return computeLocalDocumentation(element, originalElement, true)

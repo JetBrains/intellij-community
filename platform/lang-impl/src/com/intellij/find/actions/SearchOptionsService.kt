@@ -4,8 +4,6 @@ package com.intellij.find.actions
 import com.intellij.find.actions.SearchOptionsService.MyState
 import com.intellij.find.actions.SearchOptionsService.SearchVariant
 import com.intellij.find.usages.api.SearchTarget
-import com.intellij.find.usages.api.UsageHandler
-import com.intellij.find.usages.api.UsageHandler.UsageAction
 import com.intellij.find.usages.api.UsageOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.hasTextSearchStrings
@@ -92,23 +90,21 @@ internal class PersistedSearchOptions(
   val textSearch: Boolean,
 )
 
-internal fun <O> getSearchOptions(
+internal fun getSearchOptions(
   variant: SearchVariant,
   target: SearchTarget,
-  handler: UsageHandler<O>,
   selectedScope: SearchScope,
-): AllSearchOptions<O> {
+): AllSearchOptions {
   val persistedOptions: PersistedSearchOptions = searchOptionsService().getSearchOptions(variant, target.targetKey())
   val scopeToUse = target.maximalSearchScope as? LocalSearchScope
                    ?: selectedScope
   return AllSearchOptions(
     options = UsageOptions.createOptions(persistedOptions.usages, scopeToUse),
     textSearch = if (target.hasTextSearchStrings()) persistedOptions.textSearch else null,
-    customOptions = handler.getCustomOptions(variant.toUsageAction())
   )
 }
 
-internal fun setSearchOptions(variant: SearchVariant, target: SearchTarget, allOptions: AllSearchOptions<*>) {
+internal fun setSearchOptions(variant: SearchVariant, target: SearchTarget, allOptions: AllSearchOptions) {
   val newOptions = PersistedSearchOptions(allOptions.options.isUsages, allOptions.textSearch ?: true)
   searchOptionsService().setSearchOptions(variant, target.targetKey(), newOptions)
 }
@@ -118,10 +114,3 @@ private val defaultOptions = PersistedSearchOptions(true, true)
 private fun searchOptionsService(): SearchOptionsService = service()
 
 private fun SearchTarget.targetKey(): String = javaClass.name
-
-private fun SearchVariant.toUsageAction(): UsageAction {
-  return when (this) {
-    SearchVariant.FIND_USAGES -> UsageAction.FIND_USAGES
-    SearchVariant.SHOW_USAGES -> UsageAction.SHOW_USAGES
-  }
-}

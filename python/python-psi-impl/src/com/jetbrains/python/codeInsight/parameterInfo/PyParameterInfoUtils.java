@@ -54,7 +54,8 @@ public final class PyParameterInfoUtils {
   }
 
   /**
-   * builds the textual picture and the list of named parameters
+   * Builds a list of textual representation of parameters
+   * Returns two lists: parameters with type hints and parameters with type annotations
    *
    * @param parameters            parameters of a callable
    * @param indexToNamedParameter used to collect all named parameters of callable
@@ -62,12 +63,13 @@ public final class PyParameterInfoUtils {
    * @param hintFlags             mark parameter as deprecated/highlighted/strikeout
    * @param context               context to be used to get parameter representation
    */
-  public static List<String> buildParameterListHint(@NotNull List<PyCallableParameter> parameters,
-                                                    @NotNull final Map<Integer, PyCallableParameter> indexToNamedParameter,
-                                                    @NotNull final Map<PyCallableParameter, Integer> parameterToHintIndex,
-                                                    @NotNull final Map<Integer, EnumSet<ParameterFlag>> hintFlags,
-                                                    @NotNull TypeEvalContext context) {
+  public static Pair<List<String>, List<String>> buildParameterListHint(@NotNull List<PyCallableParameter> parameters,
+                                                                        @NotNull final Map<Integer, PyCallableParameter> indexToNamedParameter,
+                                                                        @NotNull final Map<PyCallableParameter, Integer> parameterToHintIndex,
+                                                                        @NotNull final Map<Integer, EnumSet<ParameterFlag>> hintFlags,
+                                                                        @NotNull TypeEvalContext context) {
     final List<String> hintsList = new ArrayList<>();
+    final List<String> annotations = new ArrayList<>();
     final int[] currentParameterIndex = new int[]{0};
     ParamHelper.walkDownParameters(
       parameters,
@@ -76,12 +78,14 @@ public final class PyParameterInfoUtils {
         public void enterTupleParameter(PyTupleParameter param, boolean first, boolean last) {
           hintFlags.put(hintsList.size(), EnumSet.noneOf(ParameterFlag.class));
           hintsList.add("(");
+          annotations.add("");
         }
 
         @Override
         public void leaveTupleParameter(PyTupleParameter param, boolean first, boolean last) {
           hintFlags.put(hintsList.size(), EnumSet.noneOf(ParameterFlag.class));
           hintsList.add(last ? ")" : "), ");
+          annotations.add("");
         }
 
         @Override
@@ -93,6 +97,7 @@ public final class PyParameterInfoUtils {
         public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
           hintFlags.put(hintsList.size(), EnumSet.noneOf(ParameterFlag.class));
           hintsList.add(last ? PySlashParameter.TEXT : (PySlashParameter.TEXT + ", "));
+          annotations.add("");
           currentParameterIndex[0]++;
         }
 
@@ -100,6 +105,7 @@ public final class PyParameterInfoUtils {
         public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
           hintFlags.put(hintsList.size(), EnumSet.noneOf(ParameterFlag.class));
           hintsList.add(last ? PySingleStarParameter.TEXT : (PySingleStarParameter.TEXT + ", "));
+          annotations.add("");
           currentParameterIndex[0]++;
         }
 
@@ -107,6 +113,19 @@ public final class PyParameterInfoUtils {
         public void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last) {
           indexToNamedParameter.put(currentParameterIndex[0], parameter);
           final StringBuilder stringBuilder = new StringBuilder();
+          boolean annotationAdded = false;
+          if (parameter.getParameter() instanceof PyNamedParameter) {
+            final String annotation = ((PyNamedParameter)parameter.getParameter()).getAnnotationValue();
+            if (annotation != null) {
+              String annotationText = ParamHelper.getNameInSignature(parameter) + ": " +
+                                      annotation.replaceAll("\n", "").replaceAll("\\s+", " ");
+              annotations.add(last ? annotationText : (annotationText + ", "));
+              annotationAdded = true;
+            }
+          }
+          if (!annotationAdded) {
+            annotations.add("");
+          }
           stringBuilder.append(parameter.getPresentableText(true, context, type -> type == null || type instanceof PyStructuralType));
           if (!last) stringBuilder.append(", ");
           final int hintIndex = hintsList.size();
@@ -117,7 +136,7 @@ public final class PyParameterInfoUtils {
         }
       }
     );
-    return hintsList;
+    return new Pair<>(hintsList, annotations);
   }
 
   public static void highlightParameter(@NotNull final PyCallableParameter parameter,
@@ -312,12 +331,14 @@ public final class PyParameterInfoUtils {
     // formatting of hints: hint index -> flags. this includes flags for parens.
     final Map<Integer, EnumSet<ParameterFlag>> hintFlags = new HashMap<>();
 
-    final List<String> hintsList =
+    final Pair<List<String>, List<String>> hintsAndAnnotations =
       buildParameterListHint(parameters, indexToNamedParameter, parameterToHintIndex, hintFlags, typeEvalContext);
+    final List<String> hintsList = hintsAndAnnotations.first;
+    final List<String> annotations = hintsAndAnnotations.second;
 
     highlightParameters(callExpression, callableType, parameters, mapping, indexToNamedParameter, parameterToHintIndex, hintFlags,
                         currentParamOffset);
 
-    return new ParameterHints(hintsList, hintFlags);
+    return new ParameterHints(hintsList, hintFlags, annotations);
   }
 }

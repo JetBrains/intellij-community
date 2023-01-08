@@ -35,7 +35,10 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
   override fun getState(): State = State(shownTips)
 
   override fun loadState(state: State) {
-    shownTips.putAll(state.shownTips)
+    state.shownTips.forEach { (filename, timestamp) ->
+      // migration from tip filename to tip id
+      shownTips.put(TipAndTrickBean.getTipId(filename), timestamp)
+    }
   }
 
   fun sortTips(tips: List<TipAndTrickBean>, experimentType: TipsUtilityExperiment): RecommendationDescription {
@@ -73,20 +76,20 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
   }
 
   fun fireTipShown(tip: TipAndTrickBean) {
-    shownTips.put(tip.fileName!!, System.currentTimeMillis())
+    shownTips.put(tip.id, System.currentTimeMillis())
   }
 
   fun filterShownTips(tips: List<TipAndTrickBean>): List<TipAndTrickBean> {
     val resultTips = tips.toMutableList()
-    for (tipFile in shownTips.keys.shuffled()) {
-      resultTips.find { it.fileName == tipFile }?.let { tip ->
+    for (tipId in shownTips.keys.shuffled()) {
+      resultTips.find { it.id == tipId }?.let { tip ->
         resultTips.remove(tip)
         resultTips.add(tip)
       }
     }
     if (wereTipsShownToday()) {
       shownTips.maxByOrNull { it.value }?.let {
-        resultTips.find { tip -> tip.fileName == it.key }?.let { tip ->
+        resultTips.find { tip -> tip.id == it.key }?.let { tip ->
           resultTips.remove(tip)
           resultTips.add(0, tip)
         }
@@ -103,9 +106,9 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
   private class TipsUsageListener : FeaturesRegistryListener {
     override fun featureUsed(feature: FeatureDescriptor) {
       val tip = TipUtils.getTip(feature) ?: return
-      val timestamp = getInstance().shownTips.getLong(tip.fileName)
+      val timestamp = getInstance().shownTips.getLong(tip.id)
       if (timestamp != 0L) {
-        TipsOfTheDayUsagesCollector.triggerTipUsed(tip.fileName, System.currentTimeMillis() - timestamp)
+        TipsOfTheDayUsagesCollector.triggerTipUsed(tip.id, System.currentTimeMillis() - timestamp)
       }
     }
   }

@@ -18,7 +18,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 
-public final class UnixPythonSdkFlavor extends CPythonSdkFlavor {
+public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   private final static Pattern PYTHON_3_RE = Pattern.compile("(python-?3\\.(\\d){1,2})|(python-?3)");
 
   private UnixPythonSdkFlavor() {
@@ -33,6 +33,11 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor {
   @Override
   public boolean isApplicable() {
     return SystemInfo.isUnix && !SystemInfo.isMac;
+  }
+
+  @Override
+  public @NotNull Class<PyFlavorData.Empty> getFlavorDataClass() {
+    return PyFlavorData.Empty.class;
   }
 
   @NotNull

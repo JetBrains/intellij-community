@@ -11,9 +11,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
-/**
- * @author peter
- */
 public class ExcludeFromStubGenerationAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {

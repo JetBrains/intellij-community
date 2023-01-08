@@ -6,8 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -47,7 +45,7 @@ class ConfigureImageDialog(
       textFieldWithBrowseButton(MarkdownBundle.message("markdown.configure.image.dialog.browse.image.title"),
                                 project,
                                 FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-      ).horizontalAlign(HorizontalAlign.FILL)
+      ).align(AlignX.FILL)
         .bindText(::pathFieldText)
         .focused()
     }
@@ -73,15 +71,14 @@ class ConfigureImageDialog(
     collapsibleGroup(MarkdownBundle.message("markdown.configure.image.dialog.screen.reader.text.panel.title")) {
       row(MarkdownBundle.message("markdown.configure.image.dialog.title.label")) {
         textField()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .bindText(::titleFieldText)
       }
       row {
         label(MarkdownBundle.message("markdown.configure.image.dialog.description.label"))
-          .verticalAlign(VerticalAlign.TOP)
+          .align(AlignY.TOP)
         textArea()
-          .horizontalAlign(HorizontalAlign.FILL)
-          .verticalAlign(VerticalAlign.FILL)
+          .align(Align.FILL)
           .bindText(::descriptionFieldText)
           .rows(4)
       }.layout(RowLayout.LABEL_ALIGNED)

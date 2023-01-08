@@ -48,3 +48,12 @@ open class Test2 : Test() {
     get() = if (Math.random() > 0.5) "" else null
     set(<warning descr="[UNUSED_PARAMETER] Parameter 'value' is never used">value</warning>) {}
 }
+class WithInit(a: Int) {
+    init {
+        if (a > 0) {
+            println(1)
+        } else if (<warning descr="Condition 'a <= 0' is always true">a <= 0</warning>) {
+            println(2)
+        }
+    }
+}

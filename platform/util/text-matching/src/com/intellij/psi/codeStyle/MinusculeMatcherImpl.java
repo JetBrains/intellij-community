@@ -18,8 +18,6 @@ import java.util.Arrays;
  * Used in navigation, code completion, speed search etc.
  *
  * @see NameUtil#buildMatcher(String)
- *
- * @author peter
  */
 class MinusculeMatcherImpl extends MinusculeMatcher {
   /** Camel-hump matching is >O(n), so for larger prefixes we fall back to simpler matching to avoid pauses */

@@ -38,7 +38,7 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
   private fun presentPR(avatarIconsProvider: GHAvatarIconsProvider, pr: GHPullRequestShort) =
     ReviewListItemPresentation.Simple(pr.title, "#" + pr.number, pr.createdAt,
                                       createUserPresentation(avatarIconsProvider, pr.author),
-                                      tagGroup = NamedCollection.create(GithubBundle.message("pull.request.labels"),
+                                      tagGroup = NamedCollection.create(GithubBundle.message("pull.request.labels.popup", pr.labels.size),
                                                                         pr.labels.map(::getLabelPresentation)),
                                       mergeableStatus = getMergeableStatus(pr.mergeable),
                                       state = getStateText(pr.state, pr.isDraft),

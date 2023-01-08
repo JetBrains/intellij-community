@@ -242,7 +242,7 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testEnterInTuple() {
-    doTestEnter("for x in 'a', <caret>'b': pass", "for x in 'a', \\\n         'b': pass");
+    doTestEnter("for x in 'a', <caret>'b': pass", "for x in 'a', \\\n        'b': pass");
   }
 
   public void testEnterInCodeWithErrorElements() {

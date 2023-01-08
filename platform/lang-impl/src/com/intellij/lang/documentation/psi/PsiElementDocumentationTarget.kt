@@ -62,7 +62,7 @@ class PsiElementDocumentationTarget private constructor(
 
   override fun createPointer(): Pointer<out DocumentationTarget> = pointer
 
-  override val presentation: TargetPresentation get() = targetPresentation(targetElement)
+  override fun presentation(): TargetPresentation = targetPresentation(targetElement)
 
   override val navigatable: Navigatable? get() = targetElement as? Navigatable
 

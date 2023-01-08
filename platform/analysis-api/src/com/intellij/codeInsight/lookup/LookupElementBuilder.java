@@ -22,8 +22,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * @author peter
- *
  * @see LookupElementDecorator
  * @see com.intellij.codeInsight.completion.PrioritizedLookupElement
  */

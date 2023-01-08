@@ -63,7 +63,7 @@ public final class ReassignVariableUtil {
           PsiElement outerCodeBlock = PsiUtil.getVariableCodeBlock(variable, null);
           if (outerCodeBlock == null) continue;
           if (ReferencesSearch.search(variable, new LocalSearchScope(outerCodeBlock))
-            .allMatch(reference -> HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, reference.getElement()) == null)) {
+            .allMatch(reference -> HighlightControlFlowUtil.getElementVariableReferencedFrom(variable, reference.getElement()) == null)) {
             vars.add(variable);
           }
         }

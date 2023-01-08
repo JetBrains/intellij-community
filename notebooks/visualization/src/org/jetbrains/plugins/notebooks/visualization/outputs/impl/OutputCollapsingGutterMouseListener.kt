@@ -14,7 +14,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayManager
-import org.jetbrains.plugins.notebooks.visualization.notebookAppearance
+import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.outputs.hoveredCollapsingComponentRect
 import java.awt.BorderLayout
 import java.awt.Cursor

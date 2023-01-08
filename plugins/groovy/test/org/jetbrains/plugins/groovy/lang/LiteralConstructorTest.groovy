@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.openapi.util.RecursionManager
@@ -165,7 +165,7 @@ class CollectionNoArgConstructor implements Collection {
       'short s = [<caret>]'       : false,
       'void v = [<caret>]'        : false,
 
-      'boolean boo = [<caret>1]'  : true,
+      'boolean boo = [<caret>1]'  : false,
       'byte b = [<caret>1]'       : true,
       'char c = [<caret>1]'       : true,
       'double d = [<caret>1]'     : true,
@@ -175,7 +175,7 @@ class CollectionNoArgConstructor implements Collection {
       'short s = [<caret>1]'      : true,
       'void v = [<caret>1]'       : true,
 
-      'boolean boo = [<caret>:]'  : true,
+      'boolean boo = [<caret>:]'  : false,
       'byte b = [<caret>:]'       : true,
       'char c = [<caret>:]'       : true,
       'double d = [<caret>:]'     : true,
@@ -185,7 +185,7 @@ class CollectionNoArgConstructor implements Collection {
       'short s = [<caret>:]'      : true,
       'void v = [<caret>:]'       : true,
 
-      'Boolean boo = [<caret>]'   : true,
+      'Boolean boo = [<caret>]'   : false,
       'Byte b = [<caret>]'        : true,
       'Character c = [<caret>]'   : true,
       'Double d = [<caret>]'      : true,
@@ -195,7 +195,7 @@ class CollectionNoArgConstructor implements Collection {
       'Short s = [<caret>]'       : true,
       'Void v = [<caret>]'        : true,
 
-      'Boolean boo = [<caret>:]'  : true,
+      'Boolean boo = [<caret>:]'  : false,
       'Byte b = [<caret>:]'       : true,
       'Character c = [<caret>:]'  : true,
       'Double d = [<caret>:]'     : true,
@@ -216,8 +216,8 @@ class CollectionNoArgConstructor implements Collection {
 
       'Class a = [<caret>]'       : false,
       'Class a = [<caret>:]'      : false,
-      'String s = [<caret>]'      : true,
-      'String s = [<caret>:]'     : true,
+      'String s = [<caret>]'      : false,
+      'String s = [<caret>:]'     : false,
 
       'Set s = [<caret>]'         : false,
       'Set s = [<caret>:]'        : true,

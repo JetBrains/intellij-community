@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.util.indexing.roots.kind.IndexableSetSelfDependentOrigin;
-import com.intellij.util.indexing.roots.origin.ModuleRootSelfDependentOriginImpl;
+import com.intellij.util.indexing.roots.kind.IndexableSetIterableOrigin;
+import com.intellij.util.indexing.roots.origin.ModuleRootIterableOriginImpl;
 import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
 import com.intellij.workspaceModel.ide.impl.UtilsKt;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
@@ -42,9 +42,9 @@ class SourceRootIndexableEntityProvider implements IndexableEntityProvider.Paren
   }
 
   @Override
-  public @Nullable IndexableSetSelfDependentOrigin getExistingEntityIteratorOrigins(@NotNull SourceRootEntity entity,
-                                                                                                          @NotNull EntityStorage storage,
-                                                                                                          @NotNull Project project) {
+  public @Nullable IndexableSetIterableOrigin getExistingEntityIteratorOrigins(@NotNull SourceRootEntity entity,
+                                                                               @NotNull EntityStorage storage,
+                                                                               @NotNull Project project) {
     ModuleEntity moduleEntity = entity.getContentRoot().getModule();
     ModuleBridge module = ModuleEntityUtils.findModule(moduleEntity, storage);
     if (module == null) {
@@ -67,7 +67,7 @@ class SourceRootIndexableEntityProvider implements IndexableEntityProvider.Paren
       }
     }
     if (isExcluded) {
-      return new ModuleRootSelfDependentOriginImpl(module, Collections.singletonList(UtilsKt.getVirtualFile(entity.getUrl())),
+      return new ModuleRootIterableOriginImpl(module, Collections.singletonList(UtilsKt.getVirtualFile(entity.getUrl())),
                                               ContainerUtil.map(excludedSourceUrlsFiles, url -> UtilsKt.getVirtualFile(url)));
     }
     else {

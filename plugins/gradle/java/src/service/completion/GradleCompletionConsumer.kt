@@ -33,7 +33,7 @@ class GradleCompletionConsumer(position: PsiElement, val delegate: GroovyComplet
       GradleLookupWeigher.setGradleCompletionPriority(newElement, GradleLookupWeigher.DEFAULT_COMPLETION_PRIORITY - 1)
       delegate.consume(newElement)
     }
-    else if (psi is GrLightField && psi.originInfo == GradleExtensionsContributor.propertiesFileOriginInfo) {
+    else if (psi is GrLightField && psi.originInfo == GradleExtensionsContributor.PROPERTIES_FILE_ORIGINAL_INFO) {
       val property = psi.navigationElement.asSafely<IProperty>() ?: return delegate.consume(element)
       val value = property.value
       val newElement = element.modify { withTailText("=$value").withTypeText(psi.type.presentableText, true) }

@@ -1,0 +1,9 @@
+<idea-plugin package="org.jetbrains.completion.full.line.python">
+  <dependencies>
+    <plugin id="com.intellij.modules.python"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="org.jetbrains.completion.full.line">
+    <fullLineLanguageSupport implementation="org.jetbrains.completion.full.line.python.supporters.PythonSupporter"/>
+  </extensions>
+</idea-plugin>

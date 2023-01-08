@@ -17,7 +17,6 @@ import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
 import git4idea.status.GitStagingAreaHolder;
-import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +27,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 
+import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -247,25 +247,25 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
 
   @NotNull
   private GitRepoInfo readRepoInfo() {
-    Span span =
-      TraceManager.INSTANCE.getTracer("vcs").spanBuilder("reading Git repo info").setAttribute("repository", getShortRepositoryName(this))
-        .startSpan();
-    File configFile = myRepositoryFiles.getConfigFile();
-    GitConfig config = GitConfig.read(configFile);
-    myRepositoryFiles.updateCustomPaths(config.parseCore());
+    return computeWithSpan(TraceManager.INSTANCE.getTracer("vcs"), "reading Git repo info", span -> {
+      span.setAttribute("repository", getShortRepositoryName(this));
 
-    Collection<GitRemote> remotes = config.parseRemotes();
-    GitBranchState state = myReader.readState(remotes);
-    boolean isShallow = myReader.hasShallowCommits();
-    Collection<GitBranchTrackInfo> trackInfos =
-      config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
-    GitHooksInfo hooksInfo = myReader.readHooksInfo();
-    Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
-    span.end();
-    return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), new LinkedHashSet<>(remotes),
-                           new HashMap<>(state.getLocalBranches()), new HashMap<>(state.getRemoteBranches()),
-                           new LinkedHashSet<>(trackInfos),
-                           submodules, hooksInfo, isShallow);
+      File configFile = myRepositoryFiles.getConfigFile();
+      GitConfig config = GitConfig.read(configFile);
+      myRepositoryFiles.updateCustomPaths(config.parseCore());
+
+      Collection<GitRemote> remotes = config.parseRemotes();
+      GitBranchState state = myReader.readState(remotes);
+      boolean isShallow = myReader.hasShallowCommits();
+      Collection<GitBranchTrackInfo> trackInfos =
+        config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
+      GitHooksInfo hooksInfo = myReader.readHooksInfo();
+      Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
+      return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), new LinkedHashSet<>(remotes),
+                             new HashMap<>(state.getLocalBranches()), new HashMap<>(state.getRemoteBranches()),
+                             new LinkedHashSet<>(trackInfos),
+                             submodules, hooksInfo, isShallow);
+    });
   }
 
   @NotNull

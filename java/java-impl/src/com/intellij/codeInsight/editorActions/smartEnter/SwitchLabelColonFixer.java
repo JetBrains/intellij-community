@@ -21,9 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSwitchLabelStatement;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * @author peter
- */
 public class SwitchLabelColonFixer implements Fixer {
   @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {

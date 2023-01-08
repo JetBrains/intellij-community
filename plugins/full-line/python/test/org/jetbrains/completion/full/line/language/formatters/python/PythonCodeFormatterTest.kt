@@ -5,7 +5,7 @@ import com.jetbrains.python.PythonFileType
 import org.jetbrains.completion.full.line.FilesTest
 import org.jetbrains.completion.full.line.FilesTest.readFile
 import org.jetbrains.completion.full.line.language.formatters.CodeFormatterTest
-import org.jetbrains.completion.full.line.language.formatters.PythonCodeFormatter
+import org.jetbrains.completion.full.line.python.formatters.PythonCodeFormatter
 
 abstract class PythonCodeFormatterTest : CodeFormatterTest(PythonCodeFormatter()) {
 

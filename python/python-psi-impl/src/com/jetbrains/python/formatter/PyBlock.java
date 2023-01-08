@@ -272,15 +272,21 @@ public class PyBlock implements ASTBlock {
           childAlignment = binaryParentBlock.getChildAlignment();
         }
         final boolean parenthesised = binaryParentType == PyElementTypes.PARENTHESIZED_EXPRESSION;
-        if (childAlignment == null && topmostBinary != null &&
-            !(parenthesised && isIfCondition(binaryParentNode)) &&
-            !(isCondition(topmostBinary.myNode) && !ALIGN_CONDITIONS_WITHOUT_PARENTHESES)) {
-          childAlignment = topmostBinary.getAlignmentForChildren();
+        if (binaryParentType != PyElementTypes.RETURN_STATEMENT &&
+            binaryParentType != PyElementTypes.YIELD_EXPRESSION) {
+          if (childAlignment == null && topmostBinary != null &&
+              !(parenthesised && isIfCondition(binaryParentNode)) &&
+              !(isCondition(topmostBinary.myNode) && !ALIGN_CONDITIONS_WITHOUT_PARENTHESES)) {
+            childAlignment = topmostBinary.getAlignmentForChildren();
+          }
+          // We omit indentation for the binary expression itself in this case (similarly to PyTupleExpression inside
+          // PyParenthesisedExpression) because we indent individual operands and operators inside rather than
+          // the whole contained expression.
+          childIndent = parenthesised ? Indent.getContinuationIndent() : Indent.getContinuationWithoutFirstIndent();
         }
-        // We omit indentation for the binary expression itself in this case (similarly to PyTupleExpression inside
-        // PyParenthesisedExpression) because we indent individual operands and operators inside rather than
-        // the whole contained expression.
-        childIndent = parenthesised ? Indent.getContinuationIndent() : Indent.getContinuationWithoutFirstIndent();
+        else {
+          childIndent = Indent.getNormalIndent();
+        }
       }
     }
     else if (parentType == PyElementTypes.OR_PATTERN) {
@@ -773,6 +779,12 @@ public class PyBlock implements ASTBlock {
     }
     if (myNode.getElementType() == PyElementTypes.WITH_STATEMENT) {
       return myNode.findChildByType(PyTokenTypes.LPAR) != null && !hasHangingIndent(myNode.getPsi());
+    }
+    if (myNode.getElementType() == PyElementTypes.TUPLE_EXPRESSION) {
+      final ASTNode prevNode = myNode.getTreeParent();
+      if (prevNode.getElementType() != PyElementTypes.PARENTHESIZED_EXPRESSION) {
+        return false;
+      }
     }
     return myContext.getPySettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS && !hasHangingIndent(myNode.getPsi());
   }

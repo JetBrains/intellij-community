@@ -22,9 +22,6 @@ import org.jetbrains.plugins.groovy.config.wizard.GroovyProjectWizardUtils;
 
 import javax.swing.*;
 
-/**
- * @author peter
- */
 public final class GroovyAwareModuleBuilder extends JavaModuleBuilder {
 
   private @Nullable String myPathToGroovySample = null;

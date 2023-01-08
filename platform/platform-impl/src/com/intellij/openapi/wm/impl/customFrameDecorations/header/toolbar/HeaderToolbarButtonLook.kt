@@ -42,6 +42,12 @@ internal class HeaderToolbarButtonLook : IdeaActionButtonLook() {
     super.paintIcon(g, actionButton, scaledIcon, x, y)
   }
 
+  override fun paintDownArrow(g: Graphics?, actionButton: ActionButtonComponent?, originalIcon: Icon, arrowIcon: Icon) {
+    val scaledOriginalIcon = scaleIcon(adjustColor(originalIcon))
+    val scaledArrowIcon = scaleIcon(adjustColor(arrowIcon))
+    super.paintDownArrow(g, actionButton, scaledOriginalIcon, scaledArrowIcon)
+  }
+
   private fun adjustColor(icon: Icon) =
     if (ColorUtil.isDark(headerColor)) IconLoader.getDarkIcon(icon, true) else icon
 

@@ -8,8 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows skipping completion autopopup according to current context.
- *
- * @author peter
  */
 public abstract class CompletionConfidence {
 

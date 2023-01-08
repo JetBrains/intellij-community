@@ -8,12 +8,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl.BOMForNewUTF8Files
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.RowLayout
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.builder.*
 import java.awt.event.ItemListener
 import javax.swing.JComponent
 
@@ -27,7 +22,7 @@ class FileEncodingConfigurableUI {
   fun createContent(tablePanel: JComponent, filesEncodingCombo: JComponent): DialogPanel {
     return panel {
       row {
-        cell(tablePanel).horizontalAlign(HorizontalAlign.FILL).verticalAlign(VerticalAlign.FILL)
+        cell(tablePanel).align(Align.FILL)
       }.resizableRow()
         .bottomGap(BottomGap.SMALL)
 

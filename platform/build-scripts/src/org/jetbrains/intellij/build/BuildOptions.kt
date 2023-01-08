@@ -209,10 +209,9 @@ class BuildOptions {
   var buildUnixSnaps = SystemProperties.getBooleanProperty("intellij.build.unix.snaps", false)
 
   /**
-   * Image for snap package creation. Default is "snapcore/snapcraft:stable", but can be modified mostly due to problems
-   * with new versions of snapcraft.
+   * Docker image for snap package creation
    */
-  var snapDockerImage: String = System.getProperty("intellij.build.snap.docker.image", "snapcore/snapcraft:stable")
+  var snapDockerImage: String = System.getProperty("intellij.build.snap.docker.image", "snapcore/snapcraft:stable@sha256:6d771575c134569e28a590f173f7efae8bf7f4d1746ad8a474c98e02f4a3f627")
   var snapDockerBuildTimeoutMin: Long = System.getProperty("intellij.build.snap.timeoutMin", "20").toLong()
 
   /**

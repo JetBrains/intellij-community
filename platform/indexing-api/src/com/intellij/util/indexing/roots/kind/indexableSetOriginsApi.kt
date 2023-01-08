@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.IndexableSetContributor
+import com.intellij.util.indexing.roots.IndexableFilesIterator
 import java.util.*
 import java.util.function.Predicate
 
@@ -18,20 +19,22 @@ interface IndexableSetOrigin
 
 /**
  * Represents an origin of [com.intellij.util.indexing.roots.IndexableFilesIterator] which has enough info to create iterator on itself.
- * Designed for use with [com.intellij.util.indexing.roots.IndexableFilesIndex] in case it's enabled.
- * See [com.intellij.util.indexing.roots.IndexableFilesIndex.shouldBeUsed]
+ * Designed for use with [com.intellij.util.indexing.IndexableFilesIndex] in case it's enabled.
+ * See [com.intellij.util.indexing.IndexableFilesIndex.shouldBeUsed]
  */
-abstract class IndexableSetSelfDependentOrigin : IndexableSetOrigin {
+abstract class IndexableSetIterableOrigin : IndexableSetOrigin {
   abstract val iterationRoots: Collection<VirtualFile>
   protected abstract val exclusionData: ExclusionData
 
   fun isExcluded(file: VirtualFile): Boolean = exclusionData.isExcluded(file)
 
+  abstract fun createIterator(): IndexableFilesIterator
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    other as IndexableSetSelfDependentOrigin
+    other as IndexableSetIterableOrigin
 
     if (iterationRoots != other.iterationRoots) return false
     if (exclusionData != other.exclusionData) return false
@@ -45,17 +48,21 @@ abstract class IndexableSetSelfDependentOrigin : IndexableSetOrigin {
     return result
   }
 
-  interface ExclusionData {
+  interface ExclusionData : Predicate<VirtualFile> {
     val rootsToExclude: Iterable<VirtualFile>
 
     fun isExcluded(file: VirtualFile): Boolean
 
     fun addRelevantExcludedRootsFromDirectoryIndexExcludePolicies(allExcludedRoots: Collection<VirtualFile>)
 
+    fun setExcludedRootsFromChildContentRoots(childContentRoots: Collection<VirtualFile>)
+
     fun addExcludedFileCondition(condition: Condition<VirtualFile>?)
 
     fun load(data: ExclusionData)
     fun isExcludedByCondition(file: VirtualFile): Boolean
+
+    override fun test(file: VirtualFile): Boolean = isExcluded(file)
 
     companion object {
       fun createExclusionData(includedRoots: Collection<VirtualFile>): ExclusionData = ExclusionDataImpl(includedRoots)
@@ -63,11 +70,21 @@ abstract class IndexableSetSelfDependentOrigin : IndexableSetOrigin {
       private class ExclusionDataImpl(private val includedRoots: Collection<VirtualFile>) : ExclusionData {
         private val excludedRoots: MutableCollection<VirtualFile> = mutableListOf()
         private var excludeCondition: Predicate<VirtualFile>? = null
+        private val excludedChildContentRoots: MutableCollection<VirtualFile> = mutableListOf()
 
         override fun addRelevantExcludedRootsFromDirectoryIndexExcludePolicies(allExcludedRoots: Collection<VirtualFile>) {
           for (excludedRoot in allExcludedRoots) {
             if (VfsUtilCore.isUnderFiles(excludedRoot, includedRoots)) {
               excludedRoots.add(excludedRoot)
+            }
+          }
+        }
+
+        override fun setExcludedRootsFromChildContentRoots(childContentRoots: Collection<VirtualFile>) {
+          excludedChildContentRoots.clear()
+          for (childContentRoot in childContentRoots) {
+            if (VfsUtilCore.isUnderFiles(childContentRoot, includedRoots)) {
+              excludedChildContentRoots.add(childContentRoot)
             }
           }
         }
@@ -81,10 +98,12 @@ abstract class IndexableSetSelfDependentOrigin : IndexableSetOrigin {
         }
 
         override fun isExcluded(file: VirtualFile): Boolean = VfsUtilCore.isUnderFiles(file, excludedRoots) ||
-                                                              isExcludedByCondition(file)
+                                                              isExcludedByCondition(file) ||
+                                                              VfsUtilCore.isUnderFiles(file, excludedChildContentRoots)
 
         override val rootsToExclude: Iterable<VirtualFile>
-          get() = excludedRoots
+          get() = excludedRoots + excludedChildContentRoots
+
 
         override fun isExcludedByCondition(file: VirtualFile): Boolean = excludeCondition?.test(file) ?: false
 
@@ -93,6 +112,8 @@ abstract class IndexableSetSelfDependentOrigin : IndexableSetOrigin {
           excludedRoots.clear()
           excludedRoots.addAll((data as ExclusionDataImpl).excludedRoots)
           excludeCondition = data.excludeCondition
+          excludedChildContentRoots.clear()
+          excludedChildContentRoots.addAll(data.excludedChildContentRoots)
         }
 
         override fun equals(other: Any?): Boolean {
@@ -105,6 +126,7 @@ abstract class IndexableSetSelfDependentOrigin : IndexableSetOrigin {
           if (excludedRoots != other.excludedRoots) return false
           //we can't compare conditions, so !== for the sake of reflexivity
           if (excludeCondition !== other.excludeCondition) return false
+          if (excludedChildContentRoots !== other.excludedChildContentRoots) return false
 
           return true
         }
@@ -113,6 +135,7 @@ abstract class IndexableSetSelfDependentOrigin : IndexableSetOrigin {
           var result = includedRoots.hashCode()
           result = 31 * result + excludedRoots.hashCode()
           result = 31 * result + (excludeCondition?.hashCode() ?: 0)
+          result = 31 * result + excludedChildContentRoots.hashCode()
           return result
         }
       }
@@ -122,12 +145,18 @@ abstract class IndexableSetSelfDependentOrigin : IndexableSetOrigin {
       private object DummyExclusionData : ExclusionData {
         override val rootsToExclude: Iterable<VirtualFile>
           get() = Collections.emptyList()
+
         override fun isExcluded(file: VirtualFile): Boolean = false
         override fun isExcludedByCondition(file: VirtualFile): Boolean = false
         override fun addRelevantExcludedRootsFromDirectoryIndexExcludePolicies(allExcludedRoots: Collection<VirtualFile>) {
         }
+
+        override fun setExcludedRootsFromChildContentRoots(childContentRoots: Collection<VirtualFile>) {
+        }
+
         override fun addExcludedFileCondition(condition: Condition<VirtualFile>?) {
         }
+
         override fun load(data: ExclusionData) {
           assert(data == DummyExclusionData) { "Can't load non dummy exclusion data into a dummy one" }
         }

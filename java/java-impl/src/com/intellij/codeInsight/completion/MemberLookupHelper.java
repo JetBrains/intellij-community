@@ -30,9 +30,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public class MemberLookupHelper {
   private final PsiMember myMember;
   private final boolean myMergedOverloads;

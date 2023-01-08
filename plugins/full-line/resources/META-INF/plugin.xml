@@ -1,4 +1,4 @@
-<idea-plugin require-restart="true">
+<idea-plugin require-restart="true" package="org.jetbrains.completion.full.line">
   <id>org.jetbrains.completion.full.line</id>
   <name>Full Line Code Completion</name>
   <vendor>JetBrains</vendor>
@@ -129,11 +129,11 @@
 
     ]]></description>
 
-  <depends>com.intellij.modules.platform</depends>
-  <depends optional="true" config-file="completion-ml-ranking-patch.xml">com.intellij.completion.ml.ranking</depends>
-  <depends optional="true" config-file="python.xml">com.intellij.modules.python</depends>
-  <depends optional="true" config-file="java.xml">com.intellij.java</depends>
-  <depends optional="true" config-file="kotlin.xml">org.jetbrains.kotlin</depends>
+  <content>
+    <module name="intellij.fullLine.python"/>
+    <module name="intellij.fullLine.java"/>
+    <module name="intellij.fullLine.kotlin"/>
+  </content>
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="org.jetbrains.completion.full.line.actions.FullLineStartupActivity"/>
@@ -226,18 +226,15 @@
   </extensionPoints>
 
   <actions>
-    <group id="FullLineGroup" text="Full Line Code Completion" popup="true">
+    <group id="FullLineGroup" popup="true">
       <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="CodeCompletionGroup"/>
       <action id="org.jetbrains.completion.full.line.actions.ShowSettingsAction"
-              class="org.jetbrains.completion.full.line.actions.ShowSettingsAction"
-              text="Show Extended Settings"
-              description="Show extended full line settings for each configuration">
+              class="org.jetbrains.completion.full.line.actions.ShowSettingsAction">
       </action>
       <action id="org.jetbrains.completion.full.line.actions.VerifyCloudAction"
-              class="org.jetbrains.completion.full.line.actions.VerifyCloudAction"
-              text="Verify Cloud"
-              description="Verify cloud completion for extended usage">
+              class="org.jetbrains.completion.full.line.actions.VerifyCloudAction">
       </action>
     </group>
   </actions>
+  <resource-bundle>messages.MLServerCompletionBundle</resource-bundle>
 </idea-plugin>

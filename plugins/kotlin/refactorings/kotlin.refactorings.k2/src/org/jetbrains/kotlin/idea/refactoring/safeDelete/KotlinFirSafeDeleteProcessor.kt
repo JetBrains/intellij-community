@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.idea.inheritorsSearch.search
+import org.jetbrains.kotlin.idea.inheritorsSearch.findAllOverridings
 import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -123,7 +123,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                     }
                 }
 
-                search(element).forEach { m ->
+                findAllOverridings(element).forEach { m ->
                     val original = m.unwrapped
                     if (original != null && !allElementsToDelete.contains(original)) {
                         val oSymbol = when (original) {

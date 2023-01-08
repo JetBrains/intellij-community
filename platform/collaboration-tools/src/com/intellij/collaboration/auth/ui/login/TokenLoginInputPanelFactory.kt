@@ -11,10 +11,10 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.*
@@ -47,7 +47,7 @@ class TokenLoginInputPanelFactory(
       row(CollaborationToolsBundle.message("login.field.server")) {
         cell(serverTextField)
           .bindText(model::serverUri)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .resizableColumn()
           .comment(tokenNote)
           .enabledIf(progressModel.toComponentPredicate(!serverFieldDisabled))
@@ -62,7 +62,7 @@ class TokenLoginInputPanelFactory(
       row(CollaborationToolsBundle.message("login.field.token")) {
         val tokenField = textField()
           .bindText(model::token)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .resizableColumn()
           .enabledIf(progressModel.toComponentPredicate())
           .validationOnApply {

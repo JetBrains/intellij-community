@@ -22,9 +22,6 @@ import com.intellij.util.xml.XmlName;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public interface DomChildrenDescription extends AbstractDomChildrenDescription, PomNamedTarget {
 
   @NotNull

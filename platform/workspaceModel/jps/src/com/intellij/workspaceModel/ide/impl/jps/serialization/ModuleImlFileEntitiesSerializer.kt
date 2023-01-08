@@ -79,11 +79,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       if (moduleLoadedInfo != null) {
         val entitySource = getOtherEntitiesEntitySource(reader)
         loadContentRoots(moduleLoadedInfo.customRootsSerializer, builder, moduleLoadedInfo.moduleEntity,
-                         reader,
-                         moduleLoadedInfo.customDir,
-                         errorReporter,
-                         virtualFileManager,
-                         entitySource)
+                         reader, moduleLoadedInfo.customDir, errorReporter, virtualFileManager,
+                         entitySource, true)
       } else {
         moduleEntity = loadModuleEntity(reader, builder, errorReporter, virtualFileManager)?.moduleEntity
       }
@@ -171,11 +168,15 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     // Don't forget to load external system options even if custom root serializer exist
     loadExternalSystemOptions(builder, moduleEntity, reader, externalSystemOptions, externalSystemId, entitySource)
     loadContentRoots(customRootsSerializer, builder, moduleEntity, reader, customDir, errorReporter, virtualFileManager,
-                     moduleEntity.entitySource)
+                     moduleEntity.entitySource, false)
 
     return ModuleLoadedInfo(moduleEntity, customRootsSerializer, customDir)
   }
 
+  /**
+   * [loadingAdditionalRoots] - true if we load additional information of the module. For example, content roots that are defined by user
+   *   in maven project.
+   */
   private fun loadContentRoots(customRootsSerializer: CustomModuleRootsSerializer?,
                                builder: MutableEntityStorage,
                                moduleEntity: ModuleEntity,
@@ -183,7 +184,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                customDir: String?,
                                errorReporter: ErrorReporter,
                                virtualFileManager: VirtualFileUrlManager,
-                               contentRootEntitySource: EntitySource) {
+                               contentRootEntitySource: EntitySource,
+                               loadingAdditionalRoots: Boolean) {
     if (customRootsSerializer != null) {
       customRootsSerializer.loadRoots(builder, moduleEntity, reader, customDir, fileUrl, internalModuleListSerializer, errorReporter,
                                       virtualFileManager)
@@ -191,7 +193,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     else {
       val rootManagerElement = reader.loadComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, getBaseDirPath())?.clone()
       if (rootManagerElement != null) {
-        loadRootManager(rootManagerElement, moduleEntity, builder, virtualFileManager, contentRootEntitySource)
+        loadRootManager(rootManagerElement, moduleEntity, builder, virtualFileManager, contentRootEntitySource, loadingAdditionalRoots)
       }
     }
   }
@@ -248,7 +250,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                               moduleEntity: ModuleEntity,
                               builder: MutableEntityStorage,
                               virtualFileManager: VirtualFileUrlManager,
-                              contentRotEntitySource: EntitySource) {
+                              contentRotEntitySource: EntitySource,
+                              loadingAdditionalRoots: Boolean) {
     val alreadyLoadedContentRoots = moduleEntity.contentRoots.associateBy { it.url.url }
     for (contentElement in rootManagerElement.getChildrenAndDetach(CONTENT_TAG)) {
       val contentRootUrlString = contentElement.getAttributeValueStrict(URL_ATTRIBUTE)
@@ -349,8 +352,10 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
         }
       }
     }
-    builder.modifyEntity(moduleEntity) {
-      dependencies = dependencyItems
+    if (!loadingAdditionalRoots) {
+      builder.modifyEntity(moduleEntity) {
+        dependencies = dependencyItems
+      }
     }
   }
 

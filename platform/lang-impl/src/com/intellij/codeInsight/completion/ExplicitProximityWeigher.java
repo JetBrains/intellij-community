@@ -18,9 +18,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public class ExplicitProximityWeigher extends CompletionWeigher {
 
   @Override

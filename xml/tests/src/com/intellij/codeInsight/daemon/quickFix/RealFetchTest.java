@@ -52,7 +52,8 @@ public class RealFetchTest extends BasePlatformTestCase {
     }
     catch (Throwable e) {
       Throwable cause = ExceptionUtil.getRootCause(e);
-      if (cause.getMessage().startsWith(XmlBundle.message("xml.intention.fetch.error.fetching.title"))) {
+      if (cause.getMessage().startsWith(XmlBundle.message("xml.intention.fetch.error.fetching.title")) ||
+          cause.getMessage().startsWith("Could not fetch")) {
         ExternalResourcesChecker.reportUnavailability(url, cause);
       }
       throw new RuntimeException(e);

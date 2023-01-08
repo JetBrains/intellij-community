@@ -82,6 +82,20 @@ public class ShLiveTemplateTest extends BasePlatformTestCase {
     doTest("system info mac<caret>", "sw_vers");
   }
 
+  public void testComment() {
+    doTestEmptyLookup("echo stuff # this a<caret>");
+  }
+
+  private void doTestEmptyLookup(String actual) {
+    myFixture.configureByText("a.sh", actual);
+    final Editor editor = myFixture.getEditor();
+    final Project project = editor.getProject();
+    assertNotNull(project);
+    new ListTemplatesAction().actionPerformedImpl(project, editor);
+    final LookupImpl lookup = (LookupImpl) LookupManager.getActiveLookup(editor);
+    assertNull(lookup);
+  }
+
   private void doTest(String actual, String expected) {
     myFixture.configureByText("a.sh", actual);
     final Editor editor = myFixture.getEditor();

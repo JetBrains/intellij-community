@@ -15,9 +15,6 @@
  */
 package com.intellij.ide.util.gotoByName
 
-/**
- * @author peter
- */
 internal interface SelectionPolicy {
   fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>): List<Int>
 }

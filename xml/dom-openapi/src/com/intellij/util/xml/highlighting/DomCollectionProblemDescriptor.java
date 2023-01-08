@@ -17,9 +17,6 @@ package com.intellij.util.xml.highlighting;
 
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 
-/**
- * @author peter
- */
 public interface DomCollectionProblemDescriptor extends DomElementProblemDescriptor {
   DomCollectionChildDescription getChildDescription();
 }

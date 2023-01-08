@@ -1022,6 +1022,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Oracle = load("providers/oracle.svg", 501669974, 0);
     /** 16x16 */ public static final @NotNull Icon Postgresql = load("providers/postgresql.svg", 808589440, 2);
     /** 16x16 */ public static final @NotNull Icon Presto = load("providers/presto.svg", -1973458769, 2);
+    /** 16x16 */ public static final @NotNull Icon Redis = load("providers/redis.svg", -1913770236, 2);
     /** 16x16 */ public static final @NotNull Icon Redshift = load("providers/redshift.svg", -158004877, 0);
     /** 16x16 */ public static final @NotNull Icon Singlestore = load("providers/singlestore.svg", 1556951403, 0);
     /** 16x16 */ public static final @NotNull Icon Snowflake = load("providers/snowflake.svg", -1972320959, 0);
@@ -1133,6 +1134,7 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon NotificationsNewImportant = load("toolwindows/notificationsNewImportant.svg", -1918528557, 2);
     /** 13x13 */ public static final @NotNull Icon Problems = load("toolwindows/problems.svg", 1234004667, 2);
     /** 13x13 */ public static final @NotNull Icon ProblemsEmpty = load("toolwindows/problemsEmpty.svg", 1213926744, 2);
+    /** 13x13 */ public static final @NotNull Icon SettingSync = load("toolwindows/settingSync.svg", 717169308, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowAnalyzeDataflow = load("toolwindows/toolWindowAnalyzeDataflow.svg", 745967759, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowAnt = load("toolwindows/toolWindowAnt.svg", 658498879, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowBookmarks = load("toolwindows/toolWindowBookmarks.svg", 949604189, 2);

@@ -41,8 +41,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   private static Icon myIcon;
   private static Icon myDisabledIcon;
 
-  @NotNull
-  public static Icon getArrowIcon(boolean enabled) {
+  public static @NotNull Icon getArrowIcon(boolean enabled) {
     if (myIcon != AllIcons.General.ArrowDown) {
       myIcon = UIManager.getIcon("ComboBoxButton.arrowIcon");
       myDisabledIcon = UIManager.getIcon("ComboBoxButton.arrowIconDisabled");
@@ -71,8 +70,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     popup.showCenteredInCurrentWindow(project);
   }
 
-  @NotNull
-  protected ListPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
+  protected @NotNull ListPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
     return createActionPopup(createPopupActionGroup(component, context), context, disposeCallback);
   }
 
@@ -83,9 +81,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return popup;
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     ComboBoxButton button = createComboBoxButton(presentation);
     if (isNoWrapping(place)) return button;
 
@@ -100,8 +97,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return ExperimentalUI.isNewUI() && ActionPlaces.isMainToolbar(place);
   }
 
-  @NotNull
-  protected ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
+  protected @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
     return new ComboBoxButton(presentation);
   }
 
@@ -121,11 +117,13 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return false;
   }
 
-  @NotNull
-  protected abstract DefaultActionGroup createPopupActionGroup(JComponent button);
+  /** @deprecated override {@link #createPopupActionGroup(JComponent, DataContext)} instead */
+  @Deprecated
+  protected @NotNull DefaultActionGroup createPopupActionGroup(JComponent button) {
+    throw new UnsupportedOperationException();
+  }
 
-  @NotNull
-  protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull  DataContext dataContext) {
+  protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull  DataContext dataContext) {
     return createPopupActionGroup(button);
   }
 
@@ -251,8 +249,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     @TestOnly
-    @NotNull
-    public Presentation getPresentation() {
+    public @NotNull Presentation getPresentation() {
       return myPresentation;
     }
 
@@ -276,9 +273,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       fireStateChanged();
     }
 
-    @Nullable
     @Override
-    public String getToolTipText() {
+    public @Nullable String getToolTipText() {
       return myForcePressed || Registry.is("ide.helptooltip.enabled") ? null : super.getToolTipText();
     }
 
@@ -292,13 +288,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       popup.showUnderneathOf(this);
     }
 
-    @NotNull
-    protected JBPopup createPopup(@Nullable Runnable onDispose) {
+    protected @NotNull JBPopup createPopup(@Nullable Runnable onDispose) {
       return createActionPopup(getDataContext(), this, onDispose);
     }
 
-    @NotNull
-    protected DataContext getDataContext() {
+    protected @NotNull DataContext getDataContext() {
       return ActionToolbar.getDataContextFor(this);
     }
 

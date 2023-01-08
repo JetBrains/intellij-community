@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfoBase implements GenerationInfo {
   private SmartPsiElementPointer<T> myMember;
   private final boolean myMergeIfExists;

@@ -51,7 +51,7 @@ class ProprietaryBuildTools(
         override val usePresignedNativeFiles: Boolean
           get() = false
 
-        override suspend fun signFiles(files: List<Path>, context: BuildContext, options: PersistentMap<String, String>) {
+        override suspend fun signFiles(files: List<Path>, context: BuildContext?, options: PersistentMap<String, String>) {
           Span.current().addEvent("files won't be signed", Attributes.of(
             AttributeKey.stringArrayKey("files"), files.map(Path::toString),
             AttributeKey.stringKey("reason"), "sign tool isn't defined",

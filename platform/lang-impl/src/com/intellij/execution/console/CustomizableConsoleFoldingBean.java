@@ -12,8 +12,6 @@ import com.intellij.util.xmlb.annotations.Attribute;
  * <p>
  * Register in {@code plugin.xml}:<p>
  * {@code <stacktrace.fold substring="at com.intellij.ide.IdeEventQueue"/>}
- *
- * @author peter
  */
 public final class CustomizableConsoleFoldingBean {
   public static final ExtensionPointName<CustomizableConsoleFoldingBean> EP_NAME = new ExtensionPointName<>("com.intellij.stacktrace.fold");

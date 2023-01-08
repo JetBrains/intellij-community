@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.nj2k
 
 import com.intellij.psi.*
+import com.intellij.psi.impl.light.LightRecordMethod
+import com.intellij.psi.util.JavaPsiRecordUtil.getFieldForComponent
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
@@ -55,6 +57,10 @@ class JKSymbolProvider(private val resolver: JKResolver) {
 
     internal inline fun <reified T : JKSymbol> provideSymbolForReference(reference: PsiReference): T {
         val target = reference.resolve()
+        if (target is LightRecordMethod) {
+            val field = getFieldForComponent(target.recordComponent)
+            if (field != null) return provideDirectSymbol(field) as T
+        }
         if (target != null) return provideDirectSymbol(target) as T
         return (if (isAssignable<T, JKUnresolvedField>()) JKUnresolvedField(
             reference.canonicalText,

@@ -14,9 +14,6 @@ import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
-* @author peter
-*/
 public class PackageLookupItem extends LookupElement {
   private final PsiPackage myPackage;
   private final String myString;

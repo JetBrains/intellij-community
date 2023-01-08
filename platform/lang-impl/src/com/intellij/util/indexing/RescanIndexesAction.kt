@@ -38,6 +38,7 @@ class RescanIndexesAction : RecoveryAction {
     var predefinedIndexableFilesIterators: List<IndexableFilesIterator>? = null
     if (recoveryScope is FilesRecoveryScope) {
       predefinedIndexableFilesIterators = recoveryScope.files.map { ProjectIndexableFilesIteratorImpl(it) }
+      if (predefinedIndexableFilesIterators.isEmpty()) return emptyList()
     }
     object : UnindexedFilesScanner(project, false, false,
                                    predefinedIndexableFilesIterators, null, "Rescanning indexes recovery action",

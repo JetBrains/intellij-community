@@ -15,9 +15,10 @@ public final class FeaturesTrainerIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, FeaturesTrainerIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon Checkmark = load("img/checkmark.svg", 20507421, 2);
+  /** 16x16 */ public static final @NotNull Icon EduTools = load("img/eduTools.svg", 910512450, 0);
   /** 16x16 */ public static final @NotNull Icon FeatureTrainer = load("img/featureTrainer.svg", -702544516, 2);
   /** 13x13 */ public static final @NotNull Icon FeatureTrainerToolWindow = load("img/featureTrainerToolWindow.svg", -1207567605, 2);
   /** 16x16 */ public static final @NotNull Icon GreenCheckmark = load("img/greenCheckmark.svg", 1470976909, 2);
-  /** 40x40 */ public static final @NotNull Icon PluginIcon = load("img/pluginIcon.svg", -1525812347, 0);
+  /** 16x16 */ public static final @NotNull Icon PluginIcon = load("img/pluginIcon.svg", -475279622, 0);
   /** 16x16 */ public static final @NotNull Icon ResetLesson = load("img/resetLesson.svg", 98607716, 2);
 }

@@ -28,7 +28,6 @@ import org.jetbrains.annotations.PropertyKey;
 import java.io.IOException;
 
 /**
- * @author peter
  * @deprecated Use {@link CreateDirectoryPathFix} or {@link CreateFilePathFix} instead.
 */
 @Deprecated

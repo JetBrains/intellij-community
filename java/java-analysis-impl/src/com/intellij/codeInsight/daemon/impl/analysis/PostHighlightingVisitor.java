@@ -41,6 +41,7 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +129,8 @@ class PostHighlightingVisitor {
     myDeadCodeInfoType = myDeadCodeKey == null
                          ? HighlightInfoType.UNUSED_SYMBOL
                          : new HighlightInfoType.HighlightInfoTypeImpl(profile.getErrorLevel(myDeadCodeKey, myFile).getSeverity(),
-                                                                       HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
+                                                                       ObjectUtils.notNull(profile.getEditorAttributes(myDeadCodeKey.toString(), myFile), 
+                                                                                           HighlightInfoType.UNUSED_SYMBOL.getAttributesKey()));
   }
 
   void collectHighlights(@NotNull HighlightInfoHolder result, @NotNull ProgressIndicator progress) {
@@ -196,12 +198,17 @@ class PostHighlightingVisitor {
     if (!(myFile instanceof PsiJavaFile)) {
       return false;
     }
-    Function<? super InspectionProfile, ? extends InspectionProfileWrapper> custom = InspectionProfileWrapper.getCustomInspectionProfileWrapper(myFile);
-    InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
-    InspectionProfile profile = custom != null ? custom.apply(currentProfile).getInspectionProfile() : currentProfile;
+    InspectionProfile profile = getCurrentProfile();
     return profile.isToolEnabled(displayKey, myFile) &&
            HighlightingLevelManager.getInstance(myProject).shouldInspect(myFile) &&
            !HighlightingLevelManager.getInstance(myProject).runEssentialHighlightingOnly(myFile);
+  }
+
+  @NotNull
+  private InspectionProfile getCurrentProfile() {
+    Function<? super InspectionProfile, ? extends InspectionProfileWrapper> custom = InspectionProfileWrapper.getCustomInspectionProfileWrapper(myFile);
+    InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
+    return custom != null ? custom.apply(currentProfile).getInspectionProfile() : currentProfile;
   }
 
   @Nullable
@@ -605,7 +612,13 @@ class PostHighlightingVisitor {
     boolean predefinedImport = imports != null && imports.contains(importStatement.getText());
     String description = !predefinedImport ? JavaAnalysisBundle.message("unused.import.statement") :
                          JavaAnalysisBundle.message("text.unused.import.in.template");
-    HighlightInfo info = HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.UNUSED_IMPORT)
+    InspectionProfile profile = getCurrentProfile();
+    HighlightInfoType.HighlightInfoTypeImpl configHighlightType =
+      new HighlightInfoType.HighlightInfoTypeImpl(profile.getErrorLevel(unusedImportKey, myFile).getSeverity(),
+                                                  ObjectUtils.notNull(profile.getEditorAttributes(unusedImportKey.toString(), myFile),
+                                                                      JavaHighlightInfoTypes.UNUSED_IMPORT.getAttributesKey()));
+
+    HighlightInfo info = HighlightInfo.newHighlightInfo(configHighlightType)
         .range(importStatement)
         .descriptionAndTooltip(description)
         .group(GeneralHighlightingPass.POST_UPDATE_ALL)

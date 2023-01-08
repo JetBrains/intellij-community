@@ -419,7 +419,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     TextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes();
     attributes.setForegroundColor(foregroundColor);
     chunks.add(new TextChunk(attributes, group.getPresentableGroupText()));
-    UsageNodePresentation presentation = new UsageNodePresentation(icon, chunks.toArray(TextChunk.EMPTY_ARRAY));
+    UsageNodePresentation presentation = new UsageNodePresentation(icon, chunks.toArray(TextChunk.EMPTY_ARRAY), null);
     myCachedPresentation = new SoftReference<>(presentation);
   }
 

@@ -8,8 +8,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.util.indexing.roots.kind.IndexableSetSelfDependentOrigin;
-import com.intellij.util.indexing.roots.origin.ModuleRootSelfDependentOriginImpl;
+import com.intellij.util.indexing.roots.kind.IndexableSetIterableOrigin;
+import com.intellij.util.indexing.roots.origin.ModuleRootIterableOriginImpl;
 import com.intellij.workspaceModel.ide.impl.UtilsKt;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
@@ -41,7 +41,7 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
   }
 
   @Override
-  public @Nullable IndexableSetSelfDependentOrigin getExistingEntityIteratorOrigins(@NotNull ContentRootEntity entity,
+  public @Nullable IndexableSetIterableOrigin getExistingEntityIteratorOrigins(@NotNull ContentRootEntity entity,
                                                                                     @NotNull EntityStorage storage,
                                                                                     @NotNull Project project) {
     ModuleEntity moduleEntity = entity.getModule();
@@ -53,7 +53,7 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
     if (root == null) return null;
     List<VirtualFile> excludedFiles =
       IndexableEntityProviderMethods.INSTANCE.getExcludedFiles(entity);//todo[lene] add excluded root condition
-    return new ModuleRootSelfDependentOriginImpl(module, Collections.singletonList(root), excludedFiles);
+    return new ModuleRootIterableOriginImpl(module, Collections.singletonList(root), excludedFiles);
   }
 
   @Override

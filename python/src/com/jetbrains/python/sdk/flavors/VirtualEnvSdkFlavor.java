@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * User : catherine
  */
-public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
+public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   private VirtualEnvSdkFlavor() {
   }
   private final static Set<String> NAMES = Set.of("jython", "pypy", "python", "jython.bat", "pypy.exe", "python.exe");
@@ -42,6 +42,11 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   @Override
   public boolean isPlatformIndependent() {
     return true;
+  }
+
+  @Override
+  public @NotNull Class<PyFlavorData.Empty> getFlavorDataClass() {
+    return PyFlavorData.Empty.class;
   }
 
   @NotNull

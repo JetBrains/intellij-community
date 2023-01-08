@@ -59,9 +59,6 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.util.*;
 
-/**
- * @author peter
- */
 public final class DomManagerImpl extends DomManager implements Disposable {
   private static final Key<Object> MOCK = Key.create("MockElement");
 

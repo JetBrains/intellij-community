@@ -7,11 +7,7 @@ import com.intellij.openapi.observable.util.bindEmptyText
 import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
-import com.intellij.ui.dsl.builder.bindText
-import com.intellij.ui.dsl.builder.columns
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.builder.*
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
 import org.jetbrains.idea.maven.project.MavenProjectBundle
@@ -53,7 +49,7 @@ class MavenEnvironmentSettingsDialog(private val project: Project, private val s
       textFieldWithBrowseButton(browseDialogTitle, project, fileChooserDescriptor)
         .bindText(userSettingsProperty)
         .applyToComponent { bindEmptyText(defaultUserSettingsProperty.toUiPathProperty()) }
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
         .columns(COLUMNS_MEDIUM)
     }
     row(MavenConfigurableBundle.message("maven.settings.environment.local.repository") + ":") {
@@ -62,7 +58,7 @@ class MavenEnvironmentSettingsDialog(private val project: Project, private val s
       textFieldWithBrowseButton(browseDialogTitle, project, fileChooserDescriptor)
         .bindText(localRepositoryProperty)
         .applyToComponent { bindEmptyText(defaultLocalRepositoryProperty.toUiPathProperty()) }
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
         .columns(COLUMNS_MEDIUM)
     }
     onApply {

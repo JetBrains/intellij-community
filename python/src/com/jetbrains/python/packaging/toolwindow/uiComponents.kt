@@ -2,6 +2,8 @@
 package com.jetbrains.python.packaging.toolwindow
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.SideBorder
@@ -24,9 +26,13 @@ import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.TableCellRenderer
 
 
-internal class PyPackagesTable<T : DisplayablePackage>(model: ListTableModel<T>, service: PyPackagingToolWindowService, tablesView: PyPackagingTablesView) : JBTable(model) {
+internal class PyPackagesTable<T : DisplayablePackage>(project: Project,
+                                                       model: ListTableModel<T>,
+                                                       tablesView: PyPackagingTablesView,
+                                                       controller: PyPackagingToolWindowPanel) : JBTable(model) {
   private var lastSelectedRow = -1
   init {
+    val service = project.service<PyPackagingToolWindowService>()
     setShowGrid(false)
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
     val column = columnModel.getColumn(1)
@@ -42,7 +48,7 @@ internal class PyPackagesTable<T : DisplayablePackage>(model: ListTableModel<T>,
         lastSelectedRow = selectedRow
         tablesView.requestSelection(this)
         val pkg = model.items[selectedRow]
-        if (pkg !is ExpandResultNode) service.packageSelected(pkg)
+        if (pkg !is ExpandResultNode) controller.packageSelected(pkg)
       }
     }
 
@@ -179,7 +185,7 @@ fun borderPanel(init: JPanel.() -> Unit) = object : JPanel() {
 
 fun headerPanel(label: JLabel, component: JComponent?) = object : JPanel() {
   init {
-    background = UIUtil.getControlColor()
+    background = UIUtil.getLabelBackground()
     layout = BorderLayout()
     border = BorderFactory.createCompoundBorder(SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.BOTTOM), EmptyBorder(0, 5, 0, 5))
     preferredSize = Dimension(preferredSize.width, 25)

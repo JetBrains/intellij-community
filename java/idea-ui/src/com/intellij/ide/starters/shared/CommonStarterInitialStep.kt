@@ -30,7 +30,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.jetbrains.annotations.Nls
 import java.io.File
 import javax.swing.JComponent
@@ -92,7 +91,7 @@ abstract class CommonStarterInitialStep(
 
     val locationRow = row(UIBundle.message("label.project.wizard.new.project.location")) {
       val commentLabel = projectLocationField(locationProperty, wizardContext)
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
         .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_LOCATION_FOR_ERROR)
         .comment(getLocationComment(), 100)
         .comment!!

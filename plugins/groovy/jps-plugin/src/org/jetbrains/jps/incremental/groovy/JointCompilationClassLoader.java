@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.ByteBuffer;
 
-/**
- * @author peter
- */
 final class JointCompilationClassLoader extends UrlClassLoader {
   private static final boolean isParallelCapable = registerAsParallelCapable();
 

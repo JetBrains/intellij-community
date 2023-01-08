@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Registers {@link FileType} with specific file name extensions/patterns.
  *
- * @author peter
  * @deprecated use {@code com.intellij.fileType} extension point instead for declarative registration
  */
 @Deprecated

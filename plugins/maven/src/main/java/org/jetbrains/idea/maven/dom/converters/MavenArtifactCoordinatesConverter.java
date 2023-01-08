@@ -238,6 +238,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
     private PsiFile resolveInLocalRepository(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
       File file = MavenUtil.getRepositoryFile(psiManager.getProject(), id, "pom", null);
+      if (null == file) return null;
       VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
       if (virtualFile == null) return null;
 

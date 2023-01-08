@@ -262,6 +262,16 @@ class ModuleRootsInProjectFileIndexTest {
   }
 
   @Test
+  fun `file as test source root`() {
+    val file = projectModel.baseProjectDir.newVirtualFile("module/source.txt")
+    PsiTestUtil.addSourceRoot(module, file, true)
+    fileIndex.assertInModule(file, module, file, IN_CONTENT or IN_SOURCE or IN_TEST_SOURCE)
+
+    PsiTestUtil.removeSourceRoot(module, file)
+    fileIndex.assertInModule(file, module, file)
+  }
+
+  @Test
   fun `file as excluded root`() {
     val file = projectModel.baseProjectDir.newVirtualFile("module/excluded.txt")
     PsiTestUtil.addContentRoot(module, moduleDir)

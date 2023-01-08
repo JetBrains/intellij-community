@@ -402,7 +402,6 @@ interface ScriptDefinitionContributor {
     @Deprecated("migrating to new configuration refinement: use ScriptDefinitionsSource instead")
     fun getDefinitions(): List<KotlinScriptDefinition>
 
-    @JvmDefault
     @Deprecated("migrating to new configuration refinement: drop usages")
     fun isReady() = true
 

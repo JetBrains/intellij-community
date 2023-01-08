@@ -209,16 +209,14 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
           array[index] = null
         }
       }
-
-      ForkJoinTask.invokeAll(scales.map { scale ->
-        ForkJoinTask.adapt {
-          ByteBufferAllocator().use { bufferAllocator ->
-            for (icon in array) {
-              processImage(icon = icon ?: continue, getMapByScale = getMapByScale, scale = scale, bufferAllocator = bufferAllocator)
-            }
+      // cannot be processed concurrently due to IDEA-303866
+      scales.map { scale ->
+        ByteBufferAllocator().use { bufferAllocator ->
+          for (icon in array) {
+            processImage(icon = icon ?: continue, getMapByScale = getMapByScale, scale = scale, bufferAllocator = bufferAllocator)
           }
         }
-      })
+      }
 
       //println("${Formats.formatFileSize(totalSize.get().toLong())} (${totalSize.get()}, iconCount=${totalFiles.get()}, resultSize=${result.size})")
     }

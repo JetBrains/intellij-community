@@ -12,9 +12,6 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-/**
- * @author peter
- */
 abstract class LightGroovyTestCase extends LightJavaCodeInsightFixtureTestCase {
 
   @NotNull

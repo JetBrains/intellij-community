@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue
+import com.intellij.openapi.util.text.StringUtil
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.plugins.github.api.data.GithubIssueState
@@ -71,7 +72,7 @@ internal data class GHPRListSearchValue(override val searchQuery: String? = null
     }
 
     if (label != null) {
-      terms.add(Qualifier.Simple(QualifierName.label, label))
+      terms.add(Qualifier.Simple(QualifierName.label, StringUtil.wrapWithDoubleQuote(label)))
     }
 
     if (terms.isEmpty()) return null

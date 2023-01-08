@@ -13,9 +13,6 @@ import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.groovy.JpsGroovySettings;
 
-/**
- * @author peter
- */
 @State(name = "GroovyCompilerProjectConfiguration", storages = @Storage("groovyc.xml"))
 public class GroovyCompilerConfiguration implements PersistentStateComponent<JpsGroovySettings>, Disposable {
   private String myConfigScript = "";

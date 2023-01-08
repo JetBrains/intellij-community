@@ -4,12 +4,8 @@ package com.intellij.ide.customize.transferSettings.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.customize.transferSettings.models.BaseIdeVersion
 import com.intellij.ide.customize.transferSettings.models.FailedIdeVersion
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.TopGap
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -38,21 +34,21 @@ class TransferSettingsLeftPanelItemRenderer : ListCellRenderer<BaseIdeVersion> {
                   isOpaque = true
               }
               cell(ts)
-                  .horizontalAlign(HorizontalAlign.FILL)
+                  .align(AlignX.FILL)
                   .customize(Gaps(bottom = 4))
           }
       }*/
 
       row {
         icon(IconUtil.scale(item.icon, null, 35 / item.icon.iconWidth.toFloat()))
-          .verticalAlign(VerticalAlign.CENTER)
+          .align(AlignY.CENTER)
           .customize(Gaps(right = 10, left = 10)) // TODO: create a customizer and pass inset here
         panel {
           row {
             if (item is FailedIdeVersion) {
               icon(AllIcons.General.Warning).gap(RightGap.SMALL).customize(Gaps(right = 3))
             }
-            label(item.name).bold().verticalAlign(VerticalAlign.TOP).applyToComponent {
+            label(item.name).bold().align(AlignY.TOP).applyToComponent {
               font = font.deriveFont(13f)
               foreground = fg
             }.customize(Gaps())

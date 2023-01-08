@@ -9,13 +9,19 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MessageDialogBuilder;
+import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.Producer;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.util.List;
 import java.util.*;
 import java.util.function.Function;
 
@@ -100,10 +106,8 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
       boolean enabled = !disabled;
       e.getPresentation().setEnabledAndVisible(isForceEnableAll || enabled);
 
-      boolean isForceDisableAll = myAction == PluginEnableDisableAction.DISABLE_GLOBALLY &&
-                                  allEnabled;
-      setShortcutSet(SHORTCUT_SET,
-                     myShowShortcut && (isForceEnableAll || isForceDisableAll));
+      boolean isForceDisableAll = myAction == PluginEnableDisableAction.DISABLE_GLOBALLY && allEnabled;
+      setShortcutSet(SHORTCUT_SET, myShowShortcut && (isForceEnableAll || isForceDisableAll));
     }
 
     @Override
@@ -113,8 +117,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myPluginModel.setEnabledState(getAllDescriptors(),
-                                    myAction);
+      myPluginModel.setEnabledState(getAllDescriptors(), myAction);
     }
   }
 
@@ -234,5 +237,89 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     return TabbedPaneHeaderComponent.createToolbar(result,
                                                    IdeBundle.message("plugin.settings.link.title"),
                                                    AllIcons.General.GearHover);
+  }
+
+  static <C extends JComponent> @NotNull OptionButtonController<C> createOptionButton(@NotNull Function<@NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
+                                                                     @NotNull Producer<@NotNull UninstallAction<C>> createUninstallAction) {
+    return new OptionButtonController<C>(createEnableDisableAction.apply(PluginEnableDisableAction.ENABLE_GLOBALLY),
+                                      createEnableDisableAction.apply(PluginEnableDisableAction.DISABLE_GLOBALLY),
+                                      createUninstallAction.produce());
+  }
+
+  static class OptionButtonController<C extends JComponent> implements ActionListener {
+    public final JBOptionButton button = new OptionButton();
+    public final JButton bundledButton = new JButton();
+
+    private final EnableDisableAction<C> myEnableAction;
+    private final EnableDisableAction<C> myDisableAction;
+    private EnableDisableAction<C> myCurrentAction;
+
+    OptionButtonController(@NotNull EnableDisableAction<C> enableAction,
+                           @NotNull EnableDisableAction<C> disableAction,
+                           @NotNull UninstallAction<C> uninstallAction) {
+      myEnableAction = enableAction;
+      myDisableAction = disableAction;
+      button.setAction(new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          OptionButtonController.this.actionPerformed(null);
+        }
+      });
+
+      button.setOptions(new Action[]{new AbstractAction(uninstallAction.getTemplateText()) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          uninstallAction.actionPerformed(AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT));
+        }
+      }});
+
+      bundledButton.setOpaque(false);
+      bundledButton.addActionListener(this);
+    }
+
+    public void update() {
+      Presentation presentation = new Presentation();
+      AnActionEvent event = AnActionEvent.createFromDataContext("", presentation, DataContext.EMPTY_CONTEXT);
+
+      myEnableAction.update(event);
+      myCurrentAction = presentation.isEnabledAndVisible() ? myEnableAction : myDisableAction;
+
+      String text = myCurrentAction.getTemplateText();
+      button.getAction().putValue(Action.NAME, text);
+      bundledButton.setText(text);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      myCurrentAction.actionPerformed(AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT));
+    }
+  }
+
+  private static class OptionButton extends JBOptionButton {
+    private final JButton myBaseline = new JButton();
+
+    OptionButton() {
+      super(null, null);
+
+      setAddSeparator(false);
+      setSelectFirstItem(false);
+      setPopupBackgroundColor(UIUtil.getListBackground());
+      setShowPopupYOffset(-2);
+
+      setPopupHandler(popup -> {
+        Dimension size = new Dimension(popup.getSize());
+        Insets insets = getInsets();
+        size.width = getWidth() - insets.left - insets.right;
+        popup.setSize(size);
+        return null;
+      });
+    }
+
+    @Override
+    public int getBaseline(int width, int height) {
+      myBaseline.setText(getText());
+      myBaseline.setSize(getSize());
+      return myBaseline.getBaseline(width, height);
+    }
   }
 }

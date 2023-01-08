@@ -20,9 +20,6 @@ import groovy.transform.CompileStatic
 
 import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
 
-/**
- * @author peter
- */
 @CompileStatic
 class JavaLiveTemplateTest extends LiveTemplateTestCase {
 
@@ -221,7 +218,7 @@ class Outer {
   private void stripTrailingSpaces() {
     DocumentImpl document = (DocumentImpl)getEditor().getDocument()
     document.setStripTrailingSpacesEnabled(true)
-   document.stripTrailingSpaces(getProject())
+    document.stripTrailingSpaces(getProject())
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
   }
 
@@ -241,6 +238,13 @@ class Outer {
   void testSoutp() {
     configure()
     startTemplate("soutp", "Java")
+    checkResult()
+  }
+
+  void testItm() {
+    configure()
+    startTemplate("itm", "Java")
+    WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
     checkResult()
   }
   
@@ -507,7 +511,7 @@ class Foo {
 '''
   }
 
-  void "test ritar template in expression lambda"() {
+  void "test itar template in expression lambda"() {
     myFixture.configureByText 'a.java', '''class Foo {
   void test(int[] arr) {
     Runnable r = () -> itar<caret>

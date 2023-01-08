@@ -47,16 +47,13 @@ data class LinkLabelSymbol(
   override val maximalSearchScope: SearchScope?
     get() = GlobalSearchScope.fileScope(file)
 
-  override val presentation: TargetPresentation
-    get() = targetPresentation
-
-  override val usageHandler: UsageHandler<*>
+  override val usageHandler: UsageHandler
     get() = UsageHandler.createEmptyUsageHandler(text)
 
   override val searchText: String
     get() = text
 
-  override fun getTargetPresentation(): TargetPresentation {
+  override fun presentation(): TargetPresentation {
     return TargetPresentation.builder(text).icon(MarkdownIcons.EditorActions.Link).presentation()
   }
 

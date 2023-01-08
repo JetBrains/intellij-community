@@ -11,9 +11,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 @TestDataPath("$CONTENT_ROOT/testData")
 public abstract class CompletionSortingTestCase extends LightFixtureCompletionTestCase {
   private final CompletionType myType;

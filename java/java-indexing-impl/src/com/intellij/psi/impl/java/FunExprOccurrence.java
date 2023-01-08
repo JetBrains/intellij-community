@@ -37,9 +37,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class FunExprOccurrence {
   private final int argIndex;
   private final List<? extends ReferenceChainLink> referenceContext;

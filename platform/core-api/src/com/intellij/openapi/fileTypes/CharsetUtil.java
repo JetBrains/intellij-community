@@ -11,9 +11,6 @@ import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author peter
- */
 public final class CharsetUtil {
   private static final Map<String, Boolean> ourSupportsCharsetDetection = new ConcurrentHashMap<>();
 

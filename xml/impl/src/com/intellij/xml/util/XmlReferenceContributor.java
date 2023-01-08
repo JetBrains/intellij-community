@@ -31,9 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.XmlPatterns.*;
 
-/**
- * @author peter
- */
 public class XmlReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull final PsiReferenceRegistrar registrar) {

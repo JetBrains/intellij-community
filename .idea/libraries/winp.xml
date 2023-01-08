@@ -1,12 +1,10 @@
 <component name="libraryTable">
   <library name="winp" type="repository">
-    <properties maven-id="org.jvnet.winp:winp:1.28" />
+    <properties maven-id="org.jetbrains.intellij.deps.winp:winp:1.30.1" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jvnet/winp/winp/1.28/winp-1.28.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/winp/winp/1.30.1/winp-1.30.1.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jvnet/winp/winp/1.28/winp-1.28-sources.jar!/" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>

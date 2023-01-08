@@ -7,11 +7,12 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,9 +54,9 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
   }
 
   @Override
-  @RequiresEdt
-  protected @Nullable HgRepository guessCurrentRepository(@NotNull Project project) {
-    return HgUtil.guessWidgetRepository(project);
+  @CalledInAny
+  protected @Nullable HgRepository guessCurrentRepository(@NotNull Project project, @Nullable VirtualFile selectedFile) {
+    return HgUtil.guessWidgetRepository(project, selectedFile);
   }
 
   @Override

@@ -24,9 +24,6 @@ import java.util.List;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
-* @author peter
-*/
 class TypeArgumentCompletionProvider {
   static final ElementPattern<PsiElement> IN_TYPE_ARGS = psiElement().inside(PsiReferenceParameterList.class);
   private static final Logger LOG = Logger.getInstance(TypeArgumentCompletionProvider.class);

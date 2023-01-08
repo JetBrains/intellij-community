@@ -21,9 +21,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class GroovyNoVariantsDelegator extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance(GroovyNoVariantsDelegator.class);
 

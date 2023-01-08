@@ -41,7 +41,7 @@ class MinimapConfigurable : Configurable {
     buttonsGroup {
       row {
         cell(createHorizontalStrut(JBUIScale.scale(10)))
-        label(MiniMessagesBundle.message("settings.enable.scope"))
+        label(MiniMessagesBundle.message("settings.enable.scope")).widthGroup("group1")
         cell(enableForAll)
         cell(enableForZeppelin)
       }
@@ -49,7 +49,7 @@ class MinimapConfigurable : Configurable {
     buttonsGroup {
       row {
         cell(createHorizontalStrut(JBUIScale.scale(10)))
-        label(MiniMessagesBundle.message("settings.alignment"))
+        label(MiniMessagesBundle.message("settings.alignment")).widthGroup("group1")
         cell(alignmentLeft)
         cell(alignmentRight)
       }

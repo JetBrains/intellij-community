@@ -21,9 +21,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.Consumer
 
 import static com.intellij.testFramework.PlatformTestUtil.assertTreeEqual
-/**
- * @author peter
- */
 class GroovyStructureViewTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testSyntheticMethods() {

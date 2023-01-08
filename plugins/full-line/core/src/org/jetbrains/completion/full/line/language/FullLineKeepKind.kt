@@ -10,5 +10,5 @@ enum class KeepKind {
   PROBABLE,
 
   @SerializedName("long")
-  LONG
+  LONG,
 }

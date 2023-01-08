@@ -4,9 +4,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * @author peter
- */
 public class MissingClassBodyFixer implements Fixer {
   @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {

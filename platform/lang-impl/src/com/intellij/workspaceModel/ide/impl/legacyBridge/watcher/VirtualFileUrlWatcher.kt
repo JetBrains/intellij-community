@@ -107,10 +107,13 @@ open class VirtualFileUrlWatcher(val project: Project) {
     fun getInstance(project: Project): VirtualFileUrlWatcher = project.service()
 
     internal fun calculateAffectedEntities(storage: EntityStorage, virtualFileUrl: VirtualFileUrl,
-                                           aggregator: MutableList<EntityWithVirtualFileUrl>) {
+                                           aggregator: MutableList<EntityWithVirtualFileUrl>): Boolean {
+      var hasEntities = false
       storage.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl).forEach {
         aggregator.add(EntityWithVirtualFileUrl(it.first, virtualFileUrl, it.second))
+        hasEntities = true
       }
+      return hasEntities
     }
 
   }

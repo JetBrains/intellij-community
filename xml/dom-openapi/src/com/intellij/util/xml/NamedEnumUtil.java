@@ -5,9 +5,6 @@ import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public class NamedEnumUtil {
   private static final Function<Enum, String> NAMED_SHOW = s -> ((NamedEnum) s).getValue();
   private static final Function<Enum, String> SIMPLE_SHOW = s -> s.name();

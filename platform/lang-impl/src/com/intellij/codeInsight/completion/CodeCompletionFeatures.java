@@ -17,9 +17,6 @@ package com.intellij.codeInsight.completion;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public interface
   CodeCompletionFeatures {
   @NonNls String EXCLAMATION_FINISH = "editing.completion.finishByExclamation";

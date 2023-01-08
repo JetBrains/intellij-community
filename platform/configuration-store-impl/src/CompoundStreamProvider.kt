@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
@@ -28,10 +28,10 @@ class CompoundStreamProvider : StreamProvider {
     return providers.any { it.processChildren(path, roamingType, filter, processor) }
   }
 
-  override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
+  override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
     providers.forEach {
       if (it.isApplicable(fileSpec, roamingType)) {
-        it.write(fileSpec, content, size, roamingType)
+        it.write(fileSpec, content, roamingType)
       }
     }
   }

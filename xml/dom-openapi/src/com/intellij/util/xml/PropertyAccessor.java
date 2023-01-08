@@ -24,8 +24,6 @@ import java.lang.annotation.Target;
  * Annotates DOM methods that are shortcuts to long call chains. For example, if you often need
  * to write getFoo().getBar().getZip(), you can instead create a method getFBZ() and annotate it
  * with @PropertyAccessor({"foo", "bar", "zip"}).
- *
- * @author peter
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})

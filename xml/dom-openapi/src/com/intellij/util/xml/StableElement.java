@@ -15,9 +15,6 @@
  */
 package com.intellij.util.xml;
 
-/**
- * @author peter
- */
 public interface StableElement<T> {
   void revalidate();
   void invalidate();

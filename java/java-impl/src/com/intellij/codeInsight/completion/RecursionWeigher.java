@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
-* @author peter
-*/
 class RecursionWeigher extends LookupElementWeigher {
   private final ElementFilter myFilter;
   private final PsiElement myPosition;

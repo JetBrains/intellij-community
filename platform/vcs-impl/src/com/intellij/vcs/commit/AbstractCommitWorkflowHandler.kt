@@ -155,7 +155,10 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
    * @return false if commit operation should be cancelled.
    */
   @RequiresEdt
-  protected open fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean = true
+  protected open fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean {
+    FileDocumentManager.getInstance().saveAllDocuments()
+    return true
+  }
 
   protected open fun doExecuteSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
     return workflow.executeSession(sessionInfo, commitInfo)
@@ -285,7 +288,11 @@ class DynamicCommitInfoImpl(
   override val commitActionText: String
     get() = getActionTextWithoutEllipsis(workflow.vcses, executor, commitContext.isAmendCommitMode, false)
 
-  override fun asStaticInfo(): CommitInfo {
+  override fun asStaticInfo(): StaticCommitInfo {
     return StaticCommitInfo(commitContext, executor, commitActionText, committedChanges, affectedVcses, commitMessage)
   }
+}
+
+interface DynamicCommitInfo : CommitInfo {
+  fun asStaticInfo(): StaticCommitInfo
 }

@@ -2,10 +2,7 @@
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.ui.JBColor;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.internal.UseJBColorInspection;
 
@@ -21,6 +18,10 @@ public abstract class UseJBColorFixTestBase extends JavaCodeInsightFixtureTestCa
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(new UseJBColorInspection());
+    myFixture.addClass("""
+                         package java.awt;
+                         public interface Paint {}
+                         """);
     myFixture.addClass("""
                          package java.awt;
                          import java.io.Serializable;
@@ -44,11 +45,29 @@ public abstract class UseJBColorFixTestBase extends JavaCodeInsightFixtureTestCa
                              public Color(int r, int g, int b) {}
                          }
                          """);
-  }
-
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    moduleBuilder.addLibrary("platform-util-ui", PathUtil.getJarPathForClass(JBColor.class));
+    myFixture.addClass("""
+                         package com.intellij.ui;
+                         import java.awt.Color;
+                         public class JBColor extends Color {
+                             public static final JBColor white = null;
+                             public static final JBColor WHITE = null;
+                             public static final JBColor lightGray = null;
+                             public static final JBColor LIGHT_GRAY = null;
+                             public static final JBColor darkGray = null;
+                             public static final JBColor DARK_GRAY = null;
+                             public static final JBColor black = null;
+                             public static final JBColor BLACK = null;
+                             public static final JBColor red = null;
+                             public static final JBColor RED = null;
+                             public static final JBColor yellow = null;
+                             public static final JBColor YELLOW = null;
+                             public static final JBColor green = null;
+                             public static final JBColor GREEN = null;
+                             public static final JBColor blue = null;
+                             public static final JBColor BLUE = null;
+                             public JBColor(Color regular, Color dark) {}
+                         }
+                         """);
   }
 
   protected void doTest(String fixName) {

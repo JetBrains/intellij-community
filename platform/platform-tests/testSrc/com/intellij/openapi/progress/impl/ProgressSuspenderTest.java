@@ -13,9 +13,6 @@ import com.intellij.util.concurrency.Semaphore;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author peter
- */
 public class ProgressSuspenderTest extends LightPlatformTestCase {
   public void testSuspendResumeWork() {
     Semaphore mayStop = new Semaphore(1);

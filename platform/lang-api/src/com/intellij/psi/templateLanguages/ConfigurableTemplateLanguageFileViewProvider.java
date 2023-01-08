@@ -17,8 +17,6 @@ package com.intellij.psi.templateLanguages;
 
 /**
  * Indicates that template data language of this view provider can be configured in Settings|Project Settings|Template Data Languages
- *
- * @author peter
  */
 public interface ConfigurableTemplateLanguageFileViewProvider extends TemplateLanguageFileViewProvider{
 }

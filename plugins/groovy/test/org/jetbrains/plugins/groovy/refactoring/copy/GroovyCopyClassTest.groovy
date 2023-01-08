@@ -8,9 +8,6 @@ import com.intellij.refactoring.copy.CopyClassesHandler
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author peter
- */
 class GroovyCopyClassTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {

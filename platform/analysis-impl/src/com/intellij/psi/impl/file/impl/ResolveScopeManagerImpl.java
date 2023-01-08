@@ -247,7 +247,8 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
                                                                            @NotNull CustomEntityProjectModelInfoProvider<T> provider,
                                                                            @NotNull EntityStorage snapshot) {
     Sequence<T> entities = snapshot.entities(provider.getEntityClass());
-    for (CustomEntityProjectModelInfoProvider.LibraryRoots<T> libraryRoots : SequencesKt.asIterable(provider.getLibraryRoots(entities))) {
+    for (CustomEntityProjectModelInfoProvider.LibraryRoots<T> libraryRoots :
+      SequencesKt.asIterable(provider.getLibraryRoots(entities, snapshot))) {
       if (VfsUtilCore.isUnder(file, new HashSet<>(libraryRoots.sources)) &&
           !VfsUtilCore.isUnder(file, new HashSet<>(libraryRoots.excluded))) {
         return true;

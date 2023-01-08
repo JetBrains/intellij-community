@@ -6,9 +6,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 
-/**
- * @author peter
- */
 public class WorkingTimeMeasurer {
   private final long myTimeLimit;
   private final long myStart;

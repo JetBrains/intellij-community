@@ -20,15 +20,11 @@ class PySdkAdditionalDataTest {
    */
   @Test
   fun saveLoadTest() {
-    val sut = PythonSdkAdditionalData(null)
+    val sut = PythonSdkAdditionalData()
 
     val element = Element("root")
     sut.save(element)
-
-    val sdk = mock(Sdk::class.java).apply {
-      `when`(homePath).thenReturn("some path")
-    }
-    val loadedSut = PythonSdkAdditionalData.load(sdk, element)
+    val loadedSut = PythonSdkAdditionalData.loadFromElement(element)
     Assert.assertEquals("UUID hasn't been loaded", sut.uuid, loadedSut.uuid)
   }
 }

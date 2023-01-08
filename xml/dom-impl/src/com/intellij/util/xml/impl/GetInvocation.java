@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class GetInvocation implements Invocation {
   private static final Key<CachedValue<List<Pair<Converter,Object>>>> DOM_VALUE_KEY = Key.create("Dom element value key");
   private final Converter myConverter;

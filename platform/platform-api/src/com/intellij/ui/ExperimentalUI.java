@@ -34,11 +34,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class ExperimentalUI {
   private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
   private IconPathPatcher iconPathPatcher;
-  private static final String KEY = "ide.experimental.ui";
+  public static final String KEY = "ide.experimental.ui";
 
   public static boolean isNewUI() {
     // CWM-7348 thin client does not support new UI
-    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && isSupported();
+    return (EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && isSupported()) || Boolean.getBoolean("ide.force.new.ui"); // temp flag for remote dev
   }
 
   public static boolean isSupported() {

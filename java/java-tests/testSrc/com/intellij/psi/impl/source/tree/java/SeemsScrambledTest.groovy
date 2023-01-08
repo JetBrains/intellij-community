@@ -5,9 +5,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
 import static com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl.seemsScrambledByStructure
-/**
- * @author peter
- */
 @CompileStatic
 class SeemsScrambledTest extends LightJavaCodeInsightFixtureTestCase {
 

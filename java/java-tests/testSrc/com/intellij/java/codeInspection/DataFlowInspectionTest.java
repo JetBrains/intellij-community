@@ -18,9 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   @NotNull
   @Override

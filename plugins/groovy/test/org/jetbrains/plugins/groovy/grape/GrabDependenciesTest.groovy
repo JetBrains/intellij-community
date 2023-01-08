@@ -18,9 +18,6 @@ package org.jetbrains.plugins.groovy.grape
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author peter
- */
 class GrabDependenciesTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() {

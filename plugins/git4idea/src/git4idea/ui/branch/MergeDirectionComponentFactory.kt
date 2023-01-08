@@ -13,8 +13,8 @@ import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UI
@@ -205,11 +205,11 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
       val panel = panel {
         row(repoRowMessage) {
           cell(repoComponent)
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row(GitBundle.message("branch.direction.panel.branch.label")) {
           branchComponent = comboBox(branchModel, SimpleListCellRenderer.create("", GitBranch::getName))
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
             .also {
               ComboboxSpeedSearch.installSpeedSearch(it.component, GitBranch::getName)
             }
@@ -218,7 +218,7 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
         row {
           button(GitBundle.message("branch.direction.panel.save.button")) {
             buttonHandler?.invoke(it)
-          }.horizontalAlign(HorizontalAlign.RIGHT)
+          }.align(AlignX.RIGHT)
         }
       }.apply {
         isFocusCycleRoot = true

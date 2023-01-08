@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.EXCLUDED
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.EXCLUDED_FROM_MODULE_ONLY
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_CONTENT
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_LIBRARY
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE
@@ -17,6 +18,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -89,7 +91,12 @@ class NestedModuleAndLibraryRootsInProjectFileIndex {
     fileIndex.assertInModule(file, module, moduleDir, IN_CONTENT or IN_LIBRARY)
 
     PsiTestUtil.addExcludedRoot(module, excludedDir)
-    fileIndex.assertScope(file, IN_LIBRARY)
+    if (WorkspaceFileIndexEx.IS_ENABLED) {
+      fileIndex.assertInModule(file, module, moduleDir, IN_LIBRARY or EXCLUDED_FROM_MODULE_ONLY)
+    }
+    else {
+      fileIndex.assertScope(file, IN_LIBRARY)
+    }
 
     projectModel.modifyLibrary(library) {
       it.addExcludedRoot(excludedDir.url)
@@ -151,7 +158,13 @@ class NestedModuleAndLibraryRootsInProjectFileIndex {
     projectModel.addModuleLevelLibrary(module, "lib") {
       it.addRoot(root, OrderRootType.CLASSES)
     }
-    fileIndex.assertScope(file, IN_LIBRARY)
-    fileIndex.assertScope(root, IN_LIBRARY)
+    if (WorkspaceFileIndexEx.IS_ENABLED) {
+      fileIndex.assertInModule(file, module, root, IN_LIBRARY or EXCLUDED_FROM_MODULE_ONLY)
+      fileIndex.assertInModule(root, module, root, IN_LIBRARY or EXCLUDED_FROM_MODULE_ONLY)
+    }
+    else {
+      fileIndex.assertScope(file, IN_LIBRARY)
+      fileIndex.assertScope(root, IN_LIBRARY)
+    }
   }
 }

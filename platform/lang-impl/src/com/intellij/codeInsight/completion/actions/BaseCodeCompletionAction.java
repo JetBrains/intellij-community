@@ -18,9 +18,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.InputEvent;
 
-/**
- * @author peter
- */
 public abstract class BaseCodeCompletionAction extends DumbAwareAction implements HintManagerImpl.ActionToIgnore {
 
   protected BaseCodeCompletionAction() {

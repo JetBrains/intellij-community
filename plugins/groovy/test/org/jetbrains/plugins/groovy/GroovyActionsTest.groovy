@@ -5,9 +5,6 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author peter
- */
 class GroovyActionsTest extends LightJavaCodeInsightFixtureTestCase {
 
   final String basePath = TestUtils.testDataPath + 'groovy/actions/'

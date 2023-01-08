@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 public class LookupOffsets implements DocumentListener {
   @NotNull private String myAdditionalPrefix = "";
 

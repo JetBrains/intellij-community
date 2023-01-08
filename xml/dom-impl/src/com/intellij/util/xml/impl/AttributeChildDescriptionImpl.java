@@ -14,9 +14,6 @@ import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 @Presentation(typeName = "Attribute")
 public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl implements DomAttributeChildDescription<Void> {
   private final JavaMethod myGetterMethod;

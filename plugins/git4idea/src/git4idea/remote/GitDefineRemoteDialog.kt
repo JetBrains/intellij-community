@@ -16,8 +16,8 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import git4idea.GitUtil.mention
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
@@ -61,12 +61,12 @@ class GitDefineRemoteDialog(
     panel {
       row(message("remotes.define.remote.name")) {
         cell(nameField)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .validationOnApply { nameNotBlank() ?: nameWellFormed() ?: nameUnique() }
       }
       row(message("remotes.define.remote.url")) {
         cell(urlField)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .validationOnApply { urlNotBlank() ?: urlAccessError }
           .applyToComponent { clearUrlAccessErrorOnTextChanged() }
       }

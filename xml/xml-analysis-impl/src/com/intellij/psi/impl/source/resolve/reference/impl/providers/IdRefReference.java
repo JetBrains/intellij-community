@@ -21,9 +21,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class IdRefReference extends BasicAttributeValueReference {
   private final boolean myIdAttrsOnly;
 

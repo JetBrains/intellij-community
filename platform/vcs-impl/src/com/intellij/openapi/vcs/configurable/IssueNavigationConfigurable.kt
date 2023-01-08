@@ -18,14 +18,11 @@ import com.intellij.ui.AnActionButton.GroupPopupWrapper
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.UIBundle
-import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
-import com.intellij.xml.util.XmlStringUtil
 
 class IssueNavigationConfigurable(private val project: Project)
   : BoundSearchableConfigurable(
@@ -79,8 +76,7 @@ class IssueNavigationConfigurable(private val project: Project)
       }
       row {
         cell(decorator)
-          .horizontalAlign(HorizontalAlign.FILL)
-          .verticalAlign(VerticalAlign.FILL)
+          .align(Align.FILL)
           .onReset {
             links.clear()
             for (link in configuration.links) {

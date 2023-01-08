@@ -49,9 +49,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-/**
-* @author peter
-*/
 public final class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<LookupElement>> {
   private static final Logger LOG = Logger.getInstance(ConstructorInsertHandler.class);
   public static final ConstructorInsertHandler SMART_INSTANCE = new ConstructorInsertHandler(true);

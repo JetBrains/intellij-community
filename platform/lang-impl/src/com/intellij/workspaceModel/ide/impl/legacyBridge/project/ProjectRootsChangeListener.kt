@@ -10,6 +10,7 @@ import com.intellij.util.indexing.EntityIndexingServiceEx
 import com.intellij.util.indexing.IndexableFilesIndex
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableFilesIndexImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleDependencyIndexImpl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
@@ -29,6 +30,7 @@ internal class ProjectRootsChangeListener(private val project: Project) {
   fun changed(event: VersionedStorageChange) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
+    (ModuleDependencyIndex.getInstance(project) as ModuleDependencyIndexImpl).workspaceModelChanged(event);
     if (IndexableFilesIndex.shouldBeUsed()) {
       IndexableFilesIndexImpl.getInstanceImpl(project).workspaceModelChanged(event)
     }

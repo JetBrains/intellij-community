@@ -28,9 +28,6 @@ import com.intellij.util.ref.GCWatcher
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
-/**
- * @author peter
- */
 @SkipSlowTestLocally
 class StubAstSwitchTest extends LightJavaCodeInsightFixtureTestCase {
 

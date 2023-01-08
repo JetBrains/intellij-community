@@ -7,9 +7,9 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
@@ -38,11 +38,11 @@ internal class GHTokenCredentialsUi(
   }
 
   override fun Panel.centerPanel() {
-    row(message("credentials.server.field")) { cell(serverTextField).horizontalAlign(HorizontalAlign.FILL) }
+    row(message("credentials.server.field")) { cell(serverTextField).align(AlignX.FILL) }
     row(message("credentials.token.field")) {
       cell(tokenTextField)
         .comment(message("login.insufficient.scopes", GHSecurityUtil.MASTER_SCOPES))
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
         .resizableColumn()
       button(message("credentials.button.generate")) { browseNewTokenUrl() }
         .enabledIf(serverTextField.serverValid)

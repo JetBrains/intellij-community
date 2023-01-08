@@ -1060,6 +1060,77 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
                                                          ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
+  // PY-46053
+  public void testLongTypeHintReplaceWithAnnotation() {
+    final Map<String, PsiElement> test = loadTest(2);
+    // Long non-current type hints should be replaced with shorter annotation
+    feignCtrlP(test.get("<arg1>").getTextOffset()).check(
+      "file: str | bytes | PathLike[str] | PathLike[bytes] | int, mode: OpenTextMode, buffering: int = ...",
+      new String[]{"file: str | bytes | PathLike[str] | PathLike[bytes] | int, "});
+    feignCtrlP(test.get("<arg2>").getTextOffset()).check(
+      "file: _OpenFile, mode: Literal[\"w\", \"wt\", \"tw\", \"a\", \"at\", \"ta\", \"x\", \"xt\", \"tx\", \"r\", \"rt\", \"tr\", " +
+      "\"U\"] = ..., buffering: int = ...",
+      new String[]{
+        "mode: Literal[\"w\", \"wt\", \"tw\", \"a\", \"at\", \"ta\", \"x\", \"xt\", \"tx\", \"r\", \"rt\", \"tr\", \"U\"] = ..., "});
+  }
+
+  // PY-46053
+  public void testLongTypeHintWithoutAnnotation() {
+    final Map<String, PsiElement> test = loadTest(2);
+    // Long non-current type hints without annotation should stay without changes
+    feignCtrlP(test.get("<arg1>").getTextOffset()).check(
+      "parameter: MyClassWithVeryVeryVeryLongName | MyClassWithVeryVeryVeryLongNameNumberTwo | int, short_param: str",
+      new String[]{"short_param: str"});
+    feignCtrlP(test.get("<arg2>").getTextOffset()).check(
+      "p, u: Literal[\"A\", \"B\", \"C\", \"D\", \"E\", \"F\", \"G\", \"H\", \"I\", \"J\", \"K\", \"L\", \"M\", \"N\", \"O\", " +
+      "\"P\", \"Q\", \"R\", \"S\", \"T\", \"U\", \"V\", \"W\", \"X\", \"Y\", \"Z\"], l: Lower"
+      , new String[]{
+        "u: Literal[\"A\", \"B\", \"C\", \"D\", \"E\", \"F\", \"G\", \"H\", \"I\", \"J\", \"K\", \"L\", \"M\", \"N\", \"O\", \"P\", " +
+        "\"Q\", \"R\", \"S\", \"T\", \"U\", \"V\", \"W\", \"X\", \"Y\", \"Z\"], "});
+  }
+
+  // PY-46053
+  public void testLongStarSlashParameter() {
+    final Map<String, PsiElement> test = loadTest(4);
+    feignCtrlP(test.get("<arg1>").getTextOffset()).check(
+      "a, /, b: Upper, *, c: Upper",
+      new String[]{""});
+
+    feignCtrlP(test.get("<arg2>").getTextOffset()).check(
+      "a, /, b: Literal[\"A\", \"B\", \"C\", \"D\", \"E\", \"F\", \"G\", \"H\", \"I\", \"J\", \"K\", \"L\", \"M\", \"N\", \"O\", " +
+      "\"P\", \"Q\", \"R\", \"S\", \"T\", \"U\", \"V\", \"W\", \"X\", \"Y\", \"Z\"], *, c: Upper"
+      , new String[]{
+        "b: Literal[\"A\", \"B\", \"C\", \"D\", \"E\", \"F\", \"G\", \"H\", \"I\", \"J\", \"K\", \"L\", \"M\", \"N\", \"O\", \"P\", " +
+        "\"Q\", \"R\", \"S\", \"T\", \"U\", \"V\", \"W\", \"X\", \"Y\", \"Z\"], "});
+
+    feignCtrlP(test.get("<arg3>").getTextOffset()).check(
+      "a, /, b: Upper, *, c: Upper"
+      , new String[]{""});
+
+    feignCtrlP(test.get("<arg4>").getTextOffset()).check(
+      "a, /, b: Upper, *, c: Literal[\"A\", \"B\", \"C\", \"D\", \"E\", \"F\", \"G\", \"H\", \"I\", \"J\", \"K\", \"L\", \"M\", " +
+      "\"N\", \"O\", \"P\", \"Q\", \"R\", \"S\", \"T\", \"U\", \"V\", \"W\", \"X\", \"Y\", \"Z\"]"
+      , new String[]{
+        "c: Literal[\"A\", \"B\", \"C\", \"D\", \"E\", \"F\", \"G\", \"H\", \"I\", \"J\", \"K\", \"L\", \"M\", \"N\", \"O\", \"P\", " +
+        "\"Q\", \"R\", \"S\", \"T\", \"U\", \"V\", \"W\", \"X\", \"Y\", \"Z\"]"});
+  }
+
+  // PY-46053
+  public void testLongTypeHintMultiline() {
+    final Map<String, PsiElement> test = loadTest(2);
+    feignCtrlP(test.get("<arg1>").getTextOffset()).check(
+      "parameter: Literal[\"A\", \"B\", \"C\", \"D\", \"E\", \"F\", \"G\", \"H\", \"I\", \"J\", \"K\", \"L\", \"M\", \"N\", \"O\", " +
+      "\"P\", \"Q\", \"R\", \"S\", \"T\", \"U\", \"V\", \"W\", \"X\", \"Y\", \"Z\"] | MyClassWithVeryVeryVeryLongName | int, " +
+      "short_param: str"
+      , new String[]{
+        "parameter: Literal[\"A\", \"B\", \"C\", \"D\", \"E\", \"F\", \"G\", \"H\", \"I\", \"J\", \"K\", \"L\", \"M\", \"N\", \"O\", " +
+        "\"P\", \"Q\", \"R\", \"S\", \"T\", \"U\", \"V\", \"W\", \"X\", \"Y\", \"Z\"] | MyClassWithVeryVeryVeryLongName | int, "});
+
+    feignCtrlP(test.get("<arg2>").getTextOffset()).check(
+      "parameter: MyClassWithVeryVeryVeryLongName | Upper | int, short_param: str"
+      , new String[]{"short_param: str"});
+  }
+
   @NotNull
   private Collector feignCtrlP(int offset) {
     return feignCtrlP(offset, myFixture.getFile());

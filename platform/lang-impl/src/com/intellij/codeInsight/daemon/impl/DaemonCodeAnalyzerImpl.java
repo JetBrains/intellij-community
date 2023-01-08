@@ -753,6 +753,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   @ApiStatus.Internal
   public static void waitForUnresolvedReferencesQuickFixesUnderCaret(@NotNull PsiFile file, @NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
+    assert editor.getProject() == null || editor.getProject() == file.getProject();
     CaretModel caretModel = editor.getCaretModel();
     int offset = caretModel.getOffset();
     Project project = file.getProject();

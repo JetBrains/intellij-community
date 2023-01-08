@@ -22,9 +22,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
-* @author peter
-*/
 public class SmartCompletionDecorator extends LookupElementDecorator<LookupElement> {
   @NotNull private final Collection<? extends ExpectedTypeInfo> myExpectedTypeInfos;
 

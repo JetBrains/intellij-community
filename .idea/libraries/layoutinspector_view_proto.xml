@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="layoutinspector-view-proto" type="repository">
+    <properties maven-id="org.jetbrains.intellij.deps.android.tools.base:layoutinspector-view-proto:221.0.12.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layoutinspector-view-proto/221.0.12.0/layoutinspector-view-proto-221.0.12.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_compose_java_proto/221.0.12.0/layout_inspector_compose_java_proto-221.0.12.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_snapshot_java_proto/221.0.12.0/layout_inspector_snapshot_java_proto-221.0.12.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_view_java_proto/221.0.12.0/layout_inspector_view_java_proto-221.0.12.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

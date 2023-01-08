@@ -29,7 +29,7 @@ import static com.intellij.openapi.util.text.HtmlChunk.raw;
 import static com.intellij.openapi.util.text.HtmlChunk.text;
 
 
-public final class MacPythonSdkFlavor extends CPythonSdkFlavor {
+public final class MacPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
 
   private static final Logger LOGGER = Logger.getInstance(MacPythonSdkFlavor.class);
 
@@ -39,6 +39,11 @@ public final class MacPythonSdkFlavor extends CPythonSdkFlavor {
   @Override
   public boolean isApplicable() {
     return SystemInfo.isMac;
+  }
+
+  @Override
+  public @NotNull Class<PyFlavorData.Empty> getFlavorDataClass() {
+    return PyFlavorData.Empty.class;
   }
 
   @NotNull

@@ -68,6 +68,7 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
 import javax.swing.*
+import com.intellij.openapi.application.readAction
 
 private val OPEN_FILES_ACTIVITY = Key.create<Activity>("open.files.activity")
 private val LOG = logger<EditorsSplitters>()
@@ -208,7 +209,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
         repaint()
       }
     })
-    enableEditorActivationOnEscape();
+    enableEditorActivationOnEscape()
   }
 
   override fun dispose() {
@@ -502,10 +503,18 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   val isInsideChange: Boolean
     get() = insideChange > 0
 
-  fun updateFileBackgroundColor(file: VirtualFile) {
-    val windows = getWindows()
-    for (i in windows.indices) {
-      windows.get(i).updateFileBackgroundColor(file)
+  fun updateFileBackgroundColorAsync(file: VirtualFile) {
+    manager.project.coroutineScope.launch {
+      val color = readAction {
+        EditorTabPresentationUtil.getEditorTabBackgroundColor(manager.project, file)
+      }
+
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        val windows = getWindows()
+        for (i in windows.indices) {
+          windows.get(i).updateFileBackgroundColor(file, color)
+        }
+      }
     }
   }
 
@@ -582,7 +591,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     }
 
     for (file in openFileList) {
-      updateFileBackgroundColor(file)
+      updateFileBackgroundColorAsync(file)
       updateFileIcon(file)
       updateFileColor(file)
     }

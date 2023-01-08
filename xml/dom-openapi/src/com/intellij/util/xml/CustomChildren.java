@@ -24,8 +24,6 @@ import java.lang.annotation.Target;
 /**
  * Annotates a collection children getter, which should return parameterized {@link java.util.Collection} or {@link java.util.List}. The returned elements
  * are those who don't belong to any of the usual collection children (see {@link SubTagList}).
- *
- * @author peter
  */
 
 @Retention(RetentionPolicy.RUNTIME)

@@ -286,7 +286,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
 
     private void removeChild(FSItem fsItem) {
       if (fsItem.myName.equals("src") && getParent() == null) {
-        throw new RuntimeException("removing src directory");
+        throw new RuntimeException("removing 'temp:///src' directory");
       }
       myChildren.remove(fsItem.myName);
     }

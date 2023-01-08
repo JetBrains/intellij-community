@@ -747,7 +747,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       object : ExtensionPointListener<SyntheticConfigurationTypeProvider> {
 
         override fun extensionAdded(extension: SyntheticConfigurationTypeProvider, pluginDescriptor: PluginDescriptor) {
-          extension.initializeConfigurationTypes()
+          extension.configurationTypes
         }
       }, true, this)
   }
@@ -792,30 +792,28 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override fun noStateLoaded() {
-    val first = isFirstLoadState.getAndSet(false)
-    if (first) {
+    val isFirstLoadState = isFirstLoadState.getAndSet(false)
+    if (isFirstLoadState) {
       onFirstLoadingStarted()
     }
 
     loadSharedRunConfigurations()
     runConfigurationFirstLoaded()
-    eventPublisher.stateLoaded(this, first)
+    eventPublisher.stateLoaded(this, isFirstLoadState)
 
-    if (first) {
+    if (isFirstLoadState) {
       onFirstLoadingFinished()
     }
   }
 
   override fun loadState(parentNode: Element) {
     config.migrateToAdvancedSettings()
-    val oldSelectedConfigurationId: String?
     val isFirstLoadState = isFirstLoadState.compareAndSet(true, false)
+    val oldSelectedConfigurationId = if (!isFirstLoadState) selectedConfigurationId else null
     if (isFirstLoadState) {
-      oldSelectedConfigurationId = null
       onFirstLoadingStarted()
     }
     else {
-      oldSelectedConfigurationId = selectedConfigurationId
       clear(false)
     }
 
@@ -878,7 +876,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     runConfigurationFirstLoaded()
     fireBeforeRunTasksUpdated()
 
-    if (!isFirstLoadState && oldSelectedConfigurationId != null && oldSelectedConfigurationId != selectedConfigurationId) {
+    if (oldSelectedConfigurationId != null && oldSelectedConfigurationId != selectedConfigurationId) {
       eventPublisher.runConfigurationSelected(selectedConfiguration)
     }
 

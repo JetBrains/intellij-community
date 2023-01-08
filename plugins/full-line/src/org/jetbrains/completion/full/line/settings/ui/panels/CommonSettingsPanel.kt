@@ -3,7 +3,9 @@ package org.jetbrains.completion.full.line.settings.ui.panels
 import com.intellij.lang.Language
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ContextHelpLabel
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.and
+import com.intellij.ui.layout.panel
 import org.jetbrains.completion.full.line.language.RedCodePolicy
 import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle.Companion.message
 import org.jetbrains.completion.full.line.settings.state.MLServerCompletionSettings

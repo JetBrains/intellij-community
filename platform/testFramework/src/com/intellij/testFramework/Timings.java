@@ -4,9 +4,6 @@ package com.intellij.testFramework;
 import com.intellij.concurrency.JobSchedulerImpl;
 import org.jetbrains.annotations.Range;
 
-/**
- * @author peter
- */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public final class Timings {
   public static final long CPU_TIMING;

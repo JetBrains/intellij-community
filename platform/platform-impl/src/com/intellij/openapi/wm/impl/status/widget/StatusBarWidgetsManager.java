@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.wm.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -99,6 +100,12 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   public boolean wasWidgetCreated(@Nullable StatusBarWidgetFactory factory) {
     synchronized (myWidgetFactories) {
       return myWidgetFactories.get(factory) != null;
+    }
+  }
+
+  public boolean wasWidgetCreated(@NotNull String factoryId) {
+    synchronized (myWidgetFactories) {
+      return ContainerUtil.exists(myWidgetFactories.keySet(), factory -> factory.getId().equalsIgnoreCase(factoryId));
     }
   }
 

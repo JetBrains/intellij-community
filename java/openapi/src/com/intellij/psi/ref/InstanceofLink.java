@@ -7,9 +7,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public final class InstanceofLink<Parent extends PsiElement, Child extends PsiElement, CastTo extends Child> extends PsiChildLink<Parent, CastTo> {
   private final PsiChildLink<Parent, Child> myDelegate;
   private final Class<CastTo> myCastTo;

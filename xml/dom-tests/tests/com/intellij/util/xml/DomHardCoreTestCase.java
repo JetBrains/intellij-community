@@ -30,9 +30,6 @@ import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.impl.DomTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public abstract class DomHardCoreTestCase extends JavaCodeInsightTestCase {
   private CallRegistry<DomEvent> myCallRegistry;
 

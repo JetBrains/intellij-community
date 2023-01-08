@@ -46,7 +46,7 @@ public final class ToolsImpl implements Tools {
     return insertTool(scope, toolWrapper, enabled, level, myTools != null ? myTools.size() : 0);
   }
 
-  @NotNull ScopeToolState prependTool(@NotNull NamedScope scope,
+  public @NotNull ScopeToolState prependTool(@NotNull NamedScope scope,
                                       @NotNull InspectionToolWrapper<?,?> toolWrapper,
                                       boolean enabled,
                                       @NotNull HighlightDisplayLevel level) {

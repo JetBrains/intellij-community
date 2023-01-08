@@ -11,6 +11,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +66,9 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   public void addNotify() {
     super.addNotify();
 
-    processAddToUi(true);
+    if (UIUtil.getParentOfType(JBRunnerTabs.class, this) != null) {
+      processAddToUi(true);
+    }
   }
 
   @Override

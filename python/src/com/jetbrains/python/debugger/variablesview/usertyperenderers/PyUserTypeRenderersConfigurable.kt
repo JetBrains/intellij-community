@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.QualifiedName
 import com.intellij.ui.*
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -298,13 +299,13 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
       return panel {
         row(PyBundle.message("form.debugger.variables.view.user.type.renderers.name")) {
           myRendererNameTextField = textField()
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
             .component
         }
         row {
           cell(myTypeNameTextField)
             .label(PyBundle.message("form.debugger.variables.view.user.type.renderers.apply.renderer.to.objects.of.type"), LabelPosition.TOP)
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         buttonsGroup(PyBundle.message("form.debugger.variables.view.user.type.renderers.when.rendering.node")) {
           row {
@@ -320,7 +321,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
           indent {
             row {
               cell(myNodeValueExpressionEditor.component)
-                .horizontalAlign(HorizontalAlign.FILL)
+                .align(AlignX.FILL)
                 .comment(PyBundle.message("form.debugger.variables.view.user.type.renderers.variable.name"))
             }
           }
@@ -339,7 +340,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
           indent {
             row {
               cell(myChildrenRenderersListEditor)
-                .horizontalAlign(HorizontalAlign.FILL)
+                .align(AlignX.FILL)
                 .comment(PyBundle.message("form.debugger.variables.view.user.type.renderers.variable.name"))
             }
             row {

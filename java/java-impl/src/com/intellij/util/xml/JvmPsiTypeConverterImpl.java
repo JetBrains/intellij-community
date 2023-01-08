@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements CustomReferenceConverter<PsiType> {
 
   private static final BidirectionalMap<PsiType, Character> ourPrimitiveTypes = new BidirectionalMap<>();

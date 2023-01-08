@@ -35,9 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class GroovyStatementMover extends StatementUpDownMover {
 
   @Override

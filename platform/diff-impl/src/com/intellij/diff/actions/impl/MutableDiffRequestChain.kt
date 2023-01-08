@@ -180,7 +180,7 @@ internal class SwapThreeWayColorModeAction : ComboBoxAction() {
     return ActionUpdateThread.EDT
   }
 
-  override fun createPopupActionGroup(button: JComponent?): DefaultActionGroup {
+  override fun createPopupActionGroup(button: JComponent, context: DataContext): DefaultActionGroup {
     return DefaultActionGroup(ThreeSideDiffColors.values().map { MyAction(getText(it), it) })
   }
 

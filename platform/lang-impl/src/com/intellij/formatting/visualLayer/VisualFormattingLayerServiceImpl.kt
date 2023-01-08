@@ -15,7 +15,39 @@ import kotlin.math.min
 @Service
 class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
 
-  override fun getVisualFormattingLayerElements(editor: Editor): List<VisualFormattingLayerElement> {
+  override fun applyVisualFormattingLayerElementsToEditor(editor: Editor, elements: List<VisualFormattingLayerElement>) {
+    editor.inlayModel.execute(false) {
+      editor.inlayModel
+        .getInlineElementsInRange(0, Int.MAX_VALUE, InlayPresentation::class.java)
+        .forEach { it.dispose() }
+
+      editor.inlayModel
+        .getBlockElementsInRange(0, Int.MAX_VALUE, InlayPresentation::class.java)
+        .forEach { it.dispose() }
+
+      elements.asSequence()
+        .filterIsInstance<InlineInlay>()
+        .forEach { it.applyToEditor(editor) }
+
+      elements.asSequence()
+        .filterIsInstance<BlockInlay>()
+        .forEach { it.applyToEditor(editor) }
+    }
+
+    editor.foldingModel.runBatchFoldingOperation(
+      {
+        editor.foldingModel
+          .allFoldRegions
+          .filter { it.getUserData(visualFormattingElementKey) == true }
+          .forEach { it.dispose() }
+
+        elements.asSequence()
+          .filterIsInstance<Folding>()
+          .forEach { it.applyToEditor(editor) }
+      }, true, false)
+  }
+
+  override fun collectVisualFormattingLayerElements(editor: Editor): List<VisualFormattingLayerElement> {
     val project = editor.project ?: return emptyList()
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return emptyList()
     val codeStyleSettings = editor.visualFormattingLayerCodeStyleSettings ?: return emptyList()

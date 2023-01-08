@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiFile
 import com.intellij.util.ExceptionUtil
 import org.jetbrains.completion.full.line.providers.CloudExceptionWithCustomRegistry
@@ -46,6 +47,7 @@ fun PsiFile.projectFilePath(): String {
 }
 
 // Extract correct presentable message from exception.
+@NlsSafe
 fun Throwable.decoratedMessage(): String {
   return when (this) {
     is SocketTimeoutException, is TimeoutException -> "Connection timeout"

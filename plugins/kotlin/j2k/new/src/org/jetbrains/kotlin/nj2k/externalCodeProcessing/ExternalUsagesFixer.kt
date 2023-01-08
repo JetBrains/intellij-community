@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.nj2k.externalCodeProcessing
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.j2k.AccessorKind.GETTER
 import org.jetbrains.kotlin.j2k.AccessorKind.SETTER
@@ -10,7 +11,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsages>) {
     private val conversions = mutableListOf<JKExternalConversion>()
@@ -77,18 +77,17 @@ internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsag
         }
     }
 
-    private fun KtDeclaration?.isConstProperty(): Boolean =
+    private fun KtNamedDeclaration?.isConstProperty(): Boolean =
         this is KtProperty && hasModifier(KtTokens.CONST_KEYWORD)
 
-    private fun KtDeclaration?.isSimpleProperty(): Boolean {
-        if (this is KtParameter && hasValOrVar() && getStrictParentOfType<KtPrimaryConstructor>() != null) return true
-        return (this is KtProperty &&
-                getter == null
-                && setter == null
-                && !hasModifier(KtTokens.CONST_KEYWORD))
-    }
+    private fun KtNamedDeclaration?.isSimpleProperty(): Boolean =
+        this?.isConstructorDeclaredProperty() == true ||
+                (this is KtProperty &&
+                        getter == null
+                        && setter == null
+                        && !hasModifier(KtTokens.CONST_KEYWORD))
 
-    private fun KtDeclaration.addAnnotationIfThereAreNoJvmOnes(fqName: FqName) {
+    private fun KtNamedDeclaration.addAnnotationIfThereAreNoJvmOnes(fqName: FqName) {
         // we don't want to resolve here and as we are working with fqNames, just by-text comparing is OK
         if (annotationEntries.any { entry ->
                 USED_JVM_ANNOTATIONS.any { jvmAnnotation ->

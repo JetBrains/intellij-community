@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author peter
-*/
 public class CamelHumpMatcher extends PrefixMatcher {
   private final MinusculeMatcher myMatcher;
   private final MinusculeMatcher myCaseInsensitiveMatcher;

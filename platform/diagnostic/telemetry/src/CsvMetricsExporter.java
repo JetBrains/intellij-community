@@ -7,6 +7,7 @@ import io.opentelemetry.sdk.metrics.InstrumentType;
 import io.opentelemetry.sdk.metrics.data.AggregationTemporality;
 import io.opentelemetry.sdk.metrics.data.MetricData;
 import io.opentelemetry.sdk.metrics.export.MetricExporter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -32,7 +33,8 @@ import static java.nio.file.StandardOpenOption.*;
  * TODO not all metrics types are supported now, see .toCSVLine()
  * MAYBE roll output files daily/hourly?
  */
-public final class CsvMetricsExporter implements MetricExporter {
+@ApiStatus.Internal
+final class CsvMetricsExporter implements MetricExporter {
   private static final Logger LOGGER = Logger.getInstance(CsvMetricsExporter.class);
 
   @NotNull

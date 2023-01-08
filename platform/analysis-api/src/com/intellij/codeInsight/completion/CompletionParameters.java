@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
  * See {@link #withType(CompletionType)}, {@link #withInvocationCount(int)} and {@link #withPosition(PsiElement, int)} to
  * create modified copy of given current parameters.
  *
- * @author peter
  * @see CompletionContributor
  */
 public final class CompletionParameters {

@@ -7,17 +7,6 @@ import com.intellij.openapi.util.IntellijInternalApi
 @RequiresOptIn(level = RequiresOptIn.Level.ERROR)
 annotation class UnsafeTestSourceSetHeuristicApi
 
-
-@UnsafeTestSourceSetHeuristicApi
-internal fun isProbablyTestSourceSet(name: String): Boolean {
-    return name.endsWith("Test") || name == "test"
-}
-
-@UnsafeTestSourceSetHeuristicApi
-internal fun isProbablyProductionSourceSet(name: String): Boolean {
-    return !isProbablyTestSourceSet(name)
-}
-
 @UnsafeTestSourceSetHeuristicApi
 @IntellijInternalApi
 fun predictedProductionSourceSetName(testSourceSetName: String): String {

@@ -129,4 +129,31 @@ class Test {
       default: yield "";
     };
   }
+
+  void declaredInWhenExpression(Object obj) {
+    switch (obj) {
+      case Integer i when new Function<Integer, Boolean>() {
+        @Override
+        public Boolean apply(Integer integer) {
+          System.out.println(integer++);
+          int num = 0;
+          System.out.println(++num);
+          return true;
+        }
+      }.apply(42) -> {}
+      default -> {}
+    }
+
+    switch (obj) {
+      case Integer i when switch (i) {
+        case 1 -> {
+          int num = 0;
+          ++num;
+          yield num;
+        }
+        default -> 42;
+      } == 42 -> {}
+      default -> {}
+    }
+  }
 }

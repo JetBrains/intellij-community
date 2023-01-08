@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -56,6 +55,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   private final Disposable myPointersDisposable = Disposer.newDisposable();
   private final ProjectModelExternalSource myExternalSource;
   private final EventDispatcher<RootSetChangedListener> myDispatcher = EventDispatcher.create(RootSetChangedListener.class);
+  private LibraryRootPointerListener myRootPointerListener;
 
   LibraryImpl(LibraryTable table, @NotNull Element element, ModifiableRootModel rootModel) throws InvalidDataException {
     this(table, rootModel, null, null, findPersistentLibraryKind(element), findExternalSource(element));
@@ -234,10 +234,10 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @NotNull
   private VirtualFilePointerListener getListener() {
-    Project project = myLibraryTable instanceof ProjectLibraryTable ? ((ProjectLibraryTable)myLibraryTable).getProject() : null;
-    return project != null
-           ? ProjectRootManagerImpl.getInstanceImpl(project).getRootsValidityChangedListener()
-           : ProjectJdkImpl.getGlobalVirtualFilePointerListener();
+    if (myRootPointerListener == null) {
+      myRootPointerListener = new LibraryRootPointerListener();
+    }
+    return myRootPointerListener;
   }
 
   @Nullable
@@ -788,5 +788,18 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       return PathUtil.getFileName(PathUtil.toPresentableUrl(urls[0]));
     }
     return ProjectModelBundle.message("empty.library.title");
+  }
+
+  private class LibraryRootPointerListener implements VirtualFilePointerListener {
+    @Override
+    public void beforeValidityChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {
+      ProjectJdkImpl.getGlobalVirtualFilePointerListener().beforeValidityChanged(pointers);
+    }
+
+    @Override
+    public void validityChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {
+      ProjectJdkImpl.getGlobalVirtualFilePointerListener().validityChanged(pointers);
+      fireRootSetChanged();
+    }
   }
 }

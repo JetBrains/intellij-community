@@ -412,7 +412,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     @Override
-    public void cleanUpCache() {
+    public synchronized void cleanUpCache() {
       super.cleanUpCache();
       myTotalErrorLevel = null;
     }
@@ -426,7 +426,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       updateUpTo(this);
     }
 
-    public ErrorLevel getTotalErrorLevel() {
+    public synchronized ErrorLevel getTotalErrorLevel() {
       if (myTotalErrorLevel == null) {
         myTotalErrorLevel = calcTotalErrorLevel();
       }
@@ -592,7 +592,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     protected List<? extends MavenSimpleNode> doGetChildren() {
-      return ContainerUtil.concat(Collections.singletonList(myProfilesNode), super.doGetChildren());
+      return ContainerUtil.concat(Collections.singletonList(myProfilesNode), new ArrayList<>(super.doGetChildren()));
     }
 
     public void updateProfiles() {
@@ -803,7 +803,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     protected List<? extends MavenSimpleNode> doGetChildren() {
       return ContainerUtil.concat(
         Arrays.asList(myLifecycleNode, myPluginsNode, myRunConfigurationsNode, myDependenciesNode),
-        super.doGetChildren()
+        new ArrayList<>(super.doGetChildren())
       );
     }
 
@@ -1229,7 +1229,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
   public abstract class BaseDependenciesNode extends GroupNode {
     protected final MavenProject myMavenProject;
-    private List<DependencyNode> myChildren = new ArrayList<>();
+    private List<DependencyNode> myChildren = new CopyOnWriteArrayList<>();
 
     protected BaseDependenciesNode(MavenSimpleNode parent, MavenProject mavenProject) {
       super(parent);

@@ -18,9 +18,6 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * @author peter
- */
 public interface PsiRefElementCreator<Parent, Child> {
 
   @NotNull

@@ -11,9 +11,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.XmlDomBundle;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class DefineAttributeQuickFix implements LocalQuickFix {
   private final String myAttrName;
   private final String myAttrValue;

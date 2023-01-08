@@ -14,9 +14,9 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.TitledSeparator
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -83,7 +83,7 @@ class ProjectSettingsComponent(ideWizard: IdeWizard) : DynamicComponent(ideWizar
         panel {
             row {
                 cell(nameAndLocationComponent.component)
-                    .horizontalAlign(HorizontalAlign.FILL)
+                    .align(AlignX.FILL)
                     .resizableColumn()
 
                 bottomGap(BottomGap.SMALL)
@@ -91,7 +91,7 @@ class ProjectSettingsComponent(ideWizard: IdeWizard) : DynamicComponent(ideWizar
 
             row {
                 cell(buildSystemAdditionalSettingsComponent.component)
-                    .horizontalAlign(HorizontalAlign.FILL)
+                    .align(AlignX.FILL)
                     .resizableColumn()
 
                 bottomGap(BottomGap.SMALL)

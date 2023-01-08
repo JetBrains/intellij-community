@@ -102,7 +102,8 @@ data class IDERunContext(
     .usingStartupFramework()
     .setFatalErrorNotificationEnabled()
     .setFlagIntegrationTests()
-    .takeScreenshotIfFailure(testContext.paths.logsDir)
+    .takeScreenshotsPeriodically(testContext.paths.logsDir)
+    .takeScreenshotOnFailure(testContext.paths.logsDir)
     .withJvmCrashLogDirectory(jvmCrashLogDirectory)
     .withHeapDumpOnOutOfMemoryDirectory(heapDumpOnOomDirectory)
     .let { if (Const.isClassFileVerificationEnabled) it.withClassFileVerification() else it }
@@ -330,6 +331,12 @@ data class IDERunContext(
       source = testContext.paths.systemDir.resolve("event-log-data/logs/FUS"),
       artifactPath = contextName,
       artifactName = formatArtifactName("event-log-data", testContext.testName)
+    )
+
+    testContext.publishArtifact(
+      source = testContext.paths.snapshotsDir,
+      artifactPath = contextName,
+      artifactName = formatArtifactName("snapshots", testContext.testName)
     )
 
     if (!isRunSuccessful)

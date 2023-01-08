@@ -33,9 +33,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-/**
- * @author peter
- */
 public class PlainTextSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   @Override
   @NotNull

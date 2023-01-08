@@ -6,9 +6,6 @@ import com.intellij.openapi.actionSystem.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class FileTemplateSeparator extends ActionGroup {
 
   @Override

@@ -45,7 +45,6 @@ interface ExternalSystemProjectNotificationAware {
     /**
      * Happens when notification should be shown or hidden.
      */
-    @JvmDefault
     fun onNotificationChanged(project: Project) {
     }
   }

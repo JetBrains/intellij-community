@@ -22,9 +22,6 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public interface DomFileElement<T extends DomElement> extends DomElement, UserDataHolder, ModificationTracker {
   @NotNull
   XmlFile getFile();

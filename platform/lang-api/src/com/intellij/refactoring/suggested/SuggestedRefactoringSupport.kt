@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.suggested
 
 import com.intellij.lang.Language
@@ -28,7 +28,6 @@ interface SuggestedRefactoringSupport {
    * for they are part of a bigger declaration.
    */
   @Deprecated(message = "Use isAnchor instead", replaceWith = ReplaceWith("isAnchor(psiElement)"))
-  @JvmDefault
   fun isDeclaration(psiElement: PsiElement): Boolean = throw NotImplementedError("Will be removed")
 
   /**
@@ -40,7 +39,6 @@ interface SuggestedRefactoringSupport {
    * for they are part of a bigger anchor (method or function).
    */
   @Suppress("DEPRECATION")
-  @JvmDefault
   fun isAnchor(psiElement: PsiElement): Boolean = isDeclaration(psiElement)
 
   /**
@@ -75,7 +73,6 @@ interface SuggestedRefactoringSupport {
    * Returns true if there's a syntax error within given anchor that prevents
    * suggested refactoring from successful completion
    */
-  @JvmDefault
   fun hasSyntaxError(anchor: PsiElement): Boolean {
     val signatureRange = signatureRange(anchor) ?: return true
     return anchor.containingFile.hasErrorElementInRange(signatureRange)

@@ -10,7 +10,8 @@ import java.nio.charset.StandardCharsets
 import java.util.*
 
 @ApiStatus.Experimental
-internal fun RequestBuilder.withBasicAuthorization(repository: PyPackageRepository): RequestBuilder {
+internal fun RequestBuilder.withBasicAuthorization(repository: PyPackageRepository?): RequestBuilder {
+  if (repository == null) return this
   val password = repository.getPassword()
   if (repository.login != null && password != null) {
     val credentials = Base64.getEncoder().encode("${repository.login}:${password}".toByteArray()).toString(StandardCharsets.UTF_8)

@@ -24,40 +24,32 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 fun findUsages(showDialog: Boolean, project: Project, selectedScope: SearchScope, target: SearchTarget) {
-  findUsages(showDialog, project, target, target.usageHandler, selectedScope)
-}
-
-private fun <O> findUsages(showDialog: Boolean,
-                           project: Project,
-                           target: SearchTarget,
-                           handler: UsageHandler<O>,
-                           selectedScope: SearchScope) {
-  val allOptions = getSearchOptions(SearchVariant.FIND_USAGES, target, handler, selectedScope)
+  val allOptions = getSearchOptions(SearchVariant.FIND_USAGES, target, selectedScope)
   if (showDialog) {
     val canReuseTab = canReuseTab(project)
-    val dialog = UsageOptionsDialog(project, target.displayString, handler, allOptions, target.showScopeChooser(), canReuseTab)
+    val dialog = UsageOptionsDialog(project, target.displayString, allOptions, target.showScopeChooser(), canReuseTab)
     if (!dialog.showAndGet()) {
       // cancelled
       return
     }
-    val dialogResult: AllSearchOptions<O> = dialog.result()
+    val dialogResult: AllSearchOptions = dialog.result()
     setSearchOptions(SearchVariant.FIND_USAGES, target, dialogResult)
-    findUsages(project, target, handler, dialogResult)
+    findUsages(project, target, dialogResult)
   }
   else {
-    findUsages(project, target, handler, allOptions)
+    findUsages(project, target, allOptions)
   }
 }
 
-internal fun <O> findUsages(project: Project, target: SearchTarget, handler: UsageHandler<O>, allOptions: AllSearchOptions<O>) {
-  val query = buildUsageViewQuery(project, target, handler, allOptions)
+internal fun findUsages(project: Project, target: SearchTarget, allOptions: AllSearchOptions) {
+  val query = buildUsageViewQuery(project, target, allOptions)
   val factory = Factory {
     UsageSearcher {
       runSearch(project, query, it)
     }
   }
   val usageViewPresentation = UsageViewPresentation().apply {
-    searchString = handler.getSearchString(allOptions)
+    searchString = target.usageHandler.getSearchString(allOptions)
     scopeText = allOptions.options.searchScope.displayName
     tabText = UsageViewBundle.message("search.title.0.in.1", searchString, scopeText)
     isOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView || !canReuseTab(project)
@@ -83,11 +75,11 @@ private fun canReuseTab(project: Project): Boolean {
   }
 }
 
-internal val SearchTarget.displayString: String get() = presentation.presentableText
+internal val SearchTarget.displayString: String get() = presentation().presentableText
 
 @Nls(capitalization = Nls.Capitalization.Title)
-internal fun <O> UsageHandler<O>.getSearchString(allOptions: AllSearchOptions<O>): String {
-  return getSearchString(allOptions.options, allOptions.customOptions)
+internal fun UsageHandler.getSearchString(allOptions: AllSearchOptions): String {
+  return getSearchString(allOptions.options)
 }
 
 internal fun SearchTarget.showScopeChooser(): Boolean {

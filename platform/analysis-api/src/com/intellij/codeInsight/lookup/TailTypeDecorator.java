@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Consider using {@link com.intellij.codeInsight.completion.InsertHandler} instead
- * @author peter
  */
 public abstract class TailTypeDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
   public TailTypeDecorator(T delegate) {

@@ -10,9 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
 
-/**
- * @author peter
- */
 public abstract class GrCodeBlockElementType extends IReparseableElementType implements ICompositeElementType {
 
   private final boolean isInsideSwitch;

@@ -177,7 +177,7 @@ internal class ModifiableContentEntryBridge(
 
   override fun removeExcludePattern(pattern: String) {
     updateContentEntry {
-      excludedPatterns = mutableListOf()
+      excludedPatterns.remove(pattern)
     }
   }
 

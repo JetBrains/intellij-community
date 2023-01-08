@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.ProjectTopics;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.inspectionProfile.YamlInspectionProfileImpl;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.conversion.ConversionListener;
@@ -742,6 +743,9 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     }
 
     if (profilePath != null && !profilePath.isEmpty()) {
+      if (YamlInspectionProfileImpl.isYamlFile(profilePath)){
+        return YamlInspectionProfileImpl.loadFrom(project, profilePath).buildEffectiveProfile();
+      }
       InspectionProfileImpl inspectionProfile = loadProfileByPath(profilePath);
       if (inspectionProfile == null) {
         onFailure(InspectionsBundle.message("inspection.application.profile.failed.configure.by.path.0.1", profilePath, configSource));

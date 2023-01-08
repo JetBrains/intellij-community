@@ -5,9 +5,6 @@ import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 
-/**
- * @author peter
- */
 class LiteralConstructorUsagesTest extends LightGroovyTestCase {
 
   void testList_AsCast() throws Exception {

@@ -6,9 +6,6 @@ import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.util.ObjectUtils.NULL;
 
-/**
- * @author peter
- */
 public abstract class SoftFactoryMap<T,V> {
   private final ConcurrentMap<T, V> myMap = ContainerUtil.createConcurrentWeakKeySoftValueMap();
 

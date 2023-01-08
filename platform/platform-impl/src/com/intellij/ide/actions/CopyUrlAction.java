@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.StringSelection;
 import java.util.regex.Matcher;
 
-/**
- * @author peter
- */
 public class CopyUrlAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

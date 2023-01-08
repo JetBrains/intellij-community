@@ -297,13 +297,13 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
   }
 
   private static void registerProjectSession(@NotNull ClientId clientId, @NotNull Project project, @NotNull Disposable disposable) {
-    ClientProjectSessionImpl clientProjectSession = new ClientProjectSessionImpl(clientId, (ProjectImpl)project);
+    ClientProjectSessionImpl clientProjectSession = new ClientProjectSessionImpl(clientId, ClientType.GUEST, (ProjectImpl)project);
     registerSession(clientProjectSession, project, disposable);
   }
 
   private static void registerAppSession(@NotNull ClientId clientId, @NotNull Disposable disposable) {
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-    ClientAppSessionImpl clientAppSession = new ClientAppSessionImpl(clientId, application);
+    ClientAppSessionImpl clientAppSession = new ClientAppSessionImpl(clientId, ClientType.GUEST, application);
     registerSession(clientAppSession, application, disposable);
     PluginDescriptor descriptor = ComponentManagerImpl.fakeCorePluginDescriptor;
     clientAppSession.registerServiceInstance(ClientCopyPasteManager.class, new MockCopyPasteManager(), descriptor);

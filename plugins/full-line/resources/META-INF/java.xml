@@ -1,6 +1,0 @@
-<idea-plugin>
-  <depends>com.intellij.java</depends>
-  <extensions defaultExtensionNs="org.jetbrains.completion.full.line">
-    <fullLineLanguageSupport implementation="org.jetbrains.completion.full.line.language.supporters.JavaSupporter"/>
-  </extensions>
-</idea-plugin>

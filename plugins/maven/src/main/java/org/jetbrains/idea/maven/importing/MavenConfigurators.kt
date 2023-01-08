@@ -29,7 +29,6 @@ interface MavenWorkspaceConfigurator {
    * * WriteActions are not allowed.
    */
   @RequiresBackgroundThread
-  @JvmDefault
   fun getAdditionalSourceFolders(context: FoldersContext): Stream<String> {
     return Stream.empty()
   }
@@ -43,7 +42,6 @@ interface MavenWorkspaceConfigurator {
    * * WriteActions are not allowed.
    */
   @RequiresBackgroundThread
-  @JvmDefault
   fun getAdditionalTestSourceFolders(context: FoldersContext): Stream<String> {
     return Stream.empty()
   }
@@ -59,7 +57,6 @@ interface MavenWorkspaceConfigurator {
    * * WriteActions are not allowed.
    */
   @RequiresBackgroundThread
-  @JvmDefault
   fun getFoldersToExclude(context: FoldersContext): Stream<String> {
     return Stream.empty()
   }
@@ -79,7 +76,6 @@ interface MavenWorkspaceConfigurator {
    * * Side-effects other than changing [ModuleEntity]-related entities are not allowed.
    */
   @RequiresBackgroundThread
-  @JvmDefault
   fun configureMavenProject(context: MutableMavenProjectContext) {
   }
 
@@ -93,7 +89,6 @@ interface MavenWorkspaceConfigurator {
    * * Side-effects other than changing [MutableEntityStorage] are not allowed
    */
   @RequiresBackgroundThread
-  @JvmDefault
   fun beforeModelApplied(context: MutableModelContext) {
   }
 
@@ -109,7 +104,6 @@ interface MavenWorkspaceConfigurator {
    * * Necessary preparations must be done in [beforeModelApplied] or [configureMavenProject]. Data can be passed context as [UserDataHolder].
    */
   @RequiresWriteLock
-  @JvmDefault
   fun afterModelApplied(context: AppliedModelContext) {
   }
 

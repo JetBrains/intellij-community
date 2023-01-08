@@ -76,9 +76,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * @author peter
- */
 final class FindInProjectTask {
   private static final Logger LOG = Logger.getInstance(FindInProjectTask.class);
 

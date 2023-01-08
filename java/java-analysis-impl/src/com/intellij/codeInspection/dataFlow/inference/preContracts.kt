@@ -12,11 +12,9 @@ import com.intellij.codeInspection.dataFlow.inference.ContractInferenceInterpret
 import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
+import com.siyeh.ig.psiutils.MethodUtils
 import com.siyeh.ig.psiutils.SideEffectChecker
 
-/**
- * @author peter
- */
 interface PreContract {
   fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock): List<StandardMethodContract>
   fun negate(): PreContract? = NegatingContract(
@@ -39,11 +37,27 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
 
     val parameters = targetMethod.parameterList.parameters
     val arguments = call.argumentList.expressions
-    val qualifier = call.methodExpression.qualifierExpression
+    val qualifier = PsiUtil.skipParenthesizedExprDown(call.methodExpression.qualifierExpression)
     val varArgCall = MethodCallInstruction.isVarArgCall(targetMethod, result.substitutor, arguments, parameters)
 
-    val methodContracts = StandardMethodContract.toNonIntersectingStandardContracts(JavaMethodContractUtil.getMethodContracts(targetMethod))
-                          ?: return emptyList()
+    var methodContracts: List<StandardMethodContract> = StandardMethodContract.toNonIntersectingStandardContracts(
+      JavaMethodContractUtil.getMethodContracts(targetMethod))
+                                                        ?: return emptyList()
+    if (MethodUtils.isEquals(targetMethod) && qualifier is PsiReferenceExpression) {
+      val target = qualifier.resolve() as? PsiField
+      if (target?.containingClass?.qualifiedName == CommonClassNames.JAVA_LANG_BOOLEAN) {
+        val constraint = when (target.name) {
+          "FALSE" -> FALSE_VALUE
+          "TRUE" -> TRUE_VALUE
+          else -> null
+        }
+        if (constraint != null) {
+          methodContracts = listOf(StandardMethodContract(arrayOf(constraint), ContractReturnValue.returnTrue()),
+                                   StandardMethodContract(arrayOf(ANY_VALUE), ContractReturnValue.returnFalse()))
+        }
+      }
+    }
+
     val fromDelegate = methodContracts.mapNotNull { dc ->
       convertDelegatedMethodContract(method, parameters, qualifier, arguments, varArgCall, dc)
     }.toMutableList()
@@ -54,7 +68,7 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
       fromDelegate += listOf(
         StandardMethodContract(emptyConstraints(method), ContractReturnValue.returnNotNull()))
     }
-    return StandardMethodContract.toNonIntersectingStandardContracts(fromDelegate) ?: emptyList()
+    return fromDelegate
   }
 
   private fun convertDelegatedMethodContract(callerMethod: PsiMethod,

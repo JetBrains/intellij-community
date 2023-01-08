@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
-* @author peter
-*/
 public abstract class StaticMemberProcessor {
   private final Set<PsiClass> myStaticImportedClasses = new HashSet<>();
   private final PsiElement myPosition;

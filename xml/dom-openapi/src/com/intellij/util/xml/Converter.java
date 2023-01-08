@@ -27,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
  * @see CustomReferenceConverter
  *
  * @param <T> Type to convert from/to.
- *
- * @author peter
  */
 public abstract class Converter<T> {
   @Nullable

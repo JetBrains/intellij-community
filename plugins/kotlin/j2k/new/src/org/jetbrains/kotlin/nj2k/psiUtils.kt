@@ -131,6 +131,7 @@ fun PsiClass.classKind(): JKClass.ClassKind =
         isAnnotationType -> JKClass.ClassKind.ANNOTATION
         isEnum -> JKClass.ClassKind.ENUM
         isInterface -> JKClass.ClassKind.INTERFACE
+        isRecord -> JKClass.ClassKind.RECORD
         else -> JKClass.ClassKind.CLASS
     }
 

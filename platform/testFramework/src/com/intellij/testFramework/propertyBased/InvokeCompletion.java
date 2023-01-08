@@ -48,9 +48,6 @@ import org.jetbrains.jetCheck.Generator;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public class InvokeCompletion extends ActionOnFile {
   private static final Logger LOG = Logger.getInstance(InvokeCompletion.class);
   private final CompletionPolicy myPolicy;

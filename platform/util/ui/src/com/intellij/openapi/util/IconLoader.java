@@ -588,9 +588,6 @@ public final class IconLoader {
     if (icon instanceof LazyIcon) {
       icon = ((LazyIcon)icon).getOrComputeIcon();
     }
-    if (icon instanceof RetrievableIcon) {
-      icon = getOrigin((RetrievableIcon)icon);
-    }
 
     return iconToDisabledIcon.computeIfAbsent(icon, existingIcon -> {
       return filterIcon(existingIcon, UIUtil::getGrayFilter/* returns laf-aware instance */, ancestor);
@@ -670,7 +667,7 @@ public final class IconLoader {
    */
   public static @NotNull Icon filterIcon(@NotNull Icon icon,
                                          @NotNull Supplier<? extends RGBImageFilter> filterSupplier,
-                                         @Nullable Component ancestor) {
+                                         @SuppressWarnings("unused") @Nullable Component ancestor) {
     if (icon instanceof LazyIcon) {
       icon = ((LazyIcon)icon).getOrComputeIcon();
     }
@@ -684,6 +681,13 @@ public final class IconLoader {
       return ((CachedImageIcon)icon).createWithFilter(filterSupplier);
     }
 
+    return new FilteredIcon(icon, filterSupplier);
+  }
+
+  @NotNull
+  static JBImageIcon renderFilteredIcon(@NotNull Icon icon,
+                                        @NotNull Supplier<? extends RGBImageFilter> filterSupplier,
+                                        @NotNull Component ancestor) {
     double scale;
     ScaleContextSupport ctxSupport = getScaleContextSupport(icon);
     if (ctxSupport == null) {
@@ -700,7 +704,7 @@ public final class IconLoader {
     graphics.setColor(Gray.TRANSPARENT);
     graphics.fillRect(0, 0, icon.getIconWidth(), icon.getIconHeight());
     graphics.scale(scale, scale);
-    icon.paintIcon(LabelHolder.fakeComponent, graphics, 0, 0);
+    icon.paintIcon(ancestor, graphics, 0, 0);
 
     graphics.dispose();
 
@@ -1361,14 +1365,5 @@ public final class IconLoader {
     else {
       return null;
     }
-  }
-
-  private static final class LabelHolder {
-    /**
-     * To get disabled icon with paint it into the image. Some icons require
-     * not null component to paint.
-     */
-    private static final JComponent fakeComponent = new JComponent() {
-    };
   }
 }

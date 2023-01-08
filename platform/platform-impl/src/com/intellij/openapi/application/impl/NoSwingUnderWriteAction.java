@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author peter
- */
 final class NoSwingUnderWriteAction {
   private static final Logger LOG = Logger.getInstance(NoSwingUnderWriteAction.class);
 

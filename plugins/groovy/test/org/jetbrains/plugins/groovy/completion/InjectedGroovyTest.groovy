@@ -23,9 +23,6 @@ import com.intellij.psi.xml.XmlText
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry
 import org.jetbrains.plugins.groovy.GroovyLanguage
-/**
- * @author peter
- */
 class InjectedGroovyTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testTabMethodParentheses() {

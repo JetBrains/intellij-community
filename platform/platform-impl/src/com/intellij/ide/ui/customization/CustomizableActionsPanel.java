@@ -519,6 +519,9 @@ public class CustomizableActionsPanel {
           if (actionIdOrGroup != null) {
             boolean isGroupSelected = CustomizationUtil.getGroupForNode(node) != null;
             int newActionPosition = isGroupSelected ? node.getChildCount() : node.getParent().getIndex(node) + 1;
+            if (actionIdOrGroup instanceof Group group) {
+              group.setForceShowAsPopup(true);
+            }
             ActionUrl url = new ActionUrl(getGroupPath(new TreePath(node.getPath()), true), actionIdOrGroup, ADDED, newActionPosition);
             addCustomizedAction(url);
             changePathInActionsTree(myActionsTree, url);

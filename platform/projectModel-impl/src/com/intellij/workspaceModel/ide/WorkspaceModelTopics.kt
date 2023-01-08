@@ -16,14 +16,12 @@ interface WorkspaceModelChangeListener : EventListener {
    * Please note that [event] contains information about old and new versions of the changed entities, and it's recommended to override it 
    * instead. 
    */
-  @JvmDefault
   fun beforeChanged(event: VersionedStorageChange) {}
 
   /**
    * This method is invoked under Write Action after changes are applied. 
    * If its implementation involves heavy computations, it's better to schedule its execution on a separate thread to avoid blocking Event Dispatch Thread.
    */
-  @JvmDefault
   fun changed(event: VersionedStorageChange) {}
 }
 

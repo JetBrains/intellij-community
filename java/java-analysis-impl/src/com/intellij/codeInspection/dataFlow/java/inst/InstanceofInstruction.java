@@ -22,9 +22,6 @@ import java.util.ArrayList;
 
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.*;
 
-/**
- * @author peter
- */
 public class InstanceofInstruction extends ExpressionPushingInstruction {
   private final boolean myClassObjectCheck;
 

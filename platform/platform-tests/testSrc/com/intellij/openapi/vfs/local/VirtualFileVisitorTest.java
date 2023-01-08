@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -20,12 +19,13 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
-import static com.intellij.openapi.util.io.IoTestUtil.*;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeNioSymLinkCreationIsSupported;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDir = new TempDirectory();
@@ -33,28 +33,23 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
   private VirtualFile myRoot;
 
   @Before
-  public void setUp() {
-    assumeSymLinkCreationIsSupported();
+  public void setUp() throws IOException {
+    assumeNioSymLinkCreationIsSupported();
 
-    File d1 = createTestDir(tempDir.getRoot(), "d1");
-    File d11 = createTestDir(d1, "d11");
-    createTestFile(d11, "f11.1");
-    createTestFile(d11, "f11.2");
-    createTestFile(d1, "f1.1");
-    createTestDir(d1, "d12");
-    File d13 = createTestDir(d1, "d13");
-    createTestFile(d13, "f13.1");
-    createTestFile(d13, "f13.2");
-    File d2 = createTestDir(tempDir.getRoot(), "d2");
-    createTestFile(d2, "f2.1");
-    createTestFile(d2, "f2.2");
-    File d3 = createTestDir(tempDir.getRoot(), "d3");
+    tempDir.newFile("d1/f1.1");
+    tempDir.newFile("d1/d11/f11.1");
+    tempDir.newFile("d1/d11/f11.2");
+    tempDir.newDirectory("d1/d12");
+    tempDir.newFile("d1/d13/f13.1");
+    tempDir.newFile("d1/d13/f13.2");
+    tempDir.newFile("d2/f2.1");
+    tempDir.newFile("d2/f2.2");
+    tempDir.newDirectory("d3");
 
-    createSymLink(d11.getPath(), d1.getPath() + "/d11_link");
-    createSymLink(d3.getPath(), d3.getPath() + "/d3_rec_link");
+    Files.createSymbolicLink(tempDir.getRootPath().resolve("d1/d11_link"), Path.of("d11"));
+    Files.createSymbolicLink(tempDir.getRootPath().resolve("d3/d3_rec_link"), Path.of(".."));
 
-    myRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir.getRoot());
-    assertNotNull(tempDir.getRoot().toString(), myRoot);
+    myRoot = tempDir.getVirtualFileRoot();
   }
 
   @After
@@ -342,9 +337,8 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
           return true;
         }
 
-        @NotNull
         @Override
-        public Result visitFileEx(@NotNull VirtualFile file) {
+        public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
           if (!visited.add(file)) {
             throw new AssertionError(file + " already visited");
           }
@@ -370,9 +364,8 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
           backLog.put(file, s);
         }
 
-        @Nullable
         @Override
-        public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
+        public @Nullable Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
           return iterable != null ? iterable.fun(file) : super.getChildrenIterable(file);
         }
       });

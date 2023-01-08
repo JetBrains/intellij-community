@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class IncludedXmlAttribute extends IncludedXmlElement<XmlAttribute> implements XmlAttribute {
 
   public IncludedXmlAttribute(@NotNull XmlAttribute original, @Nullable XmlTag parent) {

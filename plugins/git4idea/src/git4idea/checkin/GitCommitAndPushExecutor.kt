@@ -26,6 +26,8 @@ internal class GitCommitAndPushExecutor : CommitExecutorWithRichDescription {
 
   override fun useDefaultAction(): Boolean = false
 
+  override fun requiresSyncCommitChecks(): Boolean = true
+
   override fun getId(): String = ID
 
   override fun supportsPartialCommit(): Boolean = true

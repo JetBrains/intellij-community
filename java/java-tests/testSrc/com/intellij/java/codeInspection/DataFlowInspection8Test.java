@@ -13,9 +13,6 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
 
   @NotNull

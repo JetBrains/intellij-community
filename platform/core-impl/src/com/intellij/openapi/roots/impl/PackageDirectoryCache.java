@@ -18,9 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author peter
- */
 public class PackageDirectoryCache {
   private static final Logger LOG = Logger.getInstance(PackageDirectoryCache.class);
   private final MultiMap<String, VirtualFile> myRootsByPackagePrefix = MultiMap.create();

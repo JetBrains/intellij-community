@@ -99,6 +99,8 @@ public interface NonBlockingReadAction<T> {
   /**
    * Merges together similar computations by cancelling the previous ones when a new one is submitted.
    * This can be useful when the results of the previous computation won't make sense anyway in the changed environment.
+   * NOTE: current implementation prohibit from using same .coalesceBy key for computations of different origins (see
+   * NonBlockingActionImpl.getComputationOrigin() for details).
    * @param equality objects that together identify the computation: if they're all equal in two submissions,
    *                 then the computations are merged. Callers should take care to pass something unique there
    *                 (e.g. some {@link com.intellij.openapi.util.Key} or {@code this} {@code getClass()}),

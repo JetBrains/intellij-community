@@ -14,9 +14,6 @@ import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptionImpl implements CustomDomChildrenDescription, AbstractCollectionChildDescription {
   @Nullable private final JavaMethod myGetter;
   private final TagNameDescriptor myTagNameDescriptor;

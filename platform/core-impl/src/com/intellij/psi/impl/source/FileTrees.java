@@ -22,9 +22,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-/**
- * @author peter
- */
 final class FileTrees {
   private static final Logger LOG = Logger.getInstance(FileTrees.class);
   private static final int firstNonFilePsiIndex = 1;

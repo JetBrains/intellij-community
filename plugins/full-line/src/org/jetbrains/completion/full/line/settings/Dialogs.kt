@@ -1,6 +1,7 @@
 package org.jetbrains.completion.full.line.settings
 
 import com.intellij.openapi.ui.DialogWrapper
+import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle.Companion.message
 import org.jetbrains.completion.full.line.settings.ui.MLServerCompletionConfigurable
 import org.jetbrains.completion.full.line.settings.ui.VerifyCloudConfigurable
 import javax.swing.JComponent
@@ -8,7 +9,7 @@ import javax.swing.JComponent
 class FullSettingsDialog : DialogWrapper(true) {
   init {
     init()
-    title = "Full Line Settings"
+    title = message("full.line.settings.dialog.title")
   }
 
   override fun createCenterPanel(): JComponent {
@@ -20,7 +21,7 @@ class FullSettingsDialog : DialogWrapper(true) {
 class VerifyCloudDialog : DialogWrapper(true) {
   init {
     init()
-    title = "Verify Full Line Cloud"
+    title = message("full.line.cloud.verify.dialog.title")
   }
 
   override fun createCenterPanel(): JComponent {

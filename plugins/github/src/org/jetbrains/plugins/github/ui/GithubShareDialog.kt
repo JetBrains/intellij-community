@@ -10,10 +10,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.RowLayout
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.dialog.DialogUtils
 import org.jetbrains.annotations.TestOnly
@@ -86,28 +83,27 @@ class GithubShareDialog(project: Project,
   override fun createCenterPanel() = panel {
     row(message("share.dialog.repo.name")) {
       cell(repositoryTextField)
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
         .validationOnApply { validateRepository() }
         .resizableColumn()
       cell(privateCheckBox)
     }
     row(message("share.dialog.remote")) {
       cell(remoteTextField)
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
         .validationOnApply { validateRemote() }
     }
     row {
       label(message("share.dialog.description"))
-        .verticalAlign(VerticalAlign.TOP)
+        .align(AlignY.TOP)
       scrollCell(descriptionTextArea)
-        .horizontalAlign(HorizontalAlign.FILL)
-        .verticalAlign(VerticalAlign.FILL)
+        .align(Align.FILL)
     }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
 
     if (accountsModel.size != 1) {
       row(message("share.dialog.share.by")) {
         comboBox(accountsModel)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .validationOnApply { if (accountsModel.selected == null) error(message("dialog.message.account.cannot.be.empty")) else null }
           .applyToComponent { addActionListener { switchAccount(getAccount()) } }
           .resizableColumn()

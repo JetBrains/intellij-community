@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 
 package com.intellij.codeInsight.highlighting
@@ -6,7 +6,9 @@ package com.intellij.codeInsight.highlighting
 import com.intellij.find.FindManager
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.impl.FindManagerImpl
-import com.intellij.find.usages.api.*
+import com.intellij.find.usages.api.PsiUsage
+import com.intellij.find.usages.api.Usage
+import com.intellij.find.usages.api.UsageOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.buildQuery
 import com.intellij.find.usages.impl.symbolSearchTarget
@@ -106,20 +108,10 @@ private fun getPsiUsageRanges(file: PsiFile, psiTarget: PsiElement): UsageRanges
 private fun getSymbolUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges? {
   val project: Project = file.project
   val searchTarget = symbolSearchTarget(project, symbol) ?: return null
-  return getSearchTargetUsageRanges(project, file, searchTarget, searchTarget.usageHandler)
-}
-
-private fun <O> getSearchTargetUsageRanges(
-  project: Project,
-  file: PsiFile,
-  searchTarget: SearchTarget,
-  usageHandler: UsageHandler<O>
-): UsageRanges {
   val searchScope = LocalSearchScope(file)
-  val usages: Collection<Usage> = buildQuery(project, searchTarget, usageHandler, AllSearchOptions(
+  val usages: Collection<Usage> = buildQuery(project, searchTarget, AllSearchOptions(
     options = UsageOptions.createOptions(searchScope),
     textSearch = true,
-    customOptions = usageHandler.getCustomOptions(UsageHandler.UsageAction.HIGHLIGHT_USAGES)
   )).findAll()
   val readRanges = ArrayList<TextRange>()
   val readDeclarationRanges = ArrayList<TextRange>()

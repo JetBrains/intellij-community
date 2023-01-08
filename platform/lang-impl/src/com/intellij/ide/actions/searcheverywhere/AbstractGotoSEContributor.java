@@ -104,7 +104,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     });
   }
 
-  private List<ScopeDescriptor> createScopes() {
+  protected List<ScopeDescriptor> createScopes() {
     DataContext context = createContext(myProject, myPsiContext);
     List<ScopeDescriptor> res = new ArrayList<>();
     ScopeChooserCombo.processScopes(

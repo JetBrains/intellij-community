@@ -147,7 +147,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun panel(init: Panel.() -> Unit): PanelImpl {
     lateinit var result: PanelImpl
     row {
-      result = panel(init).verticalAlign(VerticalAlign.FILL) as PanelImpl
+      result = panel(init).align(AlignY.FILL) as PanelImpl
     }
     return result
   }
@@ -177,7 +177,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
         else {
           init()
         }
-      }.verticalAlign(VerticalAlign.FILL)
+      }.align(AlignY.FILL)
     }
     result.internalTopGap = spacingConfiguration.verticalMediumGap
     result.internalBottomGap = spacingConfiguration.verticalMediumGap
@@ -362,6 +362,11 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
+  override fun align(align: Align): PanelImpl {
+    super.align(align)
+    return this
+  }
+
   override fun resizableColumn(): PanelImpl {
     super.resizableColumn()
     return this
@@ -444,7 +449,7 @@ private fun Panel.createSeparatorRow(title: JBLabel?, background: Color? = null)
 
   return row {
     cell(separator)
-      .horizontalAlign(HorizontalAlign.FILL)
+      .align(AlignX.FILL)
   }
 }
 

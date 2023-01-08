@@ -563,7 +563,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       if (data != null) {
         final PsiElement parent = data.getFirst();
         final String text = parent.getText();
-        final Pair<String, String> detectedQuotes = PyStringLiteralUtil.getQuotes(text);
+        final Pair<String, String> detectedQuotes = PyStringLiteralCoreUtil.getQuotes(text);
         final Pair<String, String> quotes = detectedQuotes != null ? detectedQuotes : Pair.create("'", "'");
         final TextRange range = data.getSecond();
         final String substring = range.substring(text);

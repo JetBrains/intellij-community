@@ -34,9 +34,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author peter
- */
 public class TextControl extends EditorTextFieldControl<TextPanel> {
 
   public TextControl(final DomWrapper<String> domWrapper) {

@@ -16,9 +16,6 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
-*/
 public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements JavaLikeQuoteHandler, MultiCharQuoteHandler {
   private final TokenSet myConcatenableStrings = TokenSet.create(JavaTokenType.STRING_LITERAL);
   private final TokenSet myAppropriateElementTypeForLiteral = TokenSet.orSet(

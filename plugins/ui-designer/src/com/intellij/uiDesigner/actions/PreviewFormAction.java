@@ -106,10 +106,9 @@ public final class PreviewFormAction extends AnAction{
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    GuiEditor editor = getOrCreateUpdateSession(e).compute(this, "getEditor", ActionUpdateThread.EDT,
-                                                           () -> FormEditingUtil.getActiveEditor(e.getDataContext()));
+    GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
 
-    if(editor == null){
+    if (editor == null) {
       e.getPresentation().setVisible(false);
       return;
     }

@@ -23,9 +23,6 @@ import java.util.Arrays;
 
 import static com.intellij.patterns.StandardPatterns.*;
 
-/**
- * @author peter
- */
 public class StandardPatternsTest extends TestCase {
 
   public void testNull() {

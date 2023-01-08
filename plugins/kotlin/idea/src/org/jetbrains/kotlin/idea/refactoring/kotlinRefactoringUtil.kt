@@ -773,8 +773,6 @@ fun KtNamedDeclaration.isAbstract(): Boolean = when {
     else -> false
 }
 
-fun KtNamedDeclaration.isConstructorDeclaredProperty() = this is KtParameter && ownerFunction is KtPrimaryConstructor && hasValOrVar()
-
 fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
     changeInfo: KotlinChangeInfo,
     originalList: ListType,

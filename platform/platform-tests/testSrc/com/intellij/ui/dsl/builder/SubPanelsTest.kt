@@ -35,7 +35,7 @@ class SubPanelsTest {
       }
       row("Row 2") {
         cell(subPanel)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
     }
 

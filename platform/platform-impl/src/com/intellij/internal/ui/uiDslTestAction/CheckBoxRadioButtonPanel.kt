@@ -3,11 +3,11 @@ package com.intellij.internal.ui.uiDslTestAction
 
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
+import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
@@ -32,7 +32,7 @@ internal class CheckBoxRadioButtonPanel {
           }
         }
       }.resizableColumn()
-        .verticalAlign(VerticalAlign.TOP)
+        .align(AlignY.TOP)
       panel {
         row {
           label("Marker")
@@ -43,7 +43,7 @@ internal class CheckBoxRadioButtonPanel {
           }
         }
       }.resizableColumn()
-        .verticalAlign(VerticalAlign.TOP)
+        .align(AlignY.TOP)
     }
 
     buttonsGroup {

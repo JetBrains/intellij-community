@@ -3,9 +3,6 @@ package com.intellij.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
 
-/**
- * @author peter
- */
 public abstract class CommonReferenceProviderTypes {
 
   public static CommonReferenceProviderTypes getInstance() {

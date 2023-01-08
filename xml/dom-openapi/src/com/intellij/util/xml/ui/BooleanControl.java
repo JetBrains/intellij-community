@@ -19,9 +19,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author peter
- */
 public class BooleanControl extends BaseModifiableControl<JCheckBox, Boolean> {
   private boolean myUndefined;
 

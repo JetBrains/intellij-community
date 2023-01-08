@@ -70,6 +70,16 @@
               <text resource-bundle="messages/PyBundle" key="form.console.options.use.command.queue"/>
             </properties>
           </component>
+          <component id="c5c5f" class="com.intellij.ui.components.JBCheckBox" binding="myAutoCompletionEnabledCheckbox">
+            <constraints>
+              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <selected value="false"/>
+              <text resource-bundle="messages/PyBundle" key="form.console.options.auto.completion.enabled"/>
+              <toolTipText value=""/>
+            </properties>
+          </component>
         </children>
       </grid>
       <hspacer id="4135">

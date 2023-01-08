@@ -244,7 +244,6 @@ interface TrustStateListener {
   /**
    * Executed when the project becomes trusted.
    */
-  @JvmDefault
   fun onProjectTrusted(project: Project) {
   }
 
@@ -254,7 +253,6 @@ interface TrustStateListener {
    *
    * NB: [onProjectTrusted] is also called in this case, and most probably you want to use that method.
    */
-  @JvmDefault
   fun onProjectTrustedFromNotification(project: Project) {
   }
 

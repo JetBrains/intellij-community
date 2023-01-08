@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public class JavaMethodResolveHelper {
   private final Set<MethodSignature> myDuplicates = new HashSet<>();
 

@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
-/**
- * @author peter
-*/
 public final class StatisticsWeigher extends CompletionWeigher {
   private static final Logger LOG = Logger.getInstance(StatisticsWeigher.class);
   private static final Key<StatisticsInfo> BASE_STATISTICS_INFO = Key.create("Base statistics info");

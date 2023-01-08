@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports problems in <code>Comparator.compare()</code> implementations.
+Reports problems in <code>Comparator.compare()</code> and <code>Comparable.compareTo()</code> implementations.
 <p>The following cases are reported:</p>
 <ul>
   <li>
@@ -8,9 +8,18 @@ Reports problems in <code>Comparator.compare()</code> implementations.
     with itself, or the method is not implemented correctly.
   </li>
   <li>
-    It's evident that the comparator does not return <code>0</code> for the same elements. Such a comparator violates the contract
+    It's evident that the method does not return <code>0</code> for the same elements. Such a comparison method violates the contract
     and can produce unpredictable results when equal elements are encountered. In particular,
     sorting may fail with an exception on some data.</li>
+  <li>
+    Comparison method never returns positive or negative value. To fulfill the contract, if comparison method returns positive values,
+    it should also return negative ones if arguments are supplied in reversed order.
+  </li>
+  <li>
+    Comparison method returns <code>Integer.MIN_VALUE</code>. While allowed by contract, it may be error-prone, as some call sites
+    may incorrectly invert the return value of comparison method using unary minus. In this case, <code>Integer.MIN_VALUE</code>
+    will stay negative.
+  </li>
 </ul>
 <p><b>Example:</b></p>
 <pre><code>

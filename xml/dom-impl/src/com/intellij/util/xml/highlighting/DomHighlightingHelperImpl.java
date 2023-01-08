@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   public static final DomHighlightingHelperImpl INSTANCE = new DomHighlightingHelperImpl();
   private final GenericValueReferenceProvider myProvider = new GenericValueReferenceProvider();

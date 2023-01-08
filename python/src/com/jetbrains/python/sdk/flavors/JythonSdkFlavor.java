@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 
-public final class JythonSdkFlavor extends PythonSdkFlavor {
+public final class JythonSdkFlavor extends PythonSdkFlavor<PyFlavorData.Empty> {
   private static final Pattern VERSION_RE = Pattern.compile("(Jython \\S+)( on .*)?");
   private static final String JYTHONPATH = "JYTHONPATH";
   private static final String PYTHON_PATH_PREFIX = "-Dpython.path=";
@@ -30,6 +30,11 @@ public final class JythonSdkFlavor extends PythonSdkFlavor {
 
   public static JythonSdkFlavor getInstance() {
     return PythonSdkFlavor.EP_NAME.findExtension(JythonSdkFlavor.class);
+  }
+
+  @Override
+  public @NotNull Class<PyFlavorData.Empty> getFlavorDataClass() {
+    return PyFlavorData.Empty.class;
   }
 
   @Override

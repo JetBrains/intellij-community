@@ -36,9 +36,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-/**
- * @author peter
- */
 class StatusPanel extends JPanel {
   private Notification myCurrentNotification;
   private @NlsSafe @Nullable String myTimeText;

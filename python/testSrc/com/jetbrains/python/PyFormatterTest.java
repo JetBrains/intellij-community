@@ -1261,4 +1261,34 @@ public class PyFormatterTest extends PyTestCase {
   public void testMultiLineCallChainSplitByBackslashes() {
     doTest();
   }
+
+  // PY-24792
+  public void testNoAlignmentForMultilineBinaryExpressionInReturnStatement() {
+    doTest();
+  }
+
+  // PY-24792
+  public void testNoAlignmentForMultilineBinaryExpressionInYieldStatement() {
+    doTest();
+  }
+
+  // PY-24792
+  public void testNoAlignmentForPartlyParenthesizedMultiLineReturnStatement() {
+    doTest();
+  }
+
+  // PY-24792
+  public void testNoAlignmentForSplitByBackslashesTupleInReturnStatement() {
+    doTest();
+  }
+
+  // PY-24792
+  public void testNoAlignmentForSplitByBackslashesTupleInAssignmentStatement() {
+    doTest();
+  }
+
+  // PY-24792
+  public void testNoAlignmentForSplitByBackslashesTupleInYieldStatement() {
+    doTest();
+  }
 }

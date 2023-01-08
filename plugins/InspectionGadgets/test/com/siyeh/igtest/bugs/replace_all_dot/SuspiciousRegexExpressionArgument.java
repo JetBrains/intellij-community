@@ -1,3 +1,5 @@
+import java.io.File;
+
 class SuspicousRegexExpressionArgument {{
 
   "a.s.d.f".split(<warning descr="Suspicious regex expression \".\" in call to 'split()'"><caret>"."</warning>);
@@ -6,4 +8,6 @@ class SuspicousRegexExpressionArgument {{
   "one two".split(" ");
   "[][][]".split("]");
   "{}{}{}".split("}");
+  
+  "a/b/c/d".split(<warning descr="File.separator is used as a regex; will not work on Windows">File.separator</warning>);
 }}

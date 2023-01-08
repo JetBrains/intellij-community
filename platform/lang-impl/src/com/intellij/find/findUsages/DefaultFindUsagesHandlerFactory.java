@@ -7,9 +7,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public final class DefaultFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
 
   @Internal

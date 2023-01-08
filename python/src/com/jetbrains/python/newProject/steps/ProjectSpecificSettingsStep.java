@@ -386,7 +386,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   public static List<Sdk> getValidPythonSdks(@NotNull List<Sdk> existingSdks) {
     return StreamEx
       .of(existingSdks)
-      .filter(sdk -> sdk != null && sdk.getSdkType() instanceof PythonSdkType && !PythonSdkUtil.isInvalid(sdk))
+      .filter(sdk -> sdk != null && sdk.getSdkType() instanceof PythonSdkType && PySdkExtKt.getSdkSeemsValid(sdk))
       .sorted(new PreferredSdkComparator())
       .toList();
   }

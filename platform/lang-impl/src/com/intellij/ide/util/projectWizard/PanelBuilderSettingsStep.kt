@@ -3,9 +3,9 @@ package com.intellij.ide.util.projectWizard
 
 import com.intellij.ide.wizard.NewProjectWizardBaseStep
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.PathUtil
 import java.io.File
 import javax.swing.JComponent
@@ -18,7 +18,7 @@ class PanelBuilderSettingsStep(private val wizardContext: WizardContext,
   override fun addSettingsField(label: String, field: JComponent) {
     with(builder) {
       row(label) {
-        cell(field).horizontalAlign(HorizontalAlign.FILL)
+        cell(field).align(AlignX.FILL)
       }.bottomGap(BottomGap.SMALL)
     }
   }
@@ -26,7 +26,7 @@ class PanelBuilderSettingsStep(private val wizardContext: WizardContext,
   override fun addSettingsComponent(component: JComponent) {
     with(builder) {
       row("") {
-        cell(component).horizontalAlign(HorizontalAlign.FILL)
+        cell(component).align(AlignX.FILL)
       }.bottomGap(BottomGap.SMALL)
     }
   }

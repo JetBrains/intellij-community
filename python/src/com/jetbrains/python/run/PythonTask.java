@@ -240,7 +240,7 @@ public class PythonTask {
       execution.setWorkingDir(addDirToUploadList(request, uploadedPaths, workDir));
     }
     TargetEnvironment environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
-    var commandLine = PythonScripts.buildTargetedCommandLine(execution, environment, sdk, new ArrayList<>(), false);
+    var commandLine = PythonScripts.buildTargetedCommandLine(execution, environment, sdk, new ArrayList<>());
 
     for (var volume : environment.getUploadVolumes().values()) {
       try {

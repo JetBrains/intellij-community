@@ -22,9 +22,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassRe
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class PropertiesClassReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull final PsiReferenceRegistrar registrar) {

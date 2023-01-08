@@ -31,9 +31,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class JspSpiUtil {
   private static final Logger LOG = Logger.getInstance(JspSpiUtil.class);
   @NonNls private static final String JAR_EXTENSION = "jar";

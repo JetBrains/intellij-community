@@ -15,7 +15,6 @@ import java.util.*;
 /**
  * An object holding the items to be shown in a {@link Lookup} and determining their order.
  * If accessed from multiple threads, it needs to take care of proper synchronization itself.
- * @author peter
  */
 public abstract class LookupArranger implements WeighingContext {
   protected final List<LookupElement> myItems = new ArrayList<>();

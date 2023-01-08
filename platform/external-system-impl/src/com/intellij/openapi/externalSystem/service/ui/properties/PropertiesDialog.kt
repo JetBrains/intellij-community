@@ -7,8 +7,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 
 class PropertiesDialog(
   private val project: Project,
@@ -27,7 +27,7 @@ class PropertiesDialog(
       row {
         table.setEmptyState(info.dialogEmptyState)
         cell(table.component)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
     }
   }

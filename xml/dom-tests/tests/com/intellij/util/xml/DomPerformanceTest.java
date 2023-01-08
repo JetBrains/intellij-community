@@ -32,9 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * @author peter
- */
 @HardwareAgentRequired
 public class DomPerformanceTest extends DomHardCoreTestCase {
   public void testVisitorPerformance() {

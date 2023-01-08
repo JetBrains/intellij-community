@@ -7,9 +7,6 @@ import groovy.transform.CompileStatic
 import groovy.transform.Immutable
 import junit.framework.TestCase
 
-/**
- * @author peter
- */
 @CompileStatic
 class RecursionManagerTest extends TestCase {
   private final RecursionGuard myGuard = RecursionManager.createGuard("RecursionManagerTest")

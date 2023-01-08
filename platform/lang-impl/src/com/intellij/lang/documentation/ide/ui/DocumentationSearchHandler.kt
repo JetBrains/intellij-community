@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import java.awt.BorderLayout
 
 internal class DocumentationSearchHandler(
@@ -77,7 +77,7 @@ internal class DocumentationSearchHandler(
 
     val searchPanel = panel {
       row {
-        cell(search.searchField).horizontalAlign(HorizontalAlign.FILL).resizableColumn()
+        cell(search.searchField).align(AlignX.FILL).resizableColumn()
         cell(search.matchLabel)
         cell(toolbar.component)
       }

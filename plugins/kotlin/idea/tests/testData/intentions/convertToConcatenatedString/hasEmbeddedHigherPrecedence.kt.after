@@ -1,0 +1,7 @@
+fun foo(): Int? {
+    return null
+}
+
+fun test(): String {
+    return "as Int: " + foo() as Int
+}

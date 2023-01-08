@@ -22,9 +22,6 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 final class MarkerProduction extends IntArrayList {
   private static final Logger LOG = Logger.getInstance(MarkerProduction.class);
   private static final int LINEAR_SEARCH_LIMIT = 20;

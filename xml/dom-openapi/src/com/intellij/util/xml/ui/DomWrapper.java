@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 
-/**
- * @author peter
- */
 public abstract class DomWrapper<T> {
 
   @NotNull

@@ -24,9 +24,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 public final class JavaConstructorCallElement extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
   private static final Key<JavaConstructorCallElement> WRAPPING_CONSTRUCTOR_CALL = Key.create("WRAPPING_CONSTRUCTOR_CALL");
   @NotNull private final PsiMethod myConstructor;

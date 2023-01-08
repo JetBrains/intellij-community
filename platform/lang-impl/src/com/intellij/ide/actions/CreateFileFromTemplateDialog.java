@@ -35,9 +35,6 @@ import java.util.*;
 
 import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
-/**
- * @author peter
- */
 public class CreateFileFromTemplateDialog extends DialogWrapper {
   private JTextField myNameField;
   private TemplateKindCombo myKindCombo;

@@ -39,22 +39,34 @@ sealed class ClientSessionsManager<T : ClientSession> {
 
     /**
      * Returns all project-level sessions.
-     * @param includeLocal specifies whether the local session should be included
+     * @param kind specifies what sessions should be included
      * @see ClientSession
      */
     @JvmStatic
+    fun getProjectSessions(project: Project, kind: ClientKind): List<ClientProjectSession> {
+      return getInstance(project).getSessions(kind)
+    }
+
+    @JvmStatic
+    @Deprecated("Use overload accepting ClientKind")
     fun getProjectSessions(project: Project, includeLocal: Boolean): List<ClientProjectSession> {
-      return getInstance(project).getSessions(includeLocal)
+      return getProjectSessions(project, if (includeLocal) ClientKind.ALL else ClientKind.REMOTE)
     }
 
     /**
      * Returns all application-level sessions.
-     * @param includeLocal specifies whether the local session should be included
+     * @param kind specifies what sessions should be included
      * @see ClientSession
      */
     @JvmStatic
+    fun getAppSessions(kind: ClientKind): List<ClientAppSession> {
+      return getInstance().getSessions(kind)
+    }
+
+    @Deprecated("Use overload accepting ClientKind")
+    @JvmStatic
     fun getAppSessions(includeLocal: Boolean): List<ClientAppSession> {
-      return getInstance().getSessions(includeLocal)
+      return getAppSessions(if (includeLocal) ClientKind.ALL else ClientKind.REMOTE)
     }
 
     @ApiStatus.Internal
@@ -66,12 +78,17 @@ sealed class ClientSessionsManager<T : ClientSession> {
 
   private val sessions = ConcurrentHashMap<ClientId, T>()
 
+  @Deprecated("Use overload accepting ClientKind")
   fun getSessions(includeLocal: Boolean): List<T> {
-    if (includeLocal) {
+    return getSessions(if (includeLocal) ClientKind.ALL else ClientKind.REMOTE)
+  }
+
+  fun getSessions(kind: ClientKind): List<T> {
+    if (kind == ClientKind.ALL) {
       return java.util.List.copyOf(sessions.values)
     }
     else {
-      return sessions.values.filter { !it.isLocal }
+      return sessions.values.filter { it.type.matches(kind) }
     }
   }
 
@@ -104,14 +121,14 @@ open class ClientAppSessionsManager : ClientSessionsManager<ClientAppSession>() 
    * Used for [ClientId] overriding in JetBrains Client
    */
   protected open fun createLocalSession(application: ApplicationImpl): ClientAppSessionImpl {
-    return ClientAppSessionImpl(ClientId.localId, application)
+    return ClientAppSessionImpl(ClientId.localId, ClientType.LOCAL, application)
   }
 }
 
 open class ClientProjectSessionsManager(project: Project) : ClientSessionsManager<ClientProjectSession>() {
   init {
     if (project is ProjectImpl) {
-      registerSession(project, ClientProjectSessionImpl(ClientId.localId, project))
+      registerSession(project, ClientProjectSessionImpl(ClientId.localId, ClientType.LOCAL, project))
     }
   }
 }

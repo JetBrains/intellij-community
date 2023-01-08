@@ -22,7 +22,6 @@ import java.nio.channels.spi.SelectorProvider
 import java.util.*
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.function.Supplier
 
 class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
                                         val childEventLoopGroup: EventLoopGroup,
@@ -70,7 +69,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
     suspend fun start(firstPort: Int,
                       portsCount: Int,
                       tryAnyPort: Boolean,
-                      handler: Supplier<ChannelHandler>? = null): BuiltInServer {
+                      handler: (() -> ChannelHandler)? = null): BuiltInServer {
       val provider = selectorProvider ?: SelectorProvider.provider()
       val factory = BuiltInServerThreadFactory()
       val eventLoopGroup = NioEventLoopGroup(if (PlatformUtils.isIdeaCommunity()) 2 else 3, factory, provider)
@@ -86,12 +85,12 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
     }
 
     suspend fun start(parentEventLoopGroup: EventLoopGroup,
-              childEventLoopGroup: EventLoopGroup,
-              isEventLoopGroupOwner: Boolean,
-              firstPort: Int,
-              portsCount: Int,
-              tryAnyPort: Boolean,
-              handler: Supplier<ChannelHandler>? = null): BuiltInServer {
+                      childEventLoopGroup: EventLoopGroup,
+                      isEventLoopGroupOwner: Boolean,
+                      firstPort: Int,
+                      portsCount: Int,
+                      tryAnyPort: Boolean,
+                      handler: (() -> ChannelHandler)? = null): BuiltInServer {
       val channelRegistrar = ChannelRegistrar()
       val bootstrap = createServerBootstrap(parentEventLoopGroup, childEventLoopGroup)
       configureChildHandler(bootstrap = bootstrap, channelRegistrar = channelRegistrar, channelHandler = handler)
@@ -115,11 +114,11 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
       return bootstrap
     }
 
-    fun configureChildHandler(bootstrap: ServerBootstrap, channelRegistrar: ChannelRegistrar, channelHandler: (Supplier<ChannelHandler>)?) {
+    fun configureChildHandler(bootstrap: ServerBootstrap, channelRegistrar: ChannelRegistrar, channelHandler: (() -> ChannelHandler)? = null) {
       val portUnificationServerHandler = if (channelHandler == null) PortUnificationServerHandler() else null
       bootstrap.childHandler(object : ChannelInitializer<Channel>(), ChannelHandler {
         override fun initChannel(channel: Channel) {
-          channel.pipeline().addLast(channelRegistrar, channelHandler?.get() ?: portUnificationServerHandler)
+          channel.pipeline().addLast(channelRegistrar, channelHandler?.invoke() ?: portUnificationServerHandler)
         }
       })
     }

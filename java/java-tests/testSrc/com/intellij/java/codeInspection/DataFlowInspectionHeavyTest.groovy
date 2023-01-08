@@ -27,9 +27,6 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase {
 

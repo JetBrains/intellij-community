@@ -35,9 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.function.Function;
 
-/**
- * @author peter
- */
 public class TemplateDataElementType extends IFileElementType implements ITemplateDataElementType {
   private static final Logger LOG = Logger.getInstance(TemplateDataElementType.class);
   private static final int CHECK_PROGRESS_AFTER_TOKENS = 1000;

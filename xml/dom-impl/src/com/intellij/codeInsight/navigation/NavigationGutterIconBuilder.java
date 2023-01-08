@@ -38,8 +38,6 @@ import java.util.*;
 /**
  * DOM-specific builder for {@link GutterIconRenderer}
  * and {@link com.intellij.codeInsight.daemon.LineMarkerInfo}.
- *
- * @author peter
  */
 public class NavigationGutterIconBuilder<T> {
   @NonNls private static final String PATTERN = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";

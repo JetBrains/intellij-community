@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 10);
+  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 11);
 
   public enum DialogType {automatically, manually}
 
@@ -40,13 +40,13 @@ public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
                          .collect(Collectors.toList()));
   private static final EventId3<String, String, String> TIP_SHOWN =
     GROUP.registerEvent("tip.shown",
-                        EventFields.StringValidatedByCustomRule("filename", TipInfoValidationRule.class),
+                        EventFields.StringValidatedByCustomRule("tip_id", TipInfoValidationRule.class),
                         ALGORITHM_FIELD,
                         EventFields.Version);
 
   private static final EventId2<String, Long> TIP_PERFORMED =
     GROUP.registerEvent("tip.performed",
-                        EventFields.StringValidatedByCustomRule("filename", TipInfoValidationRule.class),
+                        EventFields.StringValidatedByCustomRule("tip_id", TipInfoValidationRule.class),
                         EventFields.Long("time_passed"));
 
   @Override
@@ -55,7 +55,7 @@ public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
   }
 
   public static void triggerTipShown(@NotNull TipAndTrickBean tip, @NotNull String algorithm, @Nullable String version) {
-    TIP_SHOWN.log(tip.fileName, algorithm, version);
+    TIP_SHOWN.log(tip.getId(), algorithm, version);
   }
 
   public static void triggerDialogShown(@NotNull DialogType type) {
@@ -66,8 +66,8 @@ public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
     DIALOG_CLOSED.log(showOnStartupBefore, GeneralSettings.getInstance().isShowTipsOnStartup());
   }
 
-  public static void triggerTipUsed(@NotNull String tipFilename, long timePassed) {
-    TIP_PERFORMED.log(tipFilename, timePassed);
+  public static void triggerTipUsed(@NotNull String tipId, long timePassed) {
+    TIP_PERFORMED.log(tipId, timePassed);
   }
 
   public static class TipInfoValidationRule extends CustomValidationRule {
@@ -87,9 +87,9 @@ public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
         return info.isSafeToReport() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
       }
 
-      Object filename = context.eventData.get("filename");
-      if (filename instanceof String) {
-        TipAndTrickBean tip = TipAndTrickBean.findByFileName((String)filename);
+      Object tipId = context.eventData.get("tip_id");
+      if (tipId instanceof String) {
+        TipAndTrickBean tip = TipAndTrickBean.findById((String)tipId);
         if (tip != null) {
           PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfoByDescriptor(tip.getPluginDescriptor());
           context.setPayload(PLUGIN_INFO, pluginInfo);

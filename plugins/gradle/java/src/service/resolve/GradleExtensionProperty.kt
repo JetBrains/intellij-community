@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.ide.presentation.Presentation
+import com.intellij.psi.OriginInfoAwareElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.ui.IconManager
@@ -10,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyBase
 import javax.swing.Icon
 
 @Presentation(typeName = "Gradle Extension")
-class GradleExtensionProperty(name: String, private val type: PsiType?, context: PsiElement) : GroovyPropertyBase(name, context) {
+class GradleExtensionProperty(name: String, private val type: PsiType?, context: PsiElement) : GroovyPropertyBase(name, context), OriginInfoAwareElement {
 
   override fun getPropertyType(): PsiType? = type
 
@@ -19,4 +20,10 @@ class GradleExtensionProperty(name: String, private val type: PsiType?, context:
   }
 
   override fun toString(): String = "Gradle Extension: $name"
+
+  override fun getOriginInfo(): String = GRADLE_EXTENSION_PROPERTY
+
+  companion object {
+    internal const val GRADLE_EXTENSION_PROPERTY: String = "by gradle sync"
+  }
 }

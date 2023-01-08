@@ -8,9 +8,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 
-/**
- * @author peter
- */
 public interface GrMethodCall extends GrCallExpression, NavigationItem {
   @Nullable
   GroovyMethodCallReference getImplicitCallReference();

@@ -8,7 +8,6 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2
 import com.intellij.find.usages.api.SearchTarget
-import com.intellij.find.usages.api.UsageHandler
 import com.intellij.find.usages.api.UsageOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.buildUsageViewQuery
@@ -357,14 +356,9 @@ fun CodeInsightTestFixture.assertUnresolvedReference(signature: String, okWithNo
 fun CodeInsightTestFixture.findUsages(target: SearchTarget): MutableCollection<out Usage> {
   val project = project
 
-  //noinspection unchecked
-  @Suppress("UNCHECKED_CAST")
-  val handler = target.usageHandler as UsageHandler<Any>
   val searchScope = coalesce<SearchScope>(target.maximalSearchScope, GlobalSearchScope.allScope(project))
-  val allOptions = AllSearchOptions(UsageOptions.createOptions(searchScope), true,
-                                    handler.getCustomOptions(UsageHandler.UsageAction.FIND_USAGES))
-
-  return buildUsageViewQuery(getProject(), target, handler, allOptions).findAll()
+  val allOptions = AllSearchOptions(UsageOptions.createOptions(searchScope), true)
+  return buildUsageViewQuery(getProject(), target, allOptions).findAll()
 }
 
 @JvmOverloads
@@ -415,6 +409,19 @@ fun CodeInsightTestFixture.checkListByFile(actualList: List<String>, @TestDataFi
   }
   else if (expectedContents != actualContents) {
     throw FileComparisonFailure(expectedFile, expectedContents, actualContents, path)
+  }
+}
+
+fun CodeInsightTestFixture.checkTextByFile(actualContents: String, @TestDataFile expectedFile: String) {
+  val path = "$testDataPath/$expectedFile"
+  val file = File(path)
+  if (!file.exists() && file.createNewFile()) {
+    Logger.getInstance("#WebTestUtilKt").warn("File $file has been created.")
+  }
+  val actualContentsTrimmed = actualContents.trim() + "\n"
+  val expectedContents = FileUtil.loadFile(file, "UTF-8", true).trim() + "\n"
+  if (expectedContents != actualContentsTrimmed) {
+    throw FileComparisonFailure(expectedFile, expectedContents, actualContentsTrimmed, path)
   }
 }
 

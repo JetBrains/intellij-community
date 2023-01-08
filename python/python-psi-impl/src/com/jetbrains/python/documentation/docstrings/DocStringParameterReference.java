@@ -157,7 +157,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     TextRange range = getRangeInElement();
-    Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(range.substring(myElement.getText()));
+    Pair<String, String> quotes = PyStringLiteralCoreUtil.getQuotes(range.substring(myElement.getText()));
 
     if (quotes != null) {
       range = TextRange.create(range.getStartOffset() + quotes.first.length(), range.getEndOffset() - quotes.second.length());

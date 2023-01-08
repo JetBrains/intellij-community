@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author peter
- */
 public interface PsiPresentableMetaData extends PsiMetaData {
   @Nullable
   @Nls

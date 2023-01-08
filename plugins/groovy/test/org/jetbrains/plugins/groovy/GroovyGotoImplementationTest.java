@@ -29,9 +29,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 
-/**
- * @author peter
- */
 public class GroovyGotoImplementationTest extends JavaCodeInsightFixtureTestCase {
 
   public void testNoGotoImplementationOutsideSourceRoot() throws Throwable {

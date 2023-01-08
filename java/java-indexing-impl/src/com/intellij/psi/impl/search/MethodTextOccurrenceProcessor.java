@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-/**
- * @author peter
- */
 public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
   private static final PsiReferenceService ourReferenceService = PsiReferenceService.getService();
   private final PsiMethod[] myMethods;

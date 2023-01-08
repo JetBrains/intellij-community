@@ -266,6 +266,10 @@ public class PythonSdkUtil {
     return false;
   }
 
+  /**
+   * @deprecated use PySdkExt.isValid
+   */
+  @Deprecated
   public static boolean isInvalid(@NotNull Sdk sdk) {
     if (isRemote(sdk)) {
       return PyRemoteSdkValidator.Companion.isInvalid(sdk);
@@ -517,7 +521,7 @@ public class PythonSdkUtil {
   }
 
   @Nullable
-  private static VirtualFile findCondaMeta(@Nullable String sdkPath) {
+  public static VirtualFile findCondaMeta(@Nullable String sdkPath) {
     if (sdkPath == null) {
       return null;
     }

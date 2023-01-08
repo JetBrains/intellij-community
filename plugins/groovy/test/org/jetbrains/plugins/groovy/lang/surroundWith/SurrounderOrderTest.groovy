@@ -20,9 +20,6 @@ import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.WriteAction
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author peter
- */
 class SurrounderOrderTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testStatementSurrounders() {

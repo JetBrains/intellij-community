@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class JavaPackageFindUsagesOptions extends JavaFindUsagesOptions {
   public boolean isClassesUsages;
   public boolean isIncludeSubpackages = true;

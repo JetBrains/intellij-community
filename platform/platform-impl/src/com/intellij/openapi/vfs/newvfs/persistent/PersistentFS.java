@@ -1,12 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.DiskQueryRelay;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -108,16 +105,6 @@ public abstract class PersistentFS extends ManagingFS {
   @Deprecated(forRemoval = true)
   public void processEvents(@NotNull List<? extends @NotNull VFileEvent> events) {
     RefreshQueue.getInstance().processEvents(false, events);
-  }
-
-  public static @NotNull NewVirtualFileSystem replaceWithNativeFS(final @NotNull NewVirtualFileSystem fs) {
-    if (SystemInfo.isWindows &&
-        !(fs instanceof Win32LocalFileSystem) &&
-        fs.getProtocol().equals(LocalFileSystem.PROTOCOL) &&
-        Win32LocalFileSystem.isAvailable()) {
-      return Win32LocalFileSystem.getWin32Instance();
-    }
-    return fs;
   }
 
   // 'true' if the FS persisted at least one child, or it has never been queried for children

@@ -16,7 +16,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -26,7 +28,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -43,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -77,7 +80,6 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     connection.subscribe(EditorColorsManager.TOPIC, __ -> colorsChanged());
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     multicaster.addDocumentListener(new MyDocumentListener(), myProject);
-    multicaster.addEditorMouseListener(new MyEditorMouseListener(), myProject);
 
     mySortedState = UISettings.getInstance().getSortBookmarks();
     connection.subscribe(UISettingsListener.TOPIC, uiSettings -> {
@@ -505,29 +507,6 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
   private void colorsChanged() {
     for (Bookmark bookmark : myBookmarks.values()) {
       bookmark.updateHighlighter();
-    }
-  }
-
-  private class MyEditorMouseListener implements EditorMouseListener {
-    @Override
-    public void mouseClicked(@NotNull final EditorMouseEvent e) {
-      if (e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA) return;
-      if (e.getMouseEvent().isPopupTrigger()) return;
-      if ((e.getMouseEvent().getModifiers() & (SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)) == 0) return;
-
-      Editor editor = e.getEditor();
-      int line = e.getLogicalPosition().line;
-
-      Document document = editor.getDocument();
-
-      Bookmark bookmark = findEditorBookmark(document, line);
-      if (bookmark == null) {
-        addEditorBookmark(editor, line);
-      }
-      else {
-        removeBookmark(bookmark);
-      }
-      e.consume();
     }
   }
 

@@ -260,7 +260,9 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
       if (elements[0].getContainingFile() instanceof PsiCodeFragment) {
         return false;
       }
-      for (FoldingBuilder each : LanguageFolding.INSTANCE.allForLanguage(elements[0].getLanguage())) {
+      Language language = elements[0].getLanguage();
+      if (!myProvider.isSupported(language)) return false;
+      for (FoldingBuilder each : LanguageFolding.INSTANCE.allForLanguage(language)) {
         if (myProvider.isSupportedBy(each)) return true;
       }
       return false;

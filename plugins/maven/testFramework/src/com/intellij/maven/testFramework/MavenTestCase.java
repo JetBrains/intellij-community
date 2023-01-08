@@ -3,6 +3,9 @@ package com.intellij.maven.testFramework;
 
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -675,6 +678,19 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   private static String getTestMavenHome() {
     return System.getProperty("idea.maven.test.home");
+  }
+
+  protected DataContext createTestDataContext(VirtualFile pomFile) {
+    final DataContext defaultContext = DataManager.getInstance().getDataContext();
+    return dataId -> {
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        return myProject;
+      }
+      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+        return new VirtualFile[]{pomFile};
+      }
+      return defaultContext.getData(dataId);
+    };
   }
 
   private static class SetWithToString<T> extends AbstractSet<T> {

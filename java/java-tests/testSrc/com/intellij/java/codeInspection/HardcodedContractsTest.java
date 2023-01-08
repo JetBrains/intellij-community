@@ -21,9 +21,6 @@ import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class HardcodedContractsTest extends DataFlowInspectionTestCase {
   @NotNull
   @Override

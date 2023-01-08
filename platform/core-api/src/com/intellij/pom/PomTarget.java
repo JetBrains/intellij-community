@@ -18,8 +18,6 @@ package com.intellij.pom;
 /**
  * Accompanied by a PSI element via {@link com.intellij.pom.references.PomService#convertToPsi(PomTarget)}. All references to this target
  * should resolve to that PSI element.
- *
- * @author peter
  */
 public interface PomTarget extends Navigatable {
   PomTarget[] EMPTY_ARRAY = new PomTarget[0];

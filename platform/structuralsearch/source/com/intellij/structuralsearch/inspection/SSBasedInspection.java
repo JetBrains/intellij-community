@@ -386,7 +386,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return result;
   }
 
-  private Matcher buildCompiledConfiguration(Configuration configuration, @NotNull Project project) {
+  private static Matcher buildCompiledConfiguration(Configuration configuration, @NotNull Project project) {
     try {
       final MatchOptions matchOptions = configuration.getMatchOptions();
       final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, false, true);

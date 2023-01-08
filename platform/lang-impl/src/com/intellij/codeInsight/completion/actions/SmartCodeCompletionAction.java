@@ -22,9 +22,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class SmartCodeCompletionAction extends BaseCodeCompletionAction{
 
   @Override

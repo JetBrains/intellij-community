@@ -28,9 +28,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 class DomElementResolveProblemDescriptorImpl extends DomElementProblemDescriptorImpl implements DomElementResolveProblemDescriptor {
   @NotNull private final PsiReference myReference;
 

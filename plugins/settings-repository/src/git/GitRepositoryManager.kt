@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.Disposable
@@ -108,8 +108,8 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
 
   override fun hasUpstream() = getUpstream() != null
 
-  override fun addToIndex(file: Path, path: String, content: ByteArray, size: Int) {
-    repository.edit(AddLoadedFile(path, content, size, file.lastModified().toMillis()))
+  override fun addToIndex(file: Path, path: String, content: ByteArray) {
+    repository.edit(AddLoadedFile(path, content, file.lastModified().toMillis()))
   }
 
   override fun deleteFromIndex(path: String, isFile: Boolean) {

@@ -33,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class JavaClassReferenceCompletionContributor extends CompletionContributor implements DumbAware {
   @Override
   public void duringCompletion(@NotNull CompletionInitializationContext context) {

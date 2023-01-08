@@ -25,6 +25,8 @@ public class Group implements KeymapGroup {
 
   private final Set<String> myIds = new HashSet<>();
 
+  private boolean myForceShowAsPopup;
+
   public Group(@NlsActions.ActionText String name, String id, Icon icon) {
     myName = name;
     myId = id;
@@ -47,6 +49,14 @@ public class Group implements KeymapGroup {
   @Nullable
   public String getId() {
     return myId;
+  }
+
+  public boolean isForceShowAsPopup() {
+    return myForceShowAsPopup;
+  }
+
+  public void setForceShowAsPopup(boolean forceShowAsPopup) {
+    myForceShowAsPopup = forceShowAsPopup;
   }
 
   @Override

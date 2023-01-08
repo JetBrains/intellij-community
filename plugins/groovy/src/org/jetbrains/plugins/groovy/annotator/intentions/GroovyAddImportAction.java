@@ -27,9 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement<?>, GrReferenceElement<?>> {
   private final GrReferenceElement<?> ref;
 

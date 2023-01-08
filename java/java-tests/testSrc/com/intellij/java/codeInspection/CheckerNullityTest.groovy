@@ -4,9 +4,6 @@ package com.intellij.java.codeInspection
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
-/**
- * @author peter
- */
 @CompileStatic
 class CheckerNullityTest extends LightJavaCodeInsightFixtureTestCase {
   @Override

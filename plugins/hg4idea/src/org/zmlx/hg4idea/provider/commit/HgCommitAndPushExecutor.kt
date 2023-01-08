@@ -24,6 +24,8 @@ class HgCommitAndPushExecutor : CommitExecutorWithRichDescription {
 
   override fun useDefaultAction(): Boolean = false
 
+  override fun requiresSyncCommitChecks(): Boolean = true
+
   override fun getId(): String = ID
 
   override fun createCommitSession(commitContext: CommitContext): CommitSession {

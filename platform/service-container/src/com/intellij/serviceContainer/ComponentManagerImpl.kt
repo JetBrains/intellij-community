@@ -18,7 +18,6 @@ import com.intellij.openapi.extensions.*
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
@@ -209,7 +208,7 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  final override fun getMessageBus(): MessageBus {
+  override fun getMessageBus(): MessageBus {
     if (containerState.get() >= ContainerState.DISPOSE_IN_PROGRESS) {
       ProgressManager.checkCanceled()
       throw AlreadyDisposedException("Already disposed: $this")

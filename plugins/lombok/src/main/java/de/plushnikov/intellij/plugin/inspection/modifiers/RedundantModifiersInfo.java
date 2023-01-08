@@ -16,7 +16,7 @@ public class RedundantModifiersInfo {
   public RedundantModifiersInfo(@NotNull RedundantModifiersInfoType redundantModifiersInfoType,
                                 @PsiModifier.ModifierConstant @Nullable String dontRunOnModifier,
                                 @InspectionMessage @NotNull String description,
-                                @PsiModifier.ModifierConstant @NotNull String... modifiers) {
+                                @PsiModifier.ModifierConstant String @NotNull... modifiers) {
     this.redundantModifiersInfoType = redundantModifiersInfoType;
     this.description = description;
     this.dontRunOnModifier = dontRunOnModifier;

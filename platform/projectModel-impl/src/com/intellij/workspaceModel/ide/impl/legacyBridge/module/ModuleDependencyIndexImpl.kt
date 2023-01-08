@@ -43,19 +43,6 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
   init {
     if (!project.isDefault) {
       val messageBusConnection = project.messageBus.connect(this)
-      messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
-        override fun changed(event: VersionedStorageChange) {
-          if (project.isDisposed) return
-
-          // Roots changed event should be fired for the global libraries linked with module
-          val moduleChanges = event.getChanges(ModuleEntity::class.java)
-          for (change in moduleChanges) {
-            change.oldEntity?.let { removeTrackedLibrariesAndJdkFromEntity(it) }
-            change.newEntity?.let { addTrackedLibraryAndJdkFromEntity(it) }
-          }
-        }
-      })
-
       messageBusConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, jdkChangeListener)
     }
   }
@@ -112,7 +99,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
     moduleEntity.dependencies.forEach {
       when {
-        it is ModuleDependencyItem.Exportable.LibraryDependency && it.library.tableId is LibraryTableId.GlobalLibraryTableId -> {
+        it is ModuleDependencyItem.Exportable.LibraryDependency && it.library.tableId !is LibraryTableId.ModuleLibraryTableId -> {
           val libraryName = it.library.name
           val libraryLevel = it.library.tableId.level
           val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project) ?: return@forEach
@@ -243,6 +230,9 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
 
     override fun jdkAdded(jdk: Sdk) {
       if (hasDependencyOn(jdk)) {
+        if (watchedSdks.isEmpty()) {
+          eventDispatcher.multicaster.firstDependencyOnSdkAdded()
+        }
         eventDispatcher.multicaster.referencedSdkAdded(jdk)
         if (watchedSdks.add(jdk.rootProvider)) {
           eventDispatcher.multicaster.addedDependencyOn(jdk)
@@ -280,13 +270,21 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       if (hasDependencyOn(jdk)) {
         eventDispatcher.multicaster.referencedSdkRemoved(jdk)
       }
+      if (watchedSdks.isEmpty()) {
+        eventDispatcher.multicaster.lastDependencyOnSdkRemoved()
+      }
     }
 
     fun addTrackedJdk(sdkDependency: ModuleDependencyItem, moduleEntity: ModuleEntity) {
       val sdk = findSdk(sdkDependency)
-      if (sdk != null && watchedSdks.add(sdk.rootProvider)) {
-        eventDispatcher.multicaster.addedDependencyOn(sdk)
-        sdk.rootProvider.addRootSetChangedListener(rootSetChangeListener)
+      if (sdk != null) {
+        if (watchedSdks.isEmpty()) {
+          eventDispatcher.multicaster.firstDependencyOnSdkAdded()
+        }
+        if (watchedSdks.add(sdk.rootProvider)) {
+          eventDispatcher.multicaster.addedDependencyOn(sdk)
+          sdk.rootProvider.addRootSetChangedListener(rootSetChangeListener)
+        }
       }
       sdkDependencies.putValue(sdkDependency, moduleEntity.persistentId)
     }
@@ -297,6 +295,9 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       if (sdk != null && !hasDependencyOn(sdk) && watchedSdks.remove(sdk.rootProvider)) {
         sdk.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
         eventDispatcher.multicaster.removedDependencyOn(sdk)
+        if (watchedSdks.isEmpty()) {
+          eventDispatcher.multicaster.lastDependencyOnSdkRemoved()
+        }
       }
     }
 
@@ -329,6 +330,17 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     libraryTablesListener.unsubscribe()
     jdkChangeListener.unsubscribe()
     setupTrackedLibrariesAndJdks()
+  }
+
+  fun workspaceModelChanged(event: VersionedStorageChange){
+    if (project.isDisposed) return
+
+    // Roots changed event should be fired for the global libraries linked with module
+    val moduleChanges = event.getChanges(ModuleEntity::class.java)
+    for (change in moduleChanges) {
+      change.oldEntity?.let { removeTrackedLibrariesAndJdkFromEntity(it) }
+      change.newEntity?.let { addTrackedLibraryAndJdkFromEntity(it) }
+    }
   }
 
 }

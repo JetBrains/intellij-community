@@ -10,9 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author peter
- */
 public enum RebuildStatus {
   OK,
   REQUIRES_REBUILD,

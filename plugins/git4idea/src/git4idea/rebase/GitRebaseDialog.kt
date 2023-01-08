@@ -26,7 +26,6 @@ import com.intellij.ui.InplaceButton
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.JBVerticalGaps
 import com.intellij.util.IconUtil
 import com.intellij.util.asSafely
@@ -331,7 +330,7 @@ internal class GitRebaseDialog(private val project: Project,
           cell(rootField)
             .columns(COLUMNS_SHORT)
             .resizableColumn()
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
 
         cell(createCmdLabel())
@@ -339,12 +338,12 @@ internal class GitRebaseDialog(private val project: Project,
         cell(ontoLabel)
 
         cell(ontoField)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .resizableColumn()
           .applyToComponent { setMinimumAndPreferredWidth(JBUI.scale(if (showRootField()) SHORT_FIELD_LENGTH else LONG_FIELD_LENGTH)) }
 
         topUpstreamFieldPlaceholder = placeholder()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .resizableColumn()
 
         topBranchFieldPlaceholder = placeholder()
@@ -352,10 +351,10 @@ internal class GitRebaseDialog(private val project: Project,
 
       row {
         bottomUpstreamFieldPlaceholder = placeholder()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .resizableColumn()
         bottomBranchFieldPlaceholder = placeholder()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .resizableColumn()
       }.customize(JBVerticalGaps(0, 6))
 

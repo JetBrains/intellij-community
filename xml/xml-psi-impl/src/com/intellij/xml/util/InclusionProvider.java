@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 
-/**
-* @author peter
-*/
 final class InclusionProvider implements CachedValueProvider<PsiElement[]> {
   private static final Logger LOG = Logger.getInstance(InclusionProvider.class);
   private final XmlTag myXincludeTag;

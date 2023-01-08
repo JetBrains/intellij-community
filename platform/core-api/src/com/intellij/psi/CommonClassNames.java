@@ -3,9 +3,6 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public interface CommonClassNames {
   String DEFAULT_PACKAGE = "java.lang";
 

@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.ide.navbar.ide.NavBarIdeUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -48,7 +49,7 @@ final class ActivateNavigationBarAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     UISettings settings = UISettings.getInstance();
-    final boolean enabled = project != null && settings.getShowNavigationBar() && !settings.getPresentationMode();
+    final boolean enabled = project != null && NavBarIdeUtil.isNavbarShown(settings);
     e.getPresentation().setEnabled(enabled);
   }
 

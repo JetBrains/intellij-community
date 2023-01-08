@@ -23,9 +23,7 @@ import java.util.List;
 
 /**
  * A helper object for {@link RecursionManager}. It's obtained from {@link RecursionManager#createGuard(String)}.
- *
- * @author peter
-*/
+ */
 public abstract class RecursionGuard<Key> {
 
   /**

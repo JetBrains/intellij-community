@@ -824,7 +824,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
     @NotNull
     @Override
-    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+    protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       DefaultActionGroup group = new DefaultActionGroup();
       for (DiffTool tool : getAvailableFittedTools()) {
         group.add(new DiffToolToggleAction(tool));

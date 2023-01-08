@@ -11,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public final class ApproximateResolver {
   /**
    * Tries to calculate the type of a given expression using lightweight resolve: no type inference for method calls, no exact candidate selection, works only with raw types.

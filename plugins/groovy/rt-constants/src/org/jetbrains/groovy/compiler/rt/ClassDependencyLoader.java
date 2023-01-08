@@ -6,9 +6,6 @@ import java.lang.reflect.*;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class ClassDependencyLoader {
   private final Set<Class<?>> myVisited = new HashSet<Class<?>>();
 

@@ -33,7 +33,7 @@ class WslSyncTest(private val linToWin: Boolean) {
       private set
 
     override fun before() {
-      dir = wslRule.wsl.runCommand("mktemp", "-d")
+      dir = wslRule.wsl.runCommand("mktemp", "-d").getOrThrow()
     }
 
     override fun after() {

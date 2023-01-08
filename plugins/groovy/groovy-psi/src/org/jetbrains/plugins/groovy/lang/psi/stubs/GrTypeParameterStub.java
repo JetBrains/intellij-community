@@ -8,9 +8,6 @@ import com.intellij.util.io.StringRef;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 
-/**
- * @author peter
- */
 public class GrTypeParameterStub extends StubBase<GrTypeParameter> implements NamedStub<GrTypeParameter> {
   private final StringRef myName;
 

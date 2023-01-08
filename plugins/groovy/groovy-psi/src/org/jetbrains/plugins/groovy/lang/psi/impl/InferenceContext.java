@@ -20,9 +20,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Function;
 
-/**
- * @author peter
- */
 public interface InferenceContext {
 
   InferenceContext TOP_CONTEXT = new TopInferenceContext();

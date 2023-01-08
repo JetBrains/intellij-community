@@ -30,7 +30,6 @@ import java.util.Map;
  * @see #get(Key) 
  * @see #put(Key, Object)
  * @see #ProcessingContext(SharedProcessingContext) 
- * @author peter
  */
 public class ProcessingContext {
   private Map<Object, Object> myMap;

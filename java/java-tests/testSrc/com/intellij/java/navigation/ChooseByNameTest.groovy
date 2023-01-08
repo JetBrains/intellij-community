@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
-/**
- * @author peter
- */
 class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
   static final ELEMENTS_LIMIT = 30
 

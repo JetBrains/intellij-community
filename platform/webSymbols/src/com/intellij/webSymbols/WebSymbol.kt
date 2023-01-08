@@ -34,124 +34,96 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
 
   val kind: SymbolKind
 
-  @JvmDefault
   val matchedName: String
     get() = ""
 
-  @JvmDefault
   override fun getModificationCount(): Long = 0
 
   override fun createPointer(): Pointer<out WebSymbol>
 
-  @JvmDefault
   val psiContext: PsiElement?
     get() = null
 
-  @JvmDefault
   @get:JvmName("isCompleteMatch")
   val completeMatch: Boolean
     get() = true
 
-  @JvmDefault
   val nameSegments: List<WebSymbolNameSegment>
     get() = listOf(WebSymbolNameSegment(0, matchedName.length, this))
 
-  @JvmDefault
   val contextContainers: Sequence<WebSymbolsContainer>
     get() = sequenceOf(this)
 
-  @JvmDefault
   @get:NlsSafe
   val name: String
     get() = matchedName
 
-  @JvmDefault
   val description: String?
     get() = null
 
-  @JvmDefault
   val descriptionSections: Map<String, String>
     get() = emptyMap()
 
-  @JvmDefault
   val docUrl: String?
     get() = null
 
-  @JvmDefault
   val icon: Icon?
     get() = null
 
-  @JvmDefault
   @get:JvmName("isDeprecated")
   val deprecated: Boolean
     get() = false
 
-  @JvmDefault
   @get:JvmName("isExperimental")
   val experimental: Boolean
     get() = false
 
-  @JvmDefault
   @get:JvmName("isVirtual")
   val virtual: Boolean
     get() = false
 
-  @JvmDefault
   @get:JvmName("isAbstract")
   val abstract: Boolean
     get() = false
 
-  @JvmDefault
   @get:JvmName("isExtension")
   val extension: Boolean
     get() = false
 
-  @JvmDefault
   @get:JvmName("isRequired")
   val required: Boolean?
     get() = null
 
-  @JvmDefault
   val defaultValue: String?
     get() = null
 
-  @JvmDefault
   val priority: Priority?
     get() = null
 
-  @JvmDefault
   val proximity: Int?
     get() = null
 
-  @JvmDefault
   val type: Any?
     get() = null
 
-  @JvmDefault
   val attributeValue: WebSymbolHtmlAttributeValue?
     get() = null
 
-  @JvmDefault
   val pattern: WebSymbolsPattern?
     get() = null
 
-  @JvmDefault
   val properties: Map<String, Any>
     get() = emptyMap()
 
-  @JvmDefault
   val documentation: WebSymbolDocumentation?
     get() = WebSymbolDocumentation.create(this)
 
-  @JvmDefault
   override fun getDocumentationTarget(): DocumentationTarget =
     WebSymbolDocumentationTargetImpl(this)
 
-  @JvmDefault
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     emptyList()
 
-  @JvmDefault
   override fun getSymbolPresentation(): SymbolPresentation {
     @Suppress("HardCodedStringLiteral")
     val description = if (name.contains(' ')) {
@@ -172,7 +144,6 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
     return SymbolPresentation.create(icon, name, description, description)
   }
 
-  @JvmDefault
   val presentation: TargetPresentation
     get() = symbolPresentation.let {
       TargetPresentation.builder(it.shortDescription)
@@ -180,15 +151,12 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
         .presentation()
     }
 
-  @JvmDefault
   fun isEquivalentTo(symbol: Symbol): Boolean =
     this == symbol
 
-  @JvmDefault
   fun adjustNameForRefactoring(registry: WebSymbolsRegistry, newName: String, occurence: String): String =
     registry.namesProvider.adjustRename(namespace, kind, matchedName, newName, occurence)
 
-  @JvmDefault
   fun validateName(name: String): String? = null
 
   enum class Priority(val value: Double) {

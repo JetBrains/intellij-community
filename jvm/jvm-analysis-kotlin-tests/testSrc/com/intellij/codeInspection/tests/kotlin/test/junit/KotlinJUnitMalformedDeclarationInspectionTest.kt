@@ -52,7 +52,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class A {
         @org.junit.jupiter.api.Nested
-        class <warning descr="Only non-static nested classes can serve as '@Nested' test classes">B</warning> { }
+        class <warning descr="Class 'B' annotated with '@Nested' should be non-static">B</warning> { }
       }
     """.trimIndent())
   }
@@ -106,6 +106,10 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ValueSource(strings = ["title"])
         fun implicitConversionClass(book: Book) { }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.ValueSource(strings = ["6.7.1", "7.3.3", "7.5.1"])
+        fun test(gradleVersion: String, @org.junit.jupiter.api.io.TempDir projectDir: java.io.File) { }
 
         class Book(val title: String) { }
       }

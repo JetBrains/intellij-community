@@ -22,9 +22,6 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author peter
- */
 public final class StaticGenericInfoBuilder {
   private static final Set<Class<?>> ADDER_PARAMETER_TYPES = Set.of(Class.class, int.class);
   private static final Logger LOG = Logger.getInstance(StaticGenericInfoBuilder.class);

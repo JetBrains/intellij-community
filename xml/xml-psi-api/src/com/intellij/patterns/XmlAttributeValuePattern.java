@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public class XmlAttributeValuePattern extends XmlElementPattern<XmlAttributeValue,XmlAttributeValuePattern>{
   static final XmlAttributeValuePattern XML_ATTRIBUTE_VALUE_PATTERN = new XmlAttributeValuePattern(
     new InitialPatternCondition<>(XmlAttributeValue.class) {

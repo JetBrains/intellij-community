@@ -31,9 +31,6 @@ import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
-/**
- * @author peter
- */
 class DumbServiceImplTest extends BasePlatformTestCase {
   @Override
   protected void setUp() throws Exception {

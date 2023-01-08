@@ -32,9 +32,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class DomSimpleValuesTest extends DomTestCase {
 
   private MyElement createElement(final String xml) throws IncorrectOperationException {

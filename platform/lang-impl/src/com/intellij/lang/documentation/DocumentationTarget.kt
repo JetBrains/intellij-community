@@ -35,13 +35,11 @@ interface DocumentationTarget {
    * Returned presentation is used to render the tab name and icon in the tool window,
    * and to render location info under the documentation in the popup.
    */
-  val presentation: TargetPresentation
-    @RequiresReadLock
-    @RequiresBackgroundThread
-    get
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  fun presentation(): TargetPresentation
 
   @Suppress("DEPRECATION") // deprecated JvmDefault
-  @JvmDefault
   val navigatable: Navigatable?
     @RequiresReadLock
     @RequiresBackgroundThread
@@ -56,7 +54,6 @@ interface DocumentationTarget {
    */
   @RequiresReadLock
   @RequiresBackgroundThread
-  @JvmDefault
   fun computeDocumentationHint(): @HintText String? = null
 
   /**
@@ -72,6 +69,5 @@ interface DocumentationTarget {
    */
   @RequiresReadLock
   @RequiresBackgroundThread
-  @JvmDefault
   fun computeDocumentation(): DocumentationResult? = null
 }

@@ -25,9 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
 import org.jetbrains.plugins.groovy.util.Slow
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author peter
- */
 @Slow
 class GroovyStressPerformanceTest extends LightGroovyTestCase {
   final String basePath = TestUtils.testDataPath + 'highlighting/'

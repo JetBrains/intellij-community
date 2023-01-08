@@ -14,9 +14,6 @@ import com.intellij.psi.PsiWhiteSpace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class ParenthesesInsertHandler<T extends LookupElement> implements InsertHandler<T> {
   public static final ParenthesesInsertHandler<LookupElement> WITH_PARAMETERS = new ParenthesesInsertHandler<>() {
     @Override

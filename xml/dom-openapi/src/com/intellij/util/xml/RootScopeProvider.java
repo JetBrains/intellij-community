@@ -17,9 +17,6 @@ package com.intellij.util.xml;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class RootScopeProvider extends ScopeProvider{
 
   @Override

@@ -13,9 +13,6 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class PsiTypeCanonicalLookupElement extends LookupElement {
   private final PsiType myType;
   private final String myPresentableText;

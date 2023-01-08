@@ -17,9 +17,6 @@ package com.intellij.openapi.vcs;
 
 import org.jetbrains.annotations.Nls;
 
-/**
- * @author peter
- */
 public class VcsConnectionProblem extends VcsException {
   public VcsConnectionProblem(@Nls String message) {
     super(message);

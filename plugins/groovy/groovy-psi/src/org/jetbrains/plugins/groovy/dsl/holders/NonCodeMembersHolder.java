@@ -29,9 +29,6 @@ import java.util.function.Consumer;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.shouldProcessMethods;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.shouldProcessProperties;
 
-/**
- * @author peter
- */
 public class NonCodeMembersHolder implements CustomMembersHolder {
 
   private static final Logger LOG = Logger.getInstance(NonCodeMembersHolder.class);
