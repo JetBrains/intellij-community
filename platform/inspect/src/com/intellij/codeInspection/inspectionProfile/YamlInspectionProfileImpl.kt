@@ -16,6 +16,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory
 import org.jdom.Element
 import java.io.File
+import java.io.Reader
 import java.lang.IllegalArgumentException
 
 class YamlInspectionConfigImpl(override val inspection: String,
@@ -78,11 +79,12 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
   companion object {
     @JvmStatic
     fun loadFrom(project: Project,
-                 filepath: String = "${getDefaultProfileDirectory(project)}/profile.yaml",
+                 reader: Reader,
+                 rootPath: String,
                  toolsSupplier: InspectionToolsSupplier = InspectionToolRegistrar.getInstance(),
                  profileManager: BaseInspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
     ): YamlInspectionProfileImpl {
-      val profile = readConfig(project, filepath)
+      val profile = readConfig(project, reader, rootPath)
       val baseProfile = findBaseProfile(profileManager, profile.baseProfile)
       val configurations = profile.inspections.map(::createInspectionConfig)
       val groupProvider = CompositeGroupProvider()
@@ -96,6 +98,17 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       }
       groupProvider.addProvider(customGroupProvider)
       return YamlInspectionProfileImpl(profile.name, toolsSupplier, profileManager, baseProfile, configurations, groups, groupProvider)
+    }
+
+    @JvmStatic
+    fun loadFrom(project: Project,
+                 filePath: String = "${getDefaultProfileDirectory(project)}/profile.yaml",
+                 toolsSupplier: InspectionToolsSupplier = InspectionToolRegistrar.getInstance(),
+                 profileManager: BaseInspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
+    ): YamlInspectionProfileImpl {
+      val configFile = File(filePath).absoluteFile
+      require(configFile.exists()) { "File does not exist: ${configFile.canonicalPath}" }
+      return loadFrom(project, configFile.reader(), configFile.parent, toolsSupplier, profileManager)
     }
 
     private fun findBaseProfile(profileManager: InspectionProfileManager, profileName: String?): InspectionProfileImpl {

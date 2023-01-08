@@ -7,6 +7,7 @@ import org.yaml.snakeyaml.constructor.CustomClassLoaderConstructor
 import org.yaml.snakeyaml.introspector.BeanAccess
 import org.yaml.snakeyaml.representer.Representer
 import java.io.File
+import java.io.Reader
 
 class YamlInspectionProfileRaw(
   val baseProfile: String? = null,
@@ -31,8 +32,8 @@ class YamlInspectionConfigRaw(
 )
 
 
-fun readConfig(project: Project, filePath: String): YamlInspectionProfileRaw {
-  val merged = readRaw(project, filePath)
+fun readConfig(project: Project, reader: Reader, rootPath: String): YamlInspectionProfileRaw {
+  val merged = readRaw(project, reader, rootPath)
   val representer = Representer()
   representer.propertyUtils.isSkipMissingProperties = true
   val constr = CustomClassLoaderConstructor(YamlInspectionProfileRaw::class.java, YamlInspectionProfileRaw::class.java.classLoader)
@@ -60,12 +61,16 @@ private fun merge(first: Map<String, *>, second: Map<String, *>): Map<String, *>
   }
 }
 
-private fun readRaw(project: Project, filePath: String): Map<String, *> {
+private fun readRaw(project: Project, reader: Reader, rootPath: String): Map<String, *> {
+  val yamlReader = Yaml()
+  val rawConfig: Map<String, *> = yamlReader.load(reader)
+  val includedConfigs = (rawConfig["include"] as? List<*>)?.filterIsInstance(String::class.java).orEmpty()
+  val includedPaths = includedConfigs.map { filename -> "${rootPath}/$filename" }
+  return includedPaths.fold(rawConfig) { accumulator, file -> merge(accumulator, readRawFile(project, file)) }
+}
+
+private fun readRawFile(project: Project, filePath: String): Map<String, *> {
   val configFile = File(filePath).absoluteFile
   require(configFile.exists()) { "File does not exist: ${configFile.canonicalPath}" }
-  val yamlReader = Yaml()
-  val rawConfig: Map<String, *> = yamlReader.load(configFile.reader())
-  val includedConfigs = (rawConfig["include"] as? List<*>)?.filterIsInstance(String::class.java).orEmpty()
-  val includedPaths = includedConfigs.map { filename -> "${configFile.parent}/$filename" }
-  return includedPaths.fold(rawConfig) { accumulator, file -> merge(accumulator, readRaw(project, file)) }
+  return readRaw(project, configFile.reader(), configFile.parent)
 }
