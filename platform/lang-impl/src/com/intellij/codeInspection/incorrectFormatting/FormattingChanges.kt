@@ -69,9 +69,14 @@ fun detectFormattingChanges(file: PsiFile): FormattingChanges? {
 
   val preFormat = fileDoc.text
   val postFormat = copyDoc.text
-  val changes = diffWhitespace(preFormat,
-                               postFormat,
-                               WhiteSpaceFormattingStrategyFactory.getStrategy(baseLanguage))
+  val changes = try {
+    diffWhitespace(preFormat,
+                   postFormat,
+                   WhiteSpaceFormattingStrategyFactory.getStrategy(baseLanguage))
+  } catch (e: NonWhitespaceChangeException) {
+    throw IllegalArgumentException(
+      "Non-whitespace change: pre-format=%#04x, post-format=%#04x, lang=%s".format(e.pre.code, e.post.code, file.language.id))
+  }
   return FormattingChanges(preFormat, postFormat, changes)
 }
 
@@ -111,7 +116,7 @@ private fun diffWhitespace(pre: CharSequence,
       j = jWsEnd
     }
     else if (pre[i] != post[j]) {
-      throw IllegalArgumentException("Non-whitespace change")
+      throw NonWhitespaceChangeException(pre[i], post[j])
     }
     else {
       ++i
@@ -120,3 +125,5 @@ private fun diffWhitespace(pre: CharSequence,
   }
   return mismatches
 }
+
+private data class NonWhitespaceChangeException(val pre: Char, val post: Char): Exception()
