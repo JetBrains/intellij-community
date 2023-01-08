@@ -221,6 +221,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       int commitId = myStorage.getCommitIndex(detail.getId(), detail.getRoot());
       mutator.putCommit(commitId, detail, user -> myIndexStorage.users.getUserId(user));
       mutator.putParents(commitId, detail.getParents(), hash -> myStorage.getCommitIndex(hash, detail.getRoot()));
+
       myIndexStorage.add(commitId, detail);
     }
     catch (IOException | UncheckedIOException e) {
@@ -235,7 +236,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         if (myIndexStorage.store instanceof PhmVcsLogStore) {
           ((PhmVcsLogStore)myIndexStorage.store).force();
         }
-        myIndexStorage.trigrams.flush();
         myIndexStorage.users.flush();
         myIndexStorage.paths.flush();
       }
@@ -327,7 +327,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
   static final class IndexStorage implements Disposable {
     public final @NotNull VcsLogStore store;
-    public final @NotNull VcsLogMessagesTrigramIndex trigrams;
     public final @NotNull VcsLogUserBiMap users;
     public final @NotNull VcsLogPathsIndex paths;
 
@@ -347,10 +346,9 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
           store = new SqliteVcsLogStore(project);
         }
         else {
-          store = new PhmVcsLogStore(indexStorageId, storageLockContext, this);
+          store = new PhmVcsLogStore(indexStorageId, storageLockContext, errorHandler, this);
         }
 
-        trigrams = new VcsLogMessagesTrigramIndex(indexStorageId, storageLockContext, errorHandler, this);
         users = new VcsLogUserIndex(indexStorageId, storageLockContext, userRegistry, errorHandler, this);
         paths = new VcsLogPathsIndex(indexStorageId, storage, roots, storageLockContext, errorHandler, store, this);
 
@@ -363,7 +361,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     }
 
     void add(int commitId, VcsLogIndexer.@NotNull CompressedDetails detail) {
-      trigrams.update(commitId, detail);
       users.update(commitId, detail);
       paths.update(commitId, detail);
     }
@@ -373,10 +370,10 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         return;
       }
 
-      boolean trigramsEmpty = trigrams.isEmpty();
+      var trigramsEmpty = store.getTrigramsEmpty();
       boolean usersEmpty = users.isEmpty();
       boolean pathsEmpty = paths.isEmpty();
-      if (trigramsEmpty || usersEmpty || pathsEmpty) {
+      if ((trigramsEmpty != null && trigramsEmpty) || usersEmpty || pathsEmpty) {
         LOG.warn("Some of the index maps empty:\n" +
                  "trigrams empty " + trigramsEmpty + "\n" +
                  "users empty " + usersEmpty + "\n" +

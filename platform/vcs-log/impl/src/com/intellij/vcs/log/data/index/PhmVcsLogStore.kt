@@ -11,8 +11,10 @@ import com.intellij.util.io.*
 import com.intellij.util.io.storage.AbstractStorage
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogTextFilter
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcs.log.impl.VcsLogErrorHandler
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.util.StorageId
 import it.unimi.dsi.fastutil.ints.IntSet
@@ -29,6 +31,7 @@ import java.util.function.ToIntFunction
 internal class PhmVcsLogStore(
   storageId: StorageId,
   storageLockContext: StorageLockContext,
+  errorHandler: VcsLogErrorHandler,
   disposable: Disposable,
 ) : VcsLogStore {
   private val messages: PersistentHashMap<Int, String>
@@ -37,6 +40,8 @@ internal class PhmVcsLogStore(
   private val timestamps: PersistentHashMap<Int, LongArray>
 
   private val renames: PersistentHashMap<IntArray, IntArray>
+
+  private val trigrams: VcsLogMessagesTrigramIndex
 
   @Volatile
   override var isFresh = false
@@ -99,7 +104,12 @@ internal class PhmVcsLogStore(
 
       catchAndWarn(renames::close)
     })
+
+    trigrams = VcsLogMessagesTrigramIndex(storageId, storageLockContext, errorHandler, disposable)
   }
+
+  override val trigramsEmpty: Boolean
+    get() = trigrams.isEmpty
 
   override fun createWriter(): VcsLogWriter {
     return object : VcsLogWriter {
@@ -109,6 +119,8 @@ internal class PhmVcsLogStore(
         if (details.author != details.committer) {
           committers.put(commitId, userToId.applyAsInt(details.committer))
         }
+
+        trigrams.update(commitId, details)
       }
 
       override fun putParents(commitId: Int, parents: List<Hash>, hashToId: ToIntFunction<Hash>) {
@@ -152,6 +164,7 @@ internal class PhmVcsLogStore(
     parents.force()
     committers.force()
     timestamps.force()
+    trigrams.flush()
   }
 
   override fun getMessage(commitId: Int): String? = messages.get(commitId)
@@ -184,6 +197,29 @@ internal class PhmVcsLogStore(
   }
 
   override fun getRename(parent: Int, child: Int): IntArray? = renames.get(intArrayOf(parent, child))
+
+  override fun getCommitsForSubstring(string: String,
+                                      candidates: IntSet?,
+                                      noTrigramSources: MutableList<String>,
+                                      consumer: IntConsumer,
+                                      filter: VcsLogTextFilter) {
+    val commits = trigrams.getCommitsForSubstring(string)
+    if (commits == null) {
+      noTrigramSources.add(string)
+      return
+    }
+
+    val iterator = commits.iterator()
+    while (iterator.hasNext()) {
+      val commit = iterator.nextInt()
+      if (candidates == null || candidates.contains(commit)) {
+        val message = messages.get(commit)
+        if (filter.matches(message)) {
+          consumer.accept(commit)
+        }
+      }
+    }
+  }
 }
 
 private inline fun catchAndWarn(runnable: () -> Unit) {

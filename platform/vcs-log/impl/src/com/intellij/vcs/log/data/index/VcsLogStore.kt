@@ -2,15 +2,24 @@
 package com.intellij.vcs.log.data.index
 
 import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogTextFilter
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.io.IOException
+import java.util.function.IntConsumer
 import java.util.function.IntFunction
 import java.util.function.ToIntFunction
 
 internal interface VcsLogStore {
   val isEmpty: Boolean
+
+  /**
+   * null if not applicable
+   */
+  val trigramsEmpty: Boolean?
+    get() = null
+
   var isFresh: Boolean
 
   fun getMessage(commitId: Int): String?
@@ -39,6 +48,12 @@ internal interface VcsLogStore {
   fun getRename(parent: Int, child: Int): IntArray?
 
   fun createWriter(): VcsLogWriter
+
+  fun getCommitsForSubstring(string: String,
+                             candidates: IntSet?,
+                             noTrigramSources: MutableList<String>,
+                             consumer: IntConsumer,
+                             filter: VcsLogTextFilter)
 }
 
 interface VcsLogWriter {

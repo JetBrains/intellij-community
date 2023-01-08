@@ -18,10 +18,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Map;
 
-public final class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void, VcsCommitMetadata> {
+final class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void, VcsCommitMetadata> {
   private static final @NonNls String TRIGRAMS = "trigrams";
 
-  public VcsLogMessagesTrigramIndex(@NotNull StorageId storageId,
+  VcsLogMessagesTrigramIndex(@NotNull StorageId storageId,
                                     @Nullable StorageLockContext storageLockContext,
                                     @NotNull VcsLogErrorHandler errorHandler,
                                     @NotNull Disposable disposableParent) throws IOException {
@@ -29,6 +29,9 @@ public final class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Voi
           storageLockContext, errorHandler, disposableParent);
   }
 
+  /**
+   * Returns null if trigrams cannot be built for the string.
+   */
   public @Nullable IntSet getCommitsForSubstring(@NotNull CharSequence string) throws StorageException {
     IntSet trigrams = TrigramBuilder.getTrigrams(string);
     return trigrams.isEmpty() ? null : getCommitsWithAllKeys(trigrams);

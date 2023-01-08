@@ -200,18 +200,13 @@ public final class IndexDataGetter {
                                       Collections.singletonList(filter.getText());
         List<String> noTrigramSources = new ArrayList<>();
         for (String string : trigramSources) {
-          IntSet commits = myIndexStorage.trigrams.getCommitsForSubstring(string);
-          if (commits == null) {
-            noTrigramSources.add(string);
-          }
-          else {
-            filter(IntCollectionUtil.intersect(candidates, commits), filter::matches, consumer);
-          }
+          myIndexStorage.store.getCommitsForSubstring(string, candidates, noTrigramSources, consumer, filter);
         }
-        if (noTrigramSources.isEmpty()) return;
 
-        VcsLogTextFilter noTrigramFilter = VcsLogFilterObject.fromPatternsList(noTrigramSources, filter.matchesCase());
-        filter(candidates, noTrigramFilter::matches, consumer);
+        if (!noTrigramSources.isEmpty()) {
+          VcsLogTextFilter noTrigramFilter = VcsLogFilterObject.fromPatternsList(noTrigramSources, filter.matchesCase());
+          filter(candidates, noTrigramFilter::matches, consumer);
+        }
       });
     }
     else {
@@ -224,13 +219,14 @@ public final class IndexDataGetter {
   private void filter(@Nullable IntIterable candidates,
                       @NotNull Predicate<String> condition,
                       @NotNull IntConsumer consumer) throws IOException {
+    VcsLogStore store = myIndexStorage.store;
     if (candidates == null) {
-      myIndexStorage.store.processMessages((commit, message) -> filterCommit(message, commit, condition, consumer));
+      store.processMessages((commit, message) -> filterCommit(message, commit, condition, consumer));
     }
     else {
       for (IntIterator iterator = candidates.iterator(); iterator.hasNext(); ) {
         int commit = iterator.nextInt();
-        if (!filterCommit(myIndexStorage.store.getMessage(commit), commit, condition, consumer)) {
+        if (!filterCommit(store.getMessage(commit), commit, condition, consumer)) {
           break;
         }
       }
