@@ -16250,6 +16250,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/usePropertyAccessSyntax/get.kt");
         }
 
+        @TestMetadata("getCallableReference.kt")
+        public void testGetCallableReference() throws Exception {
+            runTest("testData/inspectionsLocal/usePropertyAccessSyntax/getCallableReference.kt");
+        }
+
+        @TestMetadata("getCallableReferenceOldLV.kt")
+        public void testGetCallableReferenceOldLV() throws Exception {
+            runTest("testData/inspectionsLocal/usePropertyAccessSyntax/getCallableReferenceOldLV.kt");
+        }
+
         @TestMetadata("set.kt")
         public void testSet() throws Exception {
             runTest("testData/inspectionsLocal/usePropertyAccessSyntax/set.kt");
