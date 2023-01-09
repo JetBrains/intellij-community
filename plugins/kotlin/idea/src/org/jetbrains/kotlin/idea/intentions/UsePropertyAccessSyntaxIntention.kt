@@ -68,7 +68,7 @@ import javax.swing.JComponent
 
 @Suppress("DEPRECATION")
 class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtExpression>(UsePropertyAccessSyntaxIntention::class),
-    CleanupLocalInspectionTool {
+                                          CleanupLocalInspectionTool {
 
     val fqNameList = NotPropertiesService.DEFAULT.map(::FqNameUnsafe).toMutableList()
 
@@ -352,8 +352,8 @@ private inline fun <T> KtExpression.callOrReferenceOrNull(
     call: (KtCallExpression) -> T,
     reference: (KtCallableReferenceExpression) -> T
 ): T? =
-    when {
-        this is KtCallExpression -> call(this)
-        this is KtSimpleNameExpression && parent is KtCallableReferenceExpression -> reference(parent as KtCallableReferenceExpression)
+    when (this) {
+        is KtCallExpression -> call(this)
+        is KtCallableReferenceExpression -> reference(this)
         else -> null
     }
