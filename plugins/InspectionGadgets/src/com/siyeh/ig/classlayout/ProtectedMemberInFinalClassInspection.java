@@ -20,6 +20,7 @@ import com.intellij.codeInspection.BatchQuickFix;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -69,7 +70,14 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection implem
 
     @Override
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      performFix(descriptor.getPsiElement());
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        performFix(descriptor.getPsiElement());
+      });
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
 
     @Override
