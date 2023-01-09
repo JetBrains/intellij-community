@@ -19,7 +19,9 @@ import com.intellij.ui.ExpandedItemListCellRendererWrapper;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -147,6 +149,19 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
     }
 
     private static DefaultMutableTreeNode getClickInfoNode(MouseEvent me, JComponent component) {
+      if (component instanceof UiInspectorPreciseContextProvider contextProvider) {
+        Point targetPoint = SwingUtilities.convertPoint(me.getComponent(), me.getPoint(), component);
+        MouseEvent componentEvent = MouseEventAdapter.convert(me, component);
+        UiInspectorPreciseContextProvider.UiInspectorInfo inspectorInfo = contextProvider.getUiInspectorContext(componentEvent);
+        if (inspectorInfo != null) {
+          String name = ObjectUtils.chooseNotNull(inspectorInfo.name, "Click Info");
+          HierarchyTree.ComponentNode node = HierarchyTree.ComponentNode.createNamedNode(name, inspectorInfo.component);
+          if (inspectorInfo.component != null) inspectorInfo.component.doLayout();
+          node.setUserObject(inspectorInfo.values);
+          return node;
+        }
+      }
+
       Pair<List<PropertyBean>, @NotNull Component> clickInfo = getClickInfo(me, component);
       if (clickInfo != null) {
         //We present clicked renderer as ComponentNode instead of ClickInfoNode to see inner structure of renderer

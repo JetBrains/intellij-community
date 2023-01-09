@@ -197,6 +197,13 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       return node;
     }
 
+    public static ComponentNode createNamedNode(@NotNull String name, @Nullable Component component) {
+      Accessible accessible = ObjectUtils.tryCast(component, Accessible.class);
+      ComponentNode node = new ComponentNode(component, accessible, name, false);
+      node.children = prepareComponentChildren(component);
+      return node;
+    }
+
     private ComponentNode(@Nullable Component component,
                           @Nullable Accessible accessible,
                           @NotNull String name,

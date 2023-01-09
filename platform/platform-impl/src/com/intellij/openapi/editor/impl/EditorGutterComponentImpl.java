@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.NonHideableIconGutterMark;
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.codeInsight.hint.TooltipController;
@@ -16,6 +17,9 @@ import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorPreciseContextProvider;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -134,7 +138,8 @@ import java.util.concurrent.atomic.AtomicReference;
  *</ul>
  */
 @DirtyUI
-final class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider, Accessible {
+final class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider,
+                                                                                 Accessible, UiInspectorPreciseContextProvider {
   public static final String DISTRACTION_FREE_MARGIN = "editor.distraction.free.margin";
   private static final Logger LOG = Logger.getInstance(EditorGutterComponentImpl.class);
 
@@ -2161,7 +2166,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       repaint();
     }
     else {
-      ActiveGutterRenderer lineRenderer = getActiveRendererByMouseEvent(e);
+      ActiveGutterRenderer lineRenderer = e.isConsumed() ? null : getActiveRendererByMouseEvent(e);
       if (lineRenderer != null) {
         lineRenderer.doAction(myEditor, e);
       }
@@ -2235,7 +2240,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (findFoldingAnchorAt(e.getX(), e.getY()) != null) {
       return null;
     }
-    if (e.isConsumed() || e.getX() > getWhitespaceSeparatorOffset()) {
+    if (e.getX() > getWhitespaceSeparatorOffset()) {
       return null;
     }
     final ActiveGutterRenderer[] gutterRenderer = {null};
@@ -2733,5 +2738,36 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @Override
   public int getHoveredFreeMarkersLine() {
     return myHoveredFreeMarkersLine;
+  }
+
+  @Override
+  public @Nullable UiInspectorInfo getUiInspectorContext(@NotNull MouseEvent event) {
+    Point point = event.getPoint();
+    PointInfo pointInfo = getPointInfo(point);
+    if (pointInfo != null) {
+      List<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Clicked Renderer", pointInfo.renderer));
+      result.add(new PropertyBean("Clicked Renderer Class", UiInspectorUtil.getClassPresentation(pointInfo.renderer)));
+      result.add(new PropertyBean("Accessible Name", pointInfo.renderer.getAccessibleName()));
+      result.add(new PropertyBean("Icon", pointInfo.renderer.getIcon()));
+      if (pointInfo.renderer instanceof LineMarkerInfo.LineMarkerGutterIconRenderer<?> lineMarkerRenderer) {
+        LineMarkerInfo<?> markerInfo = lineMarkerRenderer.getLineMarkerInfo();
+        result.add(new PropertyBean("Marker Info - Element", markerInfo.getElement()));
+        if (markerInfo.getNavigationHandler() != null) {
+          result.add(new PropertyBean("Marker Info - Navigation Handler", markerInfo.getNavigationHandler()));
+        }
+      }
+      return new UiInspectorInfo("GutterIconRenderer", result, null);
+    }
+
+    ActiveGutterRenderer gutterRenderer = getActiveRendererByMouseEvent(event);
+    if (gutterRenderer != null) {
+      List<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Clicked Renderer", gutterRenderer));
+      result.add(new PropertyBean("Clicked Renderer Class", UiInspectorUtil.getClassPresentation(gutterRenderer)));
+      return new UiInspectorInfo("ActiveGutterRenderer", result, null);
+    }
+
+    return null;
   }
 }

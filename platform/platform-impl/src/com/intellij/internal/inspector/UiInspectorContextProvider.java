@@ -14,6 +14,7 @@ import java.util.List;
  * @see UiInspectorTreeRendererContextProvider
  * @see UiInspectorTableRendererContextProvider
  * @see UiInspectorListRendererContextProvider
+ * @see UiInspectorPreciseContextProvider
  */
 public interface UiInspectorContextProvider {
   @NotNull
