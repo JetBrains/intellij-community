@@ -121,7 +121,9 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
 
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
     DesktopLayout restoreLayout = manager.getLayoutToRestoreLater();
-    if (!inPresentation && restoreLayout != null) {
+    if (!inPresentation &&
+        !ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled() &&
+        restoreLayout != null) {
       manager.setLayout(restoreLayout);
     }
   }

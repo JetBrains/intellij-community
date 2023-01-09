@@ -73,13 +73,14 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
       TogglePresentationModeAction.storeToolWindows(project);
     }
 
-    UISettings.getInstance().fireUISettingsChanged();
+    UISettings uiSettings = UISettings.getInstance();
+    uiSettings.fireUISettingsChanged();
     LafManager.getInstance().updateUI();
     EditorUtil.reinitSettings();
     DaemonCodeAnalyzer.getInstance(project).settingsChanged();
     EditorFactory.getInstance().refreshAllEditors();
     if (!enter) {
-      TogglePresentationModeAction.restoreToolWindows(project, false);
+      TogglePresentationModeAction.restoreToolWindows(project, uiSettings.getPresentationMode());
     }
   }
 
