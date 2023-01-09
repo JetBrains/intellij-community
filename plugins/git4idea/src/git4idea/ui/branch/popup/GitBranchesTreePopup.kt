@@ -389,6 +389,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     rowHeight = treeRowHeight
     isLargeModel = true
     expandsSelectedPaths = true
+    SmartExpander.installOn(this)
   }
 
   /**
