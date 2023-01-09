@@ -311,6 +311,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/highOrderFunctions/InsertFunctionWithSingleParameterWithBrace.kt");
         }
 
+        @TestMetadata("InsertFunctionWithSingleParameterWithParenthesis.kt")
+        public void testInsertFunctionWithSingleParameterWithParenthesis() throws Exception {
+            runTest("../testData/handlers/basic/highOrderFunctions/InsertFunctionWithSingleParameterWithParenthesis.kt");
+        }
+
         @TestMetadata("OptionalParameters1.kt")
         public void testOptionalParameters1() throws Exception {
             runTest("../testData/handlers/basic/highOrderFunctions/OptionalParameters1.kt");
@@ -334,6 +339,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("ReplaceByLambdaTemplateNoClosingParenth.kt")
         public void testReplaceByLambdaTemplateNoClosingParenth() throws Exception {
             runTest("../testData/handlers/basic/highOrderFunctions/ReplaceByLambdaTemplateNoClosingParenth.kt");
+        }
+
+        @TestMetadata("ReplaceFunctionWithSingleParameter.kt")
+        public void testReplaceFunctionWithSingleParameter() throws Exception {
+            runTest("../testData/handlers/basic/highOrderFunctions/ReplaceFunctionWithSingleParameter.kt");
         }
 
         @TestMetadata("SameTypeParameters.kt")

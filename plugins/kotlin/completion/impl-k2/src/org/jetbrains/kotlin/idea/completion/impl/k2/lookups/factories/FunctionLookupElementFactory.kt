@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRang
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.KotlinCompletionCharFilter
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
+import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
@@ -108,7 +109,9 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
         val isSmartEnterCompletion = completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR
         val isReplaceCompletion = completionChar == Lookup.REPLACE_SELECT_CHAR
 
-        val (openingBracket, closingBracket) = if (lookupObject.insertEmptyLambda) '{' to '}' else '(' to ')'
+        val preferParentheses = completionChar == '(' || isReplaceCompletion && chars.isCharAt(offset, '(')
+        val insertLambda = !preferParentheses && lookupObject.insertEmptyLambda
+        val (openingBracket, closingBracket) = if (insertLambda) '{' to '}' else '(' to ')'
 
         if (isReplaceCompletion) {
             val offset1 = chars.skipSpaces(offset)
@@ -131,7 +134,7 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
         var inBracketsShift = 0
 
         if (openingBracketOffset == null) {
-            if (lookupObject.insertEmptyLambda) {
+            if (insertLambda) {
                 if (completionChar == ' ' || completionChar == '{') {
                     context.setAddCompletionChar(false)
                 }
