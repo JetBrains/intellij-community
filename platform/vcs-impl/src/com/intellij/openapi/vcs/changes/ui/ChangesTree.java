@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DefaultTreeExpander;
@@ -914,25 +913,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       else {
         tree.resetTreeState();
       }
-    }
-  }
-
-  static class FixedHeightSampleChangesBrowserNode extends ChangesBrowserNode<Object> {
-    private static final Object FIXED_HEIGHT_SAMPLE_NODE_VALUE = new Object();
-
-    private FixedHeightSampleChangesBrowserNode() {
-      super(FIXED_HEIGHT_SAMPLE_NODE_VALUE);
-    }
-
-    @Override
-    public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
-      renderer.append("ChangesTreeDummy.java");
-      renderer.setIcon(AllIcons.FileTypes.Any_type);
-    }
-
-    @Override
-    public String toString() {
-      return "FixedHeightSampleChangesBrowserNode";
     }
   }
 }
