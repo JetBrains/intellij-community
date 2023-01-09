@@ -10,9 +10,6 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import kotlin.reflect.KProperty
 
-/**
- * Not thread-safe
- */
 abstract class PersistentVar<T>(
   path: Path
 ) {
@@ -26,11 +23,12 @@ abstract class PersistentVar<T>(
   abstract fun DataOutput.writeValue(value: T)
 
   @Throws(IOException::class)
-  operator fun getValue(thisRef: Any?, property: KProperty<*>): T? =
+  operator fun getValue(thisRef: Any?, property: KProperty<*>): T? = synchronized(this) {
     DataInputStream(Channels.newInputStream(fileChannel.position(0))).readValue()
+  }
 
   @Throws(IOException::class)
-  operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T?) {
+  operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T?): Unit = synchronized(this) {
     if (value == null) {
       fileChannel.truncate(0)
     }
