@@ -75,7 +75,7 @@ class FileTypeWithDescriptorRenderer<T> extends SimpleListCellRenderer<T> implem
 
     List<PropertyBean> result = new ArrayList<>();
     result.add(new PropertyBean("FileType ID", fileType.getName()));
-    result.add(new PropertyBean("FileType Class", UiInspectorUtil.getClassName(fileType)));
+    result.add(new PropertyBean("FileType Class", UiInspectorUtil.getClassPresentation(fileType)));
     return result;
   }
 }

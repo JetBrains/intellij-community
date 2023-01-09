@@ -777,7 +777,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       if (configurable == null) return Collections.emptyList();
 
       List<PropertyBean> result = new ArrayList<>();
-      result.add(new PropertyBean("Configurable class", UiInspectorUtil.getClassName(configurable), true));
+      result.add(new PropertyBean("Configurable class", UiInspectorUtil.getClassPresentation(configurable), true));
 
       if (wrapper instanceof SearchableConfigurable searchableConfigurable) {
         result.add(new PropertyBean("Configurable ID", searchableConfigurable.getId(), true));

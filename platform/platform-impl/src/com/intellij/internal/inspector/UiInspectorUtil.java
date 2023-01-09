@@ -139,6 +139,13 @@ public final class UiInspectorUtil {
     return clazz.getSimpleName();
   }
 
+  public static @NotNull String getClassPresentation(@NotNull Object value) {
+    Class<?> clazz0 = value.getClass();
+    Class<?> clazz = clazz0.isAnonymousClass() ? clazz0.getSuperclass() : clazz0;
+    String simpleName = clazz.getSimpleName();
+    return simpleName + " (" + clazz.getPackageName() + ")";
+  }
+
   public static void openClassByFqn(@Nullable Project project, @NotNull String jvmFqn, boolean requestFocus) {
     PsiElement classElement = findClassByFqn(project, jvmFqn);
     if (classElement != null) {

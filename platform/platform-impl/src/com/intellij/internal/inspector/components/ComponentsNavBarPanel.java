@@ -83,7 +83,7 @@ final class ComponentsNavBarPanel extends Breadcrumbs {
     @Override
     public String getText() {
       Object obj = isAccessibleEnabled ? myComponent.getAccessibleContext() : myComponent;
-      return UiInspectorUtil.getClassName(obj);
+      return UiInspectorUtil.getClassPresentation(obj);
     }
   }
 }
