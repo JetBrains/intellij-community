@@ -29,6 +29,8 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.StringReader
 import java.nio.file.Path
 import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 import kotlin.io.path.exists
 
 internal const val DEPRECATED_MODULE_MANAGER_COMPONENT_NAME = "DeprecatedModuleOptionManager"
@@ -68,27 +70,33 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                             errorReporter: ErrorReporter,
                             virtualFileManager: VirtualFileUrlManager) {
     val externalStorageEnabled = externalStorageConfigurationManager?.isEnabled ?: false
+    val moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity> = HashMap()
     if (!externalStorageEnabled) {
-      val moduleLoadedInfo = loadModuleEntity(reader, builder, errorReporter, virtualFileManager)
+      val moduleLoadedInfo = loadModuleEntity(reader, builder, errorReporter, virtualFileManager, moduleLibrariesCollector)
       if (moduleLoadedInfo != null) {
         createFacetSerializer().loadFacetEntities(builder, moduleLoadedInfo.moduleEntity, reader)
       }
     }
     else {
       val externalSerializer = externalModuleListSerializer?.createSerializer(internalEntitySource, fileUrl, modulePath.group) as ModuleImlFileEntitiesSerializer?
-      val moduleLoadedInfo = externalSerializer?.loadModuleEntity(reader, builder, errorReporter, virtualFileManager)
+      val moduleLoadedInfo = externalSerializer?.loadModuleEntity(reader, builder, errorReporter, virtualFileManager, moduleLibrariesCollector)
       var moduleEntity = moduleLoadedInfo?.moduleEntity
       if (moduleLoadedInfo != null) {
         val entitySource = getOtherEntitiesEntitySource(reader)
         loadContentRoots(moduleLoadedInfo.customRootsSerializer, builder, moduleLoadedInfo.moduleEntity,
                          reader, moduleLoadedInfo.customDir, errorReporter, virtualFileManager,
-                         entitySource, true)
+                         entitySource, true, moduleLibrariesCollector)
       } else {
-        moduleEntity = loadModuleEntity(reader, builder, errorReporter, virtualFileManager)?.moduleEntity
+        moduleEntity = loadModuleEntity(reader, builder, errorReporter, virtualFileManager, moduleLibrariesCollector)?.moduleEntity
       }
       if (moduleEntity != null) {
         createFacetSerializer().loadFacetEntities(builder, moduleEntity, reader)
         externalSerializer?.createFacetSerializer()?.loadFacetEntities(builder, moduleEntity, reader)
+      }
+    }
+    moduleLibrariesCollector.values.forEach { lib ->
+      if ((lib as LibraryEntityImpl.Builder).diff == null) {
+        builder addEntity lib
       }
     }
   }
@@ -102,7 +110,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   private fun loadModuleEntity(reader: JpsFileContentReader,
                                builder: MutableEntityStorage,
                                errorReporter: ErrorReporter,
-                               virtualFileManager: VirtualFileUrlManager): ModuleLoadedInfo? {
+                               virtualFileManager: VirtualFileUrlManager,
+                               moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>): ModuleLoadedInfo? {
     if (skipLoadingIfFileDoesNotExist && !fileUrl.toPath().exists()) {
       return null
     }
@@ -178,7 +187,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     builder addEntity moduleEntity
 
     loadContentRoots(customRootsSerializer, builder, moduleEntity, reader, customDir, errorReporter, virtualFileManager,
-                     moduleEntity.entitySource, false)
+                     moduleEntity.entitySource, false, moduleLibrariesCollector)
     loadTestModuleProperty(builder, moduleEntity, reader, entitySource)
 
     return ModuleLoadedInfo(moduleEntity, customRootsSerializer, customDir)
@@ -196,15 +205,16 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                errorReporter: ErrorReporter,
                                virtualFileManager: VirtualFileUrlManager,
                                contentRootEntitySource: EntitySource,
-                               loadingAdditionalRoots: Boolean) {
+                               loadingAdditionalRoots: Boolean,
+                               moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>) {
     if (customRootsSerializer != null) {
       customRootsSerializer.loadRoots(builder, moduleEntity, reader, customDir, fileUrl, internalModuleListSerializer, errorReporter,
-                                      virtualFileManager)
+                                      virtualFileManager, moduleLibrariesCollector)
     }
     else {
       val rootManagerElement = reader.loadComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, getBaseDirPath())?.clone()
       if (rootManagerElement != null) {
-        loadRootManager(rootManagerElement, moduleEntity, builder, virtualFileManager, contentRootEntitySource, loadingAdditionalRoots)
+        loadRootManager(rootManagerElement, moduleEntity, builder, virtualFileManager, contentRootEntitySource, loadingAdditionalRoots, moduleLibrariesCollector)
       }
     }
   }
@@ -261,14 +271,15 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                               builder: MutableEntityStorage,
                               virtualFileManager: VirtualFileUrlManager,
                               contentRootEntitySource: EntitySource,
-                              loadingAdditionalRoots: Boolean) {
+                              loadingAdditionalRoots: Boolean,
+                              moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>) {
     val contentRoots = loadContentRootEntities(moduleEntity, rootManagerElement, virtualFileManager, builder, contentRootEntitySource)
     builder.modifyEntity(moduleEntity) {
       this.contentRoots = this.contentRoots + contentRoots
     }
 
-    val dependencyItems = loadModuleDependencies(rootManagerElement, contentRootEntitySource, virtualFileManager, builder,
-                                                 moduleEntity.symbolicId)
+    val dependencyItems = loadModuleDependencies(rootManagerElement, contentRootEntitySource, virtualFileManager, moduleEntity.symbolicId,
+                                                 moduleLibrariesCollector)
     if (!loadingAdditionalRoots) {
       builder.modifyEntity(moduleEntity) {
         dependencies = dependencyItems
@@ -304,8 +315,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   private fun loadModuleDependencies(rootManagerElement: Element,
                                      contentRootEntitySource: EntitySource,
                                      virtualFileManager: VirtualFileUrlManager,
-                                     builder: MutableEntityStorage,
-                                     moduleId: ModuleId): ArrayList<ModuleDependencyItem> {
+                                     moduleId: ModuleId,
+                                     moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>): ArrayList<ModuleDependencyItem> {
     fun Element.readScope(): ModuleDependencyItem.DependencyScope {
       val attributeValue = getAttributeValue(SCOPE_ATTRIBUTE) ?: return ModuleDependencyItem.DependencyScope.COMPILE
       return try {
@@ -340,8 +351,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           moduleLibraryNames.add(name)
           val tableId = LibraryTableId.ModuleLibraryTableId(moduleId)
           val library = loadLibrary(name, libraryElement, tableId, contentRootEntitySource, virtualFileManager)
-          builder addEntity library
           val libraryId = LibraryId(name, tableId)
+          moduleLibrariesCollector[libraryId] = library
           ModuleDependencyItem.Exportable.LibraryDependency(libraryId, dependencyElement.isExported(), dependencyElement.readScope())
         }
         MODULE_TYPE -> {

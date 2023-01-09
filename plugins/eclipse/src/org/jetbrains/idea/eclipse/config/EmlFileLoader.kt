@@ -25,9 +25,11 @@ import org.jetbrains.jps.util.JpsPathUtil
  * Loads additional module configuration from *.eml file to [ModuleEntity]
  */
 internal class EmlFileLoader(
-  private val module: ModuleEntity, private val builder: MutableEntityStorage,
+  private val module: ModuleEntity,
+  private val builder: MutableEntityStorage,
   private val expandMacroToPathMap: ExpandMacroToPathMap,
-  private val virtualFileManager: VirtualFileUrlManager
+  private val virtualFileManager: VirtualFileUrlManager,
+  private val moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>,
 ) {
   fun loadEml(emlTag: Element, contentRoot: ContentRootEntity) {
     loadCustomJavaSettings(emlTag)
@@ -38,10 +40,7 @@ internal class EmlFileLoader(
   }
 
   private fun loadDependencies(emlTag: Element) {
-    val moduleLibraries = module.dependencies.asSequence().filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
-      .mapNotNull { it.library.resolve(builder) }
-      .filter { it.tableId is LibraryTableId.ModuleLibraryTableId }
-      .associateBy { it.name }
+    val moduleLibraries = moduleLibrariesCollector.values.associateBy { it.name }
     val libraryScopes = HashMap<String, ModuleDependencyItem.DependencyScope>()
     emlTag.getChildren("lib").forEach { libTag ->
       val name = libTag.getAttributeValue("name")!!
@@ -116,7 +115,7 @@ internal class EmlFileLoader(
     updateRoots(IdeaSpecificSettings.RELATIVE_MODULE_CLS, OrderRootType.CLASSES.name())
     updateRoots(IdeaSpecificSettings.RELATIVE_MODULE_JAVADOC, "JAVADOC")
     if (rootsToAdd.isNotEmpty() || rootsToRemove.isNotEmpty()) {
-      builder.modifyEntity(library) {
+      (library as LibraryEntity.Builder).apply {
         roots.removeAll(rootsToRemove)
         roots.addAll(rootsToAdd)
       }

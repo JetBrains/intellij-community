@@ -77,7 +77,8 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                          imlFileUrl: VirtualFileUrl,
                          internalModuleListSerializer: JpsModuleListSerializer?,
                          errorReporter: ErrorReporter,
-                         virtualFileManager: VirtualFileUrlManager) {
+                         virtualFileManager: VirtualFileUrlManager,
+                         moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>) {
     val storageRootUrl = getStorageRoot(imlFileUrl, customDir, virtualFileManager)
     val entitySource = moduleEntity.entitySource as EclipseProjectFile
     val contentRootEntity = builder addEntity ContentRootEntity(storageRootUrl, emptyList(), entitySource) {
@@ -101,7 +102,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     val emlTag = reader.loadComponent(emlUrl, "", null)
     if (emlTag != null) {
       reader.getExpandMacroMap(imlFileUrl.url).substitute(emlTag, SystemInfo.isFileSystemCaseSensitive)
-      EmlFileLoader(moduleEntity, builder, reader.getExpandMacroMap(emlUrl), virtualFileManager).loadEml(emlTag, contentRootEntity)
+      EmlFileLoader(moduleEntity, builder, reader.getExpandMacroMap(emlUrl), virtualFileManager, moduleLibrariesCollector).loadEml(emlTag, contentRootEntity)
     }
     else {
       val javaSettings = moduleEntity.javaSettings
