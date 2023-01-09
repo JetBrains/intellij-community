@@ -14,7 +14,7 @@ import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.SuperDeclaration
 import org.jetbrains.kotlin.idea.codeInsight.SuperDeclarationProvider
@@ -22,12 +22,22 @@ import org.jetbrains.kotlin.psi.*
 
 class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler {
     companion object {
-        val ALLOWED_DECLARATION_CLASSES = arrayOf(
-            KtNamedFunction::class.java,
-            KtClassOrObject::class.java,
-            KtProperty::class.java,
-            KtParameter::class.java
-        )
+        fun findTargetDeclaration(
+            file: PsiFile,
+            editor: Editor
+        ): KtDeclaration? {
+            val element = file.findElementAt(editor.caretModel.offset)?: return null
+            return element
+                .parents(false)
+                .filter { declaration ->
+                    when (declaration) {
+                        is KtNamedFunction, is KtClassOrObject, is KtProperty -> true
+                        is KtParameter -> declaration.hasValOrVar()
+                        else -> false
+                    }
+                }
+                .firstOrNull() as? KtDeclaration
+        }
 
         fun findSuperDeclarations(targetDeclaration: KtDeclaration): HandlerResult? {
             val superDeclarations =
@@ -88,18 +98,13 @@ class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler {
 
         FeatureUsageTracker.getInstance().triggerFeatureUsed(GotoSuperAction.FEATURE_ID)
 
-        val element = file.findElementAt(editor.caretModel.offset) ?: return
-        var targetDeclaration = PsiTreeUtil.getParentOfType<KtDeclaration>(element, *ALLOWED_DECLARATION_CLASSES) ?: return
-        if (targetDeclaration is KtParameter && !targetDeclaration.hasValOrVar()) {
-           targetDeclaration = PsiTreeUtil.getParentOfType<KtDeclaration>(element, *ALLOWED_DECLARATION_CLASSES) ?: return
-        }
+        val targetDeclaration = findTargetDeclaration(file, editor) ?: return
         gotoSuperDeclarations(targetDeclaration)?.showInBestPositionFor(editor)
     }
 
     override fun update(editor: Editor, file: PsiFile, presentation: Presentation?) {
         if (file !is KtFile) return
-        val element = file.findElementAt(editor.caretModel.offset) ?: return
-        val targetDeclaration = PsiTreeUtil.getParentOfType<KtDeclaration>(element, *ALLOWED_DECLARATION_CLASSES) ?: return
+        val targetDeclaration = findTargetDeclaration(file, editor) ?: return
         presentation?.text = when (targetDeclaration) {
             is KtClass, is PsiClass -> KotlinBundle.message("action.GotoSuperClass.MainMenu.text")
             is KtFunction, is PsiMethod -> ActionsBundle.actionText("GotoSuperMethod.MainMenu")
