@@ -5,8 +5,6 @@ package com.intellij.openapi.externalSystem.util
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.file.VirtualFileUtil
-import com.intellij.openapi.file.readText
 import com.intellij.util.ThrowableRunnable
 import com.intellij.testFramework.runInEdtAndGet as runInEdtAndGetImpl
 import com.intellij.testFramework.runInEdtAndWait as runInEdtAndWaitImpl

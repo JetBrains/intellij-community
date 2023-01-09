@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.testFramework.util
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.starters.local.generator.TestFileSystemLocation
-import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.file.VirtualFileUtil
