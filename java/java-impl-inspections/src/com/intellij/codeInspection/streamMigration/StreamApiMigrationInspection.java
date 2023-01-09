@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -503,7 +503,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
                                                               boolean replaceTrivialForEach) {
     boolean shouldWarn = replaceTrivialForEach || tb.hasOperations();
     if (ReferencesSearch.search(tb.getVariable(), new LocalSearchScope(statement)).findFirst() == null) {
-      return new MatchMigration(shouldWarn, "anyMatch");
+      return new MatchMigration(shouldWarn, "anyMatch()/noneMatch()/allMatch");
     }
     if (nonFinalVariables.isEmpty() && statement instanceof PsiExpressionStatement) {
       return new FindFirstMigration(shouldWarn);
