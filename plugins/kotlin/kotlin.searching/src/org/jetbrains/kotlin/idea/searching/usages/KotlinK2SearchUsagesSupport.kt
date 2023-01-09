@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.MethodSignatureUtil
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.calls.KtDelegatedConstructorCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
@@ -29,6 +31,7 @@ import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -153,20 +156,22 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                         is KtValueParameterSymbol -> {
                             // TODO: The following code handles only constructors. Handle other cases e.g.,
                             //       look for uses of component functions cf [isDestructionDeclarationSearch]
-                            val constructorSymbol =
-                                elementSymbol.getContainingSymbol() as? KtConstructorSymbol ?: return@analyzeWithReadAction null
-                            val containingClassType = getContainingClassType(constructorSymbol) ?: return@analyzeWithReadAction null
-                            val psiClass = getPsiClassOfKtType(containingClassType) ?: return@analyzeWithReadAction null
+                            val psiClass = PsiTreeUtil.getParentOfType(psiElement, KtClassOrObject::class.java)?.toLightClass() ?: return@analyzeWithReadAction null
 
-                            ReceiverTypeSearcherInfo(psiClass) {
-                                analyze(it) {
-                                    val returnType = it.getReturnKtType()
-                                    returnType == containingClassType || returnType is KtNonErrorClassType && returnType.ownTypeArguments.any { arg ->
-                                        when (arg) {
-                                            is KtStarTypeProjection -> false
-                                            is KtTypeArgumentWithVariance -> arg.type == containingClassType
-                                        }
+                            val classPointer = psiClass.createSmartPointer()
+                            ReceiverTypeSearcherInfo(psiClass) { declaration ->
+                                analyzeWithReadAction(declaration) {
+                                    fun KtType.containsClassType(clazz: PsiClass?): Boolean {
+                                        if (clazz == null) return false
+                                        return this is KtNonErrorClassType && (clazz.isEquivalentTo(getPsiClassOfKtType(this)) || this.ownTypeArguments.any { arg ->
+                                            when (arg) {
+                                                is KtStarTypeProjection -> false
+                                                is KtTypeArgumentWithVariance -> arg.type.containsClassType(clazz)
+                                            }
+                                        })
                                     }
+
+                                    declaration.getReturnKtType().containsClassType(classPointer.element)
                                 }
                             }
                         }

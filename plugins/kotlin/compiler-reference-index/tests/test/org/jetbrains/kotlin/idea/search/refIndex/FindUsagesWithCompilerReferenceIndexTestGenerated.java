@@ -228,6 +228,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
+                public static class TestDataClassComponentByRefLocal extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("dataClassComponentByRefLocal.0.kt")
+                    public void testDataClassComponentByRefLocal() throws Exception {
+                        runTest("../../idea/tests/testData/findUsages/kotlin/conventions/components/dataClassComponentByRefLocal.0.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestDataClassFromStdlib extends AbstractFindUsagesWithCompilerReferenceIndexTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);

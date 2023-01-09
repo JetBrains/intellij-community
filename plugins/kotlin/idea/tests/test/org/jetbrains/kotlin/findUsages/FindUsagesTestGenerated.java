@@ -114,6 +114,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                     runTest("testData/findUsages/kotlin/conventions/components/dataClassComponentByRef.0.kt");
                 }
 
+                @TestMetadata("dataClassComponentByRefLocal.0.kt")
+                public void testDataClassComponentByRefLocal() throws Exception {
+                    runTest("testData/findUsages/kotlin/conventions/components/dataClassComponentByRefLocal.0.kt");
+                }
+
                 @TestMetadata("dataClassFromStdlib.0.kt")
                 public void testDataClassFromStdlib() throws Exception {
                     runTest("testData/findUsages/kotlin/conventions/components/dataClassFromStdlib.0.kt");
