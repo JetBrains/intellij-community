@@ -392,6 +392,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
     return closingInProgress;
   }
 
+  @Override
   public int toOffsetInPage(final long offsetInFile) {
     return (int)(offsetInFile % pageSize);
   }

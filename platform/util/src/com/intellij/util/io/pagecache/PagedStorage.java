@@ -47,6 +47,11 @@ public interface PagedStorage extends Forceable, AutoCloseable {
   void put(final long offsetInFile,
            final byte[] src, final int offsetInArray, final int length) throws IOException;
 
+  /**
+   * Length of data in this file. Length increasing only as we write to the file -- i.e. if one
+   * requests a page ahead of the current length, this doesn't lead to length increasing. Only
+   * when one writes something on that page storage length is also increasing.
+   */
   long length();
 
   void clear();

@@ -30,6 +30,11 @@ import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.Streaml
  * Implements {@link StreamlinedBlobStorage} blobs over {@link PagedFileStorageLockFree} storage.
  * Implementation is thread-safe, and mostly relies on page-level locks to protect data access.
  * <br/>
+ * Storage is optimized to store small records (~tens bytes) -- it tries to compress record headers
+ * so smaller records have just 2 bytes of overhead because of header. At the same time storage allows
+ * record size up to 1Mb large -- in contrast to {@link SmallStreamlinedBlobStorage}.
+ * <p>
+ * 
  */
 public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage implements StreamlinedBlobStorage {
   private static final Logger LOG = Logger.getInstance(StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage.class);
@@ -39,21 +44,34 @@ public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage implements 
   // Persistent format: (header) (records)*
   //  header: storageVersion[int32], safeCloseMagic[int32] ...monitoring fields... dataFormatVersion[int32]
   //  record:
-  //          recordHeader: capacity[uint16], actualLength[uint16], redirectToOffset[int32]
-  //          recordData:   byte[actualLength]?
+  //          recordHeader: recordType[int8], capacity, length?, redirectTo?, recordData[length]?
+  //                        First byte of header contains the record type, which defines other header
+  //                        fields & their length. A lot of bits wiggling are used to compress header
+  //                        into as few bytes as possible -- see RecordLayout below for details.
   //
   //  1. capacity is the allocated size of the record payload _excluding_ header, so
   //     nextRecordOffset = currentRecordOffset + recordHeader + recordCapacity
+  //     (and recordHeader size depends on a record type, which is encoded in a first header byte)
   //
-  //  2. actualLength (<=capacity) is actual size of record payload written into the record, so
+  //  2. actualLength (<=capacity) is the actual size of record payload written into the record, so
   //     recordData[0..actualLength) contains actual data, and recordData[actualLength..capacity)
   //     contains trash.
   //
-  //  3. redirectToOffset is a 'forwarding pointer' for records that was moved (e.g. re-allocated).
+  //  3. redirectTo is a 'forwarding pointer' for records that were moved (e.g. re-allocated).
   //
   //  4. records are always allocated on a single page: i.e. record never breaks a page boundary.
   //     If a record doesn't fit the current page, it is moved to another page (remaining space on
   //     page is filled by placeholder record, if needed).
+
+  //FIXME RC: there are hidden deadlocks possibilities: sometimes we need to change >1 page at a time,
+  //          and hence we acquire >1 page lock. E.g. this happens during record re-allocation: we
+  //          need to write new record content to a new place (which may be on a new page) and then
+  //          put reference to a new location into an old location header (MOVED record type .redirectedTo
+  //          field). Now this issues are hidden: it is not a frequent case, and also today all new
+  //          records are allocated at the end of storage -> old and new page locks are always
+  //          implicitly ordered: lock is always acquired on old page first, then on new. But this
+  //          is just a lucky coincidence, and could change as soon as we implement free-lists and
+  //          removed records re-use -> we'll get hard to debug deadlocks.
 
   //TODO RC: implement space reclamation: re-use space of deleted records for the newly allocated ones.
   //         Need to keep a free-list.
@@ -78,6 +96,7 @@ public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage implements 
 
   private static final int FILE_STATUS_OPENED = 0;
   private static final int FILE_STATUS_SAFELY_CLOSED = 1;
+  //TODO RC: how to implement this?
   private static final int FILE_STATUS_CORRUPTED = 2;
 
   //=== HEADER format:
@@ -105,14 +124,21 @@ public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage implements 
   //MAYBE allow to reserve additional space in header for something implemented on the top of the storage?
 
 
-  public static final int MAX_REDIRECTS = 1024;
-
   //=== RECORD format:
 
-  //Record format:
+  //We try to compress headers as much as possible, to add the lowest overhead to record payload, especially
+  // when the payload is small. For that we use multiple record types, each of types defines its own set of
+  // fields -- so we do not waste space on fields not actual for a given record type. Record type is defined
+  // by the first 2 bits of the first header byte, and the 6 bits remaining are used to store type-specific
+  // data. To compress data even further, we also use the fact that total record size is always a multiple 8
+  // (see OFFSET_BUCKET) -- thus we could store capacity in 3 bits less.
+  //
+  // BEWARE: header[a..b] notation below means _bits_ 'a' to 'b' -- not bytes as it is usually written!
+  //
+  // Record format:
+  //
   //  record: header[1b+] (type, capacity[?]?, length[?]?, redirectTo[?]?, data[?]?)
   //  type: header[0..1] = [ACTUAL|MOVED|PADDING|PARTIAL]
-  //        total record size is always a multiple 8 (OFFSET_BUCKET), hence we need 3 bits less to store capacity than length
   //  switch(type):
   //     ACTUAL: redirectTo is absent,
   //             header[2]: recordSizeType =(SMALL | LARGE)
@@ -606,12 +632,20 @@ public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage implements 
   }
 
   /**
-   * Other record types support larger capacities, but most records starts as 'ACTUAL', hence actual large
-   * record capacity is used as 'common denominator' here.
+   * Different record types support different capacities, even larger than this one. But most records
+   * start as 'ACTUAL' record type, hence actual LargeRecord capacity is used as 'common denominator'
+   * here.
    */
   private static final int MAX_CAPACITY = LargeRecord.MAX_CAPACITY;
 
-  /* ===================================================================================================== */
+  /**
+   * Max length of .redirectTo chain.
+   * If a chain is longer, it is considered a bug (cyclic reference, or alike) and IOException is thrown.
+   */
+  public static final int MAX_REDIRECTS = 1024;
+
+
+  /* ============== instance fields: ====================================================================== */
 
 
   @NotNull
@@ -643,7 +677,8 @@ public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage implements 
 
 
   public StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage(final @NotNull PagedFileStorageLockFree pagedStorage,
-                                                                 final @NotNull SpaceAllocationStrategy allocationStrategy) throws IOException {
+                                                                 final @NotNull SpaceAllocationStrategy allocationStrategy)
+    throws IOException {
     this.pagedStorage = pagedStorage;
     this.allocationStrategy = allocationStrategy;
 
