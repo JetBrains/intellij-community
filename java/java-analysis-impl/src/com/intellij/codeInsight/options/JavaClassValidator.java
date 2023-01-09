@@ -8,11 +8,13 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.PsiNameHelperImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,9 +70,29 @@ public class JavaClassValidator implements StringValidatorWithSwingSelector {
   }
 
   @Override
-  public @Nullable String getErrorMessage(@NotNull String className) {
-    return PsiNameHelperImpl.getInstance().isQualifiedName(className) ? null:
-           JavaBundle.message("validator.text.not.valid.class.name");
+  public @Nullable String getErrorMessage(@Nullable Project project, @NotNull String className) {
+    if (!PsiNameHelperImpl.getInstance().isQualifiedName(className)) {
+      return JavaBundle.message("validator.text.not.valid.class.name");
+    }
+    if (project == null) return null;
+    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
+    if (psiClass == null) {
+      return JavaBundle.message("validator.text.class.not.found");
+    }
+    return checkClass(psiClass);
+  }
+
+  @Nullable
+  private @Nls String checkClass(PsiClass psiClass) {
+    if (myAnnotationOnly && !psiClass.isAnnotationType()) {
+      return JavaBundle.message("validator.text.no.annotation");
+    }
+    if (!mySuperClasses.isEmpty() &&
+        !ContainerUtil.exists(mySuperClasses, superClass -> InheritanceUtil.isInheritor(psiClass, superClass))) {
+      return JavaBundle.message("validator.text.wrong.superclass");
+    }
+    return null;
   }
 
   @Override
@@ -83,10 +105,7 @@ public class JavaClassValidator implements StringValidatorWithSwingSelector {
       .createWithInnerClassesScopeChooser(title, GlobalSearchScope.allScope(project), new ClassFilter() {
         @Override
         public boolean isAccepted(PsiClass aClass) {
-          if (myAnnotationOnly && !aClass.isAnnotationType()) return false;
-          if (!mySuperClasses.isEmpty() && 
-              !ContainerUtil.exists(mySuperClasses, superClass -> InheritanceUtil.isInheritor(aClass, superClass))) return false;
-          return true;
+          return checkClass(aClass) == null;
         }
       }, null);
     chooser.showDialog();

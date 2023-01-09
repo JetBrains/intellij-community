@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.options;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,8 +16,9 @@ public interface StringValidator {
   @NotNull String validatorId();
 
   /**
+   * @param project project in which context the string must be checked; null if unknown/non-applicable
    * @param string string to check
    * @return an error message describing why the string is not valid; null if it's valid
    */
-  @Nullable @NlsContexts.HintText String getErrorMessage(@NotNull String string);
+  @Nullable @NlsContexts.HintText String getErrorMessage(@Nullable Project project, @NotNull String string);
 }

@@ -172,7 +172,7 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
 
         if (hasOptionsPanel) {
           myUpdatedSettingsToolWrapper = copyToolWithSettings(toolWrapper);
-          final JComponent optionsPanel = InspectionOptionPaneRenderer.createOptionsPanel(myUpdatedSettingsToolWrapper.getTool(), myDisposable);
+          final JComponent optionsPanel = InspectionOptionPaneRenderer.createOptionsPanel(myUpdatedSettingsToolWrapper.getTool(), myDisposable, project);
           LOGGER.assertTrue(optionsPanel != null);
 
           final var separator = new TitledSeparator(IdeBundle.message("goto.inspection.action.choose.inherit.settings.from"));

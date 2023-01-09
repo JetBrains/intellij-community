@@ -339,21 +339,21 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
 
   /**
    * Old and discouraged way to create inspection options. Override {@link #getOptionsPane()} instead.
-   * If you need to render options, use {@link InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable)}.
+   * If you need to render options, use {@link InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable, Project)}.
    *
    * @return {@code null} if no UI options required.
    */
   public @Nullable JComponent createOptionsPanel() {
     OptPane pane = getOptionsPane();
     if (pane.equals(OptPane.EMPTY)) return null;
-    return InspectionOptionPaneRenderer.getInstance().render(this, getOptionsPane(), null);
+    return InspectionOptionPaneRenderer.getInstance().render(this, getOptionsPane(), null, null);
   }
 
   /**
    * @return declarative representation of the inspection options. If this method returns a non-empty pane, then
    * {@link #createOptionsPanel()} is not used.
    * @see OptPane#pane(OptRegularComponent...) 
-   * @see InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable) 
+   * @see InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable, Project) 
    */
   public @NotNull OptPane getOptionsPane() {
     return OptPane.EMPTY;

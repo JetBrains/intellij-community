@@ -51,7 +51,7 @@ public class EditSettingsAction extends InspectionViewActionBase {
       InspectionToolWrapper tool = getSingleTool(view);
       final DialogBuilder builder = new DialogBuilder()
         .title(InspectionsBundle.message("inspection.tool.window.inspection.dialog.title", tool.getDisplayName()));
-      JComponent panel = InspectionOptionPaneRenderer.createOptionsPanel(tool.getTool(), builder);
+      JComponent panel = InspectionOptionPaneRenderer.createOptionsPanel(tool.getTool(), builder, e.getProject());
       LOG.assertTrue(panel != null, "Unexpectedly inspection '" + tool.getShortName() + "' didn't create an options panel");
       builder.centerPanel(panel);
       builder.removeAllActions();

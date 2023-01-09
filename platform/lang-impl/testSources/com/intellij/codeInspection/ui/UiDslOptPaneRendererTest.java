@@ -160,7 +160,7 @@ public class UiDslOptPaneRendererTest {
   }
 
   private static @NotNull JComponent render(InspectionProfileEntry inspection) {
-    return new UiDslOptPaneRenderer().render(inspection, inspection.getOptionsPane(), null);
+    return new UiDslOptPaneRenderer().render(inspection, inspection.getOptionsPane(), null, null);
   }
 
   private static class MyTabsInspection extends LocalInspectionTool {

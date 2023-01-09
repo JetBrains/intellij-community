@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.Settings
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.SimpleListCellRenderer
@@ -21,10 +22,13 @@ import javax.swing.*
 import kotlin.math.max
 
 class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
-  override fun render(tool: InspectionProfileEntry, pane: OptPane, parent: Disposable?): JComponent {
+  override fun render(tool: InspectionProfileEntry,
+                      pane: OptPane,
+                      parent: Disposable?,
+                      project: Project?): JComponent {
     return panel {
       pane.components.forEachIndexed { i, component ->
-        render(component, tool.optionController, i != 0 && !pane.components[i - 1].hasBottomGap)
+        render(component, tool.optionController, project, i != 0 && !pane.components[i - 1].hasBottomGap)
       }
     }
       .apply { if (parent != null) registerValidators(parent) }
@@ -36,10 +40,14 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
    * @param isFirst true if the component is first in a hierarchy (then [OptGroup] doesn't need a top gap)
    * @param withBottomGap true if the component is the last of a group which should have a bottom gap
    */
-  private fun Panel.render(component: OptRegularComponent, tool: OptionController, isFirst: Boolean = false, withBottomGap: Boolean = false) {
+  private fun Panel.render(component: OptRegularComponent,
+                           tool: OptionController,
+                           project: Project?,
+                           isFirst: Boolean = false,
+                           withBottomGap: Boolean = false) {
     when (component) {
       is OptControl, is OptSettingLink, is OptCustom -> {
-        renderOptRow(component, tool, withBottomGap)
+        renderOptRow(component, tool, withBottomGap, project)
       }
 
       is OptGroup -> {
@@ -47,7 +55,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           row { label(component.label.label()) }
             .apply { if (isFirst) topGap(TopGap.SMALL) }
           indent {
-            component.children.forEachIndexed { i, child -> render(child, tool, i == 0, i == component.children.lastIndex) }
+            component.children.forEachIndexed { i, child -> render(child, tool, project, i == 0, i == component.children.lastIndex) }
           }
         }
       }
@@ -60,7 +68,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           component.children.forEach { tab ->
             tabbedPane.add(tab.label.label(), com.intellij.ui.dsl.builder.panel {
               tab.children.forEachIndexed { i, tabComponent ->
-                render(tabComponent, tool, i == 0)
+                render(tabComponent, tool, project, i == 0)
               }
             })
           }
@@ -78,7 +86,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
             if (splitLabel != null && splitLabel.prefix.isNotBlank()) {
               label(splitLabel.prefix).gap(RightGap.SMALL)
             }
-            val cell = renderOptCell(child, tool)
+            val cell = renderOptCell(child, tool, project)
             if (splitLabel != null && splitLabel.suffix.isNotBlank()) {
               cell.gap(RightGap.SMALL)
               label(splitLabel.suffix)
@@ -89,13 +97,13 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       is OptCheckboxPanel -> {
         panel {
           // TODO: proper rendering
-          component.children.forEachIndexed { i, child -> render(child, tool, i == 0, i == component.children.lastIndex) }
+          component.children.forEachIndexed { i, child -> render(child, tool, project, i == 0, i == component.children.lastIndex) }
         }
       }
     }
   }
 
-  private fun Panel.renderOptRow(component: OptRegularComponent, tool: OptionController, withBottomGap: Boolean = false) {
+  private fun Panel.renderOptRow(component: OptRegularComponent, tool: OptionController, withBottomGap: Boolean = false, project: Project?) {
     val splitLabel = component.splitLabel
     val nestedInRow = component.nestedInRow
     lateinit var cell: Cell<JComponent>
@@ -105,19 +113,19 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         row {
           label(splitLabel.prefix)
             .gap(RightGap.SMALL)
-          cell = renderOptCell(component, tool)
+          cell = renderOptCell(component, tool, project)
             .gap(RightGap.SMALL)
           label(splitLabel.suffix)
         }
       }
       // Split label with null suffix
-      splitLabel?.prefix != null -> row(splitLabel.prefix) { cell = renderOptCell(component, tool) }
+      splitLabel?.prefix != null -> row(splitLabel.prefix) { cell = renderOptCell(component, tool, project) }
       // No row label (align left, control handles the label)
       else -> row {
-        cell = renderOptCell(component, tool)
+        cell = renderOptCell(component, tool, project)
 
         nestedInRow?.let { nested ->
-          renderOptCell(nested, tool)
+          renderOptCell(nested, tool, project)
             .enabledIf((cell.component as JBCheckBox).selected)
         }
       }
@@ -130,7 +138,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       val group = indent {
         nested
           .drop(if (nestedInRow != null) 1 else 0)
-          .forEachIndexed { i, component -> render(component, tool, i == 0) }
+          .forEachIndexed { i, component -> render(component, tool, project, i == 0) }
       }
       if (cell.component is JBCheckBox) {
         group.enabledIf((cell.component as JBCheckBox).selected)
@@ -138,7 +146,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
     }
   }
 
-  private fun Row.renderOptCell(component: OptRegularComponent, tool: OptionController): Cell<JComponent> {
+  private fun Row.renderOptCell(component: OptRegularComponent, tool: OptionController, project: Project?): Cell<JComponent> {
     return when (component) {
         is OptCheckbox -> {
           checkBox(component.label.label())
@@ -159,7 +167,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
               text = tool.getOption(component.bindId) as String
             }
             .validationOnInput { textField ->
-              component.validator?.getErrorMessage(textField.text)?.let { error(it) }
+              component.validator?.getErrorMessage(project, textField.text)?.let { error(it) }
             }
             .onChanged {
               tool.setOption(component.bindId, it.text)
@@ -198,11 +206,11 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
             val settings = Settings.KEY.getData(dataContext)
             if (settings == null) {
-              val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return@addHyperlinkListener
+              val prj = project ?: CommonDataKeys.PROJECT.getData(dataContext) ?: return@addHyperlinkListener
               // Settings dialog was opened without configurable hierarchy tree in the left area
               // (e.g. by invoking "Edit inspection profile setting" fix)
               ShowSettingsUtil.getInstance().showSettingsDialog(
-                project, { conf -> ConfigurableVisitor.getId(conf) == component.configurableID }
+                prj, { conf -> ConfigurableVisitor.getId(conf) == component.configurableID }
               ) { conf -> component.controlLabel?.let { label -> conf.focusOn(label) } }
             }
             else {
