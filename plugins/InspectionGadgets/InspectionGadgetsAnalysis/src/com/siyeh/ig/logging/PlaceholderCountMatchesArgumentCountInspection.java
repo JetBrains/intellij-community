@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -357,6 +357,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       concatenationStack.add(expression);
       while (!concatenationStack.isEmpty()) {
         PsiExpression currentExpression = concatenationStack.pop();
+        //limit parts not to process too long
         if (parts.size() > MAX_PARTS) {
           parts.add(new PartHolder(null, false));
           return parts;
