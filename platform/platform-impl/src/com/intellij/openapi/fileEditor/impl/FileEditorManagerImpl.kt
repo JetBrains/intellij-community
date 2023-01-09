@@ -317,7 +317,9 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
      * Works on FileEditor objects, allows forcing opening other editor tabs in the main window.
      * If the currently selected file editor has this key is set to TRUE, new editors will be opened in the main splitters.
      */
+    @JvmField
     val SINGLETON_EDITOR_IN_WINDOW = Key.create<Boolean>("OPEN_OTHER_TABS_IN_MAIN_WINDOW")
+
     const val FILE_EDITOR_MANAGER = "FileEditorManager"
     const val EDITOR_OPEN_INACTIVE_SPLITTER = "editor.open.inactive.splitter"
     private val openFileSetModificationCount = LongAdder()
@@ -802,16 +804,30 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   private fun getOrCreateCurrentWindow(file: VirtualFile): EditorWindow {
-    val uiSettings = UISettings.getInstance()
-    val useMainWindow = uiSettings.openTabsInMainWindow || SINGLETON_EDITOR_IN_WINDOW.get(selectedEditor, false)
-    val splitters = if (useMainWindow) mainSplitters else splitters
+    val currentEditor = selectedEditor
+    val isSingletonEditor = SINGLETON_EDITOR_IN_WINDOW.get(currentEditor, false)
     val currentWindow = splitters.currentWindow
-    if (currentWindow == null || uiSettings.editorTabPlacement != UISettings.TABS_NONE) {
-      return splitters.getOrCreateCurrentWindow(file)
+
+    // If the selected editor is a singleton in a split window, prefer the sibling of that split window.
+    // When navigating from a diff view opened in a vertical split,
+    // this makes a new tab open below/above the diff view, still keeping the diff in sight.
+    if (isSingletonEditor && currentWindow != null && currentWindow.inSplitter() &&
+        currentWindow.tabCount == 1 && currentWindow.selectedComposite?.selectedEditor === currentEditor) {
+      val siblingWindow = currentWindow.getSiblings().firstOrNull()
+      if (siblingWindow != null) {
+        return siblingWindow
+      }
     }
-    else {
-      return currentWindow
+
+    val uiSettings = UISettings.getInstance()
+    val useMainWindow = isSingletonEditor || uiSettings.openTabsInMainWindow
+    val targetSplitters = if (useMainWindow) mainSplitters else splitters
+    val targetWindow = targetSplitters.currentWindow
+
+    if (targetWindow != null && uiSettings.editorTabPlacement == UISettings.TABS_NONE) {
+      return targetWindow
     }
+    return targetSplitters.getOrCreateCurrentWindow(file)
   }
 
   fun openFileInNewWindow(file: VirtualFile): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
