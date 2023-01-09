@@ -13,7 +13,6 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory
-import com.intellij.util.LocalTimeCounter
 
 data class FormattingChanges(val preFormatText: CharSequence, val postFormatText: CharSequence, val mismatches: List<WhitespaceMismatch>) {
   data class WhitespaceMismatch(val preFormatRange: TextRange, val postFormatRange: TextRange)
@@ -40,12 +39,13 @@ fun detectFormattingChanges(file: PsiFile): FormattingChanges? {
 
   val psiCopy = PsiFileFactory.getInstance(file.project).createFileFromText(
     file.name,
-    file.fileType,
+    file.language,
     fileDoc.text,
-    LocalTimeCounter.currentTime(),
     false,
-    true
-  )
+    true,
+    false,
+    null
+  ) ?: return null
   // Necessary if we want to apply the same .editorconfig files
   psiCopy.putUserData(PsiFileFactory.ORIGINAL_FILE, file)
   val copyDoc = psiCopy.viewProvider.document!!
