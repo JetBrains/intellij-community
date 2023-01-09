@@ -1,7 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.common.kotlin
 
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiType
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -180,6 +183,81 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         TestCase.assertNotNull(visitedMethod.singleOrNull { it.name == "readSomething" })
         TestCase.assertNotNull(visitedMethod.singleOrNull { it.name == "getFoo" })
         TestCase.assertNotNull(visitedMethod.singleOrNull { it.name == "getBoo" })
+    }
+
+    private fun checkPsiType(psiType: PsiType, fqName: String = "TypeAnnotation") {
+        TestCase.assertEquals(1, psiType.annotations.size)
+        val annotation = psiType.annotations[0]
+        TestCase.assertEquals(fqName, annotation.qualifiedName)
+    }
+
+    fun checkAnnotationOnPsiType(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                @Target(AnnotationTarget.TYPE)
+                annotation class TypeAnnotation
+                
+                interface State<out T> {
+                    val value: T
+                }
+                
+                fun test(
+                    i : @TypeAnnotation Int?,
+                    s : @TypeAnnotation String?,
+                    vararg vs : @TypeAnnotation Any,
+                ): @TypeAnnotation State<String> {
+                    return object : State<String> {
+                        override val value: String = i?.toString() ?: s ?: "42"
+                    }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        val test = uFile.findElementByTextFromPsi<UMethod>("test", strict = false)
+            .orFail("can't find fun test")
+        val lightMethod = test.javaPsi
+
+        TestCase.assertNotNull(lightMethod.returnType)
+        checkPsiType(lightMethod.returnType!!)
+
+        lightMethod.parameterList.parameters.forEach { psiParameter ->
+            val psiTypeToCheck = (psiParameter.type as? PsiArrayType)?.componentType ?: psiParameter.type
+            checkPsiType(psiTypeToCheck)
+        }
+    }
+
+    fun checkAnnotationOnPsiTypeArgument(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                @Target(AnnotationTarget.TYPE)
+                annotation class TypeAnnotation
+                
+                fun test(
+                    ins : List<@TypeAnnotation Int>,
+                ): Array<@TypeAnnotation String> {
+                    return ins.map { it.toString() }.toTypedArray()
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        val test = uFile.findElementByTextFromPsi<UMethod>("test", strict = false)
+            .orFail("can't find fun test")
+        val lightMethod = test.javaPsi
+
+        fun firstTypeArgument(psiType: PsiType?): PsiType? =
+            (psiType as? PsiClassType)?.parameters?.get(0)
+                ?: (psiType as? PsiArrayType)?.componentType
+
+        TestCase.assertNotNull(lightMethod.returnType)
+        checkPsiType(firstTypeArgument(lightMethod.returnType)!!)
+
+        lightMethod.parameterList.parameters.forEach { psiParameter ->
+            checkPsiType(firstTypeArgument(psiParameter.type)!!)
+        }
     }
 
 }
