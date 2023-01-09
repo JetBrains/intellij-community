@@ -960,7 +960,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     closePopup();
   }
 
-  private void closePopup() {
+  public void closePopup() {
     ActionMenu.showDescriptionInStatusBar(true, myResultsList, null);
     stopSearching();
     searchFinishedHandler.run();

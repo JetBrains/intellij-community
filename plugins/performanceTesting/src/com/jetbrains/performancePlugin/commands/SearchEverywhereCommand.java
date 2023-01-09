@@ -1,5 +1,6 @@
 package com.jetbrains.performancePlugin.commands;
 
+import com.intellij.diagnostic.telemetry.TraceUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.searcheverywhere.*;
@@ -16,6 +17,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
+import com.sampullara.cli.Args;
+import com.sampullara.cli.Argument;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
@@ -32,8 +35,11 @@ public class SearchEverywhereCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "searchEverywhere";
   private static final Logger LOG = Logger.getInstance(SearchEverywhereCommand.class);
 
+  private final Options myOptions = new Options();
+
   public SearchEverywhereCommand(@NotNull String text, int line) {
     super(text, line);
+    Args.parse(myOptions, extractCommandArgument(PREFIX).split("\\|")[0].split(" "));
   }
 
   @Override
@@ -43,7 +49,8 @@ public class SearchEverywhereCommand extends AbstractCommand {
 
     String input = extractCommandArgument(PREFIX);
     String[] args = input.split("\\|");
-    final String tab = args.length > 0 ? args[0] : "all";
+    Args.parse(myOptions, args[0].split(" "));
+    final String tab = myOptions.tab;
     final String text = args.length > 1 ? args[1] : "";
 
     Ref<String> tabId = new Ref<>();
@@ -63,7 +70,9 @@ public class SearchEverywhereCommand extends AbstractCommand {
       DataContext dataContext = DataManager.getInstance().getDataContext(focusedComponent);
       IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
       AnActionEvent actionEvent = AnActionEvent.createFromDataContext(ActionPlaces.EDITOR_POPUP, null, dataContext);
-      SearchEverywhereManager.getInstance(project).show(tabId.get(), "", actionEvent);
+      TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, "searchEverywhere_show", span ->{
+        SearchEverywhereManager.getInstance(project).show(tabId.get(), "", actionEvent);
+      });
       Span span = PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_" + tab).startSpan();
       spanRef.set(span);
       try (Scope ignored = span.makeCurrent()) {
@@ -73,6 +82,10 @@ public class SearchEverywhereCommand extends AbstractCommand {
     }));
     try {
       result.get().get();
+      if (myOptions.close) {
+        ApplicationManager.getApplication()
+          .invokeLater(() -> SearchEverywhereManager.getInstance(project).getCurrentlyShownUI().closePopup());
+      }
     }
     catch (InterruptedException | ExecutionException e) {
       LOG.error(e);
@@ -82,5 +95,13 @@ public class SearchEverywhereCommand extends AbstractCommand {
       actionCallback.setDone();
     }
     return Promises.toPromise(actionCallback);
+  }
+
+  static class Options {
+    @Argument
+    String tab = "all";
+
+    @Argument
+    Boolean close = false;
   }
 }
