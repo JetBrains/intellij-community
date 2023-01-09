@@ -5,7 +5,6 @@ package com.intellij.openapi.file.system
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
-import com.intellij.openapi.file.IoFileUtil.toCanonicalPath
 import com.intellij.openapi.file.NioPathUtil.toCanonicalPath
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -28,7 +27,7 @@ object LocalFileSystemUtil {
 
   @JvmStatic
   fun findFileOrDirectory(file: File): VirtualFile? {
-    return findFileOrDirectory(file.toCanonicalPath())
+    return findFileOrDirectory(file.toPath())
   }
 
   @JvmStatic
@@ -43,7 +42,7 @@ object LocalFileSystemUtil {
 
   @JvmStatic
   fun getFileOrDirectory(file: File): VirtualFile {
-    return getFileOrDirectory(file.toCanonicalPath())
+    return getFileOrDirectory(file.toPath())
   }
 
   @JvmStatic
@@ -58,7 +57,7 @@ object LocalFileSystemUtil {
 
   @JvmStatic
   fun findFile(file: File): VirtualFile? {
-    return findFile(file.toCanonicalPath())
+    return findFile(file.toPath())
   }
 
   @JvmStatic
@@ -73,7 +72,7 @@ object LocalFileSystemUtil {
 
   @JvmStatic
   fun getFile(file: File): VirtualFile {
-    return getFile(file.toCanonicalPath())
+    return getFile(file.toPath())
   }
 
   @JvmStatic
@@ -88,7 +87,7 @@ object LocalFileSystemUtil {
 
   @JvmStatic
   fun findDirectory(file: File): VirtualFile? {
-    return findDirectory(file.toCanonicalPath())
+    return findDirectory(file.toPath())
   }
 
   @JvmStatic
@@ -103,7 +102,7 @@ object LocalFileSystemUtil {
 
   @JvmStatic
   fun getDirectory(file: File): VirtualFile {
-    return getDirectory(file.toCanonicalPath())
+    return getDirectory(file.toPath())
   }
 
   @JvmStatic
