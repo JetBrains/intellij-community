@@ -74,8 +74,8 @@ fun detectFormattingChanges(file: PsiFile): FormattingChanges? {
                    postFormat,
                    WhiteSpaceFormattingStrategyFactory.getStrategy(baseLanguage))
   } catch (e: NonWhitespaceChangeException) {
-    throw IllegalArgumentException(
-      "Non-whitespace change: pre-format=%#04x, post-format=%#04x, lang=%s".format(e.pre.code, e.post.code, file.language.id))
+    throw IllegalArgumentException("Non-whitespace change: pre-format=%#04x, post-format=%#04x, lang=%s, filetype=%s"
+                                     .format(e.pre.code, e.post.code, file.language.id, file.fileType.name))
   }
   return FormattingChanges(preFormat, postFormat, changes)
 }
