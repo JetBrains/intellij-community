@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.configurationStore.StoreUtilKt;
@@ -1150,12 +1150,7 @@ public final class ConfigImportHelper {
     return false;
   }
 
-  private static boolean blockImport(
-    Path path,
-    Path oldConfig,
-    Path newConfig,
-    Path oldPluginsDir,
-    @Nullable ConfigImportSettings settings) {
+  private static boolean blockImport(Path path, Path oldConfig, Path newConfig, Path oldPluginsDir, @Nullable ConfigImportSettings settings) {
     if (oldConfig.equals(path.getParent())) {
       Path fileName = path.getFileName();
       return shouldSkipFileDuringImport(path, settings) ||
