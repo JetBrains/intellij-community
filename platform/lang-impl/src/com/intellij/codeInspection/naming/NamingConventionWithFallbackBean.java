@@ -5,13 +5,11 @@ package com.intellij.codeInspection.naming;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.options.OptRegularComponent;
 import com.intellij.codeInspection.options.OptionController;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class NamingConventionWithFallbackBean extends NamingConventionBean {
@@ -46,8 +44,7 @@ public class NamingConventionWithFallbackBean extends NamingConventionBean {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox("inheritDefaultSettings", InspectionsBundle.message("inspection.naming.conventions.option"),
-                       super.getOptionsPane().components().toArray(OptRegularComponent[]::new))
+      super.getOptionsPane().asCheckbox("inheritDefaultSettings", InspectionsBundle.message("inspection.naming.conventions.option"))
         .description(InspectionsBundle.message("inspection.naming.conventions.option.description"))
     ); 
   }

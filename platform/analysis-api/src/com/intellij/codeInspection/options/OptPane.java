@@ -76,6 +76,18 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
   }
 
   /**
+   * Transform this pane to a checkbox with dependent controls
+   *
+   * @param bindId checkbox bindId
+   * @param label checkbox title
+   * @return a {@link OptCheckbox} object that contains all the controls from this pane as children 
+   */
+  public @NotNull OptCheckbox asCheckbox(@Language("jvm-field-name") @NotNull String bindId,
+                                         @NotNull @NlsContexts.Label String label) {
+    return new OptCheckbox(bindId, new PlainMessage(label), components(), null);
+  }
+  
+  /**
    * @param bindPrefix prefix to add to bindId values
    * @return an equivalent component but every control has bindId prefixed with bindPrefix and dot.
    * Could be useful to compose a complex form from independent parts. To process prefixed options,
