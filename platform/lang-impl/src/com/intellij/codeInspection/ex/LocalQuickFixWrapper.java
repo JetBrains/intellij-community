@@ -10,6 +10,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsActions;
@@ -18,7 +19,10 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class LocalQuickFixWrapper extends QuickFixAction {
   private final QuickFix<?> myFix;
@@ -79,8 +83,13 @@ public class LocalQuickFixWrapper extends QuickFixAction {
 
         removeElements(refElements, project, myToolWrapper);
       };
+      Runnable fixApplicator = () -> ((BatchQuickFix)myFix).applyFix(project, descriptors, collectedElementsToIgnore, refreshViews);
+      if (myFix.startInWriteAction()) {
+        ApplicationManager.getApplication().runWriteAction(fixApplicator);
+      } else {
+        fixApplicator.run();
+      }
 
-      ((BatchQuickFix)myFix).applyFix(project, descriptors, collectedElementsToIgnore, refreshViews);
       return;
     }
 
@@ -114,7 +123,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
                                      @NotNull GlobalInspectionContextImpl context,
                                      Set<? super PsiElement> ignoredElements) {
     if (myFix instanceof BatchQuickFix) {
-      super.performFixesInBatch(project, Collections.singletonList(BatchModeDescriptorsUtil.flattenDescriptors(descriptors)), context, ignoredElements);
+      applyFix(project, context, BatchModeDescriptorsUtil.flattenDescriptors(descriptors), ignoredElements);
     }
     else {
       super.performFixesInBatch(project, descriptors, context, ignoredElements);
