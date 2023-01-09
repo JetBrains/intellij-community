@@ -431,6 +431,16 @@ public abstract class AbstractStorage implements IStorage {
       final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
       appendBytes(myRecordId, _out.toByteArraySequence());
     }
+
+    private BufferExposingByteArrayOutputStream getByteStream() {
+      return ((BufferExposingByteArrayOutputStream)out);
+    }
+
+    @NotNull
+    @Override
+    public ByteArraySequence getResultingBuffer() {
+      return getByteStream().getResultingBuffer();
+    }
   }
 
   protected <T, E extends Throwable> T withReadLock(@NotNull ThrowableComputable<T, E> runnable) throws E {
