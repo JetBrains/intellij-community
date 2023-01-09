@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.headertoolbar
 
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -8,20 +9,24 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.Companion.getInstance
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.vcs.FileStatusManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.problems.WolfTheProblemSolver
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.JBColor
-import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.*
 import com.intellij.util.IconUtil
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.UIUtil
 import java.awt.Color
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
+import javax.swing.ListCellRenderer
 import javax.swing.SwingUtilities
 
 /**
@@ -30,7 +35,6 @@ import javax.swing.SwingUtilities
 class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
 
   override fun actionPerformed(e: AnActionEvent) {
-
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -41,36 +45,75 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
     e.presentation.isEnabledAndVisible = noTabs && hasOpenedFiles
   }
 
-  override fun createCustomComponent(presentation: Presentation, place: String) = SimpleColoredComponent()
+  override fun createCustomComponent(presentation: Presentation, place: String) = SimpleColoredComponent().apply {
+    isOpaque = false
+    object : ClickListener() {
+      override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
+        if (clickCount == 1) {
+          showRecentFilesPopup(this@apply)
+          return true
+        }
+        return false
+      }
+    }.installOn(this)
+  }
+
+  private fun showRecentFilesPopup(component: JComponent) {
+    val project = ProjectUtil.getProjectForComponent(component)
+    if (project != null) {
+      val recentFiles = getInstance(project).fileList.asReversed()
+      val files = recentFiles.subList(1, recentFiles.lastIndex)
+      val renderer = SimpleColoredComponent()
+      JBPopupFactory.getInstance().createPopupChooserBuilder(files)
+        .setRenderer(ListCellRenderer { list, file, index, isSelected, cellHasFocus -> renderer.apply {
+          clear()
+          ipad = JBInsets.create(4, 12)
+          file as VirtualFile
+          applyFor(renderer, file, isSelected, isInToolbar = false)
+        } })
+        .setItemChosenCallback { t -> FileEditorManager.getInstance(project).openFile(t!!, true) }
+        .createPopup()
+        .showUnderneathOf(component)
+    }
+  }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
     component as SimpleColoredComponent
     component.clear()
-    component.isOpaque = false
+    applyFor(component, null, false, true)
+  }
 
+  private fun applyFor(component: SimpleColoredComponent, f: VirtualFile?, selected: Boolean, isInToolbar: Boolean) {
     val window = SwingUtilities.windowForComponent(component)
     val project = ProjectFrameHelper.getFrameHelper(window)?.project
     if (project != null) {
       val openFiles = FileEditorManager.getInstance(project).selectedFiles
       if (openFiles.isNotEmpty()) {
-        val file = openFiles[0]
+        val file = f ?: openFiles[0]
         if (file != null) {
           val status = FileStatusManager.getInstance(project).getStatus(file)
           var fg:Color?
 
           val icon = IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, project)
-          if (JBColor.isBright() && ColorUtil.isDark(JBColor.namedColor("MainToolbar.background", Color.WHITE))) {
+          @Suppress("UseJBColor")
+          if (isInToolbar && JBColor.isBright() && ColorUtil.isDark(JBColor.namedColor("MainToolbar.background", Color.WHITE))) {
             component.icon = IconLoader.getDarkIcon(icon, true)
             fg = EditorColorsManager.getInstance().getScheme("Dark").getColor(status.colorKey)
           } else {
             component.icon = icon
-            fg = status.color
+            fg = if (selected) null else status.color
           }
 
           if (fg == null) {
-            fg = JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground())
+            if (isInToolbar) {
+              @Suppress("UnregisteredNamedColor")
+              fg = JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground())
+            } else {
+              fg = UIUtil.getListForeground(selected, true)
+            }
           }
 
+          @Suppress("HardCodedStringLiteral")
           val filename = VfsPresentationUtil.getUniquePresentableNameForUI(project, file)
           component.isOpaque = false
           val hasProblems = WolfTheProblemSolver.getInstance(project).isProblemFile(file)
