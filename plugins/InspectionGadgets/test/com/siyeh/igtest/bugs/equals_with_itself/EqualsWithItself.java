@@ -76,6 +76,23 @@ class EqualsWithItself {
     Object o1 = new Object();
     Object o2 = new Object();
     org.junit.Assert.assertSame(o1, o2);
+
+    UpperComplexObject complexObject1 = new UpperComplexObject();
+    UpperComplexObject complexObject2 = new UpperComplexObject();
+
+    org.junit.Assert.<warning descr="'assertSame()' called on itself">assertSame</warning>(complexObject1.a1.i, complexObject1.a1.i);
+    org.junit.Assert.assertSame(complexObject1.a2.i, complexObject1.a1.i);
+    org.junit.Assert.assertSame(complexObject2.a1.i, complexObject1.a1.i);
+    org.assertj.core.api.Assertions.<error descr="Cannot resolve method 'assertArrayEquals' in 'Assertions'">assertArrayEquals</error>(new int[]{1,2}, new int[]{1,2});
+  }
+
+  private static class UpperComplexObject{
+    private ComplexObject a1 = new ComplexObject();
+    private ComplexObject a2 = new ComplexObject();
+  }
+
+  private static class ComplexObject{
+    private int i;
   }
 
   static class Outer {

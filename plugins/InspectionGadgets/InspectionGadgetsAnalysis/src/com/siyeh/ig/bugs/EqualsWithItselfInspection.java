@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.SetInspectionOptionFix;
@@ -97,9 +97,9 @@ public class EqualsWithItselfInspection extends BaseInspection {
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final Boolean canEnableOption = (Boolean)infos[0];
-    return canEnableOption?
+    return canEnableOption ?
            new DelegatingFix(new SetInspectionOptionFix(this, "ignoreNonFinalClassesInTest",
-                                                 InspectionGadgetsBundle.message("equals.with.itself.option"), true)) : null;
+                                                        InspectionGadgetsBundle.message("equals.with.itself.option"), true)) : null;
   }
 
   private class EqualsWithItselfVisitor extends BaseInspectionVisitor {
@@ -107,10 +107,15 @@ public class EqualsWithItselfInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      boolean isArgumentFinalLibraryClass = isFinalLibraryClassOrPrimitives(expression);
-      boolean isTestAssertion = TEST_ASSERTIONS.test(expression);
-      if ((!ignoreNonFinalClassesInTest || !isTestAssertion || isArgumentFinalLibraryClass) && isEqualsWithItself(expression)) {
-        registerMethodCallError(expression, !ignoreNonFinalClassesInTest && isTestAssertion && !isArgumentFinalLibraryClass);
+      if (ignoreNonFinalClassesInTest &&
+          TEST_ASSERTIONS.test(expression) &&
+          !isFinalLibraryClassOrPrimitives(expression)) {
+        return;
+      }
+      if (isEqualsWithItself(expression)) {
+        registerMethodCallError(expression, !ignoreNonFinalClassesInTest &&
+                                            TEST_ASSERTIONS.test(expression) &&
+                                            !isFinalLibraryClassOrPrimitives(expression));
       }
     }
 
@@ -121,10 +126,11 @@ public class EqualsWithItselfInspection extends BaseInspection {
       if (type == null) return false;
 
       if (TypeConversionUtil.isPrimitiveAndNotNull(type)) return true;
-
+      if (type instanceof PsiArrayType) return true;
       PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
-      if (!LibraryUtil.classIsInLibrary(aClass)) return false;
-      return aClass.hasModifierProperty(PsiModifier.FINAL);
+      if (aClass == null) return false;
+      if (!aClass.hasModifierProperty(PsiModifier.FINAL)) return false;
+      return LibraryUtil.classIsInLibrary(aClass);
     }
   }
 
@@ -175,12 +181,17 @@ public class EqualsWithItselfInspection extends BaseInspection {
   private static boolean isTheSame(@Nullable PsiExpression left, @Nullable PsiExpression right) {
     left = PsiUtil.skipParenthesizedExprDown(left);
     right = PsiUtil.skipParenthesizedExprDown(right);
+
     if (!(left instanceof PsiReferenceExpression leftReference && right instanceof PsiReferenceExpression rightReference)) {
       return false;
     }
     PsiElement resolvedFromLeft = leftReference.resolve();
     PsiElement resolvedFromRight = rightReference.resolve();
-    return resolvedFromLeft != null && resolvedFromLeft == resolvedFromRight;
+    boolean equalReferences = resolvedFromLeft != null && resolvedFromLeft == resolvedFromRight;
+    if (!equalReferences) return false;
+    PsiExpression leftQualifier = ExpressionUtils.getEffectiveQualifier(leftReference);
+    PsiExpression rightQualifier = ExpressionUtils.getEffectiveQualifier(rightReference);
+    return leftQualifier == rightQualifier || isTheSame(leftQualifier, rightQualifier);
   }
 
   private static boolean isItself(@Nullable PsiExpression left, @Nullable PsiExpression right) {

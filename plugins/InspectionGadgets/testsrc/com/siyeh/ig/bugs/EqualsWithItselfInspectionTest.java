@@ -46,6 +46,7 @@ public class EqualsWithItselfInspectionTest extends LightJavaInspectionTestCase 
      public class Assertions{
      	public static void assertEquals(Object expected, Object actual) {}
      	public static void assertNotEquals(Object expected, Object actual) {}
+     	public static void assertArrayEquals(int[] expected, int[] actual) {}
      }
      """,
       """
