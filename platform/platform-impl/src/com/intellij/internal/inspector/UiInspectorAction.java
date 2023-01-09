@@ -7,6 +7,7 @@ import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.internal.inspector.components.HierarchyTree;
 import com.intellij.internal.inspector.components.InspectorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -43,7 +45,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
   private static final String ACTION_ID = "UiInspector";
   public static final String RENDERER_BOUNDS = "clicked renderer";
 
-  public static final Key<Pair<List<PropertyBean>, Component>> CLICK_INFO = Key.create("CLICK_INFO");
+  public static final Key<DefaultMutableTreeNode> CLICK_INFO = Key.create("CLICK_INFO");
   public static final Key<Point> CLICK_INFO_POINT = Key.create("CLICK_INFO_POINT");
   public static final Key<Throwable> ADDED_AT_STACKTRACE = Key.create("uiInspector.addedAt");
 
@@ -136,7 +138,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
       if (component != null) {
         if (component instanceof JComponent) {
           JComponent jComp = (JComponent)component;
-          jComp.putClientProperty(CLICK_INFO, getClickInfo(me, component));
+          jComp.putClientProperty(CLICK_INFO, getClickInfoNode(me, jComp));
           jComp.putClientProperty(CLICK_INFO_POINT, me.getPoint());
         }
 
@@ -144,7 +146,19 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
       }
     }
 
-    private static Pair<List<PropertyBean>, Component> getClickInfo(MouseEvent me, Component component) {
+    private static DefaultMutableTreeNode getClickInfoNode(MouseEvent me, JComponent component) {
+      Pair<List<PropertyBean>, @NotNull Component> clickInfo = getClickInfo(me, component);
+      if (clickInfo != null) {
+        //We present clicked renderer as ComponentNode instead of ClickInfoNode to see inner structure of renderer
+        HierarchyTree.ComponentNode node = HierarchyTree.ComponentNode.createComponentNode(clickInfo.second);
+        clickInfo.second.doLayout();
+        node.setUserObject(clickInfo.first);
+        return node;
+      }
+      return null;
+    }
+
+    private static Pair<List<PropertyBean>, @NotNull Component> getClickInfo(MouseEvent me, Component component) {
       if (me.getComponent() == null) return null;
       me = SwingUtilities.convertMouseEvent(me.getComponent(), me, component);
       List<PropertyBean> clickInfo = new ArrayList<>();

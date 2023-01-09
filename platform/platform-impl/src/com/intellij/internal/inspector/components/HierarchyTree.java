@@ -252,13 +252,8 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       Vector<TreeNode> result = new Vector<>();
 
       if (parent instanceof JComponent) {
-        Pair<List<PropertyBean>, Component> o = ClientProperty.get(parent, UiInspectorAction.CLICK_INFO);
-        if (o != null) {
-          //result.add(new ClickInfoNode(o.first));
-          //We present clicked renderer as ComponentNode instead of ClickInfoNode to see inner structure of renderer
-          ComponentNode node = createComponentNode(o.second);
-          o.second.doLayout();
-          node.setUserObject(o.first);
+        DefaultMutableTreeNode node = ClientProperty.get(parent, UiInspectorAction.CLICK_INFO);
+        if (node != null) {
           result.add(node);
         }
       }
