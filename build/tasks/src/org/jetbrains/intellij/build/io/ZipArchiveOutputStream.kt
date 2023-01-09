@@ -133,7 +133,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
 
     entryCount++
 
-    assert(channelPosition == (dataOffset + compressedSize).toLong())
+    assert(channelPosition == dataOffset.toLong() + compressedSize)
     writeCentralFileHeader(size = size,
                            compressedSize = compressedSize,
                            method = method,
