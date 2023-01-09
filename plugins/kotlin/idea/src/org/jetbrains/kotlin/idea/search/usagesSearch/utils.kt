@@ -90,9 +90,6 @@ class JavaConstructorCallLazyDescriptorHandle(psiMethod: PsiMethod) :
 fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String? =
     declaration.descriptor?.let { DescriptorRenderer.COMPACT.render(it) }
 
-fun hasType(element: KtExpression): Boolean =
-    element.analyze(BodyResolveMode.PARTIAL).getType(element) != null
-
 val KtDeclaration.constructor: ConstructorDescriptor?
     get() {
         val context = this.analyze()

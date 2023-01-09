@@ -32,9 +32,6 @@ class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
   override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> =
         declaration.actualsForExpected(module)
 
-    override fun hasType(element: KtExpression): Boolean =
-        org.jetbrains.kotlin.idea.search.usagesSearch.hasType(element)
-
     override fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean =
         reference.isCallableOverrideUsage(declaration)
 

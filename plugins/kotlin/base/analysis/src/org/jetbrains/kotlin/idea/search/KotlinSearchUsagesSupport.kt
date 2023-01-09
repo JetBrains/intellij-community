@@ -33,9 +33,6 @@ interface KotlinSearchUsagesSupport {
                 return DataClassResolver.createComponentName(parameterIndex() + 1).asString()
             }
 
-        val KtExpression.hasType: Boolean
-            get() = getInstance(project).hasType(this)
-
         fun <T : PsiNamedElement> List<T>.filterDataClassComponentsIfDisabled(kotlinOptions: KotlinReferencesSearchOptions): List<T> {
             fun PsiNamedElement.isComponentElement(): Boolean {
                 if (this !is PsiMethod) return false
@@ -122,8 +119,6 @@ interface KotlinSearchUsagesSupport {
     fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean
 
     fun actualsForExpected(declaration: KtDeclaration, module: Module? = null): Set<KtDeclaration>
-
-    fun hasType(element: KtExpression): Boolean
 
     fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean
 

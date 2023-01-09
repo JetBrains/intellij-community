@@ -74,12 +74,6 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         return false
     }
 
-    override fun hasType(element: KtExpression): Boolean {
-        return analyze(element) {
-            element.getKtType() != null
-        }
-    }
-
     override fun isCallableOverride(subDeclaration: KtDeclaration, superDeclaration: PsiNamedElement): Boolean {
         return analyze(subDeclaration) {
             val subSymbol = subDeclaration.getSymbol() as? KtCallableSymbol ?: return false

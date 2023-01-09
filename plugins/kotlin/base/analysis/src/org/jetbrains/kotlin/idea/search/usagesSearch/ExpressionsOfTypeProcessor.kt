@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.idea.base.util.excludeFileTypes
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.hasType
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isInProjectSource
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
@@ -553,10 +552,8 @@ class ExpressionsOfTypeProcessor(
 
                 if (element.getStrictParentOfType<KtImportDirective>() != null) return true // ignore usage in import
 
-                if (element.hasType) { // access to object or companion object
-                    processSuspiciousExpression(element)
-                    return true
-                }
+                processSuspiciousExpression(element)
+                return true
             }
 
             is KDocName -> return true // ignore usage in doc-comment
