@@ -57,13 +57,14 @@ class DescriptorStorageImpl(
       VfsOperationTag.ATTR_SET_VERSION -> VfsOperation.AttributesOperation.SetVersion.VALUE_SIZE_BYTES
 
       VfsOperationTag.CONTENT_WRITE_BYTES -> VfsOperation.ContentsOperation.WriteBytes.VALUE_SIZE_BYTES
-      VfsOperationTag.CONTENT_WRITE_STREAM -> TODO()
-      VfsOperationTag.CONTENT_WRITE_STREAM_2 -> TODO()
-      VfsOperationTag.CONTENT_APPEND_STREAM -> TODO()
-      VfsOperationTag.CONTENT_REPLACE_BYTES -> TODO()
-      VfsOperationTag.CONTENT_ACQUIRE_NEW_RECORD -> TODO()
-      VfsOperationTag.CONTENT_RELEASE_RECORD -> TODO()
-      VfsOperationTag.CONTENT_SET_VERSION -> TODO()
+      VfsOperationTag.CONTENT_WRITE_STREAM -> VfsOperation.ContentsOperation.WriteStream.VALUE_SIZE_BYTES
+      VfsOperationTag.CONTENT_WRITE_STREAM_2 -> VfsOperation.ContentsOperation.WriteStream2.VALUE_SIZE_BYTES
+      VfsOperationTag.CONTENT_APPEND_STREAM -> VfsOperation.ContentsOperation.AppendStream.VALUE_SIZE_BYTES
+      VfsOperationTag.CONTENT_REPLACE_BYTES -> VfsOperation.ContentsOperation.ReplaceBytes.VALUE_SIZE_BYTES
+      VfsOperationTag.CONTENT_ACQUIRE_NEW_RECORD -> VfsOperation.ContentsOperation.AcquireNewRecord.VALUE_SIZE_BYTES
+      VfsOperationTag.CONTENT_ACQUIRE_RECORD -> VfsOperation.ContentsOperation.AcquireRecord.VALUE_SIZE_BYTES
+      VfsOperationTag.CONTENT_RELEASE_RECORD -> VfsOperation.ContentsOperation.ReleaseRecord.VALUE_SIZE_BYTES
+      VfsOperationTag.CONTENT_SET_VERSION -> VfsOperation.ContentsOperation.SetVersion.VALUE_SIZE_BYTES
     } + VfsOperationTag.SIZE_BYTES * 2
 
   private fun sizeOfValueInDescriptor(size: Int) = size - VfsOperationTag.SIZE_BYTES * 2

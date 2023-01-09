@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.AttributesInterceptor
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import java.util.*
 
 class AttributesLogInterceptor(
   private val processor: OperationProcessor
@@ -23,8 +22,7 @@ class AttributesLogInterceptor(
         }
 
         private fun interceptClose(result: OperationResult<Unit>) {
-          val resultBuf = aos.getResultingBuffer()
-          val data = Arrays.copyOfRange(resultBuf.internalBuffer, resultBuf.offset, resultBuf.offset + resultBuf.length)
+          val data = aos.getResultingBuffer().toBytes()
           processor.enqueue {
             descriptorStorage.writeDescriptor(VfsOperationTag.ATTR_WRITE_ATTR) {
               coroutineScope {
