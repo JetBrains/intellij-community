@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.ide.actions.SplitAction
 import com.intellij.openapi.project.Project
+import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -29,7 +30,7 @@ internal class GHPRTimelineVirtualFile(fileManagerId: String,
   override fun getName() = "#${pullRequest.number}"
   override fun getPresentableName() = details?.let { "${it.title} $name" } ?: name
 
-  override fun getPath(): String = (fileSystem as GHPRVirtualFileSystem).getPath(fileManagerId, project, repository, pullRequest, null)
+  override fun getPath(): String = (fileSystem as GHPRVirtualFileSystem).getPath(sessionId, project, repository, pullRequest, null)
   override fun getPresentablePath() = details?.url ?: "${repository.toUrl()}/pulls/${pullRequest.number}"
 
   fun getIcon(): Icon? = details?.let { GHUIUtil.getPullRequestStateIcon(it.state, it.isDraft) }
@@ -37,7 +38,6 @@ internal class GHPRTimelineVirtualFile(fileManagerId: String,
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is GHPRTimelineVirtualFile) return false
-    if (!super.equals(other)) return false
-    return true
+    return super.equals(other)
   }
 }
