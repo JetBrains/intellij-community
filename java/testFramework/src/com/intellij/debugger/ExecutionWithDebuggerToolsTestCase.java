@@ -191,11 +191,9 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
         CharSequence text = Objects.requireNonNull(document).getImmutableCharSequence();
         String positionText = "";
         if (offset > -1) {
-          positionText = StringUtil.escapeLineBreak(
-            " [" + text.subSequence(Math.max(0, offset - 20), offset)
-            + "<*>"
-            + text.subSequence(offset, Math.min(offset + 20, text.length()))
-            + "]");
+          CharSequence before = text.subSequence(Math.max(0, offset - 20), offset);
+          CharSequence after = text.subSequence(offset, Math.min(offset + 20, text.length()));
+          positionText = StringUtil.escapeLineBreak(" [" + before + "<*>" + after + "]");
         }
 
         systemPrintln(toDisplayableString(sourcePosition) + positionText);
