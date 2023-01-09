@@ -167,7 +167,8 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
 
       PsiConditionalLoopStatement conditionalLoopStatement =
         PsiTreeUtil.getParentOfType(psiInstanceOfExpression, PsiConditionalLoopStatement.class);
-      if (conditionalLoopStatement != null && PsiTreeUtil.isAncestor(conditionalLoopStatement.getCondition(), psiInstanceOfExpression, false)) {
+      if (conditionalLoopStatement != null &&
+          PsiTreeUtil.isAncestor(conditionalLoopStatement.getCondition(), psiInstanceOfExpression, false)) {
         processReferencesForLoopStatement(conditionalLoopStatement, variable, psiInstanceOfExpression, references);
         return;
       }
@@ -186,9 +187,9 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
         //trivial cases
         ConditionState conditionState = getConditionIfInstanceOfTrue(psiInstanceOfExpression, ifStatement.getCondition());
 
-        if (conditionState==ConditionState.TRUE &&
-            thenBranch!=null && !(thenBranch instanceof PsiEmptyStatement) &&
-            ifStatement.getElseBranch()==null)  {
+        if (conditionState == ConditionState.TRUE &&
+            thenBranch != null && !(thenBranch instanceof PsiEmptyStatement) &&
+            ifStatement.getElseBranch() == null) {
           List<PsiReferenceExpression> referencesForThenBranch =
             ContainerUtil.filter(unusedReferences, t -> PsiTreeUtil.isAncestor(thenBranch, t, false));
           unusedReferences.removeAll(referencesForThenBranch);
@@ -217,8 +218,9 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
 
       //in else branch
       PsiStatement elseBranch = ifStatement.getElseBranch();
-      Map<Boolean, List<PsiReferenceExpression>> collectedInsideElseBlock = collectedInsideThenBranch.getOrDefault(Boolean.FALSE, List.of()).stream()
-        .collect(Collectors.groupingBy(referenceExpression -> PsiTreeUtil.isAncestor(elseBranch, referenceExpression, false)));
+      Map<Boolean, List<PsiReferenceExpression>> collectedInsideElseBlock =
+        collectedInsideThenBranch.getOrDefault(Boolean.FALSE, List.of()).stream()
+          .collect(Collectors.groupingBy(referenceExpression -> PsiTreeUtil.isAncestor(elseBranch, referenceExpression, false)));
 
       if (elseBranch != null && collectedInsideElseBlock.get(Boolean.TRUE) != null) {
         if (elseBranch instanceof PsiIfStatement elseIfStatement) {
@@ -253,9 +255,9 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
         ContainerUtil.filter(unusedReferences, t -> PsiTreeUtil.isAncestor(statement.getBody(), t, false));
 
       unusedReferences.removeAll(referencesForInsideBlock);
-      if (statement.getBody()!=null && !(statement.getBody() instanceof PsiEmptyStatement) &&
+      if (statement.getBody() != null && !(statement.getBody() instanceof PsiEmptyStatement) &&
           ((this.tryToPreserveUnusedVariables && conditionState == ConditionState.TRUE && !(statement instanceof PsiDoWhileStatement)) ||
-          !referencesForInsideBlock.isEmpty())) {
+           !referencesForInsideBlock.isEmpty())) {
         addDeclarationInsideBlock(statement.getBody(), variable);
       }
 
@@ -264,8 +266,8 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
       unusedReferences.removeAll(referencesOutsideLoop);
 
       boolean noBreak = PsiTreeUtil.processElements(statement,
-                                              e -> !(e instanceof PsiBreakStatement) ||
-                                                   ((PsiBreakStatement)e).findExitedStatement() != statement);
+                                                    e -> !(e instanceof PsiBreakStatement) ||
+                                                         ((PsiBreakStatement)e).findExitedStatement() != statement);
 
       if ((this.tryToPreserveUnusedVariables && conditionState == ConditionState.FALSE && noBreak) ||
           !referencesOutsideLoop.isEmpty()) {
@@ -356,7 +358,7 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
       text = variable.getTypeElement().getText() + " " + variable.getName() + " = " + text + ";";
       PsiModifierList modifierList = variable.getModifierList();
       if (modifierList != null && StringUtil.isNotEmpty(modifierList.getText())) {
-        text =modifierList.getText() + " " + text;
+        text = modifierList.getText() + " " + text;
       }
       return text;
     }
@@ -392,7 +394,7 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
         return;
       }
 
-      references.forEach(reference->{
+      references.forEach(reference -> {
         PsiReplacementUtil.replaceExpression(reference, text, new CommentTracker());
       });
     }
