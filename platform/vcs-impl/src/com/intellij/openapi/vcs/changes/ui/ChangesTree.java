@@ -71,7 +71,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @NotNull protected final Project myProject;
   private boolean myShowCheckboxes;
-  @Nullable private ClickListener myCheckBoxClickHandler;
   private final int myCheckboxWidth;
   @NotNull private final ChangesGroupingSupport myGroupingSupport;
   private boolean myIsModelFlat;
@@ -122,8 +121,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, this::isShowFlatten, highlightProblems);
     setCellRenderer(new ChangesTreeCellRenderer(nodeRenderer));
 
-    new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
-    showCheckboxesChanged();
+    new MyToggleSelectionAction().registerCustomShortcutSet(this, null);
+    installCheckBoxClickHandler();
 
     installTreeLinkHandler(nodeRenderer);
     SmartExpander.installOn(this);
@@ -174,7 +173,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
    * <p>
    * So we add "checkbox mouse clicks" handling as a listener.
    */
-  private ClickListener installCheckBoxClickHandler() {
+  private void installCheckBoxClickHandler() {
     ClickListener handler = new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
@@ -189,8 +188,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       }
     };
     handler.installOn(this);
-
-    return handler;
   }
 
   @Nullable
@@ -379,20 +376,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     myShowCheckboxes = value;
 
     if (oldValue != value) {
-      showCheckboxesChanged();
+      updateFixedRowHeight();
+      repaint();
     }
-  }
-
-  private void showCheckboxesChanged() {
-    if (isShowCheckboxes()) {
-      myCheckBoxClickHandler = installCheckBoxClickHandler();
-    }
-    else if (myCheckBoxClickHandler != null) {
-      myCheckBoxClickHandler.uninstall(this);
-      myCheckBoxClickHandler = null;
-    }
-    updateFixedRowHeight();
-    repaint();
   }
 
   private boolean isCurrentModelFlat() {
@@ -724,6 +710,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   private class MyToggleSelectionAction extends AnAction implements DumbAware {
+    private MyToggleSelectionAction() {
+      setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)));
+    }
+
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
