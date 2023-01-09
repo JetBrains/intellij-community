@@ -180,6 +180,7 @@ public class TableLayout extends TabLayout {
   private int getMoreRectAxisSize() {
     if (myWithScrollBar) return 0;
     return myTabs.isSingleRow() ? ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width + JBUI.scale(7) : 0;
+    // 7 = 4 (borders of the button) + 3 (additional space between button and the last tab)
   }
 
   private static int getTotalLength(@NotNull List<TabInfo> list, @NotNull TablePassInfo data) {
