@@ -1165,14 +1165,7 @@ public class MavenUtil {
    * @param condition only connectors satisfied for this predicate will be restarted
    */
   public static void restartMavenConnectors(@NotNull Project project, boolean wait, Predicate<MavenServerConnector> condition) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      MavenServerManager.getInstance().getAllConnectors().forEach(it -> {
-        if (project.equals(it.getProject()) && condition.test(it)) {
-          MavenServerManager.getInstance().shutdownConnector(it, wait);
-        }
-      });
-      MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
-    }, SyncBundle.message("maven.sync.restarting"), false, project);
+    MavenServerManager.getInstance().restartMavenConnectors(project, wait, condition);
   }
 
   public static void restartMavenConnectors(@NotNull Project project, boolean wait) {

@@ -47,6 +47,7 @@ import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.function.Predicate;
 
 import static org.jetbrains.idea.maven.server.DummyMavenServerConnector.isDummy;
 
@@ -78,6 +79,26 @@ public final class MavenServerManager implements Disposable {
     synchronized (myMultimoduleDirToConnectorMap) {
       myMultimoduleDirToConnectorMap.entrySet().removeIf(e -> e.getValue() == connector);
     }
+  }
+
+  public void restartMavenConnectors(Project project, boolean wait, Predicate<MavenServerConnector> condition) {
+    List<MavenServerConnector> connectorsToShutDown = new ArrayList<>();
+    synchronized (myMultimoduleDirToConnectorMap) {
+      getAllConnectors().forEach(it -> {
+        if (project.equals(it.getProject()) && condition.test(it)) {
+          connectorsToShutDown.add(it);
+        }
+      });
+    }
+    MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, SyncBundle.message("maven.sync.restarting"), false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        connectorsToShutDown.forEach(it -> {
+          shutdownConnector(it, wait);
+        });
+      }
+    });
   }
 
   public static MavenServerManager getInstance() {
@@ -314,7 +335,6 @@ public final class MavenServerManager implements Disposable {
 
     shutdownConnector(myIndexingConnector, wait);
     values.forEach(c -> shutdownConnector(c, wait));
-
   }
 
   public static boolean verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion) {
