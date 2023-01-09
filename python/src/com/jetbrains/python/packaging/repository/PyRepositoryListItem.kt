@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.repository
 
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.ui.NamedConfigurable
 import com.intellij.openapi.util.NlsSafe
@@ -24,10 +23,10 @@ class PyRepositoryListItem(val repository: PyPackageRepository) : NamedConfigura
   private var password = repository.getPassword()
 
   private val propertyGraph = PropertyGraph()
-  private val urlProperty = propertyGraph.graphProperty { repository.repositoryUrl ?: "" }
-  private val loginProperty = propertyGraph.graphProperty { repository.login ?: "" }
-  private val passwordProperty = propertyGraph.graphProperty { repository.getPassword() ?: "" }
-  private val authorizationTypeProperty = propertyGraph.graphProperty { repository.authorizationType }
+  private val urlProperty = propertyGraph.lazyProperty { repository.repositoryUrl ?: "" }
+  private val loginProperty = propertyGraph.lazyProperty { repository.login ?: "" }
+  private val passwordProperty = propertyGraph.lazyProperty { repository.getPassword() ?: "" }
+  private val authorizationTypeProperty = propertyGraph.lazyProperty { repository.authorizationType }
 
   override fun getDisplayName(): String {
     return currentName
@@ -37,6 +36,7 @@ class PyRepositoryListItem(val repository: PyPackageRepository) : NamedConfigura
     return currentName != repository.name
            || repository.repositoryUrl != urlProperty.get()
            || repository.authorizationType != authorizationTypeProperty.get()
+           || repository.login != loginProperty.get()
            || password != passwordProperty.get()
 
   }

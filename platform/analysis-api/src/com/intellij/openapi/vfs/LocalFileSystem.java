@@ -26,7 +26,7 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   public static final String PROTOCOL = StandardFileSystems.FILE_PROTOCOL;
   public static final String PROTOCOL_PREFIX = StandardFileSystems.FILE_PROTOCOL_PREFIX;
 
-  private static class LocalFileSystemHolder {
+  private static final class LocalFileSystemHolder {
     private static final LocalFileSystem ourInstance = (LocalFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
   }
 

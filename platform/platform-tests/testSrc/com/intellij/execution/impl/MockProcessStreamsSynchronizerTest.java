@@ -5,7 +5,6 @@ import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.Disposable;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -145,7 +144,7 @@ public class MockProcessStreamsSynchronizerTest extends LightPlatformTestCase {
   }
 
   private void assertFlushedChunks(FlushedChunk @NotNull ... expectedFlushedChunks) {
-    Assert.assertEquals(ContainerUtil.newArrayList(expectedFlushedChunks), mySynchronizer.getFlushedChunksAndClear());
+    Assert.assertEquals(List.of(expectedFlushedChunks), mySynchronizer.getFlushedChunksAndClear());
   }
 
   private void assertNoPendingChunks() {

@@ -5,12 +5,13 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.*
-import java.util.*
 import kotlin.properties.Delegates
 
 class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: Boolean = false/*TODO?*/) {
@@ -20,7 +21,7 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
     )
 
     private val SAVED_TREE_KEY = Key<TreeElement>("SAVED_TREE")
-    private val psiFactory = KtPsiFactory(originalElements.first!!)
+    private val psiFactory = KtPsiFactory(originalElements.first!!.project)
 
     private abstract class TreeElement {
         companion object {
@@ -333,10 +334,14 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
                     if (commentTreeElement.spaceAfter.isNotEmpty()) {
                         parent.addBefore(psiFactory.createWhiteSpace(commentTreeElement.spaceAfter), anchorElement)
                     }
+                    if (commentTreeElement.spaceBefore.isNotEmpty()) {
+                        when {
+                            parent is KtFunctionLiteral ->
+                                parent.addBefore(psiFactory.createWhiteSpace(commentTreeElement.spaceBefore), restored)
 
-                    val functionLiteral = restored.parent as? KtFunctionLiteral
-                    if (functionLiteral != null && commentTreeElement.spaceBefore.isNotEmpty()) {
-                        functionLiteral.addBefore(psiFactory.createWhiteSpace(commentTreeElement.spaceBefore), restored)
+                            comment.elementType == KtTokens.BLOCK_COMMENT && comment.isMultiLine() ->
+                                restored.prevSibling.replace(psiFactory.createWhiteSpace(commentTreeElement.spaceBefore))
+                        }
                     }
                 }
             } else {

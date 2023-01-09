@@ -22,6 +22,7 @@ import training.learn.LearnBundle
 import training.learn.course.LearningCourse
 import training.statistic.LessonStartingWay
 import training.statistic.StatisticBase
+import training.util.enableLessonsAndPromoters
 import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.JLabel
@@ -29,15 +30,15 @@ import javax.swing.JPanel
 
 class IftTipAndTrickPromoter : TipAndTrickPromotionFactory {
   override fun createPromotionPanel(project: Project, tip: TipAndTrickBean): JPanel? {
+    if (!enableLessonsAndPromoters) return null
     val lessonId = findLessonIdForTip(tip) ?: return null
     return createOpenLessonPanel(project, lessonId, tip)
   }
 
   private fun findLessonIdForTip(tip: TipAndTrickBean): String? {
-    val tipId = tip.fileName.removePrefix("neue-").removeSuffix(".html")
     val course: LearningCourse = CourseManager.instance.currentCourse ?: return null
     val lessonIdToTipsMap = course.getLessonIdToTipsMap()
-    val lessonIds = lessonIdToTipsMap.filterValues { it.contains(tipId) }.keys
+    val lessonIds = lessonIdToTipsMap.filterValues { it.contains(tip.id) }.keys
     if (lessonIds.isNotEmpty()) {
       if (lessonIds.size > 1) {
         thisLogger().warn("$tip declared as suitable in more than one lesson: $lessonIds")
@@ -104,6 +105,6 @@ class IftTipAndTrickPromoter : TipAndTrickPromotionFactory {
     }
 
     courseManager.openLesson(project, lesson, LessonStartingWay.TIP_AND_TRICK_PROMOTER, forceStartLesson = true)
-    StatisticBase.logLessonLinkClickedFromTip(lessonId, tip.fileName)
+    StatisticBase.logLessonLinkClickedFromTip(lessonId, tip.id)
   }
 }

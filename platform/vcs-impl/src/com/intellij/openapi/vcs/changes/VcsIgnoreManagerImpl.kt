@@ -10,8 +10,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.actions.VcsContextFactory
@@ -49,14 +48,14 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
                                             Alarm.ThreadToUse.POOLED_THREAD)
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      project.messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
-        override fun projectClosing(closedProject: Project) {
-          if (project === closedProject) {
+      project.messageBus.connect().subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+        override fun projectClosing(project: Project) {
+          if (this@VcsIgnoreManagerImpl.project === project) {
             try {
               @Suppress("TestOnlyProblems")
               ignoreRefreshQueue.waitForAllExecuted(10, TimeUnit.SECONDS)
             }
-            catch (e: RuntimeException) {
+            catch (e: Exception) {
               LOG.warn("Queue '$ignoreRefreshQueue' wait for all executed failed with error:", e)
             }
           }

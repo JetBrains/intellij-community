@@ -79,8 +79,8 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleCustomImlDataEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
@@ -754,6 +754,9 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
                                                           @NotNull Supplier<AnnotationPlace> confirmNewExternalAnnotationRoot) {
     if (!element.isPhysical() && !(element.getOriginalElement() instanceof PsiCompiledElement)) {
       return AnnotationPlace.IN_CODE; //element just created
+    }
+    if (element instanceof PsiLocalVariable) {
+      return AnnotationPlace.IN_CODE;
     }
     if (!element.getManager().isInProject(element)) return AnnotationPlace.EXTERNAL;
     final Project project = myPsiManager.getProject();

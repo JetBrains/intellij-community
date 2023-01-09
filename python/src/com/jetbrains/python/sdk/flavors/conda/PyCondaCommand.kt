@@ -6,7 +6,6 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs
 import com.intellij.openapi.project.Project
-import com.jetbrains.python.FullPathOnTarget
 
 /**
  * Encapsulates conda binary command to simplify target request creation
@@ -34,9 +33,10 @@ class PyCondaCommand(
     val request = createRequest().getOrElse { return Result.failure(it) }
 
     val env = request.prepareEnvironment(indicator)
-    val commandLine = TargetedCommandLineBuilder(request).apply {
+    val commandLineBuilder = TargetedCommandLineBuilder(request).apply {
       setExePath(fullCondaPathOnTarget)
+      fixCondaPathEnvIfNeeded(fullCondaPathOnTarget)
     }
-    return Result.success(Triple(request, env, commandLine))
+    return Result.success(Triple(request, env, commandLineBuilder))
   }
 }

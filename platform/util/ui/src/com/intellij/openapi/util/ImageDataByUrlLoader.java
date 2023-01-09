@@ -29,7 +29,7 @@ public final class ImageDataByUrlLoader implements ImageDataLoader {
   private final @Nullable Class<?> ownerClass;
   private final @Nullable ClassLoader classLoader;
   private final @Nullable String overriddenPath;
-  private final @NotNull IconLoader.HandleNotFound handleNotFound;
+  private final @NotNull HandleNotFound handleNotFound;
 
   private volatile URL url;
 
@@ -40,7 +40,7 @@ public final class ImageDataByUrlLoader implements ImageDataLoader {
     overriddenPath = null;
     this.classLoader = classLoader;
     this.url = url;
-    handleNotFound = IconLoader.HandleNotFound.IGNORE;
+    handleNotFound = HandleNotFound.IGNORE;
     this.useCacheOnLoad = useCacheOnLoad;
   }
 
@@ -49,14 +49,14 @@ public final class ImageDataByUrlLoader implements ImageDataLoader {
     overriddenPath = path;
     this.classLoader = classLoader;
     this.url = url;
-    handleNotFound = IconLoader.HandleNotFound.IGNORE;
+    handleNotFound = HandleNotFound.IGNORE;
     this.useCacheOnLoad = useCacheOnLoad;
   }
 
   ImageDataByUrlLoader(@NotNull String path,
                        @Nullable Class<?> ownerClass,
                        @Nullable ClassLoader classLoader,
-                       @NotNull IconLoader.HandleNotFound handleNotFound,
+                       @NotNull HandleNotFound handleNotFound,
                        boolean useCacheOnLoad) {
     overriddenPath = path;
     this.ownerClass = ownerClass;
@@ -78,29 +78,29 @@ public final class ImageDataByUrlLoader implements ImageDataLoader {
 
     String path = overriddenPath;
     if (path == null || (ownerClass == null && (classLoader == null || path.charAt(0) != '/'))) {
-      URL url = getURL();
+      URL url = getUrl();
       if (url == null) {
         return null;
       }
       path = url.toString();
     }
-    return ImageLoader.loadImage(path, parameters, ownerClass, classLoader, flags, !path.endsWith(".svg"));
+    return ImageLoader.INSTANCE.loadImage(path, parameters, ownerClass, classLoader, flags, !path.endsWith(".svg"));
   }
 
   /**
    * Resolves the URL if it's not yet resolved.
    */
   public void resolve() {
-    getURL();
+    getUrl();
   }
 
   @Override
-  public @Nullable URL getURL() {
+  public @Nullable URL getUrl() {
     URL result = this.url;
     if (result == UNRESOLVED_URL) {
       result = null;
       try {
-        result = IconLoader.doResolve(overriddenPath, classLoader, ownerClass, handleNotFound);
+        result = IconLoader.INSTANCE.doResolve$intellij_platform_util_ui(overriddenPath, classLoader, ownerClass, handleNotFound);
       }
       finally {
         this.url = result;
@@ -111,7 +111,7 @@ public final class ImageDataByUrlLoader implements ImageDataLoader {
 
   @Override
   public @Nullable ImageDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform) {
-    return IconLoader.createNewResolverIfNeeded(classLoader, originalPath, transform);
+    return IconLoader.INSTANCE.createNewResolverIfNeeded(classLoader, originalPath, transform);
   }
 
   @Override

@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,6 +27,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.ClientProperty;
+import com.intellij.ui.CommonActionsPanel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
@@ -137,6 +139,9 @@ public final class ActionUtil {
 
     action.applyTextOverride(e);
     try {
+      if (beforeActionPerformed && e.getUpdateSession() == UpdateSession.EMPTY) {
+        IdeUiService.getInstance().initUpdateSession(e);
+      }
       Runnable runnable = () -> {
         // init group flags from deprecated methods
         boolean isGroup = action instanceof ActionGroup;
@@ -170,8 +175,8 @@ public final class ActionUtil {
         }
       };
       boolean isLikeUpdate = !beforeActionPerformed && Registry.is("actionSystem.update.actions.async");
-      try (AccessToken ignore = SlowOperations.allowSlowOperations(isLikeUpdate ? SlowOperations.ACTION_UPDATE
-                                                                                : SlowOperations.ACTION_PERFORM)) {
+      try (AccessToken ignore = SlowOperations.startSection(isLikeUpdate ? SlowOperations.ACTION_UPDATE
+                                                                         : SlowOperations.ACTION_PERFORM)) {
         long startTime = System.nanoTime();
         runnable.run();
         long duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
@@ -265,7 +270,9 @@ public final class ActionUtil {
   public static boolean lastUpdateAndCheckDumb(@NotNull AnAction action, @NotNull AnActionEvent e, boolean visibilityMatters) {
     Project project = e.getProject();
     if (project != null && PerformWithDocumentsCommitted.isPerformWithDocumentsCommitted(action)) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+      }
     }
     performDumbAwareUpdate(action, e, true);
 
@@ -301,7 +308,9 @@ public final class ActionUtil {
   }
 
   @ApiStatus.Internal
-  public static void doPerformActionOrShowPopup(@NotNull AnAction action, @NotNull AnActionEvent e, @Nullable Consumer<? super JBPopup> popupShow) {
+  public static void doPerformActionOrShowPopup(@NotNull AnAction action,
+                                                @NotNull AnActionEvent e,
+                                                @Nullable Consumer<? super JBPopup> popupShow) {
     if (action instanceof ActionGroup && !e.getPresentation().isPerformGroup()) {
       DataContext dataContext = e.getDataContext();
       ActionGroup group = (ActionGroup)action;
@@ -310,7 +319,11 @@ public final class ActionUtil {
         e.getPresentation().getText(), group, dataContext,
         JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
         false, null, -1, null, place);
-      if (popupShow != null) {
+      var toolbarPopupLocation = CommonActionsPanel.getPreferredPopupPoint(action, dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
+      if (toolbarPopupLocation != null) {
+        popup.show(toolbarPopupLocation);
+      }
+      else if (popupShow != null) {
         popupShow.accept(popup);
       }
       else {
@@ -340,7 +353,7 @@ public final class ActionUtil {
       return;
     }
     AnActionResult result = null;
-    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       performRunnable.run();
       result = AnActionResult.PERFORMED;
     }
@@ -570,6 +583,27 @@ public final class ActionUtil {
     if (ids.length == 1) return getActionGroup(ids[0]);
     List<AnAction> actions = ContainerUtil.mapNotNull(ids, ActionUtil::getAction);
     return actions.isEmpty() ? null : new DefaultActionGroup(actions);
+  }
+
+  public static @NotNull Object getDelegateChainRoot(@NotNull AnAction action) {
+    Object delegate = action;
+    while (delegate instanceof ActionWithDelegate<?>) {
+      delegate = ((ActionWithDelegate<?>)delegate).getDelegate();
+    }
+    return delegate;
+  }
+
+  public static @NotNull AnAction getDelegateChainRootAction(@NotNull AnAction action) {
+    while (action instanceof ActionWithDelegate<?>) {
+      Object delegate = ((ActionWithDelegate<?>)action).getDelegate();
+      if (delegate instanceof AnAction) {
+        action = (AnAction)delegate;
+      }
+      else {
+        return action;
+      }
+    }
+    return action;
   }
 
   @ApiStatus.Experimental

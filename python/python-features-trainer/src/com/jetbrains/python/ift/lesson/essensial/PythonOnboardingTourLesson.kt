@@ -78,8 +78,7 @@ class PythonOnboardingTourLesson :
   private lateinit var openLearnTaskId: TaskContext.TaskId
   private var useDelay: Boolean = false
 
-  private val demoConfigurationName: String = "welcome"
-  private val demoFileName: String = "$demoConfigurationName.py"
+  private val demoFileName: String = "welcome.py"
 
   private val uiSettings get() = UISettings.getInstance()
 
@@ -112,7 +111,8 @@ class PythonOnboardingTourLesson :
       usedInterpreterAtStart = project.pythonSdk?.versionString ?: "none"
       useDelay = true
       invokeActionForFocusContext(getActionById("Stop"))
-      configurations().forEach { runManager().removeConfiguration(it) }
+      val runManager = RunManager.getInstance(project)
+      runManager.allSettings.forEach(runManager::removeConfiguration)
 
       val root = ProjectUtils.getCurrentLearningProjectRoot()
       if (root.findChild(demoFileName) == null) invokeLater {
@@ -621,8 +621,4 @@ class PythonOnboardingTourLesson :
       LearningUiHighlightingManager.clearHighlights()
     }
   }
-
-  private fun TaskRuntimeContext.runManager() = RunManager.getInstance(project)
-  private fun TaskRuntimeContext.configurations() =
-    runManager().allSettings.filter { it.name.contains(demoConfigurationName) }
 }

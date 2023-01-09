@@ -6,15 +6,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectLocator;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
@@ -51,7 +49,7 @@ public final class PsiCopyPasteManager {
 
   public PsiCopyPasteManager() {
     myCopyPasteManager = CopyPasteManagerEx.getInstanceEx();
-    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         if (myRecentData != null && (!myRecentData.isValid() || myRecentData.project == project)) {
@@ -118,10 +116,7 @@ public final class PsiCopyPasteManager {
     if (myRecentData.isCopied) return false;
     PsiElement[] elements = myRecentData.getElements();
     if (elements == null) return false;
-    for (PsiElement aElement : elements) {
-      if (aElement == element) return true;
-    }
-    return false;
+    return ArrayUtil.contains(element, elements);
   }
 
   private static final DataFlavor ourDataFlavor;

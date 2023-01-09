@@ -8,6 +8,10 @@ import com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.concurrency.JobLauncher
+import com.intellij.diagnostic.telemetry.TraceManager
+import com.intellij.diagnostic.telemetry.computeWithSpan
+import com.intellij.diagnostic.telemetry.runWithSpan
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -35,9 +39,11 @@ class CodeVisionPass(
   private val editor: Editor
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true) {
   companion object {
+    private val tracer by lazy { TraceManager.getTracer("CodeVision", true) }
+
     @JvmStatic
     @Internal
-    fun collectData(editor: Editor, file: PsiFile, providers: List<DaemonBoundCodeVisionProvider>) : CodeVisionData {
+    fun collectData(editor: Editor, file: PsiFile, providers: List<DaemonBoundCodeVisionProvider>): CodeVisionData {
       val providerIdToLenses = ConcurrentHashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>()
       collect(EmptyProgressIndicator(), editor, file, providerIdToLenses, providers)
       val allProviders = CodeVisionProviderFactory.createAllProviders(file.project)
@@ -58,12 +64,19 @@ class CodeVisionPass(
                         providerIdToLenses: ConcurrentHashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>,
                         providers: List<DaemonBoundCodeVisionProvider>) {
       val modificationTracker = PsiModificationTracker.getInstance(editor.project)
-      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(providers, progress, Processor { provider ->
-        val results = provider.computeForEditor(editor, file)
-        providerIdToLenses[provider.id] = DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(results,
-                                                                                                modificationTracker.modificationCount)
-        true
-      })
+      runWithSpan(tracer, "codeVision") { span ->
+        span.setAttribute("file", file.name)
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(providers, progress, Processor { provider ->
+          span.useWithScope {
+            computeWithSpan(tracer, provider.javaClass.simpleName) {
+              val results = provider.computeForEditor(editor, file)
+              providerIdToLenses[provider.id] = DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(results,
+                                                                                                      modificationTracker.modificationCount)
+            }
+          }
+          true
+        })
+      }
     }
 
     internal fun updateProviders(project: Project,
@@ -107,6 +120,7 @@ class CodeVisionPass(
         true
       }
     }
+    CodeVisionPassFactory.putCurrentModificationStamp(editor, myFile)
   }
 
   class CodeVisionData internal constructor(

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog",
                "BlockingMethodInNonBlockingContext")
 package org.jetbrains.intellij.build.impl
@@ -246,7 +246,7 @@ class JarPackager private constructor(private val context: BuildContext) {
           val paths = nativeFiles.get(source)!!
           val sourceFile = source.file
           val fileName = sourceFile.fileName.toString()
-          if (fileName.startsWith("jna-") || fileName.startsWith("pty4j-")) {
+          if (fileName.startsWith("jna-") || fileName.startsWith("pty4j-") || fileName.startsWith("native-")) {
             async(Dispatchers.IO) {
               unpackNativeLibraries(sourceFile = sourceFile, paths = paths, context = packager.context)
             }
@@ -518,16 +518,17 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
       val fileName = path.substring(path.lastIndexOf('/') + 1)
 
       val os = when {
-        path.startsWith("darwin-") || path.startsWith("darwin/") -> OsFamily.MACOS
-        path.startsWith("win32-") || path.startsWith("win/") -> OsFamily.WINDOWS
-        path.startsWith("linux-") || path.startsWith("linux/") -> OsFamily.LINUX
+        path.startsWith("darwin-") || path.startsWith("darwin/") || path.startsWith("mac/") || path.startsWith("Mac/") -> OsFamily.MACOS
+        path.startsWith("win32-") || path.startsWith("win/") || path.startsWith("Windows/") -> OsFamily.WINDOWS
+        path.startsWith("Linux-Android/") || path.startsWith("Linux-Musl/") -> continue
+        path.startsWith("linux-") || path.startsWith("linux/") || path.startsWith("Linux/") -> OsFamily.LINUX
         else -> continue
       }
 
       val osAndArch = path.substring(0, path.indexOf('/'))
       val arch: JvmArchitecture? = when {
         osAndArch.endsWith("-aarch64") || path.contains("/aarch64/") -> JvmArchitecture.aarch64
-        osAndArch.endsWith("-x86-64") || path.contains("/x86-64/") -> JvmArchitecture.x64
+        osAndArch.endsWith("-x86-64") || path.contains("/x86-64/") || path.contains("/x86_64/") -> JvmArchitecture.x64
         // universal library
         os == OsFamily.MACOS && path.count { it == '/' } == 1 -> null
         else -> continue
@@ -614,7 +615,7 @@ private fun getLibraryFiles(library: JpsLibrary,
   for (file in files) {
     val alreadyCopiedFor = copiedFiles.putIfAbsent(file, CopiedFor(library, targetFile))
     if (alreadyCopiedFor != null) {
-      // check name - we allow to have same named module level library name
+      // check name - we allow having same named module level library name
       if (isModuleLevel && alreadyCopiedFor.library.name == libName) {
         continue
       }
@@ -631,7 +632,7 @@ private fun nameToJarFileName(name: String): String {
 
 @Suppress("SpellCheckingInspection")
 private val excludedFromMergeLibs = java.util.Set.of(
-  "sqlite", "async-profiler",
+  "async-profiler",
   "dexlib2", // android-only lib
   "intellij-test-discovery", // used as an agent
   "protobuf", // https://youtrack.jetbrains.com/issue/IDEA-268753

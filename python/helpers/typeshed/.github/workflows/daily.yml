@@ -21,9 +21,7 @@ jobs:
       matrix:
         # macos-11 does not have tcl/tk installed, needed for stubtesting tkinter
         os: ["ubuntu-latest", "windows-latest", "macos-10.15"]
-        # Python 3.9 and 3.10 temporarily pinned due to incompatibilities
-        # between micro versions.
-        python-version: ["3.6", "3.7", "3.8", "3.9.10", "3.10.2"]
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
       fail-fast: false
 
     steps:
@@ -35,18 +33,14 @@ jobs:
       - name: Update pip
         run: python -m pip install -U pip
       - name: Install dependencies
-        # Use pre-release stubtest. Keep the following in sync:
-        # - get_mypy_req in tests/stubtest_third_party.py
-        # - stubtest-stdlib in .github/workflows/daily.yml
-        # - stubtest-stdlib in .github/workflows/tests.yml
-        run: pip install $(grep tomli== requirements-tests.txt) git+git://github.com/python/mypy@c7a81620bef7585cca6905861bb7ef34ec12da2f
+        run: pip install $(grep tomli== requirements-tests.txt) $(grep mypy== requirements-tests.txt)
       - name: Run stubtest
         run: python tests/stubtest_stdlib.py
 
   stubtest-third-party:
     name: Check third party stubs with stubtest
     if: github.repository == 'python/typeshed'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         shard-index: [0, 1, 2, 3]
@@ -59,7 +53,9 @@ jobs:
       - name: Install dependencies
         run: pip install $(grep tomli== requirements-tests.txt)
       - name: Install apt packages
-        run: sudo apt install -y $(python tests/get_apt_packages.py)
+        run: |
+          sudo apt update
+          sudo apt install -y $(python tests/get_apt_packages.py)
       - name: Run stubtest
         run: python tests/stubtest_third_party.py --num-shards 4 --shard-index ${{ matrix.shard-index }}
 

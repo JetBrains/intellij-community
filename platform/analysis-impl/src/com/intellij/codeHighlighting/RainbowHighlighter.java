@@ -335,7 +335,8 @@ public class RainbowHighlighter {
     attributes.setForegroundColor(rainbowColor);
   }
 
-  public static TextAttributesKey @NotNull [] getRainbowTempKeys() {
+  public static TextAttributesKey @NotNull [] getRainbowTempKeys(@NotNull TextAttributesScheme colorsScheme) {
+    generateColors(colorsScheme);
     return RAINBOW_TEMP_KEYS;
   }
 

@@ -87,56 +87,6 @@ interface TargetEnvironmentRequest {
   val defaultVolume: Volume
     get() = throw UnsupportedOperationException()
 
-  /**
-   * @return new, separate, upload-only volume at some unspecified remote location
-   */
-  @Deprecated("Use uploadVolumes")
-  fun createTempVolume(): Volume {
-    return createUploadRoot(null, true)
-  }
-
-  /**
-   * @param temporary If true, volume should be deleted after calling
-   * [TargetEnvironment.shutdown()][TargetEnvironment.shutdown]
-   * of owning environment instance.
-   */
-  @Deprecated("Use uploadVolumes")
-  fun createUploadRoot(remoteRootPath: String?,
-                       temporary: Boolean): Volume {
-    throw UnsupportedOperationException()
-  }
-
-  @Deprecated("Use downloadVolumes")
-  fun createDownloadRoot(remoteRootPath: String?): DownloadableVolume {
-    throw UnsupportedOperationException()
-  }
-
-  /**
-   * Creates the requirement to open a port on the target environment.
-   *
-   * Returned value may be used in [TargetedCommandLineBuilder]
-   * where it will be replaced to the passed port.
-   *
-   * As soon as target will be prepared, the value will also contain the port on local machine
-   * that corresponds to the targetPort on target machine.
-   */
-  @Deprecated("Use targetPortBindings")
-  fun bindTargetPort(targetPort: Int): TargetValue<Int> {
-    throw UnsupportedOperationException()
-  }
-
-  /**
-   * Creates the requirement to make a service listening on the provided port
-   * on the local machine available for the process in the target environment.
-   * <p>
-   * The returned value contains the host and the port, which the target
-   * process should connect to, to access the local service.
-   */
-  @Deprecated("Use localPortBindings")
-  fun bindLocalPort(localPort: Int): TargetValue<HostPort> {
-    throw UnsupportedOperationException()
-  }
-
   @Deprecated("Use TargetEnvironment.UploadVolume")
   interface Volume {
     val platform: Platform
@@ -149,20 +99,6 @@ interface TargetEnvironmentRequest {
      * where it will be replaced to the corresponding **absolute** path at the target machine.
      */
     fun createUpload(localPath: String): TargetValue<String>
-  }
-
-  @Deprecated("Use TargetEnvironment.DownloadVolume")
-  interface DownloadableVolume : Volume {
-    val remoteRoot: String
-
-    /**
-     * Creates the requirement to download the local path from the target environment.
-     *
-     * Returned value has remote promise resolved to `getRemoteRoot().resolve(rootRelativePath).
-     * Local value is a promise which is resolved just before environment termination, when the files are actually downloaded from
-     * target to local machine.
-     */
-    fun createDownload(rootRelativePath: String): TargetValue<String>
   }
 
   /**

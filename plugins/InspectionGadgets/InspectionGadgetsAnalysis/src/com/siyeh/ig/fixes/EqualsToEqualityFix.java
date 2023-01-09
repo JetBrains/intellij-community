@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.*;
@@ -46,8 +45,12 @@ public final class EqualsToEqualityFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
-    final PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class, false);
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    PsiElement element = descriptor.getPsiElement();
+    if (element instanceof PsiExpression expr && BoolUtils.isNegation(expr)) {
+      element = BoolUtils.getNegated(expr);
+    }
+    final PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, false);
     EqualityCheck check = EqualityCheck.from(call);
     if (check == null) return;
     PsiExpression lhs = check.getLeft();

@@ -56,7 +56,7 @@ public abstract class InvertBooleanDelegate {
   public abstract void collectRefElements(PsiElement element,
                                           @Nullable RenameProcessor renameProcessor,
                                           @NotNull String newName,
-                                          Collection<PsiElement> elementsToInvert);
+                                          Collection<? super PsiElement> elementsToInvert);
 
   /**
    * Invoked from {@link #collectForeignElementsToInvert(PsiElement, PsiElement, Language, Collection)}
@@ -68,7 +68,7 @@ public abstract class InvertBooleanDelegate {
   /**
    * @return true, if element was found in current language
    */
-  public boolean collectElementsToInvert(PsiElement namedElement, PsiElement expression, Collection<PsiElement> elementsToInvert) {
+  public boolean collectElementsToInvert(PsiElement namedElement, PsiElement expression, Collection<? super PsiElement> elementsToInvert) {
     PsiElement elementToInvert = getElementToInvert(namedElement, expression);
     if (elementToInvert != null) {
       elementsToInvert.add(elementToInvert);
@@ -84,7 +84,7 @@ public abstract class InvertBooleanDelegate {
   protected static void collectForeignElementsToInvert(PsiElement namedElement,
                                                        PsiElement expression,
                                                        Language language,
-                                                       Collection<PsiElement> elementsToInvert) {
+                                                       Collection<? super PsiElement> elementsToInvert) {
     if (!expression.getLanguage().is(language)){
       final InvertBooleanDelegate delegate = findInvertBooleanDelegate(expression);
       if (delegate != null) {

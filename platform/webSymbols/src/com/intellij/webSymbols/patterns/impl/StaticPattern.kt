@@ -5,16 +5,16 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.WebSymbolNameSegment
-import com.intellij.webSymbols.WebSymbolsContainer
+import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
-import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
+import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
 
 internal class StaticPattern(val content: String) : WebSymbolsPattern() {
   override fun getStaticPrefixes(): Sequence<String> = sequenceOf(content)
 
   override fun match(owner: WebSymbol?,
-                     contextStack: Stack<WebSymbolsContainer>,
-                     itemsProvider: WebSymbolsPatternItemsProvider?,
+                     scopeStack: Stack<WebSymbolsScope>,
+                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
                      start: Int,
                      end: Int): List<MatchResult> =
@@ -23,8 +23,8 @@ internal class StaticPattern(val content: String) : WebSymbolsPattern() {
     else emptyList()
 
   override fun getCompletionResults(owner: WebSymbol?,
-                                    contextStack: Stack<WebSymbolsContainer>,
-                                    itemsProvider: WebSymbolsPatternItemsProvider?,
+                                    scopeStack: Stack<WebSymbolsScope>,
+                                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                                     params: CompletionParameters,
                                     start: Int,
                                     end: Int): CompletionResults =

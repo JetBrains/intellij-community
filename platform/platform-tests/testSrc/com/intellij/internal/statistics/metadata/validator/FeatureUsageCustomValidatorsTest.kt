@@ -137,7 +137,7 @@ class FeatureUsageCustomValidatorsTest : ProductivityFeaturesTest() {
 
   private class TestProductivityFeatureProvider : ProductivityFeaturesProvider() {
     override fun getFeatureDescriptors(): Array<FeatureDescriptor> {
-      val descriptor = FeatureDescriptor("features.welcome", null, "TestTip.html", "test", 0, 0, null, 0, this)
+      val descriptor = FeatureDescriptor("features.welcome", null, "TestTip", "test", 0, 0, null, 0, this)
       return arrayOf(descriptor)
     }
   }

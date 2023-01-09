@@ -260,7 +260,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  private static List<String> screenUncRoots(List<String> roots, List<String> ignored) {
+  private static List<String> screenUncRoots(List<String> roots, List<? super String> ignored) {
     List<String> filtered = null;
     for (int i = 0; i < roots.size(); i++) {
       String root = roots.get(i);

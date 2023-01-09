@@ -2013,6 +2013,120 @@ public class PyTypingTest extends PyTestCase {
              expr = A.x""");
   }
 
+  // PY-53104
+  public void testMethodReturnSelf() {
+    doTest("B",
+           """
+             from typing import Self
+
+             class A:
+                 def foo(self) -> Self:
+                     ...
+             class B(A):
+                 pass
+             expr = B().foo()""");
+  }
+
+  // PY-53104
+  public void testMethodReturnListSelf() {
+    doTest("list[B]",
+           """
+             from typing import Self
+
+             class A:
+                 def foo(self) -> list[Self]:
+                     ...
+             class B(A):
+                 pass:
+                     ...
+             expr = B().foo()""");
+  }
+
+  // PY-53104
+  public void testClassMethodReturnSelf() {
+    doTest("Circle",
+           """
+             from typing import Self
+
+
+             class Shape:
+                 @classmethod
+                 def from_config(cls, config: dict[str, float]) -> Self:
+                     return cls(config["scale"])
+
+
+             class Circle(Shape):
+                 pass
+
+
+             expr = Circle.from_config({})
+             """);
+  }
+
+  // PY-53104
+  public void testClassMethodReturnSelfNestedClass() {
+    doTest("Circle",
+           """
+             from typing import Self
+
+
+             class OuterClass:
+                 class Shape:
+                     @classmethod
+                     def from_config(cls, config: dict[str, float]) -> Self:
+                         return cls(config["scale"])
+
+                 class Circle(Shape):
+                     pass
+
+
+             expr = OuterClass.Circle.from_config({})
+             """);
+  }
+
+  // PY-53104
+  public void testNoUnstubInCalculateSelfTypeInFunctionDefinedInImportedFile() {
+    doMultiFileStubAwareTest("Clazz",
+                             """
+                               from other import Clazz
+                               clz = Clazz()
+                               expr = clz.foo()
+                               """);
+  }
+
+  // PY-53104
+  public void testMatchSelfUnionType() {
+    doTest("C",
+           """
+             from typing import Self
+
+
+             class C:
+                 def method(self) -> Self:
+                     return self
+
+
+             if bool():
+                 x = 42
+             else:
+                 x = C()
+
+             expr = x.method()""");
+  }
+
+  public void testUnresolvedReturnTypeNotOverridenByAncestorAnnotation() {
+    doTest("Any",
+           """
+             class Super:
+                 def m(self) -> int:
+                     ...
+             class Sub(Super):
+                 def m(self) -> Unresolved:
+                     ...
+             expr = Sub().m()
+             """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

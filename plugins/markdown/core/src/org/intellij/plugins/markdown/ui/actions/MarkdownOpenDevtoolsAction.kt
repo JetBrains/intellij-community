@@ -11,12 +11,12 @@ import org.intellij.plugins.markdown.ui.preview.jcef.MarkdownJCEFHtmlPanel
 
 internal class MarkdownOpenDevtoolsAction: AnAction() {
   override fun actionPerformed(event: AnActionEvent) {
-    val panel = MarkdownActionUtil.findMarkdownPreviewEditor(event)?.getUserData(MarkdownPreviewFileEditor.PREVIEW_BROWSER)
+    val panel = MarkdownActionUtil.findMarkdownPreviewEditor(event)?.getUserData(MarkdownPreviewFileEditor.PREVIEW_BROWSER)?.get()
     (panel as? JCEFHtmlPanel)?.openDevtools()
   }
 
   override fun update(event: AnActionEvent) {
-    val panel = MarkdownActionUtil.findMarkdownPreviewEditor(event)?.getUserData(MarkdownPreviewFileEditor.PREVIEW_BROWSER)
+    val panel = MarkdownActionUtil.findMarkdownPreviewEditor(event)?.getUserData(MarkdownPreviewFileEditor.PREVIEW_BROWSER)?.get()
     event.presentation.isEnabledAndVisible = application.isInternal && panel is MarkdownJCEFHtmlPanel
   }
 

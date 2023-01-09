@@ -21,7 +21,14 @@ interface SettingsSyncRemoteCommunicator {
   @RequiresBackgroundThread
   fun push(snapshot: SettingsSnapshot, force: Boolean, expectedServerVersionId: String?): SettingsSyncPushResult
 
-  fun delete()
+  @RequiresBackgroundThread
+  fun createFile(filePath: String, content: String)
+
+  @RequiresBackgroundThread
+  fun deleteFile(filePath: String)
+
+  @RequiresBackgroundThread
+  fun isFileExists(filePath: String): Boolean
 }
 
 sealed class ServerState {
@@ -34,5 +41,6 @@ sealed class ServerState {
 sealed class UpdateResult {
   class Success(val settingsSnapshot: SettingsSnapshot, val serverVersionId: String?) : UpdateResult()
   object NoFileOnServer: UpdateResult()
+  object FileDeletedFromServer: UpdateResult()
   class Error(@NlsSafe val message: String): UpdateResult()
 }

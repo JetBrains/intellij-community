@@ -1,4 +1,4 @@
-// "Create field 'field'" "true"
+// "Create field 'field'" "true-preview"
 class A{
     {
         Outer.f(field<caret>);

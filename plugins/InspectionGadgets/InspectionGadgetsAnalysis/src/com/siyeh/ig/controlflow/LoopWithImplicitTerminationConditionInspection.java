@@ -61,7 +61,7 @@ public class LoopWithImplicitTerminationConditionInspection
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiConditionalLoopStatement parent = ObjectUtils.tryCast(element.getParent(), PsiConditionalLoopStatement.class);
       if (parent == null) return;

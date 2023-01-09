@@ -196,7 +196,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
           new Task.Backgroundable(myProject, title, true, PerformInBackgroundOption.DEAF) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-              ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, myProject, false);
+              ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, myProject);
             }
           }.queue();
         });
@@ -337,9 +337,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
             rootModuleNode[0] = treeNode;
           }
           String ideGrouping = moduleData.getIdeGrouping();
-          if (ideGrouping != null) {
-            ideGroupingMap.put(ideGrouping, node);
-          }
+          ideGroupingMap.put(ideGrouping, node);
         } else {
           // add elements under module node like web/enterprise artifacts
           DataNode<ModuleData> parentModule = node.getParent(ModuleData.class);

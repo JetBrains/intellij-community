@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 class MarkdownTreeStructureProvider(private val project: Project) : TreeStructureProvider {
   override fun modify(
@@ -46,7 +47,7 @@ class MarkdownTreeStructureProvider(private val project: Project) : TreeStructur
     val fileName = markdownFile.nameWithoutExtension
     return children.asSequence().filter { node ->
       val file = (node.value as? PsiFile)?.virtualFile
-      file?.let { it.extension?.lowercase() in extensionsToFold && it.nameWithoutExtension == fileName } == true
+      file?.let { isDocumentsGroupingEnabled(it, fileName) } == true
     }.toMutableList()
   }
 
@@ -59,6 +60,11 @@ class MarkdownTreeStructureProvider(private val project: Project) : TreeStructur
     val markdownNode = MarkdownFileNode(markdownFile.nameWithoutExtension, nodeChildren)
     return MarkdownViewNode(project, markdownNode, settings, children)
   }
+
+  private fun isDocumentsGroupingEnabled(file: VirtualFile, fileName: String) =
+    file.extension?.lowercase() in extensionsToFold &&
+    file.nameWithoutExtension == fileName &&
+    MarkdownSettings.getInstance(project).isFileGroupingEnabled
 
   companion object {
     private val extensionsToFold = listOf("pdf", "docx", "html", "md")

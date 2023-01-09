@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -14,6 +13,9 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -31,11 +33,15 @@ open class AssertConsistencyEntityImpl(val dataSource: AssertConsistencyEntityDa
 
   override val passCheck: Boolean get() = dataSource.passCheck
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: AssertConsistencyEntityData?) : ModifiableWorkspaceEntityBase<AssertConsistencyEntity>(), AssertConsistencyEntity.Builder {
+  class Builder(result: AssertConsistencyEntityData?) : ModifiableWorkspaceEntityBase<AssertConsistencyEntity, AssertConsistencyEntityData>(
+    result), AssertConsistencyEntity.Builder {
     constructor() : this(AssertConsistencyEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -55,7 +61,7 @@ open class AssertConsistencyEntityImpl(val dataSource: AssertConsistencyEntityDa
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -78,8 +84,7 @@ open class AssertConsistencyEntityImpl(val dataSource: AssertConsistencyEntityDa
       dataSource as AssertConsistencyEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.passCheck != dataSource.passCheck) this.passCheck = dataSource.passCheck
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -87,7 +92,7 @@ open class AssertConsistencyEntityImpl(val dataSource: AssertConsistencyEntityDa
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -96,11 +101,10 @@ open class AssertConsistencyEntityImpl(val dataSource: AssertConsistencyEntityDa
       get() = getEntityData().passCheck
       set(value) {
         checkModificationAllowed()
-        getEntityData().passCheck = value
+        getEntityData(true).passCheck = value
         changedProperty.add("passCheck")
       }
 
-    override fun getEntityData(): AssertConsistencyEntityData = result ?: super.getEntityData() as AssertConsistencyEntityData
     override fun getEntityClass(): Class<AssertConsistencyEntity> = AssertConsistencyEntity::class.java
   }
 }
@@ -109,22 +113,17 @@ class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>
   var passCheck: Boolean = false
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<AssertConsistencyEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<AssertConsistencyEntity> {
     val modifiable = AssertConsistencyEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): AssertConsistencyEntity {
     return getCached(snapshot) {
       val entity = AssertConsistencyEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

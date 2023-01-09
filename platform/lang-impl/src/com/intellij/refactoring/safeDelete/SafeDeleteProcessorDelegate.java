@@ -41,7 +41,7 @@ public interface SafeDeleteProcessorDelegate {
    *                             and current element.
    */
   @Nullable
-  NonCodeUsageSearchInfo findUsages(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete, @NotNull List<UsageInfo> result);
+  NonCodeUsageSearchInfo findUsages(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete, @NotNull List<? super UsageInfo> result);
 
   /**
    * Returns elements that are searched for usages of the element selected for deletion. Called before the refactoring dialog is shown.
@@ -52,7 +52,7 @@ public interface SafeDeleteProcessorDelegate {
    * @return additional elements to search for usages, or null if the user has cancelled the refactoring.
    */
   @Nullable
-  Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element, @NotNull Collection<PsiElement> allElementsToDelete);
+  Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element, @NotNull Collection<? extends PsiElement> allElementsToDelete);
 
   /**
    * Returns the list of additional elements to be deleted. Called after the refactoring dialog is shown.
@@ -64,7 +64,7 @@ public interface SafeDeleteProcessorDelegate {
    * @return additional elements to search for usages, or null if no additional elements were chosen.
    */
   @Nullable
-  Collection<PsiElement> getAdditionalElementsToDelete(@NotNull PsiElement element, @NotNull Collection<PsiElement> allElementsToDelete, final boolean askUser);
+  Collection<PsiElement> getAdditionalElementsToDelete(@NotNull PsiElement element, @NotNull Collection<? extends PsiElement> allElementsToDelete, boolean askUser);
 
   /**
    * Detects usages which are not safe to delete.
@@ -85,7 +85,7 @@ public interface SafeDeleteProcessorDelegate {
    * @param usages all usages to be processed by the refactoring. 
    * @return the filtered list of usages, or null if the user has cancelled the refactoring.
    */
-  UsageInfo @Nullable [] preprocessUsages(Project project, UsageInfo[] usages);
+  UsageInfo @Nullable [] preprocessUsages(@NotNull Project project, UsageInfo @NotNull [] usages);
 
   /**
    * Prepares an element for deletion e.g., normalizing declaration so the element declared in the same declaration won't be affected by deletion.
@@ -94,27 +94,27 @@ public interface SafeDeleteProcessorDelegate {
    * 
    * @param  element an element selected for deletion.
    */
-  void prepareForDeletion(PsiElement element) throws IncorrectOperationException;
+  void prepareForDeletion(@NotNull PsiElement element) throws IncorrectOperationException;
 
   /**
    * Called to set initial value for "Search in comments" checkbox.
    * @return {@code true} if previous safe delete was executed with "Search in comments" option on.
    */
-  boolean isToSearchInComments(final PsiElement element);
+  boolean isToSearchInComments(PsiElement element);
 
   /**
    * Called to save chosen for given {@code element} "Search in comments" value.
    */
-  void setToSearchInComments(final PsiElement element, boolean enabled);
+  void setToSearchInComments(PsiElement element, boolean enabled);
 
     /**
    * Called to set initial value for "Search for text occurrence" checkbox.
    * @return {@code true} if previous safe delete was executed with "Search for test occurrences" option on.
    */
-  boolean isToSearchForTextOccurrences(final PsiElement element);
+  boolean isToSearchForTextOccurrences(PsiElement element);
 
    /**
    * Called to save chosen for given {@code element} "Search for text occurrences" value.
    */
-  void setToSearchForTextOccurrences(final PsiElement element, boolean enabled);
+  void setToSearchForTextOccurrences(PsiElement element, boolean enabled);
 }

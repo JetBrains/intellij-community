@@ -133,9 +133,7 @@ public final class JUnit4TestRunnerUtil {
           if (clazzAnnotation == null) { //do not override external runners
             try {
               final Method method = clazz.getMethod(methodName);
-              if (method != null &&
-                  notForked &&
-                  (method.getAnnotation(Ignore.class) != null || clazz.getAnnotation(Ignore.class) != null)) { //override ignored case only
+              if (notForked && (method.getAnnotation(Ignore.class) != null || clazz.getAnnotation(Ignore.class) != null)) { //override ignored case only
                 final Request classRequest = JUnit45ClassesRequestBuilder.createIgnoreIgnoredClassRequest(clazz, true);
                 final Filter ignoredTestFilter = Filter.matchMethodDescription(testMethodDescription);
                 return classRequest.filterWith(new Filter() {
@@ -162,7 +160,8 @@ public final class JUnit4TestRunnerUtil {
             }
           }
           try {
-            if (clazz.getMethod("suite") != null && !methodName.equals("suite")) {
+            if (!methodName.equals("suite")) {
+              clazz.getMethod("suite"); // check method existence
               return Request.classWithoutSuiteMethod(clazz).filterWith(testMethodDescription);
             }
           }
@@ -254,7 +253,7 @@ public final class JUnit4TestRunnerUtil {
         if (methodName != null) {
           try {
             final Method method = clazz.getMethod(methodName);
-            if (method != null && !method.isAnnotationPresent(Test.class) && TestCase.class.isAssignableFrom(clazz)) {
+            if (!method.isAnnotationPresent(Test.class) && TestCase.class.isAssignableFrom(clazz)) {
               return Request.runner(JUnit45ClassesRequestBuilder.createIgnoreAnnotationAndJUnit4ClassRunner(clazz));
             }
           }

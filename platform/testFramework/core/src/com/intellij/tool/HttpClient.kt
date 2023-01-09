@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tool
 
+import com.intellij.TestCaseLoader
 import org.apache.http.HttpResponse
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.impl.client.LaxRedirectStrategy
@@ -13,13 +15,21 @@ import java.util.concurrent.Semaphore
 import kotlin.io.path.createDirectories
 import kotlin.io.path.outputStream
 
+
 object HttpClient {
   private val locks = ConcurrentHashMap<String, Semaphore>()
+
+  private var requestConfig = RequestConfig.custom()
+    .setConnectTimeout(30 * 1000)
+    .setConnectionRequestTimeout(30 * 1000)
+    .setSocketTimeout(30 * 1000).build()
 
   fun <Y> sendRequest(request: HttpUriRequest, processor: (HttpResponse) -> Y): Y {
     HttpClientBuilder.create()
       .setRedirectStrategy(LaxRedirectStrategy())
-      .build().use { client ->
+      .setDefaultRequestConfig(requestConfig)
+      .build()
+      .use { client ->
         client.execute(request).use { response ->
           if (response.statusLine.statusCode != 200) {
             System.err.println(
@@ -61,7 +71,9 @@ object HttpClient {
     var isSuccessful = false
 
     return try {
-      println("Downloading ${request.uri} to $outPath")
+      if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
+        println("Downloading ${request.uri} to $outPath")
+      }
 
       withRetry(retries = retries) {
         sendRequest(request) { response ->
@@ -79,7 +91,9 @@ object HttpClient {
       isSuccessful
     }
     finally {
-      println("Download of ${request.uri} ${if (isSuccessful) "successful" else "failed"}")
+      if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
+        println("Downloading ${request.uri} ${if (isSuccessful) "is successful" else "failed"}")
+      }
       lock.release()
     }
   }

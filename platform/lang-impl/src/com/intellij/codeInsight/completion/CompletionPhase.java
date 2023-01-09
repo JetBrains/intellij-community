@@ -316,9 +316,9 @@ public abstract class CompletionPhase implements Disposable {
   public static class EmptyAutoPopup extends ZombiePhase {
     private final ActionTracker myTracker;
     private final Editor myEditor;
-    private final Set<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions;
+    private final Set<? extends Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions;
 
-    EmptyAutoPopup(Editor editor, Set<Pair<Integer, ElementPattern<String>>> restartingPrefixConditions) {
+    EmptyAutoPopup(Editor editor, Set<? extends Pair<Integer, ElementPattern<String>>> restartingPrefixConditions) {
       super(null);
       myTracker = new ActionTracker(editor, this);
       myEditor = editor;

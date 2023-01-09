@@ -2,10 +2,10 @@
 package org.jetbrains.kotlin.idea.base.test
 
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.util.io.exists
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 class KotlinTestLibrary private constructor(val name: String, val classes: List<Path>, val sources: List<Path>) {
     companion object {

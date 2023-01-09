@@ -9,5 +9,6 @@ class FooBar {
     FooBar foobar = (FooBar)foo;
     Object o = foobar.baz;
     foobar = null;
+    return 0;
   }
 }

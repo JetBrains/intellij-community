@@ -11,7 +11,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.Nls
 
@@ -46,7 +46,7 @@ private class ModuleLoadingErrorDescriptionBridge(@NlsContexts.DetailedDescripti
 
   override fun ignoreInvalidElement() {
     runWriteAction {
-      WorkspaceModel.getInstance(project).updateProjectModel { builder ->
+      WorkspaceModel.getInstance(project).updateProjectModel("Remove invalid module: $elementName") { builder ->
         val moduleEntity = builder.resolve(ModuleId(elementName))
         if (moduleEntity != null) {
           builder.removeEntity(moduleEntity)

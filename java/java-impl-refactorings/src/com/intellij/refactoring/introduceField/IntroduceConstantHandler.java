@@ -169,7 +169,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
       }
     }
 
-    if (IntentionPreviewUtils.isPreviewElement(getParentClass())) {
+    if (IntentionPreviewUtils.isIntentionPreviewActive()) {
       boolean preselectNonNls = PropertiesComponent.getInstance(project).getBoolean(IntroduceConstantDialog.NONNLS_SELECTED_PROPERTY);
       PsiType defaultType = typeSelectorManager.getDefaultType();
       NameSuggestionsGenerator generator = IntroduceConstantDialog.createNameSuggestionGenerator(null, expr, JavaCodeStyleManager.getInstance(project), enteredName, getParentClass());

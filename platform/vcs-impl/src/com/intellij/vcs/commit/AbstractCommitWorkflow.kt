@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.BundleBase
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -14,11 +15,13 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
@@ -28,7 +31,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.Nls
 import java.util.*
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
@@ -38,6 +43,13 @@ import kotlin.reflect.KProperty
 
 private val LOG = logger<AbstractCommitWorkflow>()
 
+
+internal fun @Nls String.removeEllipsisSuffix(): @Nls String = StringUtil.removeEllipsisSuffix(this)
+
+internal fun cleanActionText(text: @Nls String): @Nls String = UIUtil.removeMnemonic(text).removeEllipsisSuffix()
+
+internal fun @Nls String.dropMnemonic(): @Nls String = this.replace(BundleBase.MNEMONIC_STRING, "")
+
 fun CommitOptions.saveState() = allOptions.forEach { it.saveState() }
 fun CommitOptions.restoreState() = allOptions.forEach { it.restoreState() }
 
@@ -46,17 +58,41 @@ private class CommitProperty<T>(private val key: Key<T>, private val defaultValu
   override fun setValue(thisRef: CommitContext, property: KProperty<*>, value: T) = thisRef.putUserData(key, value)
 }
 
-fun commitProperty(key: Key<Boolean>): ReadWriteProperty<CommitContext, Boolean> = commitProperty(key, false)
-fun <T> commitProperty(key: Key<T>, defaultValue: T): ReadWriteProperty<CommitContext, T> = CommitProperty(key, defaultValue)
+private val COMMIT_EXECUTOR_PROPERTY_MAP = Key.create<UserDataHolder>("Vcs.Commit.ExecutorPropertyMap")
+internal fun CommitContext.cleanCommitExecutorProperties() {
+  putUserData(COMMIT_EXECUTOR_PROPERTY_MAP, null)
+}
 
-private val IS_POST_COMMIT_CHECK_KEY = Key.create<Boolean>("Vcs.Commit.IsPostCommitCheck")
-var CommitContext.isPostCommitCheck: Boolean by commitProperty(IS_POST_COMMIT_CHECK_KEY)
+private class CommitExecutorProperty<T>(private val key: Key<T>, private val defaultValue: T) : ReadWriteProperty<CommitContext, T> {
+  override fun getValue(thisRef: CommitContext, property: KProperty<*>): T {
+    return thisRef.getUserData(COMMIT_EXECUTOR_PROPERTY_MAP)?.getUserData(key) ?: defaultValue
+  }
+
+  override fun setValue(thisRef: CommitContext, property: KProperty<*>, value: T) {
+    var map: UserDataHolder? = thisRef.getUserData(COMMIT_EXECUTOR_PROPERTY_MAP)
+    if (map == null) {
+      map = UserDataHolderBase()
+      thisRef.putUserData(COMMIT_EXECUTOR_PROPERTY_MAP, map)
+    }
+    map.putUserData(key, value)
+  }
+}
+
+fun commitProperty(key: Key<Boolean>): ReadWriteProperty<CommitContext, Boolean> = commitProperty(key, false)
+fun <T> commitProperty(key: Key<T>, defaultValue: T): ReadWriteProperty<CommitContext, T> =
+  CommitProperty(key, defaultValue)
+
+fun commitExecutorProperty(key: Key<Boolean>): ReadWriteProperty<CommitContext, Boolean> = commitExecutorProperty(key, false)
+fun <T> commitExecutorProperty(key: Key<T>, defaultValue: T): ReadWriteProperty<CommitContext, T> =
+  CommitExecutorProperty(key, defaultValue)
+
+val CommitInfo.isPostCommitCheck: Boolean get() = this is PostCommitInfo
 
 private val IS_AMEND_COMMIT_MODE_KEY = Key.create<Boolean>("Vcs.Commit.IsAmendCommitMode")
 var CommitContext.isAmendCommitMode: Boolean by commitProperty(IS_AMEND_COMMIT_MODE_KEY)
 
 private val IS_CLEANUP_COMMIT_MESSAGE_KEY = Key.create<Boolean>("Vcs.Commit.IsCleanupCommitMessage")
-var CommitContext.isCleanupCommitMessage: Boolean by commitProperty(IS_CLEANUP_COMMIT_MESSAGE_KEY)
+var CommitContext.isCleanupCommitMessage: Boolean by commitExecutorProperty(IS_CLEANUP_COMMIT_MESSAGE_KEY)
 
 interface CommitWorkflowListener : EventListener {
   fun vcsesChanged() = Unit
@@ -127,32 +163,28 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   }
 
   @RequiresEdt
-  internal fun startExecution(block: () -> Boolean) {
+  internal fun startExecution(block: suspend () -> Boolean) {
     check(!isExecuting) { "Commit session is already started" }
-
     isExecuting = true
-    continueExecution {
-      eventDispatcher.multicaster.executionStarted()
-      block()
-    }
-  }
 
-  internal fun continueExecution(block: () -> Boolean) {
-    check(isExecuting) { "Commit session has already finished" }
+    project.coroutineScope.launch(CoroutineName("commit execution") + Dispatchers.EDT) {
+      check(isExecuting) { "Commit session has already finished" }
+      try {
+        eventDispatcher.multicaster.executionStarted()
 
-    try {
-      val continueExecution = block()
-      if (!continueExecution) endExecution()
-    }
-    catch (e: ProcessCanceledException) {
-      endExecution()
-    }
-    catch (e: CancellationException) {
-      endExecution()
-    }
-    catch (e: Throwable) {
-      endExecution()
-      LOG.error(e)
+        val continueExecution = block()
+        if (!continueExecution) endExecution()
+      }
+      catch (e: ProcessCanceledException) {
+        endExecution()
+      }
+      catch (e: CancellationException) {
+        endExecution()
+      }
+      catch (e: Throwable) {
+        endExecution()
+        LOG.error(e)
+      }
     }
   }
 
@@ -162,6 +194,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
     isExecuting = false
     eventDispatcher.multicaster.executionEnded()
+    commitContext.cleanCommitExecutorProperties()
   }
 
   fun addListener(listener: CommitWorkflowListener, parent: Disposable) =
@@ -173,8 +206,8 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   fun addCommitCustomListener(listener: CommitterResultHandler, parent: Disposable) =
     commitCustomEventDispatcher.addListener(listener, parent)
 
-  fun executeSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
-    return runBlockingModal(project, message("commit.checks.on.commit.progress.text")) {
+  suspend fun executeSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
+    return withModalProgressIndicator(project, message("commit.checks.on.commit.progress.text")) {
       withContext(Dispatchers.EDT) {
         fireBeforeCommitChecksStarted(sessionInfo)
         val result = runModalBeforeCommitChecks(commitInfo)
@@ -322,10 +355,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         .filter { it != CheckinHandler.DUMMY }
 
     @JvmStatic
-    fun getCommitExecutors(project: Project, changes: Collection<Change>): List<CommitExecutor> =
-      getCommitExecutors(project, getAffectedVcses(changes, project))
-
-    internal fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs>): List<CommitExecutor> {
+    fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs>): List<CommitExecutor> {
       return vcses.flatMap { it.commitExecutors } +
              ChangeListManager.getInstance(project).registeredExecutors +
              LocalCommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)
@@ -362,12 +392,36 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         return null
       }
 
-      LOG.debug("Running commit check $commitCheck")
-      val ctx = coroutineContext
-      ctx.ensureActive()
-      ctx.progressSink?.update(text = "", details = "")
+      var success = false
+      val activity = CommitSessionCounterUsagesCollector.COMMIT_CHECK_SESSION.started(project) {
+        listOf(
+          CommitSessionCounterUsagesCollector.COMMIT_CHECK_CLASS.with(commitCheck.asCheckinHandler()?.javaClass ?: commitCheck.javaClass),
+          CommitSessionCounterUsagesCollector.EXECUTION_ORDER.with(commitCheck.getExecutionOrder())
+        )
+      }
 
-      return commitCheck.runCheck(commitInfo)
+      try {
+        LOG.debug("Running commit check $commitCheck")
+        val ctx = coroutineContext
+        ctx.ensureActive()
+        ctx.progressSink?.update(text = "", details = "")
+
+        val problem = commitCheck.runCheck(commitInfo)
+        success = problem == null
+        return problem
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.warn(e)
+        return CommitProblem.createError(e)
+      }
+      finally {
+        activity.finished {
+          listOf(CommitSessionCounterUsagesCollector.IS_SUCCESS.with(success))
+        }
+      }
     }
   }
 }
@@ -398,7 +452,7 @@ internal fun CheckinHandler.asCommitCheck(commitInfo: CommitInfo): CommitCheck {
   return ProxyCommitCheck(this, commitInfo.executor)
 }
 
-private class ProxyCommitCheck(private val checkinHandler: CheckinHandler,
+private class ProxyCommitCheck(val checkinHandler: CheckinHandler,
                                private val executor: CommitExecutor?) : CommitCheck {
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder {
     if (checkinHandler is CheckinModificationHandler) return CommitCheck.ExecutionOrder.MODIFICATION
@@ -421,6 +475,14 @@ private class ProxyCommitCheck(private val checkinHandler: CheckinHandler,
 
   override fun toString(): String {
     return "ProxyCommitCheck: $checkinHandler"
+  }
+}
+
+private fun CommitCheck.asCheckinHandler(): CheckinHandler? {
+  when (this) {
+    is ProxyCommitCheck -> return this.checkinHandler
+    is CheckinHandler -> return this
+    else -> return null
   }
 }
 

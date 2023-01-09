@@ -49,9 +49,10 @@ public final class HtmlMarkdownUtils {
     HTML_DOC_SUBSTITUTIONS.put(": //", "://"); // Fix URL
   }
 
-  private static final Set<String> ACCEPTABLE_TAGS = ContainerUtil.immutableSet("p", "i", "code", "ul", "h1", "h2", "h3", "h4", "h5", "h6",
-                                                                                "li", "blockquote", "ol", "b", "a", "tt", "tt", "pre", "tr", "th",
-                                                                                "td", "table", "strong", "em", "u", "dl", "dd", "dt");
+  private static final Set<String> ACCEPTABLE_TAGS =
+    ContainerUtil.immutableSet("span", "img", "p", "i", "code", "ul", "h1", "h2", "h3", "h4", "h5", "h6",
+                               "li", "blockquote", "ol", "b", "a", "tt", "tt", "pre", "tr", "th",
+                               "td", "table", "strong", "em", "u", "dl", "dd", "dt");
 
   private HtmlMarkdownUtils() {
   }
@@ -232,23 +233,10 @@ public final class HtmlMarkdownUtils {
   }
 
   private static @NotNull String replaceProhibitedTags(@NotNull String line, @NotNull List<TextRange> skipRanges) {
-    IntList list = collectProhibitedTagOffsets(line, skipRanges);
-    return list.isEmpty() ? line : escapeTagsStart(line, list);
-  }
-
-  private static @NotNull String escapeTagsStart(@NotNull String line, @NotNull IntList orderedOffsetList) {
-    StringBuilder builder = new StringBuilder(line);
-    for (int i = orderedOffsetList.size() - 1; i >= 0; i--) {
-      var el = orderedOffsetList.getInt(i);
-      builder.replace(el, el + 1, "&lt;");
-    }
-    return builder.toString();
-  }
-
-  private static @NotNull IntList collectProhibitedTagOffsets(@NotNull String line, @NotNull List<? extends TextRange> skipRanges) {
     Matcher matcher = TAG_START_OR_CLOSE_PATTERN.matcher(line);
-    IntList list = new IntArrayList();
+    StringBuilder builder = new StringBuilder(line);
 
+    int diff = 0;
     l:
     while (matcher.find()) {
       final String tagName = matcher.group(2);
@@ -262,9 +250,19 @@ public final class HtmlMarkdownUtils {
         }
       }
 
-      list.add(matcher.start(1));
+      var start = matcher.start(1) + diff;
+      if (StringUtil.toLowerCase(tagName).equals("div")) {
+        boolean isOpenTag = !matcher.group(0).contains("/");
+        var end = start + (isOpenTag ? 5 : 6);
+        String replacement = isOpenTag ? "<span>" : "</span>";
+        builder.replace(start, end, replacement);
+        diff += 1;
+      } else {
+        builder.replace(start, start + 1, "&lt;");
+        diff += 3;
+      }
     }
-    return list;
+    return builder.toString();
   }
 
   @Contract(pure = true)

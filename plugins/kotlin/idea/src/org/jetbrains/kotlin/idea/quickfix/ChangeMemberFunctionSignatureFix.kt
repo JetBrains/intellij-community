@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.NOT_NULL_ANNOTATIONS
 import org.jetbrains.kotlin.load.java.NULLABLE_ANNOTATIONS
 import org.jetbrains.kotlin.name.FqName
@@ -212,6 +213,7 @@ class ChangeMemberFunctionSignatureFix private constructor(
                 isExternal = function.isExternal
                 isInline = function.isInline
                 isTailrec = function.isTailrec
+                isSuspend = function.isSuspend
             }
         }
     }
@@ -306,6 +308,10 @@ class ChangeMemberFunctionSignatureFix private constructor(
 
             project.executeWriteCommand(KotlinBundle.message("fix.change.signature.function.family")) {
                 val patternFunction = KtPsiFactory(project).createFunction(signature.sourceCode)
+
+                if (patternFunction.hasModifier(KtTokens.SUSPEND_KEYWORD)) {
+                    function.addModifier(KtTokens.SUSPEND_KEYWORD)
+                }
 
                 val newTypeRef = function.setTypeReference(patternFunction.typeReference)
                 if (newTypeRef != null) {

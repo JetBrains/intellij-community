@@ -132,7 +132,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<Element> elements) {
+  public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
     Object currentValue = accessor.read(context);
     if (binding instanceof BeanBinding && !accessor.isWritable()) {
       ((BeanBinding)binding).deserializeInto(currentValue, elements.get(0));

@@ -16,6 +16,7 @@
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInspection.JavaSuppressionUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class UnnecessaryLocalVariableInspection extends BaseInspection {
@@ -57,13 +59,10 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("redundant.local.variable.ignore.option"),
-                             "m_ignoreImmediatelyReturnedVariables");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("redundant.local.variable.annotation.option"),
-                             "m_ignoreAnnotatedVariablesNew");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreImmediatelyReturnedVariables", InspectionGadgetsBundle.message("redundant.local.variable.ignore.option")),
+      checkbox("m_ignoreAnnotatedVariablesNew", InspectionGadgetsBundle.message("redundant.local.variable.annotation.option")));
   }
 
   @Override

@@ -50,6 +50,8 @@ import org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeIndex;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.util.ObjectUtils.doIfNotNull;
+
 public class UnusedDefineInspection extends BaseInspection {
 
   @Override
@@ -188,9 +190,9 @@ public class UnusedDefineInspection extends BaseInspection {
 
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        T myTag = (T)descriptor.getPsiElement();
+        PsiElement myTag = doIfNotNull(descriptor.getPsiElement(), PsiElement::getParent);
         try {
-          if (myTag.isValid()) {
+          if (myTag instanceof RncDefine && myTag.isValid()) {
             myTag.delete();
           }
         } catch (IncorrectOperationException e) {

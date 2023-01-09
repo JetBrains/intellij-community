@@ -29,7 +29,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -184,6 +183,12 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
       }
       try {
         EditorScrollingPositionKeeper.perform(document, true, () -> SlowOperations.allowSlowOperations(() -> {
+          if (document != null) {
+            // In languages that are supported by a non-commit typing assistant (such as C++ and Kotlin),
+            // the `document` here can be in an uncommitted state. In the case of an external formatter,
+            // this may be the cause of formatting artifacts
+            PsiDocumentManager.getInstance(myProject).commitDocument(document);
+          }
           if (processChangedTextOnly) {
             ChangedRangesInfo info = VcsFacade.getInstance().getChangedRangesInfo(fileToProcess);
             if (info != null) {
@@ -276,8 +281,8 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     if (mySelectionModel != null) {
       return getSelectedRanges(mySelectionModel);
     }
-    
-    return !myRanges.isEmpty() ? myRanges : ContainerUtil.newArrayList(file.getTextRange());
+
+    return !myRanges.isEmpty() ? myRanges : List.of(file.getTextRange());
   }
 
   private static @NlsContexts.ProgressText String getProgressText() {

@@ -1,8 +1,9 @@
 import sys
 from _typeshed import Self, StrOrBytesPath
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from types import TracebackType
-from typing import IO, Any, AnyStr, Callable, Generic, Iterable, Mapping, Sequence, TypeVar, Union, overload
-from typing_extensions import Literal
+from typing import IO, Any, AnyStr, Generic, TypeVar, overload
+from typing_extensions import Literal, TypeAlias
 
 if sys.version_info >= (3, 9):
     from types import GenericAlias
@@ -102,20 +103,26 @@ else:
 #    reveal_type(x)  # bytes, based on the overloads
 # except TimeoutError as e:
 #    reveal_type(e.cmd)  # Any, but morally is _CMD
-_FILE = Union[None, int, IO[Any]]
-_TXT = Union[bytes, str]
+_FILE: TypeAlias = None | int | IO[Any]
+_TXT: TypeAlias = bytes | str
 if sys.version_info >= (3, 8):
-    _CMD = Union[StrOrBytesPath, Sequence[StrOrBytesPath]]
+    _CMD: TypeAlias = StrOrBytesPath | Sequence[StrOrBytesPath]
 else:
     # Python 3.6 doesn't support _CMD being a single PathLike.
     # See: https://bugs.python.org/issue31961
-    _CMD = Union[_TXT, Sequence[StrOrBytesPath]]
+    _CMD: TypeAlias = _TXT | Sequence[StrOrBytesPath]
 if sys.platform == "win32":
-    _ENV = Mapping[str, str]
+    _ENV: TypeAlias = Mapping[str, str]
 else:
-    _ENV = Union[Mapping[bytes, StrOrBytesPath], Mapping[str, StrOrBytesPath]]
+    _ENV: TypeAlias = Mapping[bytes, StrOrBytesPath] | Mapping[str, StrOrBytesPath]
 
 _T = TypeVar("_T")
+
+# These two are private but documented
+if sys.version_info >= (3, 11):
+    _USE_VFORK: bool
+if sys.version_info >= (3, 8):
+    _USE_POSIX_SPAWN: bool
 
 class CompletedProcess(Generic[_T]):
     # morally: _CMD

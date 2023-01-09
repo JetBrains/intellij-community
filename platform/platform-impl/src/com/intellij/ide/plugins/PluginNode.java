@@ -67,6 +67,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private PageContainer<PluginReviewComment> reviewComments;
   private List<String> screenShots;
   private String externalPluginIdForScreenShots;
+  private String mySuggestedCommercialIde = null;
 
   /**
    * @deprecated Use {@link #PluginNode(PluginId)}
@@ -577,6 +578,14 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public void setScreenShots(@NotNull List<String> screenshots) {
     this.screenShots = screenshots;
+  }
+
+  public String getSuggestedCommercialIde() {
+    return mySuggestedCommercialIde;
+  }
+
+  public void setSuggestedCommercialIde(String commercialIdeCode) {
+    mySuggestedCommercialIde = commercialIdeCode;
   }
 
   @Override

@@ -244,7 +244,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
 
   @NotNull
   public static ActionToolbar buildToolbar(@NotNull Editor editor,
-                                           @NotNull List<AnAction> actions,
+                                           @NotNull List<? extends AnAction> actions,
                                            @NotNull Disposable parentDisposable) {
     JComponent editorComponent = editor.getComponent();
     for (AnAction action : actions) {

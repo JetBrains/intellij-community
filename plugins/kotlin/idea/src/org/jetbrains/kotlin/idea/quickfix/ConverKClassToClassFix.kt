@@ -27,7 +27,7 @@ class ConvertKClassToClassFix(element: KtExpression) : KotlinQuickFixAction<KtEx
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
-        val expressionToInsert = KtPsiFactory(file).createExpressionByPattern("$0.java", element)
+        val expressionToInsert = KtPsiFactory(project).createExpressionByPattern("$0.java", element)
         element.replaced(expressionToInsert)
     }
 

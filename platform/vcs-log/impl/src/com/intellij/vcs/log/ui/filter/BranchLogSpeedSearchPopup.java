@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.*;
@@ -32,15 +32,14 @@ public class BranchLogSpeedSearchPopup extends FlatSpeedSearchPopup {
     return !getSpeedSearch().isHoldingFilter() || !(action instanceof ActionGroup);
   }
 
-  @NotNull
-  public static ActionGroup createSpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
+  public static @NotNull ActionGroup createSpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
     List<AnAction> speedSearchActions = new ArrayList<>();
     createSpeedSearchActions(actionGroup, speedSearchActions, true);
     return new DefaultActionGroup(speedSearchActions);
   }
 
   private static void createSpeedSearchActions(@NotNull ActionGroup actionGroup,
-                                               @NotNull List<AnAction> speedSearchActions,
+                                               @NotNull List<? super AnAction> speedSearchActions,
                                                boolean isFirstLevel) {
     if (!isFirstLevel) speedSearchActions.add(Separator.create(actionGroup.getTemplatePresentation().getText()));
 

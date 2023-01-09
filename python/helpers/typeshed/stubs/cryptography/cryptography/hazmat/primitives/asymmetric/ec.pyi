@@ -93,7 +93,7 @@ class SECT571R1(EllipticCurve):
     key_size: int = ...
     name: str = ...
 
-class EllipticCurveOID(object):
+class EllipticCurveOID:
     SECP192R1: ClassVar[ObjectIdentifier]
     SECP224R1: ClassVar[ObjectIdentifier]
     SECP256K1: ClassVar[ObjectIdentifier]
@@ -136,7 +136,7 @@ class EllipticCurvePrivateKeyWithSerialization(EllipticCurvePrivateKey):
     @abstractmethod
     def private_numbers(self) -> EllipticCurvePrivateNumbers: ...
 
-class EllipticCurvePrivateNumbers(object):
+class EllipticCurvePrivateNumbers:
     @property
     def private_value(self) -> int: ...
     @property
@@ -166,7 +166,7 @@ class EllipticCurvePublicKey(metaclass=ABCMeta):
 
 EllipticCurvePublicKeyWithSerialization = EllipticCurvePublicKey
 
-class EllipticCurvePublicNumbers(object):
+class EllipticCurvePublicNumbers:
     @property
     def curve(self) -> EllipticCurve: ...
     @property
@@ -183,7 +183,7 @@ class EllipticCurveSignatureAlgorithm(metaclass=ABCMeta):
     @abstractmethod
     def algorithm(self) -> HashAlgorithm | Prehashed: ...
 
-class ECDH(object): ...
+class ECDH: ...
 
 class ECDSA(EllipticCurveSignatureAlgorithm):
     def __init__(self, algorithm: HashAlgorithm | Prehashed): ...

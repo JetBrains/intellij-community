@@ -5,7 +5,6 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindSettings;
@@ -27,6 +26,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Editor;
@@ -72,6 +72,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.*;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
@@ -178,7 +179,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.usages");
     DataContext dataContext = e.getDataContext();
     showUsages(project, dataContext, ResolverKt.allTargets(dataContext));
   }
@@ -190,10 +190,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
     RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
     SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
-    SlowOperations.allowSlowOperations(() -> findShowUsages(
-      project, dataContext, targetVariants, FindBundle.message("show.usages.ambiguous.title"),
-      createVariantHandler(project, editor, popupPosition, searchScope)
-    ));
+    try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+      findShowUsages(
+        project, dataContext, targetVariants, FindBundle.message("show.usages.ambiguous.title"),
+        createVariantHandler(project, editor, popupPosition, searchScope)
+      );
+    }
   }
 
   @NotNull
@@ -380,7 +382,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     Project project = parameters.project;
     UsageViewImpl usageView = createUsageView(project);
-    UsageViewStatisticsCollector.logSearchStarted(project, usageView);
+    UsageViewStatisticsCollector.logSearchStarted(project, usageView, CodeNavigateSource.ShowUsagesPopup,
+                                                  actionHandler.getTargetLanguage());
     final SearchScope searchScope = actionHandler.getSelectedScope();
     final AtomicInteger outOfScopeUsages = new AtomicInteger();
     AtomicBoolean manuallyResized = new AtomicBoolean();
@@ -691,14 +694,17 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     SpeedSearchAdvertiser advertiser = new SpeedSearchAdvertiser();
     String hint = getSecondInvocationHint(actionHandler);
-    if (hint != null) {
-      advertiser.addAdvertisement(hint);
+
+    JPanel advertiserComponent = null;
+    boolean hintAdded = advertiser.addAdvertisement(hint);
+    boolean speedSearchAdded = advertiser.addSpeedSearchAdvertisement() != null;
+    if (hintAdded || speedSearchAdded) {
+      advertiserComponent = advertiser.getComponent();
     }
-    advertiser.addSpeedSearchAdvertisement();
 
     PopupChooserBuilder<?> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(table).
       setTitle(showUsagesPopupData.header.getTitle()).
-      setAdvertiser(advertiser.getComponent()).
+      setAdvertiser(advertiserComponent).
       setMovable(true).
       setResizable(true).
       setCancelKeyEnabled(true).
@@ -1006,7 +1012,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     ScopeChooserCombo scopeChooserCombo = new ScopeChooserCombo();
     scopeChooserCombo.getComboBox().putClientProperty("JComboBox.isBorderless", Boolean.TRUE);
     if (ExperimentalUI.isNewUI()) {
-      scopeChooserCombo.getComboBox().putClientProperty("JComboBox.noPaintBorder", Boolean.TRUE);
       scopeChooserCombo.setOpaque(false);
       scopeChooserCombo.getComboBox().setOpaque(false);
     }
@@ -1281,27 +1286,36 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       if (!actionHandler.isValid()) {
         return;
       }
-      JComponent label = createHintComponent(
-        suggestSecondInvocation(hint, getSecondInvocationHint(actionHandler)),
-        isWarning,
-        createSettingsButton(
-          project,
-          ShowUsagesAction::hideHints,
-          showDialogAndRestartRunnable(parameters, actionHandler)
-        )
-      );
 
-      ShowUsagesActionState state = getState(project);
-      state.continuation = showUsagesInMaximalScopeRunnable(parameters, actionHandler);
-      Runnable clearContinuation = () -> state.continuation = null;
+      ReadAction.nonBlocking(
+        () -> suggestSecondInvocation(hint, getSecondInvocationHint(actionHandler))
+      ).finishOnUiThread(ModalityState.NON_MODAL, (@NlsContexts.HintText String secondInvocationHintHtml) -> {
+        if (!actionHandler.isValid()) {
+          return;
+        }
 
-      if (editor == null || editor.isDisposed() || !UIUtil.isShowing(editor.getContentComponent())) {
-        int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
-        HintManager.getInstance().showHint(label, parameters.popupPosition, flags, 0, clearContinuation);
-      }
-      else {
-        HintManager.getInstance().showInformationHint(editor, label, clearContinuation);
-      }
+        JComponent label = createHintComponent(
+          secondInvocationHintHtml,
+          isWarning,
+          createSettingsButton(
+            project,
+            ShowUsagesAction::hideHints,
+            showDialogAndRestartRunnable(parameters, actionHandler)
+          )
+        );
+
+        ShowUsagesActionState state = getState(project);
+        state.continuation = showUsagesInMaximalScopeRunnable(parameters, actionHandler);
+        Runnable clearContinuation = () -> state.continuation = null;
+
+        if (editor == null || editor.isDisposed() || !UIUtil.isShowing(editor.getContentComponent())) {
+          int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
+          HintManager.getInstance().showHint(label, parameters.popupPosition, flags, 0, clearContinuation);
+        }
+        else {
+          HintManager.getInstance().showInformationHint(editor, label, clearContinuation);
+        }
+      }).submit(AppExecutorUtil.getAppExecutorService());
     };
 
     if (editor == null) {

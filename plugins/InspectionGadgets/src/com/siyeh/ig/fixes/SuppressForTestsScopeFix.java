@@ -52,7 +52,7 @@ public final class SuppressForTestsScopeFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(final Project project, ProblemDescriptor descriptor) {
+  protected void doFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     addRemoveTestsScope(project, true);
     final VirtualFile vFile = descriptor.getPsiElement().getContainingFile().getVirtualFile();
     UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {

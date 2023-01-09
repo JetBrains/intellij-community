@@ -165,8 +165,13 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
 
             PsiElement element = usageInfo.getElement();
             if (element != null) {
+              String recentSearchText = speedSearch.getComparator().getRecentSearchText();
+              int numberOfLettersTyped = recentSearchText != null ? recentSearchText.length() : 0;
               UsageViewStatisticsCollector.logItemChosen(element.getProject(), myUsageView, CodeNavigateSource.ShowUsagesPopup,
-                                                         element.getLanguage());
+                                                         getSelectedRow(),
+                                                         getRowCount(),
+                                                         numberOfLettersTyped,
+                                                         element.getLanguage(), false);
             }
           }
           else if (usage instanceof Navigatable) {

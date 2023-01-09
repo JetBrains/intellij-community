@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 /**
- * Model of settings of single language hints provider (Settings/Preferences | Editor | Inlay Hints).
+ * Model of settings of a single language hints provider (Settings/Preferences | Editor | Inlay Hints).
  *
  * @param isEnabled language is enabled in terms of [com.intellij.codeInsight.hints.InlayHintsSettings.hintsEnabled].
  * @param id unique model id
@@ -48,6 +48,8 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
    *
    * Should not make any visible changes (run in nonBlockingReadAction)
    *
+   * Must not access index! You must expect the default project inside.
+   *
    * @return continuation which is run in EDT
    */
   open fun collectData(editor: Editor, file: PsiFile) : Runnable {
@@ -56,6 +58,13 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
 
   open fun collectAndApply(editor: Editor, file: PsiFile) {
 
+  }
+
+  /**
+   * In case when [caseId] is null, it is required to create file not for the case, but for the whole provider
+   */
+  open fun createFile(project: Project, fileType: FileType, document: Document, caseId: String?) : PsiFile {
+    return createFile(project, fileType, document)
   }
 
   open fun createFile(project: Project, fileType: FileType, document: Document): PsiFile {
@@ -89,7 +98,7 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
   abstract fun getCaseDescription(case: ImmediateConfigurable.Case): String?
 
   /**
-   * Saves changed settings
+   * Saves changed settings, including [isEnabled]
    */
   abstract fun apply()
 
@@ -105,6 +114,8 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
 
   var isMergedNode: Boolean = false
 
+
+  @Deprecated("Not used in new UI")
   @get:NlsContexts.Checkbox
   abstract val mainCheckBoxLabel: String
 

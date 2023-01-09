@@ -61,8 +61,8 @@ public class RefreshAction extends AnAction implements DumbAware {
   }
 
   private static void performRefreshAndTrackChanges(Project project,
-                                                    Collection<Change> changesBeforeUpdate,
-                                                    Collection<FilePath> unversionedBefore,
+                                                    Collection<? extends Change> changesBeforeUpdate,
+                                                    Collection<? extends FilePath> unversionedBefore,
                                                     boolean wasUpdatingBefore) {
     if (project.isDisposed()) return;
     ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);

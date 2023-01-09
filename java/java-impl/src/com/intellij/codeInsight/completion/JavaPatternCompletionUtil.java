@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class JavaPatternCompletionUtil {
+public final class JavaPatternCompletionUtil {
   /**
    * @param psiFile file (=element.getContainingFile())
    * @param element element where completion is invoked
@@ -45,7 +45,7 @@ public class JavaPatternCompletionUtil {
    * @param psiClass class for which patterns should be suggested
    * @implNote currently, it suggests at most one record deconstruction pattern
    */
-  public static void addPatterns(@NotNull Consumer<LookupElement> lookupElements, @NotNull PsiElement context, @NotNull PsiClass psiClass) {
+  public static void addPatterns(@NotNull Consumer<? super LookupElement> lookupElements, @NotNull PsiElement context, @NotNull PsiClass psiClass) {
     if (!psiClass.isRecord() || psiClass.getRecordComponents().length == 0 || psiClass.getName() == null) return;
     // TODO: support deconstruction with type parameters
     if (psiClass.getTypeParameters().length > 0) return;

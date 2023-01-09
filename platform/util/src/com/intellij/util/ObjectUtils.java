@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.NotNullFactory;
@@ -15,15 +15,16 @@ import java.util.Objects;
 import java.util.function.IntUnaryOperator;
 import java.util.function.Predicate;
 
-public final class ObjectUtils extends ObjectUtilsRt {
+public final class ObjectUtils {
   private ObjectUtils() { }
 
   /** @see NotNullizer */
   public static final Object NULL = sentinel("ObjectUtils.NULL");
 
   /**
-   * Creates a new object which could be used as sentinel value (special value to distinguish from any other object). It does not equal
-   * to any other object. Usually should be assigned to the static final field.
+   * Creates a new object which could be used as a sentinel value (special value to distinguish from any other object).
+   * It does not equal to any other object.
+   * Usually should be assigned to the static final field.
    *
    * @param name an object name, returned from {@link #toString()} to simplify the debugging or heap dump analysis
    *             (guaranteed to be stored as sentinel object field). If sentinel is assigned to the static final field,
@@ -77,11 +78,9 @@ public final class ObjectUtils extends ObjectUtilsRt {
   }
 
   public static <T> void assertAllElementsNotNull(T @NotNull [] array) {
-    for (int i = 0; i < array.length; i++) {
-      T t = array[i];
-      if (t == null) {
-        throw new NullPointerException("Element [" + i + "] is null");
-      }
+    int i = ArrayUtil.indexOfIdentity(array, null);
+    if (i != -1) {
+      throw new NullPointerException("Element [" + i + "] is null");
     }
   }
 
@@ -129,6 +128,9 @@ public final class ObjectUtils extends ObjectUtilsRt {
     return clazz.isInstance(obj) ? clazz.cast(obj) : null;
   }
 
+  /**
+   * Do not use in Kotlin.
+   */
   public static @Nullable <T, S> S doIfCast(@Nullable Object obj,
                                             @NotNull Class<T> clazz,
                                             @NotNull Convertor<? super T, ? extends S> convertor) {
@@ -141,12 +143,19 @@ public final class ObjectUtils extends ObjectUtilsRt {
     return obj == null ? null : function.fun(obj);
   }
 
+  /**
+   * Do not use in Kotlin.
+   */
   public static <T> void consumeIfNotNull(@Nullable T obj, @NotNull Consumer<? super T> consumer) {
     if (obj != null) {
       consumer.consume(obj);
     }
   }
 
+  /**
+   * @deprecated this method is unnecessary. Just write if statement (use pattern variable when possible).
+   */
+  @Deprecated
   public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, @NotNull Consumer<? super T> consumer) {
     if (clazz.isInstance(obj)) {
       //noinspection unchecked

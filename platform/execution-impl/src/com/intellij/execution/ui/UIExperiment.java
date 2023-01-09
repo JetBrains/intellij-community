@@ -5,7 +5,7 @@ import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
-public class UIExperiment {
+public final class UIExperiment {
   private static boolean NEW_DEBUGGER_UI_ENABLED = false;
 
   public static boolean isNewDebuggerUIEnabled() {

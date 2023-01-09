@@ -1,18 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.DataClassResolver
@@ -33,9 +30,6 @@ interface KotlinSearchUsagesSupport {
         val KtExpression.hasType: Boolean
             get() = getInstance(project).hasType(this)
 
-        val PsiClass.isSamInterface: Boolean
-            get() = getInstance(project).isSamInterface(this)
-
         fun <T : PsiNamedElement> List<T>.filterDataClassComponentsIfDisabled(kotlinOptions: KotlinReferencesSearchOptions): List<T> {
             fun PsiNamedElement.isComponentElement(): Boolean {
                 if (this !is PsiMethod) return false
@@ -55,6 +49,9 @@ interface KotlinSearchUsagesSupport {
 
         fun PsiReference.isCallableOverrideUsage(declaration: KtNamedDeclaration): Boolean =
             getInstance(declaration.project).isCallableOverrideUsage(this, declaration)
+
+        fun PsiReference.isInvokeOfCompanionObject(declaration: KtNamedDeclaration): Boolean =
+            getInstance(declaration.project).isInvokeOfCompanionObject(this, declaration)
 
         fun PsiReference.isUsageInContainingDeclaration(declaration: KtNamedDeclaration): Boolean =
             getInstance(declaration.project).isUsageInContainingDeclaration(this, declaration)
@@ -82,11 +79,6 @@ interface KotlinSearchUsagesSupport {
             processor: (superMember: PsiElement, overridingMember: PsiElement) -> Boolean
         ): Boolean = getInstance(ktClass.project).forEachKotlinOverride(ktClass, members, scope, searchDeeply, processor)
 
-        fun PsiMethod.forEachOverridingMethod(
-            scope: SearchScope = runReadAction { useScope() },
-            processor: (PsiMethod) -> Boolean
-        ): Boolean = getInstance(project).forEachOverridingMethod(this, scope, processor)
-
         fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> =
             getInstance(method.project).findDeepestSuperMethodsNoWrapping(method)
 
@@ -101,14 +93,6 @@ interface KotlinSearchUsagesSupport {
 
         fun KtClass.isInheritable(): Boolean =
             getInstance(project).isInheritable(this)
-
-        @NlsSafe
-        fun formatJavaOrLightMethod(method: PsiMethod): String =
-            getInstance(method.project).formatJavaOrLightMethod(method)
-
-        @NlsSafe
-        fun formatClass(classOrObject: KtClassOrObject): String =
-            getInstance(classOrObject.project).formatClass(classOrObject)
 
         fun KtDeclaration.expectedDeclarationIfAny(): KtDeclaration? =
             getInstance(project).expectedDeclarationIfAny(this)
@@ -129,13 +113,13 @@ interface KotlinSearchUsagesSupport {
             getInstance(psiMethod.project).createConstructorHandle(psiMethod)
     }
 
+    fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean
+
     fun actualsForExpected(declaration: KtDeclaration, module: Module? = null): Set<KtDeclaration>
 
     fun dataClassComponentMethodName(element: KtParameter): String?
 
     fun hasType(element: KtExpression): Boolean
-
-    fun isSamInterface(psiClass: PsiClass): Boolean
 
     fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean
 
@@ -170,12 +154,6 @@ interface KotlinSearchUsagesSupport {
         processor: (superMember: PsiElement, overridingMember: PsiElement) -> Boolean
     ): Boolean
 
-    fun forEachOverridingMethod(
-        method: PsiMethod,
-        scope: SearchScope,
-        processor: (PsiMethod) -> Boolean
-    ): Boolean
-
     fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement>
 
     fun findSuperMethodsNoWrapping(method: PsiElement): List<PsiElement>
@@ -188,9 +166,6 @@ interface KotlinSearchUsagesSupport {
 
     fun isInheritable(ktClass: KtClass): Boolean
 
-    fun formatJavaOrLightMethod(method: PsiMethod): String
-
-    fun formatClass(classOrObject: KtClassOrObject): String
 
     fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration?
 

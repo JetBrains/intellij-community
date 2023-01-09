@@ -64,7 +64,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   @Override
   public ToStringRenderer clone() {
     final ToStringRenderer cloned = (ToStringRenderer)super.clone();
-    final ClassFilter[] classFilters = (myClassFilters.length > 0)? new ClassFilter[myClassFilters.length] : ClassFilter.EMPTY_ARRAY;
+    final ClassFilter[] classFilters = (myClassFilters.length > 0) ? new ClassFilter[myClassFilters.length] : ClassFilter.EMPTY_ARRAY;
     for (int idx = 0; idx < classFilters.length; idx++) {
       classFilters[idx] = myClassFilters[idx].clone();
     }
@@ -227,6 +227,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
 
   /**
    * for kotlin compatibility only
+   *
    * @deprecated to be removed in IDEA 2021
    */
   @Deprecated

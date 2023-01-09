@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.tools.projectWizard.cli;
 
@@ -21,16 +21,6 @@ import org.junit.runner.RunWith;
 public class ProjectTemplateBuildFileGenerationTestGenerated extends AbstractProjectTemplateBuildFileGenerationTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-    }
-
-    @TestMetadata("composeDesktopApplication")
-    public void testComposeDesktopApplication() throws Exception {
-        runTest("testData/projectTemplatesBuildFileGeneration/composeDesktopApplication/");
-    }
-
-    @TestMetadata("composeMultiplatformApplication")
-    public void testComposeMultiplatformApplication() throws Exception {
-        runTest("testData/projectTemplatesBuildFileGeneration/composeMultiplatformApplication/");
     }
 
     @TestMetadata("consoleApplication")

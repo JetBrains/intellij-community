@@ -87,7 +87,7 @@ fun demoTips(parentDisposable: Disposable): DialogPanel {
       }
       row {
         button("Button") {}.widthGroup("GroupName")
-      }.rowComment("All components from the same width group will have the same width equals to maximum width from the group. Cannot be used together with HorizontalAlign.FILL")
+      }.rowComment("All components from the same width group will have the same width equals to maximum width from the group. Cannot be used together with AlignX.FILL")
     }
     row {
       panel {

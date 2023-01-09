@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -397,6 +397,12 @@ public final class ControlFlowUtils {
     return systemExitFinder.exitFound();
   }
 
+  public static boolean containsYield(@NotNull PsiElement element){
+    final YieldFinder returnFinder = new YieldFinder();
+    element.accept(returnFinder);
+    return returnFinder.yieldFound();
+  }
+
   public static boolean elementContainsCallToMethod(PsiElement context, @NonNls String containingClassName, PsiType returnType,
     @NonNls String methodName, PsiType... parameterTypes) {
     final MethodCallFinder methodCallFinder = new MethodCallFinder(containingClassName, returnType, methodName, parameterTypes);
@@ -413,23 +419,18 @@ public final class ControlFlowUtils {
     return PsiTreeUtil.isAncestor(body, element, true);
   }
 
-  public static boolean isInFinallyBlock(@NotNull PsiElement element) {
-    PsiElement currentElement = element;
-    while (true) {
-      final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(currentElement, PsiTryStatement.class, true, PsiClass.class, PsiLambdaExpression.class);
-      if (tryStatement == null) {
-        return false;
-      }
-      final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-      if (finallyBlock != null) {
-        if (PsiTreeUtil.isAncestor(finallyBlock, currentElement, true)) {
-          final PsiMethod elementMethod = PsiTreeUtil.getParentOfType(currentElement, PsiMethod.class);
-          final PsiMethod finallyMethod = PsiTreeUtil.getParentOfType(finallyBlock, PsiMethod.class);
-          return elementMethod != null && elementMethod.equals(finallyMethod);
+  public static boolean isInFinallyBlock(@NotNull PsiElement element, @Nullable PsiElement stopAt) {
+    PsiElement parent = element.getParent();
+    while (parent != null && parent != stopAt && !(parent instanceof PsiMember) && !(parent instanceof PsiLambdaExpression)) {
+      if (parent instanceof PsiTryStatement tryStatement) {
+        final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
+        if (finallyBlock != null && PsiTreeUtil.isAncestor(finallyBlock, element, true)) {
+          return true;
         }
       }
-      currentElement = tryStatement;
+      parent = parent.getParent();
     }
+    return false;
   }
 
   public static boolean isInCatchBlock(@NotNull PsiElement element) {
@@ -1221,6 +1222,52 @@ public final class ControlFlowUtils {
       stopWalking();
     }
   }
+
+  private static class YieldFinder extends JavaRecursiveElementWalkingVisitor {
+    private boolean myFound;
+
+    private boolean yieldFound() {
+      return myFound;
+    }
+
+    @Override
+    public void visitExpression(@NotNull PsiExpression expression) {
+      // don't drill down
+    }
+
+    @Override
+    public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
+      myFound = true;
+      stopWalking();
+    }
+
+    @Override
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
+      if (myFound) {
+        return;
+      }
+      final PsiExpression condition = statement.getCondition();
+      final Object value = ExpressionUtils.computeConstantExpression(condition);
+      if (Boolean.FALSE != value) {
+        final PsiStatement thenBranch = statement.getThenBranch();
+        if (thenBranch != null) {
+          thenBranch.accept(this);
+        }
+      }
+      if (Boolean.TRUE != value) {
+        final PsiStatement elseBranch = statement.getElseBranch();
+        if (elseBranch != null) {
+          elseBranch.accept(this);
+        }
+      }
+    }
+
+    @Override
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
+      // don't drill down
+    }
+  }
+
 
   private static class BreakFinder extends JavaRecursiveElementWalkingVisitor {
 

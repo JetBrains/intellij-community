@@ -18,6 +18,7 @@ import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
@@ -49,6 +50,15 @@ public class MergeAllWindowsAction extends DumbAwareAction {
     else {
       presentation.setEnabledAndVisible(false);
     }
+  }
+
+  public static boolean isTabbedWindow(@NotNull JFrame frame) {
+    if (JdkEx.isTabbingModeAvailable() && WindowManager.getInstance().getAllProjectFrames().length > 1) {
+      ID id = MacUtil.getWindowFromJavaWindow(frame);
+      int tabs = Foundation.invoke(Foundation.invoke(id, "tabbedWindows"), "count").intValue();
+      return tabs > 1;
+    }
+    return false;
   }
 
   @Override

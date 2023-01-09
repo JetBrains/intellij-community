@@ -15,44 +15,28 @@
  */
 package com.siyeh.ig.methodmetrics;
 
-import com.intellij.openapi.ui.ComboBox;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameterList;
-import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class ParametersPerConstructorInspection extends MethodMetricInspection {
 
   @SuppressWarnings("PublicField") public Scope ignoreScope = Scope.NONE;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final JFormattedTextField valueField = prepareNumberEditor("m_limit");
-    final JComboBox<Scope> comboBox = new ComboBox<>(new Scope[] {Scope.NONE, Scope.PRIVATE, Scope.PACKAGE_LOCAL, Scope.PROTECTED});
-    comboBox.setRenderer(SimpleListCellRenderer.create("", Scope::getText));
-    comboBox.setSelectedItem(ignoreScope);
-    comboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        ignoreScope = (Scope)comboBox.getSelectedItem();
-      }
-    });
-    comboBox.setPrototypeDisplayValue(Scope.PROTECTED);
-
-    return new FormBuilder()
-      .addLabeledComponent(getConfigurationLabel(), valueField)
-      .addLabeledComponent(InspectionGadgetsBundle.message("constructor.visibility.option"), comboBox)
-      .addVerticalGap(-1)
-      .getPanel();
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("m_limit", getConfigurationLabel(), 1, 255),
+      dropdown("ignoreScope", InspectionGadgetsBundle.message("constructor.visibility.option"), Scope.class, Scope::getText)
+    );
   }
 
   @Override
@@ -109,6 +93,7 @@ public class ParametersPerConstructorInspection extends MethodMetricInspection {
       }
     };
 
+    @Nls
     abstract String getText();
   }
 

@@ -57,7 +57,8 @@ class Java9ReflectionClassVisibilityTest : LightJava9ModulesCodeInsightFixtureTe
   fun testExportsPackagePreview() {
     moduleInfo("module MAIN { requires API; }", MAIN)
     moduleInfo("module API { exports my.api; }", M2)
-    doTestPreview("Add 'exports my.impl' directive to module-info.java", "module API { exports my.api; exports my.impl; }")
+    doTestPreview("Add 'exports my.impl' directive to module-info.java",
+                  "module API { exports my.api;\n    exports my.impl;\n}")
   }
 
   fun testNotInRequirements() {

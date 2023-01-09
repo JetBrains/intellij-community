@@ -2,7 +2,6 @@
 
 package com.intellij.refactoring.rename;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -104,8 +103,6 @@ public class PsiElementRenameHandler implements RenameHandler {
         return;
       }
     }
-
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.rename");
 
     rename(element, project, nameSuggestionContext, editor);
   }

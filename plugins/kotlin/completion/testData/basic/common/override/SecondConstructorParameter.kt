@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 interface Foo {
     val foo: Int
     val bar: Int

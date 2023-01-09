@@ -37,7 +37,7 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask {
 
   protected AbstractPopup myPopup;
 
-  public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final @ProgressTitle String title, @Nullable Comparator<PsiElement> comparator) {
+  public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final @ProgressTitle String title, @Nullable Comparator<? super PsiElement> comparator) {
     super(project, title, comparator);
   }
 

@@ -250,7 +250,11 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     TreeUtil.installActions(myTree);
   }
 
-  public void show() {
+  public void show(){
+    showWithResult();
+  }
+
+  public Promise<TreePath> showWithResult() {
     JComponent panel = createCenterPanel();
     myTree.addTreeSelectionListener(__ -> {
       if (myPopup.isVisible()) {
@@ -286,7 +290,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
 
-    rebuildAndSelect(false, myInitialElement).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
+    return rebuildAndSelect(false, myInitialElement).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
       TreeUtil.ensureSelection(myTree);
       installUpdater();
     }));

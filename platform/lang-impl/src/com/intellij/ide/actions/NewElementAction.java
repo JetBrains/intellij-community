@@ -3,6 +3,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -94,7 +95,37 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
   }
 
   protected ActionGroup getGroup(DataContext dataContext) {
-    return (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WEIGHING_NEW);
+    var result = getCustomizedGroup();
+    if (result == null) {
+      result = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WEIGHING_NEW);
+    }
+    return result;
+  }
+
+  private static ActionGroup getCustomizedGroup() {
+    // We can't just get a customized GROUP_WEIGHING_NEW because it's only customized as
+    // a part of the Project View popup customization, so we get that and dig for the New subgroup.
+    // There has to be a better way to do it...
+    var projectViewPopupGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_PROJECT_VIEW_POPUP);
+    if (!(projectViewPopupGroup instanceof ActionGroup)) {
+      return null;
+    }
+    for (AnAction child : ((ActionGroup)projectViewPopupGroup).getChildren(null)) {
+       if (child instanceof ActionGroup childGroup && isNewElementGroup(childGroup)) {
+         return childGroup;
+       }
+    }
+    return null;
+  }
+
+  private static boolean isNewElementGroup(ActionGroup group) {
+    if (group instanceof WeighingNewActionGroup) {
+      return true;
+    }
+    if (group instanceof ActionGroupWrapper actionGroupWrapper) {
+      return isNewElementGroup(actionGroupWrapper.getDelegate());
+    }
+    return false;
   }
 
   @NotNull

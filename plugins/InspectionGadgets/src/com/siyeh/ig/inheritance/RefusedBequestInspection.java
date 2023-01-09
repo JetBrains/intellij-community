@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * @author Bas Leijdekkers
@@ -38,16 +38,13 @@ public class RefusedBequestInspection extends BaseInspection {
   @SuppressWarnings("PublicField") public boolean onlyReportWhenAnnotated = true;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(annotations, null);
-
-    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.refused.bequest.super.annotated.option"), "onlyReportWhenAnnotated");
-    panel.add(annotationsListControl, "growx, wrap");
-    panel.addCheckbox(InspectionGadgetsBundle.message("refused.bequest.ignore.empty.super.methods.option"), "ignoreEmptySuperMethods");
-    panel.addCheckbox(InspectionGadgetsBundle.message("refused.bequest.ignore.default.super.methods.option"), "ignoreDefaultSuperMethods");
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyReportWhenAnnotated", InspectionGadgetsBundle.message("inspection.refused.bequest.super.annotated.option"),
+               stringSet("annotations", "", new JavaClassValidator().annotationsOnly())),
+      checkbox("ignoreEmptySuperMethods", InspectionGadgetsBundle.message("refused.bequest.ignore.empty.super.methods.option")),
+      checkbox("ignoreDefaultSuperMethods", InspectionGadgetsBundle.message("refused.bequest.ignore.default.super.methods.option"))
+    );
   }
 
   @Nullable
@@ -97,7 +94,7 @@ public class RefusedBequestInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement methodName = descriptor.getPsiElement();
       final PsiMethod method = (PsiMethod)methodName.getParent();
       assert method != null;

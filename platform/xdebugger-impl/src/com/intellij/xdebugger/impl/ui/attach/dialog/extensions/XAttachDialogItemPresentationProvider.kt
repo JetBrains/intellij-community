@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nls
 interface XAttachDialogItemPresentationProvider {
 
   companion object {
-    val EP: ExtensionPointName<XAttachDialogItemPresentationProvider> = ExtensionPointName.create("com.intellij.xdebugger.dialog.presentation.provider")
+    val EP: ExtensionPointName<XAttachDialogItemPresentationProvider> = ExtensionPointName.create("com.intellij.xdebugger.dialog.item.presentation.provider")
   }
 
   fun isApplicableFor(item: AttachDialogProcessItem): Boolean
@@ -26,6 +26,10 @@ interface XAttachDialogItemPresentationProvider {
   }
   fun getProcessCommandLineTextAttributes(item: AttachDialogProcessItem): SimpleTextAttributes? {
     return null
+  }
+
+  fun getIndexedString(item: AttachDialogProcessItem): String {
+    return "${item.processInfo.pid} ${getProcessExecutableText(item)} ${item.processInfo.user}"
   }
 
   fun getPriority(): Int

@@ -78,6 +78,17 @@ public final class WindowRoundedCornersManager {
         }
         params = cornerType == PopupCornerType.RoundedTooltip ? "small" : "full";
       }
+      else if (params instanceof Color) {
+        params = new Object[]{"full", params};
+      }
+      else if (params instanceof Object[]) {
+        Object[] values = (Object[])params;
+        if (values.length != 2 || !(values[0] instanceof PopupCornerType) || !(values[1] instanceof Color)) {
+          return;
+        }
+        PopupCornerType cornerType = (PopupCornerType)values[0];
+        params = new Object[]{cornerType == PopupCornerType.RoundedTooltip ? "small" : "full", values[1]};
+      }
       else if (!(params instanceof String)) {
         return;
       }

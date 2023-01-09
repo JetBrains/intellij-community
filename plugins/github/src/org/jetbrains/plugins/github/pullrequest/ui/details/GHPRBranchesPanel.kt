@@ -16,7 +16,6 @@ import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.CollaborationToolsIcons
@@ -47,12 +46,12 @@ internal object GHPRBranchesPanel {
                            .gridGap("0", "0")
                            .insets("0", "0", "0", "0"))
 
-    add(to, CC().minWidth("${JBUIScale.scale(30)}"))
+    add(to, CC().minWidth("30"))
       add(JLabel(" ${UIUtil.leftArrow()} ").apply {
         foreground = CurrentBranchComponent.TEXT_COLOR
         border = JBUI.Borders.empty(0, 5)
       })
-    add(from, CC().minWidth("${JBUIScale.scale(30)}"))
+    add(from, CC().minWidth("30"))
       add(branchActionsToolbar)
     }
   }

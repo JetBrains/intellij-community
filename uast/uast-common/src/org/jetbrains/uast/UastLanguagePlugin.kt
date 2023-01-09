@@ -17,6 +17,7 @@ import org.jetbrains.uast.util.classSetOf
  *
  * @see org.jetbrains.uast.generate.UastCodeGenerationPlugin for UAST code generation.
  */
+@JvmDefaultWithCompatibility
 interface UastLanguagePlugin {
   companion object {
     val extensionPointName = ExtensionPointName<UastLanguagePlugin>("org.jetbrains.uast.uastLanguagePlugin")

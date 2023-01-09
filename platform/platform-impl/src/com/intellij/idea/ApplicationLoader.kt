@@ -1,29 +1,33 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ApplicationLoader")
 @file:Internal
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "RAW_RUN_BLOCKING")
+
 package com.intellij.idea
 
 import com.intellij.diagnostic.*
 import com.intellij.history.LocalHistory
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
+import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -33,6 +37,7 @@ import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.ManagingFS
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
@@ -41,37 +46,41 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.*
-import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
-import java.util.concurrent.*
 import java.util.concurrent.CancellationException
+import java.util.concurrent.CompletableFuture
 import java.util.function.BiFunction
 import kotlin.system.exitProcess
 
 @Suppress("SSBasedInspection")
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
-fun initApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
-  runBlocking(rootTask()) {
-    doInitApplication(rawArgs, appDeferred)
+fun initApplication(context: InitAppContext) {
+  runBlocking(context.context) {
+    doInitApplication(rawArgs = context.args,
+                      appDeferred = context.appDeferred,
+                      initLafJob = context.initLafJob,
+                      euaTaskDeferred = context.euaTaskDeferred)
   }
 }
 
-private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
+// executed in the main scope with a sequential dispatcher - don't forget this
+private suspend fun doInitApplication(rawArgs: List<String>,
+                                      appDeferred: Deferred<Application>,
+                                      initLafJob: Job,
+                                      euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?) {
   val initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization")
   val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
     PluginManagerCore.getInitPluginFuture().await()
   }
 
-  val (app, initLafJob) = initAppActivity.runChild("app waiting") {
-    @Suppress("UNCHECKED_CAST")
-    appDeferred.await() as Pair<ApplicationImpl, Job?>
+  val app = initAppActivity.runChild("app waiting") {
+    appDeferred.await() as ApplicationImpl
   }
 
   initAppActivity.runChild("app component registration") {
@@ -81,21 +90,35 @@ private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferr
                            listenerCallbacks = null)
   }
 
+  val loadIconMapping = if (app.isHeadlessEnvironment) null else app.coroutineScope.launchAndMeasure("icon mapping loading") {
+    try {
+      service<IconMapLoader>().preloadIconMapping()
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+    }
+  }
+
   withContext(Dispatchers.IO) {
     initConfigurationStore(app)
   }
 
   coroutineScope {
-    // LaF must be initialized before app init because icons maybe requested and as result,
-    // scale must be already initialized (especially important for Linux)
+    // LaF must be initialized before app init because icons maybe requested and, as a result,
+    // a scale must be already initialized (especially important for Linux)
     runActivity("init laf waiting") {
-      initLafJob?.join()
+      initLafJob.join()
     }
 
-    // executed in main thread
+    euaTaskDeferred?.await()?.invoke()
+
+    // executed in the main scope
     launch {
+      loadIconMapping?.join()
       val lafManagerDeferred = launch(CoroutineName("laf initialization") + RawSwingDispatcher) {
-        // don't wait for result - we just need to trigger initialization if not yet created
         app.getServiceAsync(LafManager::class.java)
       }
       if (!app.isHeadlessEnvironment) {
@@ -182,13 +205,14 @@ private suspend fun initApplicationImpl(args: List<String>,
       }
     }
   }
-  // no need to use pool once started
+  // no need to use a pool once started
   ZipFilePool.POOL = null
 }
 
 fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
   launch {
-    // LocalHistory wants ManagingFS, it should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner
+    // LocalHistory wants ManagingFS.
+    // It should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner.
     app.getServiceAsync(ManagingFS::class.java).join()
     // PlatformVirtualFileManager also wants ManagingFS
     launch { app.getServiceAsync(VirtualFileManager::class.java) }
@@ -201,7 +225,11 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
     app.getServiceAsync(FileTypeManager::class.java).join()
 
     // ProjectJdkTable wants FileTypeManager
-    launch { app.getServiceAsync(ProjectJdkTable::class.java) }
+    launch {
+      // and VirtualFilePointerManager
+      app.getServiceAsync(VirtualFilePointerManager::class.java).join()
+      app.getServiceAsync(ProjectJdkTable::class.java)
+    }
 
     // wants PropertiesComponent
     launch { app.getServiceAsync(DebugLogManager::class.java) }
@@ -251,10 +279,6 @@ private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
     AsyncProcessIcon("")
     AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
     AnimatedIcon.FS()
-  }
-  launch {
-    // IDEA-170295
-    PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
   }
 
   if (!app.isUnitTestMode && System.getProperty("enable.activity.preloading", "true").toBoolean()) {
@@ -324,6 +348,7 @@ private fun addActivateAndWindowsCliListeners() {
   addExternalInstanceListener { rawArgs ->
     LOG.info("External instance command received")
     val (args, currentDirectory) = if (rawArgs.isEmpty()) emptyList<String>() to null else rawArgs.subList(1, rawArgs.size) to rawArgs[0]
+    @Suppress("DEPRECATION")
     ApplicationManager.getApplication().coroutineScope.async {
       handleExternalCommand(args, currentDirectory).future.await()
     }
@@ -331,9 +356,7 @@ private fun addActivateAndWindowsCliListeners() {
 
   EXTERNAL_LISTENER = BiFunction { currentDirectory, args ->
     LOG.info("External Windows command received")
-    if (args.isEmpty()) {
-      return@BiFunction 0
-    }
+    @Suppress("RAW_RUN_BLOCKING")
     runBlocking(Dispatchers.Default) {
       val result = handleExternalCommand(args.asList(), currentDirectory)
       try {
@@ -347,7 +370,9 @@ private fun addActivateAndWindowsCliListeners() {
 
   ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
     override fun appWillBeClosed(isRestart: Boolean) {
-      addExternalInstanceListener { CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down"))) }
+      addExternalInstanceListener {
+        CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")))
+      }
       EXTERNAL_LISTENER = BiFunction { _, _ -> AppExitCodes.ACTIVATE_DISPOSING }
     }
   })
@@ -371,21 +396,14 @@ private suspend fun handleExternalCommand(args: List<String>, currentDirectory: 
 }
 
 fun findStarter(key: String): ApplicationStarter? {
-  val point = ApplicationStarter.EP_NAME.point as ExtensionPointImpl<ApplicationStarter>
-  var result: ApplicationStarter? = point.sortedAdapters.firstOrNull { it.orderId == key }  ?.createInstance(point.componentManager)
-  if (result == null) {
-    result = point.firstOrNull {
-      @Suppress("DEPRECATION")
-      it?.commandName == key
-    }
-  }
-  return result
+  @Suppress("DEPRECATION")
+  return ApplicationStarter.EP_NAME.findByIdOrFromInstance(key) { it.commandName }
 }
 
 fun initConfigurationStore(app: ApplicationImpl) {
   var activity = StartUpMeasurer.startActivity("beforeApplicationLoaded")
   val configPath = PathManager.getConfigDir()
-  for (listener in ApplicationLoadListener.EP_NAME.iterable) {
+  for (listener in ApplicationLoadListener.EP_NAME.lazySequence()) {
     try {
       (listener ?: break).beforeApplicationLoaded(app, configPath)
     }
@@ -399,7 +417,7 @@ fun initConfigurationStore(app: ApplicationImpl) {
 
   activity = activity.endAndStart("init app store")
 
-  // we set it after beforeApplicationLoaded call, because the app store can depend on stream provider state
+  // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
   app.stateStore.setPath(configPath)
   StartUpMeasurer.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
   activity.end()
@@ -438,26 +456,6 @@ fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedList
     launch {
       listener.execute(asyncScope)
     }
-  }
-}
-
-@Internal
-internal inline fun <T : Any> ExtensionPointName<T>.processExtensions(consumer: (extension: T, pluginDescriptor: PluginDescriptor) -> Unit) {
-  val app = ApplicationManager.getApplication()
-  val extensionArea = app.extensionArea as ExtensionsAreaImpl
-  for (adapter in extensionArea.getExtensionPoint<T>(name).sortedAdapters) {
-    val extension: T = try {
-      adapter.createInstance(app) ?: continue
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-      continue
-    }
-
-    consumer(extension, adapter.pluginDescriptor)
   }
 }
 

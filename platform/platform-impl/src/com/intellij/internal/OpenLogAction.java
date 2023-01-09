@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.LoggerFactory;
 import com.intellij.idea.StartupUtil;
 import com.intellij.notification.Notification;
@@ -48,6 +49,9 @@ public class OpenLogAction extends DumbAwareAction {
       final FileEditor[] editors = FileEditorManager.getInstance(project).openFile(file, true);
       if (editors.length > 0 && editors[0] instanceof TextEditor) {
         scrollToLastIDEStart((TextEditor)editors[0]);
+      }
+      else {
+        PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true);
       }
     }
     else {

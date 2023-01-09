@@ -45,6 +45,6 @@ class ReplaceCollectionCountWithSizeQuickFix : LocalQuickFix {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement as KtCallExpression
-        element.replace(KtPsiFactory(element).createExpression("size"))
+        element.replace(KtPsiFactory(project).createExpression("size"))
     }
 }

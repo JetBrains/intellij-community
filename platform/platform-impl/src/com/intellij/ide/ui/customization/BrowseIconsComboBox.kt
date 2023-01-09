@@ -212,7 +212,8 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
     if (actionId != null && icon != null) {
       val customIconRef = customActionsSchema.getIconPath(actionId)
       if (StringUtil.isNotEmpty(customIconRef) && selectByCondition { info -> info.iconReference == customIconRef }
-          || selectByCondition { info -> info.actionId == actionId || info.icon == icon }) {
+          || selectByCondition { info -> info.actionId == actionId }
+          || selectByCondition { info -> info.icon == icon }) {
         return
       }
     }

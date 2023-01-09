@@ -55,7 +55,7 @@ public class VcsFacade {
 
   /**
    * @return whether a directory has files with uncommitted changes in it.
-   * <p>
+   * <p/>
    * WARNING: DELETED files are NOT included (ie: we can't reformat them, thus they are ignored).
    */
   public boolean hasChanges(@NotNull VirtualFile file, @NotNull Project project) {
@@ -143,7 +143,7 @@ public class VcsFacade {
 
   /**
    * @return the text ranges with uncommitted changes
-   * <p>
+   * <p/>
    * Deleted lines are ignored.
    * {@link ChangedRangesInfo#insertedRanges} contains 'completely new' lines.
    * {@link ChangedRangesInfo#insertedRanges} is {@code null} if the whole file is new.
@@ -163,10 +163,10 @@ public class VcsFacade {
 
   /**
    * Allows to temporally suppress document modification tracking.
-   * <p>
+   * <p/>
    * Ex: To perform a task, that might delete a whole document and re-create it from scratch (ex: rearrange methods by re-inserting).
    * Such modification would destroy all existing modified line ranges and associated data, unless handled as atomic change.
-   * <p>
+   * <p/>
    * While using `runHeavyModificationTask` would make trackers compare only the starting and finishing document states,
    * ignoring intermediate modifications (assuming that "cumulative" differences will be more incremental).
    *

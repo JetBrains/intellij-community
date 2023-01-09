@@ -1,8 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import org.jetbrains.intellij.build.impl.DebuggerAgentDownloader
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PluginLayout
+import kotlin.io.path.copyTo
+import kotlin.io.path.createDirectories
 
 object JavaPluginLayout {
   @JvmStatic
@@ -76,7 +79,12 @@ object JavaPluginLayout {
         "intellij.java.featuresTrainer"
       ))
 
-      spec.withArtifact("debugger-agent", "rt")
+      spec.withGeneratedResources { targetPath, buildContext ->
+        val rt = targetPath.resolve("lib").resolve("rt").createDirectories()
+        val debuggerAgent = DebuggerAgentDownloader.downloadDebuggerAgent(buildContext.paths.communityHomeDirRoot)
+        debuggerAgent.copyTo(rt.resolve("debugger-agent.jar"))
+      }
+
       spec.withProjectLibrary("Eclipse", "ecj", LibraryPackMode.STANDALONE_MERGED)
       // used in JPS - do not use uber jar
       spec.withProjectLibrary("jgoodies-common", LibraryPackMode.STANDALONE_MERGED)

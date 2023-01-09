@@ -273,7 +273,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
       return cacheFile.hasCompleteHistory();
     }
 
-    boolean hasDateFilter = settings.USE_DATE_AFTER_FILTER || settings.USE_DATE_BEFORE_FILTER || settings.USE_CHANGE_AFTER_FILTER || settings.USE_CHANGE_BEFORE_FILTER;
+    boolean hasDateFilter = settings.USE_DATE_AFTER_FILTER || settings.USE_CHANGE_AFTER_FILTER;
     boolean hasNonDateFilter = settings.isNonDateFilterSpecified();
     if (!hasDateFilter && hasNonDateFilter) {
       return cacheFile.hasCompleteHistory();

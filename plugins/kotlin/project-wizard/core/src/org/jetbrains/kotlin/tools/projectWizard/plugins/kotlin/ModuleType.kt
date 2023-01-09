@@ -26,7 +26,7 @@ enum class ModuleSubType(val moduleType: ModuleType) {
     js(ModuleType.js),
     android(ModuleType.android),
     androidNativeArm32(ModuleType.native), androidNativeArm64(ModuleType.native),
-    iosArm32(ModuleType.native), iosArm64(ModuleType.native), iosX64(ModuleType.native),
+    iosArm32(ModuleType.native), iosArm64(ModuleType.native), iosX64(ModuleType.native), iosSimulatorArm64(ModuleType.native),
     ios(ModuleType.native)/*TODO TEMPORARY TILL HMPP WIZARD PART IS MERGED*/,
     iosCocoaPods(ModuleType.native) {
         override fun toString(): String = "ios"
@@ -39,8 +39,8 @@ enum class ModuleSubType(val moduleType: ModuleType) {
 }
 
 val ModuleSubType.isIOS: Boolean
-    get() = this in EnumSet.of(ModuleSubType.iosX64, ModuleSubType.iosArm32, ModuleSubType.iosArm64, ModuleSubType.ios,
-                               ModuleSubType.iosCocoaPods)
+    get() = this in EnumSet.of(ModuleSubType.iosX64, ModuleSubType.iosArm32, ModuleSubType.iosArm64, ModuleSubType.iosSimulatorArm64,
+                               ModuleSubType.ios, ModuleSubType.iosCocoaPods)
 
 val ModuleSubType.isNativeDesktop: Boolean
     get() = this in EnumSet.of(

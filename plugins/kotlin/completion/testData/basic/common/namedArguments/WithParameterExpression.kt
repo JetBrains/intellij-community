@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 val paramTest = 12
 
 fun small(paramFirst: Int, paramSecond: Int) {

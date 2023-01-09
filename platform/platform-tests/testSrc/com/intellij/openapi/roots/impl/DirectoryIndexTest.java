@@ -3,7 +3,6 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -159,8 +158,8 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
                                             return myProject == project ? Collections.singletonList(
                                               new JavaSyntheticLibrary(
                                                 "test",
-                                                ContainerUtil.newArrayList(myLibAdditionalSrcDir, myLibAdditionalOutsideSrcDir),
-                                                ContainerUtil.newArrayList(myLibAdditionalClsDir, myLibAdditionalOutsideClsDir),
+                                                List.of(myLibAdditionalSrcDir, myLibAdditionalOutsideSrcDir),
+                                                List.of(myLibAdditionalClsDir, myLibAdditionalOutsideClsDir),
                                                 ContainerUtil.newHashSet(myLibAdditionalExcludedDir, myLibAdditionalOutsideExcludedDir)
                                               )
                                             ) : Collections.emptyList();
@@ -187,6 +186,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     super.tearDown();
   }
 
+  //everything except order entry checks is covered by other tests 
   public void testDirInfos() {
     assertNotInProject(myRootVFile);
 
@@ -225,58 +225,6 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     checkInfo(myModule3Dir, myModule3, false, false, null, null, null);
   }
 
-  public void testDirsByPackageName() {
-    checkPackage("", true, mySrcDir1, myTestSrc1, myResDir, myTestResDir, mySrcDir2, myLibSrcDir, myLibClsDir,
-                 myLibAdditionalSrcDir, myLibAdditionalOutsideSrcDir, myLibAdditionalClsDir, myLibAdditionalOutsideClsDir);
-    checkPackage("", false, mySrcDir1, myTestSrc1, myResDir, myTestResDir, mySrcDir2, myLibClsDir,
-                 myLibAdditionalClsDir, myLibAdditionalOutsideClsDir);
-
-    checkPackage("pack1", true, myPack1Dir);
-    checkPackage("pack1", false, myPack1Dir);
-
-    checkPackage("pack2", true, myPack2Dir);
-    checkPackage("pack2", false, myPack2Dir);
-
-    checkPackage(".pack2", false);
-    checkPackage(".pack2", true);
-
-    VirtualFile libClsPack = createChildDirectory(myLibClsDir, "pack1");
-    VirtualFile libSrcPack = createChildDirectory(myLibSrcDir, "pack1");
-    VirtualFile pack3Cls = createChildDirectory(myLibAdditionalClsDir, "pack3");
-    VirtualFile pack3Src = createChildDirectory(myLibAdditionalSrcDir, "pack3");
-    VirtualFile pack4Cls = createChildDirectory(myLibAdditionalOutsideClsDir, "pack4");
-    VirtualFile pack4Src = createChildDirectory(myLibAdditionalOutsideSrcDir, "pack4");
-    fireRootsChanged();
-    checkPackage("pack1", true, myPack1Dir, libSrcPack, libClsPack);
-    checkPackage("pack1", false, myPack1Dir, libClsPack);
-    checkPackage("pack3", false, pack3Cls);
-    checkPackage("pack3", true, pack3Src, pack3Cls);
-    checkPackage("pack4", false, pack4Cls);
-    checkPackage("pack4", true, pack4Src, pack4Cls);
-  }
-
-  public void testDirectoriesWithPackagePrefix() {
-    PsiTestUtil.addSourceRoot(myModule3, myModule3Dir);
-    WriteCommandAction.runWriteCommandAction(myProject, () -> {
-      final ModifiableRootModel model = ModuleRootManager.getInstance(myModule3).getModifiableModel();
-      model.getContentEntries()[0].getSourceFolders()[0].setPackagePrefix("pack1");
-      model.commit();
-    });
-    checkPackage("pack1", true, myPack1Dir, myModule3Dir);
-  }
-
-  public void testPackageDirectoriesWithDots() {
-    VirtualFile fooBar = createChildDirectory(mySrcDir1, "foo.bar");
-    VirtualFile goo1 = createChildDirectory(fooBar, "goo");
-    VirtualFile foo = createChildDirectory(mySrcDir2, "foo");
-    VirtualFile bar = createChildDirectory(foo, "bar");
-    VirtualFile goo2 = createChildDirectory(bar, "goo");
-
-    checkPackage("foo", false, foo);
-    checkPackage("foo.bar", false, bar, fooBar);
-    checkPackage("foo.bar.goo", false, goo2, goo1);
-  }
-  
   private static OrderEntry[] toArray(Collection<OrderEntry> orderEntries) {
     return orderEntries.toArray(OrderEntry.EMPTY_ARRAY);
   }
@@ -292,7 +240,8 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     assertInstanceOf(entries[0], LibraryOrderEntry.class);
     assertInstanceOf(entries[1], ModuleSourceOrderEntry.class);
 
-    checkInfo(myTestSrc1, myModule, false, true, "testSrc", myTestSrc1Folder, JavaSourceRootType.TEST_SOURCE, myModule, myModule);
+    String packageName = WorkspaceFileIndexEx.IS_ENABLED ? "" : "testSrc";
+    checkInfo(myTestSrc1, myModule, false, true, packageName, myTestSrc1Folder, JavaSourceRootType.TEST_SOURCE, myModule, myModule);
     entriesResult = myFileIndex.getOrderEntriesForFile(myTestSrc1);
     entries = toArray(entriesResult);
     assertInstanceOf(entries[0], LibraryOrderEntry.class);
@@ -325,7 +274,8 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   public void testModuleWithSameSourceRoot() {
     SourceFolder sourceFolder = PsiTestUtil.addSourceRoot(myModule2, mySrcDir1);
     checkInfo(mySrcDir1, myModule2, false, false, "", sourceFolder, JavaSourceRootType.SOURCE, myModule2, myModule3);
-    checkInfo(myTestSrc1, myModule2, false, false, "testSrc", sourceFolder, JavaSourceRootType.SOURCE, myModule2, myModule3);
+    String packageName = WorkspaceFileIndexEx.IS_ENABLED ? "" : "testSrc";
+    checkInfo(myTestSrc1, myModule2, false, false, packageName, sourceFolder, JavaSourceRootType.SOURCE, myModule2, myModule3);
   }
   
   public void testProcessingNestedContentRootsOfExcludedDirsOnCreation() {
@@ -363,7 +313,8 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     checkInfo(myModule1Dir, myModule, true, false, "", null, null, myModule);
     checkInfo(mySrcDir1, myModule, true, false, "", mySrcDir1Folder, JavaSourceRootType.SOURCE, myModule);
 
-    checkInfo(myModule2Dir, myModule2, true, false, "module2", null, null, myModule);
+    String packageName = WorkspaceFileIndexEx.IS_ENABLED ? null : "module2";
+    checkInfo(myModule2Dir, myModule2, true, false, packageName, null, null, myModule);
     checkInfo(mySrcDir2, myModule2, true, false, "", mySrcDir2Folder, JavaSourceRootType.SOURCE, myModule2, myModule3);
     checkInfo(myExcludeDir, null, true, false, "module2.src2.excluded", null, null, myModule3);
 
@@ -379,14 +330,15 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     if (WorkspaceFileIndexEx.IS_ENABLED) {
       assertExcluded(myExcludedLibSrcDir, myModule);
       assertExcluded(myExcludedLibClsDir, myModule);
+      checkPackage("lib.src.exc", true);
+      checkPackage("lib.cls.exc", true);
     }
     else {
       checkInfo(myExcludedLibSrcDir, null, true, false, "lib.src.exc", null, null, myModule3, myModule);
       checkInfo(myExcludedLibClsDir, null, true, false, "lib.cls.exc", null, null, myModule3);
+      checkPackage("lib.src.exc", true, myExcludedLibSrcDir);
+      checkPackage("lib.cls.exc", true, myExcludedLibClsDir);
     }
-
-    checkPackage("lib.src.exc", true, myExcludedLibSrcDir);
-    checkPackage("lib.cls.exc", true, myExcludedLibClsDir);
 
     checkPackage("lib.src", true);
     checkPackage("lib.cls", true);

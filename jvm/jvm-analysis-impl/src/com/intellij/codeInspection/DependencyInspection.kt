@@ -2,6 +2,7 @@
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -59,6 +60,10 @@ class DependencyInspection : AbstractBaseUastLocalInspectionTool() {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       ShowSettingsUtil.getInstance().editConfigurable(project, DependencyConfigurable(project))
+    }
+
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+      return IntentionPreviewInfo.Html(JvmAnalysisBundle.message("jvm.inspections.dependency.intention.description"))
     }
   }
 }

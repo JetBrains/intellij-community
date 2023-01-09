@@ -30,7 +30,7 @@ class AddJvmNameAnnotationFix(element: KtElement, private val jvmName: String) :
         when (element) {
             is KtAnnotationEntry -> {
                 val argList = element.valueArgumentList
-                val newArgList = KtPsiFactory(element).createCallArguments("(\"$jvmName\")")
+                val newArgList = KtPsiFactory(project).createCallArguments("(\"$jvmName\")")
                 if (argList != null) {
                     argList.replace(newArgList)
                 } else {

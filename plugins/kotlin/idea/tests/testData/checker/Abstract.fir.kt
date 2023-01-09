@@ -62,7 +62,7 @@ abstract class MyAbstractClass() {
     <error descr="[ABSTRACT_FUNCTION_WITH_BODY] A function 'j' with body cannot be abstract">abstract</error> fun j() {}
 }
 
-interface MyTrait {
+interface MyInterface {
     //properties
 
     val a: Int

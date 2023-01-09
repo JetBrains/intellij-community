@@ -22,6 +22,9 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
+import com.intellij.ui.dsl.gridLayout.Gaps;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -89,6 +92,12 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       myBrowseButton.getAccessibleContext().setAccessibleName(UIBundle.message("component.with.browse.button.accessible.name"));
     }
     new LazyDisposable(this);
+
+    Insets insets = myComponent.getInsets();
+    Gaps visualPaddings = new Gaps(insets.top, insets.left, insets.bottom, inlineBrowseButton ? insets.right : myBrowseButton.getInsets().right);
+    putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, component);
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, visualPaddings);
   }
 
   @NotNull

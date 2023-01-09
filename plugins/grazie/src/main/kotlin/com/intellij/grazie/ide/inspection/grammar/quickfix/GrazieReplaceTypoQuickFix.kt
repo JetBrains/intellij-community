@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.ide.inspection.grammar.quickfix
 
+import ai.grazie.nlp.langs.Language
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.codeInsight.intention.CustomizableIntentionAction.RangeToHighlight
 import com.intellij.codeInsight.intention.FileModifier
@@ -12,7 +13,9 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.grazie.GrazieBundle
+import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
+import com.intellij.grazie.ide.notification.advertiseGrazieProfessional
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.TextContent
@@ -38,7 +41,7 @@ object GrazieReplaceTypoQuickFix {
     }
   }
 
-  private class ChangeToVariantAction(
+  private open class ChangeToVariantAction(
     private val rule: Rule,
     override val index: Int,
     @IntentionFamilyName private val family: String,
@@ -46,6 +49,7 @@ object GrazieReplaceTypoQuickFix {
     private val replacements: List<Pair<SmartPsiFileRange, String>>,
     private val underlineRanges: List<SmartPsiFileRange>,
     private val toHighlight: List<SmartPsiFileRange>,
+    private val detectedLanguage: Language?
   )
     : ChoiceVariantIntentionAction(), HighPriorityAction {
     override fun getName(): String {
@@ -64,17 +68,23 @@ object GrazieReplaceTypoQuickFix {
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile): Boolean = replacements.all { it.first.range != null }
 
-    override fun getFileModifierForPreview(target: PsiFile): FileModifier = this
+    override fun getFileModifierForPreview(target: PsiFile): FileModifier {
+      return ForPreview(rule, index, family, suggestion, replacements, underlineRanges, toHighlight, detectedLanguage)
+    }
 
     override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
+      if (detectedLanguage == Language.ENGLISH) {
+        advertiseGrazieProfessional(project)
+      }
+      performFix(project, file, editor)
+    }
+
+    protected fun performFix(project: Project, file: PsiFile, editor: Editor?) {
       GrazieFUSCounter.quickFixInvoked(rule, project, "accept.suggestion")
-
       val document = file.viewProvider.document ?: return
-
       underlineRanges.forEach { underline ->
         underline.range?.let { UpdateHighlightersUtil.removeHighlightersWithExactRange(document, project, it) }
       }
-
       applyReplacements(document, replacements)
     }
 
@@ -92,6 +102,21 @@ object GrazieReplaceTypoQuickFix {
         RangeToHighlight(file, TextRange.create(range), EditorColors.SEARCH_RESULT_ATTRIBUTES)
       }
     }
+
+    private class ForPreview(
+      rule: Rule,
+      index: Int,
+      @IntentionFamilyName family: String,
+      @NlsSafe suggestion: String,
+      replacements: List<Pair<SmartPsiFileRange, String>>,
+      underlineRanges: List<SmartPsiFileRange>,
+      toHighlight: List<SmartPsiFileRange>,
+      detectedLanguage: Language?
+    ): ChangeToVariantAction(rule, index, family, suggestion, replacements, underlineRanges, toHighlight, detectedLanguage) {
+      override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
+        performFix(project, file, editor)
+      }
+    }
   }
 
   @Deprecated(message = "use getReplacementFixes(problem, underlineRanges)")
@@ -103,6 +128,7 @@ object GrazieReplaceTypoQuickFix {
   @JvmStatic
   fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>): List<LocalQuickFix> {
     val file = problem.text.containingFile
+    val language = LangDetector.getLanguage(problem.text.toString())
     val spm = SmartPointerManager.getInstance(file.project)
     val familyName: @IntentionFamilyName String = familyName(problem)
     val result = arrayListOf<LocalQuickFix>(ReplaceTypoTitleAction(familyName, problem.shortMessage))
@@ -111,7 +137,7 @@ object GrazieReplaceTypoQuickFix {
       val replacements = changes.flatMap { toFileReplacements(it.range, it.replacement, problem.text) }
       val presentable = suggestion.presentableText
       val toHighlight = changes.map { spm.createSmartPsiFileRangePointer(file, makeNonEmpty(problem.text.textRangeToFile(it.range), file)) }
-      result.add(ChangeToVariantAction(problem.rule, index, familyName, presentable, replacements, underlineRanges, toHighlight))
+      result.add(ChangeToVariantAction(problem.rule, index, familyName, presentable, replacements, underlineRanges, toHighlight, language))
     }
     return result
   }

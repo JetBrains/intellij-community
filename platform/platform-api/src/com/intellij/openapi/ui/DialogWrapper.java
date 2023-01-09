@@ -16,6 +16,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.client.ClientDisposableProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -313,7 +314,7 @@ public abstract class DialogWrapper {
     createDefaultActions();
   }
 
-  protected DialogWrapper(@NotNull Function<DialogWrapper, DialogWrapperPeer> peerFactory) {
+  protected DialogWrapper(@NotNull Function<? super DialogWrapper, ? extends DialogWrapperPeer> peerFactory) {
     myPeer = peerFactory.apply(this);
     myCreateSouthSection = false;
     createDefaultActions();
@@ -1309,7 +1310,7 @@ public abstract class DialogWrapper {
         DialogPanel dialogPanel = (DialogPanel)centerPanel;
         myPreferredFocusedComponentFromPanel = dialogPanel.getPreferredFocusedComponent();
         dialogPanel.registerValidators(myDisposable, map -> {
-          setOKActionEnabled(map.isEmpty());
+          setOKActionEnabled(ContainerUtil.and(map.values(), info -> info.okEnabled));
           return Unit.INSTANCE;
         });
         myDialogPanel = dialogPanel;
@@ -1667,7 +1668,7 @@ public abstract class DialogWrapper {
     ensureEventDispatchThread();
     registerKeyboardShortcuts();
 
-    Disposable uiParent = ApplicationManager.getApplication();
+    Disposable uiParent = ClientDisposableProvider.getCurrentDisposable();
     if (uiParent != null) { // may be null if no app yet (license agreement)
       Disposer.register(uiParent, myDisposable); // ensure everything is disposed on app quit
     }
@@ -1689,6 +1690,9 @@ public abstract class DialogWrapper {
 
   public void setInitialLocationCallback(@NotNull Computable<? extends Point> callback) {
     myInitialLocationCallback = callback;
+  }
+
+  public void beforeShowCallback() {
   }
 
   private void registerKeyboardShortcuts() {

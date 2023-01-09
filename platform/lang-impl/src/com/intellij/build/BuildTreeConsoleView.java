@@ -304,7 +304,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
   }
 
   private @Nullable ExecutionNode getOrMaybeCreateParentNode(@NotNull BuildEvent event,
-                                                             @NotNull Set<ExecutionNode> structureChanged) {
+                                                             @NotNull Set<? super ExecutionNode> structureChanged) {
     ExecutionNode parentNode = event.getParentId() == null ? null : nodesMap.get(event.getParentId());
     if (event instanceof MessageEvent) {
       parentNode = createMessageParentNodes((MessageEvent)event, parentNode);
@@ -482,7 +482,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
 
   @NotNull
   private ExecutionNode addAsPresentableEventNode(@NotNull PresentableBuildEvent event,
-                                                  @NotNull Set<ExecutionNode> structureChanged,
+                                                  @NotNull Set<? super ExecutionNode> structureChanged,
                                                   @Nullable ExecutionNode parentNode,
                                                   @NotNull Object eventId,
                                                   @NotNull ExecutionNode buildProgressRootNode) {
@@ -922,7 +922,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     private final AtomicReference<String> myNodeConsoleViewName = new AtomicReference<>();
     private final Map<String, List<Consumer<? super BuildTextConsoleView>>> deferredNodeOutput = new ConcurrentHashMap<>();
     private @Nullable ExecutionNode myExecutionNode;
-    private @NotNull final List<Filter> myExecutionConsoleFilters;
+    private final @NotNull List<? extends Filter> myExecutionConsoleFilters;
     private final BuildProgressStripe myPanelWithProgress;
     private final DefaultActionGroup myConsoleToolbarActionGroup;
     private final ActionToolbar myToolbar;
@@ -932,7 +932,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
                        @NotNull ExecutionNode buildProgressRootNode,
                        @NotNull Disposable parentDisposable,
                        @Nullable ExecutionConsole executionConsole,
-                       @NotNull List<Filter> executionConsoleFilters) {
+                       @NotNull List<? extends Filter> executionConsoleFilters) {
       myProject = project;
       myPanel = new NonOpaquePanel(new BorderLayout());
       myPanelWithProgress = new BuildProgressStripe(myPanel, parentDisposable, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);

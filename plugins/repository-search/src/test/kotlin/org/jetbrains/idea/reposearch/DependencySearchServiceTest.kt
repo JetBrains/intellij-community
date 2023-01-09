@@ -7,6 +7,7 @@ import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.WaitFor
 import junit.framework.TestCase
 import org.jetbrains.concurrency.isPending
+import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 
 class DependencySearchServiceTest : LightPlatformTestCase() {
@@ -16,8 +17,6 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     super.setUp()
     dependencySearchService = DependencySearchService(project)
     Disposer.register(testRootDisposable, dependencySearchService)
-
-
   }
 
 
@@ -29,13 +28,12 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     val testProvider = object : TestSearchProvider() {
       override fun isLocal() = false
 
-      override fun fulltextSearch(searchString: String, consumer: Consumer<RepositoryArtifactData>) {
+      override fun fulltextSearch(searchString: String): CompletableFuture<List<RepositoryArtifactData>> = CompletableFuture.supplyAsync {
         requests++
-        consumer.accept(RepositoryArtifactData { searchString })
+        listOf(RepositoryArtifactData { searchString })
       }
     }
-    ExtensionTestUtil.maskExtensions(DependencySearchService.EP_NAME, listOf(
-      DependencySearchProvidersFactory { listOf(testProvider) }), testRootDisposable, false);
+    ExtensionTestUtil.maskExtensions(DependencySearchService.EP_NAME, listOf(DependencySearchProvidersFactory { listOf(testProvider) }), testRootDisposable, false)
     val searchParameters = SearchParameters(true, false)
 
     val promise = dependencySearchService.fulltextSearch("something", searchParameters) {}
@@ -56,15 +54,16 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
 
 
   open class TestSearchProvider : DependencySearchProvider {
-    override fun suggestPrefix(groupId: String?, artifactId: String?, consumer: Consumer<RepositoryArtifactData>) {
+
+    override fun fulltextSearch(searchString: String): CompletableFuture<List<RepositoryArtifactData>> {
+      TODO("Not yet implemented")
+    }
+
+    override fun suggestPrefix(groupId: String?, artifactId: String?): CompletableFuture<List<RepositoryArtifactData>> {
       TODO("Not yet implemented")
     }
 
     override fun isLocal(): Boolean {
-      TODO("Not yet implemented")
-    }
-
-    override fun fulltextSearch(searchString: String, consumer: Consumer<RepositoryArtifactData>) {
       TODO("Not yet implemented")
     }
 

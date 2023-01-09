@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.diagnostic.IdeHeartbeatEventReporter;
+import com.intellij.diagnostic.UILatencyLogger;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeEventQueue;
@@ -25,6 +25,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -152,17 +153,19 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     @Override
     public void addNotify() {
       super.addNotify();
-      long time = System.currentTimeMillis() - IdeEventQueue.getInstance().getPopupTriggerTime();
+      long startedTime = IdeEventQueue.getInstance().getPopupTriggerTime();
+      long time = (startedTime > 0) ? System.currentTimeMillis() - startedTime : -1;
       PsiFile psiFile = (PsiFile)Utils.getRawDataIfCached(myContext, CommonDataKeys.PSI_FILE.getName());
       Language language = psiFile == null ? null : psiFile.getLanguage();
       boolean coldStart = SEEN_ACTION_GROUPS.add(Objects.hash(myGroup, language));
-      IdeHeartbeatEventReporter.UILatencyLogger.POPUP_LATENCY.log(EventFields.DurationMs.with(time),
-                                                                  EventFields.ActionPlace.with(myPlace),
-                                                                  IdeHeartbeatEventReporter.UILatencyLogger.COLD_START.with(coldStart),
-                                                                  EventFields.Language.with(language));
+      UILatencyLogger.POPUP_LATENCY.log(EventFields.DurationMs.with(time),
+                                        EventFields.ActionPlace.with(myPlace),
+                                        UILatencyLogger.COLD_START.with(coldStart),
+                                        EventFields.Language.with(language));
       if (Registry.is("ide.diagnostics.show.context.menu.invocation.time")) {
         //noinspection HardCodedStringLiteral
-        new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Context menu invocation took " + time + "ms", NotificationType.INFORMATION).notify(null);
+        new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Context menu invocation took " + time + "ms",
+                         NotificationType.INFORMATION).notify(null);
       }
     }
 
@@ -200,6 +203,9 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       @Override
       public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
         HelpTooltip.enableTooltip(targetComponent);
+        if (targetComponent instanceof Tree tree) {
+          tree.unblockAutoScrollFromSource();
+        }
         disposeMenu();
       }
 

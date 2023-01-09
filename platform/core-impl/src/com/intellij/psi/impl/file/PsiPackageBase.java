@@ -65,7 +65,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   }
 
   @Override
-  public RowIcon getElementIcon(final int elementFlags) {
+  public RowIcon getElementIcon(int elementFlags) {
     return IconManager.getInstance().createLayeredIcon(this, IconManager.getInstance().getPlatformIcon(PlatformIcons.Package), elementFlags);
   }
 

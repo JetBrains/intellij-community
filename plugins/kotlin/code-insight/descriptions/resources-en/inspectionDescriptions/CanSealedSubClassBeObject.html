@@ -9,7 +9,7 @@ Reports direct inheritors of <code>sealed</code> classes that have no state and 
       class User(val id: Int) : Receiver()
   }
 </code></pre>
-<p>A quick-fix converts a <code>class</code> into an <code>object</code>:</p>
+<p>The quick-fix converts a <code>class</code> into an <code>object</code>:</p>
 <pre><code>
   sealed class Receiver {
       object Everyone : Receiver()

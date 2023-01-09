@@ -5,7 +5,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -16,6 +15,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -43,11 +45,14 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
   override val notNullRoots: List<VirtualFileUrl>
     get() = dataSource.notNullRoots
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: VFUEntity2Data?) : ModifiableWorkspaceEntityBase<VFUEntity2>(), VFUEntity2.Builder {
+  class Builder(result: VFUEntity2Data?) : ModifiableWorkspaceEntityBase<VFUEntity2, VFUEntity2Data>(result), VFUEntity2.Builder {
     constructor() : this(VFUEntity2Data())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -67,11 +72,11 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       index(this, "filePath", this.filePath)
       index(this, "directoryPath", this.directoryPath)
-      index(this, "notNullRoots", this.notNullRoots.toHashSet())
+      index(this, "notNullRoots", this.notNullRoots)
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
@@ -112,8 +117,7 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       if (this.filePath != dataSource?.filePath) this.filePath = dataSource.filePath
       if (this.directoryPath != dataSource.directoryPath) this.directoryPath = dataSource.directoryPath
       if (this.notNullRoots != dataSource.notNullRoots) this.notNullRoots = dataSource.notNullRoots.toMutableList()
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -121,7 +125,7 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -130,7 +134,7 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
@@ -138,7 +142,7 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       get() = getEntityData().filePath
       set(value) {
         checkModificationAllowed()
-        getEntityData().filePath = value
+        getEntityData(true).filePath = value
         changedProperty.add("filePath")
         val _diff = diff
         if (_diff != null) index(this, "filePath", value)
@@ -148,7 +152,7 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       get() = getEntityData().directoryPath
       set(value) {
         checkModificationAllowed()
-        getEntityData().directoryPath = value
+        getEntityData(true).directoryPath = value
         changedProperty.add("directoryPath")
         val _diff = diff
         if (_diff != null) index(this, "directoryPath", value)
@@ -156,7 +160,7 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
 
     private val notNullRootsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
-      if (_diff != null) index(this, "notNullRoots", value.toHashSet())
+      if (_diff != null) index(this, "notNullRoots", value)
       changedProperty.add("notNullRoots")
     }
     override var notNullRoots: MutableList<VirtualFileUrl>
@@ -173,11 +177,10 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().notNullRoots = value
+        getEntityData(true).notNullRoots = value
         notNullRootsUpdater.invoke(value)
       }
 
-    override fun getEntityData(): VFUEntity2Data = result ?: super.getEntityData() as VFUEntity2Data
     override fun getEntityClass(): Class<VFUEntity2> = VFUEntity2::class.java
   }
 }
@@ -192,22 +195,17 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
   fun isDirectoryPathInitialized(): Boolean = ::directoryPath.isInitialized
   fun isNotNullRootsInitialized(): Boolean = ::notNullRoots.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<VFUEntity2> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<VFUEntity2> {
     val modifiable = VFUEntity2Impl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): VFUEntity2 {
     return getCached(snapshot) {
       val entity = VFUEntity2Impl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

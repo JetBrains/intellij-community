@@ -212,10 +212,9 @@ public class BuildTargetSourcesState implements BuildListener {
             }
             else {
               File file = path.toFile();
-              getOutputFileHash(file, rootFile).ifPresent(hash -> {
-                targetRootHashes.add(hash);
-                myCalculatedHashes.put(filePathString, hash);
-              });
+              byte[] hash = getOutputFileHash(file, rootFile);
+              targetRootHashes.add(hash);
+              myCalculatedHashes.put(filePathString, hash);
             }
           }
           return FileVisitResult.CONTINUE;
@@ -282,15 +281,10 @@ public class BuildTargetSourcesState implements BuildListener {
     return Optional.of(sum(stringHash, fileHash));
   }
 
-  @NotNull
-  private static Optional<byte[]> getOutputFileHash(@NotNull File file, @NotNull File rootPath) throws IOException {
+  private static byte @NotNull [] getOutputFileHash(@NotNull File file, @NotNull File rootPath) throws IOException {
     byte[] fileHash = MurmurHashingService.getFileHash(file);
-    if (fileHash == null) {
-      return Optional.empty();
-    }
-
     byte[] stringHash = getStringHash(toRelative(file, rootPath));
-    return Optional.of(sum(stringHash, fileHash));
+    return sum(stringHash, fileHash);
   }
 
   @NotNull

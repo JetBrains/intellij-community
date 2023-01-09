@@ -1,0 +1,81 @@
+<idea-plugin package="com.jetbrains.performancePlugin">
+  <id>com.jetbrains.performancePlugin</id>
+  <name>Performance Testing</name>
+  <vendor>JetBrains</vendor>
+  <category>Other Tools</category>
+  <resource-bundle>messages.PerformanceTestingBundle</resource-bundle>
+
+  <description><![CDATA[
+      Plugin for automated execution of test scripts, capturing performance snapshots
+      and gathering performance statistics.
+      ]]></description>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
+
+  <actions>
+    <group id="StartProfileGroup">
+      <add-to-group group-id="HelpDiagnosticTools" anchor="last"/>
+    </group>
+    <group id="IndexingDiagnosticGroup">
+      <action class="com.jetbrains.performancePlugin.actions.OpenIndexingDiagnosticsAction" id="performancePlugin.OpenIndexingDiagnosticsAction"/>
+      <add-to-group group-id="HelpDiagnosticTools" anchor="after" relative-to-action="CollectTroubleshootingInformation"/>
+    </group>
+    <group id="DiagnosticGroup">
+      <separator/>
+      <action class="com.jetbrains.performancePlugin.actions.ExecuteScriptAction" id="performancePlugin.ExecuteScriptAction"/>
+      <separator/>
+      <add-to-group group-id="HelpDiagnosticTools" anchor="last"/>
+    </group>
+  </actions>
+
+  <extensionPoints>
+    <extensionPoint interface="com.jetbrains.performancePlugin.CommandProvider" name="commandProvider" dynamic="true"/>
+    <extensionPoint interface="com.jetbrains.performancePlugin.RunCallbackHandler" name="runCallbackHandler"/>
+    <extensionPoint interface="com.jetbrains.performancePlugin.profilers.SnapshotOpener" name="snapshotOpener" dynamic="true"/>
+    <extensionPoint interface="com.jetbrains.performancePlugin.profilers.Profiler" name="profiler" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <troubleInfoCollector implementation="com.jetbrains.performancePlugin.PerformanceTroubleInfoCollector"/>
+    <troubleInfoCollector implementation="com.jetbrains.performancePlugin.utils.HardwareCollector"/>
+
+    <fileType name="IntegrationPerformanceTest"
+              implementationClass="com.jetbrains.performancePlugin.lang.IJPerfFileType"
+              fieldName="INSTANCE" language="IntegrationPerformanceTest" extensions="ijperf"/>
+
+    <lang.parserDefinition language="IntegrationPerformanceTest"
+                           implementationClass="com.jetbrains.performancePlugin.lang.IJPerfParserDefinition"/>
+
+    <lang.syntaxHighlighterFactory language="IntegrationPerformanceTest"
+                                   implementationClass="com.jetbrains.performancePlugin.lang.IJPerfSyntaxHighlighterFactory"/>
+
+    <completion.contributor language="IntegrationPerformanceTest"
+                            implementationClass="com.jetbrains.performancePlugin.lang.completion.IJPerfCompletionContributor"/>
+
+    <annotator language="IntegrationPerformanceTest" implementationClass="com.jetbrains.performancePlugin.lang.inspections.IJPerfStartStopProfileInspection"/>
+
+    <documentationProvider implementation="com.jetbrains.performancePlugin.lang.doc.IJPerfDocumentationProvider"/>
+
+    <startupActivity implementation="com.jetbrains.performancePlugin.ProjectLoaded"/>
+    <postStartupActivity implementation="com.jetbrains.performancePlugin.PerformanceTestTotalTimeTimer" />
+    <applicationInitializedListener implementation="com.jetbrains.performancePlugin.ProjectLoaded"/>
+
+    <notificationGroup id="PerformancePlugin" displayType="BALLOON" bundle="messages.PerformanceTestingBundle" key="notification.group.performance.plugin"/>
+    <registryKey key="performance.plugin.playback.runner.useDirectActionCall" description="Setup PlaybackRunner to use direct action calls over key strokes for actions in Playback framework" defaultValue="false" restartRequired="false"/>
+  </extensions>
+
+  <applicationListeners>
+    <listener class="com.jetbrains.performancePlugin.ProjectLoaded$MyAppLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
+  <projectListeners>
+    <listener class="com.jetbrains.performancePlugin.ProjectIndexingComponent"
+              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
+  </projectListeners>
+
+  <extensions defaultExtensionNs="com.jetbrains.performancePlugin">
+    <commandProvider implementation="com.jetbrains.performancePlugin.BaseCommandProvider"/>
+    <runCallbackHandler implementation="com.jetbrains.performancePlugin.BaseRunCallbackHandler"/>
+  </extensions>
+</idea-plugin>

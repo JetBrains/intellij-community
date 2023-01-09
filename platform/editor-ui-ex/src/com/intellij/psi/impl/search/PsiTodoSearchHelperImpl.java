@@ -60,11 +60,13 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
     return processTodoOccurences(startOffset, endOffset, occurrences);
   }
 
-  private static TodoItem @NotNull [] processTodoOccurences(int startOffset, int endOffset, Collection<? extends IndexPatternOccurrence> occurrences) {
+  private static TodoItem @NotNull [] processTodoOccurences(int startOffset,
+                                                            int endOffset,
+                                                            Collection<? extends IndexPatternOccurrence> occurrences) {
     List<TodoItem> items = new ArrayList<>(occurrences.size());
     TextRange textRange = new TextRange(startOffset, endOffset);
     final TodoItemsCreator todoItemsCreator = new TodoItemsCreator();
-    for (IndexPatternOccurrence occurrence: occurrences) {
+    for (IndexPatternOccurrence occurrence : occurrences) {
       TextRange occurrenceRange = occurrence.getTextRange();
       if (textRange.intersectsStrict(occurrenceRange) ||
           occurrence.getAdditionalTextRanges().stream().anyMatch(r -> textRange.intersectsStrict(r))) {
@@ -123,7 +125,7 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
   /**
    * Returns if td items should be highlighted in editor
    *
-   * @param file    the file to return the to do count for.
+   * @param file the file to return the to do count for.
    * @return if td items should be highlighted in editor. True by default
    */
   public boolean shouldHighlightInEditor(@NotNull PsiFile file) {

@@ -5,7 +5,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -221,7 +220,8 @@ public class PluginManagerTest {
     assumeSymLinkCreationIsSupported();
 
     Path configPath = tempDir.getRoot().toPath().resolve("config-link");
-    IoTestUtil.createSymbolicLink(configPath, tempDir.newDirectory("config-target").toPath());
+    @NotNull Path target = tempDir.newDirectory("config-target").toPath();
+    Files.createSymbolicLink(configPath, target);
     DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate(configPath, "a");
     assertThat(configPath.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)).hasContent("a" + System.lineSeparator());
   }

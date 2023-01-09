@@ -12,8 +12,10 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetin
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.util.match
 
 internal class AddBracesToAllBranchesIntention : SelfTargetingIntention<KtExpression>(
     KtExpression::class.java,
@@ -70,22 +72,16 @@ internal class AddBracesToAllBranchesIntention : SelfTargetingIntention<KtExpres
     }
 
     companion object {
-        fun targetIfOrWhenExpression(element: KtExpression): KtExpression? {
-            return when (element) {
-                is KtIfExpression -> {
-                    var target = element
-                    while (true) {
-                        val container = target.parent as? KtContainerNodeForControlStructureBody ?: break
-                        val parent = container.parent as? KtIfExpression ?: break
-                        if (parent.`else` != target) break
-                        target = parent
-                    }
-                    target
-                }
-                is KtWhenExpression -> element
-                is KtBlockExpression -> (element.parent.parent as? KtExpression)?.let { targetIfOrWhenExpression(it) }
-                else -> null
-            }
+        fun targetIfOrWhenExpression(element: KtExpression): KtExpression? = when (element) {
+            is KtIfExpression -> generateSequence(element) { target ->
+                target.parents.match(KtContainerNodeForControlStructureBody::class, last = KtIfExpression::class)
+                    ?.takeIf { it.`else` == target }
+            }.last()
+            is KtWhenExpression -> element
+            is KtBlockExpression -> element.parent.let { it as? KtContainerNodeForControlStructureBody ?: it as? KtWhenEntry }
+                ?.let { it.parent as? KtExpression }
+                ?.let(::targetIfOrWhenExpression)
+            else -> null
         }
 
         fun KtExpression.allBranchExpressions(): List<KtExpression> = when (this) {

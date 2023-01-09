@@ -255,7 +255,7 @@ public final class CheckRegExpForm {
         mySampleText.selectAll();
       }
 
-      private void registerFocusShortcut(JComponent source, String shortcut, EditorTextField target) {
+      private static void registerFocusShortcut(JComponent source, String shortcut, EditorTextField target) {
         final AnAction action = new AnAction() {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
@@ -406,7 +406,7 @@ public final class CheckRegExpForm {
     });
   }
 
-  void reportResult(RegExpMatchResult result, @NotNull PsiFile regExpFile) {
+  private void reportResult(RegExpMatchResult result, @NotNull PsiFile regExpFile) {
     switch (result) {
       case NO_MATCH -> {
         setIconAndTooltip(mySampleIcon, AllIcons.General.BalloonError, RegExpBundle.message("tooltip.no.match"));
@@ -483,16 +483,13 @@ public final class CheckRegExpForm {
     return isMatchingText(regExpFile, regExpFile.getText(), sampleText);
   }
 
-  static RegExpMatchResult isMatchingText(@NotNull final PsiFile regExpFile, String regExpText, @NotNull String sampleText) {
+  private static RegExpMatchResult isMatchingText(@NotNull final PsiFile regExpFile, String regExpText, @NotNull String sampleText) {
     final Language regExpFileLanguage = regExpFile.getLanguage();
     final RegExpMatcherProvider matcherProvider = RegExpMatcherProvider.EP.forLanguage(regExpFileLanguage);
     if (matcherProvider != null) {
       final RegExpMatchResult result = ReadAction.compute(() -> {
         final PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(regExpFile.getProject()).getInjectionHost(regExpFile);
-        if (host != null) {
-          return matcherProvider.matches(regExpText, regExpFile, host, sampleText, 1000L);
-        }
-        return null;
+        return host != null ? matcherProvider.matches(regExpText, regExpFile, host, sampleText, 1000L) : null;
       });
       if (result != null) {
         return result;

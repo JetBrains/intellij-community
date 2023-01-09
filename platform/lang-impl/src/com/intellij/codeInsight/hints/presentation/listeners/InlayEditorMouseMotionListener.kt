@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hints.presentation.InputHandler
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
-import com.intellij.util.SlowOperations
 import java.awt.Point
 
 class InlayEditorMouseMotionListener : EditorMouseMotionListener {
@@ -34,17 +33,10 @@ class InlayEditorMouseMotionListener : EditorMouseMotionListener {
     val bounds = inlay.bounds ?: return
     val inlayPoint = Point(bounds.x, bounds.y)
     val translated = Point(event.x - inlayPoint.x, event.y - inlayPoint.y)
-    SlowOperations.allowSlowOperations<Exception> {
-      container.mouseMoved(event, translated)
-    }
+    container.mouseMoved(event, translated)
   }
 
   private fun exitMouseInActiveContainer() {
-    val container = activeContainer
-    if (container != null) {
-      SlowOperations.allowSlowOperations<Exception> {
-        container.mouseExited()
-      }
-    }
+    activeContainer?.mouseExited()
   }
 }

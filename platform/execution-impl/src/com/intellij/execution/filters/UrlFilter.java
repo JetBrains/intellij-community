@@ -8,15 +8,19 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -87,10 +91,27 @@ public class UrlFilter implements Filter, DumbAware {
           }
         }
       }
-      String filePath = url.substring(LocalFileSystem.PROTOCOL_PREFIX.length(), filePathEndIndex);
+      String filePath = toWindowsPath(decode(url.substring(LocalFileSystem.PROTOCOL_PREFIX.length(), filePathEndIndex)));
       return new FileUrlHyperlinkInfo(myProject, filePath, documentLine, documentColumn, url, true);
     }
     return null;
+  }
+
+  private static @NotNull String toWindowsPath(@NotNull String path) {
+    if (path.length() >= 4 && path.charAt(0) == '/' && OSAgnosticPathUtil.isDriveLetter(path.charAt(1)) &&
+        path.charAt(2) == ':' && PathUtilRt.isSeparator(path.charAt(3))) {
+      return path.substring(1);
+    }
+    return path;
+  }
+
+  private static @NotNull String decode(@NotNull String encodedStr) {
+    try {
+      return URLDecoder.decode(encodedStr, StandardCharsets.UTF_8);
+    }
+    catch (IllegalArgumentException e) {
+      return encodedStr;
+    }
   }
 
   public static class UrlFilterProvider implements ConsoleFilterProviderEx {
@@ -107,6 +128,9 @@ public class UrlFilter implements Filter, DumbAware {
 
   public static class FileUrlHyperlinkInfo extends LazyFileHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
     private @NotNull final String myUrl;
+    final String myFilePath;
+    final int myDocumentLine;
+    final int myDocumentColumn;
 
     public FileUrlHyperlinkInfo(@NotNull Project project,
                                 @NotNull String filePath,
@@ -116,6 +140,9 @@ public class UrlFilter implements Filter, DumbAware {
                                 boolean useBrowser) {
       super(project, filePath, documentLine, documentColumn, useBrowser);
       myUrl = url;
+      myFilePath = filePath;
+      myDocumentLine = documentLine;
+      myDocumentColumn = documentColumn;
     }
 
     @Override

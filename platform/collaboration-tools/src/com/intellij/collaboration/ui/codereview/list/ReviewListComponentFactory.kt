@@ -2,7 +2,6 @@
 package com.intellij.collaboration.ui.codereview.list
 
 import com.intellij.collaboration.ui.util.JListHoveredRowMaterialiser
-import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.components.JBList
 import com.intellij.util.ui.ListUiUtil
@@ -23,7 +22,7 @@ class ReviewListComponentFactory<T>(private val listModel: ListModel<T>) {
       ScrollingUtil.installActions(it)
       ListUiUtil.Selection.installSelectionOnFocus(it)
       ListUiUtil.Selection.installSelectionOnRightClick(it)
-      ClientProperty.put(it, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(listCellRenderer))
+      UIUtil.addNotInHierarchyComponents(it, listOf(listCellRenderer))
 
       JListHoveredRowMaterialiser.install(it, ReviewListCellRenderer(itemPresenter))
     }

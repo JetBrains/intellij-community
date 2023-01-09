@@ -3,10 +3,7 @@ package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.JBPopupMenu;
@@ -38,7 +35,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 
-public class TabLabel extends JPanel implements Accessible {
+public class TabLabel extends JPanel implements Accessible, DataProvider {
   private static final Logger LOG = Logger.getInstance(TabLabel.class);
 
   // If this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)
@@ -347,9 +344,11 @@ public class TabLabel extends JPanel implements Accessible {
     if (myInfo.isPinned() && AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
       @NotNull List<TabInfo> tabs = myTabs.getTabs();
       for (int i = 0; i < tabs.size(); i++) {
-        TabInfo info = tabs.get(i);
-        if (info == myInfo && i < tabs.size() - 1) {
-          return !tabs.get(i + 1).isPinned();
+        TabInfo cur = tabs.get(i);
+        if (cur == myInfo && i < tabs.size() - 1) {
+          TabInfo next = tabs.get(i + 1);
+          return !next.isPinned()
+                 && myTabs.getTabLabel(next).getY() == this.getY(); // check that cur and next are in the same row
         }
       }
     }
@@ -681,6 +680,14 @@ public class TabLabel extends JPanel implements Accessible {
       }
     }
     return super.getToolTipText(event);
+  }
+
+  @Override
+  public @Nullable Object getData(@NotNull String dataId) {
+    if (myInfo.getComponent() instanceof DataProvider provider) {
+      return provider.getData(dataId);
+    }
+    return null;
   }
 
   @Override

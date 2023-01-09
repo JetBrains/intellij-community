@@ -10,10 +10,7 @@ import com.intellij.diagnostic.*
 import com.intellij.diagnostic.telemetry.TraceManager
 import com.intellij.ide.*
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
-import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.EndUserAgreement
-import com.intellij.ide.gdpr.showDataSharingAgreement
-import com.intellij.ide.gdpr.showEndUserAndDataSharingAgreements
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
@@ -34,7 +31,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.io.win32.IdeaWin32
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.AppUIUtil
@@ -44,10 +40,7 @@ import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.mac.MacOSApplicationProvider
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.EnvironmentUtil
-import com.intellij.util.Java11Shim
-import com.intellij.util.PlatformUtils
-import com.intellij.util.ReflectionUtil
+import com.intellij.util.*
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.EDT
@@ -93,17 +86,16 @@ internal var EXTERNAL_LISTENER: BiFunction<String, Array<String>, Int> = BiFunct
 
 private const val IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app"
 
-// see `ApplicationImpl#USE_SEPARATE_WRITE_THREAD`
-private const val USE_SEPARATE_WRITE_THREAD_PROPERTY = "idea.use.separate.write.thread"
+private const val DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY = "idea.disable.implicit.read.on.edt"
 private const val MAGIC_MAC_PATH = "/AppTranslocation/"
 
 private var socketLock: SocketLock? = null
 
-// checked - using Deferred type doesn't lead to loading this class on StartupUtil init
+// checked - using a Deferred type doesn't lead to loading this class on StartupUtil init
 internal var shellEnvDeferred: Deferred<Boolean?>? = null
   private set
 
-// mainDispatcher is a sequential - use it with care
+// mainDispatcher is sequential - use it with care
 fun CoroutineScope.startApplication(args: List<String>,
                                     appStarterDeferred: Deferred<AppStarter>,
                                     mainScope: CoroutineScope,
@@ -112,7 +104,6 @@ fun CoroutineScope.startApplication(args: List<String>,
     // required for DisabledPluginsState and EUA
     ApplicationInfoImpl.getShadowInstance()
   }
-  val euaDocumentDeferred = loadEuaDocument(appInfoDeferred)
   val pathDeferred = async(CoroutineName("config path computing") + Dispatchers.IO) {
     Pair(canonicalPath(PathManager.getConfigPath()), canonicalPath(PathManager.getSystemPath()))
   }
@@ -180,14 +171,16 @@ fun CoroutineScope.startApplication(args: List<String>,
   // log initialization must happen only after locking the system directory
   val logDeferred = setupLogger(consoleLoggerJob, checkSystemDirJob)
 
-  val showEuaIfNeededJob = showEuaIfNeeded(euaDocumentDeferred, initLafJob)
-
-  shellEnvDeferred = async(CoroutineName("environment loading") + Dispatchers.IO) {
-    EnvironmentUtil.loadEnvironment()
+  shellEnvDeferred = async(Dispatchers.IO) {
+    // EnvironmentUtil wants logger
+    logDeferred.join()
+    runActivity("environment loading") {
+      EnvironmentUtil.loadEnvironment(coroutineContext.job)
+    }
   }
 
   if (!isHeadless) {
-    showSplashIfNeeded(initLafJob, showEuaIfNeededJob, appInfoDeferred, args)
+    showSplashIfNeeded(initLafJob, appInfoDeferred, args)
 
     // must happen after initUi
     updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
@@ -260,8 +253,10 @@ fun CoroutineScope.startApplication(args: List<String>,
       }
     }
 
-    app to initLafJob
+    app
   }
+
+  val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
 
   mainScope.launch {
     // required for appStarter.prepareStart
@@ -272,27 +267,38 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
     appStarter.prepareStart(args)
 
-    // before config importing and license check
-    showEuaIfNeededJob.join()
-
     if (!isHeadless && configImportNeededDeferred.await()) {
       initLafJob.join()
-      val imported = importConfig(
+      importConfig(
         args = args,
         log = logDeferred.await(),
         appStarter = appStarterDeferred.await(),
-        agreementShown = showEuaIfNeededJob,
+        euaDocumentDeferred = euaDocumentDeferred,
       )
-      if (imported) {
+      if (!PlatformUtils.isRider()) {
         PluginManagerCore.scheduleDescriptorLoading(mainScope, zipFilePoolDeferred)
       }
     }
+    else {
+      // must be scheduled before starting app
+      schedulePluginDescriptorLoading.join()
+    }
 
-    // must be scheduled before starting app
-    schedulePluginDescriptorLoading.join()
+    val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
+      null
+    }
+    else {
+      async(CoroutineName("eua document") + Dispatchers.Default) {
+        prepareShowEuaIfNeededTask(euaDocumentDeferred.await(), asyncScope = this@startApplication)
+      }
+    }
 
-    // with main dispatcher (appStarter uses runBlocking - block main thread and not some coroutine thread)
-    appStarter.start(args, appDeferred)
+    // with the main dispatcher for non-technical reasons
+    appStarter.start(InitAppContext(context = coroutineContext,
+                                    args = args,
+                                    appDeferred = appDeferred,
+                                    initLafJob = initLafJob,
+                                    euaTaskDeferred = euaTaskDeferred))
   }
 }
 
@@ -314,9 +320,6 @@ private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: De
     withContext(Dispatchers.IO) {
       runActivity("system libs loading") {
         JnaLoader.load(log)
-        if (SystemInfoRt.isWindows) {
-          IdeaWin32.isAvailable()
-        }
       }
     }
 
@@ -336,7 +339,6 @@ private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: De
 }
 
 private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job,
-                                              showEuaIfNeededJob: Deferred<Boolean>,
                                               appInfoDeferred: Deferred<ApplicationInfoEx>,
                                               args: List<String>) {
   if (AppMode.isLightEdit()) {
@@ -351,7 +353,6 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job,
 
     // before showEuaIfNeededJob to prepare during showing EUA dialog
     val runnable = prepareSplash(appInfoDeferred, args) ?: return@launch
-    showEuaIfNeededJob.join()
     withContext(RawSwingDispatcher) {
       runnable.run()
     }
@@ -359,20 +360,8 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job,
 }
 
 private suspend fun prepareSplash(appInfoDeferred: Deferred<ApplicationInfoEx>, args: List<String>): Runnable? {
-  var showSplash = false
-  for (arg in args) {
-    if (CommandLineArgs.SPLASH == arg) {
-      showSplash = true
-      break
-    }
-    else if (CommandLineArgs.NO_SPLASH == arg) {
-      return null
-    }
-  }
-
   // products may specify `splash` VM property; `nosplash` is deprecated and should be checked first
-  if (!showSplash &&
-      (java.lang.Boolean.getBoolean(CommandLineArgs.NO_SPLASH) || !java.lang.Boolean.getBoolean(CommandLineArgs.SPLASH))) {
+  if (!CommandLineArgs.isSplashNeeded(args)) {
     return null
   }
 
@@ -388,8 +377,8 @@ fun processWindowsLauncherCommandLine(currentDirectory: String, args: Array<Stri
   return EXTERNAL_LISTENER.apply(currentDirectory, args)
 }
 
-internal val isUsingSeparateWriteThread: Boolean
-  get() = java.lang.Boolean.getBoolean(USE_SEPARATE_WRITE_THREAD_PROPERTY)
+internal val isImplicitReadOnEDTDisabled: Boolean
+  get() = java.lang.Boolean.getBoolean(DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY)
 
 // called by the app after startup
 @Synchronized
@@ -404,26 +393,6 @@ fun getServer(): BuiltInServer? = socketLock?.getServer()
 
 @Synchronized
 fun getServerFutureAsync(): Deferred<BuiltInServer?> = socketLock?.serverFuture ?: CompletableDeferred(value = null)
-
-// On startup 2 dialogs must be shown:
-// - gdpr agreement
-// - eu(l)a
-private fun CoroutineScope.loadEuaDocument(appInfoDeferred: Deferred<ApplicationInfoEx>): Deferred<Any?>? {
-  if (AppMode.isHeadless()) {
-    return null
-  }
-
-  return async(CoroutineName("eua document") + Dispatchers.IO) {
-    val vendorAsProperty = System.getProperty("idea.vendor.name", "")
-    if (if (vendorAsProperty.isEmpty()) !appInfoDeferred.await().isVendorJetBrains else vendorAsProperty != "JetBrains") {
-      null
-    }
-    else {
-      val document = runActivity("eua getting") { EndUserAgreement.getLatestDocument() }
-      if (runActivity("eua is accepted checking") { document.isAccepted }) null else document
-    }
-  }
-}
 
 private fun runPreAppClass(log: Logger, args: List<String>) {
   val classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY) ?: return
@@ -440,10 +409,9 @@ private fun runPreAppClass(log: Logger, args: List<String>) {
   }
 }
 
-private suspend fun importConfig(args: List<String>,
-                                 log: Logger,
+private suspend fun importConfig(args: List<String>, log: Logger,
                                  appStarter: AppStarter,
-                                 agreementShown: Deferred<Boolean>): Boolean {
+                                 euaDocumentDeferred: Deferred<EndUserAgreement.Document?>) {
   var activity = StartUpMeasurer.startActivity("screen reader checking")
   try {
     withContext(RawSwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
@@ -455,16 +423,17 @@ private suspend fun importConfig(args: List<String>,
   activity = activity.endAndStart("config importing")
   appStarter.beforeImportConfigs()
   val newConfigDir = PathManager.getConfigDir()
-  val veryFirstStartOnThisComputer = agreementShown.await()
+
   withContext(RawSwingDispatcher) {
-    if (UIManager.getLookAndFeel() !is IntelliJLaf) {
-      UIManager.setLookAndFeel(IntelliJLaf())
-    }
+    UIManager.setLookAndFeel(IntelliJLaf())
+  }
+
+  val veryFirstStartOnThisComputer = euaDocumentDeferred.await() != null
+  withContext(RawSwingDispatcher) {
     ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, newConfigDir, args, log)
   }
   appStarter.importFinished(newConfigDir)
   activity.end()
-  return !PlatformUtils.isRider() || ConfigImportHelper.isConfigImported()
 }
 
 // return type (LookAndFeel) is not specified to avoid class loading
@@ -478,6 +447,8 @@ private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Th
 
       @Suppress("SpellCheckingInspection")
       System.setProperty("sun.awt.noerasebackground", "true")
+      // mute system Cmd+`/Cmd+Shift+` shortcuts on macOS to avoid a conflict with corresponding platform actions (JBR-specific option)
+      System.setProperty("apple.awt.captureNextAppWinKey", "true")
 
       runActivity("awt toolkit creating") {
         Toolkit.getDefaultToolkit()
@@ -562,7 +533,7 @@ private fun CoroutineScope.initUi(initAwtToolkitAndEventQueueJob: Job, preloadLa
     }
   }
 
-  if (isUsingSeparateWriteThread) {
+  if (isImplicitReadOnEDTDisabled) {
     runActivity("Write Intent Lock UI class transformer loading") {
       WriteIntentLockInstrumenter.instrument()
     }
@@ -595,53 +566,11 @@ private fun blockATKWrapper() {
 
   val activity = StartUpMeasurer.startActivity("atk wrapper blocking")
   if (ScreenReader.isEnabled(ScreenReader.ATK_WRAPPER)) {
-    // Replacing `AtkWrapper` with a dummy `Object`. It'll be instantiated & garbage collected right away, a NOP.
+    // Replacing `AtkWrapper` with a fake `Object`. It'll be instantiated & garbage collected right away, a NOP.
     System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object")
     Logger.getInstance(StartupUiUtil::class.java).info(ScreenReader.ATK_WRAPPER + " is blocked, see IDEA-149219")
   }
   activity.end()
-}
-
-private fun CoroutineScope.showEuaIfNeeded(euaDocumentDeferred: Deferred<Any?>?, initUiJob: Job): Deferred<Boolean> {
-  val asyncScope = this
-  return async {
-    if (euaDocumentDeferred == null) {
-      return@async true
-    }
-
-    val document = euaDocumentDeferred.await() as EndUserAgreement.Document?
-
-    val updateCached = asyncScope.launch(CoroutineName("eua cache updating") + Dispatchers.IO) {
-      EndUserAgreement.updateCachedContentToLatestBundledVersion()
-    }
-
-    suspend fun prepareAndExecuteInEdt(task: () -> Unit) {
-      updateCached.join()
-      initUiJob.join()
-      withContext(RawSwingDispatcher) {
-        UIManager.setLookAndFeel(IntelliJLaf())
-        task()
-      }
-    }
-
-    runActivity("eua showing") {
-      if (document != null) {
-        prepareAndExecuteInEdt {
-          showEndUserAndDataSharingAgreements(document)
-        }
-        true
-      }
-      else if (ConsentOptions.needToShowUsageStatsConsent()) {
-        prepareAndExecuteInEdt {
-          showDataSharingAgreement()
-        }
-        false
-      }
-      else {
-        false
-      }
-    }
-  }
 }
 
 private fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(initUiDeferred: Job) {
@@ -661,11 +590,12 @@ private fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(in
           val toolkit = Toolkit.getDefaultToolkit()
           val aClass = toolkit.javaClass
           if (aClass.name == "sun.awt.X11.XToolkit") {
-            val field = ReflectionUtil.findAssignableField(aClass, null, "awtAppClassName")
-            field.set(toolkit, AppUIUtil.getFrameClass())
+            MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
+              .findStaticSetter(aClass, "awtAppClassName", String::class.java)
+              .invoke(AppUIUtil.getFrameClass())
           }
         }
-        catch (ignore: Exception) {
+        catch (ignore: Throwable) {
         }
       }
     }
@@ -868,7 +798,7 @@ private fun CoroutineScope.lockSystemDirs(configImportNeededDeferred: Job,
 
               // Temporary hack to debug "Zombie" process issue. See CWM-7058
               // TL;DR ShutDownTracker gets called but application still exists
-              if (AppMode.isIsRemoteDevHost()) {
+              if (AppMode.isRemoteDevHost()) {
                 val stacktrace = Thread.currentThread().stackTrace.joinToString("\n")
                 println("ShutDownTracker stacktrace:\n$stacktrace")
               }
@@ -1019,8 +949,7 @@ fun canonicalPath(path: String): Path {
 interface AppStarter {
   fun prepareStart(args: List<String>) {}
 
-  /* called from IDE init thread */
-  suspend fun start(args: List<String>, appDeferred: Deferred<Any>)
+  suspend fun start(context: InitAppContext)
 
   /* called from IDE init thread */
   fun beforeImportConfigs() {}

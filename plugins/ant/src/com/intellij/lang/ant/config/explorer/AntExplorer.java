@@ -34,6 +34,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -503,36 +504,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   @Override
   @Nullable
   public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      final AntBuildFile buildFile = getCurrentBuildFile();
-      if (buildFile == null) {
-        return null;
-      }
-      final VirtualFile file = buildFile.getVirtualFile();
-      if (file == null) {
-        return null;
-      }
-      final TreePath treePath = myTree.getLeadSelectionPath();
-      if (treePath == null) {
-        return null;
-      }
-      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
-      if (node == null) {
-        return null;
-      }
-      if (node.getUserObject() instanceof AntTargetNodeDescriptor) {
-        final AntTargetNodeDescriptor targetNodeDescriptor = (AntTargetNodeDescriptor)node.getUserObject();
-        final AntBuildTargetBase buildTarget = targetNodeDescriptor.getTarget();
-        final Navigatable descriptor = buildTarget.getOpenFileDescriptor();
-        if (descriptor != null) {
-          if (descriptor.canNavigate()) {
-            return descriptor;
-          }
-        }
-      }
-      if (file.isValid()) {
-        return new OpenFileDescriptor(myProject, file);
-      }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      final TreePath[] paths = myTree.getSelectionPaths();
+      final TreePath leadPath = myTree.getLeadSelectionPath();
+      final AntBuildFile currentBuildFile = getCurrentBuildFile();
+      return (DataProvider)id -> getSlowData(id, paths, leadPath, currentBuildFile);
     }
     else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return HelpID.ANT;
@@ -540,29 +516,52 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
       return myProject != null? myTreeExpander : null;
     }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+    return super.getData(dataId);
+  }
+
+  private Object getSlowData(@NotNull @NonNls String dataId, final TreePath @Nullable [] paths, @Nullable TreePath leadPath, @Nullable AntBuildFile currentBuildFile) {
+    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       final List<VirtualFile> virtualFiles = collectAntFiles(buildFile -> {
         final VirtualFile virtualFile = buildFile.getVirtualFile();
         if (virtualFile != null && virtualFile.isValid()) {
           return virtualFile;
         }
         return null;
-      });
-      return virtualFiles == null ? null : virtualFiles.toArray(VirtualFile.EMPTY_ARRAY);
+      }, paths);
+      return virtualFiles == null? null : virtualFiles.toArray(VirtualFile.EMPTY_ARRAY);
     }
-    else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      final List<PsiElement> elements = collectAntFiles(AntBuildFile::getAntFile);
-      return elements == null ? null : elements.toArray(PsiElement.EMPTY_ARRAY);
+    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      final List<PsiElement> elements = collectAntFiles(AntBuildFile::getAntFile, paths);
+      return elements == null? null : elements.toArray(PsiElement.EMPTY_ARRAY);
     }
-    return super.getData(dataId);
+    else if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+      if (leadPath != null) {
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)leadPath.getLastPathComponent();
+        if (node != null) {
+          if (node.getUserObject() instanceof AntTargetNodeDescriptor) {
+            final AntTargetNodeDescriptor targetNodeDescriptor = (AntTargetNodeDescriptor)node.getUserObject();
+            final Navigatable navigatable = targetNodeDescriptor.getTarget().getOpenFileDescriptor();
+            if (navigatable != null && navigatable.canNavigate()) {
+              return navigatable;
+            }
+          }
+        }
+      }
+      if (currentBuildFile != null && !myProject.isDisposed()) {
+        final VirtualFile file = currentBuildFile.getVirtualFile();
+        if (file != null && file.isValid()) {
+          return new OpenFileDescriptor(myProject, file);
+        }
+      }
+    }
+    return null;
   }
 
-  private <T> List<T> collectAntFiles(final Function<? super AntBuildFile, ? extends T> function) {
-    final TreePath[] paths = myTree.getSelectionPaths();
-    if (paths == null) {
+  private static <T> List<T> collectAntFiles(final Function<? super AntBuildFile, ? extends T> function, final TreePath @Nullable [] paths) {
+    if (paths == null || paths.length == 0) {
       return null;
     }
-    Set<AntBuildFile> antFiles = new LinkedHashSet<>();
+    final Set<AntBuildFile> antFiles = new LinkedHashSet<>();
     for (final TreePath path : paths) {
       for (DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
            node != null;
@@ -650,7 +649,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
   }
 
-  private final class RunAction extends AnAction {
+  private final class RunAction extends AnAction implements DumbAware {
     RunAction() {
       super(AntBundle.messagePointer("run.ant.file.or.target.action.name"),
             AntBundle.messagePointer("run.ant.file.or.target.action.description"), AllIcons.Actions.Execute);
@@ -746,7 +745,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
   }
 
-  private final class ShowAllTargetsAction extends ToggleAction {
+  private final class ShowAllTargetsAction extends ToggleAction implements DumbAware {
     ShowAllTargetsAction() {
       super(AntBundle.messagePointer("filter.ant.targets.action.name"), AntBundle.messagePointer("filter.ant.targets.action.description"),
             AllIcons.General.Filter);

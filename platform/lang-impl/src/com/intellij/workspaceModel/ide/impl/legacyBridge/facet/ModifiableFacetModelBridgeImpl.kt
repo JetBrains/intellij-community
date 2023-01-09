@@ -12,8 +12,10 @@ import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.addIfNotNull
-import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.CustomModuleEntitySource
+import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
@@ -24,11 +26,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.childrenFacets
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.annotations.TestOnly
 
 class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
@@ -74,7 +72,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   override fun removeFacet(facet: Facet<*>?) {
     if (facet == null) return
     if (facet is FacetBridge<*>) {
-      facet.removeFromStorage(diff, moduleEntity)
+      facet.removeFromStorage(diff)
     } else {
       val facetEntity = diff.facetMapping().getEntities(facet).singleOrNull() as? FacetEntity ?: return
       removeFacetEntityWithSubFacets(facetEntity)
@@ -99,7 +97,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
 
   override fun rename(facet: Facet<*>, newName: String) {
     if (facet is FacetBridge<*>) {
-      facet.rename(diff, moduleEntity, newName)
+      facet.rename(diff, newName)
     } else {
       val entity = diff.facetMapping().getEntities(facet).single() as FacetEntity
       val newEntity = diff.modifyEntity(entity) {
@@ -125,7 +123,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
       moduleDiff.addDiff(diff)
     }
     else {
-      WorkspaceModel.getInstance(moduleBridge.project).updateProjectModel {
+      WorkspaceModel.getInstance(moduleBridge.project).updateProjectModel("Facet model commit") {
         it.addDiff(diff)
       }
     }
@@ -148,6 +146,11 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
       diff.mutableFacetMapping().removeMapping(facetEntity)
       diff.mutableFacetMapping().addMapping(newEntity, facet)
     }
+    allFacets.filter { it is FacetBridge<*> }
+      .forEach { facet ->
+        facet as FacetBridge<*>
+        facet.applyChangesToStorage(diff, facet.module as ModuleBridge)
+      }
   }
 
   override fun getAllFacets(): Array<Facet<*>> {
@@ -156,7 +159,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
     facetEntities.addAll(moduleEntity.facets)
     WorkspaceFacetContributor.EP_NAME.extensions.forEach {
       if (it.rootEntityType != FacetEntity::class.java) {
-        facetEntities.addIfNotNull(it.getRootEntityByModuleEntity(moduleEntity))
+        facetEntities.addAll(it.getRootEntitiesByModuleEntity(moduleEntity))
       }
     }
     return facetEntities.mapNotNull { facetMapping.getDataByEntity(it) }.toList().toTypedArray()
@@ -173,7 +176,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
     val entity = diff.facetMapping().getEntities(facet).singleOrNull()
     if (entity == null) return false
     return if (entity is FacetEntity) {
-      entity.persistentId !in initialStorage
+      entity.symbolicId !in initialStorage
     } else true
   }
 

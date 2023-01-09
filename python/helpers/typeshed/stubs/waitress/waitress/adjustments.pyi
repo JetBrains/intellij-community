@@ -1,5 +1,6 @@
+from collections.abc import Iterable, Sequence
 from socket import socket
-from typing import Any, Iterable, Sequence
+from typing import Any
 
 from .compat import HAS_IPV6 as HAS_IPV6, PY2 as PY2, WIN as WIN, string_types as string_types
 from .proxy_headers import PROXY_HEADERS as PROXY_HEADERS

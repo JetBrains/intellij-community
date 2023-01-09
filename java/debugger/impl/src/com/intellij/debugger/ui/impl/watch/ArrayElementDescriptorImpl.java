@@ -24,7 +24,7 @@ import com.intellij.xdebugger.frame.XValueModifier;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements ArrayElementDescriptor{
+public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements ArrayElementDescriptor {
   private final int myIndex;
   private final ArrayReference myArray;
   private Ref<Value> myPresetValue;

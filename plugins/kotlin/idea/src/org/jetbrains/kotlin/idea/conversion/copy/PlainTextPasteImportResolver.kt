@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.conversion.copy
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.*
 import com.intellij.psi.search.PsiShortNamesCache
@@ -21,8 +23,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.imports.canBeReferencedViaImport
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -45,7 +45,7 @@ class PlainTextPasteImportResolver(private val dataForConversion: DataForConvers
     private val resolutionFacade = targetFile.getResolutionFacade()
 
     private val shortNameCache = PsiShortNamesCache.getInstance(project)
-    private val scope = file.resolveScope
+    private val scope = targetFile.resolveScope
 
     private val failedToResolveReferenceNames = HashSet<String>()
     private var ambiguityInResolution = false

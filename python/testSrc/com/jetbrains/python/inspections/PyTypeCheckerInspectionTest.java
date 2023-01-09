@@ -1501,4 +1501,21 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testLiteralAgainstTypeVarWithoutBound() {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
   }
+
+  // PY-55092
+  public void testGenericTypedDict() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("""
+                           from typing import TypeVar, TypedDict, Generic
+                           T = TypeVar('T')
+                           T1 = TypeVar('T1')
+                           class Group(TypedDict, Generic[T]):
+                               key: T
+                               group: list[T]
+                           class GroupWithOtherKey(Group, Generic[T1]):
+                               some_other_key: T1
+                           group: GroupWithOtherKey[str, int] = {"key": <warning descr="Expected type 'str', got 'int' instead">1</warning>, "group": [], "some_other_key": <warning descr="Expected type 'int', got 'str' instead">''</warning>}""")
+    );
+  }
 }

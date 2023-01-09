@@ -4,8 +4,13 @@ package com.intellij.java.psi.formatter.java
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.util.PsiUtil
+import junit.framework.TestCase
 
 class JavadocFormatterTest : AbstractJavaFormatterTest() {
   fun testRIGHT_MARGIN() {
@@ -1837,5 +1842,39 @@ public class Test {
         }
         """.trimIndent()
     )
+  }
+
+  fun testConvertTabsIntoSpacesInComments() {
+    val indentOptions = currentCodeStyleSettings.getIndentOptions(JavaFileType.INSTANCE)
+    val oldUseTabs = indentOptions.USE_TAB_CHARACTER
+    try {
+      indentOptions.USE_TAB_CHARACTER = false
+      val textWithTabs = """
+public class MyTest {
+    void main() {
+		/*
+		Hello
+		 */
+    }
+}
+    """
+      TestCase.assertTrue(textWithTabs.contains("\t"))
+      val file = createFile("A.java", textWithTabs.trimIndent())
+      file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST)
+      val manager = PsiDocumentManager.getInstance(project)
+      val document = manager.getDocument(file)
+      if (document == null) {
+        error("Document is null")
+      }
+
+      runUndoTransparentWriteAction {
+        CodeStyleManager.getInstance(project).reformatText(file, 0, document.textLength - 1)
+        manager.commitDocument(document)
+        val text = document.text
+        TestCase.assertFalse("Tabs must be replaced with spaces", text.contains("\t"))
+      }
+    } finally {
+      indentOptions.USE_TAB_CHARACTER = oldUseTabs
+    }
   }
 }

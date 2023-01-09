@@ -1,9 +1,12 @@
-import collections
-from typing import Any
+from collections import OrderedDict
+from typing import Any, Generic, TypeVar
 
 from humanfriendly.compat import unicode
 
-class CaseInsensitiveDict(collections.OrderedDict):
+_KT = TypeVar("_KT")
+_VT = TypeVar("_VT")
+
+class CaseInsensitiveDict(OrderedDict[_KT, _VT], Generic[_KT, _VT]):
     def __init__(self, other: Any | None = ..., **kw) -> None: ...
     def coerce_key(self, key): ...
     @classmethod

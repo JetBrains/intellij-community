@@ -13,17 +13,18 @@ import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot.InclusionOptions.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot.InclusionOptions.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEntity> {
   override val entityClass: Class<LibraryEntity> get() = LibraryEntity::class.java
 
   override fun registerFileSets(entity: LibraryEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-    val projectLibraryId = entity.persistentId.takeIf { it.tableId == LibraryTableId.ProjectLibraryTableId }
-    val compiledRootsData = LibraryRootFileSetData(projectLibraryId)
-    val sourceRootFileSetData = LibrarySourceRootFileSetData(projectLibraryId)
+    if (entity.symbolicId.tableId is LibraryTableId.GlobalLibraryTableId) return
+    val projectLibraryId = entity.symbolicId.takeIf { it.tableId == LibraryTableId.ProjectLibraryTableId }
+    val compiledRootsData = LibraryRootFileSetData(projectLibraryId, "")
+    val sourceRootFileSetData = LibrarySourceRootFileSetData(projectLibraryId, "")
     for (root in entity.roots) {
       val data: LibraryRootFileSetData
       val kind: WorkspaceFileKind
@@ -83,9 +84,11 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
   }
 }
 
-internal class LibrarySourceRootFileSetData(projectLibraryId: LibraryId?) : LibraryRootFileSetData(projectLibraryId), ModuleOrLibrarySourceRootData
+internal class LibrarySourceRootFileSetData(projectLibraryId: LibraryId?, packagePrefix: String) 
+  : LibraryRootFileSetData(projectLibraryId, packagePrefix), ModuleOrLibrarySourceRootData, JvmPackageRootData
 
-internal open class LibraryRootFileSetData(private val projectLibraryId: LibraryId?) : UnloadableFileSetData {
+internal open class LibraryRootFileSetData(private val projectLibraryId: LibraryId?,
+                                           override val packagePrefix: String) : UnloadableFileSetData, JvmPackageRootData {
   override fun isUnloaded(project: Project): Boolean {
     return projectLibraryId != null && !ModuleDependencyIndex.getInstance(project).hasDependencyOn(projectLibraryId) 
   }

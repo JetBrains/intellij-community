@@ -30,8 +30,12 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     if (containingFile instanceof PsiJavaCodeReferenceCodeFragment fragment && !fragment.isClassesAccepted()) {
       return;
     }
+    List<IntentionAction> fixes = new ArrayList<>();
+    OrderEntryFix.registerFixes(ref, fixes);
+    for (IntentionAction fix : fixes) {
+      registrar.register(fix);
+    }
     if (PsiUtil.isModuleFile(containingFile)) {
-      OrderEntryFix.registerFixes(registrar, ref);
       registrar.register(new CreateServiceImplementationClassFix(ref));
       registrar.register(new CreateServiceInterfaceOrClassFix(ref));
       return;
@@ -43,8 +47,6 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       registrar.register(new StaticImportConstantFix(containingFile, ref));
       registrar.register(new QualifyStaticConstantFix(containingFile, ref));
     }
-
-    OrderEntryFix.registerFixes(registrar, ref);
 
     MoveClassToModuleFix.registerFixes(registrar, ref);
 

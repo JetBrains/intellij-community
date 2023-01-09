@@ -17,7 +17,8 @@
     <extensionPoint name="xdebugger.attachDebuggerProvider" interface="com.intellij.xdebugger.attach.XAttachDebuggerProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.inlineValuePopupProvider" interface="com.intellij.xdebugger.impl.inline.InlineValuePopupProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.attachHostSettingsProvider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachHostSettingsProvider" dynamic="true"/>
-    <extensionPoint name="xdebugger.dialog.presentation.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogItemPresentationProvider" dynamic="true"/>
+    <extensionPoint name="xdebugger.dialog.item.presentation.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogItemPresentationProvider" dynamic="true"/>
+    <extensionPoint name="xdebugger.dialog.presentation.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogPresentationProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -38,6 +39,7 @@
     <projectService serviceImplementation="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory"/>
 
     <projectService serviceImplementation="com.intellij.xdebugger.impl.XDebuggerHistoryManager"/>
+    <pathMacroFilter implementation="com.intellij.xdebugger.impl.XDebuggerHistoryManager$XDebuggerHistoryPathMacroFilter"/>
 
     <applicationConfigurable groupId="build" dynamic="true" groupWeight="120" key="debugger.configurable.display.name" bundle="messages.XDebuggerBundle"
                              id="project.propDebugger" provider="com.intellij.xdebugger.impl.settings.DebuggerConfigurableProvider"/>
@@ -69,6 +71,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.breakpoints.BreakpointsUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.evaluate.DebuggerEvaluationStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.ui.XDebugThreadsFramesViewChangeCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.ui.attach.dialog.statistics.AttachDialogStatisticsCollector"/>
 
     <editorActionHandler action="EditorUp" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$UpHandler"
                          id="smart-step-into-up"/>
@@ -90,7 +93,12 @@
 
     <applicationService serviceImplementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogPresentationService"/>
 
+    <applicationService serviceImplementation="com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayoutService"/>
+
     <projectService serviceImplementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessDialogFactory"/>
+
+    <xdebugger.dialog.item.presentation.provider implementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogDefaultItemPresentationProvider"/>
+    <xdebugger.dialog.presentation.provider implementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogDefaultPresentationProvider"/>
 
     <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
 
@@ -102,6 +110,7 @@
     <advancedSetting id="debugger.max.recent.expressions" default="50"
                      groupKey="group.advanced.settings.debugger" bundle="messages.XDebuggerBundle"/>
 
+    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerActionsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerPerformanceCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.ui.DebuggerUIExperimentCollector"/>
   </extensions>
@@ -142,6 +151,8 @@
       <action id="AddBreakpoint" class="com.intellij.xdebugger.impl.actions.handlers.AddLineBreakpointAction"/>
       <action id="AddConditionalBreakpoint" class="com.intellij.xdebugger.impl.actions.handlers.AddLineBreakpointAction$WithCondition"/>
     </group>
+
+    <group id="XDebugger.Attach.Dialog.Settings" class="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogSettings" popup="true"/>
 
     <action id="XDebugger.Show.Breakpoints.Over.Line.Numbers" class="com.intellij.xdebugger.impl.settings.ShowBreakpointsOverLineNumbersAction">
       <add-to-group group-id="EditorGutterPopupMenu.Appearance" anchor="after" relative-to-action="EditorGutterToggleGlobalLineNumbers"/>

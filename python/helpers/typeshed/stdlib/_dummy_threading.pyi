@@ -1,11 +1,13 @@
 import sys
+from collections.abc import Callable, Iterable, Mapping
 from types import FrameType, TracebackType
-from typing import Any, Callable, Iterable, Mapping, Optional, TypeVar
+from typing import Any, TypeVar
+from typing_extensions import TypeAlias
 
 # TODO recursive type
-_TF = Callable[[FrameType, str, Any], Optional[Callable[..., Any]]]
+_TF: TypeAlias = Callable[[FrameType, str, Any], Callable[..., Any] | None]
 
-_PF = Callable[[FrameType, str, Any], None]
+_PF: TypeAlias = Callable[[FrameType, str, Any], None]
 _T = TypeVar("_T")
 
 if sys.version_info >= (3, 8):
@@ -80,8 +82,9 @@ class local:
 
 class Thread:
     name: str
-    ident: int | None
     daemon: bool
+    @property
+    def ident(self) -> int | None: ...
     def __init__(
         self,
         group: None = ...,
@@ -183,9 +186,12 @@ class Timer(Thread):
     def cancel(self) -> None: ...
 
 class Barrier:
-    parties: int
-    n_waiting: int
-    broken: bool
+    @property
+    def parties(self) -> int: ...
+    @property
+    def n_waiting(self) -> int: ...
+    @property
+    def broken(self) -> bool: ...
     def __init__(self, parties: int, action: Callable[[], None] | None = ..., timeout: float | None = ...) -> None: ...
     def wait(self, timeout: float | None = ...) -> int: ...
     def reset(self) -> None: ...

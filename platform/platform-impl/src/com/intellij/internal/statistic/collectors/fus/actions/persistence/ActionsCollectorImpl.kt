@@ -11,8 +11,10 @@ import com.intellij.internal.statistic.utils.StatisticsUtil.roundDuration
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.actionSystem.impl.Utils
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -35,8 +37,8 @@ class ActionsCollectorImpl : ActionsCollector() {
   }
 
   override fun record(project: Project?, action: AnAction?, event: AnActionEvent?, lang: Language?) {
-    recordActionInvoked(project, action, event) {
-      add(EventFields.CurrentFile.with(lang))
+    recordActionInvoked(project, action, event) { eventPairs ->
+      eventPairs.add(EventFields.CurrentFile.with(lang))
     }
   }
 
@@ -112,7 +114,7 @@ class ActionsCollectorImpl : ActionsCollector() {
     fun recordActionInvoked(project: Project?,
                             action: AnAction?,
                             event: AnActionEvent?,
-                            customDataProvider: MutableList<EventPair<*>>.() -> Unit) {
+                            customDataProvider: (MutableList<EventPair<*>>) -> Unit) {
       record(ActionsEventLogGroup.ACTION_FINISHED, project, action, event, customDataProvider)
     }
 
@@ -120,19 +122,22 @@ class ActionsCollectorImpl : ActionsCollector() {
     fun recordActionGroupExpanded(action: ActionGroup,
                                   context: DataContext,
                                   place: String,
+                                  submenu: Boolean,
                                   durationMs: Long,
                                   result: List<AnAction>?) {
       val dataContext = getCachedDataContext(context)
       val project = CommonDataKeys.PROJECT.getData(dataContext)
       ActionsEventLogGroup.ACTION_GROUP_EXPANDED.log(project) {
         val info = getPluginInfo(action.javaClass)
+        val size = result?.count { it !is Separator } ?: -1
         val language = getInjectedOrFileLanguage(project, dataContext) ?: Language.ANY
         addActionClass(this, action, info)
         add(EventFields.PluginInfo.with(info))
         add(EventFields.Language.with(language))
         add(EventFields.ActionPlace.with(place))
+        add(ActionsEventLogGroup.IS_SUBMENU.with(submenu))
         add(EventFields.DurationMs.with(durationMs))
-        add(EventFields.Size.with(result?.size ?: -1))
+        add(EventFields.Size.with(size))
       }
     }
 
@@ -141,7 +146,7 @@ class ActionsCollectorImpl : ActionsCollector() {
                project: Project?,
                action: AnAction?,
                event: AnActionEvent?,
-               customDataProvider: MutableList<EventPair<*>>.() -> Unit) {
+               customDataProvider: (MutableList<EventPair<*>>) -> Unit) {
       if (action == null) return
       eventId.log(project) {
         val info = getPluginInfo(action.javaClass)
@@ -155,7 +160,7 @@ class ActionsCollectorImpl : ActionsCollector() {
         if (project != null && !project.isDisposed) {
           add(ActionsEventLogGroup.DUMB.with(DumbService.isDumb(project)))
         }
-        customDataProvider()
+        customDataProvider(this)
         addActionClass(this, action, info)
       }
       if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
@@ -180,7 +185,7 @@ class ActionsCollectorImpl : ActionsCollector() {
       val actionClassName = if (info.isSafeToReport()) action.javaClass.name else DEFAULT_ID
       var actionId = getActionId(info, action)
       if (action is ActionWithDelegate<*>) {
-        val delegate = (action as ActionWithDelegate<*>).delegate
+        val delegate = ActionUtil.getDelegateChainRoot(action)
         val delegateInfo = getPluginInfo(delegate.javaClass)
         actionId = if (delegate is AnAction) {
           getActionId(delegateInfo, delegate)
@@ -249,24 +254,24 @@ class ActionsCollectorImpl : ActionsCollector() {
     fun onAfterActionInvoked(action: AnAction, event: AnActionEvent, result: AnActionResult) {
       val stats = ourStats.remove(event)
       val project = stats?.projectRef?.get()
-      recordActionInvoked(project, action, event) {
+      recordActionInvoked(project, action, event) { eventPairs ->
         val durationMillis = if (stats != null) TimeoutUtil.getDurationMillis(stats.start) else -1
         if (stats != null) {
-          add(EventFields.StartTime.with(stats.startMs))
+          eventPairs.add(EventFields.StartTime.with(stats.startMs))
           if (stats.isDumb != null) {
-            add(ActionsEventLogGroup.DUMB_START.with(stats.isDumb))
+            eventPairs.add(ActionsEventLogGroup.DUMB_START.with(stats.isDumb))
           }
         }
         val reportedResult = toReportedResult(result)
-        add(ActionsEventLogGroup.RESULT.with(reportedResult))
+        eventPairs.add(ActionsEventLogGroup.RESULT.with(reportedResult))
         val contextBefore = stats?.fileLanguage
         val injectedContextBefore = stats?.injectedFileLanguage
-        addLanguageContextFields(project, event, contextBefore, injectedContextBefore, this)
+        addLanguageContextFields(project, event, contextBefore, injectedContextBefore, eventPairs)
         if (action is FusAwareAction) {
           val additionalUsageData = (action as FusAwareAction).getAdditionalUsageData(event)
-          add(ActionsEventLogGroup.ADDITIONAL.with(ObjectEventData(additionalUsageData)))
+          eventPairs.add(ActionsEventLogGroup.ADDITIONAL.with(ObjectEventData(additionalUsageData)))
         }
-        add(EventFields.DurationMs.with(roundDuration(durationMillis)))
+        eventPairs.add(EventFields.DurationMs.with(roundDuration(durationMillis)))
       }
     }
 
@@ -325,7 +330,7 @@ class ActionsCollectorImpl : ActionsCollector() {
       if (project != null) {
         val editor = InjectedDataKeys.EDITOR.getData(dataContext)
         if (editor != null && !project.isDisposed) {
-          val injectedFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document)
+          val injectedFile = runReadAction { PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document) }
           if (injectedFile != null) {
             return injectedFile.language
           }

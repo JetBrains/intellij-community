@@ -55,7 +55,7 @@ public class MavenExecutionResult {
     if (mavenProject != null) {
       myPomFile = mavenProject.getFile();
     }
-    myExceptions = exceptions == null ? new ArrayList<Exception>() : exceptions;
+    myExceptions = exceptions;
     myDependencyResolutionResult = dependencyResolutionResult;
     if(myDependencyResolutionResult != null && myDependencyResolutionResult.getCollectionErrors() != null) {
       myExceptions.addAll(myDependencyResolutionResult.getCollectionErrors());

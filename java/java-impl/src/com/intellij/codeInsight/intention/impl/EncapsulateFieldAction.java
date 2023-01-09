@@ -1,14 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.ide.DataManager;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Danila Ponomarenko
  */
-public class EncapsulateFieldAction extends PsiElementBaseIntentionAction implements HighPriorityAction {
+public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
 
   @NotNull
   @Override

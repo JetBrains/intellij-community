@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.gradle
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -149,7 +150,7 @@ class ModuleInfo(val module: Module, val projectInfo: ProjectInfo) {
 
     fun targetPlatform(vararg platforms: TargetPlatform) {
         val expected = platforms.flatMap { it.componentPlatforms }.toSet()
-        val actual = module.platform?.componentPlatforms
+        val actual = runReadAction { module.platform?.componentPlatforms }
 
         if (actual == null) {
             report("Actual target platform is null")

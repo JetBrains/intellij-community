@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.inspections.branchedTransformations
 
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -15,7 +16,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApp
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.*
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -63,9 +63,9 @@ class IfThenToSafeAccessInspection @JvmOverloads constructor(private val inlineW
         fun convert(ifExpression: KtIfExpression, editor: Editor?, inlineWithPrompt: Boolean) {
             val ifThenToSelectData = ifExpression.buildSelectTransformationData() ?: return
 
-            val factory = KtPsiFactory(ifExpression)
+            val psiFactory = KtPsiFactory(ifExpression.project)
             val resultExpr = runWriteAction {
-                val replacedBaseClause = ifThenToSelectData.replacedBaseClause(factory)
+                val replacedBaseClause = ifThenToSelectData.replacedBaseClause(psiFactory)
                 val newExpr = ifExpression.replaced(replacedBaseClause)
                 KtPsiUtil.deparenthesize(newExpr)
             }

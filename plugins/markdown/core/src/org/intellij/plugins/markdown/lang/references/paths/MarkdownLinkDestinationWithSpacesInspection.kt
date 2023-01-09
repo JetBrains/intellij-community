@@ -30,7 +30,13 @@ class MarkdownLinkDestinationWithSpacesInspection: LocalInspectionTool() {
   private fun checkReference(element: MarkdownLinkDestination, holder: ProblemsHolder) {
     val references = element.references
     val reference = references.find { it is FileReferenceOwner } ?: return
+    @Suppress("NAME_SHADOWING")
+    val element = reference.element as? MarkdownLinkDestination ?: return
     val range = reference.rangeInElement
+    val text = element.text
+    if (range.isEmpty || range.endOffset > text.length) {
+      return
+    }
     val content = range.substring(element.text)
     if (!content.contains(' ')) {
       return

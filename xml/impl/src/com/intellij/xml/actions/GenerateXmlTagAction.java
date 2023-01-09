@@ -241,6 +241,8 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
       case LEAF -> {
         XmlElementDescriptor descriptor = group.getLeafDescriptor();
         
+        if (descriptor == null) return Collections.emptyList();
+        
         PsiElement declaration = descriptor.getDeclaration();
         // don't add abstract elements to required sub tags list
         if (declaration instanceof XmlTag) {
@@ -251,7 +253,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
           }
         }
         
-        return descriptor == null ? Collections.emptyList() : Collections.singletonList(descriptor);
+        return Collections.singletonList(descriptor);
       }
       case CHOICE -> {
         LinkedHashSet<XmlElementDescriptor> set = null;

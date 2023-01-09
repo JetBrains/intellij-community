@@ -68,7 +68,7 @@ public final class PermuteArgumentsFix implements IntentionAction, HighPriorityA
     Objects.requireNonNull(myCall.getArgumentList()).replace(Objects.requireNonNull(myPermutation.getArgumentList()));
   }
 
-  public static boolean registerFix(HighlightInfo info, PsiCall callExpression, final CandidateInfo[] candidates, final TextRange fixRange) {
+  public static boolean registerFix(@NotNull HighlightInfo.Builder info, PsiCall callExpression, final CandidateInfo[] candidates, final TextRange fixRange) {
     PsiExpression[] expressions = Objects.requireNonNull(callExpression.getArgumentList()).getExpressions();
     if (expressions.length < 2) return false;
     List<PsiCall> permutations = new ArrayList<>();
@@ -105,7 +105,7 @@ public final class PermuteArgumentsFix implements IntentionAction, HighPriorityA
     }
     if (permutations.size() == 1) {
       PermuteArgumentsFix fix = new PermuteArgumentsFix(callExpression, permutations.get(0));
-      QuickFixAction.registerQuickFixAction(info, fixRange, fix);
+      info.registerFix(fix, null, null, fixRange, null);
       return true;
     }
 

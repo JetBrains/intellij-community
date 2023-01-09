@@ -13,13 +13,14 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * A builder helper for {@link PersistentHashMap}
+ *
  * @see PersistentHashMap
  */
 @ApiStatus.Experimental
 public final class PersistentMapBuilder<Key, Value> {
-  @NotNull private final Path myFile;
-  @NotNull private final KeyDescriptor<Key> myKeyDescriptor;
-  @NotNull private final DataExternalizer<Value> myValueExternalizer;
+  private final @NotNull Path myFile;
+  private final @NotNull KeyDescriptor<Key> myKeyDescriptor;
+  private final @NotNull DataExternalizer<Value> myValueExternalizer;
 
   private Integer myInitialSize;
   private Integer myVersion;
@@ -27,16 +28,43 @@ public final class PersistentMapBuilder<Key, Value> {
   private Boolean myInlineValues;
   private Boolean myIsReadOnly;
   private Boolean myHasChunks;
-  private Boolean myCompactOnClose = null;
-  private @NotNull ExecutorService myWalExecutor = ConcurrencyUtil.newSameThreadExecutorService();
+  private Boolean myCompactOnClose;
+  private @NotNull ExecutorService myWalExecutor;
   private boolean myEnableWal;
+
+  private PersistentMapBuilder(final @NotNull Path file,
+                               final @NotNull KeyDescriptor<Key> keyDescriptor,
+                               final @NotNull DataExternalizer<Value> valueExternalizer,
+                               final Integer initialSize,
+                               final Integer version,
+                               final StorageLockContext lockContext,
+                               final Boolean inlineValues,
+                               final Boolean isReadOnly,
+                               final Boolean hasChunks,
+                               final Boolean compactOnClose,
+                               final @NotNull ExecutorService walExecutor,
+                               final boolean enableWal) {
+    myFile = file;
+    myKeyDescriptor = keyDescriptor;
+    myValueExternalizer = valueExternalizer;
+    myInitialSize = initialSize;
+    myVersion = version;
+    myLockContext = lockContext;
+    myInlineValues = inlineValues;
+    myIsReadOnly = isReadOnly;
+    myHasChunks = hasChunks;
+    myCompactOnClose = compactOnClose;
+    myWalExecutor = walExecutor;
+    myEnableWal = enableWal;
+  }
 
   private PersistentMapBuilder(@NotNull Path file,
                                @NotNull KeyDescriptor<Key> keyDescriptor,
                                @NotNull DataExternalizer<Value> valueExternalizer) {
-    myFile = file;
-    myKeyDescriptor = keyDescriptor;
-    myValueExternalizer = valueExternalizer;
+    this(file, keyDescriptor, valueExternalizer,
+         null, null, null, null, null, null, null,
+         ConcurrencyUtil.newSameThreadExecutorService(),
+         false);
   }
 
   @NotNull
@@ -45,7 +73,7 @@ public final class PersistentMapBuilder<Key, Value> {
   }
 
   @NotNull
-  private PersistentMapBase<Key, Value> buildImplementation() throws IOException {
+  public PersistentMapBase<Key, Value> buildImplementation() throws IOException {
     Boolean oldHasNoChunksValue = null;
     if (myHasChunks != null) {
       oldHasNoChunksValue = PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.get();
@@ -121,7 +149,7 @@ public final class PersistentMapBuilder<Key, Value> {
   }
 
   @NotNull
-  public PersistentMapBuilder<Key, Value> setWalExecutor(@NotNull ExecutorService service) {
+  public PersistentMapBuilder<Key, Value> withWalExecutor(@NotNull ExecutorService service) {
     myWalExecutor = service;
     return this;
   }
@@ -151,6 +179,7 @@ public final class PersistentMapBuilder<Key, Value> {
     myHasChunks = hasChunks;
     return this;
   }
+
   @NotNull
   public PersistentMapBuilder<Key, Value> hasNoChunks() {
     myHasChunks = false;
@@ -197,6 +226,7 @@ public final class PersistentMapBuilder<Key, Value> {
     return myEnableWal;
   }
 
+  @NotNull
   public ExecutorService getWalExecutor() {
     return myWalExecutor;
   }
@@ -204,5 +234,27 @@ public final class PersistentMapBuilder<Key, Value> {
   @Nullable
   public StorageLockContext getLockContext() {
     return myLockContext;
+  }
+
+  /**
+   * Since builder is not immutable, it is quite useful to have defensive copy of it
+   *
+   * @return shallow copy of this builder.
+   */
+  public PersistentMapBuilder<Key, Value> copy() {
+    return new PersistentMapBuilder<>(
+      myFile, myKeyDescriptor, myValueExternalizer,
+      myInitialSize, myVersion, myLockContext, myInlineValues, myIsReadOnly, myHasChunks, myCompactOnClose,
+      myWalExecutor, myEnableWal
+    );
+  }
+
+  @NotNull
+  public PersistentMapBuilder<Key, Value> copyWithFile(final @NotNull Path file) {
+    return new PersistentMapBuilder<>(
+      file, myKeyDescriptor, myValueExternalizer,
+      myInitialSize, myVersion, myLockContext, myInlineValues, myIsReadOnly, myHasChunks, myCompactOnClose,
+      myWalExecutor, myEnableWal
+    );
   }
 }

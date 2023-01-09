@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
-import com.intellij.diagnostic.StartUpMeasurer.startActivity
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
@@ -13,17 +13,21 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
 open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
@@ -32,29 +36,35 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     protected set
 
   final override val entityStorage: VersionedEntityStorageImpl
+  private val unloadedEntitiesStorage: VersionedEntityStorageImpl
+
+  override val currentSnapshot: EntityStorageSnapshot
+    get() = entityStorage.current
 
   val entityTracer: EntityTracingLogger = EntityTracingLogger()
 
   var userWarningLoggingLevel = false
     @TestOnly set
 
-  private var projectModelUpdating = AtomicBoolean(false)
+  private val projectModelVersionUpdate = AtomicLong(-1)
 
   init {
     log.debug { "Loading workspace model" }
 
     val initialContent = WorkspaceModelInitialTestContent.pop()
     val cache = WorkspaceModelCache.getInstance(project)
-    val projectEntities: MutableEntityStorage = when {
+    val (projectEntities, unloadedEntities) = when {
       initialContent != null -> {
         loadedFromCache = initialContent !== EntityStorageSnapshot.empty()
-        initialContent.toBuilder()
+        initialContent.toBuilder() to EntityStorageSnapshot.empty()
       }
       cache != null -> {
-        val activity = startActivity("cache loading")
+        val activity = StartUpMeasurer.startActivity("cache loading")
         val previousStorage: MutableEntityStorage?
+        val previousStorageForUnloaded: EntityStorageSnapshot
         val loadingCacheTime = measureTimeMillis {
           previousStorage = cache.loadCache()?.toBuilder()
+          previousStorageForUnloaded = cache.loadUnloadedEntitiesCache()?.toSnapshot() ?: EntityStorageSnapshot.empty()
         }
         val storage = if (previousStorage == null) {
           MutableEntityStorage.create()
@@ -66,17 +76,21 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
           previousStorage
         }
         activity.end()
-        storage
+        storage to previousStorageForUnloaded
       }
-      else -> MutableEntityStorage.create()
+      else -> MutableEntityStorage.create() to EntityStorageSnapshot.empty()
     }
 
     @Suppress("LeakingThis")
     prepareModel(project, projectEntities)
 
     entityStorage = VersionedEntityStorageImpl(projectEntities.toSnapshot())
+    unloadedEntitiesStorage = VersionedEntityStorageImpl(unloadedEntities)
     entityTracer.subscribe(project)
   }
+
+  override val currentSnapshotOfUnloadedEntities: EntityStorageSnapshot
+    get() = unloadedEntitiesStorage.current
 
   /**
    * Used only in Rider IDE
@@ -88,26 +102,65 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     loadedFromCache = false
   }
 
-  final override fun <R> updateProjectModel(updater: (MutableEntityStorage) -> R): R {
+  final override fun updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-    if (!projectModelUpdating.compareAndSet(false, true)) {
-      throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
+    val initialStoreVersion = projectModelVersionUpdate.get()
+    if (initialStoreVersion == entityStorage.pointer.version) {
+      log.error("Trying to update project model twice from the same version. Maybe recursive call of 'updateProjectModel'?")
     }
-    val before = entityStorage.current
-    val builder = MutableEntityStorage.from(before)
-    val result = updater(builder)
-    startPreUpdateHandlers(before, builder)
+    projectModelVersionUpdate.set(entityStorage.pointer.version)
 
-    val changes = builder.collectChanges(before)
-    this.initializeBridges(changes, builder)
+    val updateTimeMillis: Long
+    val preHandlersTimeMillis: Long
+    val collectChangesTimeMillis: Long
+    val initializingTimeMillis: Long
+    val toSnapshotTimeMillis: Long
+    val generalTime = measureTimeMillis {
+      val before = entityStorage.current
+      val builder = MutableEntityStorage.from(before)
+      updateTimeMillis = measureTimeMillis {
+        try {
+          updater(builder)
+        }
+        catch (e: Exception) {
+          projectModelVersionUpdate.set(initialStoreVersion)
+          throw e
+        }
+      }
+      preHandlersTimeMillis = measureTimeMillis {
+        startPreUpdateHandlers(before, builder)
+      }
 
-    val newStorage = builder.toSnapshot()
-    if (Registry.`is`("ide.workspace.model.assertions.on.update", false)) {
-      before.assertConsistency()
-      newStorage.assertConsistency()
+      val changes: Map<Class<*>, List<EntityChange<*>>>
+      collectChangesTimeMillis = measureTimeMillis {
+        changes = builder.collectChanges(before)
+      }
+      initializingTimeMillis = measureTimeMillis {
+        this.initializeBridges(changes, builder)
+      }
+
+      val newStorage: EntityStorageSnapshot
+      toSnapshotTimeMillis = measureTimeMillis {
+        newStorage = builder.toSnapshot()
+      }
+      if (Registry.`is`("ide.workspace.model.assertions.on.update", false)) {
+        before.assertConsistency()
+        newStorage.assertConsistency()
+      }
+      entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged)
     }
-    entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged, projectModelUpdating)
-    return result
+    log.info("Project model updated to version ${entityStorage.pointer.version} in $generalTime ms: $description")
+    if (generalTime > 1000) {
+      log.info(
+        "Project model update details: Updater code: $updateTimeMillis ms, Pre handlers: $preHandlersTimeMillis ms, Collect changes: $collectChangesTimeMillis ms")
+      log.info("Bridge initialization: $initializingTimeMillis ms, To snapshot: $toSnapshotTimeMillis ms")
+    }
+    else {
+      log.debug {
+        "Project model update details: Updater code: $updateTimeMillis ms, Pre handlers: $preHandlersTimeMillis ms, Collect changes: $collectChangesTimeMillis ms"
+      }
+      log.debug { "Bridge initialization: $initializingTimeMillis ms, To snapshot: $toSnapshotTimeMillis ms" }
+    }
   }
 
   /**
@@ -116,21 +169,60 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
    * This method doesn't require write action.
    */
   @Synchronized
-  final override fun <R> updateProjectModelSilent(updater: (MutableEntityStorage) -> R): R {
-    if (!projectModelUpdating.compareAndSet(false, true)) {
-      throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
+  fun updateProjectModelSilent(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
+    val initialStoreVersion = projectModelVersionUpdate.get()
+    if (initialStoreVersion == entityStorage.pointer.version) {
+      log.error("Trying to update project model twice from the same version. Maybe recursive call of 'updateProjectModel'?")
     }
-    val before = entityStorage.current
-    val builder = MutableEntityStorage.from(entityStorage.current)
-    val result = updater(builder)
-    val newStorage = builder.toSnapshot()
-    if (Registry.`is`("ide.workspace.model.assertions.on.update", false)) {
-      before.assertConsistency()
-      newStorage.assertConsistency()
+    projectModelVersionUpdate.set(entityStorage.pointer.version)
+
+    val newStorage: EntityStorageSnapshot
+    val updateTimeMillis: Long
+    val toSnapshotTimeMillis: Long
+    val generalTime = measureTimeMillis {
+      val before = entityStorage.current
+      val builder = MutableEntityStorage.from(entityStorage.current)
+      updateTimeMillis = measureTimeMillis {
+        try {
+          updater(builder)
+        }
+        catch (e: Exception) {
+          projectModelVersionUpdate.set(initialStoreVersion)
+          throw e
+        }
+      }
+      toSnapshotTimeMillis = measureTimeMillis {
+        newStorage = builder.toSnapshot()
+      }
+      if (Registry.`is`("ide.workspace.model.assertions.on.update", false)) {
+        before.assertConsistency()
+        newStorage.assertConsistency()
+      }
+      entityStorage.replaceSilently(newStorage)
     }
-    entityStorage.replaceSilently(newStorage)
-    projectModelUpdating.set(false)
-    return result
+    log.info("Project model updated silently to version ${entityStorage.pointer.version} in $generalTime ms: $description")
+    if (generalTime > 1000) {
+      log.info("Project model update details: Updater code: $updateTimeMillis ms, To snapshot: $toSnapshotTimeMillis m")
+    }
+    else {
+      log.debug { "Project model update details: Updater code: $updateTimeMillis ms, To snapshot: $toSnapshotTimeMillis m" }
+    }
+  }
+
+  override fun updateUnloadedEntities(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    if (project.isDisposed) return
+
+    val time = measureTimeMillis {
+      val before = currentSnapshotOfUnloadedEntities
+      val builder = MutableEntityStorage.from(before)
+      updater(builder)
+      startPreUpdateHandlers(before, builder)
+      val changes = builder.collectChanges(before)
+      val newStorage = builder.toSnapshot()
+      unloadedEntitiesStorage.replace(newStorage, changes, ::onBeforeUnloadedEntitiesChanged, ::onUnloadedEntitiesChanged)
+    }
+    log.info("Unloaded entity storage updated in $time ms: $description")
   }
 
   final override fun getBuilderSnapshot(): BuilderSnapshot {
@@ -145,7 +237,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
 
     val builder = replacement.builder
     this.initializeBridges(replacement.changes, builder)
-    entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged, null)
+    entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged)
 
     return true
   }
@@ -155,6 +247,11 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
   private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
+    logErrorOnEventHandling {
+      if (!GlobalLibraryTableBridge.isEnabled()) return@logErrorOnEventHandling
+      // To handle changes made directly in project level workspace model
+      (GlobalLibraryTableBridge.getInstance() as GlobalLibraryTableBridgeImpl).initializeLibraryBridges(change, builder)
+    }
     logErrorOnEventHandling {
       (project.serviceOrNull<ProjectLibraryTable>() as? ProjectLibraryTableBridgeImpl)?.initializeLibraryBridges(change, builder)
     }
@@ -180,11 +277,27 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     if (project.isDisposed) return
     //it is important to update WorkspaceFileIndex before other listeners are called because they may rely on it
     logErrorOnEventHandling {
-      (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.onEntitiesChanged(change)
+      (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.onEntitiesChanged(change, EntityStorageKind.MAIN)
     }
 
     logErrorOnEventHandling {
       project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).changed(change)
+    }
+  }
+
+  private fun onBeforeUnloadedEntitiesChanged(change: VersionedStorageChange) {
+    logErrorOnEventHandling {
+      project.messageBus.syncPublisher(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED).beforeChanged(change)
+    }
+  }
+
+  private fun onUnloadedEntitiesChanged(change: VersionedStorageChange) {
+    //it is important to update WorkspaceFileIndex before other listeners are called because they may rely on it
+    logErrorOnEventHandling {
+      (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.onEntitiesChanged(change, EntityStorageKind.UNLOADED)
+    }
+    logErrorOnEventHandling {
+      project.messageBus.syncPublisher(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED).changed(change)
     }
   }
 

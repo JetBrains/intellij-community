@@ -7,7 +7,7 @@ import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleCodeInsightTest
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
 import org.jetbrains.plugins.groovy.util.BaseTest
 
-abstract class GradleCodeInsightBaseTestCase : GradleTestCase(), BaseTest {
+abstract class GradleCodeInsightBaseTestCase : GradleProjectTestCase(), BaseTest {
 
   val codeInsightFixture: JavaCodeInsightTestFixture
     get() = (gradleFixture as GradleCodeInsightTestFixture).codeInsightFixture

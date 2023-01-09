@@ -2,7 +2,6 @@ package com.intellij.workspaceModel.test.api
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
@@ -16,12 +15,15 @@ interface GrandParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : GrandParentEntity> : GrandParentEntity, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
+  interface Builder<T : GrandParentEntity> : GrandParentEntity, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
     override var entitySource: EntitySource
     override var data1: String
   }
 
   companion object : Type<GrandParentEntity, Builder<GrandParentEntity>>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data1: String,
                         entitySource: EntitySource,
                         init: (Builder<GrandParentEntity>.() -> Unit)? = null): GrandParentEntity {
@@ -41,13 +43,16 @@ interface ParentEntity : GrandParentEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : ParentEntity> : ParentEntity, GrandParentEntity.Builder<T>, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
+  interface Builder<T : ParentEntity> : ParentEntity, GrandParentEntity.Builder<T>, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
     override var entitySource: EntitySource
     override var data1: String
     override var data2: String
   }
 
   companion object : Type<ParentEntity, Builder<ParentEntity>>(GrandParentEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data1: String,
                         data2: String,
                         entitySource: EntitySource,
@@ -68,7 +73,7 @@ interface ChildEntity: ParentEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildEntity, ParentEntity.Builder<ChildEntity>, ModifiableWorkspaceEntity<ChildEntity>, ObjBuilder<ChildEntity> {
+  interface Builder : ChildEntity, ParentEntity.Builder<ChildEntity>, WorkspaceEntity.Builder<ChildEntity>, ObjBuilder<ChildEntity> {
     override var entitySource: EntitySource
     override var data1: String
     override var data2: String
@@ -76,6 +81,9 @@ interface ChildEntity: ParentEntity {
   }
 
   companion object : Type<ChildEntity, Builder>(ParentEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data1: String,
                         data2: String,
                         data3: String,

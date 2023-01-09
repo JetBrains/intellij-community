@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -42,6 +43,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,6 +86,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     myModel = new CoverageTableModel(suitesBundle, stateBean, project, myTreeStructure);
     Disposer.register(this, myModel);
     myTable = new JBTreeTable(myModel);
+    TreeUtil.expand(myTable.getTree(), 2);
     myTable.getTree().setCellRenderer(new NodeRenderer() {
       @Override
       protected @NotNull SimpleTextAttributes getSimpleTextAttributes(@NotNull PresentationData presentation,
@@ -117,7 +120,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }
     final RowSorter.SortKey sortKey = new RowSorter.SortKey(stateBean.mySortingColumn, stateBean.myAscendingOrder ? SortOrder.ASCENDING : SortOrder.DESCENDING);
     rowSorter.setSortKeys(Collections.singletonList(sortKey));
-    setWidth();
+    AppExecutorUtil.getAppExecutorService().execute(() -> setWidth());
     addToCenter(myTable);
 
     attachFileStatusListener();
@@ -303,6 +306,12 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     if (myViewExtension.supportFlattenPackages()) {
       actionGroup.add(new FlattenPackagesAction());
+      actionGroup.add(new HideFullyCoveredAction());
+    }
+    if (ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
+      actionGroup.add(new ShowOnlyModifiedAction());
+    } else {
+      myStateBean.myShowOnlyModified = false;
     }
 
     installAutoScrollToSource(actionGroup);
@@ -411,6 +420,56 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myStateBean.myFlattenPackages = state;
       myModel.reset(false);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+  }
+
+  private final class HideFullyCoveredAction extends ToggleAction {
+
+    private HideFullyCoveredAction() {
+      super(CoverageBundle.messagePointer("coverage.hide.fully.covered.elements"),
+            CoverageBundle.messagePointer("coverage.hide.fully.covered.elements.comment"),
+            AllIcons.General.Filter);
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return myStateBean.myHideFullyCovered;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      myStateBean.myHideFullyCovered = state;
+      resetView();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+  }
+
+  private final class ShowOnlyModifiedAction extends ToggleAction {
+
+    private ShowOnlyModifiedAction() {
+      super(CoverageBundle.messagePointer("coverage.show.only.modified.elements"),
+            CoverageBundle.messagePointer("coverage.show.only.modified.elements.comment"),
+            AllIcons.Vcs.Branch);
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return myStateBean.myShowOnlyModified;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      myStateBean.myShowOnlyModified = state;
+      resetView();
     }
 
     @Override

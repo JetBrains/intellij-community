@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -15,7 +16,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
@@ -55,7 +55,7 @@ class RenameKotlinImplicitLambdaParameter : KotlinVariableInplaceRenameHandler()
             val target = itExpression.mainReference.resolveToDescriptors(itExpression.analyze()).single()
             val containingDescriptor = target.containingDeclaration ?: return null
             val functionLiteral = DescriptorToSourceUtils.descriptorToDeclaration(containingDescriptor) as? KtFunctionLiteral ?: return null
-            val newExpr = KtPsiFactory(itExpression).createExpression("{ it -> }") as KtLambdaExpression
+            val newExpr = KtPsiFactory(itExpression.project).createExpression("{ it -> }") as KtLambdaExpression
             val arrow = newExpr.functionLiteral.arrow ?: return null
             runWriteAction {
                 functionLiteral.addRangeAfter(

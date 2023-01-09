@@ -9,7 +9,10 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.codeInsight.lookup.WeighingContext
 import com.intellij.openapi.util.Key
 import com.intellij.psi.util.proximity.PsiProximityComparator
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.codeInsight.ENUM_VALUES_METHOD_NAME
+import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.implCommon.weighers.SoftDeprecationWeigher
 import org.jetbrains.kotlin.idea.completion.smart.*
@@ -22,6 +25,7 @@ import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.toFuzzyType
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.DescriptorUtils.isEnumClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.findOriginalTopMostOverriddenDescriptors
@@ -235,6 +239,23 @@ object K1SoftDeprecationWeigher : LookupElementWeigher(SoftDeprecationWeigher.WE
         val descriptor = declarationLookupObject.descriptor ?: return false
         val languageVersionSettings = declarationLookupObject.psiElement?.languageVersionSettings ?: return false
         return SoftDeprecationWeigher.isSoftDeprecatedFqName(descriptor.fqNameSafe, languageVersionSettings)
+                || isEnumValuesSoftDeprecatedMethod(declarationLookupObject, descriptor, languageVersionSettings)
+    }
+
+    /**
+     * Lower soft-deprecated `Enum.values()` method in completion.
+     * See [KT-22298](https://youtrack.jetbrains.com/issue/KTIJ-22298/Soft-deprecate-Enumvalues-for-Kotlin-callers).
+     */
+    private fun isEnumValuesSoftDeprecatedMethod(
+        declarationLookupObject: DescriptorBasedDeclarationLookupObject,
+        descriptor: DeclarationDescriptor,
+        languageVersionSettings: LanguageVersionSettings
+    ): Boolean {
+        return languageVersionSettings.isEnumValuesSoftDeprecateEnabled() &&
+                isEnumClass(descriptor.containingDeclaration) &&
+                ENUM_VALUES_METHOD_NAME == declarationLookupObject.name &&
+                // Don't touch user-declared methods with the name "values"
+                (descriptor as? CallableMemberDescriptor)?.kind == CallableMemberDescriptor.Kind.SYNTHESIZED
     }
 }
 
@@ -396,7 +417,7 @@ object PreferLessParametersWeigher : LookupElementWeigher("kotlin.preferLessPara
 
 class CallableReferenceWeigher(private val callType: CallType<*>) : LookupElementWeigher("kotlin.callableReference") {
     override fun weigh(element: LookupElement): Int? {
-        if (callType == CallType.CALLABLE_REFERENCE || element.getUserData(SMART_COMPLETION_ITEM_PRIORITY_KEY) == SmartCompletionItemPriority.CALLABLE_REFERENCE) {
+        if (callType is CallType.CallableReference || element.getUserData(SMART_COMPLETION_ITEM_PRIORITY_KEY) == SmartCompletionItemPriority.CALLABLE_REFERENCE) {
             val descriptor = (element.`object` as? DescriptorBasedDeclarationLookupObject)?.descriptor as? CallableDescriptor
             return if (descriptor?.returnType?.isNothing() == true) 1 else 0
         }

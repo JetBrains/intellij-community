@@ -7,20 +7,27 @@ import com.apple.eawt.FullScreenListener;
 import com.apple.eawt.FullScreenUtilities;
 import com.apple.eawt.event.FullScreenEvent;
 import com.intellij.ide.ActiveWindowsWatcher;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarKt;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ToolbarUtil;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.UIUtil;
+import com.sun.jna.Native;
+import com.sun.jna.platform.mac.CoreFoundation;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.lang.reflect.Method;
 import java.util.EventListener;
 import java.util.concurrent.CompletableFuture;
@@ -43,13 +50,18 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     }
   }
 
+  interface MyCoreFoundation extends CoreFoundation {
+    MyCoreFoundation INSTANCE = Native.load("CoreFoundation", MyCoreFoundation.class);
+
+    CoreFoundation.CFStringRef CFPreferencesCopyAppValue(
+      CoreFoundation.CFStringRef key, CoreFoundation.CFStringRef applicationID);
+  }
+
   private final EventDispatcher<FSListener> myDispatcher = EventDispatcher.create(FSListener.class);
   private final MacWinTabsHandler myTabsHandler;
   private boolean myInFullScreen;
-  private boolean myIsInit;
-  private boolean myCallSetFullScreenAfterInit;
 
-  public MacMainFrameDecorator(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
+  public MacMainFrameDecorator(@NotNull IdeFrameImpl frame, @NotNull IdeGlassPane glassPane, @NotNull Disposable parentDisposable) {
     super(frame);
 
     myTabsHandler = new MacWinTabsHandler(frame, parentDisposable);
@@ -83,8 +95,8 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       myDispatcher.addListener(new FSAdapter() {
         @Override
         public void windowEnteringFullScreen(FullScreenEvent event) {
-          JRootPane rootPane = myFrame.getRootPane();
-          if (rootPane != null && rootPane.getBorder() != null && Registry.is("ide.mac.transparentTitleBarAppearance")) {
+          JRootPane rootPane = frame.getRootPane();
+          if (rootPane != null && rootPane.getBorder() != null) {
             rootPane.setBorder(null);
           }
           myTabsHandler.enteringFullScreen();
@@ -93,21 +105,20 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         @Override
         public void windowEnteredFullScreen(FullScreenEvent event) {
           // We can get the notification when the frame has been disposed
-          JRootPane rootPane = myFrame.getRootPane();
-          if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, Boolean.TRUE);
+          JRootPane rootPane = frame.getRootPane();
+          if (rootPane != null) {
+            rootPane.putClientProperty(FULL_SCREEN, Boolean.TRUE);
+          }
           enterFullScreen();
-          myFrame.validate();
+          frame.validate();
         }
 
         @Override
         public void windowExitedFullScreen(FullScreenEvent event) {
           // We can get the notification when the frame has been disposed
-          JRootPane rootPane = myFrame.getRootPane();
-          if (ExperimentalUI.isNewUI() && MainToolbarKt.isToolbarInHeader()) {
-            ToolbarUtil.removeSystemTitleBar(rootPane);
-          }
-          else {
-            ToolbarUtil.setCustomTitleBar(myFrame, rootPane, runnable -> {
+          JRootPane rootPane = frame.getRootPane();
+          if (!ExperimentalUI.isNewUI() || !MainToolbarKt.isToolbarInHeader(UISettings.getShadowInstance())) {
+            ToolbarUtil.setCustomTitleBar(frame, rootPane, runnable -> {
               if (!Disposer.isDisposed(parentDisposable)) {
                 Disposer.register(parentDisposable, runnable::run);
               }
@@ -115,11 +126,50 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           }
 
           exitFullScreen();
-          ActiveWindowsWatcher.addActiveWindow(myFrame);
-          myFrame.validate();
+          ActiveWindowsWatcher.addActiveWindow(frame);
+          frame.validate();
         }
       });
     }
+
+    if (ExperimentalUI.isNewUI()) {
+      return;
+    }
+
+    glassPane.addMousePreprocessor(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() == 2 && e.getY() <= UIUtil.getTransparentTitleBarHeight(frame.getRootPane())) {
+          CoreFoundation.CFStringRef appleActionOnDoubleClick = CoreFoundation.CFStringRef.createCFString("AppleActionOnDoubleClick");
+          CoreFoundation.CFStringRef apple_global_domain = CoreFoundation.CFStringRef.createCFString("Apple Global Domain");
+          CoreFoundation.CFStringRef res = MyCoreFoundation.INSTANCE.CFPreferencesCopyAppValue(
+            appleActionOnDoubleClick,
+            apple_global_domain);
+          if (res != null && !res.stringValue().equals("Maximize")) {
+            if (frame.getExtendedState() == Frame.ICONIFIED) {
+              frame.setExtendedState(Frame.NORMAL);
+            }
+            else {
+              frame.setExtendedState(Frame.ICONIFIED);
+            }
+          }
+          else {
+            if (frame.getExtendedState() == Frame.MAXIMIZED_BOTH) {
+              frame.setExtendedState(Frame.NORMAL);
+            }
+            else {
+              frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+            }
+          }
+          apple_global_domain.release();
+          appleActionOnDoubleClick.release();
+          if(res != null) {
+            res.release();
+          }
+        }
+        super.mouseClicked(e);
+      }
+    }, parentDisposable);
   }
 
   private void enterFullScreen() {
@@ -132,7 +182,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     myInFullScreen = false;
     storeFullScreenStateIfNeeded();
 
-    JRootPane rootPane = myFrame.getRootPane();
+    JRootPane rootPane = frame.getRootPane();
     if (rootPane != null) {
       rootPane.putClientProperty(FULL_SCREEN, null);
     }
@@ -142,25 +192,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
   private void storeFullScreenStateIfNeeded() {
     // todo should we really check that frame has not null project as it was implemented previously?
-    myFrame.doLayout();
-  }
-
-  @Override
-  public void frameInit() {
-    myIsInit = true;
-    myTabsHandler.frameInit();
-    if (myCallSetFullScreenAfterInit) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Sets full screen after init frame: " + myFrame);
-      }
-      myCallSetFullScreenAfterInit = false;
-      toggleFullScreen(true);
-    }
-  }
-
-  @Override
-  public void frameShow() {
-    myTabsHandler.frameShow();
+    frame.doLayout();
   }
 
   @Override
@@ -176,7 +208,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   @Override
   public @NotNull CompletableFuture<Boolean> toggleFullScreen(boolean state) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Full screen state " + state + " requested for " + myFrame);
+      LOG.debug("Full screen state " + state + " requested for " + frame);
     }
     CompletableFuture<Boolean> promise = new CompletableFuture<>();
     // We delay the execution using 'invokeLater' to account for the case when window might be made visible in the same EDT event.
@@ -187,31 +219,23 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     SwingUtilities.invokeLater(() -> {
       if (myInFullScreen == state) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Full screen is already at state " + state + " for " + myFrame);
+          LOG.debug("Full screen is already at state " + state + " for " + frame);
         }
         promise.complete(state);
       }
       else if (toggleFullScreenMethod == null) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Full screen transitioning isn't supported for " + myFrame);
+          LOG.debug("Full screen transitioning isn't supported for " + frame);
         }
         promise.complete(null);
       }
       else {
-        if (!myIsInit && !myFrame.isValid()) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Sets full screen before init frame: " + myFrame);
-          }
-          myCallSetFullScreenAfterInit = true;
-          promise.complete(false);
-          return;
-        }
         AtomicBoolean preEventReceived = new AtomicBoolean();
         FSAdapter listener = new FSAdapter() {
           @Override
           public void windowEnteringFullScreen(FullScreenEvent e) {
             if (LOG.isDebugEnabled()) {
-              LOG.debug("entering full screen: " + myFrame);
+              LOG.debug("entering full screen: " + frame);
             }
             preEventReceived.set(true);
           }
@@ -219,7 +243,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           @Override
           public void windowExitingFullScreen(FullScreenEvent e) {
             if (LOG.isDebugEnabled()) {
-              LOG.debug("exiting full screen: " + myFrame);
+              LOG.debug("exiting full screen: " + frame);
             }
             preEventReceived.set(true);
           }
@@ -227,16 +251,18 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           @Override
           public void windowExitedFullScreen(FullScreenEvent event) {
             if (LOG.isDebugEnabled()) {
-              LOG.debug("exited full screen: " + myFrame);
+              LOG.debug("exited full screen: " + frame);
             }
+            notifyFrameComponents(false);
             promise.complete(false);
           }
 
           @Override
           public void windowEnteredFullScreen(FullScreenEvent event) {
             if (LOG.isDebugEnabled()) {
-              LOG.debug("entered full screen: " + myFrame);
+              LOG.debug("entered full screen: " + frame);
             }
+            notifyFrameComponents(true);
             promise.complete(true);
           }
         };
@@ -244,7 +270,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         myDispatcher.addListener(listener);
 
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Toggling full screen for " + myFrame);
+          LOG.debug("Toggling full screen for " + frame);
         }
         invokeAppMethod(toggleFullScreenMethod);
 
@@ -257,13 +283,14 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
             // does nothing is when it's invoked for an 'inactive' tab in a 'tabbed' window group.
             if (preEventReceived.get()) {
               if (LOG.isDebugEnabled()) {
-                LOG.debug("pre-transitioning event received for: " + myFrame);
+                LOG.debug("pre-transitioning event received for: " + frame);
               }
             }
             else {
               if (LOG.isDebugEnabled()) {
-                LOG.debug("pre-transitioning event not received for: " + myFrame);
+                LOG.debug("pre-transitioning event not received for: " + frame);
               }
+              notifyFrameComponents(myInFullScreen);
               promise.complete(myInFullScreen);
             }
           });
@@ -275,7 +302,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
   private void invokeAppMethod(Method method) {
     try {
-      method.invoke(Application.getApplication(), myFrame);
+      method.invoke(Application.getApplication(), frame);
     }
     catch (Exception e) {
       LOG.warn(e);
@@ -285,6 +312,11 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   @Override
   public void appClosing() {
     myTabsHandler.appClosing();
+  }
+
+  @Override
+  public boolean isTabbedWindow() {
+    return MergeAllWindowsAction.isTabbedWindow(frame);
   }
 
   private interface FSListener extends FullScreenListener, EventListener {

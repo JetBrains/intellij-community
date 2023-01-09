@@ -226,7 +226,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
-      final int CHUNK_SIZE = 10000;
+      final int CHUNK_SIZE = 2000;
 
       IndexingContext context = getIndex(indexId);
       synchronized (context) {

@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.util.Comparing;
@@ -15,9 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class CloseAllEditorsToTheLeftAction extends CloseEditorsActionBase {
-
   @Override
-  protected boolean isFileToClose(EditorComposite editor, EditorWindow window) {
+  protected boolean isFileToClose(@NotNull EditorComposite editor, @NotNull EditorWindow window, @NotNull FileEditorManagerEx fileEditorManager) {
     return false;
   }
 

@@ -11,6 +11,7 @@ interface XAttachDebuggerButtonPresentationProvider {
   fun getCustomActionPresentation(): String
 }
 
+@Nls
 fun XAttachDebugger?.getActionPresentation(): String {
   if (this == null) return XDebuggerBundle.message("xdebugger.attach.button.no.debugger.name")
   if (this is XAttachDebuggerButtonPresentationProvider) return getCustomActionPresentation()

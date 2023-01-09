@@ -2,8 +2,8 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.impl.TrustStateListener;
 import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.impl.trustedProjects.TrustedProjectsListener;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
@@ -34,6 +34,7 @@ import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.execution.SyncBundle;
+import org.jetbrains.idea.maven.indices.MavenIndices;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
@@ -46,6 +47,9 @@ import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.function.Predicate;
+
+import static org.jetbrains.idea.maven.server.DummyMavenServerConnector.isDummy;
 
 public final class MavenServerManager implements Disposable {
   public static final String BUNDLED_MAVEN_2 = "Bundled (Maven 2)";
@@ -56,14 +60,17 @@ public final class MavenServerManager implements Disposable {
 
   //TODO: should be replaced by map, where key is the indexing directory. (local/wsl)
   private MavenIndexingConnectorImpl myIndexingConnector = null;
+  private MavenIndexerWrapper myIndexerWrapper = null;
 
   private File eventListenerJar;
-
 
   public Collection<MavenServerConnector> getAllConnectors() {
     Set<MavenServerConnector> set = Collections.newSetFromMap(new IdentityHashMap<>());
     synchronized (myMultimoduleDirToConnectorMap) {
       set.addAll(myMultimoduleDirToConnectorMap.values());
+      if (myIndexingConnector != null) {
+        set.add(myIndexingConnector);
+      }
     }
     return set;
   }
@@ -72,6 +79,26 @@ public final class MavenServerManager implements Disposable {
     synchronized (myMultimoduleDirToConnectorMap) {
       myMultimoduleDirToConnectorMap.entrySet().removeIf(e -> e.getValue() == connector);
     }
+  }
+
+  public void restartMavenConnectors(Project project, boolean wait, Predicate<MavenServerConnector> condition) {
+    List<MavenServerConnector> connectorsToShutDown = new ArrayList<>();
+    synchronized (myMultimoduleDirToConnectorMap) {
+      getAllConnectors().forEach(it -> {
+        if (project.equals(it.getProject()) && condition.test(it)) {
+          connectorsToShutDown.add(it);
+        }
+      });
+    }
+    MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, SyncBundle.message("maven.sync.restarting"), false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        connectorsToShutDown.forEach(it -> {
+          shutdownConnector(it, wait);
+        });
+      }
+    });
   }
 
   public static MavenServerManager getInstance() {
@@ -111,12 +138,20 @@ public final class MavenServerManager implements Disposable {
       }
     });
 
-    connection.subscribe(TrustStateListener.TOPIC, new TrustStateListener() {
+    connection.subscribe(TrustedProjectsListener.TOPIC, new TrustedProjectsListener() {
       @Override
       public void onProjectTrusted(@NotNull Project project) {
         MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
         if (manager.isMavenizedProject()) {
-          MavenUtil.restartMavenConnectors(project, true);
+          MavenUtil.restartMavenConnectors(project, true, it -> isDummy(it));
+        }
+      }
+
+      @Override
+      public void onProjectUntrusted(@NotNull Project project) {
+        MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+        if (manager.isMavenizedProject()) {
+          MavenUtil.restartMavenConnectors(project, true, it -> !isDummy(it));
         }
       }
 
@@ -193,7 +228,7 @@ public final class MavenServerManager implements Disposable {
                                                              String multimoduleDirectory) {
     MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multimoduleDirectory);
     String vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory);
-    Integer debugPort = getDebugPort(project);
+    Integer debugPort = getFreeDebugPort();
     MavenServerConnector connector;
     if (TrustedProjects.isTrusted(project) || project.isDefault()) {
       connector = new MavenServerConnectorImpl(project, this, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
@@ -214,7 +249,7 @@ public final class MavenServerManager implements Disposable {
   }
 
 
-  private static Integer getDebugPort(@Nullable Project project) {
+  private static Integer getFreeDebugPort() {
     if (Registry.is("maven.server.debug")) {
       try {
         return NetUtils.findAvailableSocketPort();
@@ -262,7 +297,7 @@ public final class MavenServerManager implements Disposable {
 
   @Override
   public void dispose() {
-    shutdown(true);
+    shutdown(false);
   }
 
 
@@ -278,6 +313,7 @@ public final class MavenServerManager implements Disposable {
     synchronized (myMultimoduleDirToConnectorMap) {
       if (myIndexingConnector == connector) {
         myIndexingConnector = null;
+        myIndexerWrapper = null;
         return connector;
       }
       if (!myMultimoduleDirToConnectorMap.values().remove(connector)) {
@@ -299,7 +335,6 @@ public final class MavenServerManager implements Disposable {
 
     shutdownConnector(myIndexingConnector, wait);
     values.forEach(c -> shutdownConnector(c, wait));
-
   }
 
   public static boolean verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion) {
@@ -417,38 +452,73 @@ public final class MavenServerManager implements Disposable {
 
   public MavenIndexerWrapper createIndexer(@NotNull Project project) {
     if (Registry.is("maven.dedicated.indexer")) {
-      return createDedicatedIndexer(project);
+      return createDedicatedIndexer();
     }
     else {
       return createLegacyIndexer(project);
     }
   }
 
-  private MavenIndexerWrapper createDedicatedIndexer(@NotNull Project project) {
-    return new MavenIndexerWrapper(null) {
+  private MavenIndexerWrapper createDedicatedIndexer() {
+    if (myIndexerWrapper != null) return myIndexerWrapper;
+    synchronized (myMultimoduleDirToConnectorMap) {
+      if (myIndexerWrapper != null) return myIndexerWrapper;
+      String workingDir = SystemUtils.getUserHome().getAbsolutePath();
+      myIndexerWrapper =
+        new MavenIndexerWrapper(null) {
 
-      @Override
-      protected @NotNull MavenServerIndexer create() throws RemoteException {
-        MavenServerConnector indexingConnector = getIndexingConnector();
-        return indexingConnector.createIndexer();
-      }
+          @Override
+          protected MavenIndices createMavenIndices() {
+            MavenIndices indices = new MavenIndices(this, getIndicesDir().toFile());
+            Disposer.register(MavenServerManager.this, indices);
+            return indices;
+          }
 
-      private MavenServerConnector getIndexingConnector() {
-        if (myIndexingConnector != null) return myIndexingConnector;
-        synchronized (myMultimoduleDirToConnectorMap) {
-          if (myIndexingConnector != null) return myIndexingConnector;
-          myIndexingConnector = new MavenIndexingConnectorImpl(MavenServerManager.this,
-                                                               JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(),
-                                                               "",
-                                                               getDebugPort(null),
-                                                               MavenDistributionsCache.resolveEmbeddedMavenHome(),
-                                                               ObjectUtils.chooseNotNull(project.getBasePath(),
-                                                                                         SystemUtils.getUserHome().getAbsolutePath()));
-          myIndexingConnector.connect();
-        }
-        return myIndexingConnector;
-      }
-    };
+          @Override
+          protected @NotNull MavenServerIndexer create() throws RemoteException {
+            MavenServerConnector indexingConnector = getIndexingConnector();
+            return indexingConnector.createIndexer();
+          }
+
+          @Override
+          protected synchronized void handleRemoteError(RemoteException e) {
+            super.handleRemoteError(e);
+            if (waitIfNotIdeaShutdown()) {
+              MavenIndexingConnectorImpl indexingConnector = myIndexingConnector;
+              if (indexingConnector != null && !indexingConnector.checkConnected()) {
+                shutdownConnector(indexingConnector, true);
+              }
+            }
+          }
+
+          private static boolean waitIfNotIdeaShutdown() {
+            try {
+              Thread.sleep(100);
+              return true;
+            }
+            catch (InterruptedException ex) {
+              Thread.currentThread().interrupt();
+            }
+            return false;
+          }
+
+          private MavenServerConnector getIndexingConnector() {
+            if (myIndexingConnector != null) return myIndexingConnector;
+            synchronized (myMultimoduleDirToConnectorMap) {
+              if (myIndexingConnector != null) return myIndexingConnector;
+              myIndexingConnector = new MavenIndexingConnectorImpl(MavenServerManager.this,
+                                                                   JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(),
+                                                                   "",
+                                                                   getFreeDebugPort(),
+                                                                   MavenDistributionsCache.resolveEmbeddedMavenHome(),
+                                                                   workingDir);
+              myIndexingConnector.connect();
+            }
+            return myIndexingConnector;
+          }
+        };
+    }
+    return myIndexerWrapper;
   }
 
   private MavenIndexerWrapper createLegacyIndexer(@NotNull Project project) {
@@ -460,12 +530,26 @@ public final class MavenServerManager implements Disposable {
     if (MavenWslUtil.tryGetWslDistributionForPath(path) != null) {
       return new MavenIndexerWrapper(null) {
         @Override
+        protected MavenIndices createMavenIndices() {
+          MavenIndices indices = new MavenIndices(this, getIndicesDir().toFile());
+          Disposer.register(project, indices);
+          return indices;
+        }
+
+        @Override
         protected @NotNull MavenServerIndexer create() throws RemoteException {
           return new DummyIndexer();
         }
       };
     }
     return new MavenIndexerWrapper(null) {
+      @Override
+      protected MavenIndices createMavenIndices() {
+        MavenIndices indices = new MavenIndices(this, getIndicesDir().toFile());
+        Disposer.register(project, indices);
+        return indices;
+      }
+
       @NotNull
       @Override
       protected MavenServerIndexer create() throws RemoteException {

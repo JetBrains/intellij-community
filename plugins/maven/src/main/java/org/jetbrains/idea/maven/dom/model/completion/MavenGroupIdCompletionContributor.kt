@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
+import org.jetbrains.idea.maven.dom.model.completion.insert.MavenArtifactIdInsertionHandler
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionHandler
 import org.jetbrains.idea.maven.indices.IndicesBundle
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
@@ -41,15 +42,18 @@ class MavenGroupIdCompletionContributor : MavenCoordinateCompletionContributor("
   override fun fillResults(result: CompletionResultSet,
                            coordinates: MavenDomShortArtifactCoordinates,
                            cld: ConcurrentLinkedDeque<RepositoryArtifactData>,
-                           promise: Promise<Int>) {
+                           promise: Promise<Int>,
+                           completionPrefix: String) {
     val set = HashSet<String>()
     while (promise.state == Promise.State.PENDING || !cld.isEmpty()) {
       ProgressManager.checkCanceled()
       val item = cld.poll()
       if (item is MavenRepositoryArtifactInfo && set.add(item.groupId)) {
-        result
-          .addElement(
-            MavenDependencyCompletionUtil.lookupElement(item, item.groupId).withInsertHandler(MavenDependencyInsertionHandler.INSTANCE))
+        result.addElement(
+          MavenDependencyCompletionUtil.lookupElement(item, item.groupId)
+            .withInsertHandler(MavenDependencyInsertionHandler.INSTANCE)
+            .also { it.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix) }
+        )
       }
     }
   }

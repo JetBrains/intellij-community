@@ -85,8 +85,8 @@ class RescanIndexesAction : RecoveryAction {
         }
       }
 
-      override fun tryMergeWith(taskFromQueue: DumbModeTask): DumbModeTask? =
-        if (taskFromQueue is UnindexedFilesScanner && project == taskFromQueue.myProject && taskFromQueue.javaClass == javaClass) this else null
+      override fun tryMergeWith(taskFromQueue: UnindexedFilesScanner): UnindexedFilesScanner? =
+        if (project == taskFromQueue.myProject && taskFromQueue.javaClass == javaClass) this else null
     }.queue(project)
     try {
       return ProgressIndicatorUtils.awaitWithCheckCanceled(historyFuture).extractConsistencyProblems() +

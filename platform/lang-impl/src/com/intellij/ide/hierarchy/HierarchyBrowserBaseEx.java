@@ -241,8 +241,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   @Nullable
   protected Color getFileColorForNode(Object node) {
     if (node instanceof HierarchyNodeDescriptor) {
-      PsiFile containingFile = SlowOperations.allowSlowOperations(() -> ((HierarchyNodeDescriptor)node).getContainingFile());
-      return ProjectViewTree.getColorForElement(containingFile);
+      return ((HierarchyNodeDescriptor)node).getBackgroundColorCached();
     }
     return null;
   }

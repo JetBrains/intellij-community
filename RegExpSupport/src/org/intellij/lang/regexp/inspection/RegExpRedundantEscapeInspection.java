@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
@@ -21,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 /**
  * @author Bas Leijdekkers
  */
@@ -29,9 +32,9 @@ public class RegExpRedundantEscapeInspection extends LocalInspectionTool {
   public boolean ignoreEscapedMetaCharacters = false;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(RegExpBundle.message("inspection.option.ignore.escaped.closing.brackets"),
-                                          this, "ignoreEscapedMetaCharacters");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreEscapedMetaCharacters", RegExpBundle.message("inspection.option.ignore.escaped.closing.brackets")));
   }
 
   @NotNull

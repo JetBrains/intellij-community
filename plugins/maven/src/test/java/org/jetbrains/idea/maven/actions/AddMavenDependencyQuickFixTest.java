@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.actions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase;
@@ -55,9 +54,11 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
 
       }""");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     myFixture.configureFromExistingVirtualFile(f);
 
@@ -86,9 +87,11 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
 
       }""");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     myFixture.configureFromExistingVirtualFile(f);
 
@@ -103,15 +106,17 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
     waitForImportCompletion();
     String pomText = PsiManager.getInstance(myProject).findFile(myProjectPom).getText();
     assertEquals("""
-                   <?xml version="1.0"?><project xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">  <modelVersion>4.0.0</modelVersion><groupId>test</groupId><artifactId>project</artifactId><version>1</version>
-                       <dependencies>
-                           <dependency>
-                               <groupId>commons-io</groupId>
-                               <artifactId>commons-io</artifactId>
-                               <version>2.4</version>
-                           </dependency>
-                       </dependencies>
-                   </project>""", pomText);
+                    <?xml version="1.0"?><project xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">  <modelVersion>4.0.0</modelVersion><groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                        <dependencies>
+                            <dependency>
+                                <groupId>commons-io</groupId>
+                                <artifactId>commons-io</artifactId>
+                                <version>2.4</version>
+                            </dependency>
+                        </dependencies>
+                    </project>""", pomText);
   }
 
   @Test 
@@ -170,9 +175,11 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
 
       }""");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     myFixture.configureFromExistingVirtualFile(f);
 

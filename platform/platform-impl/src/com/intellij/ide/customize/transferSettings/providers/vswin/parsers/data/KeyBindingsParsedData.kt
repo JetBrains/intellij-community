@@ -73,7 +73,7 @@ class KeyBindingsParsedData(majorVersion: Int, val scheme: String, userShortcuts
   companion object {
     const val globalScope = "Global"
     const val key = "Environment_KeyBindings"
-    val logger = logger<KeyBindingsParsedData>()
+    private val logger = logger<KeyBindingsParsedData>()
   }
 
   private val isReSharperInstalled = hive?.registry?.extensions?.contains(KnownPlugins.ReSharper) == true

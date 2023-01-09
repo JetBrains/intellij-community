@@ -45,9 +45,7 @@ public class SplitLineAction extends EditorAction {
 
       if (CharArrayUtil.containsOnlyWhiteSpaces(beforeCaret)) {
         String strToInsert = "";
-        if (beforeCaret != null) {
-          strToInsert +=  beforeCaret.toString();
-        }
+        strToInsert += beforeCaret.toString();
         strToInsert += "\n";
         document.insertString(lineStart, strToInsert);
         editor.getCaretModel().moveToOffset(offset);

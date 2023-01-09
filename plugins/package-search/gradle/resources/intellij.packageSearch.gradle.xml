@@ -27,10 +27,7 @@
                 hasStaticDescription="true"
                 level="WEAK WARNING"/>
 
-        <packagesearch.coroutineProjectModuleOperationProvider
-                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleProjectModuleOperationProvider"/>
-
-        <packagesearch.coroutineModuleTransformer
+        <packagesearch.moduleTransformer
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleModuleTransformer"/>
 
         <packagesearch.flowModuleChangesSignalProvider
@@ -53,6 +50,17 @@
 
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.PackageSearchGradleConfiguration"/>
+
+        <packagesearch.resolvedDependenciesProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleResolvedDependenciesProvider"/>
+
+        <externalProjectDataService implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleConfigurationReportNodeProcessor"/>
+
+
+    </extensions>
+
+    <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+        <projectResolve implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleConfigurationResolver"/>
     </extensions>
 
     <actions>

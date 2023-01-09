@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
@@ -43,15 +43,15 @@ public class ToggleFieldBreakpointAction extends AnAction {
     }
     final SourcePosition place = getPlace(e);
 
-    if(place != null) {
+    if (place != null) {
       Document document = PsiDocumentManager.getInstance(project).getDocument(place.getFile());
       if (document != null) {
         DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(project);
         BreakpointManager manager = debuggerManager.getBreakpointManager();
         final int offset = place.getOffset();
-        final Breakpoint breakpoint = offset >= 0? manager.findBreakpoint(document, offset, FieldBreakpoint.CATEGORY) : null;
+        final Breakpoint breakpoint = offset >= 0 ? manager.findBreakpoint(document, offset, FieldBreakpoint.CATEGORY) : null;
 
-        if(breakpoint == null) {
+        if (breakpoint == null) {
           FieldBreakpoint fieldBreakpoint = manager.addFieldBreakpoint(document, offset);
           if (fieldBreakpoint != null) {
             final Editor editor = e.getData(CommonDataKeys.EDITOR);
@@ -68,14 +68,14 @@ public class ToggleFieldBreakpointAction extends AnAction {
   }
 
   @Override
-  public void update(@NotNull AnActionEvent event){
+  public void update(@NotNull AnActionEvent event) {
     SourcePosition place = getPlace(event);
     boolean toEnable = place != null;
 
     Presentation presentation = event.getPresentation();
-    if(ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
-       ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
-       ActionPlaces.BOOKMARKS_VIEW_POPUP.equals(event.getPlace())) {
+    if (ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
+        ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
+        ActionPlaces.BOOKMARKS_VIEW_POPUP.equals(event.getPlace())) {
       presentation.setVisible(toEnable);
     }
     presentation.setVisible(toEnable);
@@ -90,14 +90,14 @@ public class ToggleFieldBreakpointAction extends AnAction {
   private SourcePosition getPlace(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final Project project = event.getData(CommonDataKeys.PROJECT);
-    if(project == null) {
+    if (project == null) {
       return null;
     }
     if (ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.BOOKMARKS_VIEW_POPUP.equals(event.getPlace())) {
       final PsiElement psiElement = event.getData(CommonDataKeys.PSI_ELEMENT);
-      if(psiElement instanceof PsiField) {
+      if (psiElement instanceof PsiField) {
         return SourcePosition.createFromElement(psiElement);
       }
       return null;
@@ -140,7 +140,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
         FileType fileType = virtualFile != null ? virtualFile.getFileType() : null;
         if (JavaFileType.INSTANCE == fileType || JavaClassFileType.INSTANCE == fileType) {
           final PsiField field = FieldBreakpoint.findField(project, document, editor.getCaretModel().getOffset());
-          if(field != null){
+          if (field != null) {
             return SourcePosition.createFromElement(field);
           }
         }
@@ -148,5 +148,4 @@ public class ToggleFieldBreakpointAction extends AnAction {
     }
     return null;
   }
-
 }

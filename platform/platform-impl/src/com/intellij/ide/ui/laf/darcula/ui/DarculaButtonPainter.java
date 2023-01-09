@@ -24,9 +24,9 @@ import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.*;
 public class DarculaButtonPainter implements Border, UIResource {
   private static final int myOffset = 4;
 
-  private static final Color GOT_IT_BORDER_COLOR_START = JBColor.namedColor("GotItTooltip.startBorderColor",
+  private static final Color GOT_IT_BORDER_COLOR_START = JBColor.namedColor("GotItTooltip.Button.startBorderColor",
                                                                            JBUI.CurrentTheme.Button.buttonOutlineColorStart(false));
-  private static final Color GOT_IT_BORDER_COLOR_END = JBColor.namedColor("GotItTooltip.endBorderColor",
+  private static final Color GOT_IT_BORDER_COLOR_END = JBColor.namedColor("GotItTooltip.Button.endBorderColor",
                                                                           JBUI.CurrentTheme.Button.buttonOutlineColorEnd(false));
 
 

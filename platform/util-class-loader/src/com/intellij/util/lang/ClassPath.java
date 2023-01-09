@@ -110,7 +110,7 @@ public final class ClassPath {
     }
   }
 
-  public synchronized void reset(@NotNull List<Path> paths) {
+  public synchronized void reset(@NotNull List<? extends Path> paths) {
     lastLoaderProcessed.set(0);
     allUrlsWereProcessed = false;
     loaders.clear();
@@ -138,7 +138,7 @@ public final class ClassPath {
   }
 
   /** Adding URLs to classpath at runtime could lead to hard-to-debug errors */
-  synchronized void addFiles(@NotNull List<Path> files) {
+  synchronized void addFiles(@NotNull List<? extends Path> files) {
     for (int i = files.size() - 1; i >= 0; i--) {
       this.files.add(files.get(i));
     }
@@ -146,7 +146,7 @@ public final class ClassPath {
   }
 
   // use only after approval
-  public synchronized void appendFiles(@NotNull List<Path> newList) {
+  public synchronized void appendFiles(@NotNull List<? extends Path> newList) {
     if (newList.isEmpty()) {
       return;
     }

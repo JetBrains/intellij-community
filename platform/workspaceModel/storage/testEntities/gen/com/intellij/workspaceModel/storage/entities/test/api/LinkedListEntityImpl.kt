@@ -6,9 +6,8 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -17,6 +16,9 @@ import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -38,11 +40,15 @@ open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedLi
   override val next: LinkedListEntityId
     get() = dataSource.next
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: LinkedListEntityData?) : ModifiableWorkspaceEntityBase<LinkedListEntity>(), LinkedListEntity.Builder {
+  class Builder(result: LinkedListEntityData?) : ModifiableWorkspaceEntityBase<LinkedListEntity, LinkedListEntityData>(
+    result), LinkedListEntity.Builder {
     constructor() : this(LinkedListEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -62,7 +68,7 @@ open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedLi
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -92,8 +98,7 @@ open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedLi
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.myName != dataSource.myName) this.myName = dataSource.myName
       if (this.next != dataSource.next) this.next = dataSource.next
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -101,7 +106,7 @@ open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedLi
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -110,7 +115,7 @@ open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedLi
       get() = getEntityData().myName
       set(value) {
         checkModificationAllowed()
-        getEntityData().myName = value
+        getEntityData(true).myName = value
         changedProperty.add("myName")
       }
 
@@ -118,34 +123,33 @@ open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedLi
       get() = getEntityData().next
       set(value) {
         checkModificationAllowed()
-        getEntityData().next = value
+        getEntityData(true).next = value
         changedProperty.add("next")
 
       }
 
-    override fun getEntityData(): LinkedListEntityData = result ?: super.getEntityData() as LinkedListEntityData
     override fun getEntityClass(): Class<LinkedListEntity> = LinkedListEntity::class.java
   }
 }
 
-class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<LinkedListEntity>(), SoftLinkable {
+class LinkedListEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LinkedListEntity>(), SoftLinkable {
   lateinit var myName: String
   lateinit var next: LinkedListEntityId
 
   fun isMyNameInitialized(): Boolean = ::myName.isInitialized
   fun isNextInitialized(): Boolean = ::next.isInitialized
 
-  override fun getLinks(): Set<PersistentEntityId<*>> {
-    val result = HashSet<PersistentEntityId<*>>()
+  override fun getLinks(): Set<SymbolicEntityId<*>> {
+    val result = HashSet<SymbolicEntityId<*>>()
     result.add(next)
     return result
   }
 
-  override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     index.index(this, next)
   }
 
-  override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     // TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     val removedItem_next = mutablePreviousSet.remove(next)
@@ -157,7 +161,7 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<Link
     }
   }
 
-  override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
+  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
     var changed = false
     val next_data = if (next == oldLink) {
       changed = true
@@ -172,29 +176,24 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<Link
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<LinkedListEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<LinkedListEntity> {
     val modifiable = LinkedListEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): LinkedListEntity {
     return getCached(snapshot) {
       val entity = LinkedListEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
     }
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
+  override fun symbolicId(): SymbolicEntityId<*> {
     return LinkedListEntityId(myName)
   }
 

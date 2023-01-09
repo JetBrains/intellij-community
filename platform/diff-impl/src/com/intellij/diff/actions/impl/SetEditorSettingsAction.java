@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions.impl;
 
 import com.intellij.diff.tools.util.SyncScrollSupport;
@@ -245,7 +245,9 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
 
     private void apply(@NotNull HighlightingLevel layer) {
       for (Editor editor : myEditors.get()) {
-        ((EditorImpl)editor).setHighlightingPredicate(layer.getCondition());
+        if (editor instanceof EditorImpl) {
+          ((EditorImpl)editor).setHighlightingPredicate(layer.getCondition());
+        }
       }
     }
 

@@ -30,7 +30,7 @@ import java.util.Set;
  * Date: Apr 28, 2006
  * Time: 10:56:55 AM
  */
-public class IconResourceInjector {
+public final class IconResourceInjector {
 
   public static void injectIcon(InputStream stream, DirectoryEntry root, int iconId) throws IOException {
     IconFile iconFile = new IconFile();

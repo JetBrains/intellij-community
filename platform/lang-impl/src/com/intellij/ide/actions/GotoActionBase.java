@@ -126,7 +126,7 @@ public abstract class GotoActionBase extends AnAction {
       if (selectedText != null) return new Pair<>(selectedText, 0);
     }
 
-    final String query = e.getData(SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY);
+    final String query = e.getData(PlatformDataKeys.SPEED_SEARCH_TEXT);
     if (!StringUtil.isEmpty(query)) {
       return Pair.create(query, 0);
     }

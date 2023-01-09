@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -17,6 +16,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -42,11 +44,15 @@ open class XChildWithOptionalParentEntityImpl(val dataSource: XChildWithOptional
   override val optionalParent: XParentEntity?
     get() = snapshot.extractOneToManyParent(OPTIONALPARENT_CONNECTION_ID, this)
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: XChildWithOptionalParentEntityData?) : ModifiableWorkspaceEntityBase<XChildWithOptionalParentEntity>(), XChildWithOptionalParentEntity.Builder {
+  class Builder(result: XChildWithOptionalParentEntityData?) : ModifiableWorkspaceEntityBase<XChildWithOptionalParentEntity, XChildWithOptionalParentEntityData>(
+    result), XChildWithOptionalParentEntity.Builder {
     constructor() : this(XChildWithOptionalParentEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -66,7 +72,7 @@ open class XChildWithOptionalParentEntityImpl(val dataSource: XChildWithOptional
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -92,12 +98,7 @@ open class XChildWithOptionalParentEntityImpl(val dataSource: XChildWithOptional
       dataSource as XChildWithOptionalParentEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.childProperty != dataSource.childProperty) this.childProperty = dataSource.childProperty
-      if (parents != null) {
-        val optionalParentNew = parents.filterIsInstance<XParentEntity?>().singleOrNull()
-        if ((optionalParentNew == null && this.optionalParent != null) || (optionalParentNew != null && this.optionalParent == null) || (optionalParentNew != null && this.optionalParent != null && (this.optionalParent as WorkspaceEntityBase).id != (optionalParentNew as WorkspaceEntityBase).id)) {
-          this.optionalParent = optionalParentNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -105,7 +106,7 @@ open class XChildWithOptionalParentEntityImpl(val dataSource: XChildWithOptional
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -114,7 +115,7 @@ open class XChildWithOptionalParentEntityImpl(val dataSource: XChildWithOptional
       get() = getEntityData().childProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().childProperty = value
+        getEntityData(true).childProperty = value
         changedProperty.add("childProperty")
       }
 
@@ -132,21 +133,21 @@ open class XChildWithOptionalParentEntityImpl(val dataSource: XChildWithOptional
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, OPTIONALPARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, OPTIONALPARENT_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(OPTIONALPARENT_CONNECTION_ID, this, value)
         }
         else {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, OPTIONALPARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, OPTIONALPARENT_CONNECTION_ID)] = data
           }
@@ -157,7 +158,6 @@ open class XChildWithOptionalParentEntityImpl(val dataSource: XChildWithOptional
         changedProperty.add("optionalParent")
       }
 
-    override fun getEntityData(): XChildWithOptionalParentEntityData = result ?: super.getEntityData() as XChildWithOptionalParentEntityData
     override fun getEntityClass(): Class<XChildWithOptionalParentEntity> = XChildWithOptionalParentEntity::class.java
   }
 }
@@ -167,22 +167,17 @@ class XChildWithOptionalParentEntityData : WorkspaceEntityData<XChildWithOptiona
 
   fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<XChildWithOptionalParentEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<XChildWithOptionalParentEntity> {
     val modifiable = XChildWithOptionalParentEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): XChildWithOptionalParentEntity {
     return getCached(snapshot) {
       val entity = XChildWithOptionalParentEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

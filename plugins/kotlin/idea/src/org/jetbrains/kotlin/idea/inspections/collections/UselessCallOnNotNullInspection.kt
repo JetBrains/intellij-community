@@ -98,7 +98,7 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
         }
 
         val copy = expression.copy().safeAs<KtQualifiedExpression>()?.apply {
-            callExpression?.calleeExpression?.replace(KtPsiFactory(expression).createExpression(newFunctionName))
+            callExpression?.calleeExpression?.replace(KtPsiFactory(expression.project).createExpression(newFunctionName))
         }
         val newContext = copy?.analyzeAsReplacement(expression, context)
         val invertedName = copy?.invertSelectorFunction(newContext)?.callExpression?.calleeExpression?.text

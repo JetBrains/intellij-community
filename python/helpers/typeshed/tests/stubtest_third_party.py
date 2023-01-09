@@ -9,21 +9,14 @@ import subprocess
 import sys
 import tempfile
 import venv
-from glob import glob
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import NoReturn
 
 import tomli
 
 
 @functools.lru_cache()
-def get_mypy_req():
-    # Use pre-release stubtest. Keep the following in sync:
-    # - get_mypy_req in tests/stubtest_third_party.py
-    # - stubtest-stdlib in .github/workflows/daily.yml
-    # - stubtest-stdlib in .github/workflows/tests.yml
-    return "git+git://github.com/python/mypy@c7a81620bef7585cca6905861bb7ef34ec12da2f"
-
+def get_mypy_req() -> str:
     with open("requirements-tests.txt") as f:
         return next(line.strip() for line in f if "mypy" in line)
 
@@ -32,7 +25,7 @@ def run_stubtest(dist: Path) -> bool:
     with open(dist / "METADATA.toml") as f:
         metadata = dict(tomli.loads(f.read()))
 
-    if not run_stubtest_for(metadata, dist):
+    if not metadata.get("stubtest", True):
         print(f"Skipping stubtest for {dist.name}\n\n")
         return True
 
@@ -113,15 +106,6 @@ def run_stubtest(dist: Path) -> bool:
             print(f"stubtest succeeded for {dist.name}", file=sys.stderr)
         print("\n\n", file=sys.stderr)
     return True
-
-
-def run_stubtest_for(metadata: dict[str, Any], dist: Path) -> bool:
-    return has_py3_stubs(dist) and metadata.get("stubtest", True)
-
-
-# Keep this in sync with mypy_test.py
-def has_py3_stubs(dist: Path) -> bool:
-    return len(glob(f"{dist}/*.pyi")) > 0 or len(glob(f"{dist}/[!@]*/__init__.pyi")) > 0
 
 
 def main() -> NoReturn:

@@ -123,7 +123,7 @@ public final class ExternalDiffTool {
 
   private static boolean show(@Nullable Project project,
                               @NotNull DiffDialogHints hints,
-                              @NotNull ThrowableConvertor<? super ProgressIndicator, List<DiffRequest>, ? extends Exception> requestsProducer) {
+                              @NotNull ThrowableConvertor<? super ProgressIndicator, ? extends List<DiffRequest>, ? extends Exception> requestsProducer) {
     try {
       List<DiffRequest> requests = computeWithModalProgress(project,
                                                             DiffBundle.message("progress.title.loading.requests"),
@@ -144,7 +144,7 @@ public final class ExternalDiffTool {
 
   @RequiresEdt
   private static void showRequests(@Nullable Project project,
-                                   @NotNull List<DiffRequest> requests,
+                                   @NotNull List<? extends DiffRequest> requests,
                                    @NotNull DiffDialogHints hints) throws IOException {
     List<DiffRequest> showInBuiltin = new ArrayList<>();
     for (DiffRequest request : requests) {

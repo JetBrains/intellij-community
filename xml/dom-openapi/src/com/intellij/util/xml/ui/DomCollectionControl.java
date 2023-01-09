@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -11,11 +11,11 @@ import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.DomElement;
@@ -99,7 +99,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
 
   @Override
   public boolean canNavigate(DomElement element) {
-    final Class<DomElement> aClass = (Class<DomElement>)ReflectionUtil.getRawType(myChildDescription.getType());
+    Class<DomElement> aClass = (Class<DomElement>)ClassUtil.getRawType(myChildDescription.getType());
 
     final DomElement domElement = element.getParentOfType(aClass, false);
 
@@ -108,7 +108,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
 
   @Override
   public void navigate(DomElement element) {
-    final Class<DomElement> aClass = (Class<DomElement>)ReflectionUtil.getRawType(myChildDescription.getType());
+    final Class<DomElement> aClass = (Class<DomElement>)ClassUtil.getRawType(myChildDescription.getType());
     final DomElement domElement = element.getParentOfType(aClass, false);
 
     int index = myCollectionElements.indexOf(domElement);

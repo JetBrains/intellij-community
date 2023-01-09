@@ -31,7 +31,6 @@ import com.intellij.projectView.BaseProjectViewTestCase;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -100,11 +99,11 @@ public class DependenciesPanelTest extends TestSourceBasedTestCase {
     DependenciesPanel dependenciesPanel = new DependenciesPanel(myProject, builder);
     try {
       JTree leftTree = dependenciesPanel.getLeftTree();
-      TreeUtil.expandAll(leftTree);
+      PlatformTestUtil.expandAll(leftTree);
       PlatformTestUtil.assertTreeEqual(leftTree, expectedLeftTree, true);
 
       JTree rightTree = dependenciesPanel.getRightTree();
-      TreeUtil.expandAll(rightTree);
+      PlatformTestUtil.expandAll(rightTree);
       PlatformTestUtil.assertTreeEqual(rightTree, expectedRightTree, true);
     }
     finally {

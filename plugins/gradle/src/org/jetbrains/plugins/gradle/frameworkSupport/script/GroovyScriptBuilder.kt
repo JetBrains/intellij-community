@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.frameworkSupport.script
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.ArgumentElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.*
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.PropertyElement
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Companion.script
 
 class GroovyScriptBuilder(indent: Int = 0) : AbstractScriptBuilder(indent) {
   override fun add(element: ScriptElement, indent: Int, isNewLine: Boolean) {
@@ -15,7 +14,7 @@ class GroovyScriptBuilder(indent: Int = 0) : AbstractScriptBuilder(indent) {
         add(element.value, indent, false)
       }
       element is CallElement && isNewLine && element.arguments.isNotEmpty() && !hasTrailingBlock(element.arguments) -> {
-        add(element.name, indent, isNewLine)
+        add(element.name, indent, isNewLine = true)
         add(" ", indent, false)
         add(element.arguments, indent)
       }
@@ -38,10 +37,5 @@ class GroovyScriptBuilder(indent: Int = 0) : AbstractScriptBuilder(indent) {
         super.add(element, indent, isNewLine)
       }
     }
-  }
-
-  companion object {
-    fun groovy(configure: ScriptTreeBuilder.() -> Unit) =
-      script(GroovyScriptBuilder(), configure)
   }
 }

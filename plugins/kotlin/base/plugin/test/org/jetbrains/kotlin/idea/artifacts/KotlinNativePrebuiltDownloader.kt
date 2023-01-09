@@ -4,9 +4,12 @@
  */
 package org.jetbrains.kotlin.idea.artifacts
 
+import org.jetbrains.kotlin.konan.file.unzipTo
+import java.io.IOException
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.absolute
 
 const val NATIVE_PREBUILT_DEV_CDN_URL = "https://download-cdn.jetbrains.com/kotlin/native/builds/dev"
 
@@ -19,7 +22,16 @@ object KotlinNativePrebuiltDownloader {
         }
     }
 
+    @Throws(IOException::class)
     fun unpackPrebuildArchive(source: Path, target: Path) {
-        TarGzipUnpacker.decompressTarGzipFile(source, target)
+        if (source.toString().endsWith(".tar.gz")) {
+            TarGzipUnpacker.decompressTarGzipFile(source, target)
+        }
+        else if (source.toString().endsWith(".zip")) {
+            source.unzipTo(target)
+        }
+        else {
+            throw IOException("Can't unpack ${source.absolute()}. Support only .tar.gz and .zip files.")
+        }
     }
 }

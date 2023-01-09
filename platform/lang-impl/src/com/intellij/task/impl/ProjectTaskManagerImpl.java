@@ -74,15 +74,28 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     return run(createModulesBuildTask(modules, false, false, false));
   }
 
+  private ProjectTask createModulesFilesTask(VirtualFile @NotNull [] files) {
+    Map<Module, List<Pair<VirtualFile, Module>>> modulesMap = stream(files)
+      .map(file -> new Pair<>(file, ProjectFileIndex.getInstance(myProject).getModuleForFile(file, false)))
+      .filter(pair -> pair.second != null)
+      .collect(groupingBy(pair -> pair.second));
+
+    var tasks = map(
+      modulesMap.entrySet(),
+      entry -> new ModuleFilesBuildTaskImpl(entry.getKey(), false, map(entry.getValue(), pair -> pair.first))
+    );
+
+    return new ProjectTaskList(tasks);
+  }
+
   @Override
   public Promise<Result> compile(VirtualFile @NotNull [] files) {
-    List<ModuleFilesBuildTask> buildTasks = map(
-      stream(files)
-        .collect(groupingBy(file -> ProjectFileIndex.getInstance(myProject).getModuleForFile(file, false)))
-        .entrySet(),
-      entry -> new ModuleFilesBuildTaskImpl(entry.getKey(), false, entry.getValue())
-    );
-    return run(new ProjectTaskList(buildTasks));
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      return run(createModulesFilesTask(files));
+    }
+
+    ProjectTask task = ReadAction.nonBlocking(() -> this.createModulesFilesTask(files)).executeSynchronously();
+    return run(task);
   }
 
   @Override
@@ -228,7 +241,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
 
   @NotNull
   private StructuredIdeActivity reportBuildStart(@NotNull ProjectTask projectTask,
-                                                 List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun) {
+                                                 List<? extends Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun) {
     Ref<Boolean> incremental = new Ref<>(null);
     AtomicInteger modules = new AtomicInteger(0);
     visitTask(projectTask, tasks -> {

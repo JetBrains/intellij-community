@@ -42,8 +42,10 @@ public class EscapedSpaceInspection extends AbstractBaseJavaLocalInspectionTool 
       if (pos == -1 || pos == text.length() - 1) break;
       char next = text.charAt(pos + 1);
       if (next == 'u') {
-        // unicode escape
-        pos += 6;
+        // unicode escape can contain several 'u', according to the spec
+        pos += 2;
+        while (pos < text.length() && text.charAt(pos) == 'u') pos++;
+        pos += 4;
         continue;
       }
       pos += 2;

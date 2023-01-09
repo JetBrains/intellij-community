@@ -8,6 +8,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -32,6 +33,7 @@ import java.util.function.Supplier;
 public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
+    Disposer.setDebugMode(false);
     super.setUp();
     RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
   }

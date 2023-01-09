@@ -152,7 +152,7 @@ object ProjectUtil {
     }
 
     var virtualFileResult: Result<VirtualFile>? = null
-    for (provider in ProjectOpenProcessor.EXTENSION_POINT_NAME.iterable) {
+    for (provider in ProjectOpenProcessor.EXTENSION_POINT_NAME.lazySequence()) {
       if (!provider.isStrongProjectInfoHolder) {
         continue
       }
@@ -522,7 +522,7 @@ object ProjectUtil {
       if (projectToClose == null) {
         val processor = CommandLineProjectOpenProcessor.getInstanceIfExists()
         if (processor != null) {
-          val opened = PlatformProjectOpenProcessor.openProjectAsync(file)
+          val opened = processor.openProjectAndFile(file = file, tempProject = false)
           if (opened != null && result == null) {
             result = opened
           }
@@ -531,7 +531,9 @@ object ProjectUtil {
       else {
         val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(file.toString()))
         if (virtualFile != null && virtualFile.isValid) {
-          OpenFileAction.openFile(virtualFile, projectToClose)
+          withContext(Dispatchers.EDT) {
+            OpenFileAction.openFile(virtualFile, projectToClose)
+          }
         }
         result = projectToClose
       }
@@ -719,7 +721,7 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
 fun <T> runBlockingUnderModalProgress(@NlsContexts.ProgressTitle title: String = "", project: Project? = null, task: suspend CoroutineScope.() -> T): T {
   if (delegateToCoroutineOnlyRunBlocking) {
     val owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project)
-    return runBlockingModal(owner, title, TaskCancellation.cancellable(), task)
+    return runBlockingModalWithRawProgressReporter(owner, title, TaskCancellation.cancellable(), task)
   }
   return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()

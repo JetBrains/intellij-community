@@ -14,6 +14,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
+import com.intellij.workspaceModel.ide.impl.AbstractWorkspaceModelCache
 import com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.LoadedProjectData
 import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
@@ -42,7 +43,7 @@ class JpsProjectLoadingListenerTest {
   fun setUp() {
     WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
     virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
-    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheImpl.PluginAwareEntityTypesResolver, virtualFileManager)
+    serializer = EntityStorageSerializerImpl(AbstractWorkspaceModelCache.PluginAwareEntityTypesResolver, virtualFileManager)
   }
 
   @After

@@ -254,7 +254,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
                                            @NotNull Map<PyExpression, PyCallableParameter> parameters,
                                            @NotNull TypeEvalContext context) {
     if (PyTypeChecker.hasGenerics(type, context)) {
-      final var substitutions = PyTypeChecker.unifyGenericCallWithParamSpecs(receiver, parameters, context);
+      final var substitutions = PyTypeChecker.unifyGenericCall(receiver, parameters, context);
       if (substitutions != null) {
         final var substitutionsWithUnresolvedReturnGenerics =
           PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(getParameters(context), type, substitutions, context);

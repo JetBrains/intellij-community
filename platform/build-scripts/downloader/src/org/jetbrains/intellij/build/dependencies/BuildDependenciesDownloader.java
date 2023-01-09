@@ -6,6 +6,7 @@ import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.Striped;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesNoopTracer;
 import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesSpan;
@@ -28,6 +29,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -58,7 +60,7 @@ public final class BuildDependenciesDownloader {
 
   // init is very expensive due to SSL initialization
   private static final class HttpClientHolder {
-    private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
+    private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER)
       .version(HttpClient.Version.HTTP_1_1).build();
   }
 
@@ -123,12 +125,12 @@ public final class BuildDependenciesDownloader {
     return path;
   }
 
-  public static synchronized Path downloadFileToCacheLocation(@NotNull BuildDependenciesCommunityRoot communityRoot, @NotNull URI uri) {
+  public static synchronized Path downloadFileToCacheLocation(@NotNull BuildDependenciesCommunityRoot communityRoot, @NotNull URI uri, @Nullable String bearerToken) {
     cleanUpIfRequired(communityRoot);
     String uriString = uri.toString();
     try {
       Path targetFile = getTargetFile(communityRoot, uriString);
-      downloadFile(uri, targetFile);
+      downloadFile(uri, targetFile, bearerToken);
       return targetFile;
     }
     catch (HttpStatusException e) {
@@ -137,6 +139,10 @@ public final class BuildDependenciesDownloader {
     catch (Exception e) {
       throw new RuntimeException("Cannot download " + uriString, e);
     }
+  }
+
+  public static Path downloadFileToCacheLocation(@NotNull BuildDependenciesCommunityRoot communityRoot, @NotNull URI uri) {
+    return downloadFileToCacheLocation(communityRoot, uri, null);
   }
 
   public static @NotNull Path getTargetFile(@NotNull BuildDependenciesCommunityRoot communityRoot, @NotNull String uriString) throws IOException {
@@ -308,7 +314,7 @@ public final class BuildDependenciesDownloader {
     }
   }
 
-  private static void downloadFile(URI uri, Path target) throws Exception {
+  private static void downloadFile(URI uri, Path target, String bearerToken) throws Exception {
     Lock lock = fileLocks.get(target);
     lock.lock();
     try {
@@ -340,7 +346,7 @@ public final class BuildDependenciesDownloader {
           LOG.info(" * Downloading " + uri + " -> " + target);
           Retry.withExponentialBackOff(() -> {
             Files.deleteIfExists(tempFile);
-            tryToDownloadFile(uri, tempFile);
+            tryToDownloadFile(uri, tempFile, bearerToken);
           });
           Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         }
@@ -362,15 +368,10 @@ public final class BuildDependenciesDownloader {
     }
   }
 
-  private static void tryToDownloadFile(URI uri, Path tempFile) throws Exception {
-    HttpRequest request = HttpRequest.newBuilder()
-      .GET()
-      .uri(uri)
-      .setHeader("User-Agent", "Build Script Downloader")
-      .build();
-
-    HttpResponse<Path> response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
+  private static void tryToDownloadFile(URI uri, Path tempFile, String bearerToken) throws Exception {
+    HttpResponse<Path> response = getResponseFollowingRedirects(uri, tempFile, bearerToken);
     int statusCode = response.statusCode();
+
     if (statusCode != 200) {
       StringBuilder builder = new StringBuilder("Cannot download\n");
 
@@ -404,6 +405,47 @@ public final class BuildDependenciesDownloader {
                                       "': expected length " + contentLength +
                                       "from Content-Length header, but got " + fileSize + " on disk");
     }
+  }
+
+  private static HttpResponse<Path> getResponseFollowingRedirects(URI uri, Path tempFile, String bearerToken) throws Exception {
+    HttpRequest request = createBuildScriptDownloaderRequest(uri, bearerToken);
+    HttpResponse<Path> response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
+    String originHost = uri.getHost();
+    int REDIRECT_LIMIT = 10;
+    for (int i = 0; i < REDIRECT_LIMIT; i++) {
+      int statusCode = response.statusCode();
+      if (!(statusCode == 301 || statusCode == 302 || statusCode == 307 || statusCode == 308)) {
+        return response;
+      }
+
+      Optional<String> locationHeader = response.headers().firstValue("Location");
+      if (locationHeader.isEmpty()) {
+        locationHeader = response.headers().firstValue("location");
+        if (locationHeader.isEmpty()) {
+          return response;
+        }
+      }
+
+      URI newUri = new URI(locationHeader.get());
+      request = newUri.getHost().equals(originHost)
+                ? createBuildScriptDownloaderRequest(newUri, bearerToken)
+                : createBuildScriptDownloaderRequest(newUri, null);
+      response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
+    }
+
+    return response;
+  }
+
+  private static HttpRequest createBuildScriptDownloaderRequest(URI uri, String bearerToken) {
+    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+      .GET()
+      .uri(uri)
+      .setHeader("User-Agent", "Build Script Downloader");
+    if (bearerToken != null) {
+      requestBuilder = requestBuilder.setHeader("Authorization", "Bearer " + bearerToken);
+    }
+
+    return requestBuilder.build();
   }
 
   public static final class HttpStatusException extends IllegalStateException {

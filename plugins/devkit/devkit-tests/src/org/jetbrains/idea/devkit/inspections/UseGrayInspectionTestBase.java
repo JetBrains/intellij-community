@@ -4,7 +4,6 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("unused")
 public abstract class UseGrayInspectionTestBase extends JavaCodeInsightFixtureTestCase {
 
   @Override
@@ -26,6 +25,7 @@ public abstract class UseGrayInspectionTestBase extends JavaCodeInsightFixtureTe
                              public Color(int rgb) {}
                          }
                          """);
+    // adding it via 'PsiTestUtil.addLibrary()' causes issues in Kotlin tests (it can't link JBColor/Gray with Color added with addClass()
     myFixture.addClass("""
                          package com.intellij.ui;
                          import java.awt.Color;

@@ -21,7 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.LayoutActionsFloatingToolbar;
+import com.intellij.openapi.editor.toolbar.floating.FloatingToolbar;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -40,12 +40,10 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.panels.FlowLayoutWrapper;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.hover.HoverListener;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
@@ -269,18 +267,14 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     private final static int RIGHT_OFFSET = 20;
 
     private final @NotNull JComponent myComponent;
-    private final @NotNull LayoutActionsFloatingToolbar myFloatingToolbar;
+    private final @NotNull FloatingToolbar myFloatingToolbar;
 
     private ConsoleWithFloatingToolbar(@NotNull JComponent component, @NotNull ActionGroup actions, @NotNull Disposable disposable) {
       myComponent = component;
-      myFloatingToolbar = new LayoutActionsFloatingToolbar(component, actions);
+      myFloatingToolbar = new FloatingToolbar(component, actions, disposable);
 
       add(myComponent, JLayeredPane.DEFAULT_LAYER);
       add(myFloatingToolbar, JLayeredPane.POPUP_LAYER);
-
-      new ToggleToolbarVisibility().addTo(myComponent, myFloatingToolbar);
-
-      Disposer.register(disposable, myFloatingToolbar);
     }
 
     @Override
@@ -294,27 +288,6 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
         toolbarSize.width,
         toolbarSize.height
       );
-    }
-
-    private class ToggleToolbarVisibility extends HoverListener {
-      final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myFloatingToolbar);
-
-      @Override
-      public void mouseMoved(@NotNull Component component, int x, int y) {
-        myFloatingToolbar.scheduleShow();
-        myAlarm.cancelAllRequests();
-        if (myFloatingToolbar.getMousePosition() == null && !UIUtil.isFocusAncestor(myFloatingToolbar)) {
-          myAlarm.addRequest(() -> myFloatingToolbar.scheduleHide(), 1400);
-        }
-      }
-
-      @Override
-      public void mouseEntered(@NotNull Component component, int x, int y) {
-      }
-
-      @Override
-      public void mouseExited(@NotNull Component component) {
-      }
     }
   }
 

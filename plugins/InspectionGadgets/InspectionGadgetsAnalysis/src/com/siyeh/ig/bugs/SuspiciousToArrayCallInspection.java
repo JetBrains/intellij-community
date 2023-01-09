@@ -217,7 +217,7 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiExpression expression = ObjectUtils.tryCast(descriptor.getStartElement(), PsiExpression.class);
       if (expression == null) return;
       new CommentTracker().replaceAndRestoreComments(expression, myReplacement);

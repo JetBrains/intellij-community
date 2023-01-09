@@ -10,23 +10,27 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 internal class GitLabRepositoryAndAccountSelectorViewModel(
   private val scope: CoroutineScope,
-  private val connectionManager: GitLabProjectConnectionManager,
   projectsManager: GitLabProjectsManager,
-  private val accountManager: GitLabAccountManager)
-  : RepositoryAndAccountSelectorViewModelBase<GitLabProjectMapping, GitLabAccount>(scope, projectsManager, accountManager) {
+  val accountManager: GitLabAccountManager,
+  onSelected: suspend (GitLabProjectMapping, GitLabAccount) -> Unit,
+)
+  : RepositoryAndAccountSelectorViewModelBase<GitLabProjectMapping, GitLabAccount>(
+  scope,
+  projectsManager,
+  accountManager,
+  onSelected) {
 
   val tokenLoginAvailableState: StateFlow<Boolean> =
     combineState(scope, repoSelectionState, accountSelectionState, missingCredentialsState, ::isTokenLoginAvailable)
 
-  private fun isTokenLoginAvailable(repo: GitLabProjectMapping?, account: GitLabAccount?, tokenMissing: Boolean): Boolean =
-    repo != null && (account == null || tokenMissing)
+  private fun isTokenLoginAvailable(repo: GitLabProjectMapping?, account: GitLabAccount?, tokenMissing: Boolean?): Boolean =
+    repo != null && (account == null || tokenMissing == true)
 
   private val _loginRequestsFlow = MutableSharedFlow<TokenLoginRequest>()
   val loginRequestsFlow: Flow<TokenLoginRequest> = _loginRequestsFlow.asSharedFlow()
@@ -39,26 +43,20 @@ internal class GitLabRepositoryAndAccountSelectorViewModel(
     }
   }
 
-  override fun submitSelection() {
-    val repo = repoSelectionState.value ?: return
-    val account = accountSelectionState.value ?: return
-    scope.launch {
-      connectionManager.tryConnect(repo, account)
-    }
-  }
-
   inner class TokenLoginRequest(val repo: GitLabProjectMapping,
                                 val account: GitLabAccount? = null,
                                 private val submit: Boolean) {
 
     val accounts: Set<GitLabAccount>
-      get() = accountManager.accountsState.value.keys
+      get() = accountManager.accountsState.value
 
     fun login(account: GitLabAccount, token: String) {
-      accountManager.updateAccount(account, token)
-      accountSelectionState.value = account
-      if (submit) {
-        submitSelection()
+      scope.launch {
+        accountManager.updateAccount(account, token)
+        accountSelectionState.value = account
+        if (submit) {
+          submitSelection()
+        }
       }
     }
   }

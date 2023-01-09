@@ -20,9 +20,11 @@ public class MavenModelReadingAndWritingTest extends MavenMultiVersionImportingT
   protected void setUp() throws Exception {
     super.setUp();
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
   }
 
   @Test

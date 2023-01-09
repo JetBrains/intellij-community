@@ -1,0 +1,2 @@
+parsimonious.nodes.Node.__repr__
+parsimonious.nodes.RuleDecoratorMeta.__new__

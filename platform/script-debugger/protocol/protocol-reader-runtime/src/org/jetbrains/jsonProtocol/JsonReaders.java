@@ -30,7 +30,7 @@ public final class JsonReaders {
 
   private static void checkIsNull(JsonReaderEx reader) {
     if (reader.peek() == JsonToken.NULL) {
-      throw new RuntimeException("Field is not nullable" + "");
+      throw new RuntimeException("Field is not nullable");
     }
   }
 

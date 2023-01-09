@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.search.usagesSearch
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -27,16 +28,13 @@ import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.util.everythingScopeExcludeFileTypes
 import org.jetbrains.kotlin.idea.base.util.excludeFileTypes
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.hasType
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isInProjectSource
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isSamInterface
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
-import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -129,10 +127,7 @@ class ExpressionsOfTypeProcessor(
 
         // optimization
         if (runReadAction {
-                searchScope is GlobalSearchScope && !FileTypeIndex.containsFileOfType(
-                    KotlinFileType.INSTANCE,
-                    searchScope
-                )
+                noKotlinFilesInScope(searchScope)
             }) return
 
         // for class from library always use plain search because we cannot search usages in compiled code (we could though)
@@ -154,6 +149,13 @@ class ExpressionsOfTypeProcessor(
                 possibleMatchesInScopeHandler(LocalSearchScope(scopeElements))
             }
         }
+    }
+
+    private fun noKotlinFilesInScope(searchScope: SearchScope): Boolean {
+        if (searchScope is GlobalSearchScope && !FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, searchScope)) {
+            return true
+        }
+        return searchScope is LocalSearchScope && searchScope.virtualFiles.none { it.fileType == KotlinFileType.INSTANCE }
     }
 
     private fun addTask(task: Task) {
@@ -785,7 +787,7 @@ class ExpressionsOfTypeProcessor(
             if (psiClass != null) {
                 testLog { "Resolved java class to descriptor: ${psiClass.qualifiedName}" }
 
-                if (psiClass.isSamInterface) {
+                if (LambdaUtil.isFunctionalClass(psiClass)) {
                     addSamInterfaceToProcess(psiClass)
                     return true
                 }

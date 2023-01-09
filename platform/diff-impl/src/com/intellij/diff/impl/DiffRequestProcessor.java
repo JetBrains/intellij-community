@@ -74,6 +74,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public abstract class DiffRequestProcessor implements CheckedDisposable {
   private static final Logger LOG = Logger.getInstance(DiffRequestProcessor.class);
@@ -550,7 +551,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
       navigationActions.add(new MyChangeDiffToolAction());
     }
     else {
-      myRightToolbarGroup.add(new MyDiffToolChooser(myMainPanel));
+      myRightToolbarGroup.add(new MyDiffToolChooser());
     }
     DiffUtil.addActionBlock(myToolbarGroup,
                             navigationActions);
@@ -761,13 +762,13 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   }
 
   private class MyDiffToolChooser extends DiffToolChooser {
-    private MyDiffToolChooser(@Nullable JComponent targetComponent) {
-      super(targetComponent);
+    private MyDiffToolChooser() {
+      super(chooseNotNull(myProject, myContext.getProject()));
     }
 
     @Override
-    public void onSelected(@NotNull AnActionEvent e, @NotNull DiffTool diffTool) {
-      DiffUsageTriggerCollector.logToggleDiffTool(e.getProject(), diffTool, myContext.getUserData(DiffUserDataKeys.PLACE));
+    public void onSelected(@NotNull Project project, @NotNull DiffTool diffTool) {
+      DiffUsageTriggerCollector.logToggleDiffTool(project, diffTool, myContext.getUserData(DiffUserDataKeys.PLACE));
       moveToolOnTop(diffTool);
 
       updateRequest(true);

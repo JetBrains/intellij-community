@@ -18,8 +18,8 @@ public class LinuxFileTypeAssociator implements SystemFileTypeAssociator {
 
   private static List<MimeTypeDescription> convertToMimeTypes(@NotNull List<? extends FileType> fileTypes) {
     List<MimeTypeDescription> mimeTypeDescriptions =
-      ContainerUtil.map(fileTypes, fileType -> new MimeTypeDescription(fileType));
-    mimeTypeDescriptions.sort(Comparator.comparing(description -> description.getType()));
+      ContainerUtil.sorted(ContainerUtil.map(fileTypes, fileType -> new MimeTypeDescription(fileType)),
+                           Comparator.comparing(description -> description.getType()));
     return mimeTypeDescriptions;
   }
 }

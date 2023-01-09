@@ -177,6 +177,9 @@ class JKAnnotation(
 }
 
 class JKTypeArgumentList(typeArguments: List<JKTypeElement> = emptyList()) : JKTreeElement(), PsiOwner by PsiOwnerImpl() {
+    constructor(vararg typeArguments: JKTypeElement) : this(typeArguments.toList())
+    constructor(vararg types: JKType) : this(types.map { JKTypeElement(it) })
+
     var typeArguments: List<JKTypeElement> by children(typeArguments)
     override fun accept(visitor: JKVisitor) = visitor.visitTypeArgumentList(this)
 }
@@ -300,7 +303,7 @@ class JKJavaResourceDeclaration(declaration: JKLocalVariable) : JKJavaResourceEl
     var declaration by child(declaration)
 }
 
-interface JKErrorElement: JKElement {
+interface JKErrorElement : JKElement {
     val psi: PsiElement?
     val reason: String?
 }

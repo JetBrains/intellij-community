@@ -3,6 +3,11 @@
   "fixed": false,
   "ui": [
     {
+      "key": "ActionButton.separatorColor",
+      "description": "ActionButton separator line color",
+      "since": "2023.1"
+    },
+    {
       "key": "Banner.infoBackground"
     },
     {
@@ -505,6 +510,10 @@
       "description": "GotIt tooltip shortcuts foreground color if different from ToolTip.shortcutForeground"
     },
     {
+      "key": "GotItTooltip.shortcutBackground",
+      "description": "GotIt tooltip shortcuts rounded background color if different from GotItTooltip.background"
+    },
+    {
       "key": "GotItTooltip.borderColor",
       "description": "GotIt tooltip border color if different from ToolTip.borderColor"
     },
@@ -513,20 +522,99 @@
       "description": "GotIt tooltip link foreground color if different from Link.activeForeground"
     },
     {
+      "key": "GotItTooltip.stepForeground",
+      "description": "GotIt tooltip step number foreground color if different from GotItTooltip.foreground",
+      "since": "2023.1"
+    },
+    {
+      "key": "GotItTooltip.Header.foreground",
+      "description": "GotIt tooltip header foreground color if different from GotItTooltip.foreground",
+      "since": "2022.3.1"
+    },
+    {
+      "key": "GotItTooltip.Button.foreground",
+      "description": "GotIt tooltip button foreground color if different from Button.foreground",
+      "since": "2022.3.1"
+    },
+    {
+      "key": "GotItTooltip.Button.startBackground",
+      "description": "GotIt tooltip button background gradient start color if different from Button.startBackground",
+      "since": "2022.3.1"
+    },
+    {
+      "key": "GotItTooltip.Button.endBackground",
+      "description": "GotIt tooltip button background gradient end color if different from Button.endBackground",
+      "since": "2022.3.1"
+    },
+    {
+      "key": "GotItTooltip.Button.startBorderColor",
+      "description": "GotIt tooltip button outline gradient start color if different from Button.startBorderColor",
+      "since": "2022.3.1"
+    },
+    {
+      "key": "GotItTooltip.Button.endBorderColor",
+      "description": "GotIt tooltip button outline gradient end color if different from Button.endBorderColor",
+      "since": "2022.3.1"
+    },
+    {
       "key": "GotItTooltip.startBackground",
-      "description": "GotIt tooltip button background gradient start color if different from Button.startBackground"
+      "description": "Use GotItTooltip.Button.startBackground",
+      "deprecated": true
     },
     {
       "key": "GotItTooltip.endBackground",
-      "description": "GotIt tooltip button background gradient end color if different from Button.endBackground"
+      "description": "Use GotItTooltip.Button.endBackground",
+      "deprecated": true
     },
     {
       "key": "GotItTooltip.startBorderColor",
-      "description": "GotIt tooltip button outline gradient start color if different from Button.startBorderColor"
+      "description": "Use GotItTooltip.Button.startBorderColor",
+      "deprecated": true
     },
     {
       "key": "GotItTooltip.endBorderColor",
-      "description": "GotIt tooltip button outline gradient end color if different from Button.endBorderColor"
+      "description": "Use GotItTooltip.Button.endBorderColor",
+      "deprecated": true
+    },
+    {
+      "key": "GotItTooltip.insets",
+      "description": "GotIt tooltip content insets",
+      "since": "2023.1"
+    },
+    {
+      "key": "GotItTooltip.textInset",
+      "description": "GotIt tooltip inset between header and description, and description and link",
+      "since": "2023.1"
+    },
+    {
+      "key": "GotItTooltip.buttonTopInset",
+      "description": "GotIt tooltip inset between description and button",
+      "since": "2023.1"
+    },
+    {
+      "key": "GotItTooltip.buttonBottomInset",
+      "description": "GotIt tooltip additional bottom inset if there is a button",
+      "since": "2023.1"
+    },
+    {
+      "key": "GotItTooltip.iconInset",
+      "description": "GotIt tooltip inset between step number/icon and header/description",
+      "since": "2023.1"
+    },
+    {
+      "key": "GotItTooltip.imageTopInset",
+      "description": "GotIt tooltip additional top inset if there is an image",
+      "since": "2023.1"
+    },
+    {
+      "key": "GotItTooltip.imageBottomInset",
+      "description": "GotIt tooltip inset between image and header/description",
+      "since": "2023.1"
+    },
+    {
+      "key": "GotItTooltip.arc",
+      "description": "GotIt tooltip radius of the rounded corners",
+      "since": "2023.1"
     },
     {
       "key": "Group.disabledSeparatorColor"
@@ -892,6 +980,9 @@
     },
     {
       "key": "Plugins.tagForeground"
+    },
+    {
+      "key": "Plugins.ScreenshotPagination.CurrentImage.fillColor"
     },
     {
       "key": "ComplexPopup.Header.background",
@@ -1328,6 +1419,11 @@
       "key": "ToolBar.horizontalToolbarInsets",
       "description": "Default insets for horizontal action toolbars",
       "since": "2022.1"
+    },
+    {
+      "key": "ToolBar.separatorColor",
+      "description": "ToolBar separator line color",
+      "since": "2023.1"
     },
     {
       "key": "ToolBar.verticalToolbarInsets",
@@ -1774,6 +1870,41 @@
     {
       "key": "MainToolbar.separatorColor",
       "description": "Color of the Main Toolbar separators",
+      "since": "2022.3"
+    },
+    {
+      "key": "MainToolbar.background",
+      "description": "Background color of the Main Toolbar",
+      "since": "2022.3"
+    },
+    {
+      "key": "RunWidget.foreground",
+      "description": "Foreground for run widget components and stroke icons",
+      "since": "2022.3"
+    },
+    {
+      "key": "RunWidget.background",
+      "description": "Background for run widget in non-running state",
+      "since": "2022.3"
+    },
+    {
+      "key": "RunWidget.runningBackground",
+      "description": "Background for run widget in running state",
+      "since": "2022.3"
+    },
+    {
+      "key": "RunWidget.hoverBackground",
+      "description": "Background for hover state in run widget. Will be applied over RunWidget.background or RunWidget.runningBackground.",
+      "since": "2022.3"
+    },
+    {
+      "key": "RunWidget.pressedBackground",
+      "description": "Background for pressed state in run widget. Will be applied over RunWidget.background or RunWidget.runningBackground.",
+      "since": "2022.3"
+    },
+    {
+      "key": "RunWidget.separatorColor",
+      "description": "The color for separator in run widget",
       "since": "2022.3"
     }
   ]

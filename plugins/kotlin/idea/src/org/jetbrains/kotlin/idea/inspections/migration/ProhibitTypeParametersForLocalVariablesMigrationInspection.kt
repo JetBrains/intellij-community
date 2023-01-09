@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections.migration
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryWithPsiElement
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.migration.MigrationInfo
@@ -20,7 +21,7 @@ class ProhibitTypeParametersForLocalVariablesMigrationInspection :
         return migrationInfo.isLanguageVersionUpdate(LanguageVersion.KOTLIN_1_3, LanguageVersion.KOTLIN_1_4)
     }
 
-    override val diagnosticFactory: DiagnosticFactoryWithPsiElement<KtTypeParameterList, *>
-        get() = Errors.LOCAL_VARIABLE_WITH_TYPE_PARAMETERS
+    override fun getDiagnosticFactory(languageVersionSettings: LanguageVersionSettings): DiagnosticFactoryWithPsiElement<KtTypeParameterList, *> =
+        Errors.LOCAL_VARIABLE_WITH_TYPE_PARAMETERS
 }
 

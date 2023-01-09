@@ -64,7 +64,6 @@ public class UnnecessaryInitCauseInspectionTest extends LightJavaInspectionTestC
            "       throw wrapper;" +
            "    }" +
            "  }" +
-           "" +
            "  class YException extends Exception {" +
            "    public YException(String msg) { super(msg); }" +
            "    public YException(String msg, IOException cause) { super(msg, cause); }" +

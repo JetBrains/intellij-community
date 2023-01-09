@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -43,12 +43,12 @@ import java.util.concurrent.Future;
 public class GoToHashOrRefPopup {
   private static final Logger LOG = Logger.getInstance(GoToHashOrRefPopup.class);
 
-  @NotNull private final TextFieldWithProgress myTextField;
-  @NotNull private final Function<? super String, ? extends Future> myOnSelectedHash;
-  @NotNull private final Function<? super VcsRef, ? extends Future> myOnSelectedRef;
-  @NotNull private final JBPopup myPopup;
-  @Nullable private Future myFuture;
-  @Nullable private VcsRef mySelectedRef;
+  private final @NotNull TextFieldWithProgress myTextField;
+  private final @NotNull Function<? super String, ? extends Future> myOnSelectedHash;
+  private final @NotNull Function<? super VcsRef, ? extends Future> myOnSelectedRef;
+  private final @NotNull JBPopup myPopup;
+  private @Nullable Future myFuture;
+  private @Nullable VcsRef mySelectedRef;
 
   public GoToHashOrRefPopup(@NotNull Project project,
                             @NotNull VcsLogRefs variants,
@@ -131,10 +131,10 @@ public class GoToHashOrRefPopup {
   }
 
   private final class VcsRefDescriptor extends DefaultTextCompletionValueDescriptor<VcsRef> {
-    @NotNull private final Project myProject;
-    @NotNull private final VcsLogColorManager myColorManager;
-    @NotNull private final Comparator<? super VcsRef> myReferenceComparator;
-    @NotNull private final Map<VirtualFile, String> myCachedRootNames = new HashMap<>();
+    private final @NotNull Project myProject;
+    private final @NotNull VcsLogColorManager myColorManager;
+    private final @NotNull Comparator<? super VcsRef> myReferenceComparator;
+    private final @NotNull Map<VirtualFile, String> myCachedRootNames = new HashMap<>();
 
     private VcsRefDescriptor(@NotNull Project project,
                              @NotNull VcsLogColorManager manager,
@@ -150,9 +150,8 @@ public class GoToHashOrRefPopup {
       }
     }
 
-    @NotNull
     @Override
-    public LookupElementBuilder createLookupBuilder(@NotNull VcsRef item) {
+    public @NotNull LookupElementBuilder createLookupBuilder(@NotNull VcsRef item) {
       LookupElementBuilder lookupBuilder = super.createLookupBuilder(item);
       if (myColorManager.hasMultiplePaths()) {
         ColorIcon icon = JBUIScale.scaleIcon(new ColorIcon(15, VcsLogGraphTable.getRootBackgroundColor(item.getRoot(), myColorManager)));
@@ -161,22 +160,19 @@ public class GoToHashOrRefPopup {
       return lookupBuilder;
     }
 
-    @NotNull
     @Override
-    public String getLookupString(@NotNull VcsRef item) {
+    public @NotNull String getLookupString(@NotNull VcsRef item) {
       return item.getName();
     }
 
-    @Nullable
     @Override
-    protected String getTailText(@NotNull VcsRef item) {
+    protected @Nullable String getTailText(@NotNull VcsRef item) {
       if (!myColorManager.hasMultiplePaths()) return null;
       return "";
     }
 
-    @Nullable
     @Override
-    protected String getTypeText(@NotNull VcsRef item) {
+    protected @Nullable String getTypeText(@NotNull VcsRef item) {
       if (!myColorManager.hasMultiplePaths()) return null;
       String text = myCachedRootNames.get(item.getRoot());
       if (text == null) {
@@ -190,9 +186,8 @@ public class GoToHashOrRefPopup {
       return myReferenceComparator.compare(item1, item2);
     }
 
-    @Nullable
     @Override
-    protected InsertHandler<LookupElement> createInsertHandler(@NotNull VcsRef item) {
+    protected @Nullable InsertHandler<LookupElement> createInsertHandler(@NotNull VcsRef item) {
       return (context, item1) -> {
         mySelectedRef = (VcsRef)item1.getObject();
         ApplicationManager.getApplication().invokeLater(() -> {

@@ -60,7 +60,6 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @State(name = "MavenProjectNavigator", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
@@ -308,7 +307,9 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
     ContentManager contentManager = toolWindow.getContentManager();
     Disposer.register(this, () -> {
       // fire content removed events, so subscribers could clean up caches
-      contentManager.removeAllContents(true);
+      if (!myProject.isDisposed()) {
+        contentManager.removeAllContents(true);
+      }
       Disposer.dispose(contentManager);
       if (!myProject.isDisposed()) {
         toolWindow.remove();
@@ -324,7 +325,10 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
 
       @Override
       public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
-        if (toolWindow.isDisposed()) return;
+        if (toolWindow.isDisposed()) {
+          return;
+        }
+
         boolean visible = ((ToolWindowManagerEx)toolWindowManager).shouldUpdateToolWindowContent(toolWindow);
         if (!visible || wasVisible) {
           return;

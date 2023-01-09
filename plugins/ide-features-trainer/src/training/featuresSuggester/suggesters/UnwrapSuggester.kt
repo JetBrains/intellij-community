@@ -17,7 +17,7 @@ class UnwrapSuggester : AbstractFeatureSuggester() {
     "https://www.jetbrains.com/help/idea/working-with-source-code.html#unwrap_remove_statement"
   override val minSuggestingIntervalDays = 14
 
-  override val languages = listOf("JAVA", "kotlin", "ECMAScript 6")
+  override val languages = listOf("JAVA", "kotlin", "JavaScript", "ECMAScript 6")
 
   private object State {
     var surroundingStatementStartOffset: Int = -1

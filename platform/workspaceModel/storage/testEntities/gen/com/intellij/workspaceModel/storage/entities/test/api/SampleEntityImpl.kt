@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -22,6 +21,9 @@ import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
 import java.util.UUID
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -61,11 +63,14 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
   override val randomUUID: UUID?
     get() = dataSource.randomUUID
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: SampleEntityData?) : ModifiableWorkspaceEntityBase<SampleEntity>(), SampleEntity.Builder {
+  class Builder(result: SampleEntityData?) : ModifiableWorkspaceEntityBase<SampleEntity, SampleEntityData>(result), SampleEntity.Builder {
     constructor() : this(SampleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -85,7 +90,7 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       index(this, "fileProperty", this.fileProperty)
       // Process linked entities that are connected without a builder
@@ -145,8 +150,7 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
       if (this.fileProperty != dataSource.fileProperty) this.fileProperty = dataSource.fileProperty
       if (this.nullableData != dataSource?.nullableData) this.nullableData = dataSource.nullableData
       if (this.randomUUID != dataSource?.randomUUID) this.randomUUID = dataSource.randomUUID
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -154,7 +158,7 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -163,7 +167,7 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
       get() = getEntityData().booleanProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().booleanProperty = value
+        getEntityData(true).booleanProperty = value
         changedProperty.add("booleanProperty")
       }
 
@@ -171,7 +175,7 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
       get() = getEntityData().stringProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().stringProperty = value
+        getEntityData(true).stringProperty = value
         changedProperty.add("stringProperty")
       }
 
@@ -193,7 +197,7 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().stringListProperty = value
+        getEntityData(true).stringListProperty = value
         stringListPropertyUpdater.invoke(value)
       }
 
@@ -201,7 +205,7 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
       get() = getEntityData().stringMapProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().stringMapProperty = value
+        getEntityData(true).stringMapProperty = value
         changedProperty.add("stringMapProperty")
       }
 
@@ -209,7 +213,7 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
       get() = getEntityData().fileProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().fileProperty = value
+        getEntityData(true).fileProperty = value
         changedProperty.add("fileProperty")
         val _diff = diff
         if (_diff != null) index(this, "fileProperty", value)
@@ -236,9 +240,9 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
@@ -250,7 +254,7 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
         }
         else {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
@@ -265,7 +269,7 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
       get() = getEntityData().nullableData
       set(value) {
         checkModificationAllowed()
-        getEntityData().nullableData = value
+        getEntityData(true).nullableData = value
         changedProperty.add("nullableData")
       }
 
@@ -273,12 +277,11 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
       get() = getEntityData().randomUUID
       set(value) {
         checkModificationAllowed()
-        getEntityData().randomUUID = value
+        getEntityData(true).randomUUID = value
         changedProperty.add("randomUUID")
 
       }
 
-    override fun getEntityData(): SampleEntityData = result ?: super.getEntityData() as SampleEntityData
     override fun getEntityClass(): Class<SampleEntity> = SampleEntity::class.java
   }
 }
@@ -298,22 +301,17 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
   fun isStringMapPropertyInitialized(): Boolean = ::stringMapProperty.isInitialized
   fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SampleEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SampleEntity> {
     val modifiable = SampleEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): SampleEntity {
     return getCached(snapshot) {
       val entity = SampleEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

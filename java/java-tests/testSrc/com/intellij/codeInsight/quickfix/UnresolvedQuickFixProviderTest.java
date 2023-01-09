@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,6 +70,7 @@ public class UnresolvedQuickFixProviderTest extends LightDaemonAnalyzerTestCase 
     DaemonCodeAnalyzer.getInstance(getProject()).restart();
     errors = highlightErrors();
     CodeInsightTestFixtureImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(getFile(), getEditor());
+    UIUtil.dispatchAllInvocationEvents();
     assertSize(N, errors);
     assertNotEmpty(regFixCalled);
   }

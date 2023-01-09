@@ -599,7 +599,7 @@ public final class IdeKeyEventDispatcher {
   boolean processAction(@NotNull InputEvent e,
                         @NotNull String place,
                         @NotNull DataContext context,
-                        @NotNull List<AnAction> actions,
+                        @NotNull List<? extends AnAction> actions,
                         @NotNull ActionProcessor processor,
                         @NotNull PresentationFactory presentationFactory,
                         @NotNull Shortcut shortcut) {
@@ -665,7 +665,7 @@ public final class IdeKeyEventDispatcher {
 
   @Nullable
   private static Trinity<AnAction, AnActionEvent, Long> doUpdateActionsInner(@NotNull UpdateSession session,
-                                                                             @NotNull List<AnAction> actions,
+                                                                             @NotNull List<? extends AnAction> actions,
                                                                              boolean dumb,
                                                                              @NotNull List<? super AnAction> wouldBeEnabledIfNotDumb,
                                                                              @NotNull Function<? super Presentation, ? extends AnActionEvent> events) {
@@ -795,7 +795,7 @@ public final class IdeKeyEventDispatcher {
     }
   }
 
-  private static void fireBeforeShortcutTriggered(@NotNull Shortcut shortcut, @NotNull List<AnAction> actions, @NotNull DataContext context) {
+  private static void fireBeforeShortcutTriggered(@NotNull Shortcut shortcut, @NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     try {
       ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC)
         .beforeShortcutTriggered(shortcut, Collections.unmodifiableList(actions), context);

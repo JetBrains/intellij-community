@@ -34,10 +34,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -64,8 +61,8 @@ import com.intellij.util.text.StringSearcher;
 import com.intellij.util.ui.EDT;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,6 +72,8 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.intellij.openapi.application.ActionsKt.runReadAction;
 
 final class FindInProjectTask {
   private static final Logger LOG = Logger.getInstance(FindInProjectTask.class);
@@ -247,7 +246,8 @@ final class FindInProjectTask {
 
     if (searcher != null) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(sourceVirtualFile);
-      CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(sourceVirtualFile, -1);
+      CharSequence s = document != null ? document.getCharsSequence() :
+                       DiskQueryRelay.compute(() -> LoadTextUtil.loadText(sourceVirtualFile, -1));
       if (s.length() == 0 || searcher.scan(s) < 0) {
         return true;
       }
@@ -315,7 +315,7 @@ final class FindInProjectTask {
                              && !Registry.is("find.search.in.excluded.dirs")
                              && !ReadAction.compute(() -> myProjectFileIndex.isExcluded(myDirectory));
     boolean withSubdirs = myDirectory != null && myFindModel.isWithSubdirectories();
-    boolean locateClassSources = myDirectory != null && myProjectFileIndex.getClassRootForFile(myDirectory) != null;
+    boolean locateClassSources = myDirectory != null && runReadAction(() -> myProjectFileIndex.getClassRootForFile(myDirectory)) != null;
     boolean searchInLibs = globalCustomScope != null && globalCustomScope.isSearchInLibraries();
 
     ConcurrentLinkedDeque<Object> deque = new ConcurrentLinkedDeque<>();

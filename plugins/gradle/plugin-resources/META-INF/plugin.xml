@@ -103,12 +103,18 @@
     <externalExecutionAware id="gradle" key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware"/>
     <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationExtension" order="last"/>
 
+    <externalSystemTaskNotificationListener
+      implementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager$BuildLayoutParametersCacheCleanupListener"/>
+
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManager"
                         serviceImplementation="org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManagerImpl"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper$SystemPropertiesAdjuster"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSystemSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.jvmcompat.CompatibilitySupportUpdater"/>
+
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettingsMigration$LegacyDefaultGradleProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettingsMigration"/>
@@ -121,6 +127,7 @@
                     serviceImplementation="org.jetbrains.plugins.gradle.service.project.GradleTasksIndicesImpl"/>
     <createDirectoryCompletionContributor implementation="org.jetbrains.plugins.gradle.GradleDirectoryCompletionContributor"/>
     <externalSystemContentRootContributor implementation="org.jetbrains.plugins.gradle.GradleContentRootContributor"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings$Service"/>
 
     <stepsBeforeRunProvider implementation="org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider" />
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer"/>
@@ -147,6 +154,13 @@
 
     <search.optionContributor implementation="org.jetbrains.plugins.gradle.config.GradleSearchableOptionContributor"/>
 
+    <registryKey defaultValue="https://download.jetbrains.com/resources/intellij/plugins/gradle/v1/compatibility.json"
+                 description="URL to get updates for gradle/jvm compatibility matrix" key="gradle.compatibility.config.url"/>
+
+    <registryKey defaultValue="14"
+                 description="Time to check in days for gradle compatibility update. Set to 0 to disable updates"
+                 key="gradle.compatibility.update.interval"/>
+
     <registryKey key="gradle.settings.showDeprecatedSettings" defaultValue="false"
                  description="Enables some deprecated setting in the Gradle settings dialog for troubleshooting"/>
     <registryKey key="gradle.tooling.custom.serializer" defaultValue="true"
@@ -172,6 +186,13 @@
     <statistics.notificationIdsHolder implementation="org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder"/>
     <iconMapper mappingFile="GradleIconMappings.json"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="org.jetbrains.plugins.gradle.service.GradleInstallationManager$BuildLayoutParametersCacheCleanupListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    <listener class="org.jetbrains.plugins.gradle.service.GradleInstallationManager$BuildLayoutParametersCacheCleanupListener"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+  </applicationListeners>
 
   <actions>
     <group id="Gradle.GenerateGroup">

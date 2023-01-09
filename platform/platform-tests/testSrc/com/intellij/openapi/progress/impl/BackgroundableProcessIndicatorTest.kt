@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.application.ApplicationManager
@@ -23,7 +23,7 @@ class BackgroundableProcessIndicatorTest : ProgressWindowTestCase<Pair<Task.Back
 
   override fun setUp(): Unit = super.setUp().also {
     assumeFalse("Cannot run headless", ApplicationManager.getApplication().isHeadlessEnvironment)
-    val frameHelper = ProjectFrameHelper(IdeFrameImpl(), null)
+    val frameHelper = ProjectFrameHelper(IdeFrameImpl())
     Disposer.register(testRootDisposable, frameHelper)
     frameHelper.init()
     statusBar = frameHelper.statusBar as IdeStatusBarImpl

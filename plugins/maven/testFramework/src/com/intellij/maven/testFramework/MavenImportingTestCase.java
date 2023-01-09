@@ -3,16 +3,21 @@ package com.intellij.maven.testFramework;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.compiler.CompilerTestUtil;
+import com.intellij.java.library.LibraryWithMavenCoordinatesProperties;
+import com.intellij.java.library.MavenCoordinates;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
@@ -48,10 +53,10 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.project.importing.*;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
-import org.jetbrains.idea.reposearch.DependencySearchService;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.junit.Assume;
 
@@ -356,7 +361,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     assertEquals(scope, dep.getScope());
   }
 
-  private LibraryOrderEntry getModuleLibDep(String moduleName, String depName) {
+  protected LibraryOrderEntry getModuleLibDep(String moduleName, String depName) {
     return getModuleDep(moduleName, depName, LibraryOrderEntry.class);
   }
 
@@ -433,6 +438,34 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       actualNames.add(name == null ? "<unnamed>" : name);
     }
     assertUnorderedElementsAreEqual(actualNames, expectedNames);
+  }
+
+  public void assertProjectLibraryCoordinates(@NotNull String libraryName,
+                                              @Nullable String groupId,
+                                              @Nullable String artifactId,
+                                              @Nullable String version) {
+    assertProjectLibraryCoordinates(libraryName, groupId, artifactId, null, JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING, version);
+  }
+
+  public void assertProjectLibraryCoordinates(@NotNull String libraryName,
+                                              @Nullable String groupId,
+                                              @Nullable String artifactId,
+                                              @Nullable String classifier,
+                                              @Nullable String packaging,
+                                              @Nullable String version)
+
+  {
+    Library lib = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libraryName);
+    assertNotNull("Library [" + libraryName + "] not found", lib);
+    LibraryProperties libraryProperties = ((LibraryEx)lib).getProperties();
+    assertInstanceOf(libraryProperties, LibraryWithMavenCoordinatesProperties.class);
+    MavenCoordinates coords = ((LibraryWithMavenCoordinatesProperties)libraryProperties).getMavenCoordinates();
+    assertNotNull("Expected non-empty maven coordinates", coords);
+    assertEquals("Unexpected groupId", groupId, coords.getGroupId());
+    assertEquals("Unexpected artifactId", artifactId, coords.getArtifactId());
+    assertEquals("Unexpected classifier", classifier, coords.getClassifier());
+    assertEquals("Unexpected packaging", packaging, coords.getPackaging());
+    assertEquals("Unexpected version", version, coords.getVersion());
   }
 
   protected void assertModuleGroupPath(String moduleName, String... expected) {
@@ -619,11 +652,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
       myProjectsManager.scheduleImportInTests(files);
-      myProjectsManager.importProjects();
     });
+    myProjectsManager.importProjects();
 
     Promise<?> promise = myProjectsManager.waitForImportCompletion();
-    PlatformTestUtil.waitForPromise(promise);
+    ApplicationManager.getApplication().invokeAndWait(() -> PlatformTestUtil.waitForPromise(promise));
 
 
     if (failOnReadingError) {
@@ -697,7 +730,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     });
   }
 
-  protected void readProjects() {
+  protected void readProjects() throws Exception {
     readProjects(myProjectsManager.getProjectsFiles());
   }
 
@@ -858,5 +891,13 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   private CodeStyleSettings getCurrentCodeStyleSettings() {
     if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return CodeStyle.createTestSettings();
     return CodeStyle.getSettings(myProject);
+  }
+
+  protected void waitForSmartMode() {
+    AsyncPromise<Void> promise = new AsyncPromise<>();
+    DumbService.getInstance(myProject).smartInvokeLater(() -> {
+      promise.setResult(null);
+    });
+    edt(() -> waitForPromise(promise, 60_000));
   }
 }

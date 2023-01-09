@@ -1,8 +1,9 @@
-from typing import Any, Callable, Iterable, Iterator, Text, TypeVar
-from typing_extensions import TypedDict
+from collections.abc import Callable, Iterable, Iterator
+from typing import Any, TypeVar
+from typing_extensions import TypeAlias, TypedDict
 
 _T = TypeVar("_T")
-_Callback = Callable[[str, _Result], Any]
+_Callback: TypeAlias = Callable[[str, _Result], Any]
 
 class _Result(TypedDict):
     nmap: _ResultNmap
@@ -49,13 +50,13 @@ class _ResultHostPort(TypedDict):
 
 __last_modification__: str
 
-class PortScanner(object):
+class PortScanner:
     def __init__(self, nmap_search_path: Iterable[str] = ...) -> None: ...
-    def get_nmap_last_output(self) -> Text: ...
+    def get_nmap_last_output(self) -> str: ...
     def nmap_version(self) -> tuple[int, int]: ...
     def listscan(self, hosts: str = ...) -> list[str]: ...
     def scan(
-        self, hosts: Text = ..., ports: Text | None = ..., arguments: Text = ..., sudo: bool = ..., timeout: int = ...
+        self, hosts: str = ..., ports: str | None = ..., arguments: str = ..., sudo: bool = ..., timeout: int = ...
     ) -> _Result: ...
     def analyse_nmap_xml_scan(
         self,
@@ -64,7 +65,7 @@ class PortScanner(object):
         nmap_err_keep_trace: str = ...,
         nmap_warn_keep_trace: str = ...,
     ) -> _Result: ...
-    def __getitem__(self, host: Text) -> PortScannerHostDict: ...
+    def __getitem__(self, host: str) -> PortScannerHostDict: ...
     def all_hosts(self) -> list[str]: ...
     def command_line(self) -> str: ...
     def scaninfo(self) -> _ResultNmapInfo: ...
@@ -73,17 +74,17 @@ class PortScanner(object):
     def csv(self) -> str: ...
 
 def __scan_progressive__(
-    self: object, hosts: Text, ports: Text, arguments: Text, callback: _Callback | None, sudo: bool, timeout: int
+    self: object, hosts: str, ports: str, arguments: str, callback: _Callback | None, sudo: bool, timeout: int
 ) -> None: ...
 
-class PortScannerAsync(object):
+class PortScannerAsync:
     def __init__(self) -> None: ...
     def __del__(self) -> None: ...
     def scan(
         self,
-        hosts: Text = ...,
-        ports: Text | None = ...,
-        arguments: Text = ...,
+        hosts: str = ...,
+        ports: str | None = ...,
+        arguments: str = ...,
         callback: _Callback | None = ...,
         sudo: bool = ...,
         timeout: int = ...,

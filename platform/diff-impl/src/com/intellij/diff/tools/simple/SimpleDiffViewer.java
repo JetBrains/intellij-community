@@ -235,7 +235,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
   }
 
   @NotNull
-  protected Runnable apply(@Nullable List<SimpleDiffChange> changes,
+  protected Runnable apply(@Nullable List<? extends SimpleDiffChange> changes,
                            boolean isContentsEqual) {
     List<SimpleDiffChange> nonSkipped = changes != null ? ContainerUtil.filter(changes, it -> !it.isSkipped()) : null;
     FoldingModelSupport.Data foldingState = myFoldingModel.createState(nonSkipped, getFoldingModelSettings());
@@ -532,7 +532,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     protected abstract Icon getIcon(@NotNull Side side);
 
     @RequiresWriteLock
-    protected abstract void doPerform(@NotNull AnActionEvent e, @NotNull Side side, @NotNull List<SimpleDiffChange> changes);
+    protected abstract void doPerform(@NotNull AnActionEvent e, @NotNull Side side, @NotNull List<? extends SimpleDiffChange> changes);
   }
 
   private abstract class ApplySelectedChangesActionBase extends SelectedChangesActionBase {
@@ -549,7 +549,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     }
 
     @Override
-    protected void doPerform(@NotNull AnActionEvent e, @NotNull Side side, @NotNull List<SimpleDiffChange> changes) {
+    protected void doPerform(@NotNull AnActionEvent e, @NotNull Side side, @NotNull List<? extends SimpleDiffChange> changes) {
       if (!isEditable(myModifiedSide)) return;
 
       String title = DiffBundle.message("message.use.selected.changes.command", e.getPresentation().getText());
@@ -561,7 +561,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     }
 
     @RequiresWriteLock
-    protected abstract void apply(@NotNull List<SimpleDiffChange> changes);
+    protected abstract void apply(@NotNull List<? extends SimpleDiffChange> changes);
   }
 
   private class ReplaceSelectedChangesAction extends ApplySelectedChangesActionBase {
@@ -583,7 +583,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     }
 
     @Override
-    protected void apply(@NotNull List<SimpleDiffChange> changes) {
+    protected void apply(@NotNull List<? extends SimpleDiffChange> changes) {
       for (SimpleDiffChange change : changes) {
         replaceChange(change, myModifiedSide.other());
       }
@@ -611,7 +611,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     }
 
     @Override
-    protected void apply(@NotNull List<SimpleDiffChange> changes) {
+    protected void apply(@NotNull List<? extends SimpleDiffChange> changes) {
       for (SimpleDiffChange change : changes) {
         appendChange(change, myModifiedSide.other());
       }
@@ -799,7 +799,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     }
 
     @Nullable
-    public Data createState(@Nullable List<SimpleDiffChange> changes, @NotNull Settings settings) {
+    public Data createState(@Nullable List<? extends SimpleDiffChange> changes, @NotNull Settings settings) {
       Iterator<int[]> it = map(changes, change -> new int[]{
         change.getStartLine(Side.LEFT),
         change.getEndLine(Side.LEFT),

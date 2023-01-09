@@ -27,7 +27,7 @@ class TooLongCharLiteralToStringFix(
             .slice(1..text.length - 2)
             .replace("\\\"", "\"")
             .replace("\"", "\\\"")
-        val newElement = KtPsiFactory(element).createStringTemplate(newStringContent)
+        val newElement = KtPsiFactory(project).createStringTemplate(newStringContent)
 
         element.replace(newElement)
     }

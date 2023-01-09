@@ -181,7 +181,7 @@ public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressabl
         if (line.isEmpty() || line.startsWith("--")) continue;
         boolean lineParsed = false;
         final int p1 = line.indexOf('#');
-        if (p1 > 0 && p1 < line.length()) {
+        if (p1 > 0) {
           final String className = line.substring(0, p1);
           final int p2 = line.indexOf('=', p1);
           if (p2 > p1 && p2 < line.length()) {

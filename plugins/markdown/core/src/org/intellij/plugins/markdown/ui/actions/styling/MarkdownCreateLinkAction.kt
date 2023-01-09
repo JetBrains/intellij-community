@@ -18,7 +18,6 @@ import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.LocalFileUrl
 import com.intellij.util.Urls
-import com.intellij.util.io.exists
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
@@ -28,6 +27,7 @@ import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import org.jetbrains.annotations.Nls
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 internal class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
   private val wrapActionBaseName: String

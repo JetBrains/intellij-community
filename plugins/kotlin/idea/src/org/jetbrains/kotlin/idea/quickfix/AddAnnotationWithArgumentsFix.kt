@@ -86,7 +86,7 @@ class AddAnnotationWithArgumentsFix(
         val entry = existingAnnotationEntry?.element
         if (entry != null) {
             if (innerText != null) {
-                val psiFactory = KtPsiFactory(declaration)
+                val psiFactory = KtPsiFactory(project)
                 entry.valueArgumentList?.addArgument(psiFactory.createArgument(innerText))
                     ?: entry.addAfter(psiFactory.createCallArguments("($innerText)"), entry.lastChild)
             }

@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import javax.swing.*;
 import java.util.*;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
@@ -1062,11 +1061,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
     }
     return null;
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    throw new RuntimeException("No UI in headless mode");
   }
 
   private static class MyAnnotateMethodFix extends AnnotateMethodFix {

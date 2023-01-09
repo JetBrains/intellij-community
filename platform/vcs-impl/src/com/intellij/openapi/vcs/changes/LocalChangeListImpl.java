@@ -14,7 +14,7 @@ public final class LocalChangeListImpl extends LocalChangeList {
   @NonNls @NotNull private final String myId;
   @NlsSafe @NotNull private final String myName;
   @NlsSafe @NotNull private final String myComment;
-  @NotNull private final Set<Change> myChanges;
+  private final @NotNull Set<? extends Change> myChanges;
   @Nullable private final ChangeListData myData;
 
   private final boolean myIsDefault;
@@ -36,7 +36,7 @@ public final class LocalChangeListImpl extends LocalChangeList {
                               @NonNls @NotNull String id,
                               @NlsSafe @NotNull String name,
                               @NlsSafe @NotNull String comment,
-                              @NotNull Set<Change> changes,
+                              @NotNull Set<? extends Change> changes,
                               @Nullable ChangeListData data,
                               boolean isDefault,
                               boolean isReadOnly) {
@@ -144,7 +144,7 @@ public final class LocalChangeListImpl extends LocalChangeList {
       myId = list.myId;
       myName = list.myName;
       myComment = list.myComment;
-      myChanges = list.myChanges;
+      myChanges = new HashSet<>(list.myChanges);
       myData = list.myData;
       myIsDefault = list.myIsDefault;
       myIsReadOnly = list.myIsReadOnly;

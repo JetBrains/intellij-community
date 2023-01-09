@@ -252,7 +252,7 @@ public class EventLogStatisticsService implements StatisticsService {
     cleanupFiles(filesToRemove, logger);
   }
 
-  private static void cleanupFiles(@NotNull List<File> toRemove, @NotNull DataCollectorDebugLogger logger) {
+  private static void cleanupFiles(@NotNull List<? extends File> toRemove, @NotNull DataCollectorDebugLogger logger) {
     for (File file : toRemove) {
       if (!file.delete()) {
         logger.warn("Failed deleting event log: " + file.getName());

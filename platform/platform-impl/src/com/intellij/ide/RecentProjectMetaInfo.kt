@@ -10,7 +10,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
-import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.LongAdder
 
 class RecentProjectMetaInfo : BaseState() {
   @get:Attribute
@@ -44,10 +44,6 @@ class RecentProjectManagerState : BaseState() {
   @get:OptionTag
   val recentPaths by list<String>()
 
-  @Deprecated("")
-  @get:OptionTag
-  val openPaths by list<String>()
-
   @get:OptionTag
   val groups by list<ProjectGroup>()
   var pid by string()
@@ -60,7 +56,7 @@ class RecentProjectManagerState : BaseState() {
 
   var lastOpenedProject by string()
 
-  fun validateRecentProjects(modCounter: AtomicLong) {
+  fun validateRecentProjects(modCounter: LongAdder) {
     val limit = AdvancedSettings.getInt("ide.max.recent.projects")
     if (additionalInfo.size <= limit || limit < 1) {
       return
@@ -77,6 +73,6 @@ class RecentProjectManagerState : BaseState() {
         }
       }
     }
-    modCounter.incrementAndGet()
+    modCounter.increment()
   }
 }

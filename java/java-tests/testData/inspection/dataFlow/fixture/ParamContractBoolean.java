@@ -6,9 +6,9 @@ class Scratch
   {
     maybeNull = true;
     if (!isTrue(getMaybeNull())) { }
-    if (<warning descr="Condition '!isTrue(null)' is always 'true'">!<warning descr="Result of 'isTrue(null)' is always 'false'">isTrue(<warning descr="Passing 'null' argument to non-annotated parameter">null</warning>)</warning></warning>) { }
-    if (<warning descr="Condition '!isTrue(true)' is always 'false'">!<warning descr="Result of 'isTrue(true)' is always 'true'">isTrue(true)</warning></warning>) { }
-    if (<warning descr="Condition '!isTrue(false)' is always 'true'">!<warning descr="Result of 'isTrue(false)' is always 'false'">isTrue(false)</warning></warning>) { }
+    if (<warning descr="Condition '!isTrue(null)' is always 'true'">!isTrue(<warning descr="Passing 'null' argument to non-annotated parameter">null</warning>)</warning>) { }
+    if (<warning descr="Condition '!isTrue(true)' is always 'false'">!isTrue(true)</warning>) { }
+    if (<warning descr="Condition '!isTrue(false)' is always 'true'">!isTrue(false)</warning>) { }
   }
 
   static Boolean maybeNull = null;

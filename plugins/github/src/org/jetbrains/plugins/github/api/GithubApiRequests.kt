@@ -9,7 +9,6 @@ import org.jetbrains.plugins.github.api.util.GHSchemaPreview
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.api.util.GithubApiUrlQueryBuilder
-import java.awt.Image
 import java.awt.image.BufferedImage
 
 /**
@@ -78,19 +77,6 @@ object GithubApiRequests {
         get(getUrl(server, CurrentUser.urlSuffix, urlSuffix, getQuery(pagination?.toString().orEmpty())))
 
       fun get(url: String) = Get.jsonPage<GithubOrg>(url).withOperationName("get user organizations")
-    }
-
-    object RepoSubs : Entity("/subscriptions") {
-      @JvmStatic
-      fun pages(server: GithubServerPath) = GithubApiPagesLoader.Request(get(server), ::get)
-
-      @JvmOverloads
-      @JvmStatic
-      fun get(server: GithubServerPath, pagination: GithubRequestPagination? = null) =
-        get(getUrl(server, CurrentUser.urlSuffix, urlSuffix, getQuery(pagination?.toString().orEmpty())))
-
-      @JvmStatic
-      fun get(url: String) = Get.jsonPage<GithubRepo>(url).withOperationName("get repository subscriptions")
     }
   }
 
@@ -332,33 +318,15 @@ object GithubApiRequests {
     object PullRequests : Entity("/pulls") {
 
       @JvmStatic
-      fun create(server: GithubServerPath,
-                 username: String, repoName: String,
-                 title: String, description: String, head: String, base: String) =
-        Post.json<GithubPullRequestDetailed>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix),
-                                             GithubPullRequestRequest(title, description, head, base))
-          .withOperationName("create pull request in $username/$repoName")
-
-      @JvmStatic
       fun update(serverPath: GithubServerPath, username: String, repoName: String, number: Long,
                  title: String? = null,
                  body: String? = null,
                  state: GithubIssueState? = null,
                  base: String? = null,
                  maintainerCanModify: Boolean? = null) =
-        Patch.json<GithubPullRequestDetailed>(getUrl(serverPath, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$number"),
-                                              GithubPullUpdateRequest(title, body, state, base, maintainerCanModify))
+        Patch.json<Any>(getUrl(serverPath, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$number"),
+                        GithubPullUpdateRequest(title, body, state, base, maintainerCanModify))
           .withOperationName("update pull request $number")
-
-      @JvmStatic
-      fun update(url: String,
-                 title: String? = null,
-                 body: String? = null,
-                 state: GithubIssueState? = null,
-                 base: String? = null,
-                 maintainerCanModify: Boolean? = null) =
-        Patch.json<GithubPullRequestDetailed>(url, GithubPullUpdateRequest(title, body, state, base, maintainerCanModify))
-          .withOperationName("update pull request")
 
       @JvmStatic
       fun merge(server: GithubServerPath, repoPath: GHRepositoryPath, number: Long,
@@ -440,15 +408,6 @@ object GithubApiRequests {
                      })
                      param(pagination)
                    }))
-
-      @JvmStatic
-      fun get(server: GithubServerPath, query: String, pagination: GithubRequestPagination? = null) =
-        get(getUrl(server, Search.urlSuffix, urlSuffix,
-                   GithubApiUrlQueryBuilder.urlQuery {
-                     param("q", query)
-                     param(pagination)
-                   }))
-
 
       @JvmStatic
       fun get(url: String) = Get.jsonSearchPage<GithubSearchedIssue>(url).withOperationName("search issues in repository")

@@ -66,6 +66,7 @@ public final class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
     addConfigFile(new ConfigFileInfo(metaData, newUrl));
   }
 
+  @Override
   public void updateConfigFile(ConfigFile configFile) {
     configFiles.remove(configFile.getMetaData(), configFile.getInfo());
     ConfigFileInfo info = new ConfigFileInfo(configFile.getMetaData(), configFile.getUrl());
@@ -146,9 +147,10 @@ public final class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
     }
   }
 
-  public void setContainer(@NotNull ConfigFileContainerImpl container) {
+  @Override
+  public void setContainer(@NotNull ConfigFileContainer container) {
     LOG.assertTrue(myContainer == null);
-    myContainer = container;
+    myContainer = (ConfigFileContainerImpl)container;
     myContainer.updateDescriptors(configFiles);
   }
 }

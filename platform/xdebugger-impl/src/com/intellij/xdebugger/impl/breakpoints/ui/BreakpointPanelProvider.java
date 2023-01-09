@@ -36,5 +36,5 @@ public abstract class BreakpointPanelProvider<B> {
 
   public abstract void onDialogClosed(final Project project);
 
-  public abstract void provideBreakpointItems(Project project, Collection<BreakpointItem> items);
+  public abstract void provideBreakpointItems(Project project, Collection<? super BreakpointItem> items);
 }

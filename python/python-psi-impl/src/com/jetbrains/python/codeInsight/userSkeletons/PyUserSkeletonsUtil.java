@@ -55,7 +55,7 @@ import java.util.List;
 /**
  * @author vlan
  */
-public class PyUserSkeletonsUtil {
+public final class PyUserSkeletonsUtil {
   public static final String USER_SKELETONS_DIR = "python-skeletons";
   private static final Logger LOG = Logger.getInstance(PyUserSkeletonsUtil.class);
   public static final Key<Boolean> HAS_SKELETON = Key.create("PyUserSkeleton.hasSkeleton");

@@ -107,7 +107,7 @@ class ReplaceIsEmptyWithIfEmptyInspection : AbstractKotlinInspection() {
             val elseExpression = ifExpression.`else` ?: return
             val defaultValueExpression = (if (replacement.negativeCondition) elseExpression else thenExpression)
 
-            val psiFactory = KtPsiFactory(ifExpression)
+            val psiFactory = KtPsiFactory(project)
             val receiverText = (condition as? KtDotQualifiedExpression)?.receiverExpression?.text?.let { "$it." } ?: ""
             val replacementFunctionName = replacement.replacementFunctionName
             val newExpression = if (defaultValueExpression is KtBlockExpression) {

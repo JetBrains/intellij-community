@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.settingsSync.migration.SettingsRepositoryToSettingsSyncMigration
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -35,15 +36,16 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     }
 
     if (!SettingsSyncSettings.getInstance().migrationFromOldStorageChecked) {
-      val migration = MIGRATION_EP.extensionList.firstOrNull()
+      SettingsSyncSettings.getInstance().migrationFromOldStorageChecked = true
+      val migration = MIGRATION_EP.extensionList.firstOrNull { it.isLocalDataAvailable(PathManager.getConfigDir()) }
       if (migration != null) {
-        val migrationPossible = migration.isLocalDataAvailable(PathManager.getConfigDir())
-        SettingsSyncSettings.getInstance().migrationFromOldStorageChecked = true
-        if (migrationPossible) {
-          LOG.info("Found migration from an old storage via ${migration.javaClass.simpleName}, migration possible: $migrationPossible")
-          SettingsSyncSettings.getInstance().syncEnabled = true
-          executorService.schedule(initializeSyncing(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration)), 0, TimeUnit.SECONDS)
-        }
+        LOG.info("Found migration from an old storage via ${migration.javaClass.simpleName}")
+        executorService.schedule(initializeSyncing(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration)), 0, TimeUnit.SECONDS)
+        SettingsSyncSettings.getInstance().syncEnabled = true
+        SettingsSyncEventsStatistics.MIGRATED_FROM_OLD_PLUGIN.log()
+      }
+      else {
+        SettingsRepositoryToSettingsSyncMigration.migrateIfNeeded(executorService)
       }
     }
   }
@@ -70,6 +72,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     LOG.info("Initializing settings sync")
     val settingsSyncMain = SettingsSyncMain.getInstance()
     settingsSyncMain.controls.bridge.initialize(initMode)
+    SettingsSyncEvents.getInstance().addCategoriesChangeListener(this)
     syncSettings()
   }
 
@@ -86,7 +89,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
   }
 
   override fun categoriesStateChanged() {
-    syncSettings()
+    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.LogCurrentSettings)
   }
 
   private fun scheduleSyncingOnAppFocus() {
@@ -125,6 +128,8 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
 
     @RequiresBackgroundThread
     internal fun syncSettings(remoteCommunicator: SettingsSyncRemoteCommunicator, updateChecker: SettingsSyncUpdateChecker) {
+      checkCrossIdeSyncStatusOnServer(remoteCommunicator)
+
       when (remoteCommunicator.checkServerState()) {
         is ServerState.UpdateNeeded -> {
           LOG.info("Updating from server")
@@ -132,7 +137,8 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
           // the push will happen automatically after updating and merging (if there is anything to merge)
         }
         ServerState.FileNotExists -> {
-          LOG.info("No file on server")
+          LOG.info("No file on server, will push local settings")
+          SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.MustPushRequest)
         }
         ServerState.UpToDate -> {
           LOG.debug("Updating settings is not needed, will check if push is needed")
@@ -143,5 +149,22 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
         }
       }
     }
+
+    internal fun checkCrossIdeSyncStatusOnServer(remoteCommunicator: SettingsSyncRemoteCommunicator) {
+      try {
+        val crossIdeSyncEnabled = remoteCommunicator.isFileExists(CROSS_IDE_SYNC_MARKER_FILE)
+        if (crossIdeSyncEnabled != SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled) {
+          LOG.info("Cross-IDE sync status on server is: ${enabledOrDisabled(crossIdeSyncEnabled)}. Updating local settings with it.")
+          SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled = crossIdeSyncEnabled
+        }
+      }
+      catch (e: Throwable) {
+        LOG.error("Couldn't check if $CROSS_IDE_SYNC_MARKER_FILE exists", e)
+      }
+    }
   }
 }
+
+internal const val CROSS_IDE_SYNC_MARKER_FILE = "cross-ide-sync-enabled"
+
+internal fun enabledOrDisabled(value: Boolean?) = if (value == null) "null" else if (value) "enabled" else "disabled"

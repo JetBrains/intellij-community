@@ -418,7 +418,7 @@ public class Alarm implements Disposable {
       synchronized (LOCK) {
         task = myTask;
       }
-      return super.toString() + (task != null ? ": "+task : "");
+      return super.toString() + (task == null ? "" : ": " + task)+"; delay="+myDelayMillis+"ms";
     }
   }
 

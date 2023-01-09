@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.getPsiFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
+import com.intellij.openapi.vfs.VirtualFile
 
 class RearrangeCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
@@ -20,15 +21,16 @@ class RearrangeCheckinHandlerFactory : CheckinHandlerFactory() {
 
 class RearrangeBeforeCheckinHandler(project: Project) : CodeProcessorCheckinHandler(project) {
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    BooleanCommitOption(project, VcsBundle.message("checkbox.checkin.options.rearrange.code"), true,
-                        settings::REARRANGE_BEFORE_PROJECT_COMMIT)
+    BooleanCommitOption.create(project, this, disableWhenDumb = true,
+                               VcsBundle.message("checkbox.checkin.options.rearrange.code"),
+                               settings::REARRANGE_BEFORE_PROJECT_COMMIT)
 
   override fun isEnabled(): Boolean = settings.REARRANGE_BEFORE_PROJECT_COMMIT
 
   override fun getProgressMessage(): String = VcsBundle.message("progress.text.rearranging.code")
 
-  override fun createCodeProcessor(commitInfo: CommitInfo): AbstractLayoutCodeProcessor =
-    RearrangeCodeProcessor(project, getPsiFiles(project, commitInfo.committedVirtualFiles), COMMAND_NAME, null, true)
+  override fun createCodeProcessor(files: List<VirtualFile>): AbstractLayoutCodeProcessor =
+    RearrangeCodeProcessor(project, getPsiFiles(project, files), COMMAND_NAME, null, true)
 
   companion object {
     @JvmField

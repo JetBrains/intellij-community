@@ -13,15 +13,15 @@ import java.util.*
 
 abstract class BaseLineStatusTrackerTestCase : BaseLineStatusTrackerManagerTest() {
   protected fun test(text: String, task: SimpleTest.() -> Unit) {
-    test(text, text, false, task)
+    test(text, text, false, task = task)
   }
 
-  protected fun test(text: String, vcsText: String, smart: Boolean = false, task: SimpleTest.() -> Unit) {
+  protected fun test(text: String, vcsText: String, smart: Boolean = false, fileName: String = "file.txt", task: SimpleTest.() -> Unit) {
     resetTestState()
     VcsApplicationSettings.getInstance().SHOW_WHITESPACES_IN_LST = smart
     arePartialChangelistsSupported = false
 
-    doTest(text, vcsText, { tracker -> SimpleTest(tracker as SimpleLocalLineStatusTracker) }, task)
+    doTest(text, vcsText, fileName = fileName, createTestHelper = { tracker -> SimpleTest(tracker as SimpleLocalLineStatusTracker) }, task = task)
   }
 
   protected fun testPartial(text: String, task: PartialTest.() -> Unit) {
@@ -31,13 +31,13 @@ abstract class BaseLineStatusTrackerTestCase : BaseLineStatusTrackerManagerTest(
   protected fun testPartial(text: String, vcsText: String, task: PartialTest.() -> Unit) {
     resetTestState()
 
-    doTest(text, vcsText, { tracker -> PartialTest(tracker as ChangelistsLocalLineStatusTracker) }, task)
+    doTest(text, vcsText, createTestHelper = { tracker -> PartialTest(tracker as ChangelistsLocalLineStatusTracker) }, task = task)
   }
 
   private fun <TestHelper : TrackerModificationsTest> doTest(text: String, vcsText: String,
+                                                             fileName: String = "file.txt",
                                                              createTestHelper: (LineStatusTracker<*>) -> TestHelper,
                                                              task: TestHelper.() -> Unit) {
-    val fileName = "file.txt"
     val file = addLocalFile(fileName, parseInput(text))
     setBaseVersion(fileName, parseInput(vcsText))
     refreshCLM()

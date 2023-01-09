@@ -28,6 +28,7 @@ fun PsiExpression.j2k(settings: ConverterSettings = defaultSettings): KtExpressi
     return KtPsiFactory(project).createExpression(text)
 }
 
+@JvmOverloads
 fun PsiMember.j2k(settings: ConverterSettings = defaultSettings): KtNamedDeclaration? {
     val text = j2kText(settings) ?: return null
     return KtPsiFactory(project).createDeclaration(text)

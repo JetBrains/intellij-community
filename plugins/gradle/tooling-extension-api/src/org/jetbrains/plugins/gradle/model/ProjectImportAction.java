@@ -44,9 +44,9 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   public static final String IDEA_BACKGROUND_CONVERT = "idea.background.convert";
   public static final String IDEA_MODELS_PARALLEL_FETCH = "idea.models.parallel.fetch";
 
-  private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new HashSet<ProjectImportModelProvider>();
-  private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new HashSet<ProjectImportModelProvider>();
-  private final Set<Class<?>> myTargetTypes = new HashSet<Class<?>>();
+  private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new LinkedHashSet<ProjectImportModelProvider>();
+  private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new LinkedHashSet<ProjectImportModelProvider>();
+  private final Set<Class<?>> myTargetTypes = new LinkedHashSet<Class<?>>();
   private final boolean myIsPreviewMode;
   private final boolean myIsCompositeBuildsSupported;
   private boolean myUseProjectsLoadedPhase;

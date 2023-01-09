@@ -1,11 +1,8 @@
-/*
- * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
- * Use is subject to license terms.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.mockJDI.values;
 
-import com.sun.jdi.StringReference;
 import com.intellij.debugger.mockJDI.MockVirtualMachine;
+import com.sun.jdi.StringReference;
 
 public class MockStringReference extends MockObjectReference implements StringReference {
   public MockStringReference(final MockVirtualMachine virtualMachine, String object) {
@@ -14,6 +11,6 @@ public class MockStringReference extends MockObjectReference implements StringRe
 
   @Override
   public String value() {
-    return (String) getValue();
+    return (String)getValue();
   }
 }

@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.LocalCommitExecutor;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.util.PairConsumer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -40,29 +39,27 @@ public abstract class CheckinHandler {
   }
 
   /**
-   * Returns the panel which is inserted in the "Before Check In" group box of the Checkin Project
-   * or Checkin File dialogs.
+   * Returns the panel which is inserted in the "Before Commit" group of the commit options panel.
    *
-   * @return the panel instance, or {@code null} if the handler does not provide any options to show in the
-   * "Before Check In" group.
+   * @see com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
    */
   @Nullable
   public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
     return null;
   }
 
-  @ApiStatus.Experimental
+  /**
+   * Returns the panel which is inserted in the "Settings | Version Control | Commit" configurable panel.
+   *
+   * @see com.intellij.openapi.options.UiDslUnnamedConfigurable
+   */
   @Nullable
   public UnnamedConfigurable getBeforeCheckinSettings() {
     return tryCast(getBeforeCheckinConfigurationPanel(), UnnamedConfigurable.class);
   }
 
   /**
-   * Returns the panel which is inserted in the "After Check In" group box of the Checkin Project
-   * or Checkin File dialogs.
-   *
-   * @return the panel instance, or {@code null} if the handler does not provide any options to show in the
-   * "After Check In" group.
+   * Returns the panel which is inserted in the "After Commit" group of the commit options panel.
    */
   @Nullable
   public RefreshableOnComponent getAfterCheckinConfigurationPanel(final Disposable parentDisposable) {

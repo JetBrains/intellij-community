@@ -30,14 +30,18 @@ public class MavenMultiProjectImportTest extends ProjectWizardTestCase<AbstractP
 
   public void testIndicesForDifferentProjectsShouldBeSameInstance() {
     myDir = getTempDir().newPath("", true);
-    VirtualFile pom1 = createPomXml("projectDir1", "<groupId>test</groupId>" +
-                                                   "<artifactId>project1</artifactId>" +
-                                                   "<version>1</version>");
+    VirtualFile pom1 = createPomXml("projectDir1", """
+      <groupId>test</groupId>
+      <artifactId>project1</artifactId>
+      <version>1</version>
+      """);
     importMaven(myProject, pom1);
 
-    VirtualFile pom2 = createPomXml("projectDir2", "<groupId>test</groupId>" +
-                                                   "<artifactId>project2</artifactId>" +
-                                                   "<version>1</version>");
+    VirtualFile pom2 = createPomXml("projectDir2", """
+      <groupId>test</groupId>
+      <artifactId>project2</artifactId>
+      <version>1</version>
+      """);
 
     MavenProjectImportProvider provider = new MavenProjectImportProvider();
     MavenProjectBuilder builder = (MavenProjectBuilder)provider.getBuilder();

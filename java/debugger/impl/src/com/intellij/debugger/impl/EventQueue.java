@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.PossiblySyncCommand;
@@ -23,7 +23,7 @@ public class EventQueue<E> {
 
   private volatile boolean myIsClosed = false;
 
-  public EventQueue (int countPriorities) {
+  public EventQueue(int countPriorities) {
     myLock = new ReentrantLock();
     myEventsAvailable = myLock.newCondition();
     myEvents = new LinkedList[countPriorities];
@@ -33,7 +33,7 @@ public class EventQueue<E> {
   }
 
   public boolean pushBack(@NotNull E event, int priority) {
-    if(LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled()) {
       LOG.debug("pushBack event " + event);
     }
 
@@ -52,7 +52,7 @@ public class EventQueue<E> {
   }
 
   public boolean put(@NotNull E event, int priority) {
-    if(LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled()) {
       LOG.debug("put event " + event);
     }
 
@@ -74,7 +74,7 @@ public class EventQueue<E> {
     return (LinkedList<E>)myEvents[priority];
   }
 
-  public void close(){
+  public void close() {
     myLock.lock();
     try {
       myIsClosed = true;
@@ -89,7 +89,7 @@ public class EventQueue<E> {
     myLock.lock();
     try {
       while (true) {
-        if(myIsClosed) {
+        if (myIsClosed) {
           throw new EventQueueClosedException();
         }
         for (int i = 0; i < myEvents.length; i++) {

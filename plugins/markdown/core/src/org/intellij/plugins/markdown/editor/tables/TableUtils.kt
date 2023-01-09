@@ -4,7 +4,6 @@ package org.intellij.plugins.markdown.editor.tables
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
@@ -19,7 +18,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.lang.psi.util.hasType
-import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -170,9 +169,23 @@ object TableUtils {
     return false
   }
 
-  internal fun isFormattingEnabledForTables(file: PsiFile): Boolean {
-    return Registry.`is`("markdown.tables.editing.support.enable") &&
-           MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled &&
-           file !in CodeStyle.getSettings(file).excludedFiles
+  internal fun isFormattingOnTypeEnabledForTables(file: PsiFile): Boolean {
+    return MarkdownCodeInsightSettings.getInstance().state.reformatTablesOnType && file !in CodeStyle.getSettings(file).excludedFiles
+  }
+
+  /**
+   * This is a quick fix for calculating the correct text range of table separator row.
+   * Currently, if the table is indented, the table separator element will contain line indentation as well.
+   * The problem only occurs with table separator row - regular rows elements don't include leading indents.
+   */
+  internal fun MarkdownTableSeparatorRow.calculateActualTextRange(): TextRange {
+    val text = text
+    val first = text.indexOfFirst { !it.isWhitespace() && it != '>'}
+    val last = text.indexOfLast { !it.isWhitespace() }
+    val end = when (last) {
+      -1 -> this.textLength
+      else -> last + 1
+    }
+    return TextRange(first.coerceAtLeast(0), end).shiftRight(startOffset)
   }
 }

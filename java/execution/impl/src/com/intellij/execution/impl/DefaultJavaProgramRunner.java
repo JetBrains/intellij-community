@@ -36,7 +36,6 @@ import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.unscramble.ThreadDumpParser;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -105,9 +104,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       });
     }
     else {
-      executionManager.startRunProfile(environment, currentState, (ignored) -> SlowOperations.allowSlowOperations(() -> {
-        return doExecute(currentState, environment);
-      }));
+      executionManager.startRunProfile(environment, currentState, (ignored) -> doExecute(currentState, environment));
     }
   }
 

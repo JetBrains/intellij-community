@@ -2,6 +2,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.Range;
 
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
@@ -30,8 +31,8 @@ public final class Timings {
   }
 
   public static String getStatistics() {
-    return String.format("CPU=%d (%d%% reference CPU), I/O=%d (%d%% reference IO), %d cores",
+    return String.format("CPU=%d (%d%% reference CPU), I/O=%d (%d%% reference IO), %d cores (%s)",
                          CPU_TIMING, CPU_TIMING * 100 / REFERENCE_CPU_TIMING,
-                         IO_TIMING, IO_TIMING * 100 / REFERENCE_IO_TIMING, Runtime.getRuntime().availableProcessors());
+                         IO_TIMING, IO_TIMING * 100 / REFERENCE_IO_TIMING, Runtime.getRuntime().availableProcessors(), CpuArch.CURRENT);
   }
 }

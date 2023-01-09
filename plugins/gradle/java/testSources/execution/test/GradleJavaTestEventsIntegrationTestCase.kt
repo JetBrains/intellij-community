@@ -11,11 +11,11 @@ import org.assertj.core.api.Condition
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
-import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
+import org.jetbrains.plugins.gradle.testFramework.GradleProjectTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 
-abstract class GradleJavaTestEventsIntegrationTestCase : GradleTestCase() {
+abstract class GradleJavaTestEventsIntegrationTestCase : GradleProjectTestCase() {
 
   override fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, test: () -> Unit) {
     super.test(gradleVersion, fixtureBuilder) {

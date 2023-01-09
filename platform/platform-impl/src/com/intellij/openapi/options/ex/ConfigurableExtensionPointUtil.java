@@ -3,6 +3,7 @@ package com.intellij.openapi.options.ex;
 
 import com.intellij.BundleBase;
 import com.intellij.ide.actions.ConfigurablesPatcher;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,6 +21,9 @@ import java.text.MessageFormat;
 import java.util.*;
 
 public final class ConfigurableExtensionPointUtil {
+  private static final @NonNls String CONFIGURABLE_ID_PREFIX = "configurable.group.";
+  private static final @NonNls String ROOT_ID = "root";
+  public static final @NonNls String ROOT_CONFIGURABLE_ID = CONFIGURABLE_ID_PREFIX + ROOT_ID;
   private static final Logger LOG = Logger.getInstance(ConfigurableExtensionPointUtil.class);
 
   private ConfigurableExtensionPointUtil() {
@@ -200,16 +204,16 @@ public final class ConfigurableExtensionPointUtil {
 
   private static void addGroup(@NotNull Map<String, Node<SortedConfigurableGroup>> tree, Project project,
                                String groupId, List<? extends Configurable> configurables, ResourceBundle alternative) {
-    boolean root = "root".equals(groupId);
+    boolean root = ROOT_ID.equals(groupId);
     ConfigurableGroupEP ep = root ? null : ConfigurableGroupEP.find(groupId);
-    String id = "configurable.group." + groupId;
+    String id = CONFIGURABLE_ID_PREFIX + groupId;
     ResourceBundle bundle = ep != null ? ep.getResourceBundle() : getBundle(id + ".settings.display.name", configurables, alternative);
     if (bundle == null) {
       bundle = OptionsBundle.INSTANCE.getResourceBundle();
       if (!root) {
         LOG.warn("use other group instead of unexpected one: " + groupId);
         groupId = "other";
-        id = "configurable.group." + groupId;
+        id = CONFIGURABLE_ID_PREFIX + groupId;
       }
     }
     Node<SortedConfigurableGroup> node = Node.get(tree, groupId);
@@ -248,7 +252,7 @@ public final class ConfigurableExtensionPointUtil {
     }
     if (!root && node.myParent == null) {
       String parentId = ep != null ? ep.parentId : getString(bundle, id + ".settings.parent");
-      parentId = Node.cyclic(tree, parentId, "root", groupId, node);
+      parentId = Node.cyclic(tree, parentId, ROOT_ID, groupId, node);
       node.myParent = Node.add(tree, parentId, groupId);
       addGroup(tree, project, parentId, null, bundle);
     }
@@ -488,10 +492,10 @@ public final class ConfigurableExtensionPointUtil {
   public static String getConfigurablePath(Class<? extends Configurable> configurableClass, Project project) {
     List<String> path = new ArrayList<>();
     collectPath(configurableClass, path, getConfigurableGroup(project, true).getConfigurables());
-    return StringUtil.join(path, " | ");
+    return StringUtil.join(path, SearchableOptionsRegistrar.SETTINGS_GROUP_SEPARATOR);
   }
 
-  private static void collectPath(Class<? extends Configurable> configurableClass, List<String> path, Configurable[] configurables) {
+  private static void collectPath(Class<? extends Configurable> configurableClass, List<? super String> path, Configurable[] configurables) {
     for (Configurable configurable : configurables) {
       if (configurableClass.equals(configurable.getClass()) ||
           configurable instanceof ConfigurableWrapper &&

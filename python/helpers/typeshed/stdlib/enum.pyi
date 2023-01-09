@@ -4,8 +4,8 @@ from _typeshed import Self
 from abc import ABCMeta
 from builtins import property as _builtins_property
 from collections.abc import Iterable, Iterator, Mapping
-from typing import Any, TypeVar, Union, overload
-from typing_extensions import Literal
+from typing import Any, TypeVar, overload
+from typing_extensions import Literal, TypeAlias
 
 if sys.version_info >= (3, 11):
     __all__ = [
@@ -52,7 +52,7 @@ _EnumerationT = TypeVar("_EnumerationT", bound=type[Enum])
 # <enum 'Foo'>
 # >>> Enum('Foo', names={'RED': 1, 'YELLOW': 2})
 # <enum 'Foo'>
-_EnumNames = Union[str, Iterable[str], Iterable[Iterable[Union[str, Any]]], Mapping[str, Any]]
+_EnumNames: TypeAlias = str | Iterable[str] | Iterable[Iterable[str | Any]] | Mapping[str, Any]
 
 class _EnumDict(dict[str, Any]):
     def __init__(self) -> None: ...
@@ -95,11 +95,11 @@ class EnumMeta(ABCMeta):
     def __members__(self: type[_EnumMemberT]) -> types.MappingProxyType[str, _EnumMemberT]: ...
     def __len__(self) -> int: ...
     def __bool__(self) -> Literal[True]: ...
+    # Simple value lookup
+    @overload  # type: ignore[override]
+    def __call__(cls: type[_EnumMemberT], value: Any, names: None = ...) -> _EnumMemberT: ...
+    # Functional Enum API
     if sys.version_info >= (3, 11):
-        # Simple value lookup
-        @overload  # type: ignore[override]
-        def __call__(cls: type[_EnumMemberT], value: Any, names: None = ...) -> _EnumMemberT: ...
-        # Functional Enum API
         @overload
         def __call__(
             cls,
@@ -113,8 +113,6 @@ class EnumMeta(ABCMeta):
             boundary: FlagBoundary | None = ...,
         ) -> type[Enum]: ...
     else:
-        @overload  # type: ignore[override]
-        def __call__(cls: type[_EnumMemberT], value: Any, names: None = ...) -> _EnumMemberT: ...
         @overload
         def __call__(
             cls,
@@ -157,7 +155,12 @@ class Enum(metaclass=EnumMeta):
     def _missing_(cls, value: object) -> Any: ...
     @staticmethod
     def _generate_next_value_(name: str, start: int, count: int, last_values: list[Any]) -> Any: ...
-    def __new__(cls: type[Self], value: Any) -> Self: ...
+    # It's not true that `__new__` will accept any argument type,
+    # so ideally we'd use `Any` to indicate that the argument type is inexpressible.
+    # However, using `Any` causes too many false-positives for those using mypy's `--disallow-any-expr`
+    # (see #7752, #2539, mypy/#5788),
+    # and in practice using `object` here has the same effect as using `Any`.
+    def __new__(cls: type[Self], value: object) -> Self: ...
     def __dir__(self) -> list[str]: ...
     def __format__(self, format_spec: str) -> str: ...
     def __hash__(self) -> Any: ...

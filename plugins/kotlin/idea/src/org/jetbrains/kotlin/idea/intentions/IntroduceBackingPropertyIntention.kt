@@ -73,13 +73,13 @@ class IntroduceBackingPropertyIntention : SelfTargetingIntention<KtProperty>(
 
         private fun createGetter(element: KtProperty) {
             val body = "get() = ${backingName(element)}"
-            val newGetter = KtPsiFactory(element).createProperty("val x $body").getter!!
+            val newGetter = KtPsiFactory(element.project).createProperty("val x $body").getter!!
             element.addAccessor(newGetter)
         }
 
         private fun createSetter(element: KtProperty) {
             val body = "set(value) { ${backingName(element)} = value }"
-            val newSetter = KtPsiFactory(element).createProperty("val x $body").setter!!
+            val newSetter = KtPsiFactory(element.project).createProperty("val x $body").setter!!
             element.addAccessor(newSetter)
         }
 
@@ -89,7 +89,7 @@ class IntroduceBackingPropertyIntention : SelfTargetingIntention<KtProperty>(
         }
 
         private fun createBackingProperty(property: KtProperty) {
-            val backingProperty = KtPsiFactory(property).buildDeclaration {
+            val backingProperty = KtPsiFactory(property.project).buildDeclaration {
                 appendFixedText("private ")
                 appendFixedText(property.valOrVarKeyword.text)
                 appendFixedText(" ")
@@ -120,7 +120,7 @@ class IntroduceBackingPropertyIntention : SelfTargetingIntention<KtProperty>(
                 override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                     val target = expression.resolveToCall()?.resultingDescriptor
                     if (target is SyntheticFieldDescriptor) {
-                        expression.replace(KtPsiFactory(element).createSimpleName("_$propertyName"))
+                        expression.replace(KtPsiFactory(element.project).createSimpleName("_$propertyName"))
                     }
                 }
 

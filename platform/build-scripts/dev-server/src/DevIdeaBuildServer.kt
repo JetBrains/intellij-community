@@ -203,15 +203,19 @@ private fun parseQuery(url: URI): Map<String, List<String?>> {
     .groupBy(keySelector = { it.key }, valueTransform = { it.value })
 }
 
+internal fun doClearDirContent(child: Path) {
+  Files.newDirectoryStream(child).use { stream ->
+    for (child in stream) {
+      NioFiles.deleteRecursively(child)
+    }
+  }
+}
+
 internal fun clearDirContent(dir: Path): Boolean {
   if (!Files.isDirectory(dir)) {
     return false
   }
 
-  Files.newDirectoryStream(dir).use { stream ->
-    for (child in stream) {
-      NioFiles.deleteRecursively(child)
-    }
-  }
+  doClearDirContent(dir)
   return true
 }

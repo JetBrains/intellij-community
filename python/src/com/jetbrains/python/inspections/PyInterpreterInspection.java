@@ -39,7 +39,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonIdeLanguageCustomization;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -238,9 +238,6 @@ public final class PyInterpreterInspection extends PyInspection {
       if (PyCondaSdkCustomizer.Companion.getInstance().getSuggestSharedCondaEnvironments()) {
         final var sharedCondaEnv = PySdkExtKt.mostPreferred(PySdkExtKt.filterSharedCondaEnvs(module, existingSdks));
         if (sharedCondaEnv != null) return new UseExistingInterpreterFix(sharedCondaEnv, module);
-
-        final var detectedCondaEnv = ContainerUtil.getFirstItem(PySdkExtKt.detectCondaEnvs(module, existingSdks, context));
-        if (detectedCondaEnv != null) return new UseDetectedInterpreterFix(detectedCondaEnv, existingSdks, false, module);
       }
 
       final var systemWideSdk = PySdkExtKt.mostPreferred(PySdkExtKt.filterSystemWideSdks(existingSdks));

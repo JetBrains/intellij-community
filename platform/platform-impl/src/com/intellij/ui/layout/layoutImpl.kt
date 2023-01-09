@@ -3,16 +3,17 @@ package com.intellij.ui.layout
 
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.migLayout.*
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Container
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
 
 @PublishedApi
+@Deprecated("Use Kotlin UI DSL Version 2")
 internal fun createLayoutBuilder(): LayoutBuilder {
   return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration()))
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 interface LayoutBuilderImpl {
   val rootRow: Row
   fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit)

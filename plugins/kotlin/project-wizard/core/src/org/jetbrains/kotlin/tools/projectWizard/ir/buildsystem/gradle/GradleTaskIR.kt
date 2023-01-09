@@ -27,21 +27,6 @@ data class GradleNamedTaskAccessIR(
     }
 }
 
-data class GradleByClassTasksAccessIR(
-    @NonNls val taskClass: String
-) : GradleTaskAccessIR {
-    override fun GradlePrinter.renderGradle() {
-        when (dsl) {
-            GradlePrinter.GradleDsl.GROOVY -> {
-                +"tasks.withType($taskClass)"
-            }
-            GradlePrinter.GradleDsl.KOTLIN -> {
-                +"tasks.withType<$taskClass>"
-            }
-        }
-    }
-}
-
 data class GradleByClassTasksCreateIR(
     val taskName: String,
     val taskClass: String

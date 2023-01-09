@@ -7,11 +7,9 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.reformatColumnOnChange
 import org.intellij.plugins.markdown.editor.tables.TableUtils
-import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 internal class MarkdownTableReformatAfterActionHook(private val baseHandler: EditorActionHandler?): EditorWriteActionHandler() {
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
@@ -25,9 +23,6 @@ internal class MarkdownTableReformatAfterActionHook(private val baseHandler: Edi
 
   private fun actuallyExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
     val project = editor.project ?: return
-    if (!Registry.`is`("markdown.tables.editing.support.enable") || !MarkdownSettings.getInstance(project).isEnhancedEditingEnabled) {
-      return
-    }
     val document = editor.document
     val caretOffset = caret?.offset ?: return
     if (!TableUtils.isProbablyInsideTableCell(document, caretOffset) || editor.caretModel.caretCount != 1) {
@@ -35,7 +30,7 @@ internal class MarkdownTableReformatAfterActionHook(private val baseHandler: Edi
     }
     val documentManager = PsiDocumentManager.getInstance(project)
     val file = documentManager.getPsiFile(document) ?: return
-    if (!TableUtils.isFormattingEnabledForTables(file)) {
+    if (!TableUtils.isFormattingOnTypeEnabledForTables(file)) {
       return
     }
     PsiDocumentManager.getInstance(project).commitDocument(document)

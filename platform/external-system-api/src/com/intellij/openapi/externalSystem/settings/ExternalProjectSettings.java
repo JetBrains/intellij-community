@@ -56,7 +56,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
 
   /**
    * @deprecated Auto-import cannot be disabled
-   * @see com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker for details
+   * @see com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
    */
   @Transient
   @Deprecated(forRemoval = true)

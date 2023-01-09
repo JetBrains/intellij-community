@@ -7,7 +7,6 @@ import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.diagnostic.ScanningType;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
@@ -16,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 public class UnindexedFilesUpdater {
   // should be used only for test debugging purpose
@@ -28,9 +26,6 @@ public class UnindexedFilesUpdater {
   // Allows to specify number of indexing threads. -1 means the default value (currently, 4).
   private static final int INDEXER_THREAD_COUNT = SystemProperties.getIntProperty("caches.indexerThreadsCount", -1);
 
-  public static final ExecutorService GLOBAL_INDEXING_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor(
-    "Indexing", getMaxNumberOfIndexingThreads()
-  );
   private final Project myProject;
   private final boolean myStartSuspended;
   private final boolean myOnProjectOpen;
@@ -101,7 +96,7 @@ public class UnindexedFilesUpdater {
   public static int getMaxNumberOfIndexingThreads() {
     // Change of the registry option requires IDE restart.
     int threadCount = INDEXER_THREAD_COUNT;
-    return threadCount <= 0 ? getMaxBackgroundThreadCount() : threadCount;
+    return Math.max(1, threadCount <= 0 ? getMaxBackgroundThreadCount() : threadCount);
   }
 
   /**

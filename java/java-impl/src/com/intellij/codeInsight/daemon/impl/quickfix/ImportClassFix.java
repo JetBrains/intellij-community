@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -50,6 +51,11 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
     PsiJavaCodeReferenceElement ref = PsiTreeUtil.findSameElementInCopy(getReference(), file);
     bindReference(ref, firstClassToImport);
     return IntentionPreviewInfo.DIFF;
+  }
+
+  @Override
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return currentFile;
   }
 
   @Override
@@ -155,30 +161,37 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
 
   @Override
   protected boolean isClassMaybeImportedAlready(@NotNull PsiFile containingFile, @NotNull PsiClass classToImport) {
-    PsiImportList importList = ((PsiJavaFile)containingFile).getImportList();
-    if (importList == null) return false;
-    boolean result = false;
-    String classQualifiedName = classToImport.getQualifiedName();
-    String packageName = classQualifiedName == null ? "" : StringUtil.getPackageName(classQualifiedName);
-    for (PsiImportStatementBase statement : importList.getAllImportStatements()) {
-      PsiJavaCodeReferenceElement importRef = statement.getImportReference();
-      if (importRef == null) continue;
-      String canonicalText = importRef.getCanonicalText(); // rely on the optimization: no resolve while getting import statement canonical text
+    if (containingFile instanceof PsiJavaFile) {
+      PsiImportList importList = ((PsiJavaFile)containingFile).getImportList();
+      if (importList == null) return false;
+      boolean result = false;
+      String classQualifiedName = classToImport.getQualifiedName();
+      String packageName = classQualifiedName == null ? "" : StringUtil.getPackageName(classQualifiedName);
+      for (PsiImportStatementBase statement : importList.getAllImportStatements()) {
+        PsiJavaCodeReferenceElement importRef = statement.getImportReference();
+        if (importRef == null) continue;
+        String canonicalText = importRef.getCanonicalText(); // rely on the optimization: no resolve while getting import statement canonical text
 
-      if (statement.isOnDemand()) {
-        if (canonicalText.equals(packageName)) {
-          result = true;
-          break;
+        if (statement.isOnDemand()) {
+          if (canonicalText.equals(packageName)) {
+            result = true;
+            break;
+          }
+        }
+        else {
+          if (canonicalText.equals(classQualifiedName)) {
+            result = true;
+            break;
+          }
         }
       }
-      else {
-        if (canonicalText.equals(classQualifiedName)) {
-          result = true;
-          break;
-        }
-      }
+      return result;
     }
-    return result;
+    if (containingFile instanceof JavaCodeFragment) {
+      String classQualifiedName = classToImport.getQualifiedName();
+      return classQualifiedName != null && ((JavaCodeFragment)containingFile).importsToString().contains(classQualifiedName);
+    }
+    return false;
   }
 
   @Override

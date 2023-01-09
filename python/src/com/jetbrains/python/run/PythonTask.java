@@ -35,6 +35,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.console.PydevConsoleRunnerImpl;
 import com.jetbrains.python.console.PydevConsoleRunnerUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
@@ -164,7 +165,7 @@ public class PythonTask {
     if (env != null) {
       commandLine.getEnvironment().putAll(env);
     }
-    PydevConsoleRunnerUtil.setCorrectStdOutEncoding(commandLine, myModule.getProject()); // To support UTF-8 output
+    PydevConsoleRunnerUtil.setCorrectStdOutEncoding(commandLine); // To support UTF-8 output
 
     ProcessHandler handler;
     var additionalData = mySdk.getSdkAdditionalData();

@@ -74,7 +74,7 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
                 }
             }
 
-        private inline fun isCommentChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) { it is PsiComment || it is KDoc }
+        private inline fun isCommentChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) { it is PsiComment }
 
         private inline fun isFormattingChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) { it is PsiWhiteSpace }
 
@@ -92,7 +92,7 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
         fun getInsideCodeBlockModificationDirtyScope(element: PsiElement): PsiElement? {
             if (!element.isPhysical) return null
             // dirty scope for whitespaces and comments is the element itself
-            if (element is PsiWhiteSpace || element is PsiComment || element is KDoc) return element
+            if (element is PsiWhiteSpace || element is PsiComment) return element
 
             return getInsideCodeBlockModificationScope(element)?.blockDeclaration
         }
@@ -356,8 +356,14 @@ val KtFile.inBlockModificationCount: Long by NotNullableUserDataProperty(FILE_IN
 
 val KtFile.inBlockModifications: Collection<KtElement>
     get() {
-        val collection = getUserData(IN_BLOCK_MODIFICATIONS)
-        return collection ?: emptySet()
+        val collection = getUserData(IN_BLOCK_MODIFICATIONS) ?: return emptyList()
+        return synchronized(collection) {
+            if (collection.isNotEmpty()) {
+                ArrayList(collection)
+            } else {
+                emptyList()
+            }
+        }
     }
 
 private fun KtFile.addInBlockModifiedItem(element: KtElement) {
@@ -373,11 +379,20 @@ private fun KtFile.addInBlockModifiedItem(element: KtElement) {
     putUserData(FILE_IN_BLOCK_MODIFICATION_COUNT, count + 1)
 }
 
+fun KtFile.removeInBlockModifications(blockModifications: Collection<KtElement>) {
+    if (blockModifications.isEmpty()) return
+
+    getUserData(IN_BLOCK_MODIFICATIONS)?.let { collection ->
+        synchronized(collection) {
+            collection.removeAll(blockModifications.toSet())
+        }
+    }
+}
+
 fun KtFile.clearInBlockModifications() {
-    val collection = getUserData(IN_BLOCK_MODIFICATIONS)
-    collection?.let {
-        synchronized(it) {
-            it.clear()
+    getUserData(IN_BLOCK_MODIFICATIONS)?.let { collection ->
+        synchronized(collection) {
+            collection.clear()
         }
     }
 }

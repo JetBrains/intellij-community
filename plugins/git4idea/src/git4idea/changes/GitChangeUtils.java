@@ -290,10 +290,6 @@ public final class GitChangeUtils {
                                       GitVcs.getInstance(project), revertable);
   }
 
-  public static long longForSHAHash(@NonNls String revisionNumber) {
-    return Long.parseLong(revisionNumber.substring(0, 15), 16) << 4 + Integer.parseInt(revisionNumber.substring(15, 16), 16);
-  }
-
   @NotNull
   public static Collection<Change> getDiff(@NotNull Project project,
                                            @NotNull VirtualFile root,

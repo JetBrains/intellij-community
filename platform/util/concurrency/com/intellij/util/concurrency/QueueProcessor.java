@@ -165,6 +165,7 @@ public final class QueueProcessor<T> {
   }
 
   public void waitFor() {
+    assertCorrectThread();
     synchronized (myQueue) {
       while (isProcessing) {
         try {
@@ -178,6 +179,7 @@ public final class QueueProcessor<T> {
   }
 
   boolean waitFor(long timeoutMS) {
+    assertCorrectThread();
     synchronized (myQueue) {
       long start = System.currentTimeMillis();
 
@@ -195,6 +197,12 @@ public final class QueueProcessor<T> {
       }
 
       return true;
+    }
+  }
+
+  private void assertCorrectThread() {
+    if (myThreadToUse == ThreadToUse.AWT && ApplicationManager.getApplication().isDispatchThread()) {
+      throw new IllegalStateException("Must not wait for AWT-backed queue in the EDT. Instead, to avoid deadlock, use background thread for that");
     }
   }
 

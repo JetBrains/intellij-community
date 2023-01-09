@@ -2,7 +2,6 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,10 +38,6 @@ public class ExceptionWorker {
 
   public Filter.Result getResult() {
     return myParser.getResult();
-  }
-
-  public PsiClass getPsiClass() {
-    return myParser.getPsiClass();
   }
 
   public String getMethod() {

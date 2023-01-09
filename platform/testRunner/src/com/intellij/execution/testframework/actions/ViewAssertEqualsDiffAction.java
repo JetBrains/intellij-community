@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.testframework.actions;
 
@@ -43,6 +43,7 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
   public static boolean openDiff(DataContext context, @Nullable DiffHyperlink currentHyperlink) {
     final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(context);
     final Project project = CommonDataKeys.PROJECT.getData(context);
+    if (project == null) return false;
     ListSelection<DiffHyperlink> hyperlinks = null;
     if (currentHyperlink != null) {
       hyperlinks = ListSelection.createSingleton(currentHyperlink);

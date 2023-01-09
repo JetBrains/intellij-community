@@ -19,7 +19,7 @@ private const val FUS_GROUP_ID = "plugins.advertiser"
 
 private val GROUP = EventLogGroup(
   FUS_GROUP_ID,
-  3,
+  4,
 )
 
 private val SOURCE_FIELD = EventFields.Enum(
@@ -76,7 +76,8 @@ private val IGNORE_UNKNOWN_FEATURES_EVENT = GROUP.registerEvent(
 
 enum class FUSEventSource {
   EDITOR,
-  NOTIFICATION;
+  NOTIFICATION,
+  SEARCH;
 
   fun doIgnoreUltimateAndLog(project: Project? = null) {
     isIgnoreIdeSuggestion = true

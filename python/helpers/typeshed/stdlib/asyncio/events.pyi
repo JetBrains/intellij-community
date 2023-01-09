@@ -2,9 +2,10 @@ import ssl
 import sys
 from _typeshed import FileDescriptorLike, Self
 from abc import ABCMeta, abstractmethod
+from collections.abc import Awaitable, Callable, Coroutine, Generator, Sequence
 from socket import AddressFamily, SocketKind, _Address, _RetAddress, socket
-from typing import IO, Any, Awaitable, Callable, Coroutine, Generator, Sequence, TypeVar, Union, overload
-from typing_extensions import Literal
+from typing import IO, Any, TypeVar, overload
+from typing_extensions import Literal, TypeAlias
 
 from .base_events import Server
 from .futures import Future
@@ -75,10 +76,10 @@ else:
 
 _T = TypeVar("_T")
 _ProtocolT = TypeVar("_ProtocolT", bound=BaseProtocol)
-_Context = dict[str, Any]
-_ExceptionHandler = Callable[[AbstractEventLoop, _Context], Any]
-_ProtocolFactory = Callable[[], BaseProtocol]
-_SSLContext = Union[bool, None, ssl.SSLContext]
+_Context: TypeAlias = dict[str, Any]
+_ExceptionHandler: TypeAlias = Callable[[AbstractEventLoop, _Context], Any]
+_ProtocolFactory: TypeAlias = Callable[[], BaseProtocol]
+_SSLContext: TypeAlias = bool | None | ssl.SSLContext
 
 class Handle:
     _cancelled: bool
@@ -123,7 +124,7 @@ class AbstractServer:
     def close(self) -> None: ...
     if sys.version_info >= (3, 7):
         async def __aenter__(self: Self) -> Self: ...
-        async def __aexit__(self, *exc: Any) -> None: ...
+        async def __aexit__(self, *exc: object) -> None: ...
         @abstractmethod
         def get_loop(self) -> AbstractEventLoop: ...
         @abstractmethod
@@ -211,7 +212,14 @@ class AbstractEventLoop:
     # Network I/O methods returning Futures.
     @abstractmethod
     async def getaddrinfo(
-        self, host: str | None, port: str | int | None, *, family: int = ..., type: int = ..., proto: int = ..., flags: int = ...
+        self,
+        host: bytes | str | None,
+        port: str | int | None,
+        *,
+        family: int = ...,
+        type: int = ...,
+        proto: int = ...,
+        flags: int = ...,
     ) -> list[tuple[AddressFamily, SocketKind, int, str, tuple[str, int] | tuple[str, int, int, int]]]: ...
     @abstractmethod
     async def getnameinfo(self, sockaddr: tuple[str, int] | tuple[str, int, int, int], flags: int = ...) -> tuple[str, str]: ...

@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.beans.newCounterMetric
 import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.testFramework.HeavyPlatformTestCase
-import com.intellij.util.containers.ContainerUtil.newArrayList
+import com.intellij.util.containers.ContainerUtil
 import org.junit.Assert
 import org.junit.Test
 
@@ -42,28 +42,28 @@ class UsageDescriptorUnitTest : HeavyPlatformTestCase() {
 
   @Test
   fun `test filter unique usage descriptors`() {
-    doTestUniqueFilter(2, newArrayList(
+    doTestUniqueFilter(2, ContainerUtil.newArrayList(
       newMetric("abcd"), newMetric("abcd"), newMetric("efgh")
     ))
   }
 
   @Test
   fun `test filter unique usage descriptors with value`() {
-    doTestUniqueFilter(3, newArrayList(
+    doTestUniqueFilter(3, ContainerUtil.newArrayList(
       newCounterMetric("abcd", 1), newCounterMetric("abcd", 1), newCounterMetric("efgh", 1), newCounterMetric("abcd", 2)
     ))
   }
 
   @Test
   fun `test filter unique usage descriptors with the same value`() {
-    doTestUniqueFilter(1, newArrayList(
+    doTestUniqueFilter(1, ContainerUtil.newArrayList(
       newCounterMetric("abcd", 1), newCounterMetric("abcd", 1), newCounterMetric("abcd", 1)
     ))
   }
 
   @Test
   fun `test filter unique usage descriptors with data`() {
-    doTestUniqueFilter(2, newArrayList(
+    doTestUniqueFilter(2, ContainerUtil.newArrayList(
       newCounterMetric("abcd", 1, FeatureUsageData().addData("foo", 123)),
       newCounterMetric("abcd", 1)
     ))
@@ -71,7 +71,7 @@ class UsageDescriptorUnitTest : HeavyPlatformTestCase() {
 
   @Test
   fun `test filter unique usage descriptors with different data`() {
-    doTestUniqueFilter(2, newArrayList(
+    doTestUniqueFilter(2, ContainerUtil.newArrayList(
       newCounterMetric("abcd", 1, FeatureUsageData().addData("foo", 123)),
       newCounterMetric("abcd", 1, FeatureUsageData().addData("foo", 122))
     ))
@@ -79,7 +79,7 @@ class UsageDescriptorUnitTest : HeavyPlatformTestCase() {
 
   @Test
   fun `test filter unique usage descriptors with the same data`() {
-    doTestUniqueFilter(1, newArrayList(
+    doTestUniqueFilter(1, ContainerUtil.newArrayList(
       newCounterMetric("abcd", 1, FeatureUsageData().addData("foo", 123)),
       newCounterMetric("abcd", 1, FeatureUsageData().addData("foo", 123))
     ))
@@ -87,7 +87,7 @@ class UsageDescriptorUnitTest : HeavyPlatformTestCase() {
 
   @Test
   fun `test filter unique usage descriptors with the same value and different data`() {
-    doTestUniqueFilter(2, newArrayList(
+    doTestUniqueFilter(2, ContainerUtil.newArrayList(
       newCounterMetric("abcd", 1, FeatureUsageData().addData("foo", 123)),
       newCounterMetric("abcd", 1, FeatureUsageData().addData("foo", 12))
     ))
@@ -95,7 +95,7 @@ class UsageDescriptorUnitTest : HeavyPlatformTestCase() {
 
   @Test
   fun `test filter unique usage descriptors with different value and same data`() {
-    doTestUniqueFilter(2, newArrayList(
+    doTestUniqueFilter(2, ContainerUtil.newArrayList(
       newCounterMetric("abcd", 1, FeatureUsageData().addData("foo", 123)),
       newCounterMetric("abcd", 2, FeatureUsageData().addData("foo", 123))
     ))

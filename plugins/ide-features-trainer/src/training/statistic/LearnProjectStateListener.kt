@@ -87,7 +87,7 @@ private fun considerNotifyAboutNewLessons(project: Project) {
   if (!PropertiesComponent.getInstance().getBoolean(SHOW_NEW_LESSONS_NOTIFICATION, true)) {
     return
   }
-  if (learningPanelWasOpenedInCurrentVersion || !iftPluginIsUsing || showingNotificationIsConsidered) {
+  if (!enableLessonsAndPromoters || learningPanelWasOpenedInCurrentVersion || !iftPluginIsUsing || showingNotificationIsConsidered) {
     return
   }
   showingNotificationIsConsidered = true

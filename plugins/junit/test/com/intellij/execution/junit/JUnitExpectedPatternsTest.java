@@ -18,6 +18,7 @@ package com.intellij.execution.junit;
 import com.intellij.junit4.ExpectedPatterns;
 import com.intellij.rt.execution.junit.ComparisonFailureData;
 import org.junit.Assert;
+import org.junit.ComparisonFailure;
 import org.junit.Test;
 
 public class JUnitExpectedPatternsTest {
@@ -79,7 +80,27 @@ public class JUnitExpectedPatternsTest {
     Assert.assertEquals("com.google.common.collect.SingletonImmutableList<[1]>", notification.getActual());
   }
 
+  @Test
+  public void testCustomComparisonException() {
+    ComparisonFailureData notification = createNotification(
+      new CustomComparisonFailure("message", "expected", "actual")
+    );
+    Assert.assertNotNull(notification);
+    Assert.assertEquals("expected", notification.getExpected());
+    Assert.assertEquals("actual", notification.getActual());
+  }
+
   private static ComparisonFailureData createNotification(String message) {
     return ExpectedPatterns.createExceptionNotification(new Throwable(message));
+  }
+
+  private static class CustomComparisonFailure extends ComparisonFailure {
+    CustomComparisonFailure(String message, String expected, String actual) {
+      super(message, expected, actual);
+    }
+  }
+
+  private static ComparisonFailureData createNotification(Throwable throwable) {
+    return ExpectedPatterns.createExceptionNotification(throwable);
   }
 }

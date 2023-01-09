@@ -57,12 +57,12 @@ public abstract class SyntheticFileSystemItem extends PsiElementBase implements 
 
   @Override
   public boolean isValid() {
-    final VirtualFile virtualFile = getVirtualFile();
+    VirtualFile virtualFile = getVirtualFile();
     return virtualFile != null && virtualFile.isValid();
   }
 
   @Override
-  public PsiElement replace(@NotNull final PsiElement newElement) throws IncorrectOperationException {
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     throw new IncorrectOperationException("Frameworks cannot be changed");
   }
 
@@ -77,13 +77,13 @@ public abstract class SyntheticFileSystemItem extends PsiElementBase implements 
   }
 
   @Override
-  public void accept(@NotNull final PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     // TODO
   }
 
   @Override
   public PsiElement @NotNull [] getChildren() {
-    final PsiElementProcessor.CollectElements<PsiFileSystemItem> collector = new PsiElementProcessor.CollectElements<>();
+    PsiElementProcessor.CollectElements<PsiFileSystemItem> collector = new PsiElementProcessor.CollectElements<>();
     processChildren(collector);
     return collector.toArray(new PsiFileSystemItem[0]);
   }
@@ -100,7 +100,7 @@ public abstract class SyntheticFileSystemItem extends PsiElementBase implements 
   }
 
   @Override
-  public void checkSetName(final String name) throws IncorrectOperationException {
+  public void checkSetName(String name) throws IncorrectOperationException {
     throw new IncorrectOperationException("Frameworks cannot be renamed");
   }
 
@@ -109,7 +109,7 @@ public abstract class SyntheticFileSystemItem extends PsiElementBase implements 
   public abstract String getName();
 
   @Override
-  public PsiElement setName(@NonNls @NotNull final String name) throws IncorrectOperationException {
+  public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     throw new IncorrectOperationException("Frameworks cannot be renamed");
   }
 

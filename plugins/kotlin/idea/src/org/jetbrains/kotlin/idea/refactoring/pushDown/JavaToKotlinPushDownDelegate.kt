@@ -54,7 +54,7 @@ class JavaToKotlinPushDownDelegate : JavaPushDownDelegate() {
         val superClassDescriptor = superClass.getJavaClassDescriptor(resolutionFacade) ?: return
         val subClassDescriptor = subClass.unsafeResolveToDescriptor() as ClassDescriptor
         val substitutor = getTypeSubstitution(superClassDescriptor.defaultType, subClassDescriptor.defaultType)?.toSubstitutor().orEmpty()
-        val psiFactory = KtPsiFactory(subClass)
+        val psiFactory = KtPsiFactory(subClass.project)
         var hasAbstractMembers = false
         members@ for (memberInfo in pushDownData.membersToMove) {
             val member = memberInfo.member

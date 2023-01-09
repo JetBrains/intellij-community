@@ -25,7 +25,7 @@ private class Visitor(var range: TextRange) : KtTreeVisitorVoid() {
 
         var delta = 0
 
-        val psiFactory = KtPsiFactory(klass)
+        val psiFactory = KtPsiFactory(klass.project)
         if (declaration is KtEnumEntry) {
             val comma = psiFactory.createComma()
 

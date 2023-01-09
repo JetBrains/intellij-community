@@ -180,5 +180,5 @@ fun KtAnnotationEntry.addUseSiteTarget(useSiteTarget: AnnotationUseSiteTarget, p
 }
 
 private fun KtAnnotationEntry.doAddUseSiteTarget(useSiteTarget: AnnotationUseSiteTarget) {
-    replace(KtPsiFactory(this).createAnnotationEntry("@${useSiteTarget.renderName}:${text.drop(1)}"))
+    replace(KtPsiFactory(project).createAnnotationEntry("@${useSiteTarget.renderName}:${text.drop(1)}"))
 }

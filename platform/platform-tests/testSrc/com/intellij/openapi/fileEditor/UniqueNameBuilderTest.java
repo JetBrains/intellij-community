@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
-import com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider;
 import com.intellij.filename.UniqueNameBuilder;
+import com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider;
 import junit.framework.TestCase;
 
 
@@ -92,8 +92,8 @@ public class UniqueNameBuilderTest extends TestCase {
     builder.addPath("A", "foo/.htaccess");
     builder.addPath("B", "bar/.htaccess");
     String shortPath = builder.getShortPath("A");
-    assertEquals("foo/.htaccess", UniqueNameEditorTabTitleProvider.getEditorTabText(shortPath, builder.getSeparator(), false));
-    assertEquals("foo/.htaccess", UniqueNameEditorTabTitleProvider.getEditorTabText(shortPath, builder.getSeparator(), true));
+    assertEquals("foo/.htaccess", UniqueNameEditorTabTitleProvider.Companion.getEditorTabText(shortPath, builder.getSeparator(), false));
+    assertEquals("foo/.htaccess", UniqueNameEditorTabTitleProvider.Companion.getEditorTabText(shortPath, builder.getSeparator(), true));
 
   }
 }

@@ -24,6 +24,7 @@ class SimpleComboboxWithActionsFactory<T : Any>(
 
     val comboModel = ComboBoxWithActionsModel<T>().apply {
       bind(scope, mappingsState, selectionState, actions, sortComparator)
+      selectFirst()
     }
 
     return ComboBox(comboModel).apply {

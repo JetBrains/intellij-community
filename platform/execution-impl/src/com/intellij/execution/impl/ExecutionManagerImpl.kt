@@ -137,7 +137,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect(this)
-    connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+    connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosed(project: Project) {
         if (project === this@ExecutionManagerImpl.project) {
           inProgress.clear()

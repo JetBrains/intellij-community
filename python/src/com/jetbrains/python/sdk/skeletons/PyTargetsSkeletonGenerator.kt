@@ -3,10 +3,10 @@ package com.jetbrains.python.sdk.skeletons
 
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
-import com.intellij.execution.target.VolumeCopyingRequest
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.VolumeCopyingRequest
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.getRelativeTargetPath
 import com.intellij.execution.target.value.getTargetDownloadPath
@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.exists
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
@@ -28,6 +27,7 @@ import com.jetbrains.python.sdk.skeleton.PySkeletonHeader
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.io.path.div
+import kotlin.io.path.exists
 
 class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder: String?, project: Project?)
   : PySkeletonGenerator(skeletonPath, pySdk, currentFolder) {

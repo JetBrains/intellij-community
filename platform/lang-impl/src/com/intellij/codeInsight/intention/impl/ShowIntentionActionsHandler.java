@@ -6,7 +6,9 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.IntentionsUI;
+import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -218,19 +220,16 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
                                               @NotNull IntentionAction action,
                                               @NotNull @NlsContexts.Command String commandName) {
     Project project = hostFile.getProject();
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickFix");
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    Pair<PsiFile, Editor> pair = chooseFileForAction(hostFile, hostEditor, action);
-    if (pair == null) return false;
-
-    CommandProcessor.getInstance().executeCommand(project, () ->
-      invokeIntention(action, pair.second, pair.first), commandName, null);
-
-    checkPsiTextConsistency(hostFile);
-
+    try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      Pair<PsiFile, Editor> pair = chooseFileForAction(hostFile, hostEditor, action);
+      if (pair == null) return false;
+      CommandProcessor.getInstance().executeCommand(project, () ->
+        invokeIntention(action, pair.second, pair.first), commandName, null);
+      checkPsiTextConsistency(hostFile);
+    }
     return true;
   }
 
@@ -254,9 +253,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       WriteAction.run(() -> action.invoke(file.getProject(), editor, file));
     }
     else {
-      try (var ignored = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
-        action.invoke(file.getProject(), editor, file);
-      }
+      action.invoke(file.getProject(), editor, file);
     }
   }
 
@@ -272,7 +269,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     PsiFile injectedFile = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, hostEditor.getCaretModel().getOffset());
     return chooseBetweenHostAndInjected(
       hostFile, hostEditor, injectedFile,
-      (psiFile, editor) -> SlowOperations.allowSlowOperations(() -> availableFor(psiFile, editor, action))
+      (psiFile, editor) -> availableFor(psiFile, editor, action)
     );
   }
 }

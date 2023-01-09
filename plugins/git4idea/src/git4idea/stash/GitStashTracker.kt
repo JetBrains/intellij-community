@@ -3,7 +3,7 @@ package git4idea.stash
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.Alarm
 import com.intellij.util.EventDispatcher
-import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.vcs.log.runInEdt
@@ -35,7 +34,7 @@ class GitStashTracker(private val project: Project) : Disposable {
     private set
 
   init {
-    val connection: MessageBusConnection = project.messageBus.connect(this)
+    val connection = project.messageBus.connect(this)
     connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
         if (GitRepositoryManager.getInstance(project).repositories.any { repo ->
@@ -70,7 +69,7 @@ class GitStashTracker(private val project: Project) : Disposable {
         }
         catch (e: VcsException) {
           newStashes[repo.root] = Stashes.Error(e)
-          LOG.warn(e)
+          logger<GitStashTracker>().warn(e)
         }
       }
 
@@ -93,10 +92,6 @@ class GitStashTracker(private val project: Project) : Disposable {
 
   override fun dispose() {
     stashes = emptyMap()
-  }
-
-  companion object {
-    private val LOG = Logger.getInstance(GitStashTracker::class.java)
   }
 
   sealed class Stashes {

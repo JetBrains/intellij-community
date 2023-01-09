@@ -14,7 +14,7 @@ public class MockConstructor extends AbstractMockMethod {
   }
 
   public Constructor getConstructor() {
-    return (Constructor) myMember;
+    return (Constructor)myMember;
   }
 
   @Override

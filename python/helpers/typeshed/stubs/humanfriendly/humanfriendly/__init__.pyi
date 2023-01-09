@@ -1,4 +1,5 @@
 import datetime
+from types import TracebackType
 from typing import Any, NamedTuple, Pattern
 
 class SizeUnit(NamedTuple):
@@ -36,7 +37,12 @@ class Timer:
     total_time: float
     def __init__(self, start_time: Any | None = ..., resumable: bool = ...) -> None: ...
     def __enter__(self): ...
-    def __exit__(self, exc_type: Any | None = ..., exc_value: Any | None = ..., traceback: Any | None = ...) -> None: ...
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None = ...,
+        exc_value: BaseException | None = ...,
+        traceback: TracebackType | None = ...,
+    ) -> None: ...
     def sleep(self, seconds: float) -> None: ...
     @property
     def elapsed_time(self): ...

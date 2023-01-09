@@ -61,7 +61,7 @@ public class LengthOneStringsInConcatenationInspection extends BaseInspection im
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiLiteralExpression expression = (PsiLiteralExpression)descriptor.getPsiElement();
       if (ExpressionUtils.isConversionToStringNecessary(expression, false)) {
         return;

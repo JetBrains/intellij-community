@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -40,8 +39,7 @@ final class ComponentsNavBarPanel extends Breadcrumbs {
 
   private void rebuild(@NotNull Component component) {
     Iterable<Component> components = UIUtil.uiParents(component, false);
-    List<ComponentItem> items = ContainerUtil.map(components, c -> new ComponentItem(c));
-    Collections.reverse(items);
+    List<ComponentItem> items = ContainerUtil.reverse(ContainerUtil.map(components, c -> new ComponentItem(c)));
     setCrumbs(items);
   }
 
@@ -85,7 +83,7 @@ final class ComponentsNavBarPanel extends Breadcrumbs {
     @Override
     public String getText() {
       Object obj = isAccessibleEnabled ? myComponent.getAccessibleContext() : myComponent;
-      return UiInspectorUtil.getClassName(obj);
+      return UiInspectorUtil.getClassPresentation(obj);
     }
   }
 }

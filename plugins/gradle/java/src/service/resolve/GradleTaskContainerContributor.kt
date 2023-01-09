@@ -61,11 +61,16 @@ class GradleTaskContainerContributor : NonCodeMembersContributor() {
     }
     if (processMethods) {
       val method = GrLightMethodBuilder(file.manager, name).apply {
+        originInfo = GRADLE_TASK_INFO
         returnType = taskType
         addParameter("configuration", closureType)
       }
       return processor.execute(method, state)
     }
     return true
+  }
+
+  companion object {
+    internal const val GRADLE_TASK_INFO = "by Gradle tasks"
   }
 }

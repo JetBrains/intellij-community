@@ -349,7 +349,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
     }
 
     class PackageCacheBulkFileListener(private val project: Project) : BulkFileListener {
-        override fun before(events: MutableList<out VFileEvent>) = onEvents(events, false)
+        override fun before(events: List<VFileEvent>) = onEvents(events, false)
         override fun after(events: List<VFileEvent>) = onEvents(events, true)
 
         private fun isRelevant(event: VFileEvent): Boolean = when (event) {

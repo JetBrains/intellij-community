@@ -167,8 +167,8 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     linkPanel.add(myLinkLabel, BorderLayout.CENTER);
     CustomShortcutSet shortcutSet = KeymapUtil.getShortcutsForMnemonicCode(TextWithMnemonic.parse(message).getMnemonicCode());
     if (shortcutSet != null) {
-      List<String> list = ContainerUtil.map(shortcutSet.getShortcuts(), shortcut -> KeymapUtil.getShortcutText(shortcut));
-      list.sort(Comparator.comparingInt(String::length));
+      List<String> list = ContainerUtil.sorted(ContainerUtil.map(shortcutSet.getShortcuts(), shortcut -> KeymapUtil.getShortcutText(shortcut)),
+      Comparator.comparingInt(String::length));
       JLabel shortcutLabel = new JLabel(list.get(0));
       shortcutLabel.setEnabled(false);
       shortcutLabel.setBorder(JBUI.Borders.empty(0, 5));
@@ -182,7 +182,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     return myMain != null ? SeparatorFactory.createSeparator(myMain.getGroup(), null) : null;
   }
 
-  protected void addFragments(@NotNull List<SettingsEditorFragment<Settings, ?>> fragments) {
+  protected void addFragments(@NotNull List<? extends SettingsEditorFragment<Settings, ?>> fragments) {
     for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
       JComponent component = fragment.getComponent();
       addLine(component);
@@ -192,13 +192,13 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     }
   }
 
-  protected void addSubGroups(@NotNull List<SettingsEditorFragment<Settings, ?>> subGroups) {
+  protected void addSubGroups(@NotNull List<? extends SettingsEditorFragment<Settings, ?>> subGroups) {
     for (SettingsEditorFragment<Settings, ?> group : subGroups) {
       addLine(group.getComponent(), 0, 0, 0);
     }
   }
 
-  protected void addTagPanel(@NotNull List<SettingsEditorFragment<Settings, ?>> tags) {
+  protected void addTagPanel(@NotNull List<? extends SettingsEditorFragment<Settings, ?>> tags) {
     JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING, JBUI.scale(TAG_HGAP), JBUI.scale(TAG_VGAP)));
     for (SettingsEditorFragment<Settings, ?> tag : tags) {
       tagsPanel.add(tag.getComponent());
@@ -322,7 +322,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     return result;
   }
 
-  private void addCommandLinePanel(@NotNull List<SettingsEditorFragment<Settings, ?>> commandLine) {
+  private void addCommandLinePanel(@NotNull List<? extends SettingsEditorFragment<Settings, ?>> commandLine) {
     if (!commandLine.isEmpty()) {
       CommandLinePanel panel = new CommandLinePanel(commandLine, myConfigId, this);
       addLine(panel, 0, -panel.getLeftInset(), TOP_INSET);

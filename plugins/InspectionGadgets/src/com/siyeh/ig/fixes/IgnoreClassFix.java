@@ -53,7 +53,7 @@ public class IgnoreClassFix extends InspectionGadgetsFix implements LowPriorityA
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (!myIgnoredClasses.add(myQualifiedName)) {
       return;
     }

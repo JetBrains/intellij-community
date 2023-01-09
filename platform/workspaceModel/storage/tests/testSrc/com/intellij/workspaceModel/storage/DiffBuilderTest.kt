@@ -11,10 +11,6 @@ import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.RepeatedTest
-import org.junit.jupiter.api.RepetitionInfo
-import org.junit.jupiter.api.assertThrows
 import java.util.*
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -527,5 +523,43 @@ class DiffBuilderTest {
     val result = target.applyDiff(source)
 
     assertEquals(1, result.entities(ParentMultipleEntity::class.java).single().children.size)
+  }
+
+  @RepeatedTest(10)
+  fun `check one to one connection change`() {
+    var builder = MutableEntityStorage.create()
+    builder addEntity OoParentEntity("aaa", MySource) {
+      child = OoChildEntity("bbb", MySource)
+    }
+    val snapshot = builder.toSnapshot()
+    builder = snapshot.toBuilder()
+
+    val parentEntity = builder.entities(OoParentEntity::class.java).single()
+    builder.modifyEntity(parentEntity) {
+      this.parentProperty = "eee"
+    }
+    parentEntity.child?.let { builder.removeEntity(it) }
+    builder.modifyEntity(parentEntity) {
+      this.child = OoChildEntity("ccc", MySource)
+    }
+
+    snapshot.toBuilder().addDiff(builder)
+  }
+
+  @RepeatedTest(10)
+  fun `check one to one connection change 2`() {
+    var builder = MutableEntityStorage.create()
+    builder addEntity OoParentEntity("aaa", MySource)
+    val snapshot = builder.toSnapshot()
+    builder = snapshot.toBuilder()
+
+    val parentEntity = builder.entities(OoParentEntity::class.java).single()
+    val newChild = OoChildEntity("ccc", MySource)
+    builder.modifyEntity(parentEntity) {
+      this.child = newChild
+    }
+    builder.removeEntity(newChild)
+
+    snapshot.toBuilder().addDiff(builder)
   }
 }

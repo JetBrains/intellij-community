@@ -15,20 +15,20 @@ import java.util.Objects;
 @ApiStatus.Internal
 public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarWidgetFactory {
   private final Project myProject;
-  @SuppressWarnings("deprecation") private final StatusBarWidgetProvider myProvider;
+  @SuppressWarnings("removal") final StatusBarWidgetProvider provider;
 
   private boolean widgetWasCreated;
   private @Nullable StatusBarWidget myWidget;
 
-  public StatusBarWidgetProviderToFactoryAdapter(@NotNull Project project, @SuppressWarnings("deprecation") @NotNull StatusBarWidgetProvider provider) {
+  public StatusBarWidgetProviderToFactoryAdapter(@NotNull Project project, @SuppressWarnings("removal") @NotNull StatusBarWidgetProvider provider) {
     myProject = project;
-    myProvider = provider;
+    this.provider = provider;
   }
 
   @Override
   public @NotNull String getId() {
     StatusBarWidget widget = getWidget();
-    return widget != null ? widget.ID() : myProvider.getClass().getName();
+    return widget != null ? widget.ID() : provider.getClass().getName();
   }
 
   @Override
@@ -51,17 +51,13 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
   @Override
   public boolean isAvailable(@NotNull Project project) {
     IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject);
-    return frame != null && myProvider.isCompatibleWith(frame) && getWidget() != null;
+    //noinspection removal
+    return frame != null && provider.isCompatibleWith(frame) && getWidget() != null;
   }
 
   @Override
   public boolean isConfigurable() {
     return !getDisplayName().isEmpty();
-  }
-
-  @Override
-  public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
-    return true;
   }
 
   @Override
@@ -71,7 +67,8 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
 
   private @Nullable StatusBarWidget getWidget() {
     if (!widgetWasCreated) {
-      myWidget = myProvider.getWidget(myProject);
+      //noinspection removal
+      myWidget = provider.getWidget(myProject);
       widgetWasCreated = true;
     }
     return myWidget;
@@ -84,20 +81,16 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
     Disposer.dispose(widget);
   }
 
-  public @NotNull String getAnchor() {
-    return myProvider.getAnchor();
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     StatusBarWidgetProviderToFactoryAdapter adapter = (StatusBarWidgetProviderToFactoryAdapter)o;
-    return myProvider.equals(adapter.myProvider) && myProject.equals(adapter.myProject);
+    return provider.equals(adapter.provider) && myProject.equals(adapter.myProject);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myProvider, myProject);
+    return Objects.hash(provider, myProject);
   }
 }

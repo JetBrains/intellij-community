@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.jps
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.compiler.CompileContext
 import com.intellij.openapi.compiler.CompileTask
 import com.intellij.openapi.compiler.CompilerMessageCategory
@@ -11,7 +12,6 @@ import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 
 class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
     override fun execute(context: CompileContext): Boolean {
@@ -29,10 +29,10 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
         )
     }
 
-    private fun CompileContext.addError(@Nls(capitalization = Nls.Capitalization.Sentence) msg: String) =
+    private fun CompileContext.addError(msg: @Nls(capitalization = Nls.Capitalization.Sentence) String) =
         addMessage(CompilerMessageCategory.ERROR, msg, null, -1, -1)
 
-    private fun CompileContext.addErrorWithReferenceToKotlincXml(@Nls(capitalization = Nls.Capitalization.Sentence) msg: String) {
+    private fun CompileContext.addErrorWithReferenceToKotlincXml(msg: @Nls(capitalization = Nls.Capitalization.Sentence) String) {
         val virtualFile = project.stateStore
             .directoryStorePath
             ?.resolve(SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE)

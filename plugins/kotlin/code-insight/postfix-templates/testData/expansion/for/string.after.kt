@@ -1,5 +1,5 @@
 fun test(text: String) {
-    for (char in text) {
+    for (ch in text) {
         
     }
 }

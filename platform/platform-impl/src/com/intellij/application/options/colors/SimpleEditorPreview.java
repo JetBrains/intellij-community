@@ -356,7 +356,7 @@ public class SimpleEditorPreview implements PreviewPanel {
     final List<HighlightData> rainbowMarkup = setupRainbowHighlighting(
       page,
       initialMarkup,
-      RainbowHighlighter.getRainbowTempKeys(),
+      RainbowHighlighter.getRainbowTempKeys(colorsScheme),
       RainbowHighlighter.isRainbowEnabledWithInheritance(colorsScheme, page.getLanguage()));
 
     myHighlightData.clear();

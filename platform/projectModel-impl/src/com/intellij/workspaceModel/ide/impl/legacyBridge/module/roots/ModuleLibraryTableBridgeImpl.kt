@@ -15,7 +15,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -59,7 +59,7 @@ class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : Mod
     val library = LibraryBridgeImpl(
       libraryTable = this,
       project = module.project,
-      initialId = entity.persistentId,
+      initialId = entity.symbolicId,
       initialEntityStorage = moduleBridge.entityStorage,
       targetBuilder = storageBuilder
     )
@@ -67,7 +67,7 @@ class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : Mod
       storageBuilder.mutableLibraryMap.addMapping(entity, library)
     }
     else {
-      (WorkspaceModel.getInstance(moduleBridge.project) as WorkspaceModelImpl).updateProjectModelSilent {
+      (WorkspaceModel.getInstance(moduleBridge.project) as WorkspaceModelImpl).updateProjectModelSilent("Add module library mapping") {
         it.mutableLibraryMap.addMapping(entity, library)
       }
     }

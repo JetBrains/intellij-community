@@ -1076,7 +1076,7 @@ public class XMLOutputter implements Cloneable {
    * @param attributes <code>List</code> of Attribute objcts
    * @param out        <code>Writer</code> to use
    */
-  private void printAttributes(Writer out, List<Attribute> attributes, NamespaceStack namespaces)
+  private void printAttributes(Writer out, List<? extends Attribute> attributes, NamespaceStack namespaces)
     throws IOException {
 
     // I do not yet handle the case where the same prefix maps to

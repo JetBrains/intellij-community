@@ -30,11 +30,12 @@ import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
-import static org.jetbrains.idea.maven.indices.MavenArchetypeManager.loadUserArchetypes;
 
 /**
  * Main api class for work with maven indices.
@@ -50,7 +51,6 @@ public final class MavenIndicesManager implements Disposable {
   private final IndexFixer myIndexFixer = new IndexFixer();
   private final MavenIndexUpdateManager myIndexUpdateManager;
 
-  private volatile Path myTestIndicesDir;
 
   public static MavenIndicesManager getInstance(@NotNull Project project) {
     return project.getService(MavenIndicesManager.class);
@@ -60,11 +60,10 @@ public final class MavenIndicesManager implements Disposable {
     myProject = project;
     myIndexerWrapper = MavenServerManager.getInstance().createIndexer(myProject);
     myIndexUpdateManager = new MavenIndexUpdateManager();
-    myMavenIndices = new MavenIndices(myIndexerWrapper, getIndicesDir().toFile(), new MavenSearchIndexListener(this));
+    myMavenIndices = myIndexerWrapper.getOrCreateIndices();
 
     initListeners();
 
-    Disposer.register(this, myMavenIndices);
     Disposer.register(this, myIndexUpdateManager);
   }
 
@@ -133,16 +132,9 @@ public final class MavenIndicesManager implements Disposable {
     }, this);
   }
 
-  @TestOnly
-  public void setTestIndexDir(Path indicesDir) {
-    myTestIndicesDir = indicesDir;
-  }
-
   @NotNull
   Path getIndicesDir() {
-    return myTestIndicesDir == null
-           ? MavenUtil.getPluginSystemDir("Indices")
-           : myTestIndicesDir;
+    return MavenIndexerWrapper.getIndicesDir();
   }
 
   public void addArchetype(@NotNull MavenArchetype archetype) {
@@ -235,7 +227,17 @@ public final class MavenIndicesManager implements Disposable {
       AsyncPromise<Void> result = new AsyncPromise<>();
 
       queueToAdd.add(new Pair<>(file, result));
-      myMergingUpdateQueue.queue(Update.create(this, taskConsumer));
+      myMergingUpdateQueue.queue(new Update(IndexFixer.this) {
+        @Override
+        public void run() {
+          ((Runnable)taskConsumer).run();
+        }
+
+        @Override
+        public boolean isDisposed() {
+          return myMavenIndices.isDisposed();
+        }
+      });
       return result;
     }
 
@@ -294,5 +296,10 @@ public final class MavenIndicesManager implements Disposable {
         myManager.myIndexUpdateManager.scheduleUpdateContent(myManager.myProject, List.of(index.getRepositoryPathOrUrl()), false);
       }
     }
+  }
+
+  @TestOnly
+  public void waitForBackgroundTasksInTests() {
+    myIndexUpdateManager.waitForBackgroundTasksInTests();
   }
 }

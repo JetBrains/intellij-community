@@ -180,8 +180,8 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
     // Try to find closing tag at or after the given offset.
     for (int i = offset; i < endOffset; i++) {
       char c = text.charAt(i);
-      if (c == '<' && i < endOffset - 2 && text.charAt(i + 1) == '/' && startTag != null
-          && CharArrayUtil.regionMatches(text, i + 2, endOffset, startTag)) 
+      if (c == '<' && i < endOffset - 2 && text.charAt(i + 1) == '/' && 
+          CharArrayUtil.regionMatches(text, i + 2, endOffset, startTag)) 
       {
         endTagStartOffset = i;
         break;

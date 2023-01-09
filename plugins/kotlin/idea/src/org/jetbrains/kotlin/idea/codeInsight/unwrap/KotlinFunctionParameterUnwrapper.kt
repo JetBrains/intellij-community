@@ -176,7 +176,7 @@ class KotlinFunctionParameterUnwrapper(val key: String) : KotlinUnwrapRemoveBase
         return function
     }
 
-    override fun collectAffectedElements(e: PsiElement, toExtract: MutableList<PsiElement>): PsiElement {
+    override fun collectAffectedElements(e: PsiElement, toExtract: MutableList<in PsiElement>): PsiElement {
         super.collectAffectedElements(e, toExtract)
         return argumentToUnwrap(e)?.let { deletionTarget(it) } ?: e
     }

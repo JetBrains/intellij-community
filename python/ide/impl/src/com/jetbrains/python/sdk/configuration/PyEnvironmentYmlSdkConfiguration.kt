@@ -67,7 +67,7 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
   private fun getEnvironmentYml(module: Module) = PyUtil.findInRoots(module, "environment.yml")
 
   private fun createAndAddSdk(module: Module, source: Source): Sdk? {
-    val targetConfig = PythonInterpreterTargetEnvironmentFactory.guessTargetConfigurationByModule(module)
+    val targetConfig = PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(module)
     if (targetConfig != null) {
       // Remote targets aren't supported yet
       return null

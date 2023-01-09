@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +60,7 @@ public class RehighlightAllEditors implements MadTestingAction {
   public static List<HighlightInfo> highlightEditor(Editor editor, Project project) {
     FileDocumentManager.getInstance().saveAllDocuments(); // to avoid async document changes on automatic save during highlighting
     PsiDocumentManager.getInstance(project).commitAllDocuments();
+    PsiUtilBase.assertEditorAndProjectConsistent(project, editor);
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     PsiTestUtil.checkStubsMatchText(file);
     

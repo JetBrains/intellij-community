@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-/**
- * @author Alexey Kudravtsev
- */
 public class DeploymentUtilImpl extends DeploymentUtil {
   private static final Logger LOG = Logger.getInstance(DeploymentUtilImpl.class);
 

@@ -1,4 +1,5 @@
-from typing import Any, Iterable, overload
+from collections.abc import Iterable
+from typing import Any, overload
 
 class LazyFixture:
     name: str

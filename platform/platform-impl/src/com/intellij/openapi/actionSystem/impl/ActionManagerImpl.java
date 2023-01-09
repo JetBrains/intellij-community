@@ -53,7 +53,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xml.dom.XmlElement;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -408,7 +407,9 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
   @Override
   public void addTimerListener(final @NotNull TimerListener listener) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
     if (myTimer == null) {
       myTimer = new MyTimer();
       myTimer.start();
@@ -462,7 +463,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   public @NotNull ActionToolbar createActionToolbar(@NotNull String place,
                                                     @NotNull ActionGroup group,
                                                     boolean horizontal,
-                                                    @NotNull Function<String, Component> separatorCreator) {
+                                                    @NotNull Function<? super String, ? extends Component> separatorCreator) {
     ActionToolbarImpl toolbar = createActionToolbarImpl(place, group, horizontal, false);
     toolbar.setSeparatorCreator(separatorCreator);
     return toolbar;
@@ -1655,12 +1656,6 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
           inputEvent == null ? 0 : inputEvent.getModifiersEx()
         );
 
-        ActionUtil.performDumbAwareUpdate(action, event, false);
-        if (!event.getPresentation().isEnabled()) {
-          result.setRejected();
-          return;
-        }
-
         ActionUtil.lastUpdateAndCheckDumb(action, event, false);
         if (!event.getPresentation().isEnabled()) {
           result.setRejected();
@@ -1698,9 +1693,10 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
     private MyTimer() {
       super(TIMER_DELAY, null);
+
       addActionListener(this);
       setRepeats(true);
-      final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+      var connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
       connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
         public void applicationActivated(@NotNull IdeFrame ideFrame) {
@@ -1739,9 +1735,12 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       }
     }
 
-    private void runListenerAction(@NotNull TimerListener listener) {
+    private static void runListenerAction(@NotNull TimerListener listener) {
       ModalityState modalityState = listener.getModalityState();
-      if (modalityState == null) return;
+      if (modalityState == null) {
+        return;
+      }
+
       LOG.debug("notify ", listener);
       if (!ModalityState.current().dominates(modalityState)) {
         try {

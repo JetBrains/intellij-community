@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.dfaassist;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -82,7 +82,8 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
       myMode = newMode;
       if (newMode == AssistMode.NONE) {
         cleanUp();
-      } else {
+      }
+      else {
         DebuggerSession session = myManager.getContext().getDebuggerSession();
         if (session != null) {
           session.refresh(false);
@@ -275,6 +276,7 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
       super(JavaDebuggerBundle.message("action.TurnOffDfaAssist.text"),
             JavaDebuggerBundle.message("action.TurnOffDfaAssist.description"), AllIcons.Actions.Cancel);
     }
+
     @Override
     public void actionPerformed(@NotNull AnActionEvent evt) {
       Disposer.dispose(DfaAssist.this);
@@ -283,8 +285,9 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
 
   /**
    * Install dataflow assistant to the specified debugging session
+   *
    * @param javaSession JVM debugger session to install an assistant to
-   * @param session X debugger session
+   * @param session     X debugger session
    */
   public static void installDfaAssist(@NotNull DebuggerSession javaSession,
                                       @NotNull XDebugSession session) {

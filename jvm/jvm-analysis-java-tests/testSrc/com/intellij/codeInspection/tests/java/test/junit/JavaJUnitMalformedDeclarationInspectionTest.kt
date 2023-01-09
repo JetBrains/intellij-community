@@ -14,12 +14,21 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       }
     """.trimIndent())
   }
-  fun `test malformed extension highlighting`() {
+  fun `test malformed extension subtype highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class A {
         @org.junit.jupiter.api.extension.RegisterExtension
-        Rule5 <warning descr="'A.Rule5' should implement 'org.junit.jupiter.api.extension.Extension'">myRule5</warning> = new Rule5();
+        Rule5 <warning descr="Field 'myRule5' annotated with '@RegisterExtension' should be of type 'org.junit.jupiter.api.extension.Extension'">myRule5</warning> = new Rule5();
         class Rule5 { }
+      }
+    """.trimIndent())
+  }
+  fun `test malformed private highlighting`() {
+    myFixture.testHighlighting(ULanguage.JAVA, """
+      class A {
+        @org.junit.jupiter.api.extension.RegisterExtension
+        private Rule5 <warning descr="Field 'myRule5' annotated with '@RegisterExtension' should be public">myRule5</warning> = new Rule5();
+        class Rule5 implements org.junit.jupiter.api.extension.Extension { }
       }
     """.trimIndent())
   }
@@ -227,7 +236,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       class CsvSource {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.CsvSource(value = "src, 1")
-        void testWithCsvSource(String first, int second) {}  
+        void testWithCsvSource(String first, int second) { }  
       }
       
       class NullSource {
@@ -239,15 +248,19 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       class EmptySource {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.EmptySource
-        void testFooSet(java.util.Set<String> input) {}
+        void testFooSet(java.util.Set<String> input) { }
 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.EmptySource
-        void testFooList(java.util.List<String> input) {}
+        void testFooList(java.util.List<String> input) { }
 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.EmptySource
-        void testFooMap(java.util.Map<String, String> input) {}  
+        void testFooMap(java.util.Map<String, String> input) { }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EmptySource
+        void testFooTestInfo(String input, org.junit.jupiter.api.TestInfo testInfo) { }
       }
     """.trimIndent()
     )
@@ -434,7 +447,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @ParameterizedTest
         void foo(String param) { }
       }
-    """.trimIndent(), "Annotate class 'Test' as '@TestInstance'")
+    """.trimIndent(), "Annotate class 'Test' as '@TestInstance'", true)
   }
   fun `test malformed parameterized introduce method source quickfix`() {
     myFixture.testQuickFix(ULanguage.JAVA, """
@@ -462,7 +475,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @ParameterizedTest
         void foo(String param) { }
       }
-    """.trimIndent(), "Create method 'parameters' in 'Test'")
+    """.trimIndent(), "Create method 'parameters' in 'Test'", true)
   }
   fun `test malformed parameterized create csv source quickfix`() {
     val file = myFixture.addFileToProject("CsvFile.java", """
@@ -589,7 +602,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.Before
         public void before() { return ""; }
       }
-    """.trimIndent(), "Fix 'before' method signature")
+    """.trimIndent(), "Fix 'before' method signature", true)
   }
   fun `test malformed before remove private quickfix`() {
     myFixture.testQuickFix(ULanguage.JAVA, """
@@ -600,9 +613,9 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
     """.trimIndent(), """
       class MainTest {
         @org.junit.jupiter.api.BeforeEach
-        public void bef<caret>oreEach() { }
+        public void beforeEach() { }
       }
-    """.trimIndent(), "Fix 'beforeEach' method signature")
+    """.trimIndent(), "Fix 'beforeEach' method signature", true)
   }
   fun `test malformed before class no highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
@@ -658,7 +671,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.jupiter.api.BeforeAll
         static void beforeAll() { return ""; }
       }
-    """.trimIndent(), "Fix 'beforeAll' method signature")
+    """.trimIndent(), "Fix 'beforeAll' method signature", true)
   }
 
   /* Malformed Datapoint(s) */
@@ -714,24 +727,24 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.experimental.theories.DataPoint
         public static Object f1() { return null; }
       }
-    """.trimIndent(), "Fix 'f1' method signature")
+    """.trimIndent(), "Fix 'f1' method signature", true)
   }
 
   /* Malformed setup/teardown */
   fun `test malformed setup no highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
-      class C extends junit.framework.TestCase {
+      public class C extends junit.framework.TestCase {
         @Override
         public void setUp() { }
       }  
-    """.trimIndent())
+    """.trimIndent(), "C")
   }
   fun `test malformed setup highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
-      class C extends junit.framework.TestCase {
+      public class C extends junit.framework.TestCase {
         private void <warning descr="Method 'setUp' should be non-private, non-static, have no parameters and of type void">setUp</warning>(int i) { }
       }  
-    """.trimIndent())
+    """.trimIndent(), "C")
   }
   fun `test malformed setup quickfix`() {
     myFixture.testQuickFix(ULanguage.JAVA, """
@@ -742,7 +755,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       class C extends junit.framework.TestCase {
         public void setUp() { }
       }  
-    """.trimIndent(), "Fix 'setUp' method signature")
+    """.trimIndent(), "Fix 'setUp' method signature", true)
   }
 
   /* Malformed rule */
@@ -830,7 +843,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.Rule
         public int x;
       }
-    """.trimIndent(), "Fix 'x' field signature")
+    """.trimIndent(), "Fix 'x' field signature", true)
   }
   fun `test malformed rule make field non-static quickfix`() {
     myFixture.testQuickFix(ULanguage.JAVA, """
@@ -843,7 +856,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.Rule
         public int y() { return 0; }
       }
-    """.trimIndent(), "Fix 'y' method signature")
+    """.trimIndent(), "Fix 'y' method signature", true)
   }
   fun `test malformed class rule make field public quickfix`() {
     myFixture.testQuickFix(ULanguage.JAVA, """
@@ -874,7 +887,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.ClassRule
         public static SomeTestRule x = new SomeTestRule();
       }
-    """.trimIndent(), "Fix 'x' field signature")
+    """.trimIndent(), "Fix 'x' field signature", true)
   }
   fun `test malformed class rule make field static quickfix`() {
     myFixture.testQuickFix(ULanguage.JAVA, """
@@ -942,7 +955,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
   /* Malformed test */
   fun `test malformed test for JUnit 3 highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
-      class JUnit3TestMethodIsPublicVoidNoArg extends junit.framework.TestCase {
+      public class JUnit3TestMethodIsPublicVoidNoArg extends junit.framework.TestCase {
         void <warning descr="Method 'testOne' should be public, non-static, have no parameters and of type void">testOne</warning>() { }
         public int <warning descr="Method 'testTwo' should be public, non-static, have no parameters and of type void">testTwo</warning>() { return 2; }
         public static void <warning descr="Method 'testThree' should be public, non-static, have no parameters and of type void">testThree</warning>() { }
@@ -950,7 +963,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         public void testFive() { }
         void testSix(int i) { } //ignore when method doesn't look like test anymore
       }
-    """.trimIndent())
+    """.trimIndent(), "JUnit3TestMethodIsPublicVoidNoArg")
   }
   fun `test malformed test for JUnit 4 highlighting`() {
     myFixture.addClass("""
@@ -958,7 +971,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       public @interface Mocked { }
     """.trimIndent())
     myFixture.testHighlighting(ULanguage.JAVA, """
-      class JUnit4TestMethodIsPublicVoidNoArg {
+      public class JUnit4TestMethodIsPublicVoidNoArg {
         @org.junit.Test void <warning descr="Method 'testOne' annotated with '@Test' should be public">testOne</warning>() {}
         @org.junit.Test public int <warning descr="Method 'testTwo' annotated with '@Test' should be of type 'void'">testTwo</warning>() { return 2; }
         @org.junit.Test public static void <warning descr="Method 'testThree' annotated with '@Test' should be non-static">testThree</warning>() {}
@@ -966,7 +979,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.Test public void testFive() {}
         @org.junit.Test public void testMock(@mockit.Mocked String s) {}
       }
-    """.trimIndent())
+    """.trimIndent(), "JUnit4TestMethodIsPublicVoidNoArg")
   }
   fun `test malformed test for JUnit 4 runWith highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
@@ -1014,6 +1027,139 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       class FooBar {
         @Test
         void parametersExample(@ResolverAnnotation String a, @ResolverAnnotation String b) { }
+      }
+    """.trimIndent())
+  }
+
+  // Unconstructable test case
+  fun testPlain() {
+    myFixture.testHighlighting(ULanguage.JAVA, """
+      class Plain { }
+    """.trimIndent())
+  }
+  fun testUnconstructableJUnit3TestCase1() {
+    myFixture.testHighlighting(ULanguage.JAVA, """
+      import junit.framework.TestCase;
+
+      public class <warning descr="Test class 'UnconstructableJUnit3TestCase1' is not constructable because it does not have a 'public' no-arg or single 'String' parameter constructor">UnconstructableJUnit3TestCase1</warning> extends TestCase {
+          private UnconstructableJUnit3TestCase1() {
+              System.out.println("");
+          }
+      }
+
+    """.trimIndent())
+  }
+  fun testUnconstructableJUnit3TestCase2() {
+    myFixture.testHighlighting(ULanguage.JAVA, """
+      import junit.framework.TestCase;
+
+      public class <warning descr="Test class 'UnconstructableJUnit3TestCase2' is not constructable because it does not have a 'public' no-arg or single 'String' parameter constructor">UnconstructableJUnit3TestCase2</warning> extends TestCase {
+          public UnconstructableJUnit3TestCase2(Object foo) {
+              System.out.println("");
+          }
+      }
+
+    """.trimIndent())
+  }
+  fun testUnconstructableJUnit3TestCase3() {
+    myFixture.testHighlighting(ULanguage.JAVA, """
+      import junit.framework.TestCase;
+
+      public class UnconstructableJUnit3TestCase3 extends TestCase {
+          public UnconstructableJUnit3TestCase3() {
+              System.out.println("");
+          }
+      }
+
+    """.trimIndent())
+  }
+  fun testUnconstructableJUnit3TestCase4() {
+    myFixture.testHighlighting(ULanguage.JAVA, """
+      import junit.framework.TestCase;
+
+      public class UnconstructableJUnit3TestCase4 extends TestCase {
+          public UnconstructableJUnit3TestCase4(String foo) {
+              System.out.println("");
+          }
+      }
+    """.trimIndent())
+  }
+  fun testUnconstructableJUnit3TestCaseLocalClass() {
+    myFixture.testHighlighting(ULanguage.JAVA, """
+      import junit.framework.TestCase;
+
+      public class UnconstructableJUnit3TestCaseLocalClass {
+          public static void main() {
+            class LocalClass extends TestCase { }
+          }
+      }
+    """.trimIndent())
+  }
+  fun testUnconstructableJUnit4TestCase1() {
+    myFixture.testHighlighting(ULanguage.JAVA, """
+      import org.junit.Test;
+      
+      public class <warning descr="Test class 'UnconstructableJUnit4TestCase1' is not constructable because it should have exactly one 'public' no-arg constructor">UnconstructableJUnit4TestCase1</warning> {
+        public UnconstructableJUnit4TestCase1(String s) {}
+        
+        public UnconstructableJUnit4TestCase1() {}
+      
+        @Test
+        public void testMe() {}
+      }
+    """.trimIndent())
+  }
+  fun testUnconstructableJUnit4TestCase2() {
+    myFixture.testHighlighting(ULanguage.JAVA, """
+      import org.junit.Test;
+
+      public class UnconstructableJUnit4TestCase2 {
+      	public UnconstructableJUnit4TestCase2() {
+      		this("two", 1);
+      	}
+
+      	private UnconstructableJUnit4TestCase2(String one, int two) {
+      		// do nothing with the parameters
+      	}
+
+      	@Test
+      	public void testAssertion() {
+      	}
+      }
+    """.trimIndent())
+  }
+  fun testUnconstructableJUnit4TestCase3() {
+    myFixture.testHighlighting(ULanguage.JAVA, """
+      import org.junit.Test;
+
+      class <warning descr="Test class 'UnconstructableJUnit4TestCase3' is not constructable because it is not 'public'"><warning descr="Test class 'UnconstructableJUnit4TestCase3' is not constructable because it should have exactly one 'public' no-arg constructor">UnconstructableJUnit4TestCase3</warning></warning> {
+        UnconstructableJUnit4TestCase3() {}
+
+        @Test
+        public void testMe() {}
+      }
+    """.trimIndent())
+  }
+  fun testConstructableJunit3WithJunit4runner() {
+    myFixture.testHighlighting(ULanguage.JAVA, """
+      import java.util.Collection;
+      import java.util.Arrays;
+      import junit.framework.TestCase;
+      import org.junit.runner.RunWith;
+      import org.junit.runners.Parameterized;
+      import org.junit.Test;
+
+      @RunWith(Parameterized.class)
+      class ConstructableJunit3WithJunit4runner extends TestCase {
+        ConstructableJunit3WithJunit4runner(Integer i) {}
+        
+        @Parameterized.Parameters
+        public static Collection<Integer> params() {
+          return Arrays.asList(1, 2, 3);
+        }
+
+        @Test
+        public void testMe() {}
       }
     """.trimIndent())
   }

@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
+import com.intellij.ui.IconDeferrer
 import com.intellij.ui.components.AnActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.dialog
@@ -38,6 +39,10 @@ import kotlin.io.path.Path
  * @author Konstantin Bulenkov
  */
 class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
+  init {
+    isEnabledInModalContext = true  // To allow the action to be run in the Manage Recent Projects modal dialog, see IDEA-302750
+  }
+
   override fun actionPerformed(event: AnActionEvent) {
     val reopenProjectAction = getSelectedItem(event) as RecentProjectItem
     val projectPath = reopenProjectAction.projectPath
@@ -77,6 +82,10 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
         FileUtil.delete(ui.pathToIcon())
         RecentProjectIconHelper.refreshProjectIcon(projectPath)
       }
+      // Actually we can try to drop the needed icon,
+      // but it is a very rare action and this whole cache drop will not have any performance impact
+      // Moreover, VCS changes will drop the cache also.
+      IconDeferrer.getInstance().clearCache()
     }
   }
 

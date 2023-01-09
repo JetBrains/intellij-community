@@ -41,5 +41,4 @@ public abstract class MockValue extends MockMirror implements Value {
     }
     return MockObjectReference.createObjectReference(o, type, virtualMachine);
   }
-
 }

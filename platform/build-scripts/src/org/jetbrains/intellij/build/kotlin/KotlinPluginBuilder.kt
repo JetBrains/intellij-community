@@ -85,6 +85,9 @@ object KotlinPluginBuilder {
     "kotlin.compiler-plugins.sam-with-receiver.common",
     "kotlin.compiler-plugins.sam-with-receiver.gradle",
     "kotlin.compiler-plugins.sam-with-receiver.maven",
+    "kotlin.compiler-plugins.assignment.common",
+    "kotlin.compiler-plugins.assignment.gradle",
+    "kotlin.compiler-plugins.assignment.maven",
     "kotlin.compiler-plugins.lombok.gradle",
     "kotlin.compiler-plugins.lombok.maven",
     "kotlin.compiler-plugins.scripting",
@@ -119,6 +122,7 @@ object KotlinPluginBuilder {
     "kotlin.j2k.post-processing",
     "kotlin.j2k.idea",
     "kotlin.j2k.old",
+    "kotlin.j2k.old.post-processing",
     "kotlin.j2k.new",
     "kotlin.plugin-updater",
     "kotlin.preferences",
@@ -127,6 +131,7 @@ object KotlinPluginBuilder {
     "kotlin.project-wizard.core",
     "kotlin.project-wizard.idea",
     "kotlin.project-wizard.idea-k1",
+    "kotlin.project-wizard.idea-k2",
     "kotlin.project-wizard.maven",
     "kotlin.project-wizard.gradle",
     "kotlin.project-wizard.compose",
@@ -171,12 +176,14 @@ object KotlinPluginBuilder {
     "kotlin.code-insight.line-markers-shared",
     "kotlin.code-insight.line-markers-k2",
     "kotlin.fir",
-    "kotlin.search",
+    "kotlin.searching.k2",
+    "kotlin.searching.base",
     "kotlin.highlighting",
     "kotlin.uast.uast-kotlin-fir",
     "kotlin.uast.uast-kotlin-idea-fir",
     "kotlin.fir.fir-low-level-api-ide-impl",
     "kotlin.navigation",
+    "kotlin.code-insight.line-markers-k2",
     "kotlin.refactorings.common",
     "kotlin.refactorings.k2",
     "kotlin.refactorings.rename.k2",
@@ -216,6 +223,7 @@ object KotlinPluginBuilder {
     "kotlinc.allopen-compiler-plugin",
     "kotlinc.noarg-compiler-plugin",
     "kotlinc.sam-with-receiver-compiler-plugin",
+    "kotlinc.assignment-compiler-plugin",
     "kotlinc.kotlinx-serialization-compiler-plugin",
     "kotlinc.parcelize-compiler-plugin",
     "kotlinc.lombok-compiler-plugin",
@@ -377,6 +385,7 @@ object KotlinPluginBuilder {
         spec.withBin("../CIDR/cidr-debugger/bin/lldb/linux/bin/LLDBFrontend", "bin/linux", skipIfDoesntExist)
         spec.withBin("../CIDR/cidr-debugger/bin/lldb/mac/LLDBFrontend", "bin/macos", skipIfDoesntExist)
         spec.withBin("../CIDR/cidr-debugger/bin/lldb/win/x64/bin/LLDBFrontend.exe", "bin/windows", skipIfDoesntExist)
+        spec.withBin("../CIDR/cidr-debugger/bin/lldb/renderers", "bin/lldb/renderers")
 
         spec.withBin("../mobile-ide/common-native/scripts", "scripts")
       }

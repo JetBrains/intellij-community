@@ -116,8 +116,6 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     LinkedHashSet<String> messages = new LinkedHashSet<>();
     GitRepositoryManager manager = getRepositoryManager(myProject);
     Set<GitRepository> repositories = map2SetNotNull(Arrays.asList(filesToCheckin), manager::getRepositoryForFileQuick);
-    String commitTemplate = GitCommitTemplateTracker.getInstance(myProject).getTemplateContent();
-    if (commitTemplate != null) return commitTemplate;
 
     for (GitRepository repository : repositories) {
       File mergeMsg = repository.getRepositoryFiles().getMergeMessageFile();

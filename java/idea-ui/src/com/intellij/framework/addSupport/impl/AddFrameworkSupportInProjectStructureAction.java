@@ -57,7 +57,7 @@ public class AddFrameworkSupportInProjectStructureAction extends DumbAwareAction
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
+    return ActionUpdateThread.BGT;
   }
 
   private boolean isVisible(@NotNull AnActionEvent e) {
@@ -76,6 +76,7 @@ public class AddFrameworkSupportInProjectStructureAction extends DumbAwareAction
     final FrameworkSupportInModuleProvider underlyingProvider = FrameworkSupportUtil.findProvider(underlyingFrameworkTypeId, FrameworkSupportUtil.getAllProviders());
     if (underlyingProvider == null) {
       LOG.error("framework not found by id " + underlyingFrameworkTypeId);
+      return false;
     }
     return underlyingProvider.isSupportAlreadyAdded(module, facetsProvider);
   }

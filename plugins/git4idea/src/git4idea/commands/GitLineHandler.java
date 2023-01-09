@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -174,6 +175,10 @@ public class GitLineHandler extends GitTextHandler {
   }
 
   public void overwriteConfig(@NonNls String ... params) {
+    overwriteConfig(Arrays.asList(params));
+  }
+
+  public void overwriteConfig(@NonNls List<String> params) {
     for (String param : params) {
       myCommandLine.getParametersList().prependAll("-c", param);
     }

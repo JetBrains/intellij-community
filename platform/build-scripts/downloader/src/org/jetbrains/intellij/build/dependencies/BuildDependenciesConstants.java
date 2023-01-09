@@ -7,4 +7,6 @@ import org.jetbrains.annotations.ApiStatus;
 public final class BuildDependenciesConstants {
   public static final String INTELLIJ_DEPENDENCIES_URL = "https://cache-redirector.jetbrains.com/intellij-dependencies";
   public static final String MAVEN_CENTRAL_URL = "https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2";
+  public static final String JPS_AUTH_SPACE_USERNAME = "jps.auth.spaceUsername";
+  public static final String JPS_AUTH_SPACE_PASSWORD = "jps.auth.spacePassword";
 }

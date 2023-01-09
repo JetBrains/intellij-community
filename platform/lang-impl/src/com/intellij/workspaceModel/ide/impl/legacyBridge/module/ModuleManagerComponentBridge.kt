@@ -16,10 +16,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.module.impl.NonPersistentModuleStore
-import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -39,10 +37,10 @@ import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.Dispatchers
@@ -86,7 +84,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     // default project doesn't have modules
     if (!project.isDefault) {
       val busConnection = project.messageBus.connect(this)
-      busConnection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      busConnection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
         override fun projectClosed(eventProject: Project) {
           if (project == eventProject) {
             for (module in modules()) {
@@ -130,9 +128,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
             }
 
             val oldModuleNames = mutableMapOf<Module, String>()
-            val unloadedModulesSet = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames
             for (change in changes) {
-              processModuleChange(change, unloadedModulesSet, oldModuleNames, event)
+              processModuleChange(change, oldModuleNames, event)
             }
 
             for (change in moduleLibraryChanges) {
@@ -146,6 +143,16 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
           if (!VirtualFileUrlWatcher.getInstance(project).isInsideFilePointersUpdate) {
             //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
             rootsChangeListener.changed(event)
+          }
+        }
+      })
+      busConnection.subscribe(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED, object : WorkspaceModelChangeListener {
+        override fun changed(event: VersionedStorageChange) {
+          event.getChanges(ModuleEntity::class.java).forEach { change ->
+            change.oldEntity?.name?.let { unloadedModules.remove(it) }
+            change.newEntity?.let {
+              unloadedModules[it.name] = UnloadedModuleDescriptionBridge.createDescription(it)
+            }
           }
         }
       })
@@ -174,14 +181,9 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   }
 
   private fun initializeModuleBridge(change: EntityChange<ModuleEntity>, builder: MutableEntityStorage) {
-    val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames
     if (change is EntityChange.Added) {
       val alreadyCreatedModule = change.entity.findModule(builder)
       if (alreadyCreatedModule == null) {
-        if (change.entity.name in unloadedModuleNames) {
-          return
-        }
-
         // Create module bridge
         val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
         val module = createModuleInstance(moduleEntity = change.entity,
@@ -200,16 +202,13 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     if (change is EntityChange.Added) {
       val tableId = change.entity.tableId as LibraryTableId.ModuleLibraryTableId
       val moduleEntity = builder.resolve(tableId.moduleId)
-                         ?: error("Could not find module for module library: ${change.entity.persistentId}")
-      if (moduleEntity.name !in unloadedModules) {
-
-        val library = builder.libraryMap.getDataByEntity(change.entity)
-        if (library == null) {
-          val module = moduleEntity.findModule(builder)
-                       ?: error("Could not find module bridge for module entity $moduleEntity")
-          val moduleRootComponent = ModuleRootComponentBridge.getInstance(module)
-          (moduleRootComponent.getModuleLibraryTable() as ModuleLibraryTableBridgeImpl).addLibrary(change.entity, builder)
-        }
+                         ?: error("Could not find module for module library: ${change.entity.symbolicId}")
+      val library = builder.libraryMap.getDataByEntity(change.entity)
+      if (library == null) {
+        val module = moduleEntity.findModule(builder)
+                     ?: error("Could not find module bridge for module entity $moduleEntity")
+        val moduleRootComponent = ModuleRootComponentBridge.getInstance(module)
+        (moduleRootComponent.getModuleLibraryTable() as ModuleLibraryTableBridgeImpl).addLibrary(change.entity, builder)
       }
     }
   }
@@ -226,8 +225,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     }
   }
 
-  private fun processModuleChange(change: EntityChange<ModuleEntity>, unloadedModuleNames: Set<String>,
-                                  oldModuleNames: MutableMap<Module, String>, event: VersionedStorageChange) {
+  private fun processModuleChange(change: EntityChange<ModuleEntity>, oldModuleNames: MutableMap<Module, String>, 
+                                  event: VersionedStorageChange) {
     when (change) {
       is EntityChange.Removed -> {
         // It's possible case then idToModule doesn't contain element e.g. if unloaded module was removed
@@ -238,19 +237,14 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       }
 
       is EntityChange.Added -> {
+        removeUnloadedModuleWithId(change.entity.symbolicId)
         val alreadyCreatedModule = change.entity.findModule(event.storageAfter)
         val module = if (alreadyCreatedModule != null) {
-          unloadedModules.remove(change.entity.name)
-
           alreadyCreatedModule.entityStorage = entityStore
           alreadyCreatedModule.diff = null
           alreadyCreatedModule
         }
         else {
-          if (change.entity.name in unloadedModuleNames) {
-            unloadedModules[change.entity.name] = UnloadedModuleDescriptionBridge.createDescription(change.entity)
-            return
-          }
           error("Module bridge should already be created")
         }
 
@@ -260,11 +254,11 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       }
 
       is EntityChange.Replaced -> {
-        val oldId = change.oldEntity.persistentId
-        val newId = change.newEntity.persistentId
+        val oldId = change.oldEntity.symbolicId
+        val newId = change.newEntity.symbolicId
 
         if (oldId != newId) {
-          unloadedModules.remove(change.newEntity.name)
+          removeUnloadedModuleWithId(newId)
           val module = change.oldEntity.findModule(event.storageBefore)
           if (module != null) {
             module.rename(newId.name, getModuleVirtualFileUrl(change.newEntity), true)
@@ -282,6 +276,15 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     }
   }
 
+  private fun removeUnloadedModuleWithId(moduleId: ModuleId) {
+    val unloadedEntity = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.resolve(moduleId)
+    if (unloadedEntity != null) {
+      WorkspaceModel.getInstance(project).updateUnloadedEntities("Remove module '${moduleId.name}' from unloaded storage because a module with same name is added") {
+        it.removeEntity(unloadedEntity)
+      }
+    }
+  }
+
   private fun processModuleLibraryChange(change: EntityChange<LibraryEntity>, event: VersionedStorageChange) {
     when (change) {
       is EntityChange.Removed -> {
@@ -291,8 +294,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
         }
       }
       is EntityChange.Replaced -> {
-        val idBefore = change.oldEntity.persistentId
-        val idAfter = change.newEntity.persistentId
+        val idBefore = change.oldEntity.symbolicId
+        val idAfter = change.newEntity.symbolicId
 
         val newLibrary = event.storageAfter.libraryMap.getDataByEntity(change.newEntity) as LibraryBridgeImpl?
         if (newLibrary != null) {
@@ -303,16 +306,10 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
         }
       }
       is EntityChange.Added -> {
-        val tableId = change.entity.tableId as LibraryTableId.ModuleLibraryTableId
-        val moduleEntity = entityStore.current.resolve(tableId.moduleId)
-                           ?: error("Could not find module for module library: ${change.entity.persistentId}")
-        if (moduleEntity.name !in unloadedModules) {
-
-          val library = event.storageAfter.libraryMap.getDataByEntity(change.entity)
-          if (library != null) {
-            (library as LibraryBridgeImpl).entityStorage = entityStore
-            library.clearTargetBuilder()
-          }
+        val library = event.storageAfter.libraryMap.getDataByEntity(change.entity)
+        if (library != null) {
+          (library as LibraryBridgeImpl).entityStorage = entityStore
+          library.clearTargetBuilder()
         }
       }
     }
@@ -368,9 +365,9 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     return moduleEntity
   }
 
-  override fun createModule(persistentId: ModuleId, name: String, virtualFileUrl: VirtualFileUrl?, entityStorage: VersionedEntityStorage,
+  override fun createModule(symbolicId: ModuleId, name: String, virtualFileUrl: VirtualFileUrl?, entityStorage: VersionedEntityStorage,
                             diff: MutableEntityStorage?): ModuleBridge {
-    return ModuleBridgeImpl(persistentId, name, project, virtualFileUrl, entityStorage, diff)
+    return ModuleBridgeImpl(symbolicId, name, project, virtualFileUrl, entityStorage, diff)
   }
 
   companion object {

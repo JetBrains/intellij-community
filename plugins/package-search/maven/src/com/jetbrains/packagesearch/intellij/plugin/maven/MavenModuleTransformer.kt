@@ -25,9 +25,9 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlText
 import com.intellij.util.asSafely
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModuleTransformer
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationIndexes
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.dependencyDeclarationCallback
 import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
@@ -36,27 +36,30 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 
-internal class MavenModuleTransformer : CoroutineModuleTransformer {
+internal class MavenModuleTransformer : ModuleTransformer {
 
-    override suspend fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> =
+    override suspend fun transformModules(
+        project: Project,
+        nativeModules: List<Module>
+    ): List<PackageSearchModule> =
         nativeModules.parallelMap { nativeModule ->
-            readAction { runCatching { MavenProjectsManager.getInstance(project).findProject(nativeModule) } }.onFailure {
-                logDebug(contextName = "MavenModuleTransformer", it) { "Error finding Maven module ${nativeModule.name}" }
-            }.getOrNull()?.let {
-                createMavenProjectModule(project, nativeModule, it)
-            }
+            readAction { runCatching { MavenProjectsManager.getInstance(project).findProject(nativeModule) } }
+                .onFailure { logDebug("MavenModuleTransformer", it) { "Error finding Maven module ${nativeModule.name}" } }
+                .getOrNull()
+                ?.toPackageSearchModule(project, nativeModule)
         }.filterNotNull()
 
-    private fun createMavenProjectModule(
-        project: Project, nativeModule: Module, mavenProject: MavenProject
-    ): ProjectModule {
-        val buildFile = mavenProject.file
-        return ProjectModule(
-            name = mavenProject.name ?: nativeModule.name,
+    private suspend fun MavenProject.toPackageSearchModule(
+        project: Project,
+        nativeModule: Module
+    ): PackageSearchModule {
+        val buildFile = file
+        return PackageSearchModule(
+            name = name ?: nativeModule.name,
             nativeModule = nativeModule,
             parent = null,
             buildFile = buildFile,
-            projectDir = mavenProject.directoryFile.toNioPath().toFile(),
+            projectDir = directoryFile.toNioPath().toFile(),
             buildSystemType = BuildSystemType.MAVEN,
             moduleType = MavenProjectModuleType,
             availableScopes = PackageSearchMavenConfiguration.getInstance(project).getMavenScopes(),
@@ -83,6 +86,4 @@ internal class MavenModuleTransformer : CoroutineModuleTransformer {
 }
 
 val BuildSystemType.Companion.MAVEN
-    get() = BuildSystemType(
-        name = "MAVEN", language = "xml", dependencyAnalyzerKey = MavenUtil.SYSTEM_ID, statisticsKey = "maven"
-    )
+    get() = BuildSystemType(name = "MAVEN", language = "xml", dependencyAnalyzerKey = MavenUtil.SYSTEM_ID)

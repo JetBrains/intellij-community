@@ -22,6 +22,7 @@ class SettingsSnapshotZipSerializerTest {
       fileState("colors/my.icls", "Color Scheme")
       fileState("file.xml", "File")
       plugin("com.jetbrains.CyanTheme", false, SettingsCategory.UI, setOf("com.intellij.modules.lang"))
+      additionalFile("newformat.json", "New format")
     }
     val zip = SettingsSnapshotZipSerializer.serializeToZip(snapshot)
 
@@ -29,5 +30,6 @@ class SettingsSnapshotZipSerializerTest {
     assertEquals(date, actualSnapshot.metaInfo.dateCreated)
     assertEquals(snapshot.plugins, actualSnapshot.plugins)
     assertEquals(snapshot.fileStates, actualSnapshot.fileStates)
+    assertEquals(snapshot.additionalFiles, actualSnapshot.additionalFiles)
   }
 }

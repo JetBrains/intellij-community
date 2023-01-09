@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build.impl
@@ -55,7 +55,7 @@ private val PLATFORM_API_MODULES = persistentListOf(
 )
 
 /**
- * List of modules which are included into lib/app.jar in all IntelliJ based IDEs.
+ * List of modules which are included in lib/app.jar in all IntelliJ based IDEs.
  */
 private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.analysis.impl",
@@ -188,8 +188,9 @@ object PlatformModules {
     // used only in modules that packed into Java
     layout.withoutProjectLibrary("jps-javac-extension")
     layout.withoutProjectLibrary("Eclipse")
-    for (platformLayoutCustomizer in productLayout.platformLayoutCustomizers) {
-      platformLayoutCustomizer.accept(layout, context)
+    val layoutSpec = PlatformLayout.Spec(layout)
+    for (platformLayoutSpec in productLayout.platformLayoutSpec) {
+      platformLayoutSpec(layoutSpec, context)
     }
 
     val alreadyPackedModules = HashSet<String>()
@@ -247,7 +248,7 @@ object PlatformModules {
       "intellij.platform.extensions",
       "intellij.platform.tracing.rt",
       "intellij.platform.core",
-      // GeneralCommandLine is used by Scala in JPS plugin
+      // Scala uses GeneralCommandLine in JPS plugin
       "intellij.platform.ide.util.io",
       "intellij.platform.boot",
     ), productLayout, layout)
@@ -279,6 +280,7 @@ object PlatformModules {
       "intellij.platform.vcs.dvcs.impl",
       "intellij.platform.vcs.log.graph.impl",
       "intellij.platform.vcs.log.impl",
+      "intellij.smart.update",
 
       "intellij.platform.collaborationTools",
       "intellij.platform.collaborationTools.auth",
@@ -289,6 +291,8 @@ object PlatformModules {
       "intellij.platform.resources",
       "intellij.platform.resources.en",
       "intellij.platform.colorSchemes",
+
+      "intellij.platform.sqlite",
     ), productLayout, layout)
 
     jar("stats.jar", listOf(
@@ -335,7 +339,7 @@ object PlatformModules {
     }
     layout.collectProjectLibrariesFromIncludedModules(context) { lib, module ->
       val name = lib.name
-      if (module.name == "intellij.platform.buildScripts.downloader" && name == "zstd-jni") {
+      if (module.name == "intellij.platform.buildScripts.downloader" && (name == "zstd-jni" || name == "zstd-jni-windows-aarch64")) {
         return@collectProjectLibrariesFromIncludedModules
       }
 

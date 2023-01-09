@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
 
+from __future__ import annotations
+
 import ast
 import sys
 from itertools import chain
 from pathlib import Path
 
-STUBS_SUPPORTING_PYTHON_2 = frozenset(
-    path.parent for path in Path("stubs").rglob("METADATA.toml") if "python2 = true" in path.read_text().splitlines()
-)
 
-
-def check_new_syntax(tree: ast.AST, path: Path) -> list[str]:
+def check_new_syntax(tree: ast.AST, path: Path, stub: str) -> list[str]:
     errors = []
-    python_2_support_required = any(directory in path.parents for directory in STUBS_SUPPORTING_PYTHON_2)
+    sourcelines = stub.splitlines()
 
-    class UnionFinder(ast.NodeVisitor):
+    class AnnotationUnionFinder(ast.NodeVisitor):
         def visit_Subscript(self, node: ast.Subscript) -> None:
             if isinstance(node.value, ast.Name):
                 if node.value.id == "Union" and isinstance(node.slice, ast.Tuple):
@@ -26,23 +24,48 @@ def check_new_syntax(tree: ast.AST, path: Path) -> list[str]:
 
             self.generic_visit(node)
 
+    class NonAnnotationUnionFinder(ast.NodeVisitor):
+        def visit_Subscript(self, node: ast.Subscript) -> None:
+            if isinstance(node.value, ast.Name):
+                nodelines = sourcelines[(node.lineno - 1) : node.end_lineno]
+                for line in nodelines:
+                    # A hack to workaround various PEP 604 bugs in mypy
+                    if any(x in line for x in {"tuple[", "Callable[", "type["}):
+                        return None
+                if node.value.id == "Union" and isinstance(node.slice, ast.Tuple):
+                    new_syntax = " | ".join(ast.unparse(x) for x in node.slice.elts)
+                    errors.append(f"{path}:{node.lineno}: Use PEP 604 syntax for Union, e.g. `{new_syntax}`")
+                elif node.value.id == "Optional":
+                    new_syntax = f"{ast.unparse(node.slice)} | None"
+                    errors.append(f"{path}:{node.lineno}: Use PEP 604 syntax for Optional, e.g. `{new_syntax}`")
+
+            self.generic_visit(node)
+
     class OldSyntaxFinder(ast.NodeVisitor):
         def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
-            UnionFinder().visit(node.annotation)
+            AnnotationUnionFinder().visit(node.annotation)
 
         def visit_arg(self, node: ast.arg) -> None:
             if node.annotation is not None:
-                UnionFinder().visit(node.annotation)
+                AnnotationUnionFinder().visit(node.annotation)
+
+        def _visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+            if node.returns is not None:
+                AnnotationUnionFinder().visit(node.returns)
+            self.generic_visit(node)
 
         def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-            if node.returns is not None:
-                UnionFinder().visit(node.returns)
-            self.generic_visit(node)
+            self._visit_function(node)
 
         def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-            if node.returns is not None:
-                UnionFinder().visit(node.returns)
-            self.generic_visit(node)
+            self._visit_function(node)
+
+        def visit_Assign(self, node: ast.Assign) -> None:
+            NonAnnotationUnionFinder().visit(node.value)
+
+        def visit_ClassDef(self, node: ast.ClassDef) -> None:
+            for base in node.bases:
+                NonAnnotationUnionFinder().visit(base)
 
     class ObjectClassdefFinder(ast.NodeVisitor):
         def visit_ClassDef(self, node: ast.ClassDef) -> None:
@@ -52,6 +75,15 @@ def check_new_syntax(tree: ast.AST, path: Path) -> list[str]:
                     f"as all classes implicitly inherit from `object` in Python 3"
                 )
             self.generic_visit(node)
+
+    class TextFinder(ast.NodeVisitor):
+        def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+            if node.module == "typing" and any(thing.name == "Text" for thing in node.names):
+                errors.append(f"{path}:{node.lineno}: Use `str` instead of `typing.Text` in a Python-3-only stub.")
+
+        def visit_Attribute(self, node: ast.Attribute) -> None:
+            if isinstance(node.value, ast.Name) and node.value.id == "typing" and node.attr == "Text":
+                errors.append(f"{path}:{node.lineno}: Use `str` instead of `typing.Text` in a Python-3-only stub.")
 
     class IfFinder(ast.NodeVisitor):
         def visit_If(self, node: ast.If) -> None:
@@ -68,8 +100,9 @@ def check_new_syntax(tree: ast.AST, path: Path) -> list[str]:
                 )
             self.generic_visit(node)
 
-    if not python_2_support_required:
-        ObjectClassdefFinder().visit(tree)
+    ObjectClassdefFinder().visit(tree)
+    if path != Path("stdlib/typing_extensions.pyi"):
+        TextFinder().visit(tree)
 
     OldSyntaxFinder().visit(tree)
     IfFinder().visit(tree)
@@ -85,8 +118,9 @@ def main() -> None:
             continue
 
         with open(path) as f:
-            tree = ast.parse(f.read())
-        errors.extend(check_new_syntax(tree, path))
+            stub = f.read()
+            tree = ast.parse(stub)
+        errors.extend(check_new_syntax(tree, path, stub))
 
     if errors:
         print("\n".join(errors))

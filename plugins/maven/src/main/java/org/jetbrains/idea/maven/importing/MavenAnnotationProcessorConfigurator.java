@@ -20,7 +20,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import kotlin.sequences.SequencesKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -97,14 +97,14 @@ public class MavenAnnotationProcessorConfigurator extends MavenImporter implemen
   }
 
   @Override
-  public void process(IdeModifiableModelsProvider modifiableModelsProvider,
-                      Module module,
-                      MavenRootModelAdapter rootModel,
-                      MavenProjectsTree mavenModel,
-                      MavenProject mavenProject,
-                      MavenProjectChanges changes,
-                      Map<MavenProject, String> mavenProjectToModuleName,
-                      List<MavenProjectsProcessorTask> postTasks) {
+  public void process(@NotNull IdeModifiableModelsProvider modifiableModelsProvider,
+                      @NotNull Module module,
+                      @NotNull MavenRootModelAdapter rootModel,
+                      @NotNull MavenProjectsTree mavenModel,
+                      @NotNull MavenProject mavenProject,
+                      @NotNull MavenProjectChanges changes,
+                      @NotNull Map<MavenProject, String> mavenProjectToModuleName,
+                      @NotNull List<MavenProjectsProcessorTask> postTasks) {
     Element config = getConfig(mavenProject, "annotationProcessorPaths");
     if (config == null) return;
 

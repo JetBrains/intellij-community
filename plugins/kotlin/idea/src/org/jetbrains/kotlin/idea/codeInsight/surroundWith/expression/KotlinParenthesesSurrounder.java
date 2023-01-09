@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.core.surroundWith.KotlinExpressionSurrounder;
 import org.jetbrains.kotlin.psi.KtExpression;
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression;
-import org.jetbrains.kotlin.psi.KtPsiFactoryKt;
+import org.jetbrains.kotlin.psi.KtPsiFactory;
 
 public class KotlinParenthesesSurrounder extends KotlinExpressionSurrounder {
     @SuppressWarnings("DialogTitleCapitalization")
@@ -24,8 +24,8 @@ public class KotlinParenthesesSurrounder extends KotlinExpressionSurrounder {
     @Nullable
     @Override
     public TextRange surroundExpression( @NotNull Project project, @NotNull Editor editor, @NotNull KtExpression expression) {
-        KtParenthesizedExpression parenthesizedExpression = (KtParenthesizedExpression) KtPsiFactoryKt
-                .KtPsiFactory(expression).createExpression("(a)");
+        KtParenthesizedExpression parenthesizedExpression =
+                (KtParenthesizedExpression) new KtPsiFactory(expression.getProject()).createExpression("(a)");
         KtExpression expressionWithoutParentheses = parenthesizedExpression.getExpression();
         assert expressionWithoutParentheses != null : "KtExpression should exists for " + parenthesizedExpression.getText() + " expression";
         expressionWithoutParentheses.replace(expression);

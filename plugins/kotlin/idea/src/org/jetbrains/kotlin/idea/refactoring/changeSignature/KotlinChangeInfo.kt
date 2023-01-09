@@ -15,7 +15,6 @@ import com.intellij.util.VisibilityUtil
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.builtins.isNonExtensionFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
@@ -120,7 +119,7 @@ open class KotlinChangeInfo(
 
             val toRemove = BooleanArray(receiverShift + methodDescriptor.parametersCount) { true }
             if (hasReceiver) {
-                toRemove[0] = receiverParameterInfo == null && hasReceiver && originalReceiver !in getNonReceiverParameters()
+                toRemove[0] = receiverParameterInfo == null && originalReceiver !in getNonReceiverParameters()
             }
 
             for (parameter in newParameters) {
@@ -271,13 +270,7 @@ open class KotlinChangeInfo(
 
             if (kind == Kind.FUNCTION) {
                 receiverParameterInfo?.let {
-                    val typeInfo = it.currentTypeInfo
-                    if (typeInfo.type != null && typeInfo.type.isNonExtensionFunctionType) {
-                        buffer.append("(${typeInfo.render()})")
-                    } else {
-                        buffer.append(typeInfo.render())
-                    }
-                    buffer.append('.')
+                    buffer.append(it.currentTypeInfo.getReceiverTypeText()).append('.')
                 }
                 buffer.append(newName)
             }
@@ -327,7 +320,7 @@ open class KotlinChangeInfo(
     }
 
     fun renderReceiverType(inheritedCallable: KotlinCallableDefinitionUsage<*>): String? {
-        val receiverTypeText = receiverParameterInfo?.currentTypeInfo?.render() ?: return null
+        val receiverTypeText = receiverParameterInfo?.currentTypeInfo?.getReceiverTypeText() ?: return null
         val typeSubstitutor = inheritedCallable.typeSubstitutor ?: return receiverTypeText
         val currentBaseFunction = inheritedCallable.baseFunction.currentCallableDescriptor ?: return receiverTypeText
         val receiverType = currentBaseFunction.extensionReceiverParameter!!.type
@@ -380,7 +373,7 @@ open class KotlinChangeInfo(
     fun getOrCreateJavaChangeInfos(): List<JavaChangeInfo>? {
         fun initCurrentSignatures(currentPsiMethods: List<PsiMethod>): List<JvmOverloadSignature> {
             val parameterInfoToPsi = methodDescriptor.original.parameters.zip(originalParameters).toMap()
-            val dummyParameter = KtPsiFactory(method).createParameter("dummy")
+            val dummyParameter = KtPsiFactory(method.project).createParameter("dummy")
             return makeSignatures(
                 parameters = newParameters,
                 psiMethods = currentPsiMethods,

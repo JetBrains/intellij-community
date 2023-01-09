@@ -2,11 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import com.intellij.psi.JavaTokenType
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiRecordComponent
-import com.intellij.psi.SyntheticElement
+import com.intellij.psi.*
 import com.intellij.psi.util.JavaPsiRecordUtil.*
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKLightMethodData

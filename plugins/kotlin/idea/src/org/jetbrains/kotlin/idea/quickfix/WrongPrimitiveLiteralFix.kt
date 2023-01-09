@@ -87,7 +87,7 @@ class WrongPrimitiveLiteralFix(element: KtConstantExpression, type: KotlinType) 
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
-        val expressionToInsert = KtPsiFactory(file).createExpression(fixedExpression)
+        val expressionToInsert = KtPsiFactory(project).createExpression(fixedExpression)
         val newExpression = element.replaced(expressionToInsert)
         editor?.caretModel?.moveToOffset(newExpression.endOffset)
     }

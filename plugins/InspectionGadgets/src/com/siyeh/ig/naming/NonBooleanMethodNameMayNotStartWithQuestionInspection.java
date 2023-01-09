@@ -15,9 +15,7 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.CommonClassNames;
@@ -32,14 +30,14 @@ import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends BaseInspection {
   public static final @NonNls String DEFAULT_QUESTION_WORDS =
@@ -58,17 +56,12 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends BaseI
   }
 
   @Override
-  public @NotNull MultipleCheckboxOptionsPanel createOptionsPanel() {
-    final var panel = new MultipleCheckboxOptionsPanel(this);
-
-    final ListTable table = new ListTable(new ListWrappingTableModel(questionList, InspectionGadgetsBundle
-      .message("boolean.method.name.must.start.with.question.table.column.name")));
-    final JPanel tablePanel = UiUtils.createAddRemovePanel(table, InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.table.label"), true);
-    panel.addGrowing(tablePanel);
-
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.with.boolean.return.type.option"), "ignoreBooleanMethods");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"), "onlyWarnOnBaseMethods");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringSet("questionList", InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.table.label")),
+      checkbox("ignoreBooleanMethods", InspectionGadgetsBundle.message("ignore.methods.with.boolean.return.type.option")),
+      checkbox("onlyWarnOnBaseMethods", InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"))
+    );
   }
 
   @Override

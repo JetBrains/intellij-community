@@ -66,7 +66,7 @@ class ReplaceMapIndexedWithListGeneratorInspection : AbstractKotlinInspection() 
             val qualifiedExpression = callExpression.getQualifiedExpressionForSelector()
             val receiverExpression = qualifiedExpression?.receiverExpression
             val valueArgument = callExpression.valueArguments.singleOrNull() ?: callExpression.lambdaArguments.singleOrNull() ?: return
-            val psiFactory = KtPsiFactory(callExpression)
+            val psiFactory = KtPsiFactory(project)
             when (val argumentExpression = valueArgument.getLambdaOrNamedFunction()) {
                 is KtLambdaExpression -> {
                     val functionLiteral = argumentExpression.functionLiteral

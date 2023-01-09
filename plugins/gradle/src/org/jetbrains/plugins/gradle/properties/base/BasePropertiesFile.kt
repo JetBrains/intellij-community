@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.gradle.properties.base
 
 import com.intellij.openapi.project.Project
-import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.isFile
 import java.io.IOException
 import java.nio.file.Path
 import java.util.Properties
+import kotlin.io.path.exists
 
 abstract class BasePropertiesFile<PROPERTIES> {
 

@@ -26,7 +26,11 @@ class KotlinLambdaSmartStepTarget(
             lambdaInfo
         )
 
-        if (!lambdaInfo.isSuspend && !lambdaInfo.callerMethodInfo.isInline && Registry.get("debugger.async.smart.step.into").asBoolean()) {
+        if (!lambdaInfo.isSuspend
+            && !lambdaInfo.callerMethodInfo.isInline
+            && !lambdaInfo.isSamSuspendMethod
+            && Registry.get("debugger.async.smart.step.into").asBoolean()
+        ) {
             val declaration = declarationPtr.getElementInReadAction()
             return KotlinLambdaAsyncMethodFilter(
                 declaration,

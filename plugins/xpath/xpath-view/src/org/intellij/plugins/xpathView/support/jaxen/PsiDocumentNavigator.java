@@ -116,7 +116,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         return getProcessingInstructionTarget(pi);
     }
 
-    public static String getProcessingInstructionTarget(XmlProcessingInstruction pi) {
+    public static @NotNull String getProcessingInstructionTarget(XmlProcessingInstruction pi) {
         final PsiElement[] children = pi.getChildren();
         LOG.assertTrue(children[1] instanceof XmlToken && ((XmlToken)children[1]).getTokenType() == XmlTokenType.XML_NAME, "Unknown PI structure");
 

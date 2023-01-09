@@ -1,5 +1,5 @@
 suspend fun test(iterable: MyIterable) {
-    <lineMarker text="&lt;html&gt;Suspend operator call &apos;next()&apos;&lt;hr size=1 noshade&gt;Suspend operator call &apos;hasNext()&apos;&lt;/html&gt;">for</lineMarker> (value in iterable) {
+    <lineMarker text="Suspend operator call 'next()'&lt;hr size=1 noshade&gt;Suspend operator call 'hasNext()'">for</lineMarker> (value in iterable) {
         print(value)
     }
 }

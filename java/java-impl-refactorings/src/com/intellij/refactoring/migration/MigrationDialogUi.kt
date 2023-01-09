@@ -49,7 +49,7 @@ class MigrationDialogUi(map: MigrationMap?) {
     }
   }
 
-  fun preferredFocusedComponent(): JComponent = editLink
+  fun preferredFocusedComponent(): JComponent = modulesCombo
 
   fun update(map: MigrationMap) {
     nameLabel.text = map.name

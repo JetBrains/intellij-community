@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.TextRange
@@ -33,8 +35,6 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleReference
 import org.jetbrains.kotlin.idea.search.usagesSearch.searchReferencesOrMethodReferences
 import org.jetbrains.kotlin.idea.util.application.executeCommand
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -72,8 +72,8 @@ class ConvertFunctionTypeParameterToReceiverIntention : SelfTargetingRangeIntent
             val callExpression = element ?: return
             val argumentList = callExpression.valueArgumentList ?: return
             val expressionToMove = argumentList.arguments.getOrNull(data.typeParameterIndex)?.getArgumentExpression() ?: return
-            val callWithReceiver =
-                KtPsiFactory(callExpression).createExpressionByPattern("$0.$1", expressionToMove, callExpression) as KtQualifiedExpression
+            val callWithReceiver = KtPsiFactory(project)
+                .createExpressionByPattern("$0.$1", expressionToMove, callExpression) as KtQualifiedExpression
             (callWithReceiver.selectorExpression as KtCallExpression).valueArgumentList!!.removeArgument(data.typeParameterIndex)
             runWriteAction {
                 callExpression.replace(callWithReceiver)
@@ -93,7 +93,7 @@ class ConvertFunctionTypeParameterToReceiverIntention : SelfTargetingRangeIntent
 
             val receiver = parameterNames.getOrNull(data.typeParameterIndex) ?: return
             val arguments = parameterNames.filter { it != receiver }
-            val adapterLambda = KtPsiFactory(expression).createLambdaExpression(
+            val adapterLambda = KtPsiFactory(expression.project).createLambdaExpression(
                 parameterNames.joinToString(),
                 "$receiver.${expression.text}(${arguments.joinToString()})"
             )
@@ -108,7 +108,7 @@ class ConvertFunctionTypeParameterToReceiverIntention : SelfTargetingRangeIntent
         override fun process(data: ConversionData, elementsToShorten: MutableList<KtElement>) {
             val expression = element ?: return
             val context = expression.analyze(BodyResolveMode.PARTIAL)
-            val psiFactory = KtPsiFactory(expression)
+            val psiFactory = KtPsiFactory(expression.project)
 
             if (expression is KtLambdaExpression || (expression !is KtSimpleNameExpression && expression !is KtCallableReferenceExpression)) {
                 expression.forEachDescendantOfType<KtThisExpression> {

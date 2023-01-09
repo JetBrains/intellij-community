@@ -13,10 +13,11 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 @JvmDefaultWithCompatibility
+@Deprecated("Use Kotlin UI DSL Version 2")
 interface BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  fun withButtonGroup(@NlsContexts.BorderTitle title: String?, buttonGroup: ButtonGroup, body: () -> Unit)
+  fun withButtonGroup(title: @NlsContexts.BorderTitle String?, buttonGroup: ButtonGroup, body: () -> Unit)
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -24,6 +25,7 @@ interface BaseBuilder {
     withButtonGroup(null, buttonGroup, body)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun buttonGroup(init: () -> Unit) {
     buttonGroup(null, init)
   }
@@ -36,6 +38,7 @@ interface BaseBuilder {
 }
 
 @JvmDefaultWithCompatibility
+@Deprecated("Use Kotlin UI DSL Version 2")
 interface RowBuilder : BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -56,7 +59,7 @@ interface RowBuilder : BaseBuilder {
     return createChildRow(label = label, isSeparated = separated).apply(init)
   }
 
-  fun row(@Nls label: String?, separated: Boolean = false, init: Row.() -> Unit): Row {
+  fun row(label: @Nls String?, separated: Boolean = false, init: Row.() -> Unit): Row {
     return row(label?.let { Label(it) }, separated = separated, init)
   }
 
@@ -87,6 +90,7 @@ interface RowBuilder : BaseBuilder {
   /**
    * Hyperlinks are supported (`<a href=""></a>`), new lines and `<br>` are supported only if no links (file issue if need).
    */
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun noteRow(@Nls text: String, linkHandler: ((url: String) -> Unit)? = null) {
     createNoteOrCommentRow(noteComponent(text, linkHandler))
   }
@@ -104,18 +108,26 @@ interface RowBuilder : BaseBuilder {
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun nestedPanel(@NlsContexts.BorderTitle title: String? = null, init: LayoutBuilder.() -> Unit): CellBuilder<DialogPanel>
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun onGlobalApply(callback: () -> Unit): Row
+
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun onGlobalReset(callback: () -> Unit): Row
+
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun onGlobalIsModified(callback: () -> Boolean): Row
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 abstract class Row : Cell(), RowBuilder {
   abstract var enabled: Boolean
 
   abstract var visible: Boolean
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   abstract var subRowsEnabled: Boolean
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   abstract var subRowsVisible: Boolean
 
   /**
@@ -125,6 +137,7 @@ abstract class Row : Cell(), RowBuilder {
   @Deprecated("Use Kotlin UI DSL Version 2")
   abstract var subRowIndent: Int
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   protected abstract val builder: LayoutBuilderImpl
 
   /**
@@ -142,6 +155,7 @@ abstract class Row : Cell(), RowBuilder {
   @Deprecated("Use Kotlin UI DSL Version 2")
   internal abstract fun alignRight()
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   abstract fun largeGapAfter()
 
   /**
@@ -162,6 +176,7 @@ abstract class Row : Cell(), RowBuilder {
   internal abstract fun setCellMode(value: Boolean, isVerticalFlow: Boolean, fullWidth: Boolean)
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 enum class GrowPolicy {
   SHORT_TEXT, MEDIUM_TEXT
 }
@@ -172,4 +187,5 @@ fun Row.enableIf(predicate: ComponentPredicate) {
   predicate.addListener { enabled = it }
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun RowBuilder.fullRow(init: InnerCell.() -> Unit): Row = row { cell(isFullWidth = true, init = init) }

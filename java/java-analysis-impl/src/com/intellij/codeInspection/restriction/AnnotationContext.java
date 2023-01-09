@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.restriction;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -112,6 +112,8 @@ public final class AnnotationContext {
     if (context != EMPTY) return context;
     context = fromArgument(expression);
     if (context != EMPTY) return context;
+    context = fromInfixMethod(expression);
+    if (context != EMPTY) return context;
     return fromInitializer(expression);
   }
 
@@ -220,6 +222,18 @@ public final class AnnotationContext {
       PsiSubstitutor substitutor = ((PsiMethodCallExpression)psi).getMethodExpression().advancedResolve(false).getSubstitutor();
       parameterType = substitutor.substitute(parameterType);
     }
+    return fromModifierListOwner(parameter).withType(parameterType);
+  }
+
+  private static @NotNull AnnotationContext fromInfixMethod(@NotNull UExpression expression) {
+    UBinaryExpression parent = ObjectUtils.tryCast(expression.getUastParent(), UBinaryExpression.class);
+    PsiMethod method = parent != null ? parent.resolveOperator() : null;
+    if (method == null) return EMPTY;
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (parameters.length != 2) return EMPTY;
+    PsiParameter parameter = UastUtils.isPsiAncestor(expression, parent.getRightOperand()) ? parameters[1] : parameters[0];
+    if (parameter == null) return EMPTY;
+    PsiType parameterType = parameter.getType();
     return fromModifierListOwner(parameter).withType(parameterType);
   }
 

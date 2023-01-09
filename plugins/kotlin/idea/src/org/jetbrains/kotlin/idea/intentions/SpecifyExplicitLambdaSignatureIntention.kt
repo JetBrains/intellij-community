@@ -70,7 +70,7 @@ open class SpecifyExplicitLambdaSignatureIntention : SelfTargetingOffsetIndepend
         }
 
         fun applyWithParameters(element: KtLambdaExpression, parameterString: String) {
-            val psiFactory = KtPsiFactory(element)
+            val psiFactory = KtPsiFactory(element.project)
             val functionLiteral = element.functionLiteral
             val newParameterList =
                 (psiFactory.createExpression("{ $parameterString -> }") as KtLambdaExpression).functionLiteral.valueParameterList

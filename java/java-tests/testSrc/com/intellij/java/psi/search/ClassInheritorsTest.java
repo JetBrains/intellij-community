@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
 
@@ -119,12 +118,12 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
   public void testInheritorsInAnotherModuleWithNoDirectDependency() throws IOException {
     myFixture.addFileToProject("A.java", "class A {}");
     myFixture.addFileToProject("mod1/B.java", "class B extends A {}");
-    myFixture.addFileToProject("mod1/C.java", "class C extends B {}");
+    myFixture.addFileToProject("mod2/C.java", "class C extends B {}");
 
     Module mod1 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
-    Module mod2 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
+    Module mod2 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
 
-    ModuleRootModificationUtil.addDependency(mod1, getModule(), DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(mod1, getModule(), DependencyScope.COMPILE, true);
     ModuleRootModificationUtil.addDependency(mod2, mod1, DependencyScope.COMPILE, false);
 
     assertSize(2, ClassInheritorsSearch.search(myFixture.findClass("A")).findAll());

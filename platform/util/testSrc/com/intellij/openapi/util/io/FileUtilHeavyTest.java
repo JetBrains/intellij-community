@@ -4,6 +4,7 @@ package com.intellij.openapi.util.io;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -204,11 +205,17 @@ public class FileUtilHeavyTest {
     File targetDir = tempDir.newDirectory("target");
     File targetFile = tempDir.newFile("target/file");
     File directDirLink = new File(tempDir.getRoot(), "dirLink");
-    createSymbolicLink(directDirLink.toPath(), targetDir.toPath());
+    @NotNull Path link2 = directDirLink.toPath();
+    @NotNull Path target2 = targetDir.toPath();
+    Files.createSymbolicLink(link2, target2);
     File directFileLink = new File(tempDir.getRoot(), "fileLink");
-    createSymbolicLink(directFileLink.toPath(), targetFile.toPath());
+    @NotNull Path link1 = directFileLink.toPath();
+    @NotNull Path target1 = targetFile.toPath();
+    Files.createSymbolicLink(link1, target1);
     File linkParentDir = tempDir.newDirectory("linkParent");
-    createSymbolicLink(new File(linkParentDir, "link").toPath(), targetDir.toPath());
+    @NotNull Path link = new File(linkParentDir, "link").toPath();
+    @NotNull Path target = targetDir.toPath();
+    Files.createSymbolicLink(link, target);
 
     FileUtil.delete(directFileLink);
     FileUtil.delete(directDirLink);
@@ -245,7 +252,7 @@ public class FileUtilHeavyTest {
 
     File top = tempDir.newDirectory("top");
     tempDir.newFile("top/a-dir/file");
-    createSymbolicLink(top.toPath().resolve("z-link"), top.toPath().resolve("a-dir"));
+    Files.createSymbolicLink(top.toPath().resolve("z-link"), top.toPath().resolve("a-dir"));
 
     FileUtil.delete(top);
     assertThat(top).doesNotExist();
@@ -288,9 +295,13 @@ public class FileUtilHeavyTest {
     String root = FileUtil.toSystemIndependentName(FileUtil.resolveShortWindowsName(rootDir.getPath()));
 
     // non-recursive link
-    createSymbolicLink(new File(rootDir, "dir1/dir2_link").toPath(), new File(rootDir, "dir1/dir2").toPath());
+    @NotNull Path link1 = new File(rootDir, "dir1/dir2_link").toPath();
+    @NotNull Path target1 = new File(rootDir, "dir1/dir2").toPath();
+    Files.createSymbolicLink(link1, target1);
     // recursive links to a parent dir
-    createSymbolicLink(new File(rootDir, "dir1/dir1_link").toPath(), new File(rootDir, "dir1").toPath());
+    @NotNull Path link = new File(rootDir, "dir1/dir1_link").toPath();
+    @NotNull Path target = new File(rootDir, "dir1").toPath();
+    Files.createSymbolicLink(link, target);
 
     // I) links should NOT be resolved when ../ stays inside the linked path
     // I.I) non-recursive links

@@ -8,6 +8,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -23,7 +24,6 @@ import org.jetbrains.kotlin.idea.inspections.UnusedReceiverParameterInspection
 import org.jetbrains.kotlin.idea.intentions.ConvertReceiverToParameterIntention
 import org.jetbrains.kotlin.idea.intentions.MoveMemberToCompanionObjectIntention
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -166,15 +166,15 @@ class SuspendFunctionOnCoroutineScopeInspection : AbstractKotlinInspection() {
                 }
             }
 
-            val factory = KtPsiFactory(function)
+            val psiFactory = KtPsiFactory(project)
             val blockExpression = function.bodyBlockExpression
             project.executeWriteCommand(name, this) {
                 val result = when {
                     expressionToWrap != bodyExpression -> expressionToWrap.replaced(
-                        factory.createExpressionByPattern("$COROUTINE_SCOPE_WRAPPER { $0 }", expressionToWrap)
+                        psiFactory.createExpressionByPattern("$COROUTINE_SCOPE_WRAPPER { $0 }", expressionToWrap)
                     )
                     blockExpression == null -> bodyExpression.replaced(
-                        factory.createExpressionByPattern("$COROUTINE_SCOPE_WRAPPER { $0 }", bodyExpression)
+                        psiFactory.createExpressionByPattern("$COROUTINE_SCOPE_WRAPPER { $0 }", bodyExpression)
                     )
                     else -> {
                         val bodyText = buildString {
@@ -184,7 +184,7 @@ class SuspendFunctionOnCoroutineScopeInspection : AbstractKotlinInspection() {
                             }
                         }
                         blockExpression.replaced(
-                            factory.createBlock("$COROUTINE_SCOPE_WRAPPER { $bodyText }")
+                            psiFactory.createBlock("$COROUTINE_SCOPE_WRAPPER { $bodyText }")
                         )
                     }
                 }

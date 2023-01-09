@@ -28,10 +28,10 @@ import com.jetbrains.python.debugger.PyDebugRunner
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
-import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.fixCondaPathEnvIfNeeded
 import com.jetbrains.python.sdk.targetAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAddedByUser
 import java.nio.file.Path
@@ -45,15 +45,15 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
                                              interpreterParameters: List<String>,
                                              isUsePty: Boolean = false): TargetedCommandLine {
   val commandLineBuilder = TargetedCommandLineBuilder(targetEnvironment.request)
-  commandLineBuilder.addEnvironmentVariable(PythonEnvUtil.PYTHONIOENCODING, charset.name())
   workingDir?.apply(targetEnvironment)?.let { commandLineBuilder.setWorkingDirectory(it) }
-  charset.let { commandLineBuilder.setCharset(it) }
+  commandLineBuilder.charset = charset
+  inputFile?.let { commandLineBuilder.setInputFile(TargetValue.fixed(it.absolutePath)) }
   sdk.configureBuilderToRunPythonOnTarget(commandLineBuilder)
   commandLineBuilder.addParameters(interpreterParameters)
   when (this) {
     is PythonScriptExecution -> pythonScriptPath?.let { commandLineBuilder.addParameter(it.apply(targetEnvironment)) }
                                 ?: throw IllegalArgumentException("Python script path must be set")
-    is PythonModuleExecution -> moduleName?.let { commandLineBuilder.addParameters(listOf("-m", moduleName)) }
+    is PythonModuleExecution -> moduleName?.let { commandLineBuilder.addParameters(listOf("-m", it)) }
                                 ?: throw IllegalArgumentException("Python module name must be set")
   }
   for (parameter in parameters) {
@@ -75,6 +75,11 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
   if (isUsePty) {
     commandLineBuilder.ptyOptions = LocalTargetPtyOptions(LocalPtyOptions.DEFAULT)
   }
+
+  // This fix shouldn't be here, since flavor patches envs (see configureBuilderToRunPythonOnTarget), but envs
+  // then overwritten by patchEnvironmentVariablesForVirtualenv and envs
+  // Fix must be removed after path merging implementation
+  commandLineBuilder.fixCondaPathEnvIfNeeded(sdk)
   return commandLineBuilder.build()
 }
 
@@ -167,6 +172,7 @@ fun appendToPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String
 fun appendToPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,
                        paths: Collection<TargetEnvironmentFunction<String>>,
                        targetPlatform: TargetPlatform) {
+  if (paths.isEmpty()) return
   val value = paths.joinToPathValue(targetPlatform)
   envs.merge(PYTHONPATH_ENV, value) { whole, suffix ->
     listOf(whole, suffix).joinToPathValue(targetPlatform)

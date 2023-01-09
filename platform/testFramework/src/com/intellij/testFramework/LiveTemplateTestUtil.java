@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.template.TemplateActionContext;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LiveTemplateTestUtil {
+public final class LiveTemplateTestUtil {
   /**
    * Moves caret though opened file from start to the end and checks if template with {@code templateKey} from the {@code templateGroup} is
    * available in every position. Marks up opened file with {@code <available>} and {@code </available>} tags for the ranges where template

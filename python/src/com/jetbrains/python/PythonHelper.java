@@ -7,7 +7,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +27,8 @@ public enum PythonHelper implements HelperPackage {
 
   // Packaging tools
   PACKAGING_TOOL("packaging_tool.py"),
-  VIRTUALENV_ZIPAPP("virtualenv.pyz"),
+  VIRTUALENV_ZIPAPP("virtualenv-20.16.7.pyz"),
+  PY2_VIRTUALENV_ZIPAPP("virtualenv-20.13.0.pyz"),
 
   COVERAGEPY("coveragepy", ""),
   COVERAGE("coverage_runner", "run_coverage"),
@@ -163,7 +163,6 @@ public enum PythonHelper implements HelperPackage {
       final Map<String, String> env = cmd.getEnvironment();
       addToPythonPath(env);
       PythonEnvUtil.resetHomePathChanges(sdkPath, env);
-      PySdkUtil.configureCharset(cmd);
       return cmd;
     }
 

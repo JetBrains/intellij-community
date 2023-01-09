@@ -24,13 +24,7 @@ public class FixedSizeButton extends JButton {
 
   private FixedSizeButton(int size, JComponent component) {
     Icon icon = AllIcons.General.Ellipsis;
-    if (icon != null) {
-      // loading may fail at design time
-      setIcon(icon);
-    }
-    else {
-      setText(".");
-    }
+    setIcon(icon);
     mySize = size;
     myComponent = component;
     setMargin(JBInsets.emptyInsets());

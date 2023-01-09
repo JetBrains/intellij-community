@@ -1,0 +1,26 @@
+{
+  parserClass="com.jetbrains.performancePlugin.lang.parser.IJPerfParser"
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+  psiClassPrefix="IJPerf"
+  psiImplClassSuffix="Impl"
+  psiPackage="com.jetbrains.performancePlugin.lang.psi"
+  psiImplPackage="com.jetbrains.performancePlugin.lang.psi.impl"
+  elementTypeHolderClass="com.jetbrains.performancePlugin.lang.psi.IJPerfElementTypes"
+  elementTypeClass="com.jetbrains.performancePlugin.lang.psi.IJPerfElementType"
+  tokenTypeClass="com.jetbrains.performancePlugin.lang.psi.IJPerfTokenType"
+  psiImplUtilClass="com.jetbrains.performancePlugin.lang.psi.IJPerfPsiImplUtil"
+}
+
+scriptFile ::= statement*
+statement ::= (commandLine|COMMENT)
+commandName ::= COMMAND
+{
+  implements=["com.intellij.psi.PsiNameIdentifierOwner"]
+  methods=[setName getName getNameIdentifier]
+}
+commandLine ::= (commandName optionList?)
+simpleOption::= IDENTIFIER (ASSIGNMENT_OPERATOR (IDENTIFIER|NUMBER|FILE_PATH))?
+gotoOption ::= (NUMBER OPTIONS_SEPARATOR NUMBER)
+delayTypingOption ::= (NUMBER PIPE TEXT)
+optionList ::= option (OPTIONS_SEPARATOR option)*
+option ::= (simpleOption | gotoOption | delayTypingOption | FILE_PATH | NUMBER)

@@ -7,7 +7,6 @@ import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.util.io.exists
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -24,6 +23,7 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.O
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyZipUnpacker
 import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactDownloader.DownloadContext
+import org.jetbrains.kotlin.idea.util.application.isHeadlessEnvironment
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.awt.EventQueue
 import java.io.File
@@ -33,6 +33,7 @@ import java.io.InputStream
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.io.path.exists
 
 object KotlinArtifactsDownloader {
     fun getUnpackedKotlinDistPath(version: String): File =
@@ -66,7 +67,7 @@ object KotlinArtifactsDownloader {
         project: Project,
         jpsVersion: String,
         indicator: ProgressIndicator,
-        onError: (String) -> Unit,
+        onError: (@Nls(capitalization = Nls.Capitalization.Sentence) String) -> Unit,
     ): Boolean {
         val context = LazyKotlinJpsPluginClasspathDownloader.Context(project, indicator)
         val jpsPluginClasspath = LazyKotlinJpsPluginClasspathDownloader(jpsVersion).lazyDownload(context)
@@ -144,7 +145,7 @@ object KotlinArtifactsDownloader {
         artifactIsPom: Boolean = false,
         additionalMavenRepos: List<RemoteRepositoryDescription> = emptyList(),
     ): List<File> {
-        check(isUnitTestMode() || !EventQueue.isDispatchThread()) {
+        check((isUnitTestMode() || isHeadlessEnvironment()) || !EventQueue.isDispatchThread()) {
             "Don't call downloadMavenArtifact on UI thread"
         }
 
@@ -231,8 +232,11 @@ object KotlinArtifactsDownloader {
     private fun getMavenRepos(project: Project): List<RemoteRepositoryDescription> =
         RemoteRepositoriesConfiguration.getInstance(project).repositories
 
-    @Nls
-    fun failedToDownloadUnbundledJpsMavenArtifact(project: Project, artifactId: String, version: String): String {
+    fun failedToDownloadUnbundledJpsMavenArtifact(
+        project: Project,
+        artifactId: String,
+        version: String,
+    ): @Nls(capitalization = Nls.Capitalization.Sentence) String {
         require(artifactId == KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID || artifactId == KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID) {
             "$artifactId should be either $KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID or $KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID"
         }

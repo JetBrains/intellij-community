@@ -65,7 +65,7 @@ import static java.awt.event.MouseEvent.*;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
 
-public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
+public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup {
   @NonNls public static final String SHOW_HINTS = "ShowHints";
 
   // Popup size stored with DimensionService is null first time
@@ -187,6 +187,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   private Disposable myProjectDisposable;
 
   private volatile State myState = State.NEW;
+  private long myOpeningTime;
 
   void setNormalWindowLevel(boolean normalWindowLevel) {
     myNormalWindowLevel = normalWindowLevel;
@@ -481,17 +482,22 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     if (UiInterceptors.tryIntercept(this)) return;
     Window window = null;
 
-    Component focusedComponent = getWndManager().getFocusedComponent(project);
-    if (focusedComponent != null) {
-      Component parent = UIUtil.findUltimateParent(focusedComponent);
-      if (parent instanceof Window) {
-        window = (Window)parent;
+    WindowManagerEx manager = getWndManager();
+    if (manager != null) {
+      Component focusedComponent = manager.getFocusedComponent(project);
+      if (focusedComponent != null) {
+        Component parent = UIUtil.findUltimateParent(focusedComponent);
+        if (parent instanceof Window) {
+          window = (Window)parent;
+        }
       }
     }
     if (window == null) {
       window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
     }
-
+    if ((window == null || !window.isShowing()) && manager != null) {
+      window = manager.getFrame(project);
+    }
     if (window != null && window.isShowing()) {
       showInCenterOf(window);
     }
@@ -507,14 +513,29 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   @Override
   public void showUnderneathOf(@NotNull Component aComponent) {
-    int x = Registry.is("ide.popup.align.by.content") ? calcHorizontalAlignment(aComponent) : JBUIScale.scale(2);
+    showUnderneathOf(aComponent, true);
+  }
+
+  @Override
+  public void showUnderneathOf(@NotNull Component aComponent, boolean useAlignment) {
+    boolean isAlignmentUsed = ExperimentalUI.isNewUI() && Registry.is("ide.popup.align.by.content") && useAlignment
+                              && isComponentSupportsAlignment(aComponent);
+    int x = isAlignmentUsed ? calcHorizontalAlignment(aComponent) : JBUIScale.scale(2);
     show(new RelativePoint(aComponent, new Point(x, aComponent.getHeight())));
+  }
+
+  private boolean isComponentSupportsAlignment(Component c) {
+    if (!(c instanceof JComponent)
+        || (c instanceof ActionButton)
+        || (c instanceof ComboBoxWithWidePopup<?>)) {
+      return false;
+    }
+
+    return true;
   }
 
   private static int calcHorizontalAlignment(@NotNull Component comp) {
     if (!(comp instanceof JComponent jcomp)) return JBUIScale.scale(2);
-    if (comp instanceof ActionButton) return JBUIScale.scale(2);
-    if (comp instanceof ComboBoxWithWidePopup<?>) return JBUIScale.scale(2);
 
     int componentLeftInset = jcomp.getInsets().left;
     int popupLeftInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() + JBUI.CurrentTheme.Popup.Selection.innerInsets().left;
@@ -837,7 +858,16 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   @Override
   public boolean canClose() {
-    return myCallBack == null || myCallBack.compute().booleanValue();
+    return (myCallBack == null || myCallBack.compute().booleanValue()) && !preventImmediateClosingAfterOpening();
+  }
+
+  private boolean preventImmediateClosingAfterOpening() {
+    // this is a workaround for X.Org bug https://gitlab.freedesktop.org/xorg/xserver/-/issues/1347
+    // it affects only non-override-redirect windows, hence the check for myNormalWindowLevel
+    return UIUtil.isXServerOnWindows() &&
+           myNormalWindowLevel &&
+           IdeEventQueue.getInstance().getTrueCurrentEvent().getID() == WindowEvent.WINDOW_DEACTIVATED &&
+           System.currentTimeMillis() < myOpeningTime + 1000;
   }
 
   @Override
@@ -1104,8 +1134,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
         cornerType = PopupCornerType.RoundedWindow;
       }
       if (cornerType != PopupCornerType.None) {
-        if (SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) {
-          WindowRoundedCornersManager.setRoundedCorners(window, new Object[]{cornerType, myPopupBorderColor});
+        if ((SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
+          WindowRoundedCornersManager.setRoundedCorners(window, new Object[]{cornerType,
+            SystemInfoRt.isWindows ? JBUI.CurrentTheme.Popup.borderColor(true) : myPopupBorderColor});
           myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
         }
         else {
@@ -1188,6 +1219,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     }
     debugState("popup shown", State.SHOWING);
     myState = State.SHOWN;
+    myOpeningTime = System.currentTimeMillis();
 
     afterShowSync();
   }
@@ -1294,9 +1326,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       }
     };
     mySpeedSearchPatternField.getTextEditor().setFocusable(mySpeedSearchAlwaysShown);
-    if (mySpeedSearchAlwaysShown) {
-      setHeaderComponent(mySpeedSearchPatternField);
-    }
 
     JBTextField textField = mySpeedSearchPatternField.getTextEditor();
     if (ExperimentalUI.isNewUI()) {
@@ -1318,6 +1347,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     }
     if (SystemInfo.isMac) {
       RelativeFont.TINY.install(mySpeedSearchPatternField);
+    }
+
+    if (mySpeedSearchAlwaysShown) {
+      setHeaderComponent(mySpeedSearchPatternField);
     }
   }
 
@@ -1550,7 +1583,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     if (myFinalRunnable != null) {
       Runnable finalRunnable = myFinalRunnable;
       getFocusManager().doWhenFocusSettlesDown(() -> {
-        try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
           finalRunnable.run();
         }
       });
@@ -2006,12 +2039,16 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   }
 
   public void setWarning(@NotNull @NlsContexts.Label String text) {
+    myHeaderPanel.add(createWarning(text), BorderLayout.SOUTH);
+  }
+
+  protected @NotNull JComponent createWarning(@NotNull @NlsContexts.Label String text) {
     JBLabel label = new JBLabel(text, UIUtil.getBalloonWarningIcon(), SwingConstants.CENTER);
     label.setOpaque(true);
     Color color = HintUtil.getInformationColor();
     label.setBackground(color);
     label.setBorder(BorderFactory.createLineBorder(color, 3));
-    myHeaderPanel.add(label, BorderLayout.SOUTH);
+    return label;
   }
 
   @Override
@@ -2035,16 +2072,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   @Override
   public void setMinimumSize(Dimension size) {
     //todo: consider changing only the caption panel minimum size
-    Dimension sizeFromHeader = myHeaderPanel.getPreferredSize();
-
-    if (sizeFromHeader == null) {
-      sizeFromHeader = myHeaderPanel.getMinimumSize();
-    }
-
-    if (sizeFromHeader == null) {
-      int minimumSize = myWindow.getGraphics().getFontMetrics(myHeaderPanel.getFont()).getHeight();
-      sizeFromHeader = new Dimension(minimumSize, minimumSize);
-    }
+    Dimension sizeFromHeader = calcHeaderSize();
 
     if (size == null) {
       myMinSize = sizeFromHeader;
@@ -2060,6 +2088,25 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       int height = Math.min(screenRectangle.height, myMinSize.height);
       myWindow.setMinimumSize(new Dimension(width, height));
     }
+  }
+
+  public Dimension getMinimumSize() {
+    return myMinSize != null ? myMinSize : calcHeaderSize();
+  }
+
+  @NotNull
+  private Dimension calcHeaderSize() {
+    Dimension sizeFromHeader = myHeaderPanel.getPreferredSize();
+
+    if (sizeFromHeader == null) {
+      sizeFromHeader = myHeaderPanel.getMinimumSize();
+    }
+
+    if (sizeFromHeader == null) {
+      int minimumSize = myWindow.getGraphics().getFontMetrics(myHeaderPanel.getFont()).getHeight();
+      sizeFromHeader = new Dimension(minimumSize, minimumSize);
+    }
+    return sizeFromHeader;
   }
 
   public void setOkHandler(Runnable okHandler) {

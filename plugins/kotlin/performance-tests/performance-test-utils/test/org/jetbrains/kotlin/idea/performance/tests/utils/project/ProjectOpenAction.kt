@@ -6,6 +6,7 @@ import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.setTrusted
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.module.ModuleManager
@@ -21,7 +22,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.UsefulTestCase.assertTrue
-import com.intellij.util.io.exists
 import org.jetbrains.kotlin.idea.configuration.getModulesWithKotlinFiles
 import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService
 import org.jetbrains.kotlin.idea.performance.tests.utils.closeProject
@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.project.ResolveElementCache
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.exists
 import kotlin.test.assertTrue
 
 data class OpenProject(val projectPath: String, val projectName: String, val jdk: Sdk, val projectOpenAction: ProjectOpenAction)
@@ -173,8 +174,16 @@ enum class ProjectOpenAction {
             DumbService.getInstance(project).waitForSmartMode()
 
             val checkerService = KotlinConfigurationCheckerService.getInstance(project)
+            val writeActionContinuations = mutableListOf<() -> Unit>()
             for (module in getModulesWithKotlinFiles(project)) {
-                checkerService.getAndCacheLanguageLevelByDependencies(module)
+                checkerService.getAndCacheLanguageLevelByDependencies(module, writeActionContinuations)
+            }
+            if (writeActionContinuations.isNotEmpty()) {
+                runInEdt {
+                    runWriteAction {
+                        writeActionContinuations.forEach { it.invoke() }
+                    }
+                }
             }
         }.get()
 

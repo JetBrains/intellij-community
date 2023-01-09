@@ -98,6 +98,16 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertDelegatedBaseJavaProject();
   }
 
+  @Test
+  @TargetVersions("5.6+")
+  public void testBaseJavaProjectHasNoWarnings() throws Exception {
+    createDefaultDirs();
+    createProjectSubFile("gradle.properties", "org.gradle.warning.mode=fail");
+    importProject("apply plugin: 'java'");
+
+    assertDelegatedBaseJavaProject();
+  }
+
   private void assertNotDelegatedBaseJavaProject() {
     assertModules("project", "project.main", "project.test");
     assertContentRoots("project", getProjectPath());
@@ -788,6 +798,30 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  public void testExcludedFoldersWithIdeaPlugin() throws Exception {
+    createProjectSubDirs("submodule");
+    importProject(
+      "apply plugin: 'idea'\n" +
+      "idea {\n" +
+      "  module {\n" +
+      "    excludeDirs += file('submodule')\n" +
+      "  }\n" +
+      "}"
+    );
+
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
+    assertExcludes("project", ".gradle", "build", "submodule");
+
+    importProject(
+      "apply plugin: 'idea'\n"
+    );
+
+    assertContentRoots("project", getProjectPath());
+    assertExcludes("project", ".gradle", "build");
+  }
+
+  @Test
   public void testSharedSourceFolders() throws Exception {
     createProjectSubFile("settings.gradle", "include 'app1', 'app2'");
     createProjectSubFile("shared/resources/resource.txt");
@@ -876,7 +910,9 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
         "        }",
         "        integrationTest(JvmTestSuite) { ",
         "            dependencies {",
-        "                implementation project ",
+        isGradleNewerOrSameAs("7.6")
+        ? "                implementation project() "
+        : "                implementation project ",
         "            }",
         "        }",
         "    }",

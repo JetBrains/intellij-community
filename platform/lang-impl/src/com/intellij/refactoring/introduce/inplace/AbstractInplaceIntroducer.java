@@ -369,7 +369,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   }
 
   @Override
-  protected void addReferenceAtCaret(Collection<PsiReference> refs) {
+  protected void addReferenceAtCaret(Collection<? super PsiReference> refs) {
     final V variable = ApplicationManager.getApplication().runReadAction((Computable<V>)() -> getLocalVariable());
     if (variable != null) {
       for (PsiReference reference : ReferencesSearch.search(variable)) {
@@ -382,7 +382,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   }
 
   @Override
-  protected void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages) {
+  protected void collectAdditionalElementsToRename(@NotNull List<? super Pair<PsiElement, TextRange>> stringUsages) {
     if (isReplaceAllOccurrences()) {
       for (E expression : getOccurrences()) {
         PsiUtilCore.ensureValid(expression);

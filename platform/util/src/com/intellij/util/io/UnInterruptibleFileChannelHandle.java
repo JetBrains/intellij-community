@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,13 +6,13 @@ import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -29,11 +29,11 @@ final class UnInterruptibleFileChannelHandle {
 
   private final @NotNull Lock myOpenCloseLock = new ReentrantLock();
   private final @NotNull Path myPath;
-  private final OpenOption @NotNull [] myOpenOptions;
+  private final Set<? extends @NotNull OpenOption> myOpenOptions;
 
   private volatile FileChannel myChannel; // null if handle has been closed
 
-  UnInterruptibleFileChannelHandle(@NotNull Path path, OpenOption @NotNull ... openOptions) throws IOException {
+  UnInterruptibleFileChannelHandle(@NotNull Path path, Set<? extends @NotNull OpenOption> openOptions) throws IOException {
     myPath = path;
     myOpenOptions = openOptions;
     reopenChannel();

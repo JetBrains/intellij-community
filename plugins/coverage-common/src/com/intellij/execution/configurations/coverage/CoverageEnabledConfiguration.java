@@ -30,7 +30,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   @NonNls protected static final String COVERAGE_ENABLED_ATTRIBUTE_NAME = "enabled";
   @NonNls protected static final String COVERAGE_RUNNER = "runner";
   @NonNls protected static final String TRACK_PER_TEST_COVERAGE_ATTRIBUTE_NAME = "per_test_coverage_enabled";
-  @NonNls protected static final String SAMPLING_COVERAGE_ATTRIBUTE_NAME = "sample_coverage";
+  @NonNls protected static final String COVERAGE_TYPE_ATTRIBUTE_NAME = "sample_coverage";
   @NonNls protected static final String TRACK_TEST_FOLDERS = "track_test_folders";
 
   private final Project myProject;
@@ -40,7 +40,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   private String myRunnerId;
   private CoverageRunner myCoverageRunner;
   private boolean myTrackPerTestCoverage = true;
-  private boolean mySampling = true;
+  private boolean myTracing = false;
   private boolean myTrackTestFolders = false;
 
   @NonNls protected String myCoverageFilePath;
@@ -63,12 +63,12 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     myIsCoverageEnabled = isCoverageEnabled;
   }
 
-  public boolean isSampling() {
-    return mySampling;
+  public boolean isTracingEnabled() {
+    return myTracing;
   }
 
-  public void setSampling(final boolean sampling) {
-    mySampling = sampling;
+  public void setTracingEnabled(final boolean tracing) {
+    myTracing = tracing;
   }
 
   public String getRunnerId() {
@@ -97,8 +97,8 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     return myTrackPerTestCoverage;
   }
 
-  public void setTrackPerTestCoverage(final boolean collectLineInfo) {
-    myTrackPerTestCoverage = collectLineInfo;
+  public void setTrackPerTestCoverage(final boolean testTracking) {
+    myTrackPerTestCoverage = testTracking;
   }
 
   public boolean isTrackTestFolders() {
@@ -179,11 +179,11 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     myIsCoverageEnabled = Boolean.parseBoolean(element.getAttributeValue(COVERAGE_ENABLED_ATTRIBUTE_NAME));
 
     // track per test coverage
-    final String collectLineInfoAttribute = element.getAttributeValue(TRACK_PER_TEST_COVERAGE_ATTRIBUTE_NAME);
-    myTrackPerTestCoverage = collectLineInfoAttribute == null || Boolean.valueOf(collectLineInfoAttribute).booleanValue();
+    final String testTrackingAttribute = element.getAttributeValue(TRACK_PER_TEST_COVERAGE_ATTRIBUTE_NAME);
+    myTrackPerTestCoverage = testTrackingAttribute == null || Boolean.valueOf(testTrackingAttribute).booleanValue();
 
-    // sampling
-    mySampling = Boolean.parseBoolean(element.getAttributeValue(SAMPLING_COVERAGE_ATTRIBUTE_NAME, "true"));
+    // line/branch coverage
+    myTracing = !Boolean.parseBoolean(element.getAttributeValue(COVERAGE_TYPE_ATTRIBUTE_NAME, "true"));
 
     // track test folders
     final String trackTestFolders = element.getAttributeValue(TRACK_TEST_FOLDERS);
@@ -215,9 +215,9 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
       element.setAttribute(TRACK_PER_TEST_COVERAGE_ATTRIBUTE_NAME, String.valueOf(false));
     }
 
-    // sampling
-    if (!mySampling) {
-      element.setAttribute(SAMPLING_COVERAGE_ATTRIBUTE_NAME, String.valueOf(false));
+    // line/branch coverage
+    if (myTracing) {
+      element.setAttribute(COVERAGE_TYPE_ATTRIBUTE_NAME, String.valueOf(false));
     }
 
     // test folders

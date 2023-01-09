@@ -169,9 +169,6 @@ public class LocalCopyPasteManager implements ClientCopyPasteManager {
 
     Object newDataText = newData.getTransferData(DataFlavor.stringFlavor);
     Object oldDataText = oldData.getTransferData(DataFlavor.stringFlavor);
-    if (newDataText == null || oldDataText == null) {
-      return null;
-    }
 
     if (oldData.isCut()) {
       if (newData.getStartOffset() == oldData.getStartOffset()) {

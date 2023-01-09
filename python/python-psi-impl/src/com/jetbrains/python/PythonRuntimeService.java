@@ -16,6 +16,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 @ApiStatus.Experimental
 public class PythonRuntimeService {
 
@@ -46,7 +48,10 @@ public class PythonRuntimeService {
     return null;
   }
 
-  public String formatDocstring(Module module, DocStringFormat format, String docstring) {
+  public String formatDocstring(@NotNull Module module,
+                                @NotNull DocStringFormat format,
+                                @NotNull String input,
+                                @NotNull List<String> formatterFlags) {
     return null;
   }
 

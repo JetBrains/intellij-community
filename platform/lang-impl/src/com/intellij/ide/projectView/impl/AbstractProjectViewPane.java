@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.ProblemListener;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiAwareObject;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.ui.SimpleColoredComponent;
@@ -89,7 +90,7 @@ import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.BGT_DATA_PR
  * Allows to add additional panes to the Project view.
  * For example, Packages view or Scope view.
  *
- * @see AsyncProjectViewPane
+ * @see AbstractProjectViewPaneWithAsyncSupport
  * @see ProjectViewPane
  */
 public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject {
@@ -381,6 +382,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return true;
   }
 
+  public boolean isAutoScrollEnabledWithoutFocus() {
+    return false;
+  }
+
   public boolean isFileNestingEnabled() {
     return false;
   }
@@ -606,12 +611,16 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   @NotNull
   public List<PsiElement> getElementsFromNode(@Nullable Object node) {
     Object value = getValueFromNode(node);
-    JBIterable<?> it = value instanceof PsiElement || value instanceof VirtualFile ? JBIterable.of(value) :
+    JBIterable<?> it = value instanceof PsiElement || value instanceof VirtualFile || value instanceof PsiAwareObject ? JBIterable.of(value) :
                        value instanceof Object[] ? JBIterable.of((Object[])value) :
                        value instanceof Iterable ? JBIterable.from((Iterable<?>)value) :
                        JBIterable.of(TreeUtil.getUserObject(node));
     return it.flatten(o -> o instanceof RootsProvider ? ((RootsProvider)o).getRoots() : Collections.singleton(o))
-      .map(o -> o instanceof VirtualFile ? PsiUtilCore.findFileSystemItem(myProject, (VirtualFile)o) : o)
+      .map(o -> o instanceof VirtualFile
+                ? PsiUtilCore.findFileSystemItem(myProject, (VirtualFile)o)
+                : o instanceof PsiAwareObject
+                  ? ((PsiAwareObject)o).findElement(myProject)
+                  : o)
       .filter(PsiElement.class)
       .filter(PsiElement::isValid)
       .toList();
@@ -773,27 +782,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return new GroupByTypeComparator(myProject, getId());
   }
 
-  @Deprecated(forRemoval = true)
   public void installComparator() {
-    installComparator(getTreeBuilder());
+    installComparator(createComparator());
   }
 
-  @Deprecated(forRemoval = true)
-  void installComparator(AbstractTreeBuilder treeBuilder) {
-    installComparator(treeBuilder, createComparator());
-  }
-
-  @TestOnly
-  @Deprecated(forRemoval = true)
   public void installComparator(@NotNull Comparator<? super NodeDescriptor<?>> comparator) {
-    installComparator(getTreeBuilder(), comparator);
-  }
-
-  @Deprecated(forRemoval = true)
-  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor<?>> comparator) {
-    if (builder != null) {
-      builder.setNodeDescriptorComparator(comparator);
-    }
   }
 
   public JTree getTree() {
@@ -1119,9 +1112,13 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         .getTreeCellRendererComponent(getTree(), object, false, false, true, getTree().getRowForPath(path), false);
       Icon[] icon = new Icon[1];
       String[] text = new String[1];
-      ObjectUtils.consumeIfCast(component, ProjectViewRenderer.class, renderer -> icon[0] = renderer.getIcon());
-      ObjectUtils.consumeIfCast(component, SimpleColoredComponent.class, renderer -> text[0] = renderer.getCharSequence(true).toString());
-      return Pair.create(icon[0], text[0]);
+      if (component instanceof ProjectViewRenderer renderer) {
+        icon[0] = renderer.getIcon();
+      }
+      if (component instanceof SimpleColoredComponent colored) {
+        text[0] = colored.getCharSequence(true).toString();
+      }
+      return new Pair<>(icon[0], text[0]);
     }
   }
 
@@ -1208,11 +1205,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       Object[] objects = dataContext.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
       if (objects == null) return PsiElement.EMPTY_ARRAY;
       return PsiUtilCore.toPsiElementArray(ContainerUtil.flatMap(Arrays.asList(objects), o -> getElementsFromNode(o)));
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
     }
 
     @Override

@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard.service
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.CodeStyleManager
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.tools.projectWizard.core.service.FileFormattingService
 import java.io.File

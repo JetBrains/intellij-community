@@ -57,7 +57,6 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.locks.LockSupport;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
@@ -156,7 +155,7 @@ public final class EditorTestUtil {
     HighlighterIterator editorIterator = editor.getHighlighter().createIterator(0);
 
     EditorHighlighter freshHighlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(
-      project, ((EditorEx)editor).getVirtualFile());
+      project, editor.getVirtualFile());
     freshHighlighter.setEditor((EditorImpl)editor);
     freshHighlighter.setText(editor.getDocument().getImmutableCharSequence());
     HighlighterIterator freshIterator = freshHighlighter.createIterator(0);
@@ -585,7 +584,7 @@ public final class EditorTestUtil {
       return markup.insertMarks(editor.getDocument().getCharsSequence());
     }
 
-    static @NotNull String renderExpectedState(@NotNull Editor editor, @NotNull List<CaretInfo> carets) {
+    static @NotNull String renderExpectedState(@NotNull Editor editor, @NotNull List<? extends CaretInfo> carets) {
       CaretAndSelectionMarkup markup = new CaretAndSelectionMarkup();
       // The expected state is properly sorted already, so it doesn't require extra sorting,
       // but for sake of consistency we use the same approach as for the actual caret state.
@@ -781,10 +780,8 @@ public final class EditorTestUtil {
                                              @Nullable Set<String> acceptableKeyNames) {
     Editor editor = fixture.getEditor();
     CaretModel caretModel = editor.getCaretModel();
-    List<Integer> caretsOffsets = ContainerUtil.map(caretModel.getAllCarets(), Caret::getOffset);
-    if (caretsOffsets.isEmpty()) {
-      caretsOffsets.add(-1);
-    }
+    List<Integer> offs = ContainerUtil.map(caretModel.getAllCarets(), Caret::getOffset);
+    List<Integer> caretsOffsets = offs.isEmpty() ? List.of(-1) : offs;
     caretModel.removeSecondaryCarets();
     CharSequence documentSequence = editor.getDocument().getCharsSequence();
 
@@ -806,7 +803,7 @@ public final class EditorTestUtil {
       }});
   }
 
-  private static @NotNull String renderTextWithHighlihgtingInfos(@NotNull List<HighlightInfo> highlightInfos,
+  private static @NotNull String renderTextWithHighlihgtingInfos(@NotNull List<? extends HighlightInfo> highlightInfos,
                                                                  @NotNull CharSequence documentSequence,
                                                                  @Nullable Set<String> acceptableKeyNames) {
     List<Pair<Integer, String>> sortedMarkers = highlightInfos.stream()

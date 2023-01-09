@@ -144,7 +144,7 @@ class KotlinLoggerInitializedWithForeignClassInspection : AbstractKotlinInspecti
                     as? KtDotQualifiedExpression ?: return
             val receiver = argument.receiverExpression
             val selector = argument.selectorExpression ?: return
-            val psiFactory = KtPsiFactory(argument)
+            val psiFactory = KtPsiFactory(project)
             val newArgument = when (receiver) {
                 is KtClassLiteralExpression -> {
                     psiFactory.createExpressionByPattern("${containingClassName}::class.$0", selector)

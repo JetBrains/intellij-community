@@ -1,3 +1,5 @@
+// IGNORE_FIR
+
 fun <T> T.foo(): Function1<@ParameterName("item") T, @ParameterName("item") Unit>
 
 fun f() {

@@ -18,7 +18,7 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLine
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLineSafely
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
-import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 
 /**
  * This handler does two things for a caret inside the indent of some line in a list:
@@ -30,13 +30,14 @@ internal class MarkdownListIndentBackspaceHandlerDelegate : BackspaceHandlerDele
   private var listItem: MarkdownListItem? = null
   private var moveCaret = false
 
-  override fun beforeCharDeleted(c: Char, file: PsiFile, editor: Editor) {
+  override fun beforeCharDeleted(char: Char, file: PsiFile, editor: Editor) {
     deletedRange = null
     listItem = null
     moveCaret = false
-
-    if (file !is MarkdownFile || !c.isWhitespace()
-        || !MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled) {
+    if (file !is MarkdownFile || !char.isWhitespace()) {
+      return
+    }
+    if (!MarkdownCodeInsightSettings.getInstance().state.adjustListIndentation) {
       return
     }
 

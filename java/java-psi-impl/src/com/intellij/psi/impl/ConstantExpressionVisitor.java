@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
-@SuppressWarnings("UnnecessaryBoxing")
 final class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstantEvaluationHelper.AuxEvaluator {
   private final Interner<String> myInterner = Interner.createStringInterner();
 
@@ -136,11 +135,11 @@ final class ConstantExpressionVisitor extends JavaElementVisitor implements PsiC
 
         if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
           if (lOperandValue instanceof Double || rOperandValue instanceof Double) {
-            value = new Double(((Number)lOperandValue).doubleValue() + ((Number)rOperandValue).doubleValue());
+            value = Double.valueOf(((Number)lOperandValue).doubleValue() + ((Number)rOperandValue).doubleValue());
             checkRealNumberOverflow(value, lOperandValue, rOperandValue,expression);
           }
           else if (lOperandValue instanceof Float || rOperandValue instanceof Float) {
-            value = new Float(((Number)lOperandValue).floatValue() + ((Number)rOperandValue).floatValue());
+            value = Float.valueOf(((Number)lOperandValue).floatValue() + ((Number)rOperandValue).floatValue());
             checkRealNumberOverflow(value, lOperandValue, rOperandValue, expression);
           }
           else if (lOperandValue instanceof Long || rOperandValue instanceof Long) {
@@ -163,11 +162,11 @@ final class ConstantExpressionVisitor extends JavaElementVisitor implements PsiC
       if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
         if (lOperandValue instanceof Double || rOperandValue instanceof Double) {
-          value = new Double(((Number)lOperandValue).doubleValue() - ((Number)rOperandValue).doubleValue());
+          value = Double.valueOf(((Number)lOperandValue).doubleValue() - ((Number)rOperandValue).doubleValue());
           checkRealNumberOverflow(value, lOperandValue, rOperandValue, expression);
         }
         else if (lOperandValue instanceof Float || rOperandValue instanceof Float) {
-          value = new Float(((Number)lOperandValue).floatValue() - ((Number)rOperandValue).floatValue());
+          value = Float.valueOf(((Number)lOperandValue).floatValue() - ((Number)rOperandValue).floatValue());
           checkRealNumberOverflow(value, lOperandValue, rOperandValue, expression);
         }
         else if (lOperandValue instanceof Long || rOperandValue instanceof Long) {
@@ -185,21 +184,21 @@ final class ConstantExpressionVisitor extends JavaElementVisitor implements PsiC
       }
     }
     else if (tokenType == JavaTokenType.ANDAND) {
-      if (lOperandValue instanceof Boolean && !((Boolean)lOperandValue).booleanValue() ||
-          rOperandValue instanceof Boolean && !((Boolean)rOperandValue).booleanValue()) {
-        value = Boolean.FALSE;
-      }
-      else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
+      if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
         value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() && ((Boolean)rOperandValue).booleanValue());
+      }
+      else if (lOperandValue instanceof Boolean && !((Boolean)lOperandValue).booleanValue() ||
+               rOperandValue instanceof Boolean && !((Boolean)rOperandValue).booleanValue()) {
+        value = Boolean.FALSE;
       }
     }
     else if (tokenType == JavaTokenType.OROR) {
-      if (lOperandValue instanceof Boolean && ((Boolean)lOperandValue).booleanValue() ||
-          rOperandValue instanceof Boolean && ((Boolean)rOperandValue).booleanValue()) {
-        value = Boolean.TRUE;
-      }
-      else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
+      if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
         value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() || ((Boolean)rOperandValue).booleanValue());
+      }
+      else if (lOperandValue instanceof Boolean && ((Boolean)lOperandValue).booleanValue() ||
+               rOperandValue instanceof Boolean && ((Boolean)rOperandValue).booleanValue()) {
+        value = Boolean.TRUE;
       }
     }
     else if (tokenType == JavaTokenType.LT || tokenType == JavaTokenType.LE ||
@@ -214,11 +213,11 @@ final class ConstantExpressionVisitor extends JavaElementVisitor implements PsiC
       if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
         if (lOperandValue instanceof Double || rOperandValue instanceof Double) {
-          value = new Double(((Number)lOperandValue).doubleValue() * ((Number)rOperandValue).doubleValue());
+          value = Double.valueOf(((Number)lOperandValue).doubleValue() * ((Number)rOperandValue).doubleValue());
           checkRealNumberOverflow(value, lOperandValue, rOperandValue, expression);
         }
         else if (lOperandValue instanceof Float || rOperandValue instanceof Float) {
-          value = new Float(((Number)lOperandValue).floatValue() * ((Number)rOperandValue).floatValue());
+          value = Float.valueOf(((Number)lOperandValue).floatValue() * ((Number)rOperandValue).floatValue());
           checkRealNumberOverflow(value, lOperandValue, rOperandValue, expression);
         }
         else if (lOperandValue instanceof Long || rOperandValue instanceof Long) {
@@ -240,11 +239,11 @@ final class ConstantExpressionVisitor extends JavaElementVisitor implements PsiC
       if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
         if (lOperandValue instanceof Double || rOperandValue instanceof Double) {
-          value = new Double(((Number)lOperandValue).doubleValue() / ((Number)rOperandValue).doubleValue());
+          value = Double.valueOf(((Number)lOperandValue).doubleValue() / ((Number)rOperandValue).doubleValue());
           checkRealNumberOverflow(value, lOperandValue, rOperandValue, expression);
         }
         else if (lOperandValue instanceof Float || rOperandValue instanceof Float) {
-          value = new Float(((Number)lOperandValue).floatValue() / ((Number)rOperandValue).floatValue());
+          value = Float.valueOf(((Number)lOperandValue).floatValue() / ((Number)rOperandValue).floatValue());
           checkRealNumberOverflow(value, lOperandValue, rOperandValue, expression);
         }
         else if (lOperandValue instanceof Long || rOperandValue instanceof Long) {
@@ -268,11 +267,11 @@ final class ConstantExpressionVisitor extends JavaElementVisitor implements PsiC
         double rVal = ((Number)rOperandValue).doubleValue();
         if (myThrowExceptionOnOverflow && rVal == 0) throw new ConstantEvaluationOverflowException(expression);
         if (lOperandValue instanceof Double || rOperandValue instanceof Double) {
-          value = new Double(((Number)lOperandValue).doubleValue() % ((Number)rOperandValue).doubleValue());
+          value = Double.valueOf(((Number)lOperandValue).doubleValue() % ((Number)rOperandValue).doubleValue());
           checkRealNumberOverflow(value, lOperandValue, rOperandValue, expression);
         }
         else if (lOperandValue instanceof Float || rOperandValue instanceof Float) {
-          value = new Float(((Number)lOperandValue).floatValue() % ((Number)rOperandValue).floatValue());
+          value = Float.valueOf(((Number)lOperandValue).floatValue() % ((Number)rOperandValue).floatValue());
           checkRealNumberOverflow(value, lOperandValue, rOperandValue, expression);
         }
         else if (lOperandValue instanceof Long || rOperandValue instanceof Long) {
@@ -454,10 +453,10 @@ final class ConstantExpressionVisitor extends JavaElementVisitor implements PsiC
       if (operandValue instanceof Character) operandValue = Integer.valueOf(((Character)operandValue).charValue());
       if (operandValue instanceof Number) {
         if (operandValue instanceof Double) {
-          value = new Double(-((Number)operandValue).doubleValue());
+          value = Double.valueOf(-((Number)operandValue).doubleValue());
         }
         else if (operandValue instanceof Float) {
-          value = new Float(-((Number)operandValue).floatValue());
+          value = Float.valueOf(-((Number)operandValue).floatValue());
         }
         else if (operandValue instanceof Long) {
           value = Long.valueOf(-((Number)operandValue).longValue());

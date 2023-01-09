@@ -44,6 +44,12 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
   fun testShadowedOption() = doTest(EditorConfigShadowedOptionInspection::class)
   fun testShadowingOption() = doTest(EditorConfigShadowingOptionInspection::class)
   fun testSpaceInHeader() = doTest(EditorConfigSpaceInHeaderInspection::class, checkWeakWarnings = true)
+
+  /**
+   * See [EDITORCONFIG-T-3](https://jetbrains.team/p/editorconfig/issues/3)
+   */
+  fun testSpaceInHeader2() = doTest(EditorConfigSpaceInHeaderInspection::class, checkWeakWarnings = true)
+
   fun testUnexpectedComma() = doTest(EditorConfigUnexpectedCommaInspection::class)
   fun testUnusedDeclaration() = doTest(EditorConfigUnusedDeclarationInspection::class)
   fun testValueCorrectness() = doTest(EditorConfigValueCorrectnessInspection::class)

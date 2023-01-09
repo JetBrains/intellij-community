@@ -62,7 +62,8 @@ object ConversionsRunner {
         RemoveRedundantQualifiersForCallsConversion(context),
         FunctionalInterfacesConversion(context),
         FilterImportsConversion(context),
-        AddElementsInfoConversion(context)
+        AddElementsInfoConversion(context),
+        EnumSyntheticValuesMethodConversion(context)
     )
 
 

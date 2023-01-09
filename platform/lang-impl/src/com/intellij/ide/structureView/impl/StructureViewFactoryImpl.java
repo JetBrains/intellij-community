@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl;
 
 import com.intellij.ide.impl.StructureViewWrapperImpl;
@@ -31,9 +31,9 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   private static final ExtensionPointName<StructureViewExtension> EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.lang.structureViewExtension");
 
   public static final class State {
-    @SuppressWarnings({"WeakerAccess"}) public boolean AUTOSCROLL_MODE = true;
-    @SuppressWarnings({"WeakerAccess"}) public boolean AUTOSCROLL_FROM_SOURCE = false;
-    @SuppressWarnings({"WeakerAccess"}) public String ACTIVE_ACTIONS = "";
+    @SuppressWarnings("WeakerAccess") public boolean AUTOSCROLL_MODE = true;
+    @SuppressWarnings("WeakerAccess") public boolean AUTOSCROLL_FROM_SOURCE = false;
+    @SuppressWarnings("WeakerAccess") public String ACTIVE_ACTIONS = "";
   }
 
   private final Project myProject;
@@ -86,13 +86,13 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
       return result;
     }
 
-    ExtensionPointImpl<StructureViewExtension> point = (ExtensionPointImpl<StructureViewExtension>)EXTENSION_POINT_NAME.getPoint();
+    ExtensionPointImpl<@NotNull StructureViewExtension> point = (ExtensionPointImpl<@NotNull StructureViewExtension>)EXTENSION_POINT_NAME.getPoint();
     Set<Class<? extends PsiElement>> visitedTypes = new HashSet<>();
     result = new ArrayList<>();
     for (StructureViewExtension extension : point.getExtensionList()) {
       Class<? extends PsiElement> registeredType = extension.getType();
       if (ReflectionUtil.isAssignable(registeredType, type) && visitedTypes.add(registeredType)) {
-        result.addAll(ExtensionProcessingHelper.getByGroupingKey(point, StructureViewExtension.class, registeredType, StructureViewExtension::getType));
+        result.addAll(ExtensionProcessingHelper.INSTANCE.getByGroupingKey(point, StructureViewExtension.class, registeredType, StructureViewExtension::getType));
       }
     }
 

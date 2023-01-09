@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.history.integration.ui.views;
 
@@ -35,7 +35,6 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ExcludingTraversalPolicy;
 import com.intellij.ui.components.ProgressBarLoadingDecorator;
 import com.intellij.util.Alarm;
-import com.intellij.util.AlarmFactory;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -55,7 +54,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   private DiffRequestPanel myDiffPanel;
   private SearchTextArea mySearchTextArea;
   private Future<?> myFilterFuture;
-  private final Alarm myAlarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.SWING_THREAD, this);
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
 
   public FileHistoryDialog(@NotNull Project p, IdeaGateway gw, VirtualFile f) {
     this(p, gw, f, true);

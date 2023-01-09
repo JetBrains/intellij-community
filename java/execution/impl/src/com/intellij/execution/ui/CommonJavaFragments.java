@@ -13,6 +13,7 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -22,9 +23,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -231,6 +231,34 @@ public final class CommonJavaFragments {
     vmParameters.setHint(ExecutionBundle.message("run.configuration.java.vm.parameters.hint"));
     vmParameters.setActionHint(ExecutionBundle.message("specify.vm.options.for.running.the.application"));
     vmParameters.setEditorGetter(editor -> editor.getEditorField());
+    return vmParameters;
+  }
+
+  @NotNull
+  public static <T extends JavaRunConfigurationBase> SettingsEditorFragment<T, VmOptionsEditor> vmOptionsEx(JavaRunConfigurationBase settings,
+                                                                                                            Computable<Boolean> hasModule) {
+    String group = ExecutionBundle.message("group.java.options");
+    VmOptionsEditor vmOptions = new VmOptionsEditor(settings) {
+      @Override
+      void setupEditor(LanguageTextField editor, JavaRunConfigurationBase settings) {
+        super.setupEditor(editor, settings);
+        editor.addSettingsProvider(e -> {
+          ExtendableTextComponent.Extension extension = ExtendableTextComponent.Extension.create(
+            AllIcons.General.InlineVariables, AllIcons.General.InlineVariablesHover, ExecutionBundle.message("insert.macros"),
+            () -> MacrosDialog.show(editor, MacrosDialog.Filters.ALL, MacrosDialog.getPathMacros(hasModule.compute())));
+          ExtendableEditorSupport.setupExtension(e, editor.getBackground(), extension);
+        });
+      }
+    };
+    SettingsEditorFragment<T, VmOptionsEditor> vmParameters =
+      new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), group, vmOptions,
+                                   15,
+                                   (configuration, c) -> c.getTextField().setText(configuration.getVMParameters()),
+                                   (configuration, c) -> configuration.setVMParameters(c.isVisible() ? c.getTextField().getText() : null),
+                                   configuration -> StringUtil.isNotEmpty(configuration.getVMParameters()));
+    vmParameters.setHint(ExecutionBundle.message("run.configuration.java.vm.parameters.hint"));
+    vmParameters.setActionHint(ExecutionBundle.message("specify.vm.options.for.running.the.application"));
+    vmParameters.setEditorGetter(VmOptionsEditor::getTextField);
     return vmParameters;
   }
 }

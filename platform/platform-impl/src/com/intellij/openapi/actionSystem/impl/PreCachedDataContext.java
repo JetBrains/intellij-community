@@ -19,6 +19,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.*;
@@ -94,7 +96,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       else {
         DataKey<?>[] keys = DataKey.allKeys();
         myDataKeysCount = updateDataKeyIndices(keys);
-        try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FORCE_ASSERT)) {
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.FORCE_ASSERT)) {
           myCachedData = cacheComponentsData(components, initial, myDataManager, keys);
         }
         ourInstances.add(this);
@@ -153,6 +155,8 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     if (PlatformCoreDataKeys.CONTEXT_COMPONENT.is(dataId)) return SoftReference.dereference(myComponentRef.ref);
     if (PlatformCoreDataKeys.IS_MODAL_CONTEXT.is(dataId)) return myComponentRef.modalContext;
     if (PlatformDataKeys.MODALITY_STATE.is(dataId)) return myComponentRef.modalityState;
+    if (PlatformDataKeys.SPEED_SEARCH_TEXT.is(dataId) && myComponentRef.speedSearchText != null) return myComponentRef.speedSearchText;
+    if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.is(dataId) && myComponentRef.speedSearchRef != null) return SoftReference.dereference(myComponentRef.speedSearchRef);
     if (myCachedData.isEmpty()) return null;
 
     boolean isEDT = EDT.isCurrentThreadEdt();
@@ -236,7 +240,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
 
   private static void reportValueProvidedByRulesUsage(@NotNull String dataId, boolean error) {
     if (!Registry.is("actionSystem.update.actions.warn.dataRules.on.edt")) return;
-    if (EDT.isCurrentThreadEdt() && SlowOperations.isInsideActivity(SlowOperations.ACTION_UPDATE) &&
+    if (EDT.isCurrentThreadEdt() && SlowOperations.isInSection(SlowOperations.ACTION_UPDATE) &&
         ActionUpdater.currentInEDTOperationName() != null && !SlowOperations.isAlwaysAllowed()) {
       String message = "'" + dataId + "' is requested on EDT by " + ActionUpdater.currentInEDTOperationName() + ". See ActionUpdateThread javadoc.";
       //noinspection StringEquality
@@ -288,7 +292,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     return ourDataKeysIndices.size();
   }
 
-  private static @NotNull FList<ProviderData> cacheComponentsData(@NotNull List<Component> components,
+  private static @NotNull FList<ProviderData> cacheComponentsData(@NotNull List<? extends Component> components,
                                                                   @NotNull FList<ProviderData> initial,
                                                                   @NotNull DataManagerImpl dataManager,
                                                                   DataKey<?> @NotNull [] keys) {
@@ -387,10 +391,18 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     final ModalityState modalityState;
     final Boolean modalContext;
 
+    final String speedSearchText;
+    final Reference<Component> speedSearchRef;
+
     ComponentRef(@Nullable Component component) {
       ref = component == null ? null : new WeakReference<>(component);
       modalityState = component == null ? ModalityState.NON_MODAL : ModalityState.stateForComponent(component);
       modalContext = component == null ? null : Utils.isModalContext(component);
+
+      SpeedSearchSupply supply = component instanceof JComponent ? SpeedSearchSupply.getSupply((JComponent)component) : null;
+      speedSearchText = supply != null ? supply.getEnteredPrefix() : null;
+      JTextField field = supply instanceof SpeedSearchBase<?> ? ((SpeedSearchBase<?>)supply).getSearchField() : null;
+      speedSearchRef = field != null ? new WeakReference<>(field) : null;
     }
   }
 }

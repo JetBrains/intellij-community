@@ -15,12 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.threading;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
@@ -35,7 +34,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
 
@@ -51,11 +51,9 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createGroovyOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(GroovyBundle.message("checkbox.ignore.double.checked.locking.on.volatile.fields"), this,
-                                          "ignoreOnVolatileVariables"
-    );
+  public @NotNull OptPane getGroovyOptionsPane() {
+    return pane(
+      checkbox("ignoreOnVolatileVariables", GroovyBundle.message("checkbox.ignore.double.checked.locking.on.volatile.fields")));
   }
 
   @NotNull

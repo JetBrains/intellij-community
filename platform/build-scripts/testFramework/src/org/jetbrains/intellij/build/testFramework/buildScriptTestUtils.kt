@@ -25,6 +25,7 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import kotlin.io.path.name
 
 fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: ProductProperties, skipDependencySetup: Boolean = false) {
   options.skipDependencySetup = skipDependencySetup
@@ -52,7 +53,6 @@ suspend fun createBuildContext(
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ): BuildContext {
   val options = BuildOptions()
-  options.compressZipFiles = false
   customizeBuildOptionsForTest(options, productProperties, skipDependencySetup)
   buildOptionsCustomizer(options)
   return BuildContextImpl.createContext(communityHome = communityHomePath,
@@ -63,8 +63,8 @@ suspend fun createBuildContext(
 }
 
 // don't expose BuildDependenciesCommunityRoot
-fun runTestBuild(homePath: Path, productProperties: ProductProperties, buildTools: ProprietaryBuildTools) {
-  runTestBuild(homePath = homePath, productProperties = productProperties, buildTools = buildTools, traceSpanName = null)
+fun runTestBuild(homePath: Path, productProperties: ProductProperties, buildTools: ProprietaryBuildTools, buildOptionsCustomizer: (BuildOptions) -> Unit = {}) {
+  runTestBuild(homePath = homePath, productProperties = productProperties, buildTools = buildTools, traceSpanName = null, buildOptionsCustomizer = buildOptionsCustomizer)
 }
 
 fun runTestBuild(
@@ -99,6 +99,7 @@ fun runTestBuild(
             },
             onFinish = { firstIteration ->
               onFinish(firstIteration)
+              firstIteration.cleanBuildOutput()
               testBuild(homePath = homePath,
                         productProperties = productProperties,
                         buildTools = buildTools,
@@ -110,9 +111,19 @@ fun runTestBuild(
                         },
                         onFinish = { nextIteration ->
                           onFinish(nextIteration)
+                          nextIteration.cleanBuildOutput()
                           buildArtifactsReproducibilityTest.compare(firstIteration, nextIteration)
                         })
             })
+}
+
+private fun BuildContext.cleanBuildOutput() {
+  Files.newDirectoryStream(paths.buildOutputDir).use { content ->
+    content.filter { it != paths.artifactDir }.forEach(NioFiles::deleteRecursively)
+  }
+  Files.newDirectoryStream(paths.artifactDir).use { content ->
+    content.filter { it.name == "unscrambled" || it.name == "scramble-logs" }.forEach(NioFiles::deleteRecursively)
+  }
 }
 
 private fun testBuild(

@@ -21,7 +21,7 @@ class EditBreakpointSuggester : AbstractFeatureSuggester() {
 
   override val message = FeatureSuggesterBundle.message("edit.breakpoint.message")
   override val suggestingActionId = "com.intellij.xdebugger.impl.actions.EditBreakpointAction\$ContextAction"
-  override val suggestingTipFileName = "BreakpointSpeedmenu.html"
+  override val suggestingTipId = "BreakpointSpeedmenu"
   override val minSuggestingIntervalDays = 30
 
   override val languages = listOf(Language.ANY.id)
@@ -49,7 +49,7 @@ class EditBreakpointSuggester : AbstractFeatureSuggester() {
         ) {
           previousSuggestionPosition = pausesOnBreakpointHistory.lastOrNull()?.get()
           pausesOnBreakpointHistory.clear()
-          return TipSuggestion(message, id, suggestingTipFileName)
+          return TipSuggestion(message, id, suggestingTipId)
         }
       }
     }

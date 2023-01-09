@@ -309,7 +309,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
           // make sure we have a content root for this directory and it's not yet registered as source folder
           Module module = index.getModuleForFile(file);
-          if (module == null || index.getContentRootForFile(file) == null || index.getSourceFolder(file) != null) {
+          if (module == null || index.getContentRootForFile(file) == null || index.isInSourceContent(file)) {
             continue;
           }
 

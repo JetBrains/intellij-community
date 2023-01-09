@@ -45,17 +45,17 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: "3.10"
       - run: pip install -r requirements-tests.txt
-      - run: ./tests/pytype_test.py
+      - run: ./tests/pytype_test.py --print-stderr
 
   mypy:
-    name: Run mypy against the stubs
+    name: Run mypy against typeshed
     runs-on: ubuntu-latest
     strategy:
       matrix:
         platform: ["linux", "win32", "darwin"]
-        python-version: ["2.7", "3.6", "3.7", "3.8", "3.9", "3.10"]
+        python-version: ["2.7", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11"]
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
@@ -64,7 +64,7 @@ jobs:
       - run: ./tests/mypy_test.py --platform=${{ matrix.platform }} --python-version=${{ matrix.python-version }}
 
   pyright:
-    name: Run pyright against the stubs
+    name: Run pyright against typeshed
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -72,7 +72,7 @@ jobs:
         python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11"]
       fail-fast: false
     env:
-      PYRIGHT_VERSION: 1.1.218 # Must match pyright_test.py.
+      PYRIGHT_VERSION: 1.1.240 # Must match pyright_test.py.
     steps:
       - uses: actions/checkout@v2
       - uses: jakebailey/pyright-action@v1
@@ -96,9 +96,7 @@ jobs:
       matrix:
         # macos-11 does not have tcl/tk installed, needed for stubtesting tkinter
         os: ["ubuntu-latest", "windows-latest", "macos-10.15"]
-        # Python 3.9 and 3.10 temporarily pinned due to incompatibilities
-        # between micro versions.
-        python-version: ["3.6", "3.7", "3.8", "3.9.10", "3.10.2"]
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
       fail-fast: false
 
     steps:
@@ -110,17 +108,13 @@ jobs:
       - name: Update pip
         run: python -m pip install -U pip
       - name: Install dependencies
-        # Use pre-release stubtest. Keep the following in sync:
-        # - get_mypy_req in tests/stubtest_third_party.py
-        # - stubtest-stdlib in .github/workflows/daily.yml
-        # - stubtest-stdlib in .github/workflows/tests.yml
-        run: pip install $(grep tomli== requirements-tests.txt) git+git://github.com/python/mypy@c7a81620bef7585cca6905861bb7ef34ec12da2f
+        run: pip install $(grep tomli== requirements-tests.txt) $(grep mypy== requirements-tests.txt)
       - name: Run stubtest
         run: python tests/stubtest_stdlib.py
 
   stubtest-third-party:
     name: Check third party stubs with stubtest
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v2
@@ -144,7 +138,7 @@ jobs:
             APT_PACKAGES=$(python tests/get_apt_packages.py $STUBS)
             if test -n "$APT_PACKAGES"; then
               echo "Installing apt packages: $APT_PACKAGES"
-              sudo apt install -y $APT_PACKAGES
+              sudo apt update && sudo apt install -y $APT_PACKAGES
             fi
             python tests/stubtest_third_party.py $STUBS
           else

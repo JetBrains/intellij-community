@@ -7,13 +7,16 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 import com.intellij.usages.UsageView
 import com.intellij.usages.impl.UsageViewStatisticsCollector.Companion.USAGE_VIEW
+import javax.swing.JComponent
 
 class SimilarUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("similar.usages", 5)
+    private val GROUP = EventLogGroup("similar.usages", 6)
+    private val COMPONENT_CLASS = EventFields.Class("component")
     private val NUMBER_OF_LOADED = EventFields.Int("number_of_loaded")
+    private val NAVIGATE_TO_USAGE_CLICKED = GROUP.registerVarargEvent("navigate.to.usage.clicked", COMPONENT_CLASS, USAGE_VIEW)
     private val MOST_COMMON_USAGE_PATTERNS_SHOWN = GROUP.registerEvent("most.common.usages.shown", USAGE_VIEW)
     private val MOST_COMMON_USAGE_PATTERNS_REFRESH_CLICKED = GROUP.registerEvent("most.common.usage.patterns.refresh.clicked", USAGE_VIEW)
     private val LINK_TO_SIMILAR_USAGES_FROM_USAGE_PREVIEW_CLICKED = GROUP.registerEvent("link.to.similar.usage.clicked", USAGE_VIEW)
@@ -25,6 +28,11 @@ class SimilarUsagesCollector : CounterUsagesCollector() {
     @JvmStatic
     fun logMostCommonUsagePatternsShown(project: Project, usageView: UsageView) {
       MOST_COMMON_USAGE_PATTERNS_SHOWN.log(project, usageView)
+    }
+
+    @JvmStatic
+    fun logNavigateToUsageClicked(project: Project, component: Class<out JComponent>?, usageView: UsageView) {
+      NAVIGATE_TO_USAGE_CLICKED.log(project, COMPONENT_CLASS.with(component), USAGE_VIEW.with(usageView))
     }
 
     @JvmStatic

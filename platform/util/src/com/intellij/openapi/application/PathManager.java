@@ -9,10 +9,11 @@ import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -62,6 +63,14 @@ public final class PathManager {
   private static String ourScratchPath;
   private static String ourPluginsPath;
   private static String ourLogPath;
+
+  private static final ArrayList<Path> ourPerProjectLockedPaths = new ArrayList<>();
+
+  public static void lockPerProjectPath(Path path) { ourPerProjectLockedPaths.add(path); }
+
+  public static void unlockPerProjectPath(Path path) { ourPerProjectLockedPaths.remove(path); }
+
+  public static @NotNull List<Path> getPerProjectLockedPaths() { return ourPerProjectLockedPaths; }
 
   // IDE installation paths
 
@@ -297,6 +306,11 @@ public final class PathManager {
     }
 
     return ourConfigPath;
+  }
+
+  @TestOnly
+  public static void setExplicitConfigPath(@Nullable String path) {
+    ourConfigPath = path;
   }
 
   public static @NotNull String getScratchPath() {
@@ -566,7 +580,7 @@ public final class PathManager {
         continue;
       }
 
-      try (InputStream inputStream = Files.newInputStream(file)) {
+      try (Reader reader = Files.newBufferedReader(file)) {
         //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
         new Properties() {
           @Override
@@ -579,7 +593,7 @@ public final class PathManager {
             }
             return null;
           }
-        }.load(inputStream);
+        }.load(reader);
       }
       catch (NoSuchFileException | AccessDeniedException ignore) {
       }
@@ -589,7 +603,6 @@ public final class PathManager {
     }
 
     // Check and fix conflicting properties.
-    sysProperties.setProperty("disableJbScreenMenuBar", "true"); // a temporary key for bundled runtime (will be removed soon)
     if ("true".equals(sysProperties.getProperty("jbScreenMenuBar.enabled"))) {
       sysProperties.setProperty("apple.laf.useScreenMenuBar", "false");
     }

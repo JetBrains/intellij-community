@@ -13,11 +13,10 @@ import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -26,7 +25,6 @@ import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.artifact.ArtifactPropertiesState
 import org.jetbrains.jps.model.serialization.artifact.ArtifactState
 import org.jetbrains.jps.util.JpsPathUtil
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl: String) : JpsDirectoryEntitiesSerializerFactory<ArtifactEntity> {
   override val componentName: String
@@ -116,11 +114,6 @@ internal class JpsArtifactsExternalFileSerializer(private val externalFile: JpsF
     return JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
   }
 
-  override fun getExternalSystemId(artifactEntity: ArtifactEntity): String? {
-    val source = artifactEntity.entitySource
-    return (source as? JpsImportedEntitySource)?.externalSystemId
-  }
-
   override fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter) {
     writer.saveComponent(fileUrl, ARTIFACT_MANAGER_COMPONENT_NAME, null)
   }
@@ -170,12 +163,6 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
       for (propertiesState in state.propertiesList) {
         builder.addArtifactPropertiesEntity(artifactEntity, propertiesState.id, JDOMUtil.write(propertiesState.options), entitySource)
       }
-      val externalSystemId = actifactElement.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE)
-      if (externalSystemId != null && !isExternalStorage) {
-        builder.addEntity(ArtifactExternalSystemIdEntity(externalSystemId, entitySource) {
-          this.artifactEntity = artifactEntity
-        })
-      }
       orderOfItems += state.name
     }
     if (preserveOrder) {
@@ -192,10 +179,9 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
 
   }
 
-  protected open fun createEntitySource(artifactTag: Element): EntitySource? = internalEntitySource
-
-  protected open fun getExternalSystemId(artifactEntity: ArtifactEntity): String? {
-    return artifactEntity.artifactExternalSystemIdEntity?.externalSystemId
+  protected open fun createEntitySource(artifactTag: Element): EntitySource? {
+    val externalSystemId = artifactTag.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE)
+    return if (externalSystemId == null) internalEntitySource else JpsImportedEntitySource(internalEntitySource, externalSystemId, false)
   }
 
   private fun loadPackagingElement(element: Element,
@@ -246,18 +232,10 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     if (mainEntities.isEmpty()) return
 
     val componentTag = JDomSerializationUtil.createComponentElement(ARTIFACT_MANAGER_COMPONENT_NAME)
-    val artifactsByName = mainEntities.groupByTo(HashMap()) { it.name }
     val orderOfItems = if (preserveOrder) (entities[ArtifactsOrderEntity::class.java]?.firstOrNull() as? ArtifactsOrderEntity?)?.orderOfArtifacts else null
-    orderOfItems?.forEach { name ->
-      val artifacts = artifactsByName.remove(name)
-      artifacts?.forEach {
-        componentTag.addContent(saveArtifact(it))
-      }
-    }
-    artifactsByName.values.forEach {
-      it.forEach { artifact ->
-        componentTag.addContent(saveArtifact(artifact))
-      }
+    val sorted = sortByOrderEntity(orderOfItems, mainEntities.groupByTo(HashMap()) { it.name }.toMutableMap())
+    sorted.forEach {
+      componentTag.addContent(saveArtifact(it))
     }
     writer.saveComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME, componentTag)
   }
@@ -277,7 +255,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
       }
     }
     artifactState.rootElement = savePackagingElement(artifact.rootElement!!)
-    val externalSystemId = getExternalSystemId(artifact)
+    val externalSystemId = (artifact.entitySource as? JpsImportedEntitySource)?.externalSystemId
     if (externalSystemId != null) {
       if (isExternalStorage)
         artifactState.externalSystemId = externalSystemId

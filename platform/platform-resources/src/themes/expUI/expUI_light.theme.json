@@ -424,8 +424,7 @@
 
     "SpeedSearch": {
       "background": "Grey13",
-      "borderColor": "Grey10",
-      "errorForeground": "errorForeground"
+      "borderColor": "Grey11"
     },
 
     "StatusBar": {
@@ -484,9 +483,22 @@
       "verticalGap": 6
     },
 
-    "GotItTooltip.borderColor": {
-      "os.default": "Grey9",
-      "os.windows": "windowsPopupBorder"
+    "GotItTooltip": {
+      "background": "Grey2",
+      "borderColor": "Grey2",
+      "foreground": "Grey9",
+      "stepForeground": "Grey7",
+      "Header.foreground": "Grey13",
+      "shortcutForeground": "Grey13",
+      "shortcutBackground": "Grey5",
+      "linkForeground": "Blue9",
+      "Button": {
+        "foreground": "Grey13",
+        "startBackground": "Grey4",
+        "endBackground": "Grey4",
+        "startBorderColor": "Grey4",
+        "endBorderColor": "Grey4"
+      }
     },
 
     "ValidationTooltip": {
@@ -606,6 +618,48 @@
       },
       "PackageTagSelected.background": "Blue10",
       "PackageTagSelected.foreground": "Grey13"
+    },
+
+    "UnattendedHostStatus": {
+      "warningBackground": "Yellow7",
+      "warningForeground": "Grey3",
+      "dangerBackground": "Red6"
+    },
+
+    "CodeWithMe.Users": {
+      "1": {
+        "Background": "Green6",
+        "Foreground": "Grey13"
+      },
+      "2": {
+        "Background": "#15A0B2",
+        "Foreground": "Grey13"
+      },
+      "3": {
+        "Background": "Red6",
+        "Foreground": "Grey13"
+      },
+      "4": {
+        "Background": "#955AE0",
+        "Foreground": "Grey13"
+      },
+      "5": {
+        "Background": "Yellow6",
+        "Foreground": "Grey13"
+      },
+      "6": {
+        "Background": "Orange6",
+        "Foreground": "Grey13"
+      }
+    },
+
+    "RunWidget" : {
+      "foreground": "Grey13",
+      "background": "Blue5",
+      "runningBackground": "Green5",
+      "hoverBackground": "#00000019",
+      "pressedBackground": "#00000028",
+      "separatorColor": "#FFFFFF40"
     }
   },
 

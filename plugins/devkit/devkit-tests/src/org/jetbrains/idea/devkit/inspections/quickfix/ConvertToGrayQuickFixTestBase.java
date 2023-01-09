@@ -1,17 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.UseGrayInspection;
 
-public abstract class ConvertToGrayQuickFixTestBase extends JavaCodeInsightFixtureTestCase {
+public abstract class ConvertToGrayQuickFixTestBase extends DevKitInspectionFixTestBase {
 
   protected static final String CONVERT_TO_GRAY_FIX_NAME_PATTERN = "Convert to 'Gray._%d'";
-
-  @NotNull
-  protected abstract String getFileExtension();
 
   @Override
   protected void setUp() throws Exception {
@@ -32,6 +26,7 @@ public abstract class ConvertToGrayQuickFixTestBase extends JavaCodeInsightFixtu
                              public Color(int rgb) {}
                          }
                          """);
+    // adding it via 'PsiTestUtil.addLibrary()' causes issues in Kotlin tests (it can't link JBColor/Gray with Color added with addClass()
     myFixture.addClass("""
                          package com.intellij.ui;
                          import java.awt.Color;
@@ -50,15 +45,5 @@ public abstract class ConvertToGrayQuickFixTestBase extends JavaCodeInsightFixtu
                            }
                          }
                          """);
-  }
-
-  protected void doTest(String fixName) {
-    String testName = getTestName(false);
-    String fileNameBefore = testName + '.' + getFileExtension();
-    String fileNameAfter = testName + "_after." + getFileExtension();
-    myFixture.testHighlighting(fileNameBefore);
-    IntentionAction intention = myFixture.findSingleIntention(fixName);
-    myFixture.checkPreviewAndLaunchAction(intention);
-    myFixture.checkResultByFile(fileNameBefore, fileNameAfter, true);
   }
 }

@@ -29,7 +29,7 @@ class ConfusingExpressionInWhenBranchFix(element: KtExpression) : KotlinPsiOnlyQ
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val expression = element ?: return
-        val wrapped = KtPsiFactory(file).createExpressionByPattern("($0)", expression)
+        val wrapped = KtPsiFactory(project).createExpressionByPattern("($0)", expression)
         expression.replace(wrapped)
     }
 

@@ -2,6 +2,7 @@
     <id>org.toml.lang</id>
     <name>Toml</name>
     <vendor>JetBrains</vendor>
+    <category>Languages</category>
 
     <description><![CDATA[
       TOML language support
@@ -68,5 +69,6 @@
         </intentionAction>
 
         <registryKey key="org.toml.json.schema" defaultValue="true" description="JSON schemas support for TOML"/>
+        <iconMapper mappingFile="TomlIconMappings.json"/>
     </extensions>
 </idea-plugin>

@@ -281,15 +281,13 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
       }
     }
 
-    myTreeView.select(configurable)
-      .onSuccess(it -> myFilter.update(filter));
+    myTreeView.select(configurable).onProcessed(it -> myFilter.update(filter));
 
     Disposer.register(this, myTreeView);
     installSpotlightRemover();
     //noinspection CodeBlock2Expr
     mySearch.getTextEditor().addActionListener(event -> {
-      myTreeView.select(myFilter.myContext.getCurrentConfigurable())
-        .onSuccess(o -> requestFocusToEditor());
+      myTreeView.select(myFilter.myContext.getCurrentConfigurable()).onProcessed(o -> requestFocusToEditor());
     });
 
     for (ConfigurableGroup group : groups) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class BinaryExpressionEvaluator
@@ -27,9 +27,9 @@ class BinaryExpressionEvaluator implements Evaluator {
   private final String myExpectedType; // a result of PsiType.getCanonicalText()
 
   BinaryExpressionEvaluator(@NotNull Evaluator leftOperand,
-                                   @NotNull Evaluator rightOperand,
-                                   @NotNull IElementType opType,
-                                   String expectedType) {
+                            @NotNull Evaluator rightOperand,
+                            @NotNull IElementType opType,
+                            String expectedType) {
     myLeftOperand = DisableGC.create(leftOperand);
     myRightOperand = DisableGC.create(rightOperand);
     myOpType = opType;
@@ -40,7 +40,6 @@ class BinaryExpressionEvaluator implements Evaluator {
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Value leftResult = (Value)myLeftOperand.evaluate(context);
     return evaluateOperation(leftResult, myOpType, myRightOperand, myExpectedType, context);
-
   }
 
   @SuppressWarnings("IntegerMultiplicationImplicitCastToLong")
@@ -267,14 +266,8 @@ class BinaryExpressionEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.incompatible.types", "^"));
     }
     else if (opType == JavaTokenType.EQEQ) {
-      if (leftResult == null && rightResult == null) {
-        return DebuggerUtilsEx.createValue(vm, expectedType, true);
-      }
-      if (leftResult == null) {
-        return DebuggerUtilsEx.createValue(vm, expectedType, rightResult.equals(null));
-      }
-      if (rightResult == null) {
-        return DebuggerUtilsEx.createValue(vm, expectedType, leftResult.equals(null));
+      if (leftResult == null || rightResult == null) {
+        return DebuggerUtilsEx.createValue(vm, expectedType, leftResult == rightResult);
       }
       if (DebuggerUtils.isInteger(leftResult) && DebuggerUtils.isInteger(rightResult)) {
         final long v1 = ((PrimitiveValue)leftResult).longValue();
@@ -320,9 +313,7 @@ class BinaryExpressionEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.incompatible.types", "&&"));
     }
     else if (opType == JavaTokenType.NE) {
-      if (leftResult == null && rightResult == null) return DebuggerUtilsEx.createValue(vm, expectedType, false);
-      if (leftResult == null) return DebuggerUtilsEx.createValue(vm, expectedType, !rightResult.equals(null));
-      if (rightResult == null) return DebuggerUtilsEx.createValue(vm, expectedType, !leftResult.equals(null));
+      if (leftResult == null || rightResult == null) return DebuggerUtilsEx.createValue(vm, expectedType, leftResult != rightResult);
       if (DebuggerUtils.isInteger(leftResult) && DebuggerUtils.isInteger(rightResult)) {
         final long v1 = ((PrimitiveValue)leftResult).longValue();
         final long v2 = ((PrimitiveValue)rightResult).longValue();
@@ -427,6 +418,4 @@ class BinaryExpressionEvaluator implements Evaluator {
 
     return null;
   }
-
-
 }

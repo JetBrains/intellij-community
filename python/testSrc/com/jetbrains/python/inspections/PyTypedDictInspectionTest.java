@@ -362,6 +362,17 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                                                            'y': NotRequired[<warning descr="'NotRequired' must have exactly one type argument">Required[int], "constraint"</warning>]})""");
   }
 
+  // PY-55092
+  public void testGenericTypedDictNoWarnings() {
+    doTestByText("""
+                   from typing import TypeVar, TypedDict, Generic
+                   T = TypeVar('T')
+                   class Group(TypedDict, Generic[T]):
+                       key: T
+                       group: list[T]
+                   group: Group[str] = {"key": 1, "group": ['one']}""");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

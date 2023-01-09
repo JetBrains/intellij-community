@@ -88,7 +88,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
 
         if (dryRun) return true
 
-        val psiFactory = KtPsiFactory(expressionToApply)
+        val psiFactory = KtPsiFactory(expressionToApply.project)
 
         val (scopeFunctionCall, block) = createScopeFunctionCall(
             psiFactory,

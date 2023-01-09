@@ -146,7 +146,6 @@ public abstract class RunTab implements DataProvider, Disposable {
 
   /**
    * Default implementation of {@link SingleContentSupplier}.
-   *
    * Isn't used directly by {@link RunTab}, but can be used by inheritors.
    */
   protected class RunTabSupplier implements SingleContentSupplier {
@@ -156,8 +155,34 @@ public abstract class RunTab implements DataProvider, Disposable {
     private final Map<TabInfo, Content> myTabInfoContentMap = new LinkedHashMap<>();
     private boolean myMoveToolbar = false;
 
+    private final ActionGroup layoutActionGroup = new ActionGroup(
+      ExecutionBundle.messagePointer("runner.content.tooltip.layout.settings"), () -> "", AllIcons.Debugger.RestoreLayout
+    ) {
+      @Override
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+        RunnerContentUi contentUi = RunnerContentUi.KEY.getData((DataProvider)myUi);
+        return Objects.requireNonNull(contentUi).getViewActions();
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabledAndVisible(getChildren(null).length > 0);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+      @Override
+      public boolean isDumbAware() {
+        return true;
+      }
+    };
+
     public RunTabSupplier(@Nullable ActionGroup group) {
       myActionGroup = group;
+      layoutActionGroup.setPopup(true);
+      layoutActionGroup.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
     }
 
     @NotNull
@@ -176,31 +201,7 @@ public abstract class RunTab implements DataProvider, Disposable {
     @NotNull
     @Override
     public List<AnAction> getContentActions() {
-      var layout = new ActionGroup(ExecutionBundle.messagePointer("runner.content.tooltip.layout.settings"), () -> "", AllIcons.Debugger.RestoreLayout) {
-          @Override
-          public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-            RunnerContentUi contentUi = RunnerContentUi.KEY.getData((DataProvider)myUi);
-            return Objects.requireNonNull(contentUi).getViewActions();
-          }
-
-        @Override
-        public void update(@NotNull AnActionEvent e) {
-          e.getPresentation().setEnabledAndVisible(getChildren(null).length > 0);
-        }
-
-        @Override
-        public @NotNull ActionUpdateThread getActionUpdateThread() {
-          return ActionUpdateThread.EDT;
-        }
-        @Override
-        public boolean isDumbAware() {
-          return true;
-        }
-      };
-      layout.setPopup(true);
-      layout.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
-
-      return List.of(layout);
+      return List.of(layoutActionGroup);
     }
 
     @Override

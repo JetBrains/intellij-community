@@ -8,7 +8,8 @@ import org.jetbrains.annotations.NonNls
 abstract class BaseExtensionPointName<T : Any>(val name: @NonNls String) {
   override fun toString(): String = name
 
-  protected fun getPointImpl(areaInstance: AreaInstance?): ExtensionPointImpl<T> {
+  @PublishedApi
+  internal fun getPointImpl(areaInstance: AreaInstance?): ExtensionPointImpl<T> {
     val area = (areaInstance?.extensionArea ?: Extensions.getRootArea()) as ExtensionsAreaImpl
     return area.getExtensionPoint(name)
   }

@@ -16,6 +16,10 @@ fun URI.addPathSuffix(suffix: String): URI {
   return withPath(currentPath + suffix)
 }
 
+fun URI.trimPath(): String {
+  return this.resolve("/").toString()
+}
+
 @ApiStatus.Experimental
 object UrlUtil {
   fun parseOrShowError(url: String, @NlsContexts.DialogTitle product: String): URI? {

@@ -13,6 +13,7 @@ import junit.framework.AssertionFailedError
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.junit.Test
 import java.util.function.Consumer
 
@@ -58,18 +59,24 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
 
   @Test
   fun `test download sources dynamic task`() {
-    importProject(createBuildScriptBuilder()
-                    .withJavaPlugin()
-                    .withIdeaPlugin()
-                    .withJUnit4()
-                    .addPrefix("idea.module.downloadSources = false")
-                    .generate())
+    val dependency = "junit:junit:4.12"
+    val dependencyName = "Gradle: junit:junit:4.12"
+    val dependencyJar = "junit-4.12.jar"
+    val dependencySourcesJar = "junit-4.12-sources.jar"
+
+    importProject {
+      withJavaPlugin()
+      withIdeaPlugin()
+      withMavenCentral()
+      addTestImplementationDependency(dependency)
+      addPrefix("idea.module.downloadSources = false")
+    }
 
     assertModules("project", "project.main", "project.test")
-    val junitLib: LibraryOrderEntry = getModuleLibDeps("project.test", "Gradle: junit:junit:4.12").single()
+    val junitLib: LibraryOrderEntry = getModuleLibDeps("project.test", dependencyName).single()
     assertThat(junitLib.getRootFiles(OrderRootType.CLASSES))
       .hasSize(1)
-      .allSatisfy(Consumer { assertEquals("junit-4.12.jar", it.name) })
+      .allSatisfy(Consumer { assertEquals(dependencyJar, it.name) })
 
     val psiFile = runReadAction {
       JavaPsiFacade.getInstance(myProject).findClass("junit.framework.Test", GlobalSearchScope.allScope(myProject))!!.containingFile
@@ -96,10 +103,10 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
     assertThat(output)
       .filteredOn { it.startsWith("Sources were downloaded to") }
       .hasSize(1)
-      .allSatisfy(Consumer { assertThat(it).endsWith("junit-4.12-sources.jar") })
+      .allSatisfy(Consumer { assertThat(it).endsWith(dependencySourcesJar) })
 
     assertThat(junitLib.getRootFiles(OrderRootType.SOURCES))
       .hasSize(1)
-      .allSatisfy(Consumer { assertEquals("junit-4.12-sources.jar", it.name) })
+      .allSatisfy(Consumer { assertEquals(dependencySourcesJar, it.name) })
   }
 }

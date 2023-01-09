@@ -1,9 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -25,5 +27,10 @@ public final class AppCodeStyleSettingsManager extends CodeStyleSettingsManager 
       appSettings.add(settings);
     }
     return appSettings;
+  }
+
+  @Override
+  protected @NotNull MessageBus getMessageBus() {
+    return ApplicationManager.getApplication().getMessageBus();
   }
 }

@@ -94,6 +94,8 @@ public final class HttpRequests {
 
     @NotNull Path saveToFile(@NotNull Path file, @Nullable ProgressIndicator indicator) throws IOException;
 
+    @NotNull Path saveToFile(@NotNull Path file, @Nullable ProgressIndicator indicator, boolean progressDescription) throws IOException;
+
     byte @NotNull [] readBytes(@Nullable ProgressIndicator indicator) throws IOException;
 
     @NotNull String readString(@Nullable ProgressIndicator indicator) throws IOException;
@@ -436,7 +438,7 @@ public final class HttpRequests {
       long contentLength = getConnection().getContentLengthLong();
       if (contentLength > Integer.MAX_VALUE) throw new IOException("Cannot download more than 2 GiB; content length is " + contentLength);
       BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? (int)contentLength : 16384);
-      NetUtils.copyStreamContent(indicator, getInputStream(), out, contentLength);
+      NetUtils.copyStreamContent(indicator, getInputStream(), out, contentLength, false);
       return out;
     }
 
@@ -452,11 +454,16 @@ public final class HttpRequests {
 
     @Override
     public @NotNull Path saveToFile(@NotNull Path file, @Nullable ProgressIndicator indicator) throws IOException {
+      return saveToFile(file, indicator, false);
+    }
+
+    @Override
+    public @NotNull Path saveToFile(@NotNull Path file, @Nullable ProgressIndicator indicator, boolean progressDescription) throws IOException {
       NioFiles.createDirectories(file.getParent());
 
       boolean deleteFile = true;
       try (OutputStream out = Files.newOutputStream(file)) {
-        NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLengthLong());
+        NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLengthLong(), progressDescription);
         deleteFile = false;
       }
       catch (HttpStatusException e) {
@@ -489,7 +496,8 @@ public final class HttpRequests {
   private static <T> T process(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
     Application app = ApplicationManager.getApplication();
     LOG.assertTrue(app == null || app.isUnitTestMode() || app.isHeadlessEnvironment() || !app.isReadAccessAllowed(),
-                   "Network shouldn't be accessed in EDT or inside read action");
+                   "Network must not be accessed in EDT or inside read action, because this may take considerable amount of time, " +
+                   "and write actions will be blocked during that time so user won't be able to perform tasks in the IDE");
 
     ClassLoader contextLoader = Thread.currentThread().getContextClassLoader();
     if (contextLoader != null && shouldOverrideContextClassLoader()) {

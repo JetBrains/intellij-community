@@ -87,29 +87,27 @@ public final class EclipseUserLibrariesHelper {
           libraryByName = model.createLibrary(libName);
           model.commit();
         }
-        if (libraryByName != null) {
-          Library.ModifiableModel model = libraryByName.getModifiableModel();
-          for (Element a : libElement.getChildren("archive")) {
-            String rootPath = a.getAttributeValue("path");
-            // IDEA-138039 Eclipse import: Unix file system: user library gets wrong paths
-            LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-            VirtualFile localFile = fileSystem.findFileByPath(rootPath);
-            if (rootPath.startsWith("/") && (localFile == null || !localFile.isValid())) {
-              // relative to workspace root
-              rootPath = project.getBasePath() + rootPath;
-              localFile = fileSystem.findFileByPath(rootPath);
-            }
-            String url = localFile == null ? VfsUtilCore.pathToUrl(rootPath) : localFile.getUrl();
-            if (localFile != null) {
-              VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
-              if (jarFile != null) {
-                url = jarFile.getUrl();
-              }
-            }
-            model.addRoot(url, OrderRootType.CLASSES);
+        Library.ModifiableModel model = libraryByName.getModifiableModel();
+        for (Element a : libElement.getChildren("archive")) {
+          String rootPath = a.getAttributeValue("path");
+          // IDEA-138039 Eclipse import: Unix file system: user library gets wrong paths
+          LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+          VirtualFile localFile = fileSystem.findFileByPath(rootPath);
+          if (rootPath.startsWith("/") && (localFile == null || !localFile.isValid())) {
+            // relative to workspace root
+            rootPath = project.getBasePath() + rootPath;
+            localFile = fileSystem.findFileByPath(rootPath);
           }
-          model.commit();
+          String url = localFile == null ? VfsUtilCore.pathToUrl(rootPath) : localFile.getUrl();
+          if (localFile != null) {
+            VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
+            if (jarFile != null) {
+              url = jarFile.getUrl();
+            }
+          }
+          model.addRoot(url, OrderRootType.CLASSES);
         }
+        model.commit();
         unknownLibraries.remove(libName);  //ignore finally found libraries
       }
     });

@@ -66,7 +66,7 @@ class JBNavigateCommandTest : NavigationTestBase() {
 
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
       setUpProject(project)
-      RecentProjectsManagerBase.getInstanceEx().runProjectPostStartupActivity(project)
+      RecentProjectsManagerBase.getInstanceEx().projectOpened(project)
     }
     try {
       val result = withContext(Dispatchers.EDT) {

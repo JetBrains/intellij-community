@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.NewActionGroup;
 import com.intellij.ide.actions.RecentLocationsAction;
@@ -225,7 +224,6 @@ public final class ScratchFileActions {
   }
 
   static @Nullable PsiFile doCreateNewScratch(@NotNull Project project, @NotNull ScratchFileCreationHelper.Context context) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("scratch");
     if (context.fileExtension == null && context.language != null) {
       LanguageFileType fileType = context.language.getAssociatedFileType();
       if (fileType != null) {

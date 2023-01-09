@@ -21,8 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -65,6 +64,8 @@ import com.intellij.xml.util.XmlStringUtil;
 import kotlin.text.StringsKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.io.File;
@@ -88,7 +89,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     new Topic<>(LocalChangeListsLoadedListener.class, Topic.BroadcastDirection.NONE);
 
   private final Project myProject;
-  private final ChangesViewI myChangesViewManager;
   private final ChangelistConflictTracker myConflictTracker;
 
   private final Scheduler myScheduler = new Scheduler(); // update thread
@@ -116,6 +116,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   @NotNull private final Set<String> myListsToBeDeletedSilently = new HashSet<>();
   @NotNull private final Set<String> myListsToBeDeleted = new HashSet<>();
   private boolean myEmptyListDeletionScheduled;
+
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private boolean myModalNotificationsBlocked;
 
   private final List<CommitExecutor> myRegisteredCommitExecutors = new ArrayList<>();
@@ -126,7 +128,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   public ChangeListManagerImpl(@NotNull Project project) {
     myProject = project;
-    myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
     myConflictTracker = new ChangelistConflictTracker(project, this);
 
     myComposite = FileHolderComposite.create(project);
@@ -167,7 +168,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     }, this);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      busConnection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
         @Override
         public void projectClosing(@NotNull Project project) {
           if (project == myProject) {
@@ -256,7 +257,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     if (config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.DO_NOTHING_SILENTLY ||
         config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.SHOW_CONFIRMATION &&
         ApplicationManager.getApplication().isUnitTestMode()) {
-      listsToBeDeleted.clear();
+      listsToBeDeleted = Collections.emptyList();
     }
 
     ChangeListRemoveConfirmation.deleteEmptyInactiveLists(myProject, listsToBeDeletedSilently, toAsk -> true);
@@ -400,6 +401,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   @Override
+  public @NotNull Promise<?> promiseWaitForUpdate() {
+    AsyncPromise<Boolean> promise = new AsyncPromise<>();
+    invokeAfterUpdate(false, () -> promise.setResult(true));
+    return promise;
+  }
+
+  @Override
   public String isFreezed() {
     return myFreezeName;
   }
@@ -421,6 +429,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     scheduleUpdateImpl();
   }
 
+  @ApiStatus.Internal
   public void scheduleUpdateImpl() {
     myUpdater.schedule();
   }
@@ -438,12 +447,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
         myUpdateException = null;
         myAdditionalInfo = null;
-
-        myDelayedNotificator.changedFileStatusChanged(true);
-        myDelayedNotificator.unchangedFileStatusChanged(true);
-        myDelayedNotificator.changeListUpdateDone();
-        ((ChangesViewEx)myChangesViewManager).refreshImmediately();
       }
+
+      myDelayedNotificator.changedFileStatusChanged(true);
+      myDelayedNotificator.unchangedFileStatusChanged(true);
+      myDelayedNotificator.changeListUpdateDone();
+      ChangesViewManager.getInstanceEx(myProject).resetViewImmediatelyAndRefreshLater();
     }
     catch (Exception | AssertionError ex) {
       LOG.error(ex);
@@ -480,6 +489,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       final boolean wasEverythingDirty = invalidated.isEverythingDirty();
       final List<VcsDirtyScope> scopes = invalidated.getScopes();
 
+      boolean isInitialUpdate;
+      ChangesViewEx changesView = ChangesViewManager.getInstanceEx(myProject);
       try {
         if (myUpdater.isStopped()) return true;
 
@@ -502,13 +513,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
                       "\nunversioned: " + myComposite.getUnversionedFileHolder().getFiles().size() +
                       "\ncurrent changes: " + myWorker);
           }
+
+          isInitialUpdate = myInitialUpdate;
+          myInitialUpdate = false;
         }
-        myChangesViewManager.setBusy(true);
-        myChangesViewManager.scheduleRefresh();
+        changesView.setBusy(true);
+        changesView.scheduleRefresh();
 
         SensitiveProgressWrapper vcsIndicator = new SensitiveProgressWrapper(ProgressManager.getInstance().getProgressIndicator());
-        if (!myInitialUpdate) invalidated.doWhenCanceled(() -> vcsIndicator.cancel());
-        myInitialUpdate = false;
+        if (!isInitialUpdate) invalidated.doWhenCanceled(() -> vcsIndicator.cancel());
 
         try {
           ProgressManager.getInstance().executeProcessUnderProgress(() -> {
@@ -580,7 +593,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
         myDelayedNotificator.changedFileStatusChanged(!isInUpdate());
         myDelayedNotificator.changeListUpdateDone();
-        myChangesViewManager.scheduleRefresh();
+        changesView.scheduleRefresh();
       }
       return true;
     });
@@ -937,6 +950,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     }
   }
 
+  private void scheduleChangesViewRefresh() {
+    if (!myProject.isDisposed()) {
+      ChangesViewManager.getInstance(myProject).scheduleRefresh();
+    }
+  }
+
   @Override
   public @NotNull LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
     return addChangeList(name, comment, null);
@@ -947,7 +966,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         final LocalChangeList changeList = myModifier.addChangeList(name, comment, data);
-        myChangesViewManager.scheduleRefresh();
+        scheduleChangesViewRefresh();
         return changeList;
       }
     });
@@ -959,7 +978,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     ApplicationManager.getApplication().runReadAction(() -> {
       synchronized (myDataLock) {
         myModifier.removeChangeList(name);
-        myChangesViewManager.scheduleRefresh();
+        scheduleChangesViewRefresh();
       }
     });
   }
@@ -973,7 +992,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     ApplicationManager.getApplication().runReadAction(() -> {
       synchronized (myDataLock) {
         myModifier.setDefault(name, automatic);
-        myChangesViewManager.scheduleRefresh();
+        scheduleChangesViewRefresh();
       }
     });
   }
@@ -998,7 +1017,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         final boolean result = myModifier.setReadOnly(name, value);
-        myChangesViewManager.scheduleRefresh();
+        scheduleChangesViewRefresh();
         return result;
       }
     });
@@ -1009,7 +1028,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         final boolean result = myModifier.editName(fromName, toName);
-        myChangesViewManager.scheduleRefresh();
+        scheduleChangesViewRefresh();
         return result;
       }
     });
@@ -1020,7 +1039,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         final String oldComment = myModifier.editComment(name, StringUtil.notNullize(newComment));
-        myChangesViewManager.scheduleRefresh();
+        scheduleChangesViewRefresh();
         return oldComment;
       }
     });
@@ -1031,7 +1050,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         final boolean result = myModifier.editData(name, newData);
-        myChangesViewManager.scheduleRefresh();
+        scheduleChangesViewRefresh();
         return result;
       }
     });
@@ -1047,7 +1066,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     ApplicationManager.getApplication().runReadAction(() -> {
       synchronized (myDataLock) {
         myModifier.moveChangesTo(list.getName(), changes);
-        myChangesViewManager.scheduleRefresh();
+        scheduleChangesViewRefresh();
       }
     });
   }
@@ -1236,6 +1255,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     myListeners.removeListener(listener);
   }
 
+  @SuppressWarnings("removal")
   @Override
   public void registerCommitExecutor(@NotNull CommitExecutor executor) {
     myRegisteredCommitExecutors.add(executor);
@@ -1264,11 +1284,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   @Override
   public void loadState(@NotNull Element element) {
-    if (myProject.isDefault()) {
-      return;
-    }
-
     synchronized (myDataLock) {
+      if (!myInitialUpdate) {
+        LOG.warn("Local changes overwritten");
+        VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+      }
+
       boolean areChangeListsEnabled = shouldEnableChangeLists();
       myWorker.setChangeListsEnabled(areChangeListsEnabled);
 
@@ -1286,10 +1307,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   @Override
   public @NotNull Element getState() {
     Element element = new Element("state");
-    if (myProject.isDefault()) {
-      return element;
-    }
-
     synchronized (myDataLock) {
       boolean areChangeListsEnabled = myWorker.areChangeListsEnabled();
       List<LocalChangeListImpl> changesToSave = areChangeListsEnabled ? myWorker.getChangeLists() : myDisabledWorkerState;
@@ -1300,6 +1317,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   // used in TeamCity
+  @SuppressWarnings("removal")
   @Override
   public void reopenFiles(@NotNull List<? extends FilePath> paths) {
     final ReadonlyStatusHandlerImpl readonlyStatusHandler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject);
@@ -1319,14 +1337,17 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     return Collections.unmodifiableList(myRegisteredCommitExecutors);
   }
 
+  @SuppressWarnings("removal")
   @Override
   public void addDirectoryToIgnoreImplicitly(@NotNull String path) {
   }
 
+  @SuppressWarnings("removal")
   @Override
   public void setFilesToIgnore(IgnoredFileBean @NotNull ... filesToIgnore) {
   }
 
+  @SuppressWarnings("removal")
   @Override
   public IgnoredFileBean @NotNull [] getFilesToIgnore() {
     return EMPTY_ARRAY;

@@ -101,10 +101,10 @@ public final class Utils {
       CustomizedDataContext context = (CustomizedDataContext)dataContext;
       DataContext delegate = wrapToAsyncDataContext(context.getParent());
       if (delegate == DataContext.EMPTY_CONTEXT) {
-        return new PreCachedDataContext(null).prependProvider(context::getRawCustomData);
+        return new PreCachedDataContext(null).prependProvider(context.getCustomDataProvider());
       }
       else if (delegate instanceof PreCachedDataContext) {
-        return ((PreCachedDataContext)delegate).prependProvider(context::getRawCustomData);
+        return ((PreCachedDataContext)delegate).prependProvider(context.getCustomDataProvider());
       }
     }
     else if (!ApplicationManager.getApplication().isUnitTestMode()) { // see `HeadlessContext`
@@ -159,7 +159,7 @@ public final class Utils {
                                                                           @NotNull String place,
                                                                           boolean isToolbarAction,
                                                                           boolean skipFastTrack) {
-    LOG.assertTrue(isAsyncDataContext(context), "Async data context required in '" + place + "': " + context.getClass().getName());
+    LOG.assertTrue(isAsyncDataContext(context), "Async data context required in '" + place + "': " + dumpDataContextClass(context));
     ActionUpdater updater = new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction);
     List<AnAction> actions = skipFastTrack ? null : expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, null);
     if (actions != null) {
@@ -211,7 +211,7 @@ public final class Utils {
       if (elapsed > 1000) {
         LOG.warn(elapsed + " ms to expandActionGroup@" + place);
       }
-      ActionsCollectorImpl.recordActionGroupExpanded(group, context, place, elapsed, result);
+      ActionsCollectorImpl.recordActionGroupExpanded(group, context, place, false, elapsed, result);
     }
   }
 
@@ -276,7 +276,7 @@ public final class Utils {
     }
     else {
       if (Registry.is("actionSystem.update.actions.async") && !isUnitTestMode) {
-        LOG.error("Async data context required in '" + place + "': " + wrapped.getClass().getName());
+        LOG.error("Async data context required in '" + place + "': " + dumpDataContextClass(wrapped));
       }
       try {
         list = DO_FULL_EXPAND ?
@@ -315,7 +315,7 @@ public final class Utils {
     if (maxTime < 1) return null;
     BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(updater.asFastUpdateSession(missedKeys, queue::offer));
-    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FAST_TRACK)) {
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.FAST_TRACK)) {
       long start = System.currentTimeMillis();
       CancellablePromise<List<AnAction>> promise = fastUpdater.expandActionGroupAsync(group, hideDisabled);
       return runLoopAndWaitForFuture(promise, null, false, () -> {
@@ -342,6 +342,9 @@ public final class Utils {
     if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
       throw new ProcessCanceledException();
     }
+    if (Thread.holdsLock(component.getTreeLock())) {
+      throw new ProcessCanceledException();
+    }
     List<AnAction> result = null;
     Span span = getTracer(false).spanBuilder("fillMenu").setAttribute("place", place).startSpan();
     long start = System.nanoTime();
@@ -360,8 +363,8 @@ public final class Utils {
       if (elapsed > 1000) {
         LOG.warn(elapsed + " ms to fillMenu@" + place);
       }
-      boolean submenu = component instanceof ActionMenu;
-      ActionsCollectorImpl.recordActionGroupExpanded(group, context, !submenu ? place : place + " (submenu)", elapsed, result);
+      boolean submenu = component instanceof ActionMenu && component.getParent() != null;
+      ActionsCollectorImpl.recordActionGroupExpanded(group, context, place, submenu, elapsed, result);
     }
   }
 
@@ -511,10 +514,22 @@ public final class Utils {
     if (StringUtil.isNotEmpty(place)) sb.append("@").append(place);
     sb.append(" (");
     for (Object x = action; x instanceof ActionWithDelegate; x = ((ActionWithDelegate<?>)x).getDelegate(), c = x.getClass()) {
-      sb.append(c.getSimpleName()).append("/");
+      sb.append(StringUtil.getShortName(c.getName())).append("/");
     }
     sb.append(c.getName()).append(")");
-    sb.insert(0, StringUtil.isNotEmpty(c.getSimpleName()) ? c.getSimpleName() : StringUtil.getShortName(c.getName()));
+    sb.insert(0, StringUtil.getShortName(c.getName()));
+    return sb.toString();
+  }
+
+  private static @NotNull String dumpDataContextClass(@NotNull DataContext context) {
+    Class<?> c = context.getClass();
+    StringBuilder sb = new StringBuilder(200);
+    int i = 0;
+    for (Object x = context; x instanceof CustomizedDataContext; x = ((CustomizedDataContext)x).getParent(), i++, c = x.getClass()) {
+      sb.append(StringUtil.getShortName(c.getName())).append("(");
+    }
+    sb.append(c.getName());
+    StringUtil.repeatSymbol(sb, ')', i);
     return sb.toString();
   }
 
@@ -679,21 +694,29 @@ public final class Utils {
     ClientProperty.put(component, IS_MODAL_CONTEXT, isModalContext);
   }
 
+  /** @deprecated Use {@link AnActionEvent#getUpdateSession()} */
+  @Deprecated(forRemoval = true)
   public static @NotNull UpdateSession getOrCreateUpdateSession(@NotNull AnActionEvent e) {
+    initUpdateSession(e);
+    return e.getUpdateSession();
+  }
+
+  @ApiStatus.Internal
+  public static void initUpdateSession(@NotNull AnActionEvent e) {
     UpdateSession updater = e.getUpdateSession();
-    if (updater == null) {
+    if (updater == UpdateSession.EMPTY) {
       ActionUpdater actionUpdater = new ActionUpdater(
         new PresentationFactory(), e.getDataContext(),
         e.getPlace(), e.isFromContextMenu(), e.isFromActionToolbar());
       updater = actionUpdater.asUpdateSession();
+      e.setUpdateSession(updater);
     }
-    return updater;
   }
 
   private static boolean ourInUpdateSessionForInputEventEDTLoop;
 
   @ApiStatus.Internal
-  public static @Nullable <T> T runUpdateSessionForInputEvent(@NotNull List<AnAction> actions,
+  public static @Nullable <T> T runUpdateSessionForInputEvent(@NotNull List<? extends AnAction> actions,
                                                               @NotNull InputEvent inputEvent,
                                                               @NotNull DataContext dataContext,
                                                               @NotNull String place,
@@ -767,7 +790,7 @@ public final class Utils {
     }
     else {
       List<AnAction> adjusted = new ArrayList<>(actions);
-      rearrangeByPromoters(adjusted, freezeDataContext(dataContext, null));
+      rearrangeByPromoters(adjusted, dataContext);
       result = function.apply(actionUpdater.asUpdateSession(), adjusted);
       actionUpdater.applyPresentationChanges();
     }
@@ -785,7 +808,7 @@ public final class Utils {
     List<ActionPromoter> promoters = ContainerUtil.concat(
       ActionPromoter.EP_NAME.getExtensionList(), ContainerUtil.filterIsInstance(actions, ActionPromoter.class));
     for (ActionPromoter promoter : promoters) {
-      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FORCE_ASSERT)) {
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.FORCE_ASSERT)) {
         List<AnAction> promoted = promoter.promote(readOnlyActions, frozenContext);
         if (promoted != null && !promoted.isEmpty()) {
           actions.removeAll(promoted);
@@ -839,7 +862,7 @@ public final class Utils {
     ProcessCanceledWithReasonException lastCancellation = null;
     int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
     for (int i = 0; i < retries; i++) {
-      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RESET)) {
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET)) {
         return computable.get();
       }
       catch (Utils.ProcessCanceledWithReasonException ex) {

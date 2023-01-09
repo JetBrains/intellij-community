@@ -39,7 +39,10 @@ private val pathElements = hashSetOf("interface-class", "implementation-class")
 private val predefinedTypes = hashSetOf("java.lang.Object")
 private val ignoreModules = hashSetOf("intellij.java.testFramework", "intellij.platform.uast.tests")
 
-class ModuleStructureValidator(private val context: BuildContext, moduleJars: Map<String, List<String>>) {
+class ModuleStructureValidator(
+  private val context: BuildContext,
+  moduleJars: Map<String, List<String>>,
+) {
   private val moduleJars = MultiMap<String, String>()
   private val moduleNames = HashSet<String>()
   private val errors = ArrayList<AssertionError>()

@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.config
 
-import git4idea.remote.hosting.knownRepositories
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import git4idea.remote.hosting.knownRepositories
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubServerPath
@@ -57,8 +57,10 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
 
     class UrlAndAccount private constructor() {
 
+      @Suppress("MemberVisibilityCanBePrivate")
       var url: String = ""
-      private var accountId: String = ""
+      @Suppress("MemberVisibilityCanBePrivate")
+      var accountId: String = ""
 
       constructor(url: String, accountId: String) : this() {
         this.url = url

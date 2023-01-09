@@ -18,7 +18,7 @@ final class FacetPointerModuleListener implements ModuleListener {
   }
 
   @Override
-  public void modulesAdded(@NotNull Project project, @NotNull List<Module> modules) {
+  public void modulesAdded(@NotNull Project project, @NotNull List<? extends Module> modules) {
     FacetPointersManager manager = FacetPointersManager.getInstance(myProject);
     if (manager instanceof FacetPointersManagerImpl) {
       ((FacetPointersManagerImpl)manager).refreshPointers();

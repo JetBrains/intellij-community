@@ -95,6 +95,14 @@ public class XmlInspectionsTest extends BasePlatformTestCase {
     myFixture.testHighlighting("deprecated.xml", "deprecated.xsd");
   }
 
+  public void testCDataEndHighlightingXml() {
+    myFixture.testHighlighting("cdataEndHighlighting.xml");
+  }
+
+  public void testCDataEndHighlightingHtml() {
+    myFixture.testHighlighting("cdataEndHighlighting.html");
+  }
+
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/xml";

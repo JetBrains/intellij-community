@@ -5,6 +5,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
@@ -530,7 +531,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   private static float getFragmentWidth(@NotNull ColoredFragment fragment, Font font, FontRenderContext frc) {
-    WidthKey key = new WidthKey(fragment.text, fragment.attributes, font, frc);
+    WidthKey key = new WidthKey(fragment.text, font, frc, fragment.attributes.getStyle());
     Float result;
     synchronized (ourWidthCache) {
       result = ourWidthCache.get(key);
@@ -727,6 +728,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   protected void paintComponent(final Graphics g) {
     try {
       doPaint((Graphics2D)g);
+    }
+    catch (ProcessCanceledException pce) {
+      throw pce;
     }
     catch (RuntimeException e) {
       LOG.error(logSwingPath(), e);
@@ -1417,46 +1421,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
   }
 
-  private static class WidthKey {
-    private final String text;
-    private final Font font;
-    private final FontRenderContext frc;
-    private final int style;
-
-    private WidthKey(@NotNull String text,
-                     @NotNull SimpleTextAttributes attributes,
-                     Font font,
-                     FontRenderContext frc) {
-      this.text = text;
-      this.font = font;
-      this.frc = frc;
-      // colors in attributes are mutable, ignore them since they don't affect text width
-      this.style = attributes.getStyle();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      WidthKey key = (WidthKey)o;
-      return style == key.style &&
-             Objects.equals(text, key.text) &&
-             Objects.equals(font, key.font) &&
-             Objects.equals(frc, key.frc);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(text, font, frc, style);
-    }
-
-    @Override
-    public String toString() {
-      return "WidthKey{text='" + text + '\'' +
-             ", font=" + font +
-             ", frc=" + frc +
-             ", style=" + style +
-             '}';
-    }
+  private record WidthKey(@NotNull String text,
+                          Font font,
+                          FontRenderContext frc,
+                          int style) {
   }
 }

@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.NlsContexts.NotificationTitle
 import com.intellij.openapi.wm.ToolWindowManager
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 
@@ -13,7 +12,7 @@ class SingletonNotificationManager(groupId: String, private val type: Notificati
   private val group = NotificationGroupManager.getInstance().getNotificationGroup(groupId)
   private val notification = AtomicReference<Notification>()
 
-  fun notify(@NotificationTitle title: String, @NotificationContent content: String, project: Project) =
+  fun notify(@NotificationTitle title: String, @NotificationContent content: String, project: Project?) =
     notify(title, content, project) { }
 
   fun notify(@NotificationTitle title: String,

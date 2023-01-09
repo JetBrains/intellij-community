@@ -19,7 +19,6 @@ package com.jetbrains.packagesearch.intellij.plugin.intentions
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.dependencytoolwindow.DependencyToolWindowFactory
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable

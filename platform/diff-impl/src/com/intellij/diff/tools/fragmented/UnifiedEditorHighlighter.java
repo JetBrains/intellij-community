@@ -37,7 +37,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
 
   private void init(@NotNull HighlighterIterator it1,
                     @NotNull HighlighterIterator it2,
-                    @NotNull List<HighlightRange> ranges,
+                    @NotNull List<? extends HighlightRange> ranges,
                     int textLength) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 

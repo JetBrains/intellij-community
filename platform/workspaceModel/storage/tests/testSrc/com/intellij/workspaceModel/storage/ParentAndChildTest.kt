@@ -126,7 +126,7 @@ class ParentAndChildTest {
     val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
-    assertTrue((entity as ModifiableWorkspaceEntityBase<*>).changedProperty.isEmpty())
+    assertTrue((entity as ModifiableWorkspaceEntityBase<*, *>).changedProperty.isEmpty())
   }
 
   @Test

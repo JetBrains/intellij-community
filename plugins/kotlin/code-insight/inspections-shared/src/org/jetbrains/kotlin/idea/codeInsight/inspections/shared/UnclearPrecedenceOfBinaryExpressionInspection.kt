@@ -5,38 +5,31 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.options.OptPane
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.siblings
-import com.intellij.ui.components.panels.VerticalBox
-import com.intellij.util.ui.CheckBox
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenceOfBinaryExpressionInspection.Holder.dfs
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenceOfBinaryExpressionInspection.Holder.doNeedToPutParentheses
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenceOfBinaryExpressionInspection.Holder.toUnified
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.parsing.KotlinExpressionParsing.Precedence
 import org.jetbrains.kotlin.psi.*
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = MyVisitor(holder)
 
     var reportEvenObviousCases: Boolean = false
 
-    override fun createOptionsPanel() = VerticalBox().apply {
-        add(
-            CheckBox(
-                KotlinBundle.message("unclear.precedence.of.binary.expression.report.even.obvious.cases.checkbox"),
-                this@UnclearPrecedenceOfBinaryExpressionInspection,
-                this@UnclearPrecedenceOfBinaryExpressionInspection::reportEvenObviousCases.name
-            )
-        )
-    }
+    override fun getOptionsPane() = OptPane.pane(
+        OptPane.checkbox(this@UnclearPrecedenceOfBinaryExpressionInspection::reportEvenObviousCases.name,
+                         KotlinBundle.message("unclear.precedence.of.binary.expression.report.even.obvious.cases.checkbox"))
+    )
 
     private inner class MyVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
         override fun visitBinaryExpression(binaryExpression: KtBinaryExpression) {

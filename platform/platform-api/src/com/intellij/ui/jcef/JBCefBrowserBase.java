@@ -4,6 +4,7 @@ package com.intellij.ui.jcef;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.Disposer;
@@ -15,16 +16,16 @@ import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IconUtil;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.net.ssl.CertificateListener;
+import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.ui.UIUtil;
 import org.cef.CefClient;
 import org.cef.browser.*;
-import org.cef.callback.CefAuthCallback;
-import org.cef.callback.CefContextMenuParams;
-import org.cef.callback.CefMenuModel;
-import org.cef.callback.CefNativeAdapter;
+import org.cef.callback.*;
 import org.cef.handler.*;
 import org.cef.network.CefCookieManager;
 import org.cef.network.CefRequest;
+import org.cef.security.CefSSLInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,8 @@ import java.beans.PropertyChangeListener;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -89,6 +92,8 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   protected final @NotNull PropertiesHelper myPropertiesHelper = new PropertiesHelper();
   private final @NotNull AtomicBoolean myIsCreateStarted = new AtomicBoolean(false);
   private @Nullable CefRequestHandler myHrefProcessingRequestHandler;
+
+  private final @NotNull CertificateListener myCertificateListener;
 
   private static final LazyInitializer.LazyValue<@NotNull String> ERROR_PAGE_READER = LazyInitializer.create(() -> {
     try {
@@ -161,7 +166,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       if (myIsOffScreenRendering) {
         JBCefApp.checkOffScreenRenderingModeEnabled();
         cefBrowser = createOsrBrowser(ObjectUtils.notNull(builder.myOSRHandlerFactory, JBCefOSRHandlerFactory.DEFAULT),
-                                      myCefClient.getCefClient(), builder.myUrl, null, null, null);
+                                      myCefClient.getCefClient(), builder.myUrl, null, null, null, builder.myMouseWheelEventEnable);
       }
       else {
         cefBrowser = myCefClient.getCefClient().createBrowser(validateUrl(builder.myUrl), CefRendering.DEFAULT, false, null);
@@ -229,6 +234,24 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
           }
           return super.getAuthCredentials(browser, origin_url, isProxy, host, port, realm, scheme, callback);
         }
+
+        @Override
+        public boolean onCertificateError(CefBrowser browser,
+                                          CefLoadHandler.ErrorCode cert_error,
+                                          String request_url,
+                                          CefSSLInfo sslInfo,
+                                          CefCallback callback) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            try {
+              CertificateManager.getInstance().getTrustManager().checkServerTrusted(sslInfo.certificate.getCertificatesChain(), "UNKNOWN");
+              callback.Continue();
+            }
+            catch (CertificateException e) {
+              callback.cancel();
+            }
+          });
+          return true;
+        }
       }, getCefBrowser());
 
       myCefClient.addContextMenuHandler(myContextMenuHandler = createDefaultContextMenuHandler(), getCefBrowser());
@@ -241,6 +264,19 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     }
 
     if (builder.myCreateImmediately) createImmediately();
+
+    myCertificateListener = new CertificateListener() {
+      @Override
+      public void certificateAdded(X509Certificate certificate) { }
+
+      @Override
+      public void certificateRemoved(X509Certificate certificate) {
+        getCefBrowser().getRequestContext().ClearCertificateExceptions(null);
+        getCefBrowser().getRequestContext().CloseAllConnections(null);
+      }
+    };
+
+    CertificateManager.getInstance().getCustomTrustManager().addListener(myCertificateListener);
   }
 
   private @NotNull CefBrowserOsrWithHandler createOsrBrowser(@NotNull JBCefOSRHandlerFactory factory,
@@ -249,9 +285,10 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
                                                              @Nullable CefRequestContext context,
                                                              // not-null parentBrowser creates a DevTools browser for it
                                                              @Nullable CefBrowser parentBrowser,
-                                                             @Nullable Point inspectAt)
+                                                             @Nullable Point inspectAt,
+                                                             boolean isMouseWheelEventEnabled)
   {
-    JComponent comp = factory.createComponent();
+    JComponent comp = factory.createComponent(isMouseWheelEventEnabled);
     CefRenderHandler handler = factory.createCefRenderHandler(comp);
     CefBrowserOsrWithHandler browser =
       new CefBrowserOsrWithHandler(client, validateUrl(url), context, handler, comp, parentBrowser, inspectAt) {
@@ -262,7 +299,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
                                                    CefBrowser parent,
                                                    Point inspectAt)
         {
-          return createOsrBrowser(factory, client, getUrl(), getRequestContext(), this, inspectAt);
+          return createOsrBrowser(factory, client, getUrl(), getRequestContext(), this, inspectAt, isMouseWheelEventEnabled);
         }
       };
     if (comp instanceof JBCefOsrComponent) ((JBCefOsrComponent)comp).setBrowser(browser);
@@ -474,6 +511,8 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       if (myRequestHandler != null) getJBCefClient().removeRequestHandler(myRequestHandler, getCefBrowser());
       if (myHrefProcessingRequestHandler != null) getJBCefClient().removeRequestHandler(myHrefProcessingRequestHandler, getCefBrowser());
       if (myContextMenuHandler != null) getJBCefClient().removeContextMenuHandler(myContextMenuHandler, getCefBrowser());
+
+      CertificateManager.getInstance().getCustomTrustManager().removeListener(myCertificateListener);
 
       myCefBrowser.stopLoad();
       myCefBrowser.setCloseAllowed();

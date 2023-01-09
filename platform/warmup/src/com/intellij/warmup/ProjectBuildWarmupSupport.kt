@@ -27,6 +27,8 @@ interface ProjectBuildWarmupSupport {
   /**
    * Start custom build process and return a future which is completed only when a custom build is finished
    * @param rebuild indicates if rebuild should be done instead of ordinary build
+   *
+   * @return build status message
    */
-  suspend fun buildProject(rebuild: Boolean = false)
+  suspend fun buildProject(rebuild: Boolean = false): String
 }

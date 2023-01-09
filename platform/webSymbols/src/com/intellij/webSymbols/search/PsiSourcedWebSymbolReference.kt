@@ -11,7 +11,7 @@ import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.refactoring.util.NonCodeUsageInfo
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 
 class PsiSourcedWebSymbolReference(private val symbol: WebSymbol,
                                    private val sourceElement: PsiElement,
@@ -65,7 +65,7 @@ class PsiSourcedWebSymbolReference(private val symbol: WebSymbol,
       val target = targetPointer.dereference() ?: return null
       return NonCodeUsageInfo.create(file, range.startOffset, range.endOffset, target,
                                      symbol.adjustNameForRefactoring(
-                                       WebSymbolsRegistryManager.get(file),
+                                       WebSymbolsQueryExecutorFactory.create(file),
                                        newName,
                                        file.text.substring(range.startOffset, range.endOffset)))
     }

@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.addPreferredFocusedComponent
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.JBScrollPane
@@ -23,17 +22,17 @@ import com.intellij.xdebugger.attach.XAttachHost
 import com.intellij.xdebugger.impl.ui.attach.dialog.diagnostics.ProcessesFetchingProblemAction
 import com.intellij.xdebugger.impl.ui.attach.dialog.diagnostics.ProcessesFetchingProblemException
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessItemsListBase
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.tree.buildTree
 import com.intellij.xdebugger.impl.util.SequentialDisposables
 import com.intellij.xdebugger.impl.util.isNotAlive
 import com.intellij.xdebugger.impl.util.onTermination
 import kotlinx.coroutines.*
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.Dimension
-import java.awt.event.*
+import java.awt.event.MouseEvent
+import java.awt.event.MouseListener
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -42,10 +41,10 @@ import javax.swing.ScrollPaneConstants
 internal abstract class AttachToProcessView(
   private val project: Project,
   protected val state: AttachDialogState,
+  private val columnsLayout: AttachDialogColumnsLayout,
   private val attachDebuggerProviders: List<XAttachDebuggerProvider>) {
 
   companion object {
-    val DEFAULT_DIMENSION = Dimension(800, 400)
     private val logger = Logger.getInstance(AttachToProcessView::class.java)
   }
 
@@ -85,9 +84,9 @@ internal abstract class AttachToProcessView(
 
   abstract fun getViewActions(): List<AnAction>
 
-  @Nls
-  @NlsContexts.Button
-  abstract fun getName(): String
+  fun getName(): String = application.getService(AttachDialogPresentationService::class.java).getHostTypeDisplayText(getHostType())
+
+  abstract fun getHostType(): AttachDialogHostType
 
   protected abstract suspend fun doUpdateProcesses()
 
@@ -148,7 +147,7 @@ internal abstract class AttachToProcessView(
 
   private suspend fun processAsPlainList(host: XAttachHost) {
     val itemsInfo = try {
-      collectAttachProcessItems(project, host, attachDebuggerProviders)
+      collectAttachProcessItemsGroupByProcessInfo(project, host, attachDebuggerProviders)
     }
     catch (processesFetchingException: ProcessesFetchingProblemException) {
       processDiagnosticInfo(processesFetchingException, host)
@@ -181,7 +180,7 @@ internal abstract class AttachToProcessView(
   }
 
   private suspend fun processPlainListItems(items: AttachItemsInfo) {
-    val list = com.intellij.xdebugger.impl.ui.attach.dialog.items.list.buildList(items, state)
+    val list = com.intellij.xdebugger.impl.ui.attach.dialog.items.list.buildList(items, state, columnsLayout)
 
     withUiContextAnyModality {
       showList(list, true)
@@ -189,7 +188,7 @@ internal abstract class AttachToProcessView(
   }
 
   private suspend fun processTreeItems(attachItemsInfo: AttachItemsInfo) {
-    val tree = buildTree(attachItemsInfo, state)
+    val tree = buildTree(attachItemsInfo, state, columnsLayout)
 
     withUiContextAnyModality {
       showList(tree, false)

@@ -28,7 +28,7 @@ interface AsyncModuleTransformer {
     companion object {
         private val extensionPointName = ExtensionPointName<AsyncModuleTransformer>("com.intellij.packagesearch.asyncModuleTransformer")
 
-        internal fun extensions(areaInstance: AreaInstance): List<CoroutineModuleTransformer> {
+        internal fun extensions(areaInstance: AreaInstance): List<ModuleTransformer> {
             return extensionPointName.getExtensionList(areaInstance).asSequence().map { it.asCoroutine() }.toList()
         }
     }
@@ -36,7 +36,7 @@ interface AsyncModuleTransformer {
     /**
      * IMPORTANT: This function is NOT invoked inside a read action.
      *
-     * Transforms [nativeModules] in a [ProjectModule] module if possible, else returns an empty list.
+     * Transforms [nativeModules] in a [PackageSearchModule] module if possible, else returns an empty list.
      * Its implementation should use the IntelliJ platform APIs for a given build system (eg.
      * Gradle or Maven), detect if and which [nativeModules] are controlled by said build system
      * and transform them accordingly.
@@ -45,7 +45,7 @@ interface AsyncModuleTransformer {
      * handle any exceptions and filter out the ones not working.
      *
      * @param nativeModules The native [Module]s that will be transformed.
-     * @return [ProjectModule]s wrapping [nativeModules] or an empty list.
+     * @return [PackageSearchModule]s wrapping [nativeModules] or an empty list.
      */
-    fun transformModules(project: Project, nativeModules: List<Module>): CompletableFuture<List<ProjectModule>>
+    fun transformModules(project: Project, nativeModules: List<Module>): CompletableFuture<List<PackageSearchModule>>
 }

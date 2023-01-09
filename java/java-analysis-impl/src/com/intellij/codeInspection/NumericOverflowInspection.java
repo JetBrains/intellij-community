@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
@@ -17,16 +18,17 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class NumericOverflowInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Key<String> HAS_OVERFLOW_IN_CHILD = Key.create("HAS_OVERFLOW_IN_CHILD");
 
   public boolean ignoreLeftShiftWithNegativeResult = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("ignore.operation.which.results.in.negative.value"), this,
-                                          "ignoreLeftShiftWithNegativeResult");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreLeftShiftWithNegativeResult", JavaAnalysisBundle.message("ignore.operation.which.results.in.negative.value")));
   }
 
   @Nls

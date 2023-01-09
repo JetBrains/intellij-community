@@ -1,21 +1,31 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui
 
+import com.intellij.application.subscribe
+import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
+import com.intellij.ide.ui.LafManagerListener
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.SearchTextField
+import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.content.Content
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import java.beans.PropertyChangeListener
 import javax.swing.*
 import javax.swing.event.DocumentEvent
+import kotlin.properties.Delegates
 
 object CollaborationToolsUIUtil {
 
@@ -66,13 +76,25 @@ object CollaborationToolsUIUtil {
   }
 
   /**
-   * Add [listener] that will be invoked on each "UI" property change
+   * Add [listener] that will be invoked on each UI update
    */
   fun <T : JComponent> overrideUIDependentProperty(component: T, listener: T.() -> Unit) {
-    component.addPropertyChangeListener("UI", PropertyChangeListener {
-      listener.invoke(component)
+    UiNotifyConnector(component, object : Activatable {
+      private var listenerDisposable: Disposable? by Delegates.observable(null) { _, oldValue, _ ->
+        oldValue?.also { Disposer.dispose(it) }
+      }
+
+      override fun showNotify() {
+        val disposable = Disposer.newDisposable()
+        LafManagerListener.TOPIC.subscribe(disposable, LafManagerListener { listener(component) })
+        listenerDisposable = disposable
+      }
+
+      override fun hideNotify() {
+        listenerDisposable = null
+      }
     })
-    listener.invoke(component)
+    listener(component)
   }
 
   /**
@@ -130,7 +152,37 @@ object CollaborationToolsUIUtil {
       focusPanel(content.component)
     }
   }
+
+  fun getFocusBorderInset(): Int {
+    val bw: Int = if (UIUtil.isUnderDefaultMacTheme()) 3 else DarculaUIUtil.BW.unscaled.toInt()
+    val lw: Int = if (UIUtil.isUnderDefaultMacTheme()) 0 else DarculaUIUtil.LW.unscaled.toInt()
+    return bw + lw
+  }
+
+  fun wrapWithLimitedSize(component: JComponent, maxWidth: Int? = null, maxHeight: Int? = null): JComponent {
+    val layout = SizeRestrictedSingleComponentLayout().apply {
+      this.maxWidth = maxWidth
+      this.maxHeight = maxHeight
+    }
+    return JPanel(layout).apply {
+      name = "Size limit wrapper"
+      isOpaque = false
+      add(component)
+    }
+  }
 }
+
+@Suppress("FunctionName")
+fun VerticalListPanel(gap: Int = 0): JPanel =
+  JPanel(ListLayout.vertical(gap)).apply {
+    isOpaque = false
+  }
+
+@Suppress("FunctionName")
+fun HorizontalListPanel(gap: Int = 0): JPanel =
+  JPanel(ListLayout.horizontal(gap)).apply {
+    isOpaque = false
+  }
 
 internal fun <E> ListModel<E>.findIndex(item: E): Int {
   for (i in 0 until size) {
@@ -152,3 +204,12 @@ internal val <E> ListModel<E>.items
       }
     }
   }
+
+fun ComboBoxModel<*>.selectFirst() {
+  val size = size
+  if (size == 0) {
+    return
+  }
+  val first = getElementAt(0)
+  selectedItem = first
+}

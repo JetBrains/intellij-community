@@ -30,7 +30,7 @@ public final class CopyHandler {
     return canCopy(elements, null);
   }
 
-  public static boolean canCopy(PsiElement[] elements, @Nullable Ref<@NlsActions.ActionText String> actionName) {
+  public static boolean canCopy(PsiElement[] elements, @Nullable Ref<? super @NlsActions.ActionText String> actionName) {
     if (elements.length > 0) {
       for(CopyHandlerDelegate delegate: CopyHandlerDelegate.EP_NAME.getExtensionList()) {
         if (delegate instanceof CopyHandlerDelegateBase ? ((CopyHandlerDelegateBase)delegate).canCopy(elements, true) : delegate.canCopy(elements)) {

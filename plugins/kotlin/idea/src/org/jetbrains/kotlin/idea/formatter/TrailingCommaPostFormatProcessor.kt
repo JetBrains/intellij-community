@@ -65,7 +65,7 @@ private class TrailingCommaPostFormatVisitor(private val settings: CodeStyleSett
                 state == TrailingCommaState.MISSING && settings.kotlinCustomSettings.addTrailingCommaIsAllowedFor(ktElement) -> {
                     // add a missing comma
                     val hasChange = if (trailingCommaAllowedInModule(ktElement)) {
-                        lastElementOrComma.addCommaAfter(KtPsiFactory(ktElement))
+                        lastElementOrComma.addCommaAfter(KtPsiFactory(ktElement.project))
                         true
                     } else {
                         false

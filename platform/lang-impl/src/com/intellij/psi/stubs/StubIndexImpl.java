@@ -4,6 +4,7 @@ package com.intellij.psi.stubs;
 import com.google.common.util.concurrent.Futures;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -13,8 +14,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.StubFileElementType;
+import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.Function;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
@@ -38,6 +44,17 @@ import java.util.concurrent.locks.ReadWriteLock;
 public final class StubIndexImpl extends StubIndexEx {
   static final Logger LOG = Logger.getInstance(StubIndexImpl.class);
 
+  public enum PerFileElementTypeStubChangeTrackingSource {
+    Disabled,
+    ChangedFilesCollector
+  }
+  public static final PerFileElementTypeStubChangeTrackingSource PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE;
+  static {
+    int sourceId = SystemProperties.getIntProperty("stub.index.per.file.element.type.stub.change.tracking.source", 1);
+    PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE = PerFileElementTypeStubChangeTrackingSource.values()[sourceId];
+  }
+
+
   private static final class AsyncState {
     private final Map<StubIndexKey<?, ?>, UpdatableIndex<?, Void, FileContent, ?>> myIndices =
       CollectionFactory.createSmallMemoryFootprintMap();
@@ -48,6 +65,8 @@ public final class StubIndexImpl extends StubIndexEx {
   private volatile AsyncState myState;
   private volatile boolean myInitialized;
 
+  private final @NotNull PerFileElementTypeStubModificationTracker myPerFileElementTypeStubModificationTracker;
+
   public StubIndexImpl() {
     StubIndexExtension.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
@@ -55,6 +74,7 @@ public final class StubIndexImpl extends StubIndexEx {
         ID.unloadId(extension.getKey());
       }
     }, null);
+    myPerFileElementTypeStubModificationTracker = new PerFileElementTypeStubModificationTracker();
   }
 
   private AsyncState getAsyncState() {
@@ -72,7 +92,11 @@ public final class StubIndexImpl extends StubIndexEx {
         }
       }
       else {
-        state = ProgressIndicatorUtils.awaitWithCheckCanceled(myStateFuture);
+        CompletableFuture<AsyncState> future = myStateFuture;
+        if (future == null) {
+          throw new AlreadyDisposedException("Stub Index is already disposed");
+        }
+        state = ProgressIndicatorUtils.awaitWithCheckCanceled(future);
       }
       myState = state;
     }
@@ -119,13 +143,10 @@ public final class StubIndexImpl extends StubIndexEx {
       }
     }
 
-    UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> stubUpdatingIndex = getStubUpdatingIndex();
-    ReadWriteLock lock = stubUpdatingIndex.getLock();
-
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
         UpdatableIndex<K, Void, FileContent, ?> index =
-          TransientFileContentIndex.createIndex(wrappedExtension, new StubIndexStorageLayout<>(wrappedExtension, indexKey), lock);
+          TransientFileContentIndex.createIndex(wrappedExtension, new StubIndexStorageLayout<>(wrappedExtension, indexKey));
 
         for (FileBasedIndexInfrastructureExtension infrastructureExtension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
           UpdatableIndex<K, Void, FileContent, ?> intermediateIndex = infrastructureExtension.combineIndex(wrappedExtension, index);
@@ -211,24 +232,22 @@ public final class StubIndexImpl extends StubIndexEx {
       FileBasedIndex.getInstance();
 
       myStateFuture = new CompletableFuture<>();
-      Future<AsyncState> future = IndexDataInitializer.submitGenesisTask(new StubIndexInitialization());
-
-      if (!IndexDataInitializer.ourDoAsyncIndicesInitialization) {
-        try {
-          future.get();
-        }
-        catch (Throwable t) {
-          LOG.error(t);
-        }
-      }
+      IndexDataInitializer.submitGenesisTask(new StubIndexInitialization());
     }
   }
 
   public void dispose() {
     try {
-      for (UpdatableIndex<?, ?, ?, ?> index : getAsyncState().myIndices.values()) {
-        index.dispose();
-      }
+      myPerFileElementTypeStubModificationTracker.dispose();
+      Collection<UpdatableIndex<?, Void, FileContent, ?>> values = getAsyncState().myIndices.values();
+      IndexDataInitializer.runParallelTasks(ContainerUtil.map(values, index -> (ThrowableRunnable<Throwable>)() -> {
+        try {
+          index.dispose();
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }), false);
     } finally {
       clearState();
     }
@@ -383,5 +402,27 @@ public final class StubIndexImpl extends StubIndexEx {
     protected String getInitializationFinishedMessage(AsyncState initializationResult) {
       return "Initialized stub indexes: " + initializationResult.myIndices.keySet() + ".";
     }
+  }
+
+  @Override
+  public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull StubFileElementType<?> fileElementType) {
+    return () -> {
+      if (PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE == PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
+        ReadAction.run(() -> {
+          ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().processFilesToUpdateInReadAction();
+        });
+      }
+      return myPerFileElementTypeStubModificationTracker.getModificationStamp(fileElementType);
+    };
+  }
+
+  @Override
+  public @NotNull ModificationTracker getStubIndexModificationTracker(@NotNull Project project) {
+    return () -> FileBasedIndex.getInstance().getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project);
+  }
+
+  @Override
+  public @NotNull FileUpdateProcessor getPerFileElementTypeModificationTrackerUpdateProcessor() {
+    return myPerFileElementTypeStubModificationTracker;
   }
 }

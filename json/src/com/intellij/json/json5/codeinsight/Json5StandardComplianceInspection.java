@@ -2,7 +2,7 @@
 package com.intellij.json.json5.codeinsight;
 
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.json.JsonBundle;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.json.JsonDialectUtil;
 import com.intellij.json.codeinsight.JsonStandardComplianceInspection;
 import com.intellij.json.json5.Json5Language;
@@ -14,8 +14,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public class Json5StandardComplianceInspection extends JsonStandardComplianceInspection {
 
   @NotNull
@@ -26,8 +24,8 @@ public class Json5StandardComplianceInspection extends JsonStandardComplianceIns
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return null;
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.EMPTY;
   }
 
   private class StandardJson5ValidatingElementVisitor extends StandardJsonValidatingElementVisitor {

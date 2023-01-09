@@ -12,8 +12,8 @@ class YieldStatementConversion(context: NewJ2kConverterContext) : RecursiveAppli
     override fun applyToElement(element: JKTreeElement, state: Boolean/*is yield allowed*/): JKTreeElement {
         when (element) {
             is JKKtWhenExpression -> return recurse(element, true)
-            is JKMethod -> return  recurse(element, false)
-            is JKLambdaExpression -> return  recurse(element, false)
+            is JKMethod -> return recurse(element, false)
+            is JKLambdaExpression -> return recurse(element, false)
             !is JKJavaYieldStatement -> return recurse(element, state)
         }
         element.invalidate()

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.caches.project
 
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -27,15 +28,14 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.types.typeUtil.closure
@@ -89,7 +89,11 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
         }
 
         modulesAndSdk = cachedValuesManager.createCachedValue {
-            val ideaModuleInfos = moduleCache.fetchValues().flatten() + sdkCache.fetchValues()
+            val ideaModuleInfos = moduleCache.fetchValues().flatten().also {
+                it.checkValidity { "modulesAndSdk: modules calculation" }
+            } + sdkCache.fetchValues().also {
+                it.checkValidity { "modulesAndSdk: sdks calculation" }
+            }
             CachedValueProvider.Result.create(ideaModuleInfos, modificationTracker)
         }
 
@@ -105,6 +109,8 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
                 }
             }
 
+            collectedLibraries.checkValidity { "libraries calculation" }
+
             CachedValueProvider.Result.create(collectedLibraries, libraryCache.removedLibraryInfoTracker(), modificationTracker)
         }
 
@@ -115,7 +121,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
     override fun dispose() = Unit
 
     abstract inner class AbstractCache<Key : Any, Value : Any>(initializer: (AbstractCache<Key, Value>) -> Unit) :
-        SynchronizedFineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory = false),
+        SynchronizedFineGrainedEntityCache<Key, Value>(project),
         WorkspaceModelChangeListener {
 
         @Volatile
@@ -283,6 +289,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
             applyIfPossible {
                 // SDK could be changed (esp in tests) out of message bus subscription
                 val sdks = runReadAction { ProjectJdkTable.getInstance().allJdks }
+
                 invalidateEntries({ k, _ -> k !in sdks })
 
                 // force calculation
@@ -332,11 +339,16 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
                 val libraryInfos = libraries.value
                 val sdkInfos = sdkCache.fetchValues()
                 val ideaModuleInfos = platformModules + libraryInfos + sdkInfos
+                ideaModuleInfos.checkValidity { "resultByPlatform $platform calculation" }
                 ideaModuleInfos
+            }.also {
+                it.checkValidity { "forPlatform $platform" }
             }
         }
 
-    override fun allModules(): List<IdeaModuleInfo> = modulesAndSdk.value + libraries.value
+    override fun allModules(): List<IdeaModuleInfo> = (modulesAndSdk.value + libraries.value).also {
+        it.checkValidity { "allModules" }
+    }
 
     override fun getModuleInfosForModule(module: Module): Collection<ModuleSourceInfo> = moduleCache[module]
 

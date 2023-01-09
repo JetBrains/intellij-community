@@ -18,9 +18,8 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
@@ -29,8 +28,9 @@ import com.intellij.vcs.log.history.FileHistoryUiProperties;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 public class ShowOtherBranchesAction extends BooleanPropertyToggleAction {
 
@@ -48,14 +48,15 @@ public class ShowOtherBranchesAction extends BooleanPropertyToggleAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
+    if (!e.getPresentation().isEnabled()) return;
+
     Project project = e.getProject();
-    FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
     VcsLogManager logManager = e.getData(VcsLogInternalDataKeys.LOG_MANAGER);
     VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    if (project != null && logManager != null && filePath != null && logUi != null) {
+    Set<VirtualFile> roots = e.getData(VcsLogInternalDataKeys.VCS_LOG_VISIBLE_ROOTS);
+    if (project != null && logManager != null && logUi != null && roots != null && roots.size() == 1) {
       VcsLogIndex index = logManager.getDataManager().getIndex();
-      VirtualFile root = VcsLogUtil.getActualRoot(project, filePath);
-      if (root != null && !index.isIndexed(root)) {
+      if (!index.isIndexed(ContainerUtil.getOnlyItem(roots))) {
         e.getPresentation().setEnabled(false);
       }
     }

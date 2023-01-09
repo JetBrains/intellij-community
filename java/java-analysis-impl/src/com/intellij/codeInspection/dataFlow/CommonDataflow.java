@@ -4,7 +4,6 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.java.anchor.*;
-import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
@@ -12,10 +11,11 @@ import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
-import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
@@ -34,6 +34,8 @@ import java.util.concurrent.RejectedExecutionException;
 import static com.intellij.codeInspection.dataFlow.DfaUtil.hasImplicitImpureSuperCall;
 
 public final class CommonDataflow {
+  private CommonDataflow() {}
+  
   private static class DataflowPoint {
     @NotNull DfType myDfType = DfType.BOTTOM;
     // empty = top; null = bottom
@@ -68,21 +70,7 @@ public final class CommonDataflow {
 
     void addFacts(DfaMemoryState memState, DfaValue value) {
       if (myDfType == DfType.TOP) return;
-      DfType newType = memState.getDfType(value);
-      if (value instanceof DfaVariableValue) {
-        DerivedVariableDescriptor field = SpecialField.fromQualifier(value);
-        if (field != null && newType instanceof DfReferenceType) {
-          DfaValue specialField = field.createValue(value.getFactory(), value);
-          DfType withSpecialField = field.asDfType(memState.getDfType(specialField));
-          newType = newType
-            .meet(withSpecialField instanceof DfReferenceType ? ((DfReferenceType)withSpecialField).dropNullability() : withSpecialField);
-        }
-      }
-      if (value instanceof DfaWrappedValue) {
-        DerivedVariableDescriptor field = ((DfaWrappedValue)value).getSpecialField();
-        DfaVariableValue var = ((DfaWrappedValue)value).getWrappedValue();
-        newType = newType.meet(field.asDfType(memState.getDfType(var)));
-      }
+      DfType newType = memState.getDfTypeIncludingDerived(value);
       myDfType = myDfType.join(newType);
     }
   }

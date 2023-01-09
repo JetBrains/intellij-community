@@ -8,9 +8,10 @@ import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.impl.CompoundInsertHandler
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
-import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
-import com.intellij.webSymbols.registry.WebSymbolMatch
+import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
+import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.utils.asSingleSymbol
+import com.intellij.webSymbols.utils.nameSegments
 import com.intellij.webSymbols.utils.withOffset
 
 internal class SequencePattern(private val patternsProvider: () -> List<WebSymbolsPattern>) : WebSymbolsPattern() {
@@ -28,21 +29,21 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
   }
 
   override fun match(owner: WebSymbol?,
-                     contextStack: Stack<WebSymbolsContainer>,
-                     itemsProvider: WebSymbolsPatternItemsProvider?,
+                     scopeStack: Stack<WebSymbolsScope>,
+                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
                      start: Int,
                      end: Int): List<MatchResult> =
     process(emptyList()) { matches, pattern, staticPrefixes ->
       if (matches.isEmpty()) {
-        pattern.match(null, contextStack, itemsProvider, params,
+        pattern.match(null, scopeStack, symbolsResolver, params,
                       start,
                       findStaticStart(params, start, end, pattern, staticPrefixes))
       }
       else {
         matches.flatMap { prevResult ->
-          withPrevMatchContext(contextStack, prevResult.segments) {
-            pattern.match(null, contextStack, itemsProvider, params,
+          withPrevMatchScope(scopeStack, prevResult.segments) {
+            pattern.match(null, scopeStack, symbolsResolver, params,
                           prevResult.end,
                           findStaticStart(params, prevResult.end, end, pattern, staticPrefixes))
               .map { it.prefixedWith(prevResult) }
@@ -52,8 +53,8 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
     }
 
   override fun getCompletionResults(owner: WebSymbol?,
-                                    contextStack: Stack<WebSymbolsContainer>,
-                                    itemsProvider: WebSymbolsPatternItemsProvider?,
+                                    scopeStack: Stack<WebSymbolsScope>,
+                                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                                     params: CompletionParameters,
                                     start: Int,
                                     end: Int): CompletionResults {
@@ -67,19 +68,19 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
     ) { matches, pattern, staticPrefixes ->
       val completeAfterChars = staticPrefixes.mapNotNull { it.getOrNull(0) }.toList()
       matches.flatMap { (prevResult, lastMatched, requiredPart, onlyRequired) ->
-        withPrevMatchContext(contextStack, requiredPart?.symbol?.nameSegments ?: lastMatched.segments) {
+        withPrevMatchScope(scopeStack, requiredPart?.symbol?.nameSegments ?: lastMatched.segments) {
           val matchStart = lastMatched.end
           val matchEnd = findStaticStart(params, matchStart, end, pattern, staticPrefixes)
           val matchResults = if (prevResult == null) {
             listOf(null)
           }
           else {
-            pattern.match(null, contextStack, itemsProvider, params, matchStart, matchEnd)
+            pattern.match(null, scopeStack, symbolsResolver, params, matchStart, matchEnd)
               .map { it.prefixedWith(prevResult) }
               .ifEmpty { listOf(null) }
           }
           matchResults.flatMap inner@{ matchResult ->
-            sliceRequiredPartIfNeeded(matchResult, pattern, matchStart, matchEnd, prevResult, itemsProvider, params)
+            sliceRequiredPartIfNeeded(matchResult, pattern, matchStart, matchEnd, prevResult, symbolsResolver, params)
               ?.let {
                 if (onlyRequired && requiredPart != null) {
                   results.add(requiredPart)
@@ -87,7 +88,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
                 return@inner it
               }
 
-            val completionResults = getCompletionResultsOnPattern(pattern, contextStack, itemsProvider, matchResult, params, matchStart,
+            val completionResults = getCompletionResultsOnPattern(pattern, scopeStack, symbolsResolver, matchResult, params, matchStart,
                                                                   prevResult)
             if (!completionResults.required && onlyRequired) {
               return@inner listOf(requiredPart.asRequiredOnlyCompletionResult(matchResult, params, lastMatched))
@@ -120,7 +121,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
                                         matchStart: Int,
                                         matchEnd: Int,
                                         prevResult: MatchResult?,
-                                        itemsProvider: WebSymbolsPatternItemsProvider?,
+                                        symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                                         params: CompletionParameters): List<SequenceCompletionResult>? =
     matchResult
       ?.takeIf {
@@ -131,7 +132,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
       }
       ?.let {
         if (pattern is CompletionAutoPopupPattern && !pattern.isSticky)
-          if (itemsProvider == null || matchResult.segments.any { it.problem == WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART })
+          if (symbolsResolver == null || matchResult.segments.any { it.problem == WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART })
             emptyList()
           else
             listOf(SequenceCompletionResult(MatchResult(WebSymbolNameSegment(matchResult.end, matchResult.end)),
@@ -264,13 +265,13 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
   }
 
   private fun getCompletionResultsOnPattern(pattern: WebSymbolsPattern,
-                                            contextStack: Stack<WebSymbolsContainer>,
-                                            itemsProvider: WebSymbolsPatternItemsProvider?,
+                                            scopeStack: Stack<WebSymbolsScope>,
+                                            symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                                             matchResult: MatchResult?,
                                             params: CompletionParameters,
                                             matchStart: Int,
                                             prevResult: MatchResult?) =
-    pattern.getCompletionResults(null, contextStack, itemsProvider,
+    pattern.getCompletionResults(null, scopeStack, symbolsResolver,
                                  if (matchResult != null) params else params.withPosition(matchStart),
                                  matchStart, matchResult?.end ?: matchStart)
       .let { completionResults ->

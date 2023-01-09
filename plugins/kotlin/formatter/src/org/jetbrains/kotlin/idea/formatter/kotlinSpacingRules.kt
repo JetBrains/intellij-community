@@ -328,6 +328,8 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
             beforeInside(IDENTIFIER, CLASS).spaces(1)
             beforeInside(IDENTIFIER, OBJECT_DECLARATION).spaces(1)
 
+            after(TYPE_ALIAS_KEYWORD).spaces(1)
+
             after(VAL_KEYWORD).spaces(1)
             after(VAR_KEYWORD).spaces(1)
             betweenInside(TYPE_PARAMETER_LIST, IDENTIFIER, PROPERTY).spaces(1)

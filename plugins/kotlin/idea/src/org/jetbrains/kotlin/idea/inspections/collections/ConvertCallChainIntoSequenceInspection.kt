@@ -91,7 +91,7 @@ private class ConvertCallChainIntoSequenceFix : LocalQuickFix {
         val last = lastCall.getQualifiedExpressionForSelector() ?: return
         val endWithTermination = lastCall.isTermination(context)
 
-        val psiFactory = KtPsiFactory(expression)
+        val psiFactory = KtPsiFactory(project)
         val dot = buildString {
             if (first is KtQualifiedExpression
                 && first.receiverExpression.siblings().filterIsInstance<PsiWhiteSpace>().any { it.textContains('\n') }
@@ -220,6 +220,12 @@ internal val collectionTransformationFunctionNames = listOf(
     "plus",
     "plusElement",
     "requireNoNulls",
+    "runningFold",
+    "runningFoldIndexed",
+    "runningReduce",
+    "runningReduceIndexed",
+    "scan",
+    "scanIndexed",
     "sorted",
     "sortedBy",
     "sortedByDescending",
@@ -298,12 +304,6 @@ internal val collectionTerminationFunctionNames = listOf(
     "reduceIndexed",
     "reduceIndexedOrNull",
     "reduceOrNull",
-    "runningFold",
-    "runningFoldIndexed",
-    "runningReduce",
-    "runningReduceIndexed",
-    "scan",
-    "scanIndexed",
     "single",
     "singleOrNull",
     "sum",

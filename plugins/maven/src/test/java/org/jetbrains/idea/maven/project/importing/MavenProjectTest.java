@@ -27,26 +27,28 @@ import java.util.stream.Collectors;
 public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
   @Test 
   public void testCollectingPlugins() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>group1</groupId>" +
-                  "      <artifactId>id1</artifactId>" +
-                  "      <version>1</version>" +
-                  "    </plugin>" +
-                  "    <plugin>" +
-                  "      <groupId>group1</groupId>" +
-                  "      <artifactId>id2</artifactId>" +
-                  "    </plugin>" +
-                  "    <plugin>" +
-                  "      <groupId>group2</groupId>" +
-                  "      <artifactId>id1</artifactId>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>group1</groupId>
+                          <artifactId>id1</artifactId>
+                          <version>1</version>
+                        </plugin>
+                        <plugin>
+                          <groupId>group1</groupId>
+                          <artifactId>id2</artifactId>
+                        </plugin>
+                        <plugin>
+                          <groupId>group2</groupId>
+                          <artifactId>id1</artifactId>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertModules("project");
 
@@ -55,18 +57,20 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test 
   public void testPluginsContainDefaultPlugins() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>group1</groupId>" +
-                  "      <artifactId>id1</artifactId>" +
-                  "      <version>1</version>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>group1</groupId>
+                          <artifactId>id1</artifactId>
+                          <version>1</version>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertModules("project");
 
@@ -75,17 +79,19 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test 
   public void testDefaultPluginsAsDeclared() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertModules("project");
 
@@ -94,25 +100,27 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test 
   public void testDoNotDuplicatePluginsFromBuildAndManagement() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "  <pluginManagement>" +
-                  "    <plugins>" +
-                  "      <plugin>" +
-                  "        <groupId>org.apache.maven.plugins</groupId>" +
-                  "        <artifactId>maven-compiler-plugin</artifactId>" +
-                  "      </plugin>" +
-                  "    </plugins>" +
-                  "  </pluginManagement>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                        </plugin>
+                      </plugins>
+                      <pluginManagement>
+                        <plugins>
+                          <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-compiler-plugin</artifactId>
+                          </plugin>
+                        </plugins>
+                      </pluginManagement>
+                    </build>
+                    """);
 
     assertModules("project");
 
@@ -121,44 +129,44 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test 
   public void testCollectingPluginsFromProfilesAlso() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>group</groupId>" +
-                  "      <artifactId>id</artifactId>" +
-                  "      <version>1</version>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>" +
-
-                  "<profiles>" +
-                  "  <profile>" +
-                  "    <id>profile1</id>" +
-                  "    <build>" +
-                  "      <plugins>" +
-                  "        <plugin>" +
-                  "          <groupId>group1</groupId>" +
-                  "          <artifactId>id1</artifactId>" +
-                  "        </plugin>" +
-                  "      </plugins>" +
-                  "    </build>" +
-                  "  </profile>" +
-                  "  <profile>" +
-                  "    <id>profile2</id>" +
-                  "    <build>" +
-                  "      <plugins>" +
-                  "        <plugin>" +
-                  "          <groupId>group2</groupId>" +
-                  "          <artifactId>id2</artifactId>" +
-                  "        </plugin>" +
-                  "      </plugins>" +
-                  "    </build>" +
-                  "  </profile>" +
-                  "</profiles>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>group</groupId>
+                          <artifactId>id</artifactId>
+                          <version>1</version>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    <profiles>
+                      <profile>
+                        <id>profile1</id>
+                        <build>
+                          <plugins>
+                            <plugin>
+                              <groupId>group1</groupId>
+                              <artifactId>id1</artifactId>
+                            </plugin>
+                          </plugins>
+                        </build>
+                      </profile>
+                      <profile>
+                        <id>profile2</id>
+                        <build>
+                          <plugins>
+                            <plugin>
+                              <groupId>group2</groupId>
+                              <artifactId>id2</artifactId>
+                            </plugin>
+                          </plugins>
+                        </build>
+                      </profile>
+                    </profiles>
+                    """);
 
     assertModules("project");
 
@@ -176,44 +184,44 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testFindingPlugin() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>group</groupId>" +
-                  "      <artifactId>id</artifactId>" +
-                  "      <version>1</version>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>" +
-
-                  "<profiles>" +
-                  "  <profile>" +
-                  "    <id>profile1</id>" +
-                  "    <build>" +
-                  "      <plugins>" +
-                  "        <plugin>" +
-                  "          <groupId>group1</groupId>" +
-                  "          <artifactId>id1</artifactId>" +
-                  "        </plugin>" +
-                  "      </plugins>" +
-                  "    </build>" +
-                  "  </profile>" +
-                  "  <profile>" +
-                  "    <id>profile2</id>" +
-                  "    <build>" +
-                  "      <plugins>" +
-                  "        <plugin>" +
-                  "          <groupId>group2</groupId>" +
-                  "          <artifactId>id2</artifactId>" +
-                  "        </plugin>" +
-                  "      </plugins>" +
-                  "    </build>" +
-                  "  </profile>" +
-                  "</profiles>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>group</groupId>
+                          <artifactId>id</artifactId>
+                          <version>1</version>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    <profiles>
+                      <profile>
+                        <id>profile1</id>
+                        <build>
+                          <plugins>
+                            <plugin>
+                              <groupId>group1</groupId>
+                              <artifactId>id1</artifactId>
+                            </plugin>
+                          </plugins>
+                        </build>
+                      </profile>
+                      <profile>
+                        <id>profile2</id>
+                        <build>
+                          <plugins>
+                            <plugin>
+                              <groupId>group2</groupId>
+                              <artifactId>id2</artifactId>
+                            </plugin>
+                          </plugins>
+                        </build>
+                      </profile>
+                    </profiles>
+                    """);
 
     assertModules("project");
 
@@ -227,19 +235,20 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test 
   public void testFindingDefaultPlugin() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>group</groupId>" +
-                  "      <artifactId>id</artifactId>" +
-                  "      <version>1</version>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>group</groupId>
+                          <artifactId>id</artifactId>
+                          <version>1</version>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertModules("project");
 
@@ -249,17 +258,18 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test 
   public void testFindingMavenGroupPluginWithDefaultPluginGroup() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <artifactId>some.plugin.id</artifactId>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <artifactId>some.plugin.id</artifactId>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
     assertModules("project");
 
     assertEquals(p("org.apache.maven.plugins", "some.plugin.id"),
@@ -269,36 +279,37 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test 
   public void testPluginConfiguration() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>group</groupId>" +
-                  "      <artifactId>id1</artifactId>" +
-                  "      <version>1</version>" +
-                  "    </plugin>" +
-                  "    <plugin>" +
-                  "      <groupId>group</groupId>" +
-                  "      <artifactId>id2</artifactId>" +
-                  "      <version>1</version>" +
-                  "      <configuration>" +
-                  "      </configuration>" +
-                  "    </plugin>" +
-                  "    <plugin>" +
-                  "      <groupId>group</groupId>" +
-                  "      <artifactId>id3</artifactId>" +
-                  "      <version>1</version>" +
-                  "      <configuration>" +
-                  "        <one>" +
-                  "          <two>foo</two>" +
-                  "        </one>" +
-                  "      </configuration>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>group</groupId>
+                          <artifactId>id1</artifactId>
+                          <version>1</version>
+                        </plugin>
+                        <plugin>
+                          <groupId>group</groupId>
+                          <artifactId>id2</artifactId>
+                          <version>1</version>
+                          <configuration>
+                          </configuration>
+                        </plugin>
+                        <plugin>
+                          <groupId>group</groupId>
+                          <artifactId>id3</artifactId>
+                          <version>1</version>
+                          <configuration>
+                            <one>
+                              <two>foo</two>
+                            </one>
+                          </configuration>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertNull(findPluginConfig("group", "id1", "one.two"));
     assertNull(findPluginConfig("group", "id2", "one.two"));
@@ -308,43 +319,44 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test 
   public void testPluginGoalConfiguration() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>group</groupId>" +
-                  "      <artifactId>id</artifactId>" +
-                  "      <version>1</version>" +
-                  "      <executions>" +
-                  "        <execution>" +
-                  "          <id>a</id>" +
-                  "          <goals>" +
-                  "            <goal>compile</goal>" +
-                  "          </goals>" +
-                  "          <configuration>" +
-                  "            <one>" +
-                  "              <two>a</two>" +
-                  "            </one>" +
-                  "          </configuration>" +
-                  "        </execution>" +
-                  "        <execution>" +
-                  "          <id>b</id>" +
-                  "          <goals>" +
-                  "            <goal>testCompile</goal>" +
-                  "          </goals>" +
-                  "          <configuration>" +
-                  "            <one>" +
-                  "              <two>b</two>" +
-                  "            </one>" +
-                  "          </configuration>" +
-                  "        </execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>group</groupId>
+                          <artifactId>id</artifactId>
+                          <version>1</version>
+                          <executions>
+                            <execution>
+                              <id>a</id>
+                              <goals>
+                                <goal>compile</goal>
+                              </goals>
+                              <configuration>
+                                <one>
+                                  <two>a</two>
+                                </one>
+                              </configuration>
+                            </execution>
+                            <execution>
+                              <id>b</id>
+                              <goals>
+                                <goal>testCompile</goal>
+                              </goals>
+                              <configuration>
+                                <one>
+                                  <two>b</two>
+                                </one>
+                              </configuration>
+                            </execution>
+                          </executions>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertNull(findPluginGoalConfig("group", "id", "package", "one.two"));
     assertEquals("a", findPluginGoalConfig("group", "id", "compile", "one.two"));
@@ -353,48 +365,49 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test 
   public void testPluginConfigurationHasResolvedVariables() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<properties>" +
-                  "  <some.path>somePath</some.path>" +
-                  "</properties>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>group</groupId>" +
-                  "      <artifactId>id</artifactId>" +
-                  "      <version>1</version>" +
-                  "      <configuration>" +
-                  "        <one>${some.path}</one>" +
-                  "      </configuration>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                      <some.path>somePath</some.path>
+                    </properties>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>group</groupId>
+                          <artifactId>id</artifactId>
+                          <version>1</version>
+                          <configuration>
+                            <one>${some.path}</one>
+                          </configuration>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertEquals("somePath", findPluginConfig("group", "id", "one"));
   }
 
   @Test 
   public void testPluginConfigurationWithStandardVariable() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>group</groupId>" +
-                  "      <artifactId>id</artifactId>" +
-                  "      <version>1</version>" +
-                  "      <configuration>" +
-                  "        <one>${project.build.directory}</one>" +
-                  "      </configuration>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>group</groupId>
+                          <artifactId>id</artifactId>
+                          <version>1</version>
+                          <configuration>
+                            <one>${project.build.directory}</one>
+                          </configuration>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertEquals(getProjectPath() + "/target",
                  FileUtil.toSystemIndependentName(findPluginConfig("group", "id", "one")));
@@ -402,73 +415,75 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test 
   public void testPluginConfigurationWithColons() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>group</groupId>" +
-                  "      <artifactId>id</artifactId>" +
-                  "      <version>1</version>" +
-                  "      <configuration>" +
-                  "        <two:three>xxx</two:three>" +
-                  "      </configuration>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>group</groupId>
+                          <artifactId>id</artifactId>
+                          <version>1</version>
+                          <configuration>
+                            <two:three>xxx</two:three>
+                          </configuration>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertNull(findPluginConfig("group", "id", "two:three"));
   }
 
   @Test 
   public void testMergingPluginConfigurationFromBuildAndProfiles() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <build>" +
-                     "      <plugins>" +
-                     "        <plugin>" +
-                     "          <groupId>org.apache.maven.plugins</groupId>" +
-                     "          <artifactId>maven-compiler-plugin</artifactId>" +
-                     "          <configuration>" +
-                     "            <target>1.4</target>" +
-                     "          </configuration>" +
-                     "        </plugin>" +
-                     "      </plugins>" +
-                     "    </build>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>two</id>" +
-                     "    <build>" +
-                     "      <plugins>" +
-                     "        <plugin>" +
-                     "          <groupId>org.apache.maven.plugins</groupId>" +
-                     "          <artifactId>maven-compiler-plugin</artifactId>" +
-                     "          <configuration>" +
-                     "            <source>1.4</source>" +
-                     "          </configuration>" +
-                     "        </plugin>" +
-                     "      </plugins>" +
-                     "    </build>" +
-                     "  </profile>" +
-                     "</profiles>" +
-
-                     "<build>" +
-                     "  <plugins>" +
-                     "    <plugin>" +
-                     "      <groupId>org.apache.maven.plugins</groupId>" +
-                     "      <artifactId>maven-compiler-plugin</artifactId>" +
-                     "      <configuration>" +
-                     "        <debug>true</debug>" +
-                     "      </configuration>" +
-                     "    </plugin>" +
-                     "  </plugins>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <build>
+                             <plugins>
+                               <plugin>
+                                 <groupId>org.apache.maven.plugins</groupId>
+                                 <artifactId>maven-compiler-plugin</artifactId>
+                                 <configuration>
+                                   <target>1.4</target>
+                                 </configuration>
+                               </plugin>
+                             </plugins>
+                           </build>
+                         </profile>
+                         <profile>
+                           <id>two</id>
+                           <build>
+                             <plugins>
+                               <plugin>
+                                 <groupId>org.apache.maven.plugins</groupId>
+                                 <artifactId>maven-compiler-plugin</artifactId>
+                                 <configuration>
+                                   <source>1.4</source>
+                                 </configuration>
+                               </plugin>
+                             </plugins>
+                           </build>
+                         </profile>
+                       </profiles>
+                       <build>
+                         <plugins>
+                           <plugin>
+                             <groupId>org.apache.maven.plugins</groupId>
+                             <artifactId>maven-compiler-plugin</artifactId>
+                             <configuration>
+                               <debug>true</debug>
+                             </configuration>
+                           </plugin>
+                         </plugins>
+                       </build>
+                       """);
     importProjectWithProfiles("one", "two");
 
     MavenPlugin plugin = findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
@@ -509,22 +524,23 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testCompilerPluginConfigurationRelease() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<build>" +
-                     "  <plugins>" +
-                     "    <plugin>" +
-                     "      <groupId>org.apache.maven.plugins</groupId>" +
-                     "      <artifactId>maven-compiler-plugin</artifactId>" +
-                     "      <version>3.6.0</version>" +
-                     "      <configuration>" +
-                     "        <release>7</release>" +
-                     "      </configuration>" +
-                     "    </plugin>" +
-                     "  </plugins>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <build>
+                         <plugins>
+                           <plugin>
+                             <groupId>org.apache.maven.plugins</groupId>
+                             <artifactId>maven-compiler-plugin</artifactId>
+                             <version>3.6.0</version>
+                             <configuration>
+                               <release>7</release>
+                             </configuration>
+                           </plugin>
+                         </plugins>
+                       </build>
+                       """);
 
     importProject();
 
@@ -533,49 +549,49 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testMergingPluginConfigurationFromBuildProfilesAndPluginsManagement() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <build>" +
-                     "      <plugins>" +
-                     "        <plugin>" +
-                     "          <groupId>org.apache.maven.plugins</groupId>" +
-                     "          <artifactId>maven-compiler-plugin</artifactId>" +
-                     "          <configuration>" +
-                     "            <target>1.4</target>" +
-                     "          </configuration>" +
-                     "        </plugin>" +
-                     "      </plugins>" +
-                     "    </build>" +
-                     "  </profile>" +
-                     "</profiles>" +
-
-                     "<build>" +
-                     "  <plugins>" +
-                     "    <plugin>" +
-                     "      <groupId>org.apache.maven.plugins</groupId>" +
-                     "      <artifactId>maven-compiler-plugin</artifactId>" +
-                     "      <configuration>" +
-                     "        <debug>true</debug>" +
-                     "      </configuration>" +
-                     "    </plugin>" +
-                     "  </plugins>" +
-                     "  <pluginManagement>" +
-                     "    <plugins>" +
-                     "      <plugin>" +
-                     "        <groupId>org.apache.maven.plugins</groupId>" +
-                     "        <artifactId>maven-compiler-plugin</artifactId>" +
-                     "        <configuration>" +
-                     "          <source>1.4</source>" +
-                     "        </configuration>" +
-                     "      </plugin>" +
-                     "    </plugins>" +
-                     "  </pluginManagement>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <build>
+                             <plugins>
+                               <plugin>
+                                 <groupId>org.apache.maven.plugins</groupId>
+                                 <artifactId>maven-compiler-plugin</artifactId>
+                                 <configuration>
+                                   <target>1.4</target>
+                                 </configuration>
+                               </plugin>
+                             </plugins>
+                           </build>
+                         </profile>
+                       </profiles>
+                       <build>
+                         <plugins>
+                           <plugin>
+                             <groupId>org.apache.maven.plugins</groupId>
+                             <artifactId>maven-compiler-plugin</artifactId>
+                             <configuration>
+                               <debug>true</debug>
+                             </configuration>
+                           </plugin>
+                         </plugins>
+                         <pluginManagement>
+                           <plugins>
+                             <plugin>
+                               <groupId>org.apache.maven.plugins</groupId>
+                               <artifactId>maven-compiler-plugin</artifactId>
+                               <configuration>
+                                 <source>1.4</source>
+                               </configuration>
+                             </plugin>
+                           </plugins>
+                         </pluginManagement>
+                       </build>
+                       """);
     importProjectWithProfiles("one");
 
     MavenPlugin plugin = findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
@@ -586,37 +602,39 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test 
   public void testDoesNotCollectProfilesWithoutId() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<profiles>" +
-                  "  <profile>" +
-                  "    <id>one</id>" +
-                  "  </profile>" +
-                  "  <profile>" +
-                  "  </profile>" +
-                  "</profiles>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <profiles>
+                      <profile>
+                        <id>one</id>
+                      </profile>
+                      <profile>
+                      </profile>
+                    </profiles>
+                    """);
 
     assertUnorderedElementsAreEqual(getMavenProject().getProfilesIds(), "one", "default");
   }
 
   @Test 
   public void testCollectingRepositories() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<repositories>" +
-                  "  <repository>" +
-                  "    <id>one</id>" +
-                  "    <url>http://repository.one.com</url>" +
-                  "  </repository>" +
-                  "  <repository>" +
-                  "    <id>two</id>" +
-                  "    <url>http://repository.two.com</url>" +
-                  "  </repository>" +
-                  "</repositories>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <repositories>
+                      <repository>
+                        <id>one</id>
+                        <url>http://repository.one.com</url>
+                      </repository>
+                      <repository>
+                        <id>two</id>
+                        <url>http://repository.two.com</url>
+                      </repository>
+                    </repositories>
+                    """);
 
     List<MavenRemoteRepository> result = getMavenProject().getRemoteRepositories();
     assertEquals(3, result.size());
@@ -627,16 +645,17 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test 
   public void testOverridingCentralRepository() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<repositories>" +
-                  "  <repository>" +
-                  "    <id>central</id>" +
-                  "    <url>http://my.repository.com</url>" +
-                  "  </repository>" +
-                  "</repositories>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <repositories>
+                      <repository>
+                        <id>central</id>
+                        <url>http://my.repository.com</url>
+                      </repository>
+                    </repositories>
+                    """);
 
     List<MavenRemoteRepository> result = getMavenProject().getRemoteRepositories();
     assertEquals(1, result.size());
@@ -647,32 +666,34 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
   @Test 
   public void testCollectingRepositoriesFromParent() {
     VirtualFile m1 = createModulePom("p1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>p1</artifactId>" +
-                                     "<version>1</version>" +
-                                     "<packaging>pom</packaging>" +
-
-                                     "<repositories>" +
-                                     "  <repository>" +
-                                     "    <id>one</id>" +
-                                     "    <url>http://repository.one.com</url>" +
-                                     "  </repository>" +
-                                     "  <repository>" +
-                                     "    <id>two</id>" +
-                                     "    <url>http://repository.two.com</url>" +
-                                     "  </repository>" +
-                                     "</repositories>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>p1</artifactId>
+                                       <version>1</version>
+                                       <packaging>pom</packaging>
+                                       <repositories>
+                                         <repository>
+                                           <id>one</id>
+                                           <url>http://repository.one.com</url>
+                                         </repository>
+                                         <repository>
+                                           <id>two</id>
+                                           <url>http://repository.two.com</url>
+                                         </repository>
+                                       </repositories>
+                                       """);
 
     VirtualFile m2 = createModulePom("p2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>p2</artifactId>" +
-                                     "<version>1</version>" +
-
-                                     "<parent>" +
-                                     "  <groupId>test</groupId>" +
-                                     "  <artifactId>p1</artifactId>" +
-                                     "  <version>1</version>" +
-                                     "</parent>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>p2</artifactId>
+                                       <version>1</version>
+                                       <parent>
+                                         <groupId>test</groupId>
+                                         <artifactId>p1</artifactId>
+                                         <version>1</version>
+                                       </parent>
+                                       """);
 
     importProjects(m1, m2);
 
@@ -746,19 +767,21 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test 
   public void testMavenModelMap() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<build>" +
-                  "  <finalName>foo</finalName>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>group1</groupId>" +
-                  "      <artifactId>id1</artifactId>" +
-                  "      <version>1</version>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <finalName>foo</finalName>
+                      <plugins>
+                        <plugin>
+                          <groupId>group1</groupId>
+                          <artifactId>id1</artifactId>
+                          <version>1</version>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     MavenProject p = getMavenProject();
     Map<String,String> map = p.getModelMap();
@@ -773,40 +796,42 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
   @Test 
   public void testDependenciesTree() {
     VirtualFile m1 = createModulePom("p1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>" +
-
-                                     "<dependencies>" +
-                                     "  <dependency>" +
-                                     "    <groupId>test</groupId>" +
-                                     "    <artifactId>m2</artifactId>" +
-                                     "    <version>1</version>" +
-                                     "  </dependency>" +
-                                     "  <dependency>" +
-                                     "    <groupId>test</groupId>" +
-                                     "    <artifactId>lib1</artifactId>" +
-                                     "    <version>1</version>" +
-                                     "  </dependency>" +
-                                     "</dependencies>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       <dependencies>
+                                         <dependency>
+                                           <groupId>test</groupId>
+                                           <artifactId>m2</artifactId>
+                                           <version>1</version>
+                                         </dependency>
+                                         <dependency>
+                                           <groupId>test</groupId>
+                                           <artifactId>lib1</artifactId>
+                                           <version>1</version>
+                                         </dependency>
+                                       </dependencies>
+                                       """);
 
     VirtualFile m2 = createModulePom("p2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>" +
-
-                                     "<dependencies>" +
-                                     "  <dependency>" +
-                                     "    <groupId>junit</groupId>" +
-                                     "    <artifactId>junit</artifactId>" +
-                                     "    <version>4.0</version>" +
-                                     "  </dependency>" +
-                                     "  <dependency>" +
-                                     "    <groupId>test</groupId>" +
-                                     "    <artifactId>lib2</artifactId>" +
-                                     "    <version>1</version>" +
-                                     "  </dependency>" +
-                                     "</dependencies>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       <dependencies>
+                                         <dependency>
+                                           <groupId>junit</groupId>
+                                           <artifactId>junit</artifactId>
+                                           <version>4.0</version>
+                                         </dependency>
+                                         <dependency>
+                                           <groupId>test</groupId>
+                                           <artifactId>lib2</artifactId>
+                                           <version>1</version>
+                                         </dependency>
+                                       </dependencies>
+                                       """);
 
     importProjects(m1, m2);
     if(!isNewImportingProcess) {
@@ -819,32 +844,34 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
   @Test 
   public void testDependenciesTreeWithTypesAndClassifiers() {
     VirtualFile m1 = createModulePom("p1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>" +
-
-                                     "<dependencies>" +
-                                     "  <dependency>" +
-                                     "    <groupId>test</groupId>" +
-                                     "    <artifactId>m2</artifactId>" +
-                                     "    <version>1</version>" +
-                                     "    <type>pom</type>" +
-                                     "    <classifier>test</classifier>" +
-                                     "  </dependency>" +
-                                     "</dependencies>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       <dependencies>
+                                         <dependency>
+                                           <groupId>test</groupId>
+                                           <artifactId>m2</artifactId>
+                                           <version>1</version>
+                                           <type>pom</type>
+                                           <classifier>test</classifier>
+                                         </dependency>
+                                       </dependencies>
+                                       """);
 
     VirtualFile m2 = createModulePom("p2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>" +
-
-                                     "<dependencies>" +
-                                     "  <dependency>" +
-                                     "    <groupId>test</groupId>" +
-                                     "    <artifactId>lib</artifactId>" +
-                                     "    <version>1</version>" +
-                                     "  </dependency>" +
-                                     "</dependencies>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       <dependencies>
+                                         <dependency>
+                                           <groupId>test</groupId>
+                                           <artifactId>lib</artifactId>
+                                           <version>1</version>
+                                         </dependency>
+                                       </dependencies>
+                                       """);
 
     importProjects(m1, m2);
     if(!isNewImportingProcess) {
@@ -858,35 +885,37 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
   @Test 
   public void testDependenciesTreeWithConflict() {
     VirtualFile m1 = createModulePom("p1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>" +
-
-                                     "<dependencies>" +
-                                     "  <dependency>" +
-                                     "    <groupId>test</groupId>" +
-                                     "    <artifactId>m2</artifactId>" +
-                                     "    <version>1</version>" +
-                                     "  </dependency>" +
-                                     "  <dependency>" +
-                                     "    <groupId>test</groupId>" +
-                                     "    <artifactId>lib</artifactId>" +
-                                     "    <version>1</version>" +
-                                     "  </dependency>" +
-                                     "</dependencies>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       <dependencies>
+                                         <dependency>
+                                           <groupId>test</groupId>
+                                           <artifactId>m2</artifactId>
+                                           <version>1</version>
+                                         </dependency>
+                                         <dependency>
+                                           <groupId>test</groupId>
+                                           <artifactId>lib</artifactId>
+                                           <version>1</version>
+                                         </dependency>
+                                       </dependencies>
+                                       """);
 
     VirtualFile m2 = createModulePom("p2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>" +
-
-                                     "<dependencies>" +
-                                     "  <dependency>" +
-                                     "    <groupId>test</groupId>" +
-                                     "    <artifactId>lib</artifactId>" +
-                                     "    <version>2</version>" +
-                                     "  </dependency>" +
-                                     "</dependencies>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       <dependencies>
+                                         <dependency>
+                                           <groupId>test</groupId>
+                                           <artifactId>lib</artifactId>
+                                           <version>2</version>
+                                         </dependency>
+                                       </dependencies>
+                                       """);
 
     importProjects(m1, m2);
     if(!isNewImportingProcess) {
@@ -903,48 +932,51 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
   @Test 
   public void testDependencyTreeDuplicates() {
     VirtualFile m1 = createModulePom("p1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>" +
-
-                                     "<dependencies>" +
-                                     "  <dependency>" +
-                                     "    <groupId>test</groupId>" +
-                                     "    <artifactId>m2</artifactId>" +
-                                     "    <version>1</version>" +
-                                     "  </dependency>" +
-                                     "  <dependency>" +
-                                     "    <groupId>test</groupId>" +
-                                     "    <artifactId>m3</artifactId>" +
-                                     "    <version>1</version>" +
-                                     "  </dependency>" +
-                                     "</dependencies>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       <dependencies>
+                                         <dependency>
+                                           <groupId>test</groupId>
+                                           <artifactId>m2</artifactId>
+                                           <version>1</version>
+                                         </dependency>
+                                         <dependency>
+                                           <groupId>test</groupId>
+                                           <artifactId>m3</artifactId>
+                                           <version>1</version>
+                                         </dependency>
+                                       </dependencies>
+                                       """);
 
     VirtualFile m2 = createModulePom("p2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>" +
-
-                                     "<dependencies>" +
-                                     "  <dependency>" +
-                                     "    <groupId>test</groupId>" +
-                                     "    <artifactId>lib</artifactId>" +
-                                     "    <version>1</version>" +
-                                     "  </dependency>" +
-                                     "</dependencies>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       <dependencies>
+                                         <dependency>
+                                           <groupId>test</groupId>
+                                           <artifactId>lib</artifactId>
+                                           <version>1</version>
+                                         </dependency>
+                                       </dependencies>
+                                       """);
 
     VirtualFile m3 = createModulePom("p3",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m3</artifactId>" +
-                                     "<version>1</version>" +
-
-                                     "<dependencies>" +
-                                     "  <dependency>" +
-                                     "    <groupId>test</groupId>" +
-                                     "    <artifactId>lib</artifactId>" +
-                                     "    <version>1</version>" +
-                                     "  </dependency>" +
-                                     "</dependencies>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m3</artifactId>
+                                       <version>1</version>
+                                       <dependencies>
+                                         <dependency>
+                                           <groupId>test</groupId>
+                                           <artifactId>lib</artifactId>
+                                           <version>1</version>
+                                         </dependency>
+                                       </dependencies>
+                                       """);
 
     importProjects(m1, m2, m3);
     if(!isNewImportingProcess) {

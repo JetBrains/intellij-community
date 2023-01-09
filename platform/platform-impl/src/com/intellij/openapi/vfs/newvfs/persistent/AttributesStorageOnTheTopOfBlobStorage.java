@@ -6,7 +6,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -32,8 +32,8 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
   //      header:  fileId[4b]   (ref back to file owned attributes)
   //      entry:  attributeId[4b], inlineSizeOrRefId[4b], inlineData[inlineSizeOrRefId]?
   //
-  //      Attribute values < INLINE_ATTRIBUTE_MAX_SIZE stored inline, size in .inlineSizeOrRefId,
-  //      Attribute values > INLINE_ATTRIBUTE_MAX_SIZE stored in dedicated records, with
+  //      Attribute values <= INLINE_ATTRIBUTE_MAX_SIZE stored inline, size in .inlineSizeOrRefId,
+  //      Attribute values >  INLINE_ATTRIBUTE_MAX_SIZE stored in dedicated records, with
   //      dedicatedRecordId = (inlineSizeOrRefId-INLINE_ATTRIBUTE_MAX_SIZE), inlineData is absent
   //      for them.
   //
@@ -497,8 +497,7 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
       }
       catch (Throwable t) {
         FSRecords.LOG.warn("Error storing " + attribute + " of file(" + fileId + ")");
-        FSRecords.handleError(t);
-        throw new RuntimeException(t);
+        throw FSRecords.handleError(t);
       }
       finally {
         lock.writeLock().unlock();

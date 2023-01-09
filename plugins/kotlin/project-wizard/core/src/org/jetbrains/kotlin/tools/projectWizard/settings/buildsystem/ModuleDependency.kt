@@ -73,7 +73,7 @@ sealed class ModuleDependencyType(
     )
 
     object AndroidSinglePlatformToMPP : ModuleDependencyType(
-        from = AndroidSinglePlatformModuleConfigurator::class,
+        from = AndroidSinglePlatformModuleConfiguratorBase::class,
         to = MppModuleConfigurator::class
     )
 

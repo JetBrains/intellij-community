@@ -2,11 +2,10 @@ package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
@@ -49,16 +48,16 @@ public final class FieldNameConstantsFieldProcessor extends AbstractFieldProcess
   }
 
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemSink builder) {
     return LombokProcessorUtil.isLevelVisible(psiAnnotation) && checkIfFieldNameIsValidAndWarn(psiAnnotation, psiField, builder);
   }
 
   public static boolean checkIfFieldNameIsValidAndWarn(@NotNull PsiAnnotation psiAnnotation,
                                                        @NotNull PsiField psiField,
-                                                       @NotNull ProblemBuilder builder) {
+                                                       @NotNull ProblemSink builder) {
     final boolean isValid = isValidFieldNameConstant(psiAnnotation, psiField);
     if (!isValid) {
-      builder.addWarning(LombokBundle.message("inspection.message.not.generating.constant"));
+      builder.addWarningMessage("inspection.message.not.generating.constant");
     }
     return isValid;
   }
@@ -75,7 +74,7 @@ public final class FieldNameConstantsFieldProcessor extends AbstractFieldProcess
   @Override
   protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final PsiClass psiClass = psiField.getContainingClass();
-    if (null != psiClass && null != psiField.getName()) {
+    if (null != psiClass) {
       target.add(createFieldNameConstant(psiField, psiClass, psiAnnotation));
     }
   }

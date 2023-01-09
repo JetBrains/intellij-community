@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
+import com.intellij.collaboration.ui.util.bindDisabled
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.collaboration.util.URIUtil
 import com.intellij.openapi.components.service
@@ -21,7 +22,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowTabViewModel.NestedViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsPanelFactory
-import org.jetbrains.plugins.gitlab.ui.GitLabBundle
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
@@ -39,7 +40,7 @@ internal class GitLabToolWindowTabController(private val project: Project,
 
         val component = when (vm) {
           is NestedViewModel.Selectors -> createSelectorsComponent(scope, vm)
-          is NestedViewModel.MergeRequests -> createMergeRequestsComponent(scope, vm)
+          is NestedViewModel.MergeRequests -> createMergeRequestsComponent(project, scope, vm)
         }
 
         CollaborationToolsUIUtil.setComponentPreservingFocus(content, component)
@@ -62,9 +63,11 @@ internal class GitLabToolWindowTabController(private val project: Project,
       },
       detailsProvider = accountsDetailsProvider,
       accountsPopupActionsSupplier = { createPopupLoginActions(selectorVm, it) },
-      credsMissingText = GitLabBundle.message("account.token.missing"),
       submitActionText = GitLabBundle.message("view.merge.requests.button"),
-      loginButtons = createLoginButtons(scope, selectorVm)
+      loginButtons = createLoginButtons(scope, selectorVm),
+      errorPresenter = GitLabSelectorErrorStatusPresenter(project, scope, selectorVm.accountManager) {
+        selectorVm.submitSelection()
+      }
     )
 
     scope.launch {
@@ -90,8 +93,8 @@ internal class GitLabToolWindowTabController(private val project: Project,
     }
   }
 
-  private fun createMergeRequestsComponent(scope: CoroutineScope, vm: NestedViewModel.MergeRequests): JComponent =
-    GitLabMergeRequestsPanelFactory().create(scope, vm.listVm)
+  private fun createMergeRequestsComponent(project: Project, scope: CoroutineScope, vm: NestedViewModel.MergeRequests): JComponent =
+    GitLabMergeRequestsPanelFactory().create(project, scope, vm.listVm)
 
   private fun createLoginButtons(scope: CoroutineScope, vm: GitLabRepositoryAndAccountSelectorViewModel)
     : List<JButton> {
@@ -104,6 +107,7 @@ internal class GitLabToolWindowTabController(private val project: Project,
           vm.requestTokenLogin(false, true)
         }
 
+        bindDisabled(scope, vm.busyState)
         bindVisibility(scope, vm.tokenLoginAvailableState)
       }
     )

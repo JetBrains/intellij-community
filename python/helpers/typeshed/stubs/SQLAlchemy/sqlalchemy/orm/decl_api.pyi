@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from typing import Any, ClassVar, TypeVar, overload
+from typing_extensions import TypeAlias
 
 from ..engine.interfaces import Connectable
 from ..sql.schema import MetaData
@@ -21,7 +22,7 @@ class _DeclarativeBase(Any):  # super classes are dynamic
     __class_getitem__: ClassVar[Any]
 
 # Meta class (or function) that creates a _DeclarativeBase class.
-_DeclarativeBaseMeta = Callable[[str, tuple[type[Any], ...], dict[str, Any]], _DeclT]
+_DeclarativeBaseMeta: TypeAlias = Callable[[str, tuple[type[Any], ...], dict[str, Any]], _DeclT]
 
 def has_inherited_table(cls: type[Any]) -> bool: ...
 

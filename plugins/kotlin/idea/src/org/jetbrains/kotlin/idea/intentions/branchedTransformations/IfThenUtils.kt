@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations
 
 import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.LocalSearchScope
@@ -24,9 +25,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlinePropertyHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
-import org.jetbrains.kotlin.idea.util.application.invokeLater
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -113,20 +112,19 @@ fun KtExpression.convertToIfNotNullExpression(
     thenClause: KtExpression,
     elseClause: KtExpression?
 ): KtIfExpression {
-    val condition = KtPsiFactory(this).createExpressionByPattern("$0 != null", conditionLhs)
+    val condition = KtPsiFactory(project).createExpressionByPattern("$0 != null", conditionLhs)
     return this.convertToIfStatement(condition, thenClause, elseClause)
 }
 
 fun KtExpression.convertToIfNullExpression(conditionLhs: KtExpression, thenClause: KtExpression): KtIfExpression {
-    val condition = KtPsiFactory(this).createExpressionByPattern("$0 == null", conditionLhs)
+    val condition = KtPsiFactory(project).createExpressionByPattern("$0 == null", conditionLhs)
     return this.convertToIfStatement(condition, thenClause)
 }
 
 fun KtExpression.convertToIfStatement(condition: KtExpression, thenClause: KtExpression, elseClause: KtExpression? = null): KtIfExpression =
-    replaced(KtPsiFactory(this).createIf(condition, thenClause, elseClause))
+    replaced(KtPsiFactory(project).createIf(condition, thenClause, elseClause))
 
 fun KtIfExpression.introduceValueForCondition(occurrenceInThenClause: KtExpression, editor: Editor?) {
-    val project = this.project
     val occurrenceInConditional = when (val condition = condition) {
         is KtBinaryExpression -> condition.left
         is KtIsExpression -> condition.leftHandSide

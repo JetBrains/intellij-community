@@ -26,5 +26,5 @@ import java.util.Set;
 public interface ModifierAwareArrangementEntry extends ArrangementEntry {
   
   @NotNull
-  Set<ArrangementSettingsToken> getModifiers();
+  Set<? extends ArrangementSettingsToken> getModifiers();
 }

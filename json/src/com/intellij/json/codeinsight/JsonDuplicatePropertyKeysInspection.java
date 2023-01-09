@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.codeinsight;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonElementVisitor;
@@ -31,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public final class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
+public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
   private static final String COMMENT = "$comment";
 
   @Override
@@ -44,22 +46,31 @@ public final class JsonDuplicatePropertyKeysInspection extends LocalInspectionTo
         for (JsonProperty property : o.getPropertyList()) {
           keys.putValue(property.getName(), property.getNameElement());
         }
-        for (Map.Entry<String, Collection<PsiElement>> entry : keys.entrySet()) {
-          final Collection<PsiElement> sameNamedKeys = entry.getValue();
-          final String entryKey = entry.getKey();
-          if (sameNamedKeys.size() > 1 && (!isSchemaFile || !COMMENT.equalsIgnoreCase(entryKey))) {
-            for (PsiElement element : sameNamedKeys) {
-              holder.registerProblem(element, JsonBundle.message("inspection.duplicate.keys.msg.duplicate.keys", entryKey),
-                                     new NavigateToDuplicatesFix(sameNamedKeys, element, entryKey));
-            }
-          }
-        }
+        visitKeys(keys, isSchemaFile, holder);
       }
     };
   }
 
+  protected static void visitKeys(MultiMap<String, PsiElement> keys, boolean isSchemaFile, @NotNull ProblemsHolder holder) {
+    for (Map.Entry<String, Collection<PsiElement>> entry : keys.entrySet()) {
+      final Collection<PsiElement> sameNamedKeys = entry.getValue();
+      final String entryKey = entry.getKey();
+      if (sameNamedKeys.size() > 1 && (!isSchemaFile || !COMMENT.equalsIgnoreCase(entryKey))) {
+        for (PsiElement element : sameNamedKeys) {
+          holder.registerProblem(element, JsonBundle.message("inspection.duplicate.keys.msg.duplicate.keys", entryKey),
+                                 getNavigateToDuplicatesFix(sameNamedKeys, element, entryKey));
+        }
+      }
+    }
+  }
+
+  protected static @NotNull NavigateToDuplicatesFix getNavigateToDuplicatesFix(Collection<PsiElement> sameNamedKeys,
+                                                                               PsiElement element,
+                                                                               String entryKey) {
+    return new NavigateToDuplicatesFix(sameNamedKeys, element, entryKey);
+  }
+
   private static final class NavigateToDuplicatesFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-    @SafeFieldForPreview
     private final @NotNull Collection<SmartPsiElementPointer<PsiElement>> mySameNamedKeys;
     private final @NotNull String myEntryKey;
 
@@ -77,6 +88,16 @@ public final class JsonDuplicatePropertyKeysInspection extends LocalInspectionTo
     @Override
     public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return getText();
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+      return IntentionPreviewInfo.EMPTY;
     }
 
     @Override

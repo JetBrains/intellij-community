@@ -78,7 +78,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
 
   @Override
-  protected void findUsages(@NotNull final List<FixableUsageInfo> usages) {
+  protected void findUsages(final @NotNull List<? super FixableUsageInfo> usages) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
     final PsiElementFactory elementFactory = facade.getElementFactory();
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();

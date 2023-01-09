@@ -86,7 +86,7 @@ public final class FileStatusFactoryImpl extends FileStatusFactory {
     public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
       PluginId pluginId = pluginDescriptor.getPluginId();
       FileStatusFactory factory = getInstance();
-      if (pluginId != null && factory instanceof FileStatusFactoryImpl) {
+      if (factory instanceof FileStatusFactoryImpl) {
         ((FileStatusFactoryImpl)factory).onPluginUnload(pluginId);
       }
     }

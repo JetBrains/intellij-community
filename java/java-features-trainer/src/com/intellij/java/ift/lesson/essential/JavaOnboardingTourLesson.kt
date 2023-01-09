@@ -88,9 +88,9 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
   private lateinit var openLearnTaskId: TaskContext.TaskId
   private var useDelay: Boolean = false
 
-  private val demoConfigurationName: String = "Welcome"
   private val demoFileDirectory: String = "src"
-  private val demoFileName: String = "$demoConfigurationName.java"
+  private val demoFileNameWithoutExtension: String = "Welcome"
+  private val demoFileName: String = "$demoFileNameWithoutExtension.java"
 
   private val uiSettings get() = UISettings.getInstance()
 
@@ -133,7 +133,8 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       jdkAtStart = getCurrentJdkVersionString(project)
       useDelay = true
       invokeActionForFocusContext(getActionById("Stop"))
-      configurations().forEach { runManager().removeConfiguration(it) }
+      val runManager = RunManager.getInstance(project)
+      runManager.allSettings.forEach(runManager::removeConfiguration)
 
       val root = ProjectUtils.getCurrentLearningProjectRoot()
       val srcDir = root.findChild(demoFileDirectory) ?: error("'src' directory not found.")
@@ -516,7 +517,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
     }
 
     fun isDemoFilePath(path: TreePath) =
-      path.pathCount >= 4 && path.getPathComponent(3).isToStringContains(demoConfigurationName)
+      path.pathCount >= 4 && path.getPathComponent(3).isToStringContains(demoFileNameWithoutExtension)
 
     task {
       text(JavaLessonsBundle.message("java.onboarding.balloon.source.directory", strong(demoFileDirectory)),
@@ -665,8 +666,4 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
 
     text(JavaLessonsBundle.message("java.onboarding.case.changed"))
   }
-
-  private fun TaskRuntimeContext.runManager() = RunManager.getInstance(project)
-  private fun TaskRuntimeContext.configurations() =
-    runManager().allSettings.filter { it.name.contains(demoConfigurationName) }
 }

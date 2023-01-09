@@ -1,11 +1,11 @@
 import sys
 from _typeshed import Self
 from types import TracebackType
-from typing import Any, Union
-from typing_extensions import Literal, final
+from typing import Any
+from typing_extensions import Literal, TypeAlias, final
 
 if sys.platform == "win32":
-    _KeyType = Union[HKEYType, int]
+    _KeyType: TypeAlias = HKEYType | int
     def CloseKey(__hkey: _KeyType) -> None: ...
     def ConnectRegistry(__computer_name: str | None, __key: _KeyType) -> HKEYType: ...
     def CreateKey(__key: _KeyType, __sub_key: str | None) -> HKEYType: ...

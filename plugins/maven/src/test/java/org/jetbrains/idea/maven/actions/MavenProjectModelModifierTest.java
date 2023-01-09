@@ -3,14 +3,15 @@ package org.jetbrains.idea.maven.actions;
 
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
+import com.intellij.openapi.roots.JavaProjectModelModifier;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.concurrency.Promise;
@@ -37,9 +38,11 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
 
   @Test
   public void testAddExternalLibraryDependency() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     Promise<Void> result =
       getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")),
@@ -62,9 +65,11 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
 
   @Test
   public void testAddExternalLibraryDependencyWithEqualMinAndMaxVersions() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     Promise<Void> result =
       getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
@@ -118,9 +123,11 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
 
   @Test
   public void testAddLibraryDependencyReleaseVersion() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     Promise<Void> result = getExtension().addExternalLibraryDependency(
       Collections.singletonList(getModule("project")), new ExternalLibraryDescriptor("commons-io", "commons-io", "999.999", "999.999"),
@@ -133,12 +140,16 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
   @Test
   public void testAddModuleDependency() {
     createTwoModulesPom("m1", "m2");
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>");
-    createModulePom("m2", "<groupId>test</groupId>" +
-                          "<artifactId>m2</artifactId>" +
-                          "<version>1</version>");
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      """);
+    createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
     importProject();
 
     Promise<Void> result = getExtension().addModuleDependency(getModule("m1"), getModule("m2"), DependencyScope.COMPILE, false);
@@ -150,20 +161,24 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
   @Test
   public void testAddLibraryDependency() {
     createTwoModulesPom("m1", "m2");
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>");
-    createModulePom("m2", "<groupId>test</groupId>" +
-                          "<artifactId>m2</artifactId>" +
-                          "<version>1</version>" +
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>junit</groupId>" +
-                          "    <artifactId>junit</artifactId>" +
-                          "    <version>4.0</version>" +
-                          "    <scope>test</scope>" +
-                          "  </dependency>" +
-                          "</dependencies>");
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      """);
+    createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>4.0</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+      """);
     importProject();
 
     String libName = "Maven: junit:junit:4.0";
@@ -179,9 +194,11 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
 
   @Test
   public void testChangeLanguageLevel() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     Module module = getModule("project");
     assertEquals(LanguageLevel.JDK_1_5, LanguageLevelUtil.getEffectiveLanguageLevel(module));
@@ -199,9 +216,11 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
 
   @Test
   public void testChangeLanguageLevelPreview() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
     Module module = getModule("project");
     assertEquals(LanguageLevel.JDK_1_5, LanguageLevelUtil.getEffectiveLanguageLevel(module));
     Promise<Void> result = getExtension().changeLanguageLevel(module, LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal() + 1]);
@@ -213,14 +232,14 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
   }
 
   private void createTwoModulesPom(final String m1, final String m2) {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom("<groupId>test</groupId>\n" +
+                     "<artifactId>project</artifactId>\n" +
+                     "<packaging>pom</packaging>\n" +
+                     "<version>1</version>\n" +
                      "<modules>" +
-                     "  <module>" + m1 + "</module>" +
-                     "  <module>" + m2 + "</module>" +
-                     "</modules>");
+                     "  <module>" + m1 + "</module>\n" +
+                     "  <module>" + m2 + "</module>\n" +
+                     "</modules>\n");
   }
 
   private String assertHasDependency(VirtualFile pom, final String groupId, final String artifactId) {

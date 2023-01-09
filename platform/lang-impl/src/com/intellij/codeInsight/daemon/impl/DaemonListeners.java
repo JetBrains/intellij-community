@@ -75,7 +75,8 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -86,6 +87,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public final class DaemonListeners implements Disposable {
   private static final Logger LOG = Logger.getInstance(DaemonListeners.class);
@@ -114,7 +116,7 @@ public final class DaemonListeners implements Disposable {
       return;
     }
 
-    MessageBusConnection connection = messageBus.connect();
+    SimpleMessageBusConnection connection = messageBus.simpleConnect();
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
@@ -141,6 +143,7 @@ public final class DaemonListeners implements Disposable {
       @Override
       public void bulkUpdateStarting(@NotNull Document document) {
         if (worthBothering(document, myProject)) {
+          // avoid restarts until bulk mode is finished and daemon restarted
           stopDaemon(false, "Document bulk modifications started");
         }
       }
@@ -174,7 +177,7 @@ public final class DaemonListeners implements Disposable {
         return;
       }
 
-      myActiveEditors = new ArrayList<>(activeEditors);
+      myActiveEditors = activeEditors.isEmpty() ? Collections.emptyList() : new ArrayList<>(activeEditors);
       // do not stop daemon if idea loses/gains focus
       stopDaemon(true, "Active editor change");
       if (ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext()) {
@@ -183,8 +186,9 @@ public final class DaemonListeners implements Disposable {
       }
 
       ErrorStripeUpdateManager errorStripeUpdateManager = ErrorStripeUpdateManager.getInstance(myProject);
+      PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
       for (Editor editor : activeEditors) {
-        PsiFile file = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument());
+        PsiFile file = psiDocumentManager.getCachedPsiFile(editor.getDocument());
         errorStripeUpdateManager.repaintErrorStripePanel(editor, file);
       }
     });
@@ -199,16 +203,15 @@ public final class DaemonListeners implements Disposable {
         Editor editor = event.getEditor();
         Document document = editor.getDocument();
         Project editorProject = editor.getProject();
-        // worthBothering() checks for getCachedPsiFile, so call getPsiFile here
-        PsiFile file = editorProject == null ? null : PsiDocumentManager.getInstance(editorProject).getPsiFile(document);
         boolean showing = UIUtil.isShowing(editor.getContentComponent());
         boolean worthBothering = worthBothering(document, editorProject);
         if (!showing || !worthBothering) {
-          LOG.debug("Not worth bothering about editor created for : " + file + " because editor isShowing(): " +
+          LOG.debug("Not worth bothering about editor created for: " + editor.getVirtualFile() + " because editor isShowing(): " +
                     showing + "; project is open and file is mine: " + worthBothering);
           return;
         }
-
+        // worthBothering() checks for getCachedPsiFile, so call getPsiFile here
+        PsiFile file = editorProject == null ? null : PsiDocumentManager.getInstance(editorProject).getPsiFile(document);
         ErrorStripeUpdateManager.getInstance(myProject).repaintErrorStripePanel(editor, file);
       }
 
@@ -217,7 +220,7 @@ public final class DaemonListeners implements Disposable {
         myActiveEditors.remove(event.getEditor());
         // mem leak after closing last editor otherwise
         if (myActiveEditors.isEmpty()) {
-          UIUtil.invokeLaterIfNeeded(() -> {
+          EdtInvocationManager.invokeLaterIfNeeded(() -> {
             IntentionsUI intentionUI = myProject.getServiceIfCreated(IntentionsUI.class);
             if (intentionUI != null) {
               intentionUI.invalidateForEditor(event.getEditor());
@@ -337,7 +340,6 @@ public final class DaemonListeners implements Disposable {
 
     connection.subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, () -> stopDaemonAndRestartAllFiles("Severities changed"));
 
-    //noinspection rawtypes
     connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerListener() {
       @Override
       public void facetRenamed(@NotNull Facet facet, @NotNull String oldName) {
@@ -374,7 +376,7 @@ public final class DaemonListeners implements Disposable {
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         PsiManager.getInstance(myProject).dropPsiCaches();
-        myDaemonCodeAnalyzer.cancelUpdateProgress(false, "plugin unload: " + pluginDescriptor);
+        myDaemonCodeAnalyzer.cancelAllUpdateProgresses(false, "plugin unload: " + pluginDescriptor);
         removeHighlightersOnPluginUnload(pluginDescriptor);
         myDaemonCodeAnalyzer.clearProgressIndicator();
         myDaemonCodeAnalyzer.cleanAllFileLevelHighlights();
@@ -392,6 +394,11 @@ public final class DaemonListeners implements Disposable {
         if (file != null) {
           // force clearing all PSI caches, including those in WholeFileInspectionFactory
           PsiManager.getInstance(myProject).dropPsiCaches();
+          for (Editor editor : myActiveEditors) {
+            if (Objects.equals(editor.getVirtualFile(), file.getVirtualFile())) {
+              ErrorStripeUpdateManager.getInstance(myProject).repaintErrorStripePanel(editor, file);
+            }
+          }
         }
       }));
     HeavyProcessLatch.INSTANCE.addListener(this, __ -> stopDaemon(true, "re-scheduled to execute after heavy processing finished"));
@@ -401,7 +408,7 @@ public final class DaemonListeners implements Disposable {
     name.addChangeListener(() -> stopDaemonAndRestartAllFiles(message), this);
   }
 
-  private boolean worthBothering(@Nullable Document document, Project project) {
+  private boolean worthBothering(@Nullable Document document, @Nullable Project project) {
     if (document == null) {
       return true;
     }
@@ -478,19 +485,7 @@ public final class DaemonListeners implements Disposable {
       }
 
       String commandName = event.getCommandName();
-
-      String cutActionName = CUT_ACTION_NAME;
-      if (cutActionName == null) {
-        ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
-        if (actionManager != null) {
-          cutActionName = actionManager.getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
-          //noinspection AssignmentToStaticFieldFromInstanceMethod
-          CUT_ACTION_NAME = cutActionName;
-        }
-      }
-
-      cutOperationJustHappened = commandName != null && !commandName.isEmpty() && !commandName.startsWith("Editor") &&
-                                 commandName.equals(cutActionName);
+      cutOperationJustHappened = commandName != null && commandName.equals(getCutActionName());
       if (!myDaemonCodeAnalyzer.isRunning()) {
         return;
       }
@@ -533,6 +528,19 @@ public final class DaemonListeners implements Disposable {
         stopDaemon(true, "Command finish");
       }
     }
+  }
+
+  private static String getCutActionName() {
+    String cutActionName = CUT_ACTION_NAME;
+    if (cutActionName == null) {
+      ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
+      if (actionManager != null) {
+        cutActionName = actionManager.getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        CUT_ACTION_NAME = cutActionName;
+      }
+    }
+    return cutActionName;
   }
 
   private final class MyTodoListener implements PropertyChangeListener {

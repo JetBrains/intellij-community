@@ -242,8 +242,8 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
   @NotNull
   public List<Configuration> getConfigurationsWithUuid(@NotNull String uuid) {
-    final List<Configuration> configurations = ContainerUtil.filter(myConfigurations, c -> uuid.equals(c.getUuid()));
-    configurations.sort(Comparator.comparingInt(Configuration::getOrder));
+    final List<Configuration> configurations = ContainerUtil.sorted(ContainerUtil.filter(myConfigurations, c -> uuid.equals(c.getUuid())),
+    Comparator.comparingInt(Configuration::getOrder));
     return configurations;
   }
 
@@ -290,7 +290,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     @Override
     @NotNull
     public String getName() {
-      return SSRBundle.message("SSRInspection.replace.with", myReplacementInfo.getReplacement());
+      return CommonQuickFixBundle.message("fix.replace.with.x", myReplacementInfo.getReplacement());
     }
 
     @Override
@@ -386,7 +386,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return result;
   }
 
-  private Matcher buildCompiledConfiguration(Configuration configuration, @NotNull Project project) {
+  private static Matcher buildCompiledConfiguration(Configuration configuration, @NotNull Project project) {
     try {
       final MatchOptions matchOptions = configuration.getMatchOptions();
       final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, false, true);

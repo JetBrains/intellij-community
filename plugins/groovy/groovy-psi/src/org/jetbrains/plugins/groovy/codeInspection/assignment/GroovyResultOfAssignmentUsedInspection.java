@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
   /**
@@ -36,11 +37,9 @@ public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
   public boolean inspectClosures = false;
 
   @Override
-  @Nullable
-  public JComponent createGroovyOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(GroovyBundle.message("checkbox.inspect.anonymous.closures"), "inspectClosures");
-    return optionsPanel;
+  public @NotNull OptPane getGroovyOptionsPane() {
+    return pane(
+      checkbox("inspectClosures", GroovyBundle.message("checkbox.inspect.anonymous.closures")));
   }
 
   @Override

@@ -811,7 +811,7 @@ public class GradleExecutionHelper {
       }
     }
     catch (Throwable t) {
-      LOG.debug(t);
+      LOG.warn("Failed to obtain build environment from Gradle daemon.", t);
     }
     return buildEnvironment;
   }

@@ -3,10 +3,7 @@ package com.intellij.codeInspection.dataFlow.inference
 
 import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
-import com.intellij.codeInspection.dataFlow.ContractReturnValue
-import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
-import com.intellij.codeInspection.dataFlow.NullabilityUtil
-import com.intellij.codeInspection.dataFlow.StandardMethodContract
+import com.intellij.codeInspection.dataFlow.*
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.*
 import com.intellij.codeInspection.dataFlow.inference.ContractInferenceInterpreter.withConstraint
 import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction
@@ -53,7 +50,9 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
         }
         if (constraint != null) {
           methodContracts = listOf(StandardMethodContract(arrayOf(constraint), ContractReturnValue.returnTrue()),
-                                   StandardMethodContract(arrayOf(ANY_VALUE), ContractReturnValue.returnFalse()))
+                                   StandardMethodContract(arrayOf(constraint.negate()), ContractReturnValue.returnFalse())) +
+                            (if (arguments.firstOrNull()?.type is PsiPrimitiveType) listOf() else 
+                              listOf(StandardMethodContract(arrayOf(NULL_VALUE), ContractReturnValue.returnFalse()))) 
         }
       }
     }

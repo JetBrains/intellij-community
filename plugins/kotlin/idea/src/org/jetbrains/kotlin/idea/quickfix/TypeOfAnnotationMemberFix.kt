@@ -28,7 +28,7 @@ class TypeOfAnnotationMemberFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val psiElement = element ?: return
-        psiElement.replace(KtPsiFactory(psiElement).createType(fixedType))
+        psiElement.replace(KtPsiFactory(project).createType(fixedType))
     }
 
     companion object : KotlinSingleIntentionActionFactory() {

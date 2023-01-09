@@ -83,7 +83,6 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     // for backward compatibility: com.microsoft.tooling.msservices.intellij.azure:3.0.11
     myWorkingDirectoryField = new TextFieldWithBrowseButton();
 
-    //noinspection DialogTitleCapitalization
     myWorkingDirectoryField.addBrowseFolderListener(ExecutionBundle.message("select.working.directory.message"), null,
                                                     getProject(),
                                                     FileChooserDescriptorFactory.createSingleFolderDescriptor(),
@@ -101,8 +100,6 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     if (isMacroSupportEnabled()) {
       initMacroSupport();
     }
-
-    setPreferredSize(new Dimension(10, 10));
 
     copyDialogCaption(myProgramParametersComponent);
   }

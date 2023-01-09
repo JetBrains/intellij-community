@@ -13,6 +13,8 @@ math.attributes &=
 	|	common.attrs.aria.implicit.math
 	)?
 
+math.attributes &= aria.global?
+
 SVG.foreignObject.content |=
 	(	math
 	|	common.inner.flow

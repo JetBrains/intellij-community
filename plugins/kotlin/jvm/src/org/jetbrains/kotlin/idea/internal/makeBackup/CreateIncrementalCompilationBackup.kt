@@ -11,6 +11,7 @@ import com.intellij.ide.actions.RevealFileAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -22,7 +23,6 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.WaitForProgressToShow
 import com.intellij.util.io.ZipUtil
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat

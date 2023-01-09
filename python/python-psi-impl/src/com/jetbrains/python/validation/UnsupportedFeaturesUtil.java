@@ -19,9 +19,12 @@ import org.xml.sax.helpers.XMLReaderFactory;
 import java.io.CharArrayWriter;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
-public class UnsupportedFeaturesUtil {
+public final class UnsupportedFeaturesUtil {
   public static final Map<LanguageLevel, Set<String>> BUILTINS = new HashMap<>();
   public static final Map<LanguageLevel, Set<String>> MODULES = new HashMap<>();
   public static final Map<String, Map<LanguageLevel, Set<String>>> CLASS_METHODS = new HashMap<>();

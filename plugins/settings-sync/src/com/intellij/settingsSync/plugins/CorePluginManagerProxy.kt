@@ -32,7 +32,7 @@ class CorePluginManagerProxy : PluginManagerProxy {
 
   override fun findPlugin(pluginId: PluginId) = PluginManagerCore.findPlugin(pluginId)
 
-  override fun createInstaller(): SettingsSyncPluginInstaller {
-    return SettingsSyncPluginInstallerImpl()
+  override fun createInstaller(notifyErrors: Boolean): SettingsSyncPluginInstaller {
+    return SettingsSyncPluginInstallerImpl(notifyErrors)
   }
 }

@@ -2,10 +2,13 @@
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment", "OVERRIDE_DEPRECATION")
 package com.intellij.serviceContainer
 
-import com.intellij.diagnostic.*
+import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.idea.AppMode.*
+import com.intellij.idea.AppMode.isLightEdit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
@@ -18,7 +21,6 @@ import com.intellij.openapi.extensions.*
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
@@ -28,6 +30,7 @@ import com.intellij.util.childScope
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
+import com.intellij.util.runSuppressing
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -39,8 +42,9 @@ import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
 import java.util.*
-import java.util.concurrent.*
 import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
 
 internal val LOG = logger<ComponentManagerImpl>()
@@ -76,7 +80,7 @@ abstract class ComponentManagerImpl(
 
     // not as file level function to avoid scope cluttering
     @ApiStatus.Internal
-    fun createAllServices(componentManager: ComponentManagerImpl, exclude: Set<String>) {
+    fun createAllServices(componentManager: ComponentManagerImpl, requireEdt: Set<String>, requireReadAction: Set<String>) {
       for (o in componentManager.componentKeyToAdapter.values) {
         if (o !is ServiceComponentAdapter) {
           continue
@@ -88,18 +92,12 @@ abstract class ComponentManagerImpl(
             // NPE in RunnerContentUi.setLeftToolbar
             continue
           }
-          if (implementation == "org.jetbrains.plugins.grails.lang.gsp.psi.gsp.impl.gtag.GspTagDescriptorService") {
-            // requires a read action
-            continue
-          }
 
-          if (exclude.contains(implementation)) {
-            invokeAndWaitIfNeeded {
-              o.getInstance<Any>(componentManager, null)
-            }
-          }
-          else {
-            o.getInstance<Any>(componentManager, null)
+          val init = { o.getInstance<Any>(componentManager, null) }
+          when {
+            requireEdt.contains(implementation) -> invokeAndWaitIfNeeded(null, init)
+            requireReadAction.contains(implementation) -> runReadAction(init)
+            else -> init()
           }
         }
         catch (e: Throwable) {
@@ -209,7 +207,7 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  final override fun getMessageBus(): MessageBus {
+  override fun getMessageBus(): MessageBus {
     if (containerState.get() >= ContainerState.DISPOSE_IN_PROGRESS) {
       ProgressManager.checkCanceled()
       throw AlreadyDisposedException("Already disposed: $this")
@@ -319,7 +317,7 @@ abstract class ComponentManagerImpl(
       StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_REGISTERED)
     }
 
-    // ensure that messageBus is created, regardless of lazy listeners map state
+    // ensuring that `messageBus` is created, regardless of the lazy listener map state
     if (isMessageBusSupported) {
       val messageBus = getOrCreateMessageBusUnderLock()
       map?.let {
@@ -403,8 +401,15 @@ abstract class ComponentManagerImpl(
     }
   }
 
+  // we cannot convert ApplicationImpl to kotlin yet
+  @TestOnly
+  suspend fun loadAppComponents() {
+    createComponentsNonBlocking()
+    StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED)
+  }
+
   @Suppress("DuplicatedCode")
-  @Deprecated(message = "Use createComponents")
+  @Deprecated(message = "Use createComponentsNonBlocking")
   protected fun createComponents() {
     LOG.assertTrue(containerState.get() == ContainerState.PRE_INIT)
 
@@ -938,7 +943,9 @@ abstract class ComponentManagerImpl(
       Disposer.register(serviceParentDisposable, result)
     }
 
-    initializeComponent(result, null, pluginId)
+    if (result is PersistentStateComponent<*>) {
+      initializeComponent(result, null, pluginId)
+    }
     StartUpMeasurer.addCompletedActivity(startTime, serviceClass, getActivityCategory(isExtension = false), pluginId.idString)
     return result
   }
@@ -1148,7 +1155,7 @@ abstract class ComponentManagerImpl(
     if (deferred.isCompleted) {
       val instance = deferred.getCompleted()
       val implClass = instance.javaClass
-      // well, we don't know the interface class, so, we cannot add any service to a hot cache
+      // well, we don't know the interface class, so we cannot add any service to a hot cache
       if (Modifier.isFinal(implClass.modifiers)) {
         serviceInstanceHotCache.putIfAbsent(implClass, instance)
       }
@@ -1163,7 +1170,7 @@ abstract class ComponentManagerImpl(
   final override fun beforeTreeDispose() {
     stopServicePreloading()
 
-    ApplicationManager.getApplication().assertIsWriteThread()
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
 
     if (!(containerState.compareAndSet(ContainerState.COMPONENT_CREATED, ContainerState.DISPOSE_IN_PROGRESS) ||
           containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.DISPOSE_IN_PROGRESS))) {
@@ -1172,25 +1179,24 @@ abstract class ComponentManagerImpl(
     }
 
     // disposed directly using Disposer.dispose()
-    // we don't care that state DISPOSE_IN_PROGRESS is already set,
-    // and exceptions because of that possible - use ProjectManager to close and dispose project.
+    // we don't care that state DISPOSE_IN_PROGRESS is already set, and exceptions because of that are possible -
+    // use `ProjectManager` to close and dispose the project
     startDispose()
   }
 
   fun startDispose() {
     stopServicePreloading()
 
-    Disposer.disposeChildren(this) { true }
-
     val messageBus = messageBus
-    // There is a chance that someone will try to connect to the message bus and will get NPE because of disposed connection disposable,
-    // because the container state is not yet set to DISPOSE_IN_PROGRESS.
-    // So, 1) dispose connection children 2) set state DISPOSE_IN_PROGRESS 3) dispose connection
-    messageBus?.disposeConnectionChildren()
-
-    containerState.set(ContainerState.DISPOSE_IN_PROGRESS)
-
-    messageBus?.disposeConnection()
+    runSuppressing(
+      { Disposer.disposeChildren(this) { true } },
+      // There is a chance that someone will try to connect to the message bus and will get NPE because of disposed connection disposable,
+      // because the container state is not yet set to DISPOSE_IN_PROGRESS.
+      // So, 1) dispose connection children 2) set state DISPOSE_IN_PROGRESS 3) dispose connection
+      { messageBus?.disposeConnectionChildren() },
+      { containerState.set(ContainerState.DISPOSE_IN_PROGRESS) },
+      { messageBus?.disposeConnection() }
+    )
   }
 
   override fun dispose() {
@@ -1209,7 +1215,7 @@ abstract class ComponentManagerImpl(
     serviceInstanceHotCache.clear()
 
     messageBus?.let {
-      // Must be after disposing of serviceParentDisposable, because message bus disposes child buses, so, we must dispose all services first.
+      // Must be after disposing `serviceParentDisposable`, because message bus disposes child buses, so we must dispose all services first.
       // For example, service ModuleManagerImpl disposes modules; each module, in turn, disposes module's message bus (child bus of application).
       Disposer.dispose(it)
       this.messageBus = null
@@ -1243,6 +1249,11 @@ abstract class ComponentManagerImpl(
     checkState()
     val adapter = componentKeyToAdapter.get(serviceClassName) as ServiceComponentAdapter?
     return adapter?.getInstance(this, keyClass = null)
+  }
+
+  fun getServiceImplementation(key: Class<*>): Class<*>? {
+    checkState()
+    return (componentKeyToAdapter.get(key.name) as? ServiceComponentAdapter?)?.componentImplementation
   }
 
   open fun isServiceSuitable(descriptor: ServiceDescriptor): Boolean = descriptor.client == null
@@ -1422,7 +1433,7 @@ abstract class ComponentManagerImpl(
 }
 
 /**
- * A linked hash set that's copied on write operations.
+ * A copy-on-write linked hash set.
  */
 private class LinkedHashSetWrapper<T : Any> {
   private val lock = Any()

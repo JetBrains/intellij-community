@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting.legacy
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,7 +15,6 @@ import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.gradleJava.scripting.getGradleScriptInputsStamp
 import org.jetbrains.kotlin.idea.gradleJava.scripting.isGradleKotlinScript
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 

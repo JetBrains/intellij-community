@@ -13,6 +13,7 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.lang.Language;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -224,7 +225,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
         close(CANCEL_EXIT_CODE);
       }
     });
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         if (project == myProject) {
@@ -310,8 +311,6 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       replaceOptions.setToShortenFQN(myShortenFqn.isSelected());
       replaceOptions.setToUseStaticImport(myStaticImport.isSelected());
       replaceOptions.setToReformatAccordingToStyle(myReformat.isSelected());
-
-
     }
     return result;
   }
@@ -329,6 +328,12 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
         setTextForEditor(text.trim(), mySearchCriteriaEdit);
         setTextForEditor(text, myReplaceCriteriaEdit);
         myScopePanel.setScopesFromContext(null);
+        final Document document = editor.getDocument();
+        final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        if (file != null) {
+          final Language language = file.getLanguage();
+          myFileTypeChooser.setSelectedItem(language.getAssociatedFileType(), language, null);
+        }
         ApplicationManager.getApplication().invokeLater(() -> startTemplate());
         return;
       }
@@ -441,20 +446,14 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     }
     myFileTypeChooser.setSelectedItem(myFileType, myDialect, myPatternContext);
     myFileTypeChooser.setFileTypeInfoConsumer(info -> {
-      if (info == null) {
-        myFileType = null;
-        myDialect = null;
-        myPatternContext = null;
-      }
-      else {
-        myFileType = info.getFileType();
-        myDialect = info.getDialect();
-        myPatternContext = info.getContext();
-        final MatchOptions matchOptions = myConfiguration.getMatchOptions();
-        matchOptions.setFileType(myFileType);
-        matchOptions.setDialect(myDialect);
-        matchOptions.setPatternContext(myPatternContext);
-      }
+      myFileType = info.getFileType();
+      myDialect = info.getDialect();
+      myPatternContext = info.getContext();
+      final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+      matchOptions.setFileType(myFileType);
+      matchOptions.setDialect(myDialect);
+      matchOptions.setPatternContext(myPatternContext);
+
       myOptionsToolbar.updateActionsImmediately();
       myFilterPanel.setFileType(myFileType);
       final String contextId = (myPatternContext == null) ? "" : myPatternContext.getId();
@@ -472,6 +471,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       myReplaceCriteriaEdit.setNewDocumentAndFileType((myFileType == null) ? PlainTextFileType.INSTANCE : myFileType, replaceDocument);
       replaceDocument.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
 
+      updateOptions();
       initValidation();
     });
     myFileTypeChooser.setUserActionFileTypeInfoConsumer(info -> {
@@ -756,6 +756,13 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
 
   public Configuration getConfiguration() {
     saveConfiguration();
+    //final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+    //assert matchOptions.isCaseSensitiveMatch() == myMatchCase.isSelected();
+    //assert matchOptions.isSearchInjectedCode() == myInjected.isSelected();
+    //final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
+    //assert replaceOptions.isToReformatAccordingToStyle() == myReformat.isSelected();
+    //assert replaceOptions.isToUseStaticImport() == myStaticImport.isSelected();
+    //assert replaceOptions.isToShortenFQN() == myShortenFqn.isSelected();
     return myReplace ? new ReplaceConfiguration(myConfiguration) : new SearchConfiguration(myConfiguration);
   }
 
@@ -910,9 +917,8 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       else {
         errors.add(new ValidationInfo(""));
       }
-      ApplicationManager.getApplication().invokeLater(() -> {
-        setSearchTargets(myConfiguration.getMatchOptions());
-      }, ModalityState.stateForComponent(component));
+      ApplicationManager.getApplication().invokeLater(() -> setSearchTargets(myConfiguration.getMatchOptions()),
+                                                      ModalityState.stateForComponent(component));
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -1233,8 +1239,8 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       if (editorTextField == null) {
         return;
       }
-      final Object object = editorTextField.getClientProperty("JComponent.outline");
-      if ("error".equals(object) || "warning".equals(object)) {
+      DarculaUIUtil.Outline object = DarculaUIUtil.getOutline(editorTextField);
+      if (DarculaUIUtil.isWarningOrError(object)) {
         myErrorBorder.paintBorder(c, g, x, y, width, height);
       }
     }
@@ -1275,7 +1281,6 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     }
 
     private void init() {
-      getTemplatePresentation().setText(SSRBundle.messagePointer(myReplace ? "switch.to.search.action" : "switch.to.replace.action"));
       getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
       final ActionManager actionManager = ActionManager.getInstance();
       final ShortcutSet searchShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralSearchAction").getShortcutSet();
@@ -1284,6 +1289,16 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
                                       ? new CompositeShortcutSet(searchShortcutSet, replaceShortcutSet)
                                       : new CompositeShortcutSet(replaceShortcutSet, searchShortcutSet);
       registerCustomShortcutSet(shortcutSet, getRootPane());
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setText(SSRBundle.messagePointer(myReplace ? "switch.to.search.action" : "switch.to.replace.action"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 

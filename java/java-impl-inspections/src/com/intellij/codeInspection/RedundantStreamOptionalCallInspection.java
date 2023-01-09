@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
@@ -27,6 +28,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 import static com.siyeh.ig.psiutils.StreamApiUtil.findSubsequentCall;
@@ -87,11 +89,10 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
   @SuppressWarnings("PublicField")
   public boolean USELESS_BOXING_IN_STREAM_MAP = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.redundant.stream.optional.call.option.streamboxing"), this,
-                                          "USELESS_BOXING_IN_STREAM_MAP");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("USELESS_BOXING_IN_STREAM_MAP", JavaBundle.message("inspection.redundant.stream.optional.call.option.streamboxing")));
   }
 
   @NotNull

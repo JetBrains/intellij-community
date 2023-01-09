@@ -5,8 +5,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.actions.IdeScaleTransformer;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -14,6 +13,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
@@ -35,6 +35,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -50,6 +51,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.text.StringUtil.convertLineSeparators;
@@ -60,7 +62,7 @@ import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getBodyLimitSettings;
 import static javax.swing.BorderFactory.createEmptyBorder;
 
-public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI, LafManagerListener {
+public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI {
   public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
   public static final Key<Supplier<Iterable<Change>>> CHANGES_SUPPLIER_KEY = Key.create("Vcs.CommitMessage.CompletionContext");
 
@@ -83,7 +85,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
     // We have to wrap the colorsScheme into a scheme delegate in order to avoid editing the global scheme
     colorsScheme = editor.createBoundColorSchemeDelegate(colorsScheme);
-    colorsScheme.setEditorFontSize(editor.getColorsScheme().getEditorFontSize());
+    colorsScheme.setEditorFontSize(IdeScaleTransformer.INSTANCE.getCurrentEditorFontSize());
 
     return colorsScheme;
   }
@@ -137,7 +139,6 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     setBorder(createEmptyBorder());
 
     updateOnInspectionProfileChanged(project);
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LafManagerListener.TOPIC, this);
   }
 
   @Override
@@ -162,8 +163,11 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   }
 
   @Override
-  public void lookAndFeelChanged(@NotNull LafManager source) {
-    Editor editor = myEditorField.getEditor();
+  public void updateUI() {
+    super.updateUI();
+
+    //noinspection ConstantValue - called from super.<init>
+    Editor editor = myEditorField != null ? myEditorField.getEditor() : null;
     if (editor instanceof EditorEx) COLOR_SCHEME_FOR_CURRENT_UI_THEME_CUSTOMIZATION.customize((EditorEx)editor);
   }
 
@@ -320,12 +324,20 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
 
       if (file != null) {
-        InspectionProfileWrapper.setCustomInspectionProfileWrapperTemporarily(file,
-                         profile -> new InspectionProfileWrapper(CommitMessageInspectionProfile.getInstance(myProject)));
+        InspectionProfileWrapper.setCustomInspectionProfileWrapperTemporarily(file, profile ->
+          new InspectionProfileWrapper(CommitMessageInspectionProfile.getInstance(myProject)));
       }
       editor.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false);
-      ((EditorMarkupModelImpl)editor.getMarkupModel())
-        .setErrorStripeRenderer(new ConditionalTrafficLightRenderer(myProject, editor.getDocument()));
+      try {
+        // must create TrafficRenderer outside EDT
+        ConditionalTrafficLightRenderer renderer =
+          ReadAction.nonBlocking(() -> new ConditionalTrafficLightRenderer(myProject, editor.getDocument())).expireWith(myProject)
+            .submit(AppExecutorUtil.getAppExecutorService()).get();
+        ((EditorMarkupModelImpl)editor.getMarkupModel()).setErrorStripeRenderer(renderer);
+      }
+      catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 

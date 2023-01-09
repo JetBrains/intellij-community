@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.assertReadAccessAllowed
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -42,7 +44,7 @@ class LibraryInfoCache(project: Project) : Disposable {
     }
 
     private class LibraryInfoInnerCache(project: Project) :
-        SynchronizedFineGrainedEntityCache<LibraryEx, List<LibraryInfo>>(project, cleanOnLowMemory = false) {
+        SynchronizedFineGrainedEntityCache<LibraryEx, List<LibraryInfo>>(project) {
 
         val removedLibraryInfoTracker = SimpleModificationTracker()
 
@@ -58,6 +60,7 @@ class LibraryInfoCache(project: Project) : Disposable {
         }
 
         override fun get(key: LibraryEx): List<LibraryInfo> {
+            assertReadAccessAllowed()
             checkKeyAndDisposeIllegalEntry(key)
 
             /**

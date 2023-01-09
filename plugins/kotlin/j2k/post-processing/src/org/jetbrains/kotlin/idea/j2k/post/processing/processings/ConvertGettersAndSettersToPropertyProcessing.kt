@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
@@ -16,7 +17,10 @@ import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.base.util.or
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
+import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
 import org.jetbrains.kotlin.idea.core.setVisibility
+import org.jetbrains.kotlin.idea.j2k.post.processing.*
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -24,14 +28,18 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.idea.util.*
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.asGetterName
 import org.jetbrains.kotlin.nj2k.asSetterName
+import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKFakeFieldData
+import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKFieldData
+import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKPhysicalMethodData
+import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
 import org.jetbrains.kotlin.nj2k.fqNameWithoutCompanions
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -50,10 +58,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.mapToIndex
-import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
-import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
-import org.jetbrains.kotlin.idea.j2k.post.processing.*
-import org.jetbrains.kotlin.nj2k.externalCodeProcessing.*
 
 internal class ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPostProcessing() {
     override val options: PostProcessingOptions =
@@ -134,7 +138,7 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
             ?.returnedExpression
             ?.unpackedReferenceToProperty()
             ?.takeIf {
-              it.type() == (type() ?: return@takeIf false)
+                it.type() == (type() ?: return@takeIf false)
             }
         return RealGetter(this, singleTimeUsedTarget, name, singleTimeUsedTarget != null)
     }
@@ -316,6 +320,7 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
                 val referenceExpression = when {
                     parent is KtQualifiedExpression && parent.receiverExpression.isReferenceToThis() ->
                         parent
+
                     else -> reference
                 }
                 if (!replaceOnlyWriteUsages
@@ -365,6 +370,7 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
                 }.isNotEmpty()
                         || causesNameConflictInCurrentDeclarationAndItsParents(name, declaration.containingDeclaration)
             }
+
             else -> false
         }
 
@@ -383,7 +389,7 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
     private inline fun <reified A : RealAccessor> A.withTargetSet(property: RealProperty?): A {
         if (property == null) return this
         if (target != null) return this
-        return if(property.property.usages(function).any())
+        return if (property.property.usages(function).any())
             updateTarget(property.property) as A
         else this
     }
@@ -613,23 +619,25 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
         klass: KtClassOrObject,
         propertiesData: List<PropertyData>
     ) {
-        val factory = KtPsiFactory(klass)
-        val accessors = propertiesData.filterGettersAndSetters(klass, factory)
+        val psiFactory = KtPsiFactory(klass.project)
+        val accessors = propertiesData.filterGettersAndSetters(klass, psiFactory)
 
         for ((property, getter, setter) in accessors) {
             val ktProperty = when (property) {
                 is RealProperty -> {
                     if (property.property.isVar != property.isVar) {
                         property.property.valOrVarKeyword.replace(
-                            if (property.isVar) factory.createVarKeyword() else factory.createValKeyword()
+                            if (property.isVar) psiFactory.createVarKeyword() else psiFactory.createValKeyword()
                         )
                     }
                     property.property
                 }
-                is FakeProperty -> factory.createProperty(property.name, property.type, property.isVar).let {
+
+                is FakeProperty -> psiFactory.createProperty(property.name, property.type, property.isVar).let {
                     val anchor = getter.safeAs<RealAccessor>()?.function ?: setter.cast<RealAccessor>().function
                     klass.addDeclarationBefore(it, anchor)
                 }
+
                 is MergedProperty -> {
                     property.mergeTo
                 }
@@ -658,12 +666,12 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
             }
 
             val isOpen = getter.safeAs<RealGetter>()?.function?.hasModifier(KtTokens.OPEN_KEYWORD) == true
-                         || setter.safeAs<RealSetter>()?.function?.hasModifier(KtTokens.OPEN_KEYWORD) == true
+                    || setter.safeAs<RealSetter>()?.function?.hasModifier(KtTokens.OPEN_KEYWORD) == true
 
-            val ktGetter = addGetter(getter, ktProperty, factory, property.isFake)
+            val ktGetter = addGetter(getter, ktProperty, psiFactory, property.isFake)
             val ktSetter =
                 setter?.let {
-                    createSetter(it, ktProperty, factory, property.isFake)
+                    createSetter(it, ktProperty, psiFactory, property.isFake)
                 }
             val getterVisibility = getter.safeAs<RealGetter>()?.function?.visibilityModifierTypeOrDefault()
             if (getter is RealGetter) {
@@ -700,7 +708,7 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
             }
 
             if (property is MergedProperty) {
-                ktProperty.renameTo(property.name, factory)
+                ktProperty.renameTo(property.name, psiFactory)
             }
             if (isOpen) {
                 ktProperty.addModifier(KtTokens.OPEN_KEYWORD)

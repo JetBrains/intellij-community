@@ -25,7 +25,7 @@ import java.util.*
 import java.util.concurrent.ForkJoinTask
 import kotlin.io.path.name
 
-private val WRITE_NEW_OPERATION = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
+private val OVERWRITE_OPERATION = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
 
 internal fun downloadCompilationCache(serverUrl: String,
                                       prefix: String,
@@ -113,7 +113,7 @@ internal fun unpackArchive(item: FetchAndUnpackItem, saveHash: Boolean) {
         Files.createDirectories(parent)
       }
 
-      FileChannel.open(file, WRITE_NEW_OPERATION).use { channel ->
+      FileChannel.open(file, OVERWRITE_OPERATION).use { channel ->
         channel.write(entry.getByteBuffer(zipFile), 0)
       }
     }
@@ -127,7 +127,7 @@ internal fun unpackArchive(item: FetchAndUnpackItem, saveHash: Boolean) {
 
 private fun writeFile(file: Path, response: Response, bufferPool: DirectFixedSizeByteBufferPool, url: String, digest: MessageDigest) {
   Files.createDirectories(file.parent)
-  FileChannel.open(file, WRITE_NEW_OPERATION).use { channel ->
+  FileChannel.open(file, OVERWRITE_OPERATION).use { channel ->
     val source = response.body.source()
     val sourceBuffer = bufferPool.allocate()
     object : ZstdDirectBufferDecompressingStreamNoFinalizer(sourceBuffer) {

@@ -54,6 +54,15 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+/**
+ * Provides a framework for testing the behavior of the editor.
+ * <p>
+ * To load some text into the editor, use {@link #configureByFile(String)}
+ * or {@link #configureFromFileText(String, String)}.
+ * <p>
+ * To perform editor actions, use {@link #right()}, {@link #deleteLine()},
+ * {@link #executeAction(String)} or the related methods.
+ */
 public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTestCase implements TestIndexingModeSupporter {
   private Editor myEditor;
   private PsiFile myFile;
@@ -86,11 +95,13 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   /**
-   * Configure test from data file. Data file is usual java, xml or whatever file that needs to be tested except it
-   * has &lt;caret&gt; marker where caret should be placed when file is loaded in editor and &lt;selection&gt;&lt;/selection&gt;
-   * denoting selection bounds.
+   * Configure the test from a data file.
+   * <p>
+   * The data file is usually a Java, XML or any other file that needs to be tested,
+   * except it has a &lt;caret&gt; marker where the caret should be placed when the file is loaded in the editor,
+   * and &lt;selection&gt;&lt;/selection&gt; denoting selection bounds.
    *
-   * @param relativePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
+   * @param relativePath relative path from %IDEA_INSTALLATION_HOME%/testData/
    */
   protected void configureByFile(@TestDataFile @NonNls @NotNull String relativePath) {
     try {
@@ -129,9 +140,10 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   /**
-   * Same as configureByFile but text is provided directly.
-   * @param fileName - name of the file.
-   * @param fileText - data file text.
+   * Same as {@link #configureByFile(String)}, but the text is provided directly.
+   *
+   * @param fileName name of the file.
+   * @param fileText data file text.
    */
   @NotNull
   protected Document configureFromFileText(@NonNls @NotNull String fileName, @NonNls @NotNull String fileText) {
@@ -139,10 +151,11 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   /**
-   * Same as configureByFile but text is provided directly.
-   * @param fileName - name of the file.
-   * @param fileText - data file text.
-   * @param checkCaret - if true, it will be verified that file contains at least one caret or selection marker
+   * Same as {@link #configureByFile(String)}, but the text is provided directly.
+   *
+   * @param fileName   name of the file.
+   * @param fileText   data file text.
+   * @param checkCaret if true, it will be verified that file contains at least one caret or selection marker
    */
   @NotNull
   protected Document configureFromFileText(@NonNls @NotNull String fileName,
@@ -298,20 +311,25 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   /**
-   * Validates that content of the editor as well as caret and selection matches one specified in data file that
-   * should be formed with the same format as one used in configureByFile
-   * @param expectedFilePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
+   * Validates that the content of the editor, the caret and the selection
+   * all match the ones specified in the data file,
+   * using the format described in {@link #configureByFile(String)}.
+   *
+   * @param expectedFilePath relative path from %IDEA_INSTALLATION_HOME%/testData/
    */
   protected void checkResultByFile(@TestDataFile @NonNls @NotNull String expectedFilePath) {
     checkResultByFile(null, expectedFilePath, false);
   }
 
   /**
-   * Validates that content of the editor as well as caret and selection matches one specified in data file that
-   * should be formed with the same format as one used in configureByFile
-   * @param message - this check specific message. Added to text, caret position, selection checking. May be null
-   * @param expectedFilePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
-   * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
+   * Validates that the content of the editor, the caret and the selection
+   * all match the ones specified in the data file,
+   * using the format described in {@link #configureByFile(String)}.
+   *
+   * @param message              additional information to identify the specific check,
+   *                             in case the checks for the text, caret position or selection fail
+   * @param expectedFilePath     relative path from %IDEA_INSTALLATION_HOME%/testData/
+   * @param ignoreTrailingSpaces whether trailing spaces in the editor of the data file should be stripped prior to comparing
    */
   protected void checkResultByFile(@Nullable String message, @TestDataFile @NotNull String expectedFilePath, boolean ignoreTrailingSpaces) {
     bringRealEditorBack();
@@ -332,37 +350,45 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     assertTrue(getMessage("Cannot find file " + fullPath, message), ioFile.exists());
     String fileText;
     try {
-     checkCaseSensitiveFS(fullPath, ioFile);
+      checkCaseSensitiveFS(fullPath, ioFile);
       fileText = FileUtil.loadFile(ioFile, StandardCharsets.UTF_8);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    checkResultByText(message, StringUtil.convertLineSeparators(fileText), ignoreTrailingSpaces, getTestDataPath() + "/" + expectedFilePath);
+    checkResultByText(message, StringUtil.convertLineSeparators(fileText), ignoreTrailingSpaces,
+                      getTestDataPath() + "/" + expectedFilePath);
   }
 
   /**
-   * Same as checkResultByFile but text is provided directly.
+   * Same as {@link #checkResultByFile(String)}, but the text is provided directly.
    */
   protected void checkResultByText(@NonNls @NotNull String expectedFileText) {
     checkResultByText(null, expectedFileText, false, null);
   }
 
   /**
-   * Same as checkResultByFile but text is provided directly.
-   * @param message - this check specific message. Added to text, caret position, selection checking. May be null
-   * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
+   * Same as {@link #checkResultByFile(String)}, but the text is provided directly.
+   *
+   * @param message              additional information to identify the specific check,
+   *                             in case the checks for the text, caret position or selection fail
+   * @param ignoreTrailingSpaces whether trailing spaces in the editor of the data file should be stripped prior to comparing
    */
   protected void checkResultByText(@Nullable String message, @NotNull String expectedFileText, boolean ignoreTrailingSpaces) {
     checkResultByText(message, expectedFileText, ignoreTrailingSpaces, null);
   }
 
   /**
-   * Same as checkResultByFile but text is provided directly.
-   * @param message - this check specific message. Added to text, caret position, selection checking. May be null
-   * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
+   * Same as {@link #checkResultByFile(String)}, but the text is provided directly.
+   *
+   * @param message              additional information to identify the specific check,
+   *                             in case the checks for the text, caret position or selection fail
+   * @param ignoreTrailingSpaces whether trailing spaces in the editor of the data file should be stripped prior to comparing
    */
-  protected void checkResultByText(@Nullable String message, @NotNull String expectedFileText, boolean ignoreTrailingSpaces, @Nullable String filePath) {
+  protected void checkResultByText(@Nullable String message,
+                                   @NotNull String expectedFileText,
+                                   boolean ignoreTrailingSpaces,
+                                   @Nullable String filePath) {
     bringRealEditorBack();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     ApplicationManager.getApplication().runWriteAction(() -> {
@@ -422,14 +448,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   /**
-   * @return Editor used in test.
+   * @return the editor that is used in the test
    */
   protected Editor getEditor() {
     return myEditor;
   }
 
   /**
-   * @return PsiFile opened in editor used in test
+   * @return the file that is opened in the editor used in the test
    */
   protected PsiFile getFile() {
     return myFile;
@@ -452,6 +478,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected void caretRight() {
     caretRight(getEditor());
   }
+
   public void caretRight(@NotNull Editor editor) {
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, editor);
   }
@@ -467,6 +494,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected void deleteLine() {
     deleteLine(getEditor(), getProject());
   }
+
   public static void deleteLine(@NotNull Editor editor, @Nullable Project project) {
     executeAction(IdeActions.ACTION_EDITOR_DELETE_LINE, editor, project);
   }
@@ -476,13 +504,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       type(c);
     }
   }
+
   protected void type(char c) {
-    type(c, getEditor(),getProject());
+    type(c, getEditor(), getProject());
   }
 
   public static void type(char c, @NotNull Editor editor, @Nullable Project project) {
     if (c == '\n') {
-      executeAction(IdeActions.ACTION_EDITOR_ENTER, editor,project);
+      executeAction(IdeActions.ACTION_EDITOR_ENTER, editor, project);
     }
     else {
       DataContext dataContext = DataManager.getInstance().getDataContext();
@@ -492,11 +521,11 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   protected void backspace() {
-    backspace(getEditor(),getProject());
+    backspace(getEditor(), getProject());
   }
 
   public static void backspace(@NotNull Editor editor, @Nullable Project project) {
-    executeAction(IdeActions.ACTION_EDITOR_BACKSPACE, editor,project);
+    executeAction(IdeActions.ACTION_EDITOR_BACKSPACE, editor, project);
   }
 
   protected void ctrlShiftF7() {
@@ -504,16 +533,17 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   protected void ctrlW() {
-    ctrlW(getEditor(),getProject());
+    ctrlW(getEditor(), getProject());
   }
 
   public static void ctrlW(@NotNull Editor editor, Project project) {
-    executeAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET, editor,project);
+    executeAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET, editor, project);
   }
 
   public void ctrlD() {
-    ctrlD(getEditor(),getProject());
+    ctrlD(getEditor(), getProject());
   }
+
   public static void ctrlD(@NotNull Editor editor, Project project) {
     executeAction(IdeActions.ACTION_EDITOR_DUPLICATE, editor, project);
   }
@@ -521,6 +551,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected void delete() {
     delete(getEditor(), getProject());
   }
+
   public static void delete(@NotNull Editor editor, Project project) {
     executeAction(IdeActions.ACTION_EDITOR_DELETE, editor, project);
   }
@@ -636,11 +667,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected void executeAction(@NonNls @NotNull String actionId) {
     executeAction(actionId, getEditor());
   }
+
   protected void executeAction(@NonNls @NotNull String actionId, @NotNull Editor editor) {
     executeAction(actionId, editor, getProject());
   }
+
   public static void executeAction(@NonNls @NotNull String actionId, @NotNull Editor editor, @Nullable Project project) {
-    CommandProcessor.getInstance().executeCommand(project, () -> EditorTestUtil.executeAction(editor, actionId, true), "", null, editor.getDocument());
+    CommandProcessor.getInstance()
+      .executeCommand(project, () -> EditorTestUtil.executeAction(editor, actionId, true), "", null, editor.getDocument());
   }
 
   @NotNull
@@ -671,6 +705,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * File parameterized tests support.
    * <p>
    * &#064;Parameterized.Parameter  fields are injected on parameterized test creation.
+   *
    * @see FileBasedTestCaseHelperEx
    */
   @Parameterized.Parameter
@@ -690,7 +725,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   @com.intellij.testFramework.Parameterized.Parameters(name = "{0}")
-  public static List<Object[]> params(@NotNull Class<?> klass) throws Throwable{
+  public static List<Object[]> params(@NotNull Class<?> klass) throws Throwable {
     Object testCase = klass.newInstance();
     if (!(testCase instanceof FileBasedTestCaseHelper)) {
       fail("Parameterized test should implement FileBasedTestCaseHelper");
@@ -723,15 +758,19 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     File testDir = null;
     if (fileBasedTestCase instanceof FileBasedTestCaseHelperEx) {
       testDir = new File(testDataPath, ((FileBasedTestCaseHelperEx)fileBasedTestCase).getRelativeBasePath());
-    } else {
+    }
+    else {
       TestDataPath annotation = klass.getAnnotation(TestDataPath.class);
       if (annotation == null) {
-        fail("TestCase should implement com.intellij.testFramework.FileBasedTestCaseHelperEx or be annotated with com.intellij.testFramework.TestDataPath");
-      } else {
+        fail("TestCase should implement com.intellij.testFramework.FileBasedTestCaseHelperEx " +
+             "or be annotated with com.intellij.testFramework.TestDataPath");
+      }
+      else {
         String trimmedRoot = StringUtil.trimStart(StringUtil.trimStart(annotation.value(), "$CONTENT_ROOT"), "$PROJECT_ROOT");
         String lastPathComponent = new File(testDataPath).getName();
         int idx = trimmedRoot.indexOf(lastPathComponent);
-        testDataPath = testDataPath.replace(File.separatorChar, '/') + (idx > 0 ? trimmedRoot.substring(idx + lastPathComponent.length()) : trimmedRoot);
+        testDataPath = testDataPath.replace(File.separatorChar, '/') +
+                       (idx > 0 ? trimmedRoot.substring(idx + lastPathComponent.length()) : trimmedRoot);
         testDir = new File(testDataPath);
       }
     }
@@ -753,7 +792,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       }
       if (fileSuffix != null) {
         beforeFileSuffixes.add(fileSuffix);
-        result.add(new Object[] {fileSuffix, testDataPath});
+        result.add(new Object[]{fileSuffix, testDataPath});
       }
     }
     afterFileSuffixes.removeAll(beforeFileSuffixes);

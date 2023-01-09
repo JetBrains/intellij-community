@@ -86,6 +86,7 @@ message Message {
       required bool force_download = 7;
       required bool disable_download = 8;
       required int32 max_download_duration = 9;
+      required bool cleanup_asynchronously = 10;
     }
 
     required Type type = 1;

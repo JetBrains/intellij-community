@@ -208,8 +208,8 @@ public class ActionsTreeTest {
           checkPresentationProperty("description", actionIdAndClass, before.getDescription(), after.getDescription());
         }
 
-        if (action instanceof ActionGroup) {
-          LOG.debug("ignored action group: " + actionIdAndClass);
+        if (action instanceof ActionGroup || action instanceof Separator) {
+          LOG.debug("ignored action group or separator: " + actionIdAndClass);
         }
         else if (StringUtil.isEmpty(action.getTemplatePresentation().getText())) {
           String message = "no text is defined for template presentation of " +

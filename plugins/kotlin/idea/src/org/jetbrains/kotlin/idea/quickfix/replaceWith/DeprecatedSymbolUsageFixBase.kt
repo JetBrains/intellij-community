@@ -116,7 +116,7 @@ abstract class DeprecatedSymbolUsageFixBase(
             descriptor: DeclarationDescriptor
         ): String {
             if (element == null) return this
-            val psiFactory = KtPsiFactory(element)
+            val psiFactory = KtPsiFactory(element.project)
             val expressionFromPattern = psiFactory.createExpressionIfPossible(this) ?: return this
 
             val classLiteral = when (expressionFromPattern) {

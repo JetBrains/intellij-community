@@ -1,6 +1,7 @@
 package com.intellij.remoteDev.util
 
 import com.google.gson.GsonBuilder
+import com.intellij.openapi.util.NlsSafe
 import java.util.*
 
 
@@ -12,10 +13,10 @@ import java.util.*
 //  "versionSuffix" : "EAP"
 //}
 data class ProductInfo(
-  val buildNumber: String,
-  val productCode: String,
-  val version: String,
-  val versionSuffix: String?,
+  val buildNumber: @NlsSafe String,
+  val productCode: @NlsSafe String,
+  val version: @NlsSafe String,
+  val versionSuffix: @NlsSafe String?,
 ) {
   companion object {
     private val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
@@ -25,7 +26,7 @@ data class ProductInfo(
     }
   }
 
-  fun presentableVersion(): String {
+  fun presentableVersion(): @NlsSafe String {
     return version + fixVersionSuffix(versionSuffix)
   }
 

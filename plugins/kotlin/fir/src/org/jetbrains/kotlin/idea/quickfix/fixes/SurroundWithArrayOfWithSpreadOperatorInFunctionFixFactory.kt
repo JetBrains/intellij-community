@@ -34,10 +34,10 @@ object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
             val argumentName = argument.getArgumentName()?.asName ?: return@applyTo
             val argumentExpression = argument.getArgumentExpression() ?: return@applyTo
 
-            val factory = KtPsiFactory(argumentExpression)
+            val psiFactory = KtPsiFactory(psi.project)
 
-            val surroundedWithArrayOf = factory.createExpressionByPattern("${input.fullyQualifiedArrayOfCall}($0)", argumentExpression)
-            val newArgument = factory.createArgument(surroundedWithArrayOf, argumentName)
+            val surroundedWithArrayOf = psiFactory.createExpressionByPattern("${input.fullyQualifiedArrayOfCall}($0)", argumentExpression)
+            val newArgument = psiFactory.createArgument(surroundedWithArrayOf, argumentName)
 
             val replacedArgument = argument.replace(newArgument) as KtValueArgument
             // Essentially this qualifier is always `kotlin` in `kotlin.arrayOf(...)`. We choose to shorten this part so that the argument

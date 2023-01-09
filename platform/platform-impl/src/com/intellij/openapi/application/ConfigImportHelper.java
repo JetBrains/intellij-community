@@ -37,6 +37,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.Restarter;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -413,10 +414,10 @@ public final class ConfigImportHelper {
   }
 
   static final class ConfigDirsSearchResult {
-    private final List<Pair<Path, FileTime>> directories;
+    private final List<? extends Pair<Path, FileTime>> directories;
     private final boolean fromSameProduct;
 
-    private ConfigDirsSearchResult(List<Pair<Path, FileTime>> directories, boolean fromSameProduct) {
+    private ConfigDirsSearchResult(List<? extends Pair<Path, FileTime>> directories, boolean fromSameProduct) {
       this.directories = directories;
       this.fromSameProduct = fromSameProduct;
     }
@@ -474,7 +475,7 @@ public final class ConfigImportHelper {
 
       if (home.equals(newConfigDir.getParent()) &&
           ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED &&
-          ProjectManagerEx.isChildProcessPath(newConfigDir)) {
+          ProjectManagerEx.Companion.isChildProcessPath(newConfigDir)) {
         exactCandidates.add(home);
         break;
       }
@@ -843,7 +844,6 @@ public final class ConfigImportHelper {
 
     List<IdeaPluginDescriptor> pluginsToMigrate = new ArrayList<>();
     List<IdeaPluginDescriptor> pluginsToDownload = new ArrayList<>();
-    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = new HashMap<>();
 
     try {
       Map<PluginId, Set<String>> brokenPluginVersions = options.brokenPluginVersions;
@@ -852,13 +852,11 @@ public final class ConfigImportHelper {
                                                                           brokenPluginVersions,
                                                                           options.compatibleBuildNumber);
 
-      pluginIdMap.putAll(result.getIdMap());
       partitionNonBundled(result.getIdMap().values(), pluginsToDownload, pluginsToMigrate, descriptor -> {
         Set<String> brokenVersions = brokenPluginVersions != null ? brokenPluginVersions.get(descriptor.getPluginId()) : null;
         return brokenVersions != null && brokenVersions.contains(descriptor.getVersion());
       });
 
-      pluginIdMap.putAll(result.getIncompleteIdMap());
       partitionNonBundled(result.getIncompleteIdMap().values(), pluginsToDownload, pluginsToMigrate, __ -> true);
     }
     catch (ExecutionException | InterruptedException e) {
@@ -970,23 +968,28 @@ public final class ConfigImportHelper {
                                                             @NotNull ConfigImportOptions options,
                                                             @NotNull List<? extends IdeaPluginDescriptor> incompatiblePlugins) {
     if (options.headless) {
-      downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, new EmptyProgressIndicator());
+      PluginDownloader.runSynchronouslyInBackground(() -> {
+        downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, new EmptyProgressIndicator());
+      });
     }
     else {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+
       ConfigImportProgressDialog dialog = new ConfigImportProgressDialog();
       dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
       AppUIUtil.updateWindowIcon(dialog);
 
       SplashManager.executeWithHiddenSplash(dialog, () -> {
-        new Thread(() -> {
+        PluginDownloader.runSynchronouslyInBackground(() -> {
           downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, dialog.getIndicator());
           SwingUtilities.invokeLater(() -> dialog.setVisible(false));
-        }, "Plugin migration downloader").start();
+        });
         dialog.setVisible(true);
       });
     }
   }
 
+  @RequiresBackgroundThread
   private static void downloadUpdatesForIncompatiblePlugins(@NotNull Path newPluginsDir,
                                                             @NotNull ConfigImportOptions options,
                                                             @NotNull List<? extends IdeaPluginDescriptor> incompatiblePlugins,

@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PatternUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -38,9 +40,8 @@ public final class IronPythonSdkFlavor extends PythonSdkFlavor<PyFlavorData.Empt
     return PyFlavorData.Empty.class;
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
     Set<String> result = new TreeSet<>();
     String root = System.getenv("ProgramFiles(x86)");
     if (root == null) {
@@ -61,7 +62,7 @@ public final class IronPythonSdkFlavor extends PythonSdkFlavor<PyFlavorData.Empt
     }
     WinPythonSdkFlavor.findInPath(result, "ipy.exe");
     WinPythonSdkFlavor.findInPath(result, "ipy64.exe");
-    return result;
+    return ContainerUtil.map(result, Path::of);
   }
 
   @Override

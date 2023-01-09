@@ -18,6 +18,7 @@ import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.structuralsearch.getCommentText
 import org.jetbrains.kotlin.idea.structuralsearch.handler.CommentedDeclarationHandler
 import org.jetbrains.kotlin.idea.structuralsearch.withinHierarchyTextFilterSet
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.psi2ir.deparenthesize
 import java.util.regex.Pattern
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisitor) : KotlinRecursiveElementVisitor() {
     private val mySubstitutionPattern = Pattern.compile("\\b(_____\\w+)\\b")
@@ -224,8 +226,7 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
 
         declaration.nameIdentifier?.let { identifier ->
             if (getHandler(identifier).withinHierarchyTextFilterSet && declaration.parent is KtClassBody) {
-                val klass = declaration.parent.parent
-                if (klass is KtClassOrObject) {
+                declaration.parents.match(KtClassBody::class, last = KtClassOrObject::class)?.let { klass ->
                     klass.nameIdentifier?.putUserData(WITHIN_HIERARCHY, true)
                 }
             }

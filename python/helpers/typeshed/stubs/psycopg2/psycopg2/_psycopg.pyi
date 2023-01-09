@@ -2,11 +2,13 @@ from _typeshed import Self
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from types import TracebackType
 from typing import Any, TypeVar, overload
+from typing_extensions import TypeAlias
 
 import psycopg2
 import psycopg2.extensions
+from psycopg2.sql import Composable
 
-_Vars = Sequence[Any] | Mapping[str, Any] | None
+_Vars: TypeAlias = Sequence[Any] | Mapping[str, Any] | None
 
 BINARY: Any
 BINARYARRAY: Any
@@ -65,6 +67,52 @@ string_types: dict[Any, Any]
 threadsafety: int
 
 __libpq_version__: int
+
+class cursor:
+    arraysize: int
+    binary_types: Any
+    closed: Any
+    connection: Any
+    description: Any
+    itersize: Any
+    lastrowid: Any
+    name: Any
+    pgresult_ptr: Any
+    query: Any
+    row_factory: Any
+    rowcount: int
+    rownumber: int
+    scrollable: Any
+    statusmessage: Any
+    string_types: Any
+    typecaster: Any
+    tzinfo_factory: Any
+    withhold: Any
+    def __init__(self, *args, **kwargs) -> None: ...
+    def callproc(self, procname, parameters=...): ...
+    def cast(self, oid, s): ...
+    def close(self): ...
+    def copy_expert(self, sql: str | bytes | Composable, file, size=...): ...
+    def copy_from(self, file, table, sep=..., null=..., size=..., columns=...): ...
+    def copy_to(self, file, table, sep=..., null=..., columns=...): ...
+    def execute(self, query: str | bytes | Composable, vars: _Vars = ...) -> None: ...
+    def executemany(self, query: str | bytes | Composable, vars_list: Iterable[_Vars]) -> None: ...
+    def fetchall(self) -> list[tuple[Any, ...]]: ...
+    def fetchmany(self, size=...) -> list[tuple[Any, ...]]: ...
+    def fetchone(self) -> tuple[Any, ...] | None: ...
+    def mogrify(self, *args, **kwargs): ...
+    def nextset(self): ...
+    def scroll(self, value, mode=...): ...
+    def setinputsizes(self, sizes): ...
+    def setoutputsize(self, size, column=...): ...
+    def __enter__(self: Self) -> Self: ...
+    def __exit__(
+        self, type: type[BaseException] | None, value: BaseException | None, traceback: TracebackType | None
+    ) -> None: ...
+    def __iter__(self: Self) -> Self: ...
+    def __next__(self) -> tuple[Any, ...]: ...
+
+_cursor: TypeAlias = cursor
 
 class AsIs:
     adapted: Any
@@ -141,31 +189,31 @@ class Decimal:
     def __conform__(self, *args, **kwargs): ...
 
 class Diagnostics:
-    column_name: Any
-    constraint_name: Any
-    context: Any
-    datatype_name: Any
-    internal_position: Any
-    internal_query: Any
-    message_detail: Any
-    message_hint: Any
-    message_primary: Any
-    schema_name: Any
-    severity: Any
-    severity_nonlocalized: Any
-    source_file: Any
-    source_function: Any
-    source_line: Any
-    sqlstate: Any
-    statement_position: Any
-    table_name: Any
-    def __init__(self, *args, **kwargs) -> None: ...
+    column_name: str | None
+    constraint_name: str | None
+    context: str | None
+    datatype_name: str | None
+    internal_position: str | None
+    internal_query: str | None
+    message_detail: str | None
+    message_hint: str | None
+    message_primary: str | None
+    schema_name: str | None
+    severity: str | None
+    severity_nonlocalized: str | None
+    source_file: str | None
+    source_function: str | None
+    source_line: str | None
+    sqlstate: str | None
+    statement_position: str | None
+    table_name: str | None
+    def __init__(self, __err: Error) -> None: ...
 
 class Error(Exception):
-    cursor: Any
-    diag: Any
-    pgcode: Any
-    pgerror: Any
+    cursor: _cursor | None
+    diag: Diagnostics
+    pgcode: str | None
+    pgerror: str | None
     def __init__(self, *args, **kwargs) -> None: ...
     def __reduce__(self): ...
     def __setstate__(self, state): ...
@@ -239,7 +287,7 @@ class ReplicationConnection(psycopg2.extensions.connection):
     set_session: Any
     def __init__(self, *args, **kwargs) -> None: ...
 
-class ReplicationCursor(psycopg2.extensions.cursor):
+class ReplicationCursor(cursor):
     feedback_timestamp: Any
     io_timestamp: Any
     wal_end: Any
@@ -273,7 +321,6 @@ class Xid:
     def __getitem__(self, __index): ...
     def __len__(self): ...
 
-_cursor = cursor
 _T_cur = TypeVar("_T_cur", bound=_cursor)
 
 class connection:
@@ -335,50 +382,6 @@ class connection:
     def xid(self, format_id, gtrid, bqual): ...
     def __enter__(self): ...
     def __exit__(self, type, value, traceback): ...
-
-class cursor:
-    arraysize: int
-    binary_types: Any
-    closed: Any
-    connection: Any
-    description: Any
-    itersize: Any
-    lastrowid: Any
-    name: Any
-    pgresult_ptr: Any
-    query: Any
-    row_factory: Any
-    rowcount: int
-    rownumber: int
-    scrollable: Any
-    statusmessage: Any
-    string_types: Any
-    typecaster: Any
-    tzinfo_factory: Any
-    withhold: Any
-    def __init__(self, *args, **kwargs) -> None: ...
-    def callproc(self, procname, parameters=...): ...
-    def cast(self, oid, s): ...
-    def close(self): ...
-    def copy_expert(self, sql, file, size=...): ...
-    def copy_from(self, file, table, sep=..., null=..., size=..., columns=...): ...
-    def copy_to(self, file, table, sep=..., null=..., columns=...): ...
-    def execute(self, query: str | bytes, vars: _Vars = ...) -> None: ...
-    def executemany(self, query: str | bytes, vars_list: Iterable[_Vars]) -> None: ...
-    def fetchall(self) -> list[tuple[Any, ...]]: ...
-    def fetchmany(self, size=...) -> list[tuple[Any, ...]]: ...
-    def fetchone(self) -> tuple[Any, ...] | Any: ...
-    def mogrify(self, *args, **kwargs): ...
-    def nextset(self): ...
-    def scroll(self, value, mode=...): ...
-    def setinputsizes(self, sizes): ...
-    def setoutputsize(self, size, column=...): ...
-    def __enter__(self: Self) -> Self: ...
-    def __exit__(
-        self, type: type[BaseException] | None, value: BaseException | None, traceback: TracebackType | None
-    ) -> None: ...
-    def __iter__(self: Self) -> Self: ...
-    def __next__(self) -> tuple[Any, ...]: ...
 
 class lobject:
     closed: Any

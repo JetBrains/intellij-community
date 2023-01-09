@@ -8,6 +8,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
+import com.intellij.navigation.TargetPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ToolbarLabelAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -88,14 +89,7 @@ public class ImplementationViewComponent extends JPanel {
     return myElements != null && myElements.length > 0;
   }
 
-  private static class FileDescriptor {
-    @NotNull public final VirtualFile myFile;
-    public final ImplementationViewElement myElement;
-
-    FileDescriptor(@NotNull VirtualFile file, ImplementationViewElement element) {
-      myFile = file;
-      myElement = element;
-    }
+  private record FileDescriptor(@NotNull VirtualFile file, @NotNull TargetPresentation element) {
   }
 
   public ImplementationViewComponent(Collection<? extends ImplementationViewElement> elements,
@@ -264,10 +258,10 @@ public class ImplementationViewComponent extends JPanel {
                                            FileDescriptor value, int index, boolean selected, boolean hasFocus) {
         setBackground(UIUtil.getListBackground(selected, true));
         if (value != null) {
-          ImplementationViewElement element = value.myElement;
-          setIcon(getIconForFile(value.myFile, project));
-          append(element.getPresentableText());
-          String presentation = element.getContainerPresentation();
+          @NotNull TargetPresentation targetPresentation = value.element;
+          setIcon(getIconForFile(value.file, project));
+          append(targetPresentation.getPresentableText());
+          String presentation = targetPresentation.getContainerText();
           if (presentation != null) {
             append("  ");
             append(StringUtil.trimStart(StringUtil.trimEnd(presentation, ")"), "("), SimpleTextAttributes.GRAYED_ATTRIBUTES);
@@ -281,8 +275,8 @@ public class ImplementationViewComponent extends JPanel {
                             FileDescriptor value, int index, boolean selected, boolean hasFocus) {
         setForeground(UIUtil.getListForeground(selected, true));
         if (value != null) {
-          setText(value.myElement.getLocationText());
-          setIcon(value.myElement.getLocationIcon());
+          setText(value.element.getLocationText());
+          setIcon(value.element.getLocationIcon());
         }
       }
     };
@@ -295,7 +289,7 @@ public class ImplementationViewComponent extends JPanel {
     String[] result = new String[model.getSize()];
     for (int i = 0; i < model.getSize(); i++) {
       FileDescriptor o = model.getElementAt(i);
-      result[i] = o.myElement.getPresentableText();
+      result[i] = o.element.getPresentableText();
     }
     return result;
   }
@@ -359,15 +353,24 @@ public class ImplementationViewComponent extends JPanel {
       VirtualFile file = element.getContainingFile();
       if (file == null) continue;
       if (names.size() > 1) {
-        files.add(new FileDescriptor(file, element));
+        files.add(new FileDescriptor(file, getPresentation(element)));
       }
       else {
-        files.add(new FileDescriptor(file, element.getContainingMemberOrSelf()));
+        files.add(new FileDescriptor(file, getPresentation(element.getContainingMemberOrSelf())));
       }
       candidates.add(element);
     }
 
     fun.fun(candidates.toArray(new ImplementationViewElement[0]), files);
+  }
+
+  @NotNull
+  private static TargetPresentation getPresentation(ImplementationViewElement element) {
+    return TargetPresentation.builder(element.getPresentableText())
+      .locationText(element.getLocationText(), element.getLocationIcon())
+      .containerText(element.getContainerPresentation())
+      .icon(element.getLocationIcon())
+      .presentation();
   }
 
   private static Icon getIconForFile(VirtualFile virtualFile, Project project) {

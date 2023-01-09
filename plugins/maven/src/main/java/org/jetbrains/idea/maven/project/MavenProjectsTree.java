@@ -16,9 +16,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ArrayListSet;
-import com.intellij.util.containers.DisposableWrapperList;
-import com.intellij.util.containers.FileCollectionFactory;
+import com.intellij.util.containers.*;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.PathKt;
 import it.unimi.dsi.fastutil.Hash;
@@ -28,10 +26,7 @@ import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
@@ -41,6 +36,8 @@ import org.jetbrains.idea.maven.utils.*;
 import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
@@ -427,8 +424,7 @@ public final class MavenProjectsTree {
     MavenProjectReader projectReader = new MavenProjectReader(myProject);
     update(managedFiles, true, force, explicitProfiles, projectReader, generalSettings, process);
 
-    List<VirtualFile> obsoleteFiles = getRootProjectsFiles();
-    obsoleteFiles.removeAll(managedFiles);
+    Collection<VirtualFile> obsoleteFiles = ContainerUtil.subtract(getRootProjectsFiles(), managedFiles);
     delete(projectReader, obsoleteFiles, explicitProfiles, generalSettings, process);
   }
 
@@ -719,7 +715,7 @@ public final class MavenProjectsTree {
   }
 
   private void delete(MavenProjectReader projectReader,
-                      List<VirtualFile> files,
+                      Collection<VirtualFile> files,
                       MavenExplicitProfiles explicitProfiles,
                       MavenGeneralSettings generalSettings,
                       MavenProgressIndicator process) {

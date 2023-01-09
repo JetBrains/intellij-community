@@ -13,8 +13,6 @@ abstract class NewFilesListener : VirtualFileChangesListener {
 
   private var isCreatedNewFiles = false
 
-  override fun isProcessRecursively() = false
-
   override fun init() {
     isCreatedNewFiles = false
   }

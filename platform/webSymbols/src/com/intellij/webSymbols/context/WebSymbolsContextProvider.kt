@@ -4,7 +4,6 @@ package com.intellij.webSymbols.context
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 
@@ -41,7 +40,7 @@ interface WebSymbolsContextProvider {
    *
    * @return {@code null} if not enabled, otherwise a proximity score
    */
-  fun isEnabled(directory: PsiDirectory): CachedValueProvider.Result<Int?> =
+  fun isEnabled(project: Project, directory: VirtualFile): CachedValueProvider.Result<Int?> =
     CachedValueProvider.Result(null, ModificationTracker.NEVER_CHANGED)
 
   /**

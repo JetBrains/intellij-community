@@ -19,7 +19,7 @@ class Main {
   int test4(int i) {
     return switch ((Integer)i) {
       case 0 -> 0;
-      case <error descr="Old patterns from JEP 406 are not available since Java 19 preview">Integer integer && Math.random() > 0.5</error> -> 7;
+      case <error descr="Guarded patterns from JEP 406 are not available since Java 19 preview">Integer integer && Math.random() > 0.5</error> -> 7;
       default -> 42;
     };
   }

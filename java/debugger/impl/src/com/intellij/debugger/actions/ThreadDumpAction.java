@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.actions;
 
@@ -42,7 +42,7 @@ public final class ThreadDumpAction extends DumbAwareAction {
     DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(project)).getContext();
 
     final DebuggerSession session = context.getDebuggerSession();
-    if(session != null && session.isAttached()) {
+    if (session != null && session.isAttached()) {
       final DebugProcessImpl process = context.getDebugProcess();
       process.getManagerThread().invoke(new DebuggerCommandImpl() {
         @Override
@@ -262,8 +262,8 @@ public final class ThreadDumpAction extends DumbAwareAction {
   }
 
   public static @NonNls String renderLocation(final Location location) {
-    return "at "+DebuggerUtilsEx.getLocationMethodQName(location)+
-           "("+DebuggerUtilsEx.getSourceName(location, e -> "Unknown Source")+":"+DebuggerUtilsEx.getLineNumber(location, false)+")";
+    return "at " + DebuggerUtilsEx.getLocationMethodQName(location) +
+           "(" + DebuggerUtilsEx.getSourceName(location, e -> "Unknown Source") + ":" + DebuggerUtilsEx.getLineNumber(location, false) + ")";
   }
 
   private static String threadName(ThreadReference threadReference) {
@@ -272,7 +272,7 @@ public final class ThreadDumpAction extends DumbAwareAction {
 
 
   @Override
-  public void update(@NotNull AnActionEvent e){
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     if (project == null) {

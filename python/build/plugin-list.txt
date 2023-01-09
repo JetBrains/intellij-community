@@ -15,7 +15,6 @@ intellij.platform.langInjection
 intellij.properties
 intellij.reStructuredText
 intellij.searchEverywhereMl
-intellij.settingsRepository
 intellij.settingsSync
 intellij.sh
 intellij.statsCollector

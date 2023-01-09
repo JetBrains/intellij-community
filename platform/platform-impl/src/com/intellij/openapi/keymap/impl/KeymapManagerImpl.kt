@@ -26,6 +26,8 @@ import com.intellij.ui.AppUIUtil
 import com.intellij.util.ResourceUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 import java.util.function.Predicate
 
@@ -39,7 +41,7 @@ private const val NAME_ATTRIBUTE = "name"
        category = SettingsCategory.KEYMAP)
 class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<KeymapManagerListener>()
-  private val boundShortcuts = HashMap<String, String>()
+  private val boundShortcuts = ConcurrentHashMap<String, String>()
   private val schemeManager: SchemeManager<Keymap>
 
   companion object {
@@ -166,14 +168,14 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   }
 
   override fun bindShortcuts(sourceActionId: String, targetActionId: String) {
-    boundShortcuts.put(targetActionId, sourceActionId)
+    boundShortcuts[targetActionId] = sourceActionId
   }
 
   override fun unbindShortcuts(targetActionId: String) {
     boundShortcuts.remove(targetActionId)
   }
 
-  override fun getBoundActions(): MutableSet<String> = boundShortcuts.keys
+  override fun getBoundActions(): Set<String> = boundShortcuts.keys
 
   override fun getActionBinding(actionId: String): String? {
     var visited: MutableSet<String>? = null
@@ -212,14 +214,16 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   }
 
   override fun loadState(state: Element) {
-    val child = state.getChild(ACTIVE_KEYMAP)
-    val activeKeymapName = child?.getAttributeValue(NAME_ATTRIBUTE)
-    if (!activeKeymapName.isNullOrBlank()) {
-      schemeManager.currentSchemeName = activeKeymapName
-      if (schemeManager.currentSchemeName != activeKeymapName) {
-        notifyAboutMissingKeymap(activeKeymapName, IdeBundle.message("notification.content.cannot.find.keymap", activeKeymapName), false)
-      }
+    val activeKeymapName = getActiveKeymapName(state.getChild(ACTIVE_KEYMAP))
+    schemeManager.currentSchemeName = activeKeymapName
+    if (schemeManager.currentSchemeName != activeKeymapName) {
+      notifyAboutMissingKeymap(activeKeymapName, IdeBundle.message("notification.content.cannot.find.keymap", activeKeymapName), false)
     }
+  }
+
+  private fun getActiveKeymapName(child : Element?) : String {
+    val value = child?.getAttributeValue(NAME_ATTRIBUTE)
+    return if (!value.isNullOrBlank()) value else DefaultKeymap.getInstance().defaultKeymapName
   }
 
   @Suppress("OverridingDeprecatedMember")

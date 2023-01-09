@@ -100,12 +100,12 @@ final class TreeAction extends AbstractAction implements UIResource {
     TreePath lead = tree.getLeadSelectionPath();
     int row = tree.getRowForPath(lead);
     if (lead == null || row < 0) {
-      selectFirst(type, tree);
+      selectFirstExceptSeparator(type, tree);
     }
     else {
-      row++; // NB!: increase row before checking for cycle scrolling
+      row = findRowExceptSeparator(tree, row, false); // NB!: increase row before checking for cycle scrolling
       if (isCycleScrollingAllowed(type) && row == tree.getRowCount()) row = 0;
-      select(type, tree, row);
+      selectExceptSeparator(type, tree, row);
     }
   }
 
@@ -113,13 +113,30 @@ final class TreeAction extends AbstractAction implements UIResource {
     TreePath lead = tree.getLeadSelectionPath();
     int row = tree.getRowForPath(lead);
     if (lead == null || row < 0) {
-      selectFirst(type, tree);
+      selectFirstExceptSeparator(type, tree);
     }
     else {
       if (row == 0 && isCycleScrollingAllowed(type)) row = tree.getRowCount();
-      row--; // NB!: decrease row after checking for cycle scrolling
-      select(type, tree, row);
+      row = findRowExceptSeparator(tree, row, true); // NB!: decrease row after checking for cycle scrolling
+      selectExceptSeparator(type, tree, row);
     }
+  }
+
+  private static int findRowExceptSeparator(@NotNull JTree tree, int row, boolean up) {
+    TreePath curPath;
+    int curRow = row;
+    do {
+      if (up) {
+        curRow--;
+      }
+      else {
+        curRow++;
+      }
+      curPath = tree.getPathForRow(curRow);
+    }
+    while (curPath != null && DefaultTreeUI.isSeparator(curPath));
+
+    return curRow;
   }
 
   private static void pageDown(@NotNull MoveType type, @NotNull JTree tree) {
@@ -196,6 +213,17 @@ final class TreeAction extends AbstractAction implements UIResource {
 
   private static void selectFirst(@NotNull MoveType type, @NotNull JTree tree) {
     select(type, tree, 0);
+  }
+
+  private static void selectFirstExceptSeparator(@NotNull MoveType type, @NotNull JTree tree) {
+    selectExceptSeparator(type, tree, 0);
+  }
+
+  private static void selectExceptSeparator(@NotNull MoveType type, @NotNull JTree tree, int row) {
+    TreePath path = tree.getPathForRow(row);
+    if (!DefaultTreeUI.isSeparator(path)) {
+      select(type, tree, path, row);
+    }
   }
 
   private static void selectLast(@NotNull MoveType type, @NotNull JTree tree) {

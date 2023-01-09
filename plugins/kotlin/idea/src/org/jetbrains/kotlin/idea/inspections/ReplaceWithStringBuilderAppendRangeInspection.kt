@@ -67,7 +67,7 @@ class ReplaceWithStringBuilderAppendRangeInspection : AbstractKotlinInspection()
             val secondArg = args.getOrNull(1)?.getArgumentExpression() ?: return
             val thirdArg = args.getOrNull(2)?.getArgumentExpression() ?: return
 
-            val psiFactory = KtPsiFactory(callExpression)
+            val psiFactory = KtPsiFactory(project)
             calleeExpression.replace(psiFactory.createCalleeExpression(functionName))
 
             val secondArgAsInt = secondArg.toIntOrNull()

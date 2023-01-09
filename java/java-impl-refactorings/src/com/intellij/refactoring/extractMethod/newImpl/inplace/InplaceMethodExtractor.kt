@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractSelector
@@ -151,6 +152,10 @@ class InplaceMethodExtractor(private val editor: Editor,
       if (shouldAnnotate != null) {
         PropertiesComponent.getInstance(project).setValue(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, shouldAnnotate, true)
       }
+      val makeStatic = popupProvider.makeStatic
+      if (!popupProvider.staticPassFields && makeStatic != null) {
+        JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = makeStatic
+      }
       restartInplace()
     }
     popupProvider.setShowDialogAction { actionEvent -> restartInDialog(actionEvent == null) }
@@ -182,12 +187,12 @@ class InplaceMethodExtractor(private val editor: Editor,
   }
 
   fun restartInDialog(isLinkUsed: Boolean = false) {
+    val methodRange = callIdentifierRange?.range
+    val methodName = if (methodRange != null) editor.document.getText(methodRange) else ""
     InplaceExtractMethodCollector.openExtractDialog.log(project, isLinkUsed)
     TemplateManagerImpl.getTemplateState(editor)?.gotoEnd(true)
     val elements = ExtractSelector().suggestElementsToExtract(targetClass.containingFile, range)
-    val methodRange = callIdentifierRange?.range
-    val methodName = if (methodRange != null) editor.document.getText(methodRange) else ""
-    extractInDialog(targetClass, elements, methodName, popupProvider.makeStatic ?: false)
+    extractInDialog(targetClass, elements, methodName, popupProvider.makeStatic ?: extractor.extractOptions.isStatic)
   }
 
   private fun restartInplace() {

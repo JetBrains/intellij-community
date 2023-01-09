@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.MultiMap
+import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
@@ -20,12 +21,13 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import java.util.IdentityHashMap
+import java.util.*
 
 internal class LibrariesAndSdkContributors(private val project: Project,
                                            private val rootFileSupplier: RootFileSupplier,
-                                           private val fileSets: MultiMap<VirtualFile, WorkspaceFileSetImpl>,
-                                           private val excludedRoots: MultiMap<VirtualFile, ExcludedRootData>) : ModuleDependencyListener, ProjectRootManagerEx.ProjectJdkListener {
+                                           private val fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
+                                           private val fileSetsByPackagePrefix: PackagePrefixStorage
+) : ModuleDependencyListener, ProjectRootManagerEx.ProjectJdkListener {
   private val sdkRoots = MultiMap.create<Sdk, VirtualFile>()
   private val libraryRoots = MultiMap<Library, VirtualFile>(IdentityHashMap())
   private val moduleDependencyIndex = ModuleDependencyIndex.getInstance(project)
@@ -76,18 +78,20 @@ internal class LibrariesAndSdkContributors(private val project: Project,
                              data: WorkspaceFileSetData) {
       rootFileSupplier.getLibraryRoots(library, rootType).forEach { root ->
         if (RootFileSupplier.ensureValid(root, library, null)) {
-          fileSets.putValue(root, WorkspaceFileSetImpl(root, kind, reference, data))
+          val fileSet = WorkspaceFileSetImpl(root, kind, reference, EntityStorageKind.MAIN, data)
+          fileSets.putValue(root, fileSet)
+          fileSetsByPackagePrefix.addFileSet("", fileSet)
           libraryRoots.putValue(library, root)
         }
       }
     }
 
     val reference = GlobalLibraryReference(library)
-    registerLibraryRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, reference, DummyWorkspaceFileSetData)
-    registerLibraryRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, reference, LibrarySourceRootFileSetData(null))
+    registerLibraryRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, reference, LibraryRootFileSetData(null, ""))
+    registerLibraryRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, reference, LibrarySourceRootFileSetData(null, ""))
     (library as? LibraryEx)?.let { rootFileSupplier.getExcludedRoots(it) }?.forEach {
       if (RootFileSupplier.ensureValid(it, library, null)) {
-        excludedRoots.putValue(it, ExcludedRootData(WorkspaceFileKindMask.EXTERNAL, reference))
+        fileSets.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, reference, EntityStorageKind.MAIN))
         libraryRoots.putValue(library, it)
       }
     }
@@ -98,29 +102,32 @@ internal class LibrariesAndSdkContributors(private val project: Project,
       sdk.rootProvider.getUrls(rootType).forEach { url ->
         val root = rootFileSupplier.findFileByUrl(url)
         if (root != null && RootFileSupplier.ensureValid(root, sdk, null)) {
-          fileSets.putValue(root, WorkspaceFileSetImpl(root, kind, reference, data))
+          val fileSet = WorkspaceFileSetImpl(root, kind, reference, EntityStorageKind.MAIN, data)
+          fileSets.putValue(root, fileSet)
+          fileSetsByPackagePrefix.addFileSet("", fileSet)
           sdkRoots.putValue(sdk, root)
         }
       }
     }
 
     val reference = SdkReference(sdk)
-    registerSdkRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, reference, DummyWorkspaceFileSetData)
-    registerSdkRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, reference, LibrarySourceRootFileSetData(null))
+    registerSdkRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, reference, LibraryRootFileSetData(null, ""))
+    registerSdkRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, reference, LibrarySourceRootFileSetData(null, ""))
   }
 
   private fun unregisterSdkRoots(sdk: Sdk) {
     val roots = sdkRoots.remove(sdk)
     roots?.forEach { root ->
-      fileSets.removeValueIf(root) { (it.entityReference as? SdkReference)?.sdk == sdk }
+      fileSets.removeValueIf(root) { fileSet: StoredFileSet -> (fileSet.entityReference as? SdkReference)?.sdk == sdk }
+      fileSetsByPackagePrefix.removeByPrefixAndReference("", SdkReference(sdk))
     }
   }
 
   private fun unregisterLibraryRoots(library: Library) {
     val roots = libraryRoots.remove(library)
     roots?.forEach { root ->
-      fileSets.removeValueIf(root) { (it.entityReference as? GlobalLibraryReference)?.library === library }
-      excludedRoots.removeValueIf(root) { (it.entityReference as? GlobalLibraryReference)?.library === library }
+      fileSets.removeValueIf(root) { fileSet: StoredFileSet -> (fileSet.entityReference as? GlobalLibraryReference)?.library === library }
+      fileSetsByPackagePrefix.removeByPrefixAndReference("", GlobalLibraryReference(library))
     }
   }
 
@@ -181,8 +188,34 @@ internal class LibrariesAndSdkContributors(private val project: Project,
 
 private class GlobalLibraryReference(val library: Library) : EntityReference<WorkspaceEntity>() {
   override fun resolve(storage: EntityStorage): WorkspaceEntity? = null
+  override fun isReferenceTo(entity: WorkspaceEntity): Boolean = false
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as GlobalLibraryReference
+    return library === other.library
+  }
+
+  override fun hashCode(): Int {
+    return System.identityHashCode(library)
+  }
 }
 
 private class SdkReference(val sdk: Sdk) : EntityReference<WorkspaceEntity>() {
   override fun resolve(storage: EntityStorage): WorkspaceEntity? = null
+  override fun isReferenceTo(entity: WorkspaceEntity): Boolean = false
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as SdkReference
+    return sdk === other.sdk
+  }
+
+  override fun hashCode(): Int {
+    return sdk.hashCode()
+  }
 }

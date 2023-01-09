@@ -216,7 +216,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
 
   static <C extends JComponent> void addActionsTo(@NotNull DefaultActionGroup group,
                                                   @NotNull Function<? super @NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
-                                                  @NotNull Producer<@NotNull UninstallAction<C>> createUninstallAction) {
+                                                  @NotNull Producer<? extends @NotNull UninstallAction<C>> createUninstallAction) {
     PluginEnableDisableAction[] actions = PluginEnableDisableAction.values();
     for (int i = 0; i < actions.length; i++) {
       group.add(createEnableDisableAction.apply(actions[i]));
@@ -227,8 +227,8 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     group.add(createUninstallAction.produce());
   }
 
-  static <C extends JComponent> @NotNull JComponent createGearButton(@NotNull Function<@NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
-                                                                     @NotNull Producer<@NotNull UninstallAction<C>> createUninstallAction) {
+  static <C extends JComponent> @NotNull JComponent createGearButton(@NotNull Function<? super @NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
+                                                                     @NotNull Producer<? extends @NotNull UninstallAction<C>> createUninstallAction) {
     DefaultActionGroup result = new DefaultActionGroup();
     addActionsTo(result,
                  createEnableDisableAction,
@@ -239,8 +239,8 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
                                                    AllIcons.General.GearHover);
   }
 
-  static <C extends JComponent> @NotNull OptionButtonController<C> createOptionButton(@NotNull Function<@NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
-                                                                     @NotNull Producer<@NotNull UninstallAction<C>> createUninstallAction) {
+  static <C extends JComponent> @NotNull OptionButtonController<C> createOptionButton(@NotNull Function<? super @NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
+                                                                                      @NotNull Producer<? extends @NotNull UninstallAction<C>> createUninstallAction) {
     return new OptionButtonController<C>(createEnableDisableAction.apply(PluginEnableDisableAction.ENABLE_GLOBALLY),
                                       createEnableDisableAction.apply(PluginEnableDisableAction.DISABLE_GLOBALLY),
                                       createUninstallAction.produce());

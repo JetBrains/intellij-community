@@ -1,5 +1,6 @@
 import sys
-from typing import Any, Callable, ClassVar, Generic, Iterator, Mapping, TypeVar
+from collections.abc import Callable, Iterator, Mapping
+from typing import Any, ClassVar, Generic, TypeVar
 from typing_extensions import ParamSpec, final
 
 if sys.version_info >= (3, 9):

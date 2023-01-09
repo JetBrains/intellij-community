@@ -1,16 +1,12 @@
-import sys
 from _typeshed import Self
+from collections.abc import Callable
+from hashlib import _Hash
 from logging import Logger, LogRecord
 from types import TracebackType
-from typing import IO, AnyStr, Callable, Protocol, TypeVar
+from typing import IO, AnyStr, Protocol, TypeVar
 
 from paramiko.config import SSHConfig, SSHConfigDict
 from paramiko.hostkeys import HostKeys
-
-if sys.version_info >= (3, 0):
-    from hashlib import _Hash
-else:
-    from hashlib import _hash as _Hash
 
 class SupportsClose(Protocol):
     def close(self) -> None: ...

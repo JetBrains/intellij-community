@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.ui.EditorCustomization;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.ScrollBarPainter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -169,6 +170,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.lookup"), Lookup.LOOKUP_COLOR, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.information"), HintUtil.INFORMATION_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.question"), HintUtil.QUESTION_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.warning"), HintUtil.WARNING_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.error"), HintUtil.ERROR_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.hint_border"), HintUtil.HINT_BORDER_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.recent.locations.selection"), HintUtil.RECENT_LOCATIONS_SELECTION_KEY, ColorDescriptor.Kind.BACKGROUND),
@@ -182,6 +184,8 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.preview.background"), EditorColors.PREVIEW_BACKGROUND, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.preview.border.color"), EditorColors.PREVIEW_BORDER_COLOR, ColorDescriptor.Kind.BACKGROUND),
   };
+
+  private static final ColorDescriptor[] NEW_COLOR_DESCRIPTORS = patchDescriptorsForNewUI(COLOR_DESCRIPTORS);
 
   private static final @NonNls Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS = new HashMap<>();
 
@@ -254,7 +258,18 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
 
   @Override
   public ColorDescriptor @NotNull [] getColorDescriptors() {
-    return COLOR_DESCRIPTORS;
+    return ExperimentalUI.isNewUI() ? NEW_COLOR_DESCRIPTORS : COLOR_DESCRIPTORS;
+  }
+
+  private static ColorDescriptor[] patchDescriptorsForNewUI(ColorDescriptor[] descriptors) {
+    if (!ExperimentalUI.isNewUI()) return descriptors;
+    for (int i = 0; i < descriptors.length; i++) {
+      if (descriptors[i].getKey() == EditorColors.GUTTER_BACKGROUND) {
+        descriptors[i] = new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.gutter.background"),EditorColors.EDITOR_GUTTER_BACKGROUND,ColorDescriptor.Kind.BACKGROUND);
+        break;
+      }
+    }
+    return descriptors;
   }
 
   @Override

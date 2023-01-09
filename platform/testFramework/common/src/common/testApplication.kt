@@ -27,7 +27,7 @@ import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
@@ -66,6 +66,7 @@ import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 private var applicationInitializationResult: Result<Unit>? = null
+const val LEAKED_PROJECTS = "leakedProjects"
 
 val isApplicationInitialized: Boolean
   get() = applicationInitializationResult?.isSuccess == true
@@ -142,7 +143,7 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
     Registry.markAsLoaded()
 
     if (EDT.isCurrentThreadEdt()) {
-      runBlockingModal(ModalTaskOwner.guess(), "") {
+      runBlockingModalWithRawProgressReporter(ModalTaskOwner.guess(), "") {
         preloadServicesAndCallAppInitializedListeners(app, pluginSet)
       }
     }
@@ -176,7 +177,7 @@ private suspend fun preloadServicesAndCallAppInitializedListeners(app: Applicati
         loadComponentInEdtTask()
       }
     }
-    app.loadComponents()
+    app.loadAppComponents()
   }
 
   coroutineScope {
@@ -296,12 +297,12 @@ fun assertNonDefaultProjectsAreNotLeaked() {
     LeakHunter.checkNonDefaultProjectLeak()
   }
   catch (e: AssertionError) {
-    publishHeapDump("leakedProjects")
-    throw e
+    publishHeapDump(LEAKED_PROJECTS)
+    throw AssertionError(e)
   }
   catch (e: Exception) {
-    publishHeapDump("leakedProjects")
-    throw e
+    publishHeapDump(LEAKED_PROJECTS)
+    throw AssertionError(e)
   }
 }
 

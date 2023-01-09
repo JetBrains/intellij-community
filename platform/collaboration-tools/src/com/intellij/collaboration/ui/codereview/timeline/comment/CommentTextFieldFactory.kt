@@ -22,7 +22,7 @@ import java.util.function.Supplier
 object CommentTextFieldFactory {
   fun create(
     model: CommentTextFieldModel,
-    @Nls placeHolder: String,
+    placeHolder: @Nls String? = null,
     withValidation: Boolean = true
   ): EditorTextField = CommentTextField(model.project, model.document).apply {
     putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
@@ -31,6 +31,8 @@ object CommentTextFieldFactory {
       it.putUserData(IncrementalFindAction.SEARCH_DISABLED, true)
       it.colorsScheme.lineSpacing = 1f
       it.settings.isUseSoftWraps = true
+      it.isEmbeddedIntoDialogWrapper = true
+      it.contentComponent.isOpaque = false
     }
     selectAll()
     if (withValidation) {

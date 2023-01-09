@@ -56,6 +56,9 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.maven" scope="RUNTIME" />
@@ -119,5 +122,12 @@
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.searching.base" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.j2k.old.post-processing" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.ide.customization" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.refactorings.common" />
+    <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared" />
   </component>
 </module>

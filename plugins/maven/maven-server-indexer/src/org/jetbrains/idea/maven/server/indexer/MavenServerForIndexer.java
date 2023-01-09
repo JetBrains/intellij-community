@@ -15,6 +15,8 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
 public class MavenServerForIndexer extends MavenRemoteObject implements MavenServer {
+
+  private volatile MavenIdeaIndexerImpl myIndexerRef;
   private volatile PlexusContainer myPlexusContainer;
 
   @Override
@@ -25,14 +27,35 @@ public class MavenServerForIndexer extends MavenRemoteObject implements MavenSer
   @Override
   public MavenServerIndexer createIndexer(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
-    try {
-      MavenIdeaIndexerImpl result = new MavenIdeaIndexerImpl(getPlexusContainer());
-      UnicastRemoteObject.exportObject(result, 0);
-      return result;
+    if (myIndexerRef != null) {
+      return myIndexerRef;
     }
-    catch (Exception e) {
-      throw rethrowException(e);
+    synchronized (this) {
+      if (myIndexerRef != null) {
+        return myIndexerRef;
+      }
+      MavenIdeaIndexerImpl result = null;
+      try {
+        result = new MavenIdeaIndexerImpl(getPlexusContainer());
+        UnicastRemoteObject.exportObject(result, 0);
+        myIndexerRef = result;
+      }
+      catch (Exception e) {
+        try {
+          if (result != null) {
+            UnicastRemoteObject.unexportObject(result, true);
+          }
+        }
+        catch (Exception unexportException) {
+          RuntimeException re = rethrowException(e);
+          re.addSuppressed(re);
+          throw re;
+        }
+
+        throw rethrowException(e);
+      }
     }
+    return myIndexerRef;
   }
 
   private PlexusContainer getPlexusContainer() throws PlexusContainerException {

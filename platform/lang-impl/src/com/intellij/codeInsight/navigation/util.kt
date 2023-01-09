@@ -125,7 +125,7 @@ fun fileStatusAttributes(project: Project, file: VirtualFile): TextAttributes? {
 fun fileLocation(project: Project, file: VirtualFile): TextWithIcon? {
   val fileIndex = ProjectRootManager.getInstance(project).fileIndex
   return if (fileIndex.isInLibrary(file)) {
-    DefaultModuleRendererFactory().libraryLocation(fileIndex, file)
+    DefaultModuleRendererFactory().libraryLocation(project, fileIndex, file)
   }
   else {
     val module = ModuleUtilCore.findModuleForFile(file, project)

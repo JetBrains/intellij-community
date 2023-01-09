@@ -97,8 +97,8 @@ public class FragmentHintManager {
     if (component instanceof LabeledComponent) {
       component = ((LabeledComponent<?>)component).getComponent();
     }
-    if (component instanceof RawCommandLineEditor) {
-      component = ((RawCommandLineEditor)component).getEditorField();
+    if (component instanceof FragmentWrapper wrapper) {
+      component = wrapper.getComponentToRegister();
     }
     if (component instanceof ComponentWithBrowseButton) {
       component = ((ComponentWithBrowseButton<?>)component).getChildComponent();

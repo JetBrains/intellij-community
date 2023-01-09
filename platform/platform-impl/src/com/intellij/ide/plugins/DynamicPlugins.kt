@@ -903,7 +903,7 @@ private fun clearTemporaryLostComponent() {
     clearMethod.isAccessible = true
     loop@ for (frame in WindowManager.getInstance().allProjectFrames) {
       val window = when (frame) {
-        is ProjectFrameHelper -> frame.frameOrNull
+        is ProjectFrameHelper -> frame.frame
         is Window -> frame
         else -> continue@loop
       }
@@ -1239,9 +1239,9 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(
       continue
     }
 
-    @Suppress("RemoveExplicitTypeArguments") val ep = app.extensionArea.getExtensionPointIfRegistered<Any>(epName)
-                                                      ?: anyProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
-                                                      ?: anyModule?.extensionArea?.getExtensionPointIfRegistered<Any>(epName)
+    val ep = app.extensionArea.getExtensionPointIfRegistered<Any>(epName)
+             ?: anyProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
+             ?: anyModule?.extensionArea?.getExtensionPointIfRegistered<Any>(epName)
     if (ep != null) {
       if (!ep.isDynamic) {
         return getNonDynamicUnloadError(optionalDependencyPluginId)

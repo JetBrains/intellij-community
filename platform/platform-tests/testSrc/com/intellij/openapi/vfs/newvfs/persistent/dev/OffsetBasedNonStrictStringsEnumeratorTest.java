@@ -1,10 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
-import com.intellij.util.io.PagedFileStorage;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.ResizeableMappedFile;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -33,7 +32,7 @@ public class OffsetBasedNonStrictStringsEnumeratorTest extends NonStrictStringsE
   protected OffsetBasedNonStrictStringsEnumerator openEnumerator(@NotNull Path storagePath) throws IOException {
     final ResizeableMappedFile mappedFile = new ResizeableMappedFile(
       storagePath,
-      10 * PagedFileStorage.MB,
+      10 * IOUtil.MiB,
       null,
       -1 /*use default page size*/,
       false

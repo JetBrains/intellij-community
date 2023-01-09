@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
@@ -571,7 +571,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     );
     DiffHyperlink hyperlink = comparisionFailedState.getHyperlink();
     if (hyperlink != null) {
-      hyperlink.setTestProxyName(getName());
+      hyperlink.setTestProxy(this);
     }
 
     updateFailedState(comparisionFailedState);
@@ -598,16 +598,14 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     myParent = parent;
   }
 
-  public List<? extends SMTestProxy> collectChildren(@Nullable final Filter<SMTestProxy> filter) {
+  public List<? extends SMTestProxy> collectChildren(final @Nullable Filter<? super SMTestProxy> filter) {
     return filterChildren(filter, collectChildren());
   }
 
   public List<? extends SMTestProxy> collectChildren() {
     final List<? extends SMTestProxy> allChildren = getChildren();
 
-    final List<SMTestProxy> result = new ArrayList<>();
-
-    result.addAll(allChildren);
+    final List<SMTestProxy> result = new ArrayList<>(allChildren);
 
     for (SMTestProxy p : allChildren) {
       result.addAll(p.collectChildren());
@@ -956,14 +954,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   }
 
   public SMRootTestProxy getRoot() {
-    if (this instanceof SMRootTestProxy) {
-      return (SMRootTestProxy)this;
-    }
-    SMTestProxy parent = getParent();
-    while (parent != null && !(parent instanceof SMRootTestProxy)) {
-      parent = parent.getParent();
-    }
-    return parent != null ? (SMRootTestProxy)parent : null;
+    return (SMRootTestProxy)getTestRoot(this);
   }
 
   public static class SMRootTestProxy extends SMTestProxy implements TestProxyRoot {
@@ -1107,6 +1098,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
       myTestConsoleProperties = properties;
     }
 
+    @Override
     public TestConsoleProperties getTestConsoleProperties() {
       return myTestConsoleProperties;
     }

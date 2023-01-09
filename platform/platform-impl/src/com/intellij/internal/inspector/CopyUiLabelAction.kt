@@ -3,18 +3,13 @@ package com.intellij.internal.inspector
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.ide.HelpTooltip
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs
 import com.intellij.util.ui.ComponentWithEmptyText
-import com.intellij.util.ui.UIUtil
 import java.awt.Component
 import java.awt.Container
 import java.awt.datatransfer.StringSelection
@@ -33,11 +28,8 @@ import javax.swing.tree.TreeCellRenderer
 
 internal class CopyUiLabelAction : UiMouseAction("CopyUiLabel") {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
-  override fun actionPerformed(e: AnActionEvent) {
-    val showFullDescription = e.inputEvent?.isShiftDown ?: false
-    val component = getComponentFor(e) ?: return
+  override fun handleClick(component: Component, event: MouseEvent?) {
+    val showFullDescription = event?.isShiftDown ?: false
     val text = when {
       showFullDescription -> {
         val text = mutableListOf<String?>()
@@ -65,22 +57,6 @@ internal class CopyUiLabelAction : UiMouseAction("CopyUiLabel") {
                                          RelativePoint.getSouthWestOf(anchor),
                                          HintManager.HIDE_BY_ANY_KEY or HintManager.HIDE_BY_OTHER_HINT, 0)
     }
-  }
-
-  private fun getComponentFor(e: AnActionEvent): Component? {
-    val event = e.inputEvent
-    val project = e.project
-
-    val eventComponent: Component? = event.component
-    if (event is MouseEvent && eventComponent != null) {
-      if (eventComponent is Container) {
-        return UIUtil.getDeepestComponentAt(eventComponent, event.x, event.y)
-      }
-      return eventComponent
-    }
-
-    return e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
-           ?: IdeFocusManager.getInstance(project).focusOwner
   }
 
   private fun getComponentContextText(c: Component): List<String?> {

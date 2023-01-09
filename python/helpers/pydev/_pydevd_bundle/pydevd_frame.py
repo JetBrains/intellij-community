@@ -19,7 +19,7 @@ from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_current_thread_id
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised, remove_exception_from_frame, ignore_exception_trace
 from _pydevd_bundle.pydevd_bytecode_utils import find_last_call_name, find_last_func_call_order
-from _pydevd_bundle.pydevd_utils import get_clsname_for_code, should_stop_on_failed_test, is_exception_in_test_unit_can_be_ignored
+from _pydevd_bundle.pydevd_utils import get_clsname_for_code, should_stop_on_failed_test, is_exception_in_test_unit_can_be_ignored, eval_expression
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, is_real_file
 
 try:
@@ -52,7 +52,7 @@ def handle_breakpoint_condition(py_db, info, breakpoint, new_frame):
         if condition is None:
             return False
 
-        return eval(condition, new_frame.f_globals, new_frame.f_locals)
+        return eval_expression(condition, new_frame.f_globals, new_frame.f_locals)
     except Exception as e:
         if IS_PY2:
             # Must be bytes on py2.
@@ -89,7 +89,7 @@ def handle_breakpoint_condition(py_db, info, breakpoint, new_frame):
 def handle_breakpoint_expression(breakpoint, info, new_frame):
     try:
         try:
-            val = eval(breakpoint.expression, new_frame.f_globals, new_frame.f_locals)
+            val = eval_expression(breakpoint.expression, new_frame.f_globals, new_frame.f_locals)
         except:
             val = sys.exc_info()[1]
     finally:

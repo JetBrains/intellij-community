@@ -283,7 +283,7 @@ public final class ScopeEditorPanel implements Disposable {
     return buttonsPanel;
   }
 
-  private void excludeSelected(@NotNull List<PackageSet> selected) {
+  private void excludeSelected(@NotNull List<? extends PackageSet> selected) {
     for (PackageSet set : selected) {
       if (myCurrentScope == null) {
         myCurrentScope = new ComplementPackageSet(set);
@@ -312,7 +312,7 @@ public final class ScopeEditorPanel implements Disposable {
     rebuild(true);
   }
 
-  private void includeSelected(@NotNull List<PackageSet> selected) {
+  private void includeSelected(@NotNull List<? extends PackageSet> selected) {
     for (PackageSet set : selected) {
       if (myCurrentScope == null) {
         myCurrentScope = set;
@@ -757,10 +757,10 @@ public final class ScopeEditorPanel implements Disposable {
   }
 
   private static final class MyAction extends AbstractAction {
-    private final Consumer<List<PackageSet>> consumer;
+    private final @NotNull Consumer<? super List<PackageSet>> consumer;
     private List<PackageSet> selection;
 
-    private MyAction(@NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String key, @NotNull Consumer<List<PackageSet>> consumer) {
+    private MyAction(@NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String key, @NotNull Consumer<? super List<PackageSet>> consumer) {
       super(IdeBundle.message(key));
       setEnabled(false);
       this.consumer = consumer;

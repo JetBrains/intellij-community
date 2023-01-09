@@ -33,6 +33,7 @@ import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerActionsCollector;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -153,6 +154,7 @@ public final class XFramesView extends XDebugView {
             if (session != null) {
               myRefresh = false;
               updateFrames((XExecutionStack)item, session, null, false);
+              XDebuggerActionsCollector.threadSelected.log(XDebuggerActionsCollector.PLACE_FRAMES_VIEW);
             }
           }
         }
@@ -218,7 +220,7 @@ public final class XFramesView extends XDebugView {
     }
   }
 
-  public void onFrameSelectionKeyPressed(@NotNull Consumer<XStackFrame> handler) {
+  public void onFrameSelectionKeyPressed(@NotNull Consumer<? super XStackFrame> handler) {
     myFramesList.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
@@ -480,6 +482,9 @@ public final class XFramesView extends XDebugView {
       if (session != null) {
         if (force || (!myRefresh && session.getCurrentStackFrame() != selected)) {
           session.setCurrentStackFrame(mySelectedStack, (XStackFrame)selected, mySelectedFrameIndex == 0);
+          if (force) {
+            XDebuggerActionsCollector.frameSelected.log(XDebuggerActionsCollector.PLACE_FRAMES_VIEW);
+          }
         }
       }
     }

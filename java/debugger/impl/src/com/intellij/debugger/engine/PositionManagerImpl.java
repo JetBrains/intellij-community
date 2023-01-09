@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.MultiRequestPositionManager;
@@ -115,13 +115,13 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   @Nullable
   public SourcePosition getSourcePosition(final Location location) throws NoDataException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(location == null) {
+    if (location == null) {
       return null;
     }
 
     Project project = getDebugProcess().getProject();
     PsiFile psiFile = getPsiFileByLocation(project, location);
-    if(psiFile == null ) {
+    if (psiFile == null) {
       return null;
     }
 
@@ -404,8 +404,8 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   @NotNull
   public List<ReferenceType> getAllClasses(@NotNull final SourcePosition position) throws NoDataException {
     return ReadAction.compute(() -> StreamEx.of(getLineClasses(position.getFile(), position.getLine()))
-                                            .flatMap(aClass -> getClassReferences(aClass, position))
-                                            .toList());
+      .flatMap(aClass -> getClassReferences(aClass, position))
+      .toList());
   }
 
   private StreamEx<ReferenceType> getClassReferences(@NotNull final PsiClass psiClass, SourcePosition position) {
@@ -553,16 +553,9 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           return null;
         }
         Set<PsiClass> lineClasses = getLineClasses(position.getFile(), rangeEnd);
-        if (lineClasses.size() > 1) {
-          // if there's more than one class on the line - try to match by name
-          for (PsiClass aClass : lineClasses) {
-            if (classToFind.equals(aClass)) {
-              return fromClass;
-            }
-          }
-        }
-        else if (!lineClasses.isEmpty()){
-          return classToFind.equals(lineClasses.iterator().next())? fromClass : null;
+        // if there's more than one class on the line - try to match by name
+        if (lineClasses.contains(classToFind)) {
+          return fromClass;
         }
         return null;
       }
@@ -591,7 +584,8 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       myMethodSignature = methodSignature;
     }
 
-    @Override public void visitClass(@NotNull PsiClass aClass) {
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
       if (myCompiledMethod == null) {
         if (getClassReferences(aClass, SourcePosition.createFromElement(aClass)).anyMatch(referenceType -> referenceType.name().equals(myClassName))) {
           myCompiledClass = aClass;
@@ -601,7 +595,8 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       }
     }
 
-    @Override public void visitMethod(@NotNull PsiMethod method) {
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
       if (myCompiledMethod == null) {
         try {
           PsiClass containingClass = method.getContainingClass();

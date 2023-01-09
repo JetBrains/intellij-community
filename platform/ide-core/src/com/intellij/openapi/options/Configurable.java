@@ -7,10 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -231,6 +228,18 @@ public interface Configurable extends UnnamedConfigurable {
 
   default boolean isModified(@NotNull JToggleButton toggleButton, boolean value) {
     return toggleButton.isSelected() != value;
+  }
+
+  /**
+   * Ask opened configurable to focus on a control with a specified label.
+   * It could be a tab name, name of the tree item, checkbox label, etc.
+   * The configurable may or may not ignore this request. 
+   * Default implementation does nothing.
+   * 
+   * @param label localized label name of the control to focus on.
+   */
+  default void focusOn(@NotNull @Nls String label) {
+    
   }
 
   interface TopComponentController {

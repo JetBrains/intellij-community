@@ -2,6 +2,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.model.ModelBranch;
 import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -17,7 +18,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.*;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.diagnostic.IndexAccessValidator;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.KeyValueUpdateProcessor;
 import com.intellij.util.indexing.impl.RemovedKeyProcessor;
@@ -60,7 +60,6 @@ public abstract class StubIndexEx extends StubIndex {
   }, ConcurrentHashMap::new);
 
   private final StubProcessingHelper myStubProcessingHelper = new StubProcessingHelper();
-  private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
 
   @ApiStatus.Internal
   abstract void initializeStubIndexes();
@@ -183,12 +182,18 @@ public abstract class StubIndexEx extends StubIndex {
       trace.stubTreesDeserializingStarted();
 
       try {
+        Collection<ModelBranch> branches = null;
         while (fileStream.hasNext()) {
           VirtualFile file = fileStream.next();
           assert file != null;
-
-          List<VirtualFile> filesInScope =
-            scope != null ? FileBasedIndexEx.filesInScopeWithBranches(scope, file) : Collections.singletonList(file);
+          List<VirtualFile> filesInScope;
+          if (scope != null) {
+            if (branches == null) branches = scope.getModelBranchesAffectingScope();
+            filesInScope = FileBasedIndexEx.filesInScopeWithBranches(scope, file, branches);
+          }
+          else {
+            filesInScope = Collections.singletonList(file);
+          }
           if (filesInScope.isEmpty()) {
             continue;
           }
@@ -312,10 +317,7 @@ public abstract class StubIndexEx extends StubIndex {
 
     try {
       @Nullable IdFilter finalIdFilter = idFilter;
-      return myAccessValidator.validate(StubUpdatingIndex.INDEX_ID, () -> FileBasedIndexEx.disableUpToDateCheckIn(() ->
-                                                                                                                    index.processAllKeys(
-                                                                                                                      processor, scope,
-                                                                                                                      finalIdFilter)));
+      return FileBasedIndexEx.disableUpToDateCheckIn(() -> index.processAllKeys(processor, scope, finalIdFilter));
     }
     catch (StorageException e) {
       forceRebuild(e);
@@ -413,12 +415,9 @@ public abstract class StubIndexEx extends StubIndex {
           return true;
         }
       };
-      myAccessValidator.validate(stubUpdatingIndexId, () -> {
-        trace.totalKeysIndexed(MeasurableIndexStore.keysCountApproximatelyIfPossible(index));
-        // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
-        return FileBasedIndexEx.disableUpToDateCheckIn(() -> ConcurrencyUtil.withLock(
-          stubUpdatingIndex.getLock().readLock(), () -> index.getData(dataKey).forEach(action)));
-      });
+      trace.totalKeysIndexed(MeasurableIndexStore.keysCountApproximatelyIfPossible(index));
+      // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
+      FileBasedIndexEx.disableUpToDateCheckIn(() -> ConcurrencyUtil.withLock(stubUpdatingIndex.getLock().readLock(), () -> index.getData(dataKey).forEach(action)));
       return action.result == null ? IntSets.EMPTY_SET : action.result;
     }
     catch (StorageException e) {
@@ -545,4 +544,14 @@ public abstract class StubIndexEx extends StubIndex {
   public void cleanCaches() {
     myCachedStubIds.clear();
   }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public interface FileUpdateProcessor {
+    void processUpdate(@NotNull VirtualFile file);
+    default void endUpdatesBatch() {}
+  }
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  abstract public @NotNull FileUpdateProcessor getPerFileElementTypeModificationTrackerUpdateProcessor();
 }

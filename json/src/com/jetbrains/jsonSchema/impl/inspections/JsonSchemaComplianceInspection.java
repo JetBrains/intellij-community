@@ -3,7 +3,7 @@ package com.jetbrains.jsonSchema.impl.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonElementVisitor;
 import com.intellij.json.psi.JsonValue;
@@ -17,7 +17,8 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class JsonSchemaComplianceInspection extends JsonSchemaBasedInspectionBase {
   public boolean myCaseInsensitiveEnum = false;
@@ -41,12 +42,10 @@ public class JsonSchemaComplianceInspection extends JsonSchemaBasedInspectionBas
     };
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(JsonBundle.message("json.schema.inspection.case.insensitive.enum"), "myCaseInsensitiveEnum");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myCaseInsensitiveEnum", JsonBundle.message("json.schema.inspection.case.insensitive.enum")));
   }
 
   private static void annotate(@NotNull PsiElement element,

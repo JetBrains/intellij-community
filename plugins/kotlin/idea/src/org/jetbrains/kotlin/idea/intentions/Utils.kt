@@ -45,7 +45,7 @@ fun splitPropertyDeclaration(property: KtProperty): KtBinaryExpression? {
 
     val explicitTypeToSet = if (property.typeReference != null) null else initializer.analyze().getType(initializer)
 
-    val psiFactory = KtPsiFactory(property)
+    val psiFactory = KtPsiFactory(property.project)
     var assignment = psiFactory.createExpressionByPattern("$0 = $1", property.nameAsName!!, initializer)
 
     assignment = parent.addAfter(assignment, property) as KtBinaryExpression
@@ -130,6 +130,7 @@ fun KtExpression?.receiverTypeIfSelectorIsSizeOrLength(): KotlinType? {
                     KotlinBuiltIns.isCollectionOrNullableCollection(type) ||
                     KotlinBuiltIns.isMapOrNullableMap(type)
         }
+
         "length" -> KotlinBuiltIns::isCharSequenceOrNullableCharSequence
         else -> return null
     }
@@ -163,8 +164,6 @@ private val ARRAY_OF_FUNCTION_NAMES = setOf(ArrayFqNames.ARRAY_OF_FUNCTION) +
         Name.identifier("emptyArray")
 
 fun KtCallExpression.isArrayOfFunction(): Boolean {
-    val functionName = calleeExpression?.text ?: return false
-    if (!ARRAY_OF_FUNCTION_NAMES.any { it.asString() == functionName }) return false
     val resolvedCall = resolveToCall() ?: return false
     val descriptor = resolvedCall.candidateDescriptor
     return (descriptor.containingDeclaration as? PackageFragmentDescriptor)?.fqName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME &&
@@ -208,15 +207,6 @@ val FunctionDescriptor.isOperatorOrCompatible: Boolean
         return isOperator
     }
 
-fun KtPsiFactory.appendSemicolonBeforeLambdaContainingElement(element: PsiElement) {
-    val previousElement = KtPsiUtil.skipSiblingsBackwardByPredicate(element) {
-        it!!.node.elementType in KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET
-    }
-    if (previousElement != null && previousElement is KtExpression) {
-        previousElement.parent.addAfter(createSemicolon(), previousElement)
-    }
-}
-
 internal fun Sequence<PsiElement>.lastWithPersistedElementOrNull(elementShouldPersist: KtExpression): PsiElement? {
     var lastElement: PsiElement? = null
     var checked = false
@@ -254,14 +244,17 @@ fun KtElement.isReferenceToBuiltInEnumFunction(): Boolean {
                         it.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTIONS, context) && it.isUsedAsExpression(context)
                     }
                 }
+
                 else -> false
             }
         }
+
         is KtQualifiedExpression -> {
             var target: KtQualifiedExpression = this
             while (target.callExpression == null) target = target.parent as? KtQualifiedExpression ?: break
             target.callExpression?.calleeExpression?.text in ENUM_STATIC_METHODS
         }
+
         is KtCallExpression -> this.calleeExpression?.text in ENUM_STATIC_METHODS
         is KtCallableReferenceExpression -> this.callableReference.text in ENUM_STATIC_METHODS
         else -> false
@@ -314,12 +307,6 @@ private val rangeTypes = setOf(
 
 fun ClassDescriptor.isRange(): Boolean {
     return rangeTypes.any { this.fqNameUnsafe.asString() == it }
-}
-
-fun KtTypeReference.isAnnotatedDeep(): Boolean {
-    if (annotationEntries.isNotEmpty()) return true
-    if (typeArguments().any { it.typeReference?.isAnnotatedDeep() == true }) return true
-    return false
 }
 
 fun KtTypeReference?.typeArguments(): List<KtTypeProjection> {

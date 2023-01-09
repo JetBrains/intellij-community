@@ -1,12 +1,10 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.handler.EqualsAndHashCodeToStringHandler;
 import de.plushnikov.intellij.plugin.processor.handler.EqualsAndHashCodeToStringHandler.MemberInfo;
@@ -48,38 +46,40 @@ public final class ToStringProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    final boolean result = validateAnnotationOnRigthType(psiClass, builder);
-    if (result) {
-      validateExistingMethods(psiClass, builder);
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink problemSink) {
+    validateAnnotationOnRightType(psiClass, problemSink);
+    if (problemSink.success()) {
+      validateExistingMethods(psiClass, problemSink);
     }
 
-    final Collection<String> excludeProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "exclude", String.class);
-    final Collection<String> ofProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", String.class);
+    if (problemSink.deepValidation()) {
+      final Collection<String> excludeProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "exclude", String.class);
+      final Collection<String> ofProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", String.class);
 
-    if (!excludeProperty.isEmpty() && !ofProperty.isEmpty()) {
-      builder.addWarning(LombokBundle.message("inspection.message.exclude.are.mutually.exclusive.exclude.parameter.will.be.ignored"),
-                         PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", null));
-    } else {
-      validateExcludeParam(psiClass, builder, psiAnnotation, excludeProperty);
+      if (!excludeProperty.isEmpty() && !ofProperty.isEmpty()) {
+        problemSink.addWarningMessage("inspection.message.exclude.are.mutually.exclusive.exclude.parameter.will.be.ignored")
+          .withLocalQuickFixes(() -> PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", null));
+      }
+      else {
+        validateExcludeParam(psiClass, problemSink, psiAnnotation, excludeProperty);
+      }
+      validateOfParam(psiClass, problemSink, psiAnnotation, ofProperty);
     }
-    validateOfParam(psiClass, builder, psiAnnotation, ofProperty);
-
-    return result;
+    return problemSink.success();
   }
 
-  private static boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    boolean result = true;
+  private static void validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
-      builder.addError(LombokBundle.message("inspection.message.to.string.only.supported.on.class.or.enum.type"));
-      result = false;
+      builder.addErrorMessage("inspection.message.to.string.only.supported.on.class.or.enum.type");
+      builder.markFailed();
     }
-    return result;
   }
 
-  private static void validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    if (hasToStringMethodDefined(psiClass)) {
-      builder.addWarning(LombokBundle.message("inspection.message.not.generated.s.method.with.same.name.already.exists"), TO_STRING_METHOD_NAME);
+  private static void validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
+    final boolean methodAlreadyExists = hasToStringMethodDefined(psiClass);
+    if (methodAlreadyExists) {
+      builder.addWarningMessage("inspection.message.not.generated.s.method.with.same.name.already.exists", TO_STRING_METHOD_NAME);
+      builder.markFailed();
     }
   }
 
@@ -89,7 +89,9 @@ public final class ToStringProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass,
+                                     @NotNull PsiAnnotation psiAnnotation,
+                                     @NotNull List<? super PsiElement> target) {
     target.addAll(createToStringMethod(psiClass, psiAnnotation));
   }
 
@@ -99,13 +101,16 @@ public final class ToStringProcessor extends AbstractClassProcessor {
       return Collections.emptyList();
     }
 
-    final Collection<MemberInfo> memberInfos = EqualsAndHashCodeToStringHandler.filterFields(psiClass, psiAnnotation, false, INCLUDE_ANNOTATION_METHOD);
+    final Collection<MemberInfo> memberInfos = EqualsAndHashCodeToStringHandler.filterMembers(psiClass, psiAnnotation, false,
+                                                                                              INCLUDE_ANNOTATION_METHOD,
+                                                                                              ConfigKey.TOSTRING_ONLY_EXPLICITLY_INCLUDED);
     final PsiMethod stringMethod = createToStringMethod(psiClass, memberInfos, psiAnnotation, false);
     return Collections.singletonList(stringMethod);
   }
 
   @NotNull
-  public PsiMethod createToStringMethod(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos, @NotNull PsiAnnotation psiAnnotation, boolean forceCallSuper) {
+  public PsiMethod createToStringMethod(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos,
+                                        @NotNull PsiAnnotation psiAnnotation, boolean forceCallSuper) {
     final PsiManager psiManager = psiClass.getManager();
 
     final String paramString = createParamString(psiClass, memberInfos, psiAnnotation, forceCallSuper);
@@ -129,15 +134,22 @@ public final class ToStringProcessor extends AbstractClassProcessor {
       }
       psiClassName.insert(0, containingClass.getName());
       containingClass = containingClass.getContainingClass();
-    } while (null != containingClass);
+    }
+    while (null != containingClass);
 
     return psiClassName.toString();
   }
 
-  private String createParamString(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos, @NotNull PsiAnnotation psiAnnotation, boolean forceCallSuper) {
-    final boolean callSuper = forceCallSuper || readCallSuperAnnotationOrConfigProperty(psiAnnotation, psiClass, ConfigKey.TOSTRING_CALL_SUPER);
-    final boolean doNotUseGetters = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "doNotUseGetters", ConfigKey.TOSTRING_DO_NOT_USE_GETTERS);
-    final boolean includeFieldNames = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "includeFieldNames", ConfigKey.TOSTRING_INCLUDE_FIELD_NAMES);
+  private String createParamString(@NotNull PsiClass psiClass,
+                                   @NotNull Collection<MemberInfo> memberInfos,
+                                   @NotNull PsiAnnotation psiAnnotation,
+                                   boolean forceCallSuper) {
+    final boolean callSuper =
+      forceCallSuper || readCallSuperAnnotationOrConfigProperty(psiAnnotation, psiClass, ConfigKey.TOSTRING_CALL_SUPER);
+    final boolean doNotUseGetters =
+      readAnnotationOrConfigProperty(psiAnnotation, psiClass, "doNotUseGetters", ConfigKey.TOSTRING_DO_NOT_USE_GETTERS);
+    final boolean includeFieldNames =
+      readAnnotationOrConfigProperty(psiAnnotation, psiClass, "includeFieldNames", ConfigKey.TOSTRING_INCLUDE_FIELD_NAMES);
 
     final StringBuilder paramString = new StringBuilder();
     if (callSuper) {
@@ -152,10 +164,11 @@ public final class ToStringProcessor extends AbstractClassProcessor {
 
       final PsiType classFieldType = memberInfo.getType();
       if (classFieldType instanceof PsiArrayType) {
-        final PsiType componentType = ((PsiArrayType) classFieldType).getComponentType();
+        final PsiType componentType = ((PsiArrayType)classFieldType).getComponentType();
         if (componentType instanceof PsiPrimitiveType) {
           paramString.append("java.util.Arrays.toString(");
-        } else {
+        }
+        else {
           paramString.append("java.util.Arrays.deepToString(");
         }
       }
@@ -187,9 +200,11 @@ public final class ToStringProcessor extends AbstractClassProcessor {
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != containingClass) {
-      final String psiFieldName = StringUtil.notNullize(psiField.getName());
-      if (EqualsAndHashCodeToStringHandler.filterFields(containingClass, psiAnnotation, false, INCLUDE_ANNOTATION_METHOD).stream()
-        .map(MemberInfo::getName).anyMatch(psiFieldName::equals)) {
+      final String psiFieldName = psiField.getName();
+      final Collection<MemberInfo> memberInfos =
+        EqualsAndHashCodeToStringHandler.filterMembers(containingClass, psiAnnotation, false,
+                                                       INCLUDE_ANNOTATION_METHOD, ConfigKey.TOSTRING_ONLY_EXPLICITLY_INCLUDED);
+      if (memberInfos.stream().filter(MemberInfo::isField).map(MemberInfo::getName).anyMatch(psiFieldName::equals)) {
         return LombokPsiElementUsage.READ;
       }
     }

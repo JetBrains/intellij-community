@@ -288,12 +288,12 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
     doLayout(columns.get(0), eachColumnX + 4, (int)myLayeredPane.getBounds().getMaxY());
   }
 
-  private void doLayout(@NotNull List<Balloon> balloons, int startX, int bottomY) {
+  private void doLayout(@NotNull List<? extends Balloon> balloons, int startX, int bottomY) {
     int y = bottomY;
     ToolWindowPane pane = UIUtil.findComponentOfType(myParent, ToolWindowPane.class);
     if (pane != null) {
       y -= pane.getBottomHeight();
-      if (SystemInfoRt.isMac && Registry.is("ide.mac.transparentTitleBarAppearance", false) && !ExperimentalUI.isNewUI()) {
+      if (SystemInfoRt.isMac && !ExperimentalUI.isNewUI()) {
         ProjectFrameHelper helper = ProjectFrameHelper.getFrameHelper((Window)myParent.getParent());
         if (helper == null || !helper.isInFullScreen()) {
           y -= UIUtil.getTransparentTitleBarHeight(myParent);
@@ -307,7 +307,7 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
     setBounds(balloons, startX, y);
   }
 
-  protected void setBounds(@NotNull List<Balloon> balloons, int startX, int y) {
+  protected void setBounds(@NotNull List<? extends Balloon> balloons, int startX, int y) {
     for (Balloon balloon : balloons) {
       Rectangle bounds = new Rectangle(getSize(balloon));
       y -= bounds.height;

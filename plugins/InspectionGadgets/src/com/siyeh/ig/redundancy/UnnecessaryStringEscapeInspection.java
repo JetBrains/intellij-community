@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 /**
  * @author Bas Leijdekkers
  */
@@ -38,11 +41,10 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
     return InspectionGadgetsBundle.message("unnecessary.string.escape.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("inspection.unnecessary.string.escape.report.char.literals.option"), this, "reportChars");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("reportChars", InspectionGadgetsBundle.message("inspection.unnecessary.string.escape.report.char.literals.option")));
   }
 
   @Nullable
@@ -68,7 +70,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiLiteralExpression)) {
         return;
@@ -182,8 +184,8 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
       if (type == null) {
         return;
       }
-      final HighlightInfo
-        parsingError = HighlightUtil.checkLiteralExpressionParsingError(expression, PsiUtil.getLanguageLevel(expression), null);
+      HighlightInfo.Builder
+        parsingError = HighlightUtil.checkLiteralExpressionParsingError(expression, PsiUtil.getLanguageLevel(expression), null, null);
       if (parsingError != null) {
         return;
       }

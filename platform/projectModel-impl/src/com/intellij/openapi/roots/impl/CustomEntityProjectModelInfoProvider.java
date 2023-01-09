@@ -5,8 +5,9 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
@@ -32,17 +33,20 @@ public interface CustomEntityProjectModelInfoProvider<T extends WorkspaceEntity>
   Class<T> getEntityClass();
 
   @NotNull
-  default Sequence<@NotNull CustomContentRoot<T>> getContentRoots(@NotNull Sequence<T> entities) {
+  default Sequence<@NotNull CustomContentRoot<T>> getContentRoots(@NotNull Sequence<T> entities,
+                                                                  @NotNull EntityStorage entityStorage) {
     return SequencesKt.emptySequence();
   }
 
   @NotNull
-  default Sequence<@NotNull LibraryRoots<T>> getLibraryRoots(@NotNull Sequence<T> entities) {
+  default Sequence<@NotNull LibraryRoots<T>> getLibraryRoots(@NotNull Sequence<T> entities,
+                                                             @NotNull EntityStorage entityStorage) {
     return SequencesKt.emptySequence();
   }
 
   @NotNull
-  default Sequence<@NotNull ExcludeStrategy<T>> getExcludeSdkRootStrategies(@NotNull Sequence<T> entities) {
+  default Sequence<@NotNull ExcludeStrategy<T>> getExcludeSdkRootStrategies(@NotNull Sequence<T> entities,
+                                                                            @NotNull EntityStorage entityStorage) {
     return SequencesKt.emptySequence();
   }
 

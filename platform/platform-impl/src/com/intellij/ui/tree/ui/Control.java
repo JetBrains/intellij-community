@@ -4,12 +4,21 @@ package com.intellij.ui.tree.ui;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.Component;
-import java.awt.Graphics;
-import javax.swing.Icon;
+import javax.swing.*;
+import javax.swing.tree.TreePath;
+import java.awt.*;
+import java.util.function.Function;
 
 public interface Control {
+  /**
+   * This key can be set to a custom control for particular {@link TreePath} to render custom icon instead of collapse/expand tree icons.
+   *
+   * @see JComponent#putClientProperty
+   */
+  Key<Function<@NotNull TreePath, @Nullable Control>> CUSTOM_CONTROL = Key.create("CUSTOM_CONTROL");
+
   @NotNull
   Icon getIcon(boolean expanded, boolean selected);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xdebugger;
 
@@ -25,10 +25,12 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 
 /**
- * Instances of this class are created by the debugging subsystem when {@link XDebuggerManager#startSession} or
- * {@link XDebuggerManager#startSessionAndShowTab} method is called. It isn't supposed to be implemented by a plugin.
- * <p/>
- * Instance of this class can be obtained from {@link XDebugProcess#getSession()} method and used to control debugging process
+ * Instances of this class are created by the debugging subsystem
+ * when the {@link XDebuggerManager#startSession} or {@link XDebuggerManager#startSessionAndShowTab} method is called.
+ * It isn't supposed to be implemented by a plugin.
+ * <p>
+ * An instance of this class can be obtained from the {@link XDebugProcess#getSession()} method
+ * and can then be used to control the debugging process.
  */
 public interface XDebugSession extends AbstractDebuggerSession {
   DataKey<XDebugSession> DATA_KEY = DataKey.create("XDebugSessionTab.XDebugSession");
@@ -47,13 +49,13 @@ public interface XDebugSession extends AbstractDebuggerSession {
   XSuspendContext getSuspendContext();
 
   /**
-   * Position from the current frame
+   * Position of the current frame
    */
   @Nullable
   XSourcePosition getCurrentPosition();
 
   /**
-   * Position from the top frame
+   * Position of the top frame
    */
   @Nullable
   XSourcePosition getTopFramePosition();
@@ -81,31 +83,31 @@ public interface XDebugSession extends AbstractDebuggerSession {
   }
 
   /**
-   * Call this method to setup custom icon and/or error message (it will be shown in tooltip) for breakpoint.
-   * Usually in your breakpoint handler you need {@link #setBreakpointVerified(XLineBreakpoint)} or {@link #setBreakpointInvalid(XLineBreakpoint, String)} instead.
+   * Call this method to set up a custom icon and/or error message (it will be shown in tooltip) for a breakpoint.
+   * Usually in your breakpoint handler you need {@link #setBreakpointVerified(XLineBreakpoint)}
+   * or {@link #setBreakpointInvalid(XLineBreakpoint, String)} instead.
    *
-   * @param breakpoint   breakpoint
    * @param icon         icon ({@code null} if default icon should be used). You can use icons from {@link com.intellij.icons.AllIcons.Debugger}
    * @param errorMessage an error message if breakpoint isn't successfully registered
-   * @see #setBreakpointVerified(XLineBreakpoint)~
+   * @see #setBreakpointVerified(XLineBreakpoint)
    * @see #setBreakpointInvalid(XLineBreakpoint, String)
    */
   void updateBreakpointPresentation(@NotNull XLineBreakpoint<?> breakpoint, @Nullable Icon icon, @Nullable String errorMessage);
 
   /**
-   * Marks the provide breakpoint as verified in the current session
+   * Marks the given breakpoint as verified in the current session.
    */
   void setBreakpointVerified(@NotNull XLineBreakpoint<?> breakpoint);
 
   /**
-   * Marks the provide breakpoint as invalid in the current session
+   * Marks the given breakpoint as invalid in the current session.
    */
   void setBreakpointInvalid(@NotNull XLineBreakpoint<?> breakpoint, @Nullable String errorMessage);
 
   /**
    * Call this method when a breakpoint is reached if its condition ({@link XBreakpoint#getCondition()}) evaluates to {@code true}.
-   * <p/>
-   * <strong>The underlying debugging process should be suspended only if the method returns {@code true}. </strong>
+   * <p>
+   * <strong>The underlying debugging process should be suspended only if the method returns {@code true}.</strong>
    *
    * @param breakpoint             reached breakpoint
    * @param evaluatedLogExpression value of {@link XBreakpoint#getLogExpression()} evaluated in the current context
@@ -123,14 +125,12 @@ public interface XDebugSession extends AbstractDebuggerSession {
   boolean breakpointReached(@NotNull XBreakpoint<?> breakpoint, @NotNull XSuspendContext suspendContext);
 
   /**
-   * Call this method when position is reached (e.g. after "Run to cursor" or "Step over" command)
-   *
-   * @param suspendContext context
+   * Call this method when the position is reached (e.g. after "Run to cursor" or "Step over" command)
    */
   void positionReached(@NotNull XSuspendContext suspendContext);
 
   /**
-   * Call this method when session resumed because of some external event, e.g. from the debugger console
+   * Call this method when the session was resumed because of some external event, e.g. from the debugger console
    */
   void sessionResumed();
 

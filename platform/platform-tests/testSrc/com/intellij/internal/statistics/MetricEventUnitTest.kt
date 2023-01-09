@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.beans.newCounterMetric
 import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.testFramework.HeavyPlatformTestCase
-import com.intellij.util.containers.ContainerUtil.newArrayList
+import com.intellij.util.containers.ContainerUtil
 import org.junit.Assert
 import org.junit.Test
 
@@ -84,35 +84,35 @@ class MetricEventUnitTest : HeavyPlatformTestCase() {
 
   @Test
   fun `test filter unique metric events`() {
-    doTestUniqueFilter(2, newArrayList(
+    doTestUniqueFilter(2, ContainerUtil.newArrayList(
       newMetric("abcd"), newMetric("abcd"), newMetric("efgh")
     ))
   }
 
   @Test
   fun `test filter unique metric events with value`() {
-    doTestUniqueFilter(3, newArrayList(
+    doTestUniqueFilter(3, ContainerUtil.newArrayList(
       newMetric("abcd"), newMetric("abcd"), newMetric("efgh"), newMetric("abcd", 2)
     ))
   }
 
   @Test
   fun `test filter unique metric events all with value`() {
-    doTestUniqueFilter(3, newArrayList(
+    doTestUniqueFilter(3, ContainerUtil.newArrayList(
       newMetric("abcd", 1), newMetric("abcd", 1), newMetric("efgh", 1), newMetric("abcd", 2)
     ))
   }
 
   @Test
   fun `test filter unique metric events all with the same value`() {
-    doTestUniqueFilter(1, newArrayList(
+    doTestUniqueFilter(1, ContainerUtil.newArrayList(
       newMetric("abcd", 1), newMetric("abcd", 1), newMetric("abcd", 1)
     ))
   }
 
   @Test
   fun `test filter unique metric events with data`() {
-    doTestUniqueFilter(2, newArrayList(
+    doTestUniqueFilter(2, ContainerUtil.newArrayList(
       newMetric("abcd", 1, FeatureUsageData().addData("foo", 123)),
       newMetric("abcd", 1)
     ))
@@ -120,7 +120,7 @@ class MetricEventUnitTest : HeavyPlatformTestCase() {
 
   @Test
   fun `test filter unique metric events with different data`() {
-    doTestUniqueFilter(2, newArrayList(
+    doTestUniqueFilter(2, ContainerUtil.newArrayList(
       newMetric("abcd", 1, FeatureUsageData().addData("foo", 123)),
       newMetric("abcd", 1, FeatureUsageData().addData("foo", 122))
     ))
@@ -128,7 +128,7 @@ class MetricEventUnitTest : HeavyPlatformTestCase() {
 
   @Test
   fun `test filter unique metric events with the same data`() {
-    doTestUniqueFilter(1, newArrayList(
+    doTestUniqueFilter(1, ContainerUtil.newArrayList(
       newMetric("abcd", 1, FeatureUsageData().addData("foo", 123)),
       newMetric("abcd", 1, FeatureUsageData().addData("foo", 123))
     ))
@@ -136,7 +136,7 @@ class MetricEventUnitTest : HeavyPlatformTestCase() {
 
   @Test
   fun `test filter unique metric events with the same value and different data`() {
-    doTestUniqueFilter(2, newArrayList(
+    doTestUniqueFilter(2, ContainerUtil.newArrayList(
       newMetric("abcd", 1, FeatureUsageData().addData("foo", 123)),
       newMetric("abcd", 1, FeatureUsageData().addData("foo", 12))
     ))
@@ -144,7 +144,7 @@ class MetricEventUnitTest : HeavyPlatformTestCase() {
 
   @Test
   fun `test filter unique metric events with different value and same data`() {
-    doTestUniqueFilter(2, newArrayList(
+    doTestUniqueFilter(2, ContainerUtil.newArrayList(
       newMetric("abcd", 1, FeatureUsageData().addData("foo", 123)),
       newMetric("abcd", 2, FeatureUsageData().addData("foo", 123))
     ))

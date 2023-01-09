@@ -26,7 +26,7 @@ abstract class SumTransformationBase(
         return if (initialization.initializer.isZeroConstant()) {
             call
         } else {
-            KtPsiFactory(call).createExpressionByPattern(
+            KtPsiFactory(call.project).createExpressionByPattern(
                 "$0 + $1", initialization.initializer, call,
                 reformat = chainedCallGenerator.reformat
             )
@@ -85,7 +85,7 @@ abstract class SumTransformationBase(
             }
 
             val byExpression = if (conversionFunctionName != null)
-                KtPsiFactory(value).createExpressionByPattern("$0.$conversionFunctionName()", value, reformat = state.reformat)
+                KtPsiFactory(value.project).createExpressionByPattern("$0.$conversionFunctionName()", value, reformat = state.reformat)
             else
                 value
 

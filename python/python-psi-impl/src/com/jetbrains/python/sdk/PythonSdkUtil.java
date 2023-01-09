@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
  *
  * @see PySdkUtil for run-time Python SDK utils
  */
-public class PythonSdkUtil {
+public final class PythonSdkUtil {
 
   public static final String REMOTE_SOURCES_DIR_NAME = "remote_sources";
   /**
@@ -495,15 +495,27 @@ public class PythonSdkUtil {
     return envs == null;
   }
 
+  /**
+   * @deprecated Check sdk flavour instead
+   */
+  @Deprecated
   // Conda virtual environment and base conda
   public static boolean isConda(@NotNull Sdk sdk) {
     return isConda(sdk.getHomePath());
   }
 
+  /**
+   * @deprecated flavour instead
+   */
+  @Deprecated
   public static boolean isConda(@Nullable String sdkPath) {
     return findCondaMeta(sdkPath) != null;
   }
 
+  /**
+   * @deprecated flavour instead
+   */
+  @Deprecated
   public static boolean isBaseConda(@Nullable String sdkPath) {
     final VirtualFile condaMeta = findCondaMeta(sdkPath);
     if (condaMeta == null) {

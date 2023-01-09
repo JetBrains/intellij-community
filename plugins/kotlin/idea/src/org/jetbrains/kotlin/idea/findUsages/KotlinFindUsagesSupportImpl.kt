@@ -1,15 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
-import org.jetbrains.kotlin.idea.search.usagesSearch.dataClassComponentFunction
 import org.jetbrains.kotlin.idea.search.usagesSearch.isCallReceiverRefersToCompanionObject
 import org.jetbrains.kotlin.idea.search.usagesSearch.isKotlinConstructorUsage
 import org.jetbrains.kotlin.psi.*
@@ -30,14 +30,11 @@ class KotlinFindUsagesSupportImpl : KotlinFindUsagesSupport {
         })
     }
 
-    override fun isDataClassComponentFunction(element: KtParameter): Boolean =
-        element.dataClassComponentFunction() != null
-
-    override fun getTopMostOverriddenElementsToHighlight(target: PsiElement): List<PsiElement> =
-        org.jetbrains.kotlin.idea.search.usagesSearch.getTopMostOverriddenElementsToHighlight(target)
-
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String? =
         org.jetbrains.kotlin.idea.search.usagesSearch.tryRenderDeclarationCompactStyle(declaration)
+
+    override fun formatJavaOrLightMethod(method: PsiMethod): String =
+        org.jetbrains.kotlin.idea.refactoring.formatJavaOrLightMethod(method)
 
     override fun isKotlinConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean =
         psiReference.isKotlinConstructorUsage(ktClassOrObject)

@@ -46,9 +46,14 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
       object : JavaRecursiveElementWalkingVisitor(){
         override fun visitExpression(expression: PsiExpression) {
           if (expression in ignoredElements) return
-          val duplicate = createDuplicate(childrenOf(patternExpression), childrenOf(expression))
+          //skip cases when the whole expression will be detected as a change
+          val duplicate = if (areNodesEquivalent(patternExpression, expression)) {
+            tryExtractDuplicate(listOf(patternExpression), listOf(expression))
+          } else {
+            null
+          }
           if (duplicate != null) {
-            duplicates += duplicate.copy(pattern = listOf(patternExpression), candidate = listOf(expression))
+            duplicates += duplicate
           } else {
             super.visitExpression(expression)
           }
@@ -59,7 +64,7 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
         override fun visitStatement(statement: PsiStatement) {
           if (statement in ignoredElements) return
           val siblings = siblingsOf(statement).take(pattern.size).toList()
-          val duplicate = createDuplicate(pattern, siblings)
+          val duplicate = tryExtractDuplicate(pattern, siblings)
           if (duplicate != null) {
             duplicates += duplicate
             ignoredElements += duplicate.candidate
@@ -88,12 +93,7 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
     return siblingsOf(element?.firstChild).toList()
   }
 
-  fun createExpressionDuplicate(pattern: PsiExpression, candidate: PsiExpression): Duplicate? {
-    return createDuplicate(childrenOf(pattern), childrenOf(candidate))
-      ?.copy(pattern = listOf(pattern), candidate = listOf(candidate))
-  }
-
-  fun createDuplicate(pattern: List<PsiElement>, candidate: List<PsiElement>): Duplicate? {
+  fun tryExtractDuplicate(pattern: List<PsiElement>, candidate: List<PsiElement>): Duplicate? {
     val changedExpressions = ArrayList<ChangedExpression>()
     if (!traverseAndCollectChanges(pattern, candidate, changedExpressions)) return null
     return removeInternalReferences(Duplicate(pattern, candidate, changedExpressions))
@@ -120,13 +120,18 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
     return duplicate.copy(changedExpressions = changedExpressions)
   }
 
+  /**
+   * Does recursive equivalence check for [pattern] and [candidate] nodes.
+   * Puts parametrized expressions into [changedExpressions] list.
+   * @return false if [pattern] and [candidate] are not parametrized duplicates.
+   */
   private fun traverseAndCollectChanges(pattern: List<PsiElement>,
                                         candidate: List<PsiElement>,
                                         changedExpressions: MutableList<ChangedExpression>): Boolean {
     if (candidate.size != pattern.size) return false
     val notEqualElements = pattern.zip(candidate).filterNot { (pattern, candidate) ->
       pattern !in predefinedChanges &&
-      areEquivalent(pattern, candidate) &&
+      areNodesEquivalent(pattern, candidate) &&
       traverseAndCollectChanges(childrenOf(pattern), childrenOf(candidate), changedExpressions)
     }
     if (notEqualElements.any { (pattern, candidate) -> ! canBeReplaced(pattern, candidate) }) return false
@@ -134,7 +139,10 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
     return true
   }
 
-  private fun areEquivalent(pattern: PsiElement, candidate: PsiElement): Boolean {
+  /**
+   * Non-recursive equivalence check for [pattern] and [candidate] elements.
+   */
+  private fun areNodesEquivalent(pattern: PsiElement, candidate: PsiElement): Boolean {
     return when {
       pattern is PsiTypeElement && candidate is PsiTypeElement -> canBeReplaced(pattern.type, candidate.type)
       pattern is PsiJavaCodeReferenceElement && candidate is PsiJavaCodeReferenceElement ->

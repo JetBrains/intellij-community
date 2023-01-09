@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PathUtil;
+import com.intellij.util.ThreeState;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -29,16 +30,15 @@ import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public final class ProcessListUtil {
   private static final Logger LOG = Logger.getInstance(ProcessListUtil.class);
   private static final String WIN_PROCESS_LIST_HELPER_FILENAME = "WinProcessListHelper.exe";
   public static final List<@NlsSafe String> COMM_LIST_COMMAND = List.of("/bin/ps", "-a", "-x", "-o", "pid,ppid,state,user,comm");
   public static final List<@NlsSafe String> COMMAND_LIST_COMMAND = List.of("/bin/ps", "-a", "-x", "-o", "pid,ppid,state,user,command");
+
+  private static final String PARENT_PID_PREFIX = "PPid:";
 
   public static ProcessInfo @NotNull [] getProcessList() {
     List<ProcessInfo> result = doGetProcessList();
@@ -117,6 +117,8 @@ public final class ProcessListUtil {
       return null;
     }
 
+    String currentUser = getCurrentUser();
+    Map<Long, String> owners = getProcessOwners();
     List<ProcessInfo> result = new ArrayList<>();
 
     for (File each : processes) {
@@ -145,10 +147,32 @@ public final class ProcessListUtil {
         // couldn't resolve symlink
       }
 
+      int parentPid = -1;
+      try (FileInputStream stream = new FileInputStream(new File(each, "status"))) {
+        String statusString = new String(FileUtil.loadBytes(stream), StandardCharsets.UTF_8);
+        for (String line : StringUtil.splitByLines(statusString)) {
+          if (line.startsWith(PARENT_PID_PREFIX)) {
+            try {
+              parentPid = Integer.parseInt(line.substring(PARENT_PID_PREFIX.length()).trim());
+            }
+            catch (NumberFormatException numberFormatException) {
+              LOG.error("Failed to parse parent pid from line " + line);
+            }
+            break;
+          }
+        }
+      }
+      catch (IOException ignored) {
+      }
+
+      String processUser = owners.get((long)pid);
       result.add(new ProcessInfo(pid, StringUtil.join(cmdline, " "),
                                  PathUtil.getFileName(cmdline.get(0)),
                                  StringUtil.join(cmdline.subList(1, cmdline.size()), " "),
-                                 executablePath
+                                 executablePath,
+                                 parentPid,
+                                 processUser,
+                                 currentUser != null ? ThreeState.fromBoolean(currentUser.equals(processUser)) : ThreeState.UNSURE
       ));
     }
     return result;
@@ -166,6 +190,12 @@ public final class ProcessListUtil {
   }
 
   public static @Nullable List<ProcessInfo> parseMacOutput(@NotNull String commandOnly, @NotNull String full) {
+    return parseMacOutput(commandOnly, full, null);
+  }
+
+  public static @Nullable List<ProcessInfo> parseMacOutput(@NotNull String commandOnly,
+                                                           @NotNull String full,
+                                                           @Nullable String currentUser) {
     List<MacProcessInfo> commands = doParseMacOutput(commandOnly);
     List<MacProcessInfo> fulls = doParseMacOutput(full);
     if (commands == null || fulls == null) return null;
@@ -185,12 +215,19 @@ public final class ProcessListUtil {
       String name = PathUtil.getFileName(command);
       String args = each.commandLine.substring(command.length()).trim();
 
-      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command, each.parentPid));
+      ThreeState isOwnedByCurrentUser = currentUser != null ? ThreeState.fromBoolean(currentUser.equals(each.user)) : ThreeState.UNSURE;
+      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command, each.parentPid, each.user, isOwnedByCurrentUser));
     }
     return result;
   }
 
   public static @Nullable List<ProcessInfo> parseLinuxOutputMacStyle(@NotNull String commandOnly, @NotNull String full) {
+    return parseLinuxOutputMacStyle(commandOnly, full, null);
+  }
+
+  public static @Nullable List<ProcessInfo> parseLinuxOutputMacStyle(@NotNull String commandOnly,
+                                                                     @NotNull String full,
+                                                                     @Nullable String currentUser) {
     List<MacProcessInfo> commands = doParseMacOutput(commandOnly);
     if (commands == null) {
       LOG.debug("Failed to parse commands output: ", commandOnly);
@@ -216,8 +253,8 @@ public final class ProcessListUtil {
       String name = PathUtil.getFileName(command);
       String args = each.commandLine.startsWith(command) ? each.commandLine.substring(command.length()).trim()
                                                          : each.commandLine;
-
-      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command, each.parentPid));
+      ThreeState isOwnedByCurrentUser = currentUser != null ? ThreeState.fromBoolean(currentUser.equals(each.user)) : ThreeState.UNSURE;
+      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command, each.parentPid, each.user, isOwnedByCurrentUser));
     }
     return result;
   }
@@ -271,20 +308,7 @@ public final class ProcessListUtil {
     return result;
   }
 
-  private static class MacProcessInfo {
-    final int pid;
-    final int parentPid;
-    final String commandLine;
-    final String user;
-    final String state;
-
-    MacProcessInfo(int pid, String commandLine, String user, String state, int parentPid) {
-      this.pid = pid;
-      this.commandLine = commandLine;
-      this.user = user;
-      this.state = state;
-      this.parentPid = parentPid;
-    }
+  private record MacProcessInfo(int pid, String commandLine, String user, String state, int parentPid) {
   }
 
   private static @Nullable List<ProcessInfo> getProcessListUsingWinProcessListHelper() {
@@ -292,7 +316,9 @@ public final class ProcessListUtil {
     if (exeFile == null) {
       return null;
     }
-    return parseCommandOutput(Collections.singletonList(exeFile.toAbsolutePath().toString()), ProcessListUtil::parseWinProcessListHelperOutput, StandardCharsets.UTF_8);
+    return parseCommandOutput(Collections.singletonList(exeFile.toAbsolutePath().toString()),
+                              output -> parseWinProcessListHelperOutput(output, getProcessOwners(), getCurrentUser()),
+                              StandardCharsets.UTF_8);
   }
 
   private static void logErrorTestSafe(@NonNls String message) {
@@ -341,7 +367,9 @@ public final class ProcessListUtil {
     return null;
   }
 
-  static @Nullable List<ProcessInfo> parseWinProcessListHelperOutput(@NotNull String output) {
+  static @Nullable List<ProcessInfo> parseWinProcessListHelperOutput(@NotNull String output,
+                                                                     @NotNull Map<Long, String> processOwners,
+                                                                     @Nullable String currentUser) {
     String[] lines = StringUtil.splitByLines(output, false);
     List<ProcessInfo> result = new ArrayList<>();
     if (lines.length % 4 != 0) {
@@ -391,7 +419,9 @@ public final class ProcessListUtil {
       else {
         args = extractCommandLineArgs(commandLine, name);
       }
-      result.add(new ProcessInfo(id, commandLine, name, args, null, parentId));
+      String processUser = processOwners.get((long)id);
+      ThreeState isOwnedByCurrentUser = currentUser != null ? ThreeState.fromBoolean(currentUser.equals(processUser)) : ThreeState.UNSURE;
+      result.add(new ProcessInfo(id, commandLine, name, args, null, parentId, processUser, isOwnedByCurrentUser));
     }
     return result;
   }
@@ -420,10 +450,12 @@ public final class ProcessListUtil {
 
   static @Nullable List<ProcessInfo> getProcessListUsingWindowsWMIC() {
     return parseCommandOutput(Arrays.asList("wmic.exe", "path", "win32_process", "get", "Caption,Processid,ParentProcessId,Commandline,ExecutablePath"),
-                              ProcessListUtil::parseWMICOutput);
+                              output -> parseWMICOutput(output, getProcessOwners(), getCurrentUser()));
   }
 
-  static @Nullable List<ProcessInfo> parseWMICOutput(@NotNull String output) {
+  static @Nullable List<ProcessInfo> parseWMICOutput(@NotNull String output,
+                                                     @NotNull Map<Long, String> processOwners,
+                                                     @Nullable String currentUser) {
     List<ProcessInfo> result = new ArrayList<>();
     String[] lines = StringUtil.splitByLinesDontTrim(output);
     if (lines.length == 0) return null;
@@ -465,17 +497,19 @@ public final class ProcessListUtil {
         args = extractCommandLineArgs(commandLine, name);
       }
 
-      result.add(new ProcessInfo(pid, commandLine, name, args, executablePath, parentPid));
+      String processUser = processOwners.get((long)pid);
+      ThreeState isOwnedByCurrentUser = currentUser != null ? ThreeState.fromBoolean(currentUser.equals(processUser)) : ThreeState.UNSURE;
+      result.add(new ProcessInfo(pid, commandLine, name, args, executablePath, parentPid, processUser, isOwnedByCurrentUser));
     }
     return result;
   }
 
   static @Nullable List<ProcessInfo> getProcessListUsingWindowsTaskList() {
     return parseCommandOutput(Arrays.asList("tasklist.exe", "/fo", "csv", "/nh", "/v"),
-                              ProcessListUtil::parseListTasksOutput);
+                              output -> parseListTasksOutput(output, getCurrentUser()));
   }
 
-  static @Nullable List<ProcessInfo> parseListTasksOutput(@NotNull String output) {
+  static @Nullable List<ProcessInfo> parseListTasksOutput(@NotNull String output, @Nullable String currentUser) {
     List<ProcessInfo> result = new ArrayList<>();
 
     CSVReader reader = new CSVReader(new StringReader(output));
@@ -490,7 +524,12 @@ public final class ProcessListUtil {
         String name = next[0];
         if (name.isEmpty()) continue;
 
-        result.add(new ProcessInfo(pid, name, name, ""));
+        String userName = next.length > 6 ? next[6] : null;
+        if ("N/A".equals(userName)) {
+          userName = null;
+        }
+        ThreeState isOwnedByCurrentUser = currentUser != null ? ThreeState.fromBoolean(currentUser.equals(userName)) : ThreeState.UNSURE;
+        result.add(new ProcessInfo(pid, name, name, "", null, -1, userName, isOwnedByCurrentUser));
       }
     }
     catch (IOException e) {
@@ -506,5 +545,23 @@ public final class ProcessListUtil {
     }
 
     return result;
+  }
+
+  /**
+   * @return map from process id to process owner name
+   */
+  private static @NotNull Map<Long, String> getProcessOwners() {
+    Map<Long, String> result = new HashMap<>();
+    ProcessHandle.allProcesses().forEach(it -> {
+      long pid = it.pid();
+      ProcessHandle.Info info = it.info();
+      String user = info.user().orElse(null);
+      result.put(pid, user);
+    });
+    return result;
+  }
+
+  private static @Nullable String getCurrentUser() {
+    return ProcessHandle.current().info().user().orElse(null);
   }
 }

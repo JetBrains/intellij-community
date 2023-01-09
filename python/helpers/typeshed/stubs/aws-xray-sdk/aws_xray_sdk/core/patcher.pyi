@@ -1,5 +1,6 @@
+from collections.abc import Iterable
 from logging import Logger
-from typing import Any, Iterable
+from typing import Any
 
 from aws_xray_sdk import global_sdk_config as global_sdk_config
 

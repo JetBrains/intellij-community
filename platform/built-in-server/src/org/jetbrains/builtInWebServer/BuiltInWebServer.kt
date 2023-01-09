@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 package org.jetbrains.builtInWebServer
 
@@ -51,6 +51,7 @@ import java.nio.file.attribute.PosixFilePermission
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
+import kotlin.io.path.exists
 
 internal val LOG = logger<BuiltInWebServer>()
 

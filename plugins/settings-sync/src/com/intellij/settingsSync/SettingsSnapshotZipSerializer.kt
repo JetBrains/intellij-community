@@ -17,6 +17,8 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.stream.Collectors
 import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.name
 
 internal object SettingsSnapshotZipSerializer {
   private const val METAINFO = ".metainfo"
@@ -45,10 +47,17 @@ internal object SettingsSnapshotZipSerializer {
       }
 
       for (fileState in snapshot.fileStates) {
-        val content = if (fileState is FileState.Modified) fileState.content else DELETED_FILE_MARKER.toByteArray()
-        zip.addFile(fileState.file, content)
+        zip.addFile(fileState.file, getContentForFileState(fileState))
+      }
+
+      for (additionalFile in snapshot.additionalFiles) {
+        zip.addFile("$METAINFO/${additionalFile.file}", getContentForFileState(additionalFile))
       }
     }
+  }
+
+  private fun getContentForFileState(fileState: FileState): ByteArray {
+    return if (fileState is FileState.Modified) fileState.content else DELETED_FILE_MARKER.toByteArray()
   }
 
   private fun serializePlugins(plugins: SettingsSyncPluginsState): String {
@@ -60,12 +69,19 @@ internal object SettingsSnapshotZipSerializer {
     Decompressor.Zip(zipFile).extract(tempDir)
     val metaInfoFolder = tempDir / METAINFO
     val metaInfo = parseMetaInfo(metaInfoFolder)
+
     val fileStates = Files.walk(tempDir)
       .filter { it.isFile() && !metaInfoFolder.isAncestor(it) }
       .map { getFileStateFromFileWithDeletedMarker(it, tempDir) }
       .collect(Collectors.toSet())
+
+    val additionalFiles = Files.walk(metaInfoFolder)
+      .filter { it.isFile() && it.name != INFO && it.name != PLUGINS }
+      .map { getFileStateFromFileWithDeletedMarker(it, metaInfoFolder) }
+      .collect(Collectors.toSet())
+
     val plugins = deserializePlugins(metaInfoFolder)
-    return SettingsSnapshot(metaInfo, fileStates, plugins)
+    return SettingsSnapshot(metaInfo, fileStates, plugins, additionalFiles)
   }
 
   private fun deserializePlugins(metaInfoFolder: Path): SettingsSyncPluginsState {

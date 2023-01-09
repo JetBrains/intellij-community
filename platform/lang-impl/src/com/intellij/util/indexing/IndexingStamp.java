@@ -84,6 +84,10 @@ public final class IndexingStamp {
     private Timestamps(@Nullable DataInputStream stream) throws IOException {
       if (stream != null) {
         int[] outdatedIndices = null;
+        //'header' is either timestamp (dominatingIndexStamp), or, if timestamp is small enough
+        // (<MAX_SHORT), it is really a number of 'outdatedIndices', followed by actual indices
+        // ints (which is index id from ID class), and followed by another timestamp=dominatingIndexStamp
+        // value
         long dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
         long diff = dominatingIndexStamp - DataInputOutputUtil.timeBase;
         if (diff > 0 && diff < ID.MAX_NUMBER_OF_INDICES) {
@@ -95,6 +99,7 @@ public final class IndexingStamp {
           dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
         }
 
+        //and after is just a set of ints -- Index IDs from ID class
         while(stream.available() > 0) {
           ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
           if (id != null && !(id instanceof StubIndexKey)) {
@@ -236,8 +241,7 @@ public final class IndexingStamp {
         timestamps = new Timestamps(stream);
       }
       catch (IOException e) {
-        FSRecords.handleError(e);
-        throw new RuntimeException(e);
+        throw FSRecords.handleError(e);
       }
       ourTimestampsCache.cacheOrGet(id, timestamps);
     }

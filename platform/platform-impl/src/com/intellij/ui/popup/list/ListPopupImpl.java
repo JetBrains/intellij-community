@@ -78,8 +78,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     this(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), null, aStep, null);
   }
 
-  public ListPopupImpl(@Nullable Project project,
-                       @NotNull ListPopupStep aStep) {
+  public ListPopupImpl(@Nullable Project project, @NotNull ListPopupStep aStep) {
     this(project, null, aStep, null);
   }
 
@@ -128,6 +127,14 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   public void goBack() {
     myList.clearSelection();
     super.goBack();
+  }
+
+  /**
+   * @return index of the selected item, regardless of the applied filter
+   */
+  public int getOriginalSelectedIndex() {
+    int index = myList.getSelectedIndex();
+    return index == -1 ? -1 : myListModel.getOriginalIndex(index);
   }
 
   @Override
@@ -423,6 +430,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     Object[] selectedValues = myList.getSelectedValues();
+    if (selectedValues.length == 0) return false;
     ListPopupStep<Object> listStep = getListStep();
     Object selectedValue = selectedValues[0];
     if (!listStep.isSelectable(selectedValue)) return false;
@@ -441,9 +449,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     Integer inlineButtonIndex = myList.getSelectedButtonIndex();
     if (inlineButtonIndex != null) {
-      if (myPopupInlineActionsSupport.runInlineAction(selectedValue, inlineButtonIndex, e)) {
+      InlineActionDescriptor actionDescriptor = myPopupInlineActionsSupport.getInlineAction(selectedValue, inlineButtonIndex, e);
+      if (actionDescriptor.getClosesPopup()) {
         disposePopup(e);
       }
+      actionDescriptor.executeAction();
       return true;
     }
 

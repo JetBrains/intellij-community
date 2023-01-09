@@ -5,6 +5,7 @@ package org.jetbrains.jpsBootstrap;
 import com.google.common.hash.Hashing;
 import com.intellij.execution.CommandLineWrapperUtil;
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,6 +15,7 @@ import org.apache.commons.cli.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging;
 import org.jetbrains.intellij.build.dependencies.JdkDownloader;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.JpsModel;
@@ -31,7 +33,10 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.stream.Collectors;
 
-import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.*;
+import static org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.*;
+import static org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.underTeamCity;
+import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.getTeamCitySystemProperties;
+import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.toBooleanChecked;
 
 @SuppressWarnings({"SameParameterValue"})
 public class JpsBootstrapMain {
@@ -140,7 +145,7 @@ public class JpsBootstrapMain {
     }
 
     String verboseEnv = System.getenv(JPS_BOOTSTRAP_VERBOSE);
-    JpsBootstrapUtil.setVerboseEnabled(cmdline.hasOption(OPT_VERBOSE) || (verboseEnv != null && toBooleanChecked(verboseEnv)));
+    BuildDependenciesLogging.setVerboseEnabled(cmdline.hasOption(OPT_VERBOSE) || (verboseEnv != null && toBooleanChecked(verboseEnv)));
 
     String communityHomeString = System.getenv(COMMUNITY_HOME_ENV);
     if (communityHomeString == null) {
@@ -158,7 +163,7 @@ public class JpsBootstrapMain {
 
   private Path downloadJdk() {
     Path jdkHome;
-    if (JpsBootstrapUtil.underTeamCity) {
+    if (underTeamCity) {
       jdkHome = JdkDownloader.getJdkHome(communityHome);
       SetParameterServiceMessage setParameterServiceMessage = new SetParameterServiceMessage(
         "jps.bootstrap.java.home", jdkHome.toString()
@@ -193,7 +198,40 @@ public class JpsBootstrapMain {
     writeJavaArgfile(moduleRuntimeClasspath);
   }
 
-  private void writeJavaArgfile(List<File> moduleRuntimeClasspath) throws IOException {
+  private void removeOpenedPackage(List<String> openedPackages, String openedPackage, List<String> unknownPackages) {
+    if (!openedPackages.remove(openedPackage)) {
+      unknownPackages.add(openedPackage);
+    }
+  }
+
+  private List<String> getOpenedPackages() throws Exception {
+    Path openedPackagesPath = communityHome.getCommunityRoot().resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt");
+    List<String> openedPackages = ContainerUtil.filter(Files.readAllLines(openedPackagesPath), it -> !it.isBlank());
+    List<String> unknownPackages = new ArrayList<>();
+
+    if (!SystemInfo.isWindows) {
+      removeOpenedPackage(openedPackages,"--add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED", unknownPackages);
+    }
+    if (!SystemInfo.isMac) {
+      removeOpenedPackage(openedPackages,"--add-opens=java.desktop/com.apple.eawt=ALL-UNNAMED", unknownPackages);
+      removeOpenedPackage(openedPackages,"--add-opens=java.desktop/com.apple.eawt.event=ALL-UNNAMED", unknownPackages);
+      removeOpenedPackage(openedPackages,"--add-opens=java.desktop/com.apple.laf=ALL-UNNAMED", unknownPackages);
+      removeOpenedPackage(openedPackages,"--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED", unknownPackages);
+    }
+    if (!SystemInfo.isLinux) {
+      removeOpenedPackage(openedPackages,"--add-opens=java.desktop/com.sun.java.swing.plaf.gtk=ALL-UNNAMED", unknownPackages);
+      removeOpenedPackage(openedPackages,"--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED", unknownPackages);
+      removeOpenedPackage(openedPackages,"--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED", unknownPackages);
+    }
+    if (!unknownPackages.isEmpty()) {
+      throw new Exception(String.format("OS specific opened packages: ['%s'] not found in '%s'. " +
+          "Probably you need to clean up OS-specific package names in org.jetbrains.jpsBootstrap.JpsBootstrapMain",
+        String.join("','", unknownPackages), openedPackagesPath));
+    }
+    return openedPackages;
+  }
+
+  private void writeJavaArgfile(List<File> moduleRuntimeClasspath) throws Exception {
     Properties systemProperties = new Properties();
 
     if (underTeamCity) {
@@ -209,9 +247,7 @@ public class JpsBootstrapMain {
     args.add("-ea");
     args.add("-Xmx" + buildTargetXmx);
 
-    Path openedPackagesPath = communityHome.getCommunityRoot().resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt");
-    List<String> openedPackages = ContainerUtil.filter(Files.readAllLines(openedPackagesPath), it -> !it.isBlank());
-    args.addAll(openedPackages);
+    args.addAll(getOpenedPackages());
 
     args.addAll(convertPropertiesToCommandLineArgs(systemProperties));
 

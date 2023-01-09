@@ -30,5 +30,5 @@ import java.util.Set;
 public interface TypeAwareArrangementEntry extends ArrangementEntry {
   
   @NotNull
-  Set<ArrangementSettingsToken> getTypes();
+  Set<? extends ArrangementSettingsToken> getTypes();
 }

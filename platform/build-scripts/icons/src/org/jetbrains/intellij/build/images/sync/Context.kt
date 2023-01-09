@@ -9,11 +9,9 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.function.Consumer
 import kotlin.concurrent.thread
 
-internal class Context(private val errorHandler: Consumer<String> = Consumer { error(it) },
-                       private val devIconsVerifier: Consumer<Collection<Path>>? = null) {
+internal class Context {
   companion object {
     const val iconsCommitHashesToSyncArg = "sync.icons.commits"
     private const val iconsRepoArg = "icons.repo"
@@ -160,19 +158,9 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   fun iconsSyncRequired() = devChanges().isNotEmpty()
   fun devSyncRequired() = iconsChanges().isNotEmpty()
 
-  fun verifyDevIcons(repos: Collection<Path>) {
-    try {
-      devIconsVerifier?.accept(repos)
-    }
-    catch (e: Exception) {
-      e.printStackTrace(System.err)
-      doFail("Test failures detected")
-    }
-  }
-
   fun doFail(report: String) {
     log(report)
-    errorHandler.accept(report)
+    error(report)
   }
 
   fun isFail() = notifySlack && failIfSyncDevIconsRequired && devSyncRequired()

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots
 
 import com.intellij.openapi.Disposable
@@ -26,7 +26,7 @@ class AdditionalLibraryRootsProviderRegistrationTest : HeavyPlatformTestCase() {
   }
 
   private fun registerProvider(sourceRoot: VirtualFile, disposable: Disposable) {
-    AdditionalLibraryRootsProvider.EP_NAME.getPoint().registerExtension(object : AdditionalLibraryRootsProvider() {
+    AdditionalLibraryRootsProvider.EP_NAME.point.registerExtension(object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project): Collection<SyntheticLibrary> {
         return listOf(SyntheticLibrary.newImmutableLibrary(listOf(sourceRoot)))
       }

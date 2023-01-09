@@ -15,27 +15,24 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.quickfix.ChainedComparisonsQuickFix;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyLiteralExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
@@ -49,17 +46,11 @@ public class PyChainedComparisonsInspection extends PyInspection {
   private static final String INSPECTION_SHORT_NAME = "PyChainedComparisonsInspection";
   public boolean ignoreConstantInTheMiddle = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    JCheckBox checkBox = PythonUiService.getInstance().createInspectionCheckBox(
-      PyPsiBundle.message("INSP.chained.comparisons.ignore.statements.with.constant.in.the.middle"), this, "ignoreConstantInTheMiddle");
-    final JPanel rootPanel = new JPanel(new BorderLayout());
-    if (checkBox != null) {
-      rootPanel.add(checkBox,
-                    BorderLayout.PAGE_START);
-    }
-    return rootPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreConstantInTheMiddle", PyPsiBundle.message("INSP.chained.comparisons.ignore.statements.with.constant.in.the.middle"))
+    );
   }
 
   @NotNull

@@ -71,6 +71,7 @@ class CommitActionsPanel : JBPanel<CommitActionsPanel>(null), CommitActionsUi {
     add(commitButton)
     add(primaryCommitActionsToolbar.component)
     add(commitOptionToolbar.component)
+    isOpaque = false
   }
 
   var isActive: Boolean = true

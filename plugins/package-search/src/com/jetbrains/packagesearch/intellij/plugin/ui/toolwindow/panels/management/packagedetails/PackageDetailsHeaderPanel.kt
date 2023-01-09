@@ -32,16 +32,16 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.normalizeWhitespace
+import com.jetbrains.packagesearch.intellij.plugin.nullIfBlank
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageOperations
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageOperationType
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.AbstractLayoutManager2
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.HtmlEditorPane
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.MenuAction
@@ -58,8 +58,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.showUnderneath
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.top
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.vertical
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.verticalCenter
-import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
-import kotlinx.coroutines.Deferred
+import com.jetbrains.packagesearch.intellij.plugin.util.modifyPackages
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
@@ -76,8 +75,7 @@ import javax.swing.text.html.parser.ParserDelegator
 private val minPopupMenuWidth = 175.scaled()
 
 internal class PackageDetailsHeaderPanel(
-    private val project: Project,
-    private val operationExecutor: OperationExecutor
+    private val project: Project
 ) : JPanel() {
 
     private val repoWarningBanner = InfoBannerPanel().apply {
@@ -98,7 +96,7 @@ internal class PackageDetailsHeaderPanel(
         addActionListener { onPrimaryActionClicked() }
     }
 
-    private var primaryOperations: Deferred<List<PackageSearchOperation<*>>>? = null
+    private var primaryOperations: (PackageManagementOperationExecutor.() -> Unit)? = null
 
     private val removeMenuAction = MenuAction().apply {
         add(object : DumbAwareAction(PackageSearchBundle.message("packagesearch.ui.toolwindow.actions.remove.text")) {
@@ -121,7 +119,7 @@ internal class PackageDetailsHeaderPanel(
         ActionButton(removeMenuAction, presentation, "PackageSearchPackageDetailsHeader", ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE)
     }
 
-    private var removeOperations: Deferred<List<PackageSearchOperation<*>>>? = null
+    private var removeOperations: (PackageManagementOperationExecutor.() -> Unit)? = null
 
     private val copyMenuItem = PackageSearchUI.menuItem(
         title = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.menu.copy"),
@@ -163,22 +161,22 @@ internal class PackageDetailsHeaderPanel(
 
     internal data class ViewModel(
         val uiPackageModel: UiPackageModel<*>,
-        val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+        val knownRepositoriesInTargetModules: Map<PackageSearchModule, List<RepositoryModel>>,
         val targetModules: TargetModules,
-        val onlyStable: Boolean
+        val onlyStable: Boolean,
+        val allKnownRepositories: List<RepositoryModel>
     )
 
     fun display(viewModel: ViewModel) {
         val packageModel = viewModel.uiPackageModel.packageModel
-
-        val name = packageModel.remoteInfo?.name
+        val remoteInfo = packageModel.remoteInfo
         val rawIdentifier = viewModel.uiPackageModel.identifier.rawValue
-        if (name != null && name != rawIdentifier) {
+        if (remoteInfo != null && name != rawIdentifier) {
             @Suppress("HardCodedStringLiteral") // The name comes from the API
             nameLabel.setBody(
                 listOf(
                     HtmlChunk.span("font-size: ${16.scaledFontSize()};")
-                        .addRaw("<b>" + packageModel.remoteInfo.name.normalizeWhitespace() + "</b>")
+                        .addRaw("<b>" + remoteInfo.name.normalizeWhitespace() + "</b>")
                 )
             )
             identifierLabel.setBodyText(rawIdentifier)
@@ -248,11 +246,11 @@ internal class PackageDetailsHeaderPanel(
     }
 
     private fun onPrimaryActionClicked() {
-        primaryOperations?.let { operationExecutor.executeOperations(it) }
+        primaryOperations?.let { project.modifyPackages(it) }
     }
 
     private fun onRemoveClicked() {
-        removeOperations?.let { operationExecutor.executeOperations(it) }
+        removeOperations?.let { project.modifyPackages(it) }
     }
 
     private fun onCopyClicked() {

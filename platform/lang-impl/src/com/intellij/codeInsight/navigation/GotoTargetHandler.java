@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.util.RoundedCellRenderer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
@@ -32,11 +33,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.util.*;
@@ -54,15 +59,21 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(getFeatureUsedKey());
+    String featureId = getFeatureUsedKey();
+    if (featureId != null) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(featureId);
+    }
 
     try {
       GotoData gotoData = getSourceAndTargetElements(editor, file);
+      Consumer<JBPopup> showPopupProcedure = popup -> {
+        popup.showInBestPositionFor(editor);
+      };
       if (gotoData != null) {
-        show(project, editor, file, gotoData);
+        show(project, editor, file, gotoData, showPopupProcedure);
       }
       else {
-        chooseFromAmbiguousSources(editor, file, data -> show(project, editor, file, data));
+        chooseFromAmbiguousSources(editor, file, data -> show(project, editor, file, data, showPopupProcedure));
       }
     }
     catch (IndexNotReadyException e) {
@@ -74,6 +85,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   protected void chooseFromAmbiguousSources(Editor editor, PsiFile file, Consumer<? super GotoData> successCallback) { }
 
   @NonNls
+  @Nullable
   protected abstract String getFeatureUsedKey();
 
   protected boolean useEditorFont() {
@@ -83,10 +95,11 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   @Nullable
   protected abstract GotoData getSourceAndTargetElements(Editor editor, PsiFile file);
 
-  private void show(@NotNull Project project,
-                    @NotNull Editor editor,
-                    @NotNull PsiFile file,
-                    @NotNull GotoData gotoData) {
+  protected void show(@NotNull Project project,
+                      @NotNull Editor editor,
+                      @NotNull PsiFile file,
+                      @NotNull GotoData gotoData,
+                      @NotNull Consumer<? super JBPopup> showPopup) {
     if (gotoData.isCanceled) return;
 
     PsiElement[] targets = gotoData.targets;
@@ -127,7 +140,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     if (useEditorFont()) {
       builder.setFont(EditorUtil.getEditorFont());
     }
-    builder.setRenderer(new GotoTargetRenderer(gotoData::getPresentation)).
+    builder.setRenderer(new RoundedCellRenderer<>(new GotoTargetRenderer(gotoData::getPresentation))).
       setItemsChosenCallback(selectedElements -> {
         for (Object element : selectedElements) {
           if (element instanceof AdditionalAction) {
@@ -168,7 +181,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     JScrollPane pane = builder instanceof PopupChooserBuilder ? ((PopupChooserBuilder<?>)builder).getScrollPane() : null;
     if (pane != null) {
-      pane.setBorder(null);
+      if (!ExperimentalUI.isNewUI()) {
+        pane.setBorder(null);
+      }
       pane.setViewportBorder(null);
     }
 
@@ -176,14 +191,14 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       Alarm alarm = new Alarm(popup);
       alarm.addRequest(() -> {
         if (!editor.isDisposed()) {
-          popup.showInBestPositionFor(editor);
+          showPopup.consume(popup);
         }
       }, 300);
       gotoData.listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);
     }
     else {
-      popup.showInBestPositionFor(editor);
+      showPopup.consume(popup);
     }
   }
 

@@ -5,6 +5,8 @@ import com.intellij.openapi.project.Project
 import git4idea.config.GitExecutableManager
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import training.dsl.LessonContext
+import training.git.GitLessonsUtil.refreshGitLogOnOpen
 import training.git.GitProjectUtil
 import training.learn.course.KLesson
 import training.learn.course.LessonProperties
@@ -13,6 +15,12 @@ import training.learn.exceptons.LessonPreparationException
 abstract class GitLesson(@NonNls id: String, @Nls name: String) : KLesson(id, name) {
   protected abstract val branchName: String
   override val properties = LessonProperties(availableSince = "212")
+
+  override val fullLessonContent: LessonContext.() -> Unit
+    get() = {
+      refreshGitLogOnOpen()
+      super.fullLessonContent(this)
+    }
 
   override fun prepare(project: Project) {
     if (GitExecutableManager.getInstance().testGitExecutableVersionValid(project)) {

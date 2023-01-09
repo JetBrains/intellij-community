@@ -62,7 +62,7 @@ class TreeWelcomeScreenLeftPanel : WelcomeScreenLeftPanel {
     tab.childTabs.forEach { addTab(child, it) }
   }
 
-  override fun addSelectionListener(disposable: Disposable, action: Consumer<WelcomeScreenTab>) {
+  override fun addSelectionListener(disposable: Disposable, action: Consumer<in WelcomeScreenTab>) {
     val tsl = TreeSelectionListener { e ->
       val tab = TreeUtil.getUserObject(WelcomeScreenTab::class.java, e.path.lastPathComponent) ?: return@TreeSelectionListener
       if (!wasLoaded) {
@@ -156,9 +156,9 @@ private class MyControlPainter : Control.Painter {
   override fun getRendererOffset(control: Control, depth: Int, leaf: Boolean): Int {
     return if (depth == 1) {
       if (leaf) {
-        delegate.getRendererOffset(control, 0, leaf)
+        delegate.getRendererOffset(control, 0, true)
       }
-      else delegate.getRendererOffset(control, 1, leaf)
+      else delegate.getRendererOffset(control, 1, false)
     }
     else delegate.getRendererOffset(control, depth - 1, leaf)
   }
@@ -166,9 +166,9 @@ private class MyControlPainter : Control.Painter {
   override fun getControlOffset(control: Control, depth: Int, leaf: Boolean): Int {
     return if (depth == 1) {
       if (leaf) {
-        delegate.getControlOffset(control, 0, leaf)
+        delegate.getControlOffset(control, 0, true)
       }
-      else delegate.getControlOffset(control, 1, leaf)
+      else delegate.getControlOffset(control, 1, false)
     }
     else delegate.getControlOffset(control, depth - 1, leaf)
   }

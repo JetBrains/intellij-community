@@ -22,7 +22,7 @@ class GrRecursiveCallLineMarkerProvider : LineMarkerProvider {
     return null
   }
 
-  override fun collectSlowLineMarkers(elements: MutableList<out PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
+  override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
     val lines = mutableSetOf<Int>()
     for (element in elements) {
       ProgressManager.checkCanceled()

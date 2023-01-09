@@ -9,8 +9,8 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="17" />
-            <stringArg name="apiVersion" arg="1.7" />
-            <stringArg name="languageVersion" arg="1.7" />
+            <stringArg name="apiVersion" arg="1.8" />
+            <stringArg name="languageVersion" arg="1.8" />
           </stringArguments>
         </compilerArguments>
       </configuration>
@@ -69,6 +69,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.highlighting" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refactorings.tests.k2" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.search.test.k2" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.searching.test.k2" scope="TEST" />
   </component>
 </module>

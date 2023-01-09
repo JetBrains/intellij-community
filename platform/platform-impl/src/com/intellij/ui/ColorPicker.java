@@ -1007,7 +1007,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       saveRecentColors(myRecentColors);
     }
 
-    private static void saveRecentColors(List<Color> recentColors) {
+    private static void saveRecentColors(List<? extends Color> recentColors) {
       final List<String> values = new ArrayList<>();
       for (Color recentColor : recentColors) {
         if (recentColor == null) break;
@@ -1018,7 +1018,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       PropertiesComponent.getInstance().setValue(COLOR_CHOOSER_COLORS_KEY, values.isEmpty() ? null : StringUtil.join(values, ",,,"), null);
     }
 
-    private static List<Color> appendColor(Color color, List<Color> recentColors, int maxSize) {
+    private static List<Color> appendColor(Color color, List<? extends Color> recentColors, int maxSize) {
       ArrayList<Color> colors = new ArrayList<>(recentColors);
       colors.remove(color);
       colors.add(0, color);

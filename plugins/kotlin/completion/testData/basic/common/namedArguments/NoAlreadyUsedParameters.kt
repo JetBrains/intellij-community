@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 fun foo(paramFirst: String, paramSecond: String, paramThird: String, paramFourth: String) {}
 
 fun test() {

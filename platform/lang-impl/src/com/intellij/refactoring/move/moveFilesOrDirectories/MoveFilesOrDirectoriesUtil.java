@@ -20,7 +20,7 @@ import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,7 +136,7 @@ public final class MoveFilesOrDirectoriesUtil {
                              MoveCallback moveCallback,
                              Runnable doneCallback) {
     CommandProcessor.getInstance().executeCommand(project, () -> {
-      Collection<PsiElement> toCheck = ContainerUtil.newArrayList(targetDirectory);
+      Collection<PsiElement> toCheck = new SmartList<>(targetDirectory);
       for (PsiElement e : adjustedElements) {
         toCheck.add(e instanceof PsiFileSystemItem && e.getParent() != null ? e.getParent() : e);
       }
@@ -212,7 +212,7 @@ public final class MoveFilesOrDirectoriesUtil {
     }, MoveHandler.getRefactoringName(), null);
   }
 
-  private static void addFilePointers(@NotNull Set<SmartPsiElementPointer<PsiFile>> pointers,
+  private static void addFilePointers(@NotNull Set<? super SmartPsiElementPointer<PsiFile>> pointers,
                                       @NotNull PsiElement element,
                                       @NotNull SmartPointerManager manager) {
     if (element instanceof PsiFile) {

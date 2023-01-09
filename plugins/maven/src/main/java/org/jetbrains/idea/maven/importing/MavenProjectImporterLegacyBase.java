@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
@@ -23,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class MavenProjectImporterLegacyBase extends MavenProjectImporterBase {
-  protected final ModuleModelProxy myModuleModel;
+  protected final ModifiableModuleModel myModuleModel;
   protected volatile Map<MavenProject, MavenProjectChanges> myProjectsToImportWithChanges;
 
   public MavenProjectImporterLegacyBase(Project project,
@@ -33,7 +34,7 @@ public abstract class MavenProjectImporterLegacyBase extends MavenProjectImporte
                                         @NotNull IdeModifiableModelsProvider modelsProvider) {
     super(project, projectsTree, importingSettings, modelsProvider);
     myProjectsToImportWithChanges = projectsToImportWithChanges;
-    myModuleModel = myModelsProvider.getModuleModelProxy();
+    myModuleModel = myModelsProvider.getModifiableModuleModel();
   }
 
   protected void finalizeImport(List<Module> obsoleteModules) {
@@ -57,7 +58,7 @@ public abstract class MavenProjectImporterLegacyBase extends MavenProjectImporte
         modulePropertyManager.setMavenized(mavenized);
       }
     }
-    WorkspaceModel.getInstance(myProject).updateProjectModel(builder -> {
+    WorkspaceModel.getInstance(myProject).updateProjectModel("Set mavenized modules", builder -> {
       builder.addDiff(storageBuilder);
       return null;
     });

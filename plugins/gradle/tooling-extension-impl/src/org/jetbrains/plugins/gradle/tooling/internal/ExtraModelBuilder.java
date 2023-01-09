@@ -111,6 +111,8 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
         }
         catch (Exception e) {
           if (service instanceof ExternalProjectBuilderImpl) {
+            //Probably checked exception might still pop from poorly behaving implementation
+            //noinspection ConstantValue
             if (e instanceof RuntimeException) throw (RuntimeException)e;
             throw new ExternalSystemException(e);
           }

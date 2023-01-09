@@ -119,7 +119,8 @@
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.method.DelegateMethodProcessor"/>
 
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.CleanupProcessor"/>
-    <!--    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.SynchronizedProcessor"/>-->
+    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.SynchronizedProcessor"/>
+    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.JacksonizedProcessor"/>
     <!-- END of lombok Processors-->
 
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery"/>
@@ -135,6 +136,7 @@
     <treeGenerator implementation="de.plushnikov.intellij.plugin.extension.LombokLightMethodTreeGenerator"/>
 
     <lang.structureViewExtension implementation="de.plushnikov.intellij.plugin.extension.LombokStructureViewExtension"/>
+    <propertyAccessorDetector implementation="de.plushnikov.intellij.plugin.extension.LombokPropertyAccessorDetector"/>
 
     <daemon.highlightInfoFilter implementation="de.plushnikov.intellij.plugin.extension.LombokHighlightErrorFilter"/>
 

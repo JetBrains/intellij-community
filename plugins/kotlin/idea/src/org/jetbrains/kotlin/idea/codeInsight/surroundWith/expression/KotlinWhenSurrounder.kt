@@ -20,7 +20,7 @@ class KotlinWhenSurrounder : KotlinExpressionSurrounder() {
 
     override fun surroundExpression(project: Project, editor: Editor, expression: KtExpression): TextRange {
         val template = "when(a) { \nb -> {}\n else -> {}\n}"
-        val whenExpression = (KtPsiFactory(expression).createExpression(template) as KtWhenExpression).let {
+        val whenExpression = (KtPsiFactory(project).createExpression(template) as KtWhenExpression).let {
             it.subjectExpression?.replace(expression)
             expression.replaced(it)
         }

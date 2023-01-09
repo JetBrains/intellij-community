@@ -6,16 +6,17 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.ReflectionAssignabilityCache;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomElementVisitor;
-import com.intellij.util.xml.DomFileDescription;
-import com.intellij.util.xml.TypeChooserManager;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,6 +127,14 @@ public final class DomApplicationComponent {
     return ContainerUtil.map2Set(myAcceptingOtherRootTagNamesDescriptions, DomFileMetaData::getDescription);
   }
 
+  public @Nullable DomFileDescription<?> findDescription(XmlFile file) {
+    Module module = ModuleUtilCore.findModuleForFile(file);
+    Condition<DomFileDescription<?>> condition = d -> d.isMyFile(file, module);
+    String rootTagLocalName = DomService.getInstance().getXmlFileHeader(file).getRootTagLocalName();
+    DomFileDescription<?> description = ContainerUtil.find(getFileDescriptions(rootTagLocalName), condition);
+    return description != null ? description : ContainerUtil.find(getAcceptingOtherRootTagNameDescriptions(), condition);
+  }
+
   synchronized void registerFileDescription(DomFileDescription<?> description) {
     registerFileDescription(new DomFileMetaData(description));
     initDescription(description);
@@ -188,7 +197,7 @@ public final class DomApplicationComponent {
   }
 
   public StaticGenericInfo getStaticGenericInfo(final Type type) {
-    return getInvocationCache(ReflectionUtil.getRawType(type)).genericInfo;
+    return getInvocationCache(ClassUtil.getRawType(type)).genericInfo;
   }
 
   InvocationCache getInvocationCache(Class<?> type) {

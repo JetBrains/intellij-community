@@ -81,11 +81,11 @@ public class ExceptionInfoCache {
   public static class ClassResolveInfo {
     static final ClassResolveInfo EMPTY = new ClassResolveInfo(Collections.emptyMap(), false);
     
-    private final Map<VirtualFile, PsiElement> myClasses;
+    private final @NotNull Map<VirtualFile, PsiElement> myClasses;
     private final boolean myInLibrary;
     private volatile List<PsiClass> myExceptionClasses;
 
-    ClassResolveInfo(Map<VirtualFile, PsiElement> classes, boolean library) {
+    ClassResolveInfo(@NotNull Map<VirtualFile, PsiElement> classes, boolean library) {
       myClasses = classes;
       myInLibrary = library;
     }
@@ -110,7 +110,7 @@ public class ExceptionInfoCache {
              (myExceptionClasses == null || ContainerUtil.and(myExceptionClasses, PsiElement::isValid));
     }
 
-    public Map<VirtualFile, PsiElement> getClasses() {
+    public @NotNull Map<VirtualFile, PsiElement> getClasses() {
       return myClasses;
     }
 

@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,9 +13,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.xmlb.annotations.Attribute;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.reflect.InvocationTargetException;
@@ -71,16 +68,13 @@ public final class ErrorFixExtensionPoint implements PluginAware {
     return map;
   }
 
-  @Contract("null, _, _ -> null")
-  @Nullable
-  public static HighlightInfo registerFixes(@Nullable HighlightInfo info,
+  public static void registerFixes(@NotNull HighlightInfo.Builder info,
                                             @NotNull PsiElement context,
                                             @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String code) {
-    if (info == null) return null;
     List<ErrorFixExtensionPoint> fixes = getCodeToFixMap().get(code);
     for (ErrorFixExtensionPoint fix : fixes) {
-      QuickFixAction.registerQuickFixAction(info, fix.instantiate(context));
+      IntentionAction action = fix.instantiate(context);
+      info.registerFix(action, null, null, null, null);
     }
-    return info;
   }
 }

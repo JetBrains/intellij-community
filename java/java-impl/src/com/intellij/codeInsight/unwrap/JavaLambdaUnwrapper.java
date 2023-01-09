@@ -33,7 +33,7 @@ public class JavaLambdaUnwrapper extends JavaUnwrapper {
   }
 
   @Override
-  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<? super PsiElement> toExtract) {
      super.collectAffectedElements(e, toExtract);
      return JavaAnonymousUnwrapper.findElementToExtractFrom(e);
   }

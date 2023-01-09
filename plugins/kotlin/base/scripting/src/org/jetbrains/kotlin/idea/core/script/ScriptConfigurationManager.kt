@@ -182,15 +182,18 @@ object ClasspathToVfsConverter {
         fun compute(filePath: String): Pair<FileType, VirtualFile?> {
             return newType to when(newType) {
                 FileType.NOT_EXISTS -> null
-                FileType.DIRECTORY -> StandardFileSystems.local()?.findFileByPath(filePath)
-                FileType.REGULAR_FILE -> StandardFileSystems.jar()?.findFileByPath(filePath + URLUtil.JAR_SEPARATOR)
+                FileType.DIRECTORY -> StandardFileSystems.local()?.refreshAndFindFileByPath(filePath)
+                FileType.REGULAR_FILE -> StandardFileSystems.jar()?.refreshAndFindFileByPath(filePath + URLUtil.JAR_SEPARATOR)
                 FileType.UNKNOWN -> null
             }
         }
 
         val (oldType, oldVFile) = cache.computeIfAbsent(key, ::compute)
 
-        if (oldType != newType || oldVFile == null && (oldType == FileType.DIRECTORY || oldType == FileType.REGULAR_FILE)) {
+        if (oldType != newType
+            || oldVFile?.isValid == false
+            || oldVFile == null && (oldType == FileType.DIRECTORY || oldType == FileType.REGULAR_FILE)
+        ) {
             return cache.compute(key) { k, _ -> compute(k) }?.second
         } else {
             return oldVFile

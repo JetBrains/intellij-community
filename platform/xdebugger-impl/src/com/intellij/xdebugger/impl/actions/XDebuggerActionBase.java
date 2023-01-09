@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
@@ -42,8 +41,8 @@ public abstract class XDebuggerActionBase extends AnAction {
     Project project = e.getProject();
     if (project != null && !project.isDisposed()) {
       DebuggerSupport[] supports = DebuggerSupport.getDebuggerSupports();
-      return Utils.getOrCreateUpdateSession(e).compute(this, "isEnabled", ActionUpdateThread.EDT,
-                                                       () -> ContainerUtil.exists(supports, support -> isEnabled(project, e, support)));
+      return e.getUpdateSession().compute(this, "isEnabled", ActionUpdateThread.EDT, () ->
+        ContainerUtil.exists(supports, support -> isEnabled(project, e, support)));
     }
     return false;
   }
@@ -83,8 +82,8 @@ public abstract class XDebuggerActionBase extends AnAction {
     Project project = event.getProject();
     if (project != null && !project.isDisposed()) {
       DebuggerSupport[] supports = DebuggerSupport.getDebuggerSupports();
-      return Utils.getOrCreateUpdateSession(event).compute(this, "isHidden", ActionUpdateThread.EDT,
-                                                           () -> ContainerUtil.and(supports, support -> getHandler(support).isHidden(project, event)));
+      return event.getUpdateSession().compute(this, "isHidden", ActionUpdateThread.EDT, () ->
+        ContainerUtil.and(supports, support -> getHandler(support).isHidden(project, event)));
     }
     return true;
   }

@@ -7,6 +7,7 @@ import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
@@ -14,6 +15,7 @@ import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -110,7 +112,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
     getCurrentLayout().init(contentManager);
 
-    contentManager.addContentManagerListener(new ContentManagerListener() {
+    ContentManagerListener contentManagerListener = new ContentManagerListener() {
       private final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
         /**
          * @see Content#PROP_TAB_LAYOUT
@@ -161,6 +163,10 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent event) {
+        if (window.isDisposed() || window.getToolWindowManager().getProject().isDisposed()) {
+          return;
+        }
+
         Content content = event.getContent();
         if (!Content.TEMPORARY_REMOVED_KEY.get(content, false)) {
           SingleContentSupplier.removeSubContentsOfContent(content, false);
@@ -196,6 +202,15 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         update();
         contentComponent.revalidate();
         contentComponent.repaint();
+      }
+    };
+    contentManager.addContentManagerListener(contentManagerListener);
+    // some tool windows clients can use contentManager.removeAllContents(true)
+    // - ensure that we don't receive such events if window is already disposed
+    Disposer.register(window.getDisposable(), new Disposable() {
+      @Override
+      public void dispose() {
+        contentManager.removeContentManagerListener(contentManagerListener);
       }
     });
 
@@ -381,10 +396,6 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   }
 
   public static void initMouseListeners(@NotNull JComponent c, @NotNull ToolWindowContentUi ui, boolean allowResize) {
-    initMouseListeners(c, ui, allowResize, false);
-  }
-
-  public static void initMouseListeners(@NotNull JComponent c, @NotNull ToolWindowContentUi ui, boolean allowResize, boolean allowDrag) {
     if (c.getClientProperty(TOOLWINDOW_UI_INSTALLED) != null) {
       return;
     }

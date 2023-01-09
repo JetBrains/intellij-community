@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.util.ValueKey;
@@ -25,15 +25,14 @@ public interface VcsLogUiProperties {
   void removeChangeListener(@NotNull PropertiesChangeListener listener);
 
   class VcsLogUiProperty<T> implements ValueKey<T> {
-    @NotNull private final String myName;
+    private final @NotNull String myName;
 
     public VcsLogUiProperty(@NonNls @NotNull String name) {
       myName = name;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myName;
     }
 

@@ -1,8 +1,9 @@
 import enum
 from _typeshed import StrOrBytesPath, SupportsWrite
+from collections.abc import Callable
 from socket import AddressFamily, SocketKind
-from typing import Any, Callable, NamedTuple, TypeVar, overload
-from typing_extensions import Literal
+from typing import Any, NamedTuple, TypeVar, overload
+from typing_extensions import Literal, TypeAlias
 
 POSIX: bool
 WINDOWS: bool
@@ -31,7 +32,7 @@ STATUS_WAITING: Literal["waiting"]
 STATUS_SUSPENDED: Literal["suspended"]
 STATUS_PARKED: Literal["parked"]
 
-_Status = Literal[
+_Status: TypeAlias = Literal[
     "running",
     "sleeping",
     "disk-sleep",

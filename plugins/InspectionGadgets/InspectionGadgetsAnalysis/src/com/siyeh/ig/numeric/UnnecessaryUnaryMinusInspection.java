@@ -55,7 +55,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)element.getParent();
       final PsiExpression operand = prefixExpression.getOperand();
@@ -122,7 +122,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiPrefixExpression prefixExpr = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiPrefixExpression.class);
       if (prefixExpr == null) {
         return;

@@ -241,7 +241,7 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
     final Map<String, Map<String, DefaultValue>> fromSource = new TreeMap<>();
     ourFromSource.forEach((qualifiedPropName, value) -> {
       final int p = qualifiedPropName.indexOf('#');
-      if (p > 0 && p < qualifiedPropName.length()) {
+      if (p > 0) {
         final String className = qualifiedPropName.substring(0, p);
         final String propName = qualifiedPropName.substring(p + 1);
         fromSource.computeIfAbsent(className, unused -> new TreeMap<>())

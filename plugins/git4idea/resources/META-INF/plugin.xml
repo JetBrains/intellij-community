@@ -17,9 +17,6 @@
 
   <resource-bundle>messages.GitBundle</resource-bundle>
 
-  <content>
-    <module name="intellij.vcs.git/terminal"/>
-  </content>
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
   </dependencies>
@@ -204,16 +201,23 @@
       <reference id="Git.Rebase.Skip"/>
     </group>
 
-    <group id="Git.Branches.Popup.Settings" class="git4idea.ui.branch.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
-      <action class="git4idea.ui.branch.GitBranchesTreePopupResizeAction"/>
-      <action class="git4idea.ui.branch.GitBranchesTreePopupGroupByPrefixAction"/>
-      <action class="git4idea.ui.branch.GitBranchesTreePopupTrackReposSynchronouslyAction"/>
+    <group id="Git.Branches.Popup.Settings" class="git4idea.ui.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
+      <action class="git4idea.ui.branch.popup.GitBranchesTreePopupGroupByPrefixAction"/>
+      <action class="git4idea.ui.branch.popup.GitBranchesTreePopupTrackReposSynchronouslyAction"/>
+      <action class="git4idea.ui.branch.popup.GitBranchesTreePopupResizeAction"/>
     </group>
 
     <group id="Git.Branches.List">
       <reference ref="Git.Ongoing.Rebase.Actions"/>
       <action class="git4idea.actions.branch.GitNewBranchAction"/>
       <action class="git4idea.actions.branch.GitCheckoutFromInputAction"/>
+    </group>
+
+    <group id="Git.Branches.Popup.SpeedSearch">
+      <reference ref="EditorBackSpace"/>
+      <reference ref="EditorCut"/>
+      <reference ref="EditorPaste"/>
+      <reference ref="$Undo"/>
     </group>
 
     <group id="Git.Branch">
@@ -430,7 +434,6 @@
       <reference ref="CheckinProject"/>
       <reference ref="Git.Commit.Stage"/>
       <reference ref="Vcs.Push"/>
-      <reference ref="Vcs.QuickListPopupAction"/>
     </group>
 
     <group id="Vcs.ToolbarWidget.CreateRepository" searchable="false">
@@ -465,7 +468,7 @@
                      groupKey="advanced.settings.git"/>
     <advancedSetting id="git.use.push.force.with.lease" default="true" groupKey="advanced.settings.git"/>
     <advancedSetting id="git.update.incoming.outgoing.info" default="true" groupKey="advanced.settings.git"/>
-    <advancedSetting id="git.use.schannel.on.windows" default="false" groupKey="advanced.settings.git"/>
+    <advancedSetting id="git.use.schannel.on.windows" default="false" groupKey="advanced.settings.git" os="windows"/>
     <registryKey key="git.execute.with.mediator" defaultValue="true"
                  description="Use wrapper executable on Windows to support soft Git process cancellation."/>
     <registryKey key="git.blocking.read" defaultValue="true"
@@ -537,13 +540,8 @@
                  description="Use 'git restore --staged --worktree --source=HEAD -- paths' instead of 'git reset --hard' to speedup worktree cleanup."/>
     <registryKey key="git.stage.separate.undo.stack" defaultValue="true"
                  description="Do not record stage operations in the undo stack of the document"/>
-    <registryKey key="git.stage.navigate.to.index.file" defaultValue="true"
+    <registryKey key="git.stage.navigate.to.index.file" defaultValue="false"
                  description="Navigate to the staging area content from diff instead of the local file" />
-    <registryKey key="git.show.full.branch.name.instead.current.selected"
-                 description="Show full branch names instead of Current/Selected"
-                 defaultValue="true"/>
-    <registryKey key="git.branches.popup.tree" defaultValue="false"
-                 description="Show branches tree in a popup instead of a list"/>
     <registryKey key="git.branches.panel.persist.tree.state" defaultValue="true"
                  description="Persist branches panel tree state between restarts"/>
     <registryKey key="git.do.not.swap.merge.conflict.sides" defaultValue="false"
@@ -599,6 +597,9 @@
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
     <applicationService serviceInterface="git4idea.commands.GitHttpAuthService"
                         serviceImplementation="git4idea.commands.GitHttpAuthServiceImpl"/>
+    <httpRequestHandler implementation="git4idea.commands.GitAskPassExternalProcessRest"/>
+    <httpRequestHandler implementation="git4idea.rebase.GitRebaseEditorExternalProcessRest"/>
+
     <applicationService serviceImplementation="git4idea.config.SSHConnectionSettings"/>
     <applicationService serviceImplementation="git4idea.remote.GitRememberedInputs"/>
     <applicationService serviceInterface="git4idea.commands.Git"
@@ -668,11 +669,11 @@
     <customVcsLogUiFactoryProvider implementation="git4idea.ui.branch.dashboard.BranchesInGitLogUiFactoryProvider"/>
     <virtualFileSystem key="git-compare-branches" implementationClass="git4idea.branch.GitCompareBranchesVirtualFileSystem"/>
 
-    <statusBarWidgetFactory implementation="git4idea.light.LightGitStatusBarWidgetFactory"/>
+    <statusBarWidgetFactory id="light.edit.git" implementation="git4idea.light.LightGitStatusBarWidgetFactory"/>
     <lightEditTabAttributesProvider implementation="git4idea.light.LightGitTabAttributesProvider"/>
-    <statusBarWidgetFactory id="gitWidget"
+    <statusBarWidgetFactory id="git"
                             implementation="git4idea.ui.branch.GitBranchWidget$Factory"
-                            order="after codeStyleWidget,before readOnlyWidget"/>
+                            order="after CodeStyleStatusBarWidget,before ReadOnlyAttribute"/>
 
     <vcsBulkMovesOnlyChangesFilter implementation="git4idea.GitBulkMovesOnlyChangesFilter"/>
 
@@ -726,7 +727,7 @@
     <searchEverywhereContributor implementation="git4idea.search.GitSearchEverywhereContributor$Companion$Factory"/>
     <projectOriginInfoProvider implementation="git4idea.repo.GitProjectOriginInfoProvider"/>
 
-    <vcsStartupActivity implementation="git4idea.repo.GitCommitTemplateTracker$GitCommitTemplateTrackerStartupActivity"/>
+    <backgroundPostStartupActivity implementation="git4idea.repo.GitCommitTemplateTracker$GitCommitTemplateTrackerStartupActivity"/>
 
     <vcs.delayedCommitMessageProvider implementation="git4idea.commit.GitDelayedCommitTemplateMessageProvider" order="first"/>
     <vcs.commitMessageProvider implementation="git4idea.commit.GitCommitTemplateMessageProvider" order="first"/>

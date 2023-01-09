@@ -43,6 +43,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
+import java.util.stream.IntStream;
 
 /**
  * @author gregsh
@@ -426,8 +427,9 @@ final class ScratchImplUtil {
 
     @Override
     public String extractText() {
-      int[] rows = comp.getSelectionModel().getSelectedIndices();
-      int[] cols = comp.getColumnModel().getSelectionModel().getSelectedIndices();
+      int[] rows = comp.getSelectedRows();
+      int[] cols = comp.getColumnSelectionAllowed() ?
+                   comp.getSelectedColumns() : IntStream.range(0, comp.getColumnCount()).toArray();
       StringBuilder sb = new StringBuilder();
       int lastCol = cols.length == 0 ? -1 : cols[cols.length - 1];
       for (int row : rows) {

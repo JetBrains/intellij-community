@@ -2,9 +2,8 @@
 
 package org.jetbrains.kotlin.idea.maven
 
-import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.idea.maven.plugins.api.MavenFixedValueReferenceProvider
-import org.jetbrains.kotlin.cli.common.arguments.DefaultValues
+import org.jetbrains.kotlin.cli.common.arguments.K2JsArgumentConstants
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.isStableOrReadyForPreview
@@ -25,9 +24,14 @@ class MavenJvmTargetsCompletionProvider : MavenFixedValueReferenceProvider(
 )
 
 class MavenJsModuleKindsCompletionProvider : MavenFixedValueReferenceProvider(
-    DefaultValues.JsModuleKinds.possibleValues!!.map(StringUtil::unquoteString).toTypedArray()
+    arrayOf(
+        K2JsArgumentConstants.MODULE_PLAIN,
+        K2JsArgumentConstants.MODULE_AMD,
+        K2JsArgumentConstants.MODULE_COMMONJS,
+        K2JsArgumentConstants.MODULE_UMD
+    )
 )
 
 class MavenJsMainCallCompletionProvider : MavenFixedValueReferenceProvider(
-    DefaultValues.JsMain.possibleValues!!.map(StringUtil::unquoteString).toTypedArray()
+    arrayOf(K2JsArgumentConstants.CALL, K2JsArgumentConstants.NO_CALL)
 )

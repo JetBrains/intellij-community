@@ -136,7 +136,7 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
       }
       stopList.add(key);
     }
-    return myBackendStorage.processKeys(stopList.isEmpty() && myMap.isEmpty() ? processor : decoratingProcessor, scope, idFilter);
+    return myBackendStorage.processKeys(stopList.isEmpty() ? processor : decoratingProcessor, scope, idFilter);
   }
 
   @Override

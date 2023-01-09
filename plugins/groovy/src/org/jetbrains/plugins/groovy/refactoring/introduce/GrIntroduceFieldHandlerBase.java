@@ -10,6 +10,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -31,7 +32,7 @@ public abstract class GrIntroduceFieldHandlerBase<Settings extends GrIntroduceSe
       return new PsiClass[]{aClass};
     }
     else {
-      List<PsiClass> result = ContainerUtil.newArrayList(aClass);
+      List<PsiClass> result = new SmartList<>(aClass);
       while (aClass != null) {
         aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
         ContainerUtil.addIfNotNull(result, aClass);

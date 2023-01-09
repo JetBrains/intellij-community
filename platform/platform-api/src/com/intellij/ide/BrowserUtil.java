@@ -126,21 +126,6 @@ public final class BrowserUtil {
     return command;
   }
 
-  public static @NotNull String getDefaultAlternativeBrowserPath() {
-    if (SystemInfo.isWindows) {
-      return "C:\\Program Files\\Internet Explorer\\IExplore.exe";
-    }
-    else if (SystemInfo.isMac) {
-      return "open";
-    }
-    else if (SystemInfo.isUnix) {
-      return "/usr/bin/firefox";
-    }
-    else {
-      return "";
-    }
-  }
-
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated the result is a pain to deal with; please use {@link #getOpenBrowserCommand(String, String, List, boolean)} instead */
   @Deprecated(forRemoval = true)

@@ -2,13 +2,17 @@
   <xi:include href="/META-INF/extensions/compiler.xml" /> <!-- extensions/compiler.xml comes from the Kotlin compiler -->
 
   <xi:include href="kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="kotlin-idea.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="searching-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kotlin-core-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="navigation.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="refactorings.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="file-types.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="resolution-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="highlighting.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="highlighting-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="language.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="light-classes.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="light-classes-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="formatter.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="completion-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -58,6 +62,7 @@
     <module name="kotlin.run-configurations.junit"/>
     <module name="kotlin.run-configurations.junit-fe10"/>
     <module name="kotlin.run-configurations.testng"/>
+    <module name="kotlin.run-configurations.jvm"/>
     <module name="kotlin.coverage"/>
     <module name="kotlin.i18n"/>
     <module name="kotlin.git"/>
@@ -78,8 +83,11 @@
     <module name="kotlin.compiler-plugins.kotlinx-serialization.maven"/>
     <module name="kotlin.compiler-plugins.lombok.gradle"/>
     <module name="kotlin.compiler-plugins.lombok.maven"/>
+    <module name="kotlin.compiler-plugins.assignment.gradle"/>
+    <module name="kotlin.compiler-plugins.assignment.maven"/>
     <module name="kotlin.features-trainer"/>
     <module name="kotlin.j2k.post-processing"/>
+    <module name="kotlin.j2k.old.post-processing"/>
 
     <module name="kotlin.copyright"/>
     <module name="kotlin.injection"/>

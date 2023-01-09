@@ -2,8 +2,8 @@
 
 package com.intellij.debugger.ui;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

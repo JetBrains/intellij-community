@@ -98,6 +98,11 @@ public final class JBUI {
     return JBDimension.size(size);
   }
 
+  public static @NotNull JBDimension size(@NonNls @NotNull String propName, @NotNull JBDimension defaultValue) {
+    Dimension d = UIManager.getDimension(propName);
+    return d != null ? JBDimension.size(d) : defaultValue;
+  }
+
   public static @NotNull JBInsets insets(int top, int left, int bottom, int right) {
     return new JBInsets(top, left, bottom, right);
   }
@@ -350,6 +355,8 @@ public final class JBUI {
       public static @NotNull Color hoverSeparatorColor() {
         return JBColor.namedColor("ActionButton.hoverSeparatorColor", new JBColor(Gray.xB3, Gray.x6B));
       }
+
+      public static final Color SEPARATOR_COLOR = JBColor.namedColor("ActionButton.separatorColor", CustomFrameDecorations.separatorForeground());
     }
 
     public static final class ActionsList {
@@ -513,7 +520,7 @@ public final class JBUI {
       }
 
       public static @NotNull Color borderColor() {
-        return JBColor.namedColor("DefaultTabs.borderColor", UIUtil.CONTRAST_BORDER_COLOR);
+        return JBColor.namedColor("DefaultTabs.borderColor", JBColor.border());
       }
 
       public static @NotNull Color background() {
@@ -611,6 +618,16 @@ public final class JBUI {
         Color BACKGROUND = JBColor.namedColor("Editor.ToolTip.background", UIUtil.getToolTipBackground());
         Color FOREGROUND = JBColor.namedColor("Editor.ToolTip.foreground", UIUtil.getToolTipForeground());
       }
+
+      interface Notification {
+        static @NotNull JBInsets borderInsets(@NotNull JBInsets defaultValue) {
+          return insets("Editor.Notification.borderInsets", defaultValue);
+        }
+
+        static @NotNull JBInsets borderInsets() {
+          return borderInsets(insets(10, 12));
+        }
+      }
     }
 
     public interface DragAndDrop {
@@ -693,7 +710,7 @@ public final class JBUI {
       }
 
       public static @NotNull Color borderColor() {
-        return JBColor.namedColor("ToolWindow.HeaderTab.borderColor", DefaultTabs.borderColor());
+        return JBColor.border();
       }
 
       public static @NotNull Color underlinedTabForeground() {
@@ -821,6 +838,8 @@ public final class JBUI {
 
     public static final class Toolbar {
 
+      public static final Color SEPARATOR_COLOR = JBColor.namedColor("ToolBar.separatorColor", CustomFrameDecorations.separatorForeground());
+
       public static Insets toolbarButtonInsets(boolean isMainToolbar) {
         return isMainToolbar ? mainToolbarButtonInsets() : toolbarButtonInsets();
       }
@@ -831,6 +850,19 @@ public final class JBUI {
 
       public static Insets mainToolbarButtonInsets() {
         return insets("MainToolbar.Button.buttonInsets", JBInsets.create(1, 2));
+      }
+
+      public static @NotNull Dimension experimentalToolbarButtonSize() {
+        return size(experimentalToolbarButtonSizeKey(), defaultExperimentalToolbarButtonSize());
+      }
+
+      public @NotNull static String experimentalToolbarButtonSizeKey() {
+        return "ActionToolbar.large.buttonSize";
+      }
+
+      @NotNull
+      public static JBDimension defaultExperimentalToolbarButtonSize() {
+        return size(40, 40);
       }
     }
 
@@ -985,7 +1017,7 @@ public final class JBUI {
         return JBColor.namedColor("Popup.mnemonicForeground", ActionsList.MNEMONIC_FOREGROUND);
       }
 
-      public static class Selection {
+      public static final class Selection {
         public static final JBValue ARC = new JBValue.UIInteger("Popup.Selection.arc", 8);
         public static final JBValue LEFT_RIGHT_INSET = new JBValue.UIInteger("Popup.Selection.leftRightInset", 12);
 
@@ -1206,6 +1238,20 @@ public final class JBUI {
     }
 
     public static final class GotItTooltip {
+      public static final JBValue TEXT_INSET = new JBValue.UIInteger("GotItTooltip.textInset", 4);
+      public static final JBValue BUTTON_TOP_INSET = new JBValue.UIInteger("GotItTooltip.buttonTopInset", 12);
+      public static final JBValue BUTTON_BOTTOM_INSET = new JBValue.UIInteger("GotItTooltip.buttonBottomInset", 6);
+      public static final JBValue ICON_INSET = new JBValue.UIInteger("GotItTooltip.iconInset", 6);
+      public static final JBValue IMAGE_TOP_INSET = new JBValue.UIInteger("GotItTooltip.imageTopInset", 4);
+      public static final JBValue IMAGE_BOTTOM_INSET = new JBValue.UIInteger("GotItTooltip.imageBottomInset", 12);
+      public static final JBValue CORNER_RADIUS = new JBValue.UIInteger("GotItTooltip.arc", 8);
+
+      // Balloon itself has insets of 5 for top and bottom and 8 for left and right.
+      // So totally there are 12 for top and bottom and 16 for left and right
+      public static @NotNull Insets insets() {
+        return JBUI.insets("GotItTooltip.insets", JBUI.insets(7, 8));
+      }
+
       public static @NotNull Color foreground(boolean useContrastColors) {
         if (useContrastColors) {
           return JBColor.namedColor("Tooltip.Learning.foreground", 0xF5F5F5);
@@ -1222,12 +1268,25 @@ public final class JBUI {
         }
       }
 
+      public static @NotNull Color stepForeground() {
+        return JBColor.namedColor("GotItTooltip.stepForeground", foreground(false));
+      }
+
+      public static @NotNull Color headerForeground() {
+        return JBColor.namedColor("GotItTooltip.Header.foreground", foreground(false));
+      }
+
       public static @NotNull Color shortcutForeground(boolean useContrastColors) {
         if (useContrastColors) {
           return JBColor.namedColor("Tooltip.Learning.spanForeground", 0xF5F5F5);
         } else {
-          return JBColor.namedColor("GotItTooltip.shortcutForeground", Tooltip.shortcutForeground());
+          return JBColor.namedColor("GotItTooltip.shortcutForeground", foreground(false));
         }
+      }
+
+      public static @NotNull Color shortcutBackground() {
+        return JBColor.namedColor("GotItTooltip.shortcutBackground",
+                                  JBColor.namedColor("Lesson.shortcutBackground", 0xE6EEF7, 0x333638));
       }
 
       public static @NotNull Color linkForeground() {
@@ -1244,6 +1303,10 @@ public final class JBUI {
 
       public static @NotNull Color buttonBackgroundContrast() {
         return JBColor.namedColor("Tooltip.Learning.spanBackground", 0x0D5CBD, 0x0250B0);
+      }
+
+      public static @NotNull Color buttonForeground() {
+        return JBColor.namedColor("GotItTooltip.Button.foreground", JBColor.namedColor("Button.foreground"));
       }
 
       public static @NotNull Color buttonForegroundContrast() {
@@ -1509,6 +1572,86 @@ public final class JBUI {
         private interface Inactive {
           Color BACKGROUND = JBColor.namedColor("Tree.hoverInactiveBackground", DEFAULT_RENDERER_HOVER_INACTIVE_BACKGROUND);
         }
+      }
+    }
+
+    public final static class RunWidget {
+      public static final Color FOREGROUND = JBColor.namedColor("RunWidget.foreground", Color.WHITE);
+      public static final Color BACKGROUND = JBColor.namedColor("RunWidget.background", 0x3369D6);
+      public static final Color RUNNING_BACKGROUND = JBColor.namedColor("RunWidget.runningBackground", 0x599E5E);
+      public static final Color SEPARATOR = JBColor.namedColor("RunWidget.separatorColor", new Color(255, 255, 255, 64));
+
+      // these colors will be applied over background color
+      public static final Color HOVER_BACKGROUND = JBColor.namedColor("RunWidget.hoverBackground", new Color(0, 0, 0, 25));
+      public static final Color PRESSED_BACKGROUND = JBColor.namedColor("RunWidget.pressedBackground", new Color(0, 0, 0, 40));
+
+      public static int toolbarHeight() {
+        return getInt(toolbarHeightKey(), defaultToolbarHeight());
+      }
+
+      @NotNull
+      public static String toolbarHeightKey() {
+        return "RunWidget.toolbarHeight";
+      }
+
+      public static int defaultToolbarHeight() {
+        return 30;
+      }
+
+      public static int toolbarBorderHeight() {
+        return getInt(toolbarBorderHeightKey(), defaultToolbarBorderHeight());
+      }
+
+      @NotNull
+      public static String toolbarBorderHeightKey() {
+        return "RunWidget.toolbarBorderHeight";
+      }
+
+      public static int defaultToolbarBorderHeight() {
+        return 5;
+      }
+
+      public static int actionButtonWidth() {
+        return getInt(actionButtonWidthKey(), defaultActionButtonWidth());
+      }
+
+      @NotNull
+      public static String actionButtonWidthKey() {
+        return "RunWidget.actionButtonWidth";
+      }
+
+      public static int defaultActionButtonWidth() {
+        return 36;
+      }
+
+      public static int configurationSelectorWidth() {
+        return getInt(configurationSelectorWidthKey(), defaultConfigurationSelectorWidth());
+      }
+
+      @NotNull
+      public static String configurationSelectorWidthKey() {
+        return "RunWidget.configurationSelectorWidth";
+      }
+
+      public static int defaultConfigurationSelectorWidth() {
+        return 90;
+      }
+    }
+
+    public final static class TitlePane {
+
+      public static @NotNull Dimension buttonPreferredSize() {
+        return size(buttonPreferredSizeKey(), defaultButtonPreferredSize());
+      }
+
+      @NotNull
+      public static String buttonPreferredSizeKey() {
+        return "TitlePane.Button.preferredSize";
+      }
+
+      @NotNull
+      private static JBDimension defaultButtonPreferredSize() {
+        return size(47, 28);
       }
     }
   }

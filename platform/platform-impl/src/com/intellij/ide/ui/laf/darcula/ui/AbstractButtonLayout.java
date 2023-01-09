@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +78,7 @@ class AbstractButtonLayout {
   }
 
   public int getBaseline() {
-    if (button.getText() == null) {
+    if (Strings.isEmpty(button.getText())) {
       return -1;
     }
     return getBaseline(textRect.y, textRect.width, textRect.height);

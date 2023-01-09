@@ -2,7 +2,6 @@
 package com.intellij.java.openapi.editor.impl;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -18,6 +17,8 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.tabs.TabInfo;
 
 import java.io.File;
+
+import static com.intellij.testFramework.CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents;
 
 public class JavaFileEditorManagerTest extends FileEditorManagerTestCase {
   public void testAsyncOpening() {
@@ -68,8 +69,8 @@ public class JavaFileEditorManagerTest extends FileEditorManagerTestCase {
     VirtualFile moduleInfoFile = getFile("/src/module-info.java");
     assertNotNull(moduleInfoFile);
 
-    manager.openFile(moduleInfoFile, false);
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    manager.openFile(moduleInfoFile);
+    executeSomeCoroutineTasksAndDispatchAllInvocationEvents(getProject());
 
     EditorTabbedContainer openedTabPane = manager.getCurrentWindow().getTabbedPane();
     assertEquals(1, openedTabPane.getTabCount());

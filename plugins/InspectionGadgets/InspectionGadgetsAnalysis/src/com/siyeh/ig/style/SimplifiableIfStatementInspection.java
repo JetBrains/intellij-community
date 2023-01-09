@@ -2,6 +2,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
@@ -23,12 +25,11 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
   public boolean DONT_WARN_ON_CHAINED_ID = true;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message(
-      "inspection.simplifiable.if.statement.option.dont.warn.on.ternary"), "DONT_WARN_ON_TERNARY");
-    panel.addCheckbox(InspectionGadgetsBundle.message("trivial.if.option.ignore.chained"), "DONT_WARN_ON_CHAINED_ID");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("DONT_WARN_ON_TERNARY", InspectionGadgetsBundle.message(
+        "inspection.simplifiable.if.statement.option.dont.warn.on.ternary")),
+      checkbox("DONT_WARN_ON_CHAINED_ID", InspectionGadgetsBundle.message("trivial.if.option.ignore.chained")));
   }
 
   @Override

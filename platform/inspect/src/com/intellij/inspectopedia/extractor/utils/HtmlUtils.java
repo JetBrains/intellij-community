@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.inspectopedia.extractor.utils;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class HtmlUtils {
+public final class HtmlUtils {
     public static final Safelist SAFELIST = new Safelist();
 
     static {
@@ -48,7 +47,7 @@ public class HtmlUtils {
     );
 
     @NotNull
-    public static String cleanupHtml(@NotNull String source, @Nullable Language languageForCodeBlocks) {
+    public static String cleanupHtml(@NotNull String source, @Nullable String languageForCodeBlocks) {
         final Document document = Jsoup.parse(source);
 
         RENAME_MAP.forEach(map -> document.select(map.first).tagName(map.second));
@@ -61,7 +60,7 @@ public class HtmlUtils {
 
         final Elements codeBlock = document.select("pre > code");
         codeBlock.attr("style", "block");
-        codeBlock.attr("lang", languageForCodeBlocks == null ? "Text" : languageForCodeBlocks.getDisplayName());
+        codeBlock.attr("lang", languageForCodeBlocks == null ? "Text" : languageForCodeBlocks);
 
         document.select("code > *").stream()
                 .filter(element -> !element.tagName().equals("a"))

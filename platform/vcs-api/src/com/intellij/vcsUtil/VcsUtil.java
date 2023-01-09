@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcsUtil;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -47,8 +47,8 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 @ApiStatus.NonExtendable
-public class VcsUtil {
-  protected static final char[] ourCharsToBeChopped = {'/', '\\'};
+public final class VcsUtil {
+  private static final char[] ourCharsToBeChopped = {'/', '\\'};
   private static final Logger LOG = Logger.getInstance(VcsUtil.class);
 
   public static final @NonNls String MAX_VCS_LOADED_SIZE_KB = "idea.max.vcs.loaded.size.kb";
@@ -529,6 +529,7 @@ public class VcsUtil {
                                             @NotNull String projectBaseDir,
                                             @NotNull FilePath filePath,
                                             boolean acceptEmptyPath) {
+    if (project.isDisposed()) return null;
     String path = filePath.getPath();
 
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);

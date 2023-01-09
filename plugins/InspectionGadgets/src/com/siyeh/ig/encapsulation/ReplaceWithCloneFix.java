@@ -37,7 +37,7 @@ class ReplaceWithCloneFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     if (!(element instanceof PsiReferenceExpression)) {
       return;

@@ -204,7 +204,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
 
     @Override
     public String toString() {
-      return getDelegate().getClass() + ": " + getDelegate();
+      return getDelegate()+" ("+getDelegate().getClass()+")";
     }
 
     @Nls

@@ -1,8 +1,9 @@
 import subprocess
 import sys
 from _typeshed import Self
+from collections.abc import Callable
 from types import TracebackType
-from typing import Any, AnyStr, Callable, Protocol
+from typing import Any, AnyStr, Protocol
 from typing_extensions import Literal
 
 if sys.platform == "win32":
@@ -31,7 +32,7 @@ if sys.platform == "win32":
             def __del__(self) -> None: ...
 
         def __enter__(self: Self) -> Self: ...
-        def __exit__(self, t: type | None, v: BaseException | None, tb: TracebackType | None) -> None: ...
+        def __exit__(self, t: type[BaseException] | None, v: BaseException | None, tb: TracebackType | None) -> None: ...
         @property
         def handle(self) -> int: ...
         def fileno(self) -> int: ...

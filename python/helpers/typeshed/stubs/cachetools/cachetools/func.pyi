@@ -1,5 +1,6 @@
 from _typeshed import IdentityFunction
-from typing import Callable, Sequence, TypeVar
+from collections.abc import Callable, Sequence
+from typing import TypeVar
 
 __all__ = ("fifo_cache", "lfu_cache", "lru_cache", "mru_cache", "rr_cache", "ttl_cache")
 _T = TypeVar("_T")

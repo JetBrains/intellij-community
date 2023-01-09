@@ -44,7 +44,7 @@ internal object ImaginaryInplaceRefactoring : InplaceRefactoring(
   override fun notSameFile(file: VirtualFile?, containingFile: PsiFile): Boolean = error("must not be called")
   override fun getReferencesSearchScope(file: VirtualFile?): SearchScope = error("must not be called")
   override fun checkLocalScope(): PsiElement = error("must not be called")
-  override fun collectAdditionalElementsToRename(stringUsages: MutableList<Pair<PsiElement, TextRange>>): Unit = error("must not be called")
+  override fun collectAdditionalElementsToRename(stringUsages: MutableList<in Pair<PsiElement, TextRange>>): Unit = error("must not be called")
   override fun createLookupExpression(selectedElement: PsiElement?): MyLookupExpression = error("must not be called")
   override fun createTemplateExpression(selectedElement: PsiElement?): Expression = error("must not be called")
   override fun acceptReference(reference: PsiReference?): Boolean = error("must not be called")
@@ -62,7 +62,7 @@ internal object ImaginaryInplaceRefactoring : InplaceRefactoring(
   override fun getVariable(): PsiNamedElement = error("must not be called")
   override fun moveOffsetAfter(success: Boolean): Unit = error("must not be called")
   override fun addAdditionalVariables(builder: TemplateBuilderImpl?): Unit = error("must not be called")
-  override fun addReferenceAtCaret(refs: MutableCollection<PsiReference>?): Unit = error("must not be called")
+  override fun addReferenceAtCaret(refs: MutableCollection<in PsiReference>): Unit = error("must not be called")
   override fun showDialogAdvertisement(actionId: String?): Unit = error("must not be called")
   override fun getInitialName(): String = error("must not be called")
   override fun revertState(): Unit = error("must not be called")
@@ -85,8 +85,8 @@ internal object ImaginaryInplaceRefactoring : InplaceRefactoring(
   override fun performRefactoring(): Boolean = error("must not be called")
 
   override fun getSelectedInEditorElement(nameIdentifier: PsiElement?,
-                                          refs: MutableCollection<out PsiReference>?,
-                                          stringUsages: MutableCollection<out Pair<PsiElement, TextRange>>?,
+                                          refs: Collection<PsiReference>,
+                                          stringUsages: Collection<Pair<PsiElement, TextRange>>,
                                           offset: Int): PsiElement = error("must not be called")
 
   override fun addHighlights(ranges: MutableMap<TextRange, TextAttributes>,
@@ -94,8 +94,8 @@ internal object ImaginaryInplaceRefactoring : InplaceRefactoring(
                              highlighters: MutableCollection<RangeHighlighter>,
                              highlightManager: HighlightManager): Unit = error("must not be called")
 
-  override fun buildTemplateAndStart(refs: MutableCollection<PsiReference>?,
-                                     stringUsages: MutableCollection<Pair<PsiElement, TextRange>>?,
-                                     scope: PsiElement?,
-                                     containingFile: PsiFile?): Boolean = error("must not be called")
+  override fun buildTemplateAndStart(refs: MutableCollection<PsiReference>,
+                                     stringUsages: MutableCollection<Pair<PsiElement, TextRange>>,
+                                     scope: PsiElement,
+                                     containingFile: PsiFile): Boolean = error("must not be called")
 }

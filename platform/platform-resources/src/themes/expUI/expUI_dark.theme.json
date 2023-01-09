@@ -405,10 +405,9 @@
 
     "SpeedSearch": {
       "background": "Grey1",
-      "borderColor": "Grey4",
+      "borderColor": "Grey3",
       "errorForeground": "Red6"
     },
-
 
     "StatusBar": {
       "Widget": {
@@ -464,13 +463,20 @@
 
     "GotItTooltip": {
       "background": "Grey3",
-      "borderColor": "Grey4",
-      "startBackground": "Grey3",
-      "endBackground": "Grey3",
-      "startBorderColor": "Grey7",
-      "endBorderColor": "Grey7",
-      "shortcutForeground": "Grey9",
-      "linkForeground": "Blue9"
+      "borderColor": "Grey3",
+      "foreground": "Grey10",
+      "stepForeground": "Grey8",
+      "Header.foreground": "Grey14",
+      "shortcutForeground": "Grey14",
+      "shortcutBackground": "Grey5",
+      "linkForeground": "Blue9",
+      "Button": {
+        "foreground": "Grey14",
+        "startBackground": "Grey6",
+        "endBackground": "Grey6",
+        "startBorderColor": "Grey6",
+        "endBorderColor": "Grey6"
+      }
     },
 
     "ValidationTooltip": {
@@ -556,6 +562,39 @@
       "shortcutBackground": "Grey5"
     },
 
+    "UnattendedHostStatus": {
+      "warningBackground": "Yellow7",
+      "warningForeground": "Grey3",
+      "dangerBackground": "Red6"
+    },
+
+    "CodeWithMe.Users": {
+      "1": {
+        "Background": "Green6",
+        "Foreground": "Grey13"
+      },
+      "2": {
+        "Background": "#15A0B2",
+        "Foreground": "Grey13"
+      },
+      "3": {
+        "Background": "Red6",
+        "Foreground": "Grey13"
+      },
+      "4": {
+        "Background": "#955AE0",
+        "Foreground": "Grey13"
+      },
+      "5": {
+        "Background": "Yellow6",
+        "Foreground": "Grey13"
+      },
+      "6": {
+        "Background": "Orange6",
+        "Foreground": "Grey13"
+      }
+    },
+
     "PackageSearch": {
       "SearchResult": {
         "background": "#1c2433",
@@ -577,6 +616,14 @@
       },
       "PackageTagSelected.background": "Blue4",
       "PackageTagSelected.foreground": "Grey10"
+    },
+    "RunWidget" : {
+      "foreground": "Grey14",
+      "background": "Blue5",
+      "runningBackground": "Green5",
+      "hoverBackground": "#00000019",
+      "pressedBackground": "#00000028",
+      "separatorColor": "#FFFFFF40"
     }
   },
 

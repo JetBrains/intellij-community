@@ -78,7 +78,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
       createAction("$Cut", CefFrame::cut),
       createAction("$Copy", CefFrame::copy),
       createAction("$Paste", CefFrame::paste),
-      createAction("$Delete", CefFrame::delete),
       createAction("$SelectAll", CefFrame::selectAll),
       createAction("$Undo", CefFrame::undo),
       createAction("$Redo", CefFrame::redo)
@@ -193,7 +192,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
       throw new IllegalArgumentException("JBCefClient is disposed");
     }
 
-    myComponent = createComponent();
+    myComponent = createComponent(builder.myMouseWheelEventEnable);
 
     myCefClient.addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
       @Override
@@ -262,9 +261,9 @@ public class JBCefBrowser extends JBCefBrowserBase {
     }, myCefBrowser);
   }
 
-  private @NotNull JPanel createComponent() {
+  private @NotNull JPanel createComponent(boolean isMouseWheelEventEnabled) {
     Component uiComp = getCefBrowser().getUIComponent();
-    JPanel resultPanel = new MyPanel(uiComp);
+    JPanel resultPanel = new MyPanel(uiComp, isMouseWheelEventEnabled);
 
     resultPanel.setBackground(JBColor.background());
     resultPanel.putClientProperty(JBCEFBROWSER_INSTANCE_PROP, this);
@@ -389,11 +388,13 @@ public class JBCefBrowser extends JBCefBrowserBase {
   public class MyPanel extends JPanel {
     private final Component myUiComp;
 
-    private MyPanel(Component uiComp) {
+    private MyPanel(Component uiComp, boolean isMouseWheelEventEnabled) {
       super(new BorderLayout());
       myUiComp = uiComp;
       myUiComp.setBackground(getBackground());
-      enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+      if (isMouseWheelEventEnabled) {
+        enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+      }
     }
 
     @Override

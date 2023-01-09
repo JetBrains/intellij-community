@@ -165,8 +165,8 @@ abstract class ProductProperties() {
     getBaseArtifactName(applicationInfo, buildNumber) + ".portable.zip"
 
   /**
-   * A config map for [org.jetbrains.intellij.build.impl.ClassVersionChecker],
-   * when .class file version verification inside [buildCrossPlatformDistribution] is needed.
+   * A config map for [org.jetbrains.intellij.build.impl.ClassFileChecker],
+   * when .class file version verification is needed.
    */
   var versionCheckerConfig: PersistentMap<String, String> = persistentMapOf()
 

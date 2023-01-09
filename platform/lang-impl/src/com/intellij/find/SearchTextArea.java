@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.editorHeaderActions.Utils;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -348,7 +347,6 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (myPopupState.isRecentlyHidden() || project == null) return; // do not show new popup
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("find.recent.search");
       FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(project);
       String[] recent = mySearchMode ? findInProjectSettings.getRecentFindStrings()
                                      : findInProjectSettings.getRecentReplaceStrings();

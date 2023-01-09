@@ -7,8 +7,8 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.util.TimeoutUtil
 
@@ -24,8 +24,8 @@ class LightEditProjectManager {
         app.messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
         runUnderModalProgressIfIsEdt {
           val startupManager = StartupManager.getInstance(project) as StartupManagerImpl
-          startupManager.initProject(null)
-          startupManager.runStartupActivities()
+          startupManager.initProject()
+          startupManager.runPostStartupActivities()
         }
       }
       if (app.isDispatchThread || app.isUnitTestMode) {
@@ -65,7 +65,7 @@ class LightEditProjectManager {
       }
       if (created) {
         fireProjectOpened(project!!)
-        ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+        ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
           override fun projectClosed(project: Project) {
             if (project === projectImpl) {
               synchronized(LOCK) { projectImpl = null }

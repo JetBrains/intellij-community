@@ -4,6 +4,7 @@ package com.intellij.grazie.grammar.strategy
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.ElementBehavior.*
 import com.intellij.psi.PsiElement
 
+@JvmDefaultWithCompatibility
 interface BaseGrammarCheckingStrategy : GrammarCheckingStrategy {
 
   /**

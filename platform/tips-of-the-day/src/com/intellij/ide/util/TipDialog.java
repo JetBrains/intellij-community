@@ -20,24 +20,36 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
+
+import static javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT;
 
 public final class TipDialog extends DialogWrapper {
   private final TipPanel myTipPanel;
   private final boolean myShowingOnStartup;
   private final boolean myShowActions;
 
-  TipDialog(@NotNull final Project project, @NotNull final List<TipAndTrickBean> tips) {
+  private boolean showRequestScheduled = false;
+
+  TipDialog(@Nullable final Project project, @NotNull final TipsSortingResult sortingResult) {
     super(project, true);
     setModal(false);
     setTitle(IdeBundle.message("title.tip.of.the.day"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
-    myTipPanel = new TipPanel(project, tips, getDisposable());
+    myTipPanel = new TipPanel(project, sortingResult, getDisposable());
     myTipPanel.addPropertyChangeListener(TipPanel.CURRENT_TIP_KEY.toString(), event -> {
-      SwingUtilities.invokeLater(() -> adjustSizeToContent());
+      if (showRequestScheduled) {
+        showRequestScheduled = false;
+        show();
+      }
+      else {
+        adjustSizeToContent();
+      }
     });
-    myShowActions = tips.size() > 1;
+    myShowActions = sortingResult.getTips().size() > 1;
     if (myShowActions) {
       setDoNotAskOption(myTipPanel);
     }
@@ -45,15 +57,15 @@ public final class TipDialog extends DialogWrapper {
     init();
   }
 
-  @Override
-  public void show() {
-    super.show();
-    // For some reason OS reduces the height of the dialog after showing (XDecoratedPeer#handleCorrectInsets)
-    // So we need to return preferred height back
-    SwingUtilities.invokeLater(() -> adjustSizeToContent());
+  /**
+   * Shows the dialog when the tip is loaded and filled into text pane
+   */
+  public void showWhenTipInstalled() {
+    showRequestScheduled = true;
   }
 
   private void adjustSizeToContent() {
+    if (isDisposed()) return;
     Dimension prefSize = getPreferredSize();
     Dimension minSize = getRootPane().getMinimumSize();
     int height = Math.max(prefSize.height, minSize.height);
@@ -70,7 +82,13 @@ public final class TipDialog extends DialogWrapper {
   protected JComponent createSouthPanel() {
     JComponent component = super.createSouthPanel();
     component.setBorder(JBUI.Borders.empty(13, 24, 15, 24));
-    UIUtil.setBackgroundRecursively(component, UIUtil.getTextFieldBackground());
+    UIUtil.setBackgroundRecursively(component, TipUiSettings.getPanelBackground());
+
+    String previousTipKey = "PreviousTip";
+    component.getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+      .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), previousTipKey);
+    component.getActionMap().put(previousTipKey, myTipPanel.myPreviousTipAction);
+
     return component;
   }
 
@@ -78,6 +96,17 @@ public final class TipDialog extends DialogWrapper {
   public void doCancelAction() {
     super.doCancelAction();
     TipsOfTheDayUsagesCollector.triggerDialogClosed(myShowingOnStartup);
+
+    Map<String, Boolean> tipIdToLikenessState = myTipPanel.getTipIdToLikenessStateMap();
+    for (Map.Entry<String, Boolean> pair : tipIdToLikenessState.entrySet()) {
+      String tipId = pair.getKey();
+      Boolean likenessState = pair.getValue();
+      TipsFeedback feedback = TipsFeedback.getInstance();
+      feedback.setLikenessState(tipId, likenessState);
+      if (likenessState != null) {
+        feedback.scheduleFeedbackSending(tipId, likenessState);
+      }
+    }
   }
 
   @Override
@@ -123,7 +152,7 @@ public final class TipDialog extends DialogWrapper {
           tips.add(tip);
           propertiesComponent.setValue(LAST_OPENED_TIP_PATH, file.getPath());
         }
-        myTipPanel.setTips(tips);
+        myTipPanel.setTips(new TipsSortingResult(tips));
       }
     }
   }

@@ -4,13 +4,13 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -opt-in=kotlin.ExperimentalStdlibApi -opt-in=kotlinx.coroutines.FlowPreview -opt-in=kotlin.time.ExperimentalTime" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -opt-in=kotlin.ExperimentalStdlibApi -opt-in=kotlinx.coroutines.FlowPreview -opt-in=kotlin.time.ExperimentalTime -opt-in=kotlinx.coroutines.DelicateCoroutinesApi" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="17" />
-            <stringArg name="apiVersion" arg="1.7" />
-            <stringArg name="languageVersion" arg="1.7" />
+            <stringArg name="apiVersion" arg="1.8" />
+            <stringArg name="languageVersion" arg="1.8" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
@@ -33,8 +33,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="commons-collections" level="project" />
-    <orderEntry type="library" name="commons-lang3" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
@@ -67,5 +65,9 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.repository.search" />
     <orderEntry type="module" module-name="intellij.platform.dependenciesToolwindow" />
+    <orderEntry type="library" name="ktor-client-cio" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
+    <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
+    <orderEntry type="library" name="caffeine" level="project" />
   </component>
 </module>

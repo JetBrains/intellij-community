@@ -99,6 +99,10 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     for (Supplier<String> synonym : mySynonyms) {
       targetAction.addSynonym(synonym);
     }
+    if (targetAction instanceof ActionGroup) {
+      LOG.warn(String.format("ActionGroup should be registered using <group> tag: id=\"%s\" class=\"%s\"",
+                             myId, targetAction.getClass().getName()));
+    }
   }
 
   public static void copyTemplatePresentation(Presentation sourcePresentation, Presentation targetPresentation) {

@@ -159,4 +159,34 @@ public class StringBufferReplaceableByString {
       .add(str2)
       .toString();
   }
+
+  void test3(String name) {
+    StringBuilder <warning descr="'StringBuilder sb' can be replaced with 'String'">sb</warning> = new StringBuilder(name.length());
+    name = sb.append(name.replace('.', '/'))
+      .append('/')
+      .append(name)
+      .toString();
+
+    StringBuilder sb2 = new StringBuilder(name.length());
+    name = "";
+    name = sb2.append(name.replace('.', '/'))
+      .append('/')
+      .append(name)
+      .toString();
+
+    StringBuilder sb3 = new StringBuilder(name.length());
+    name = sb3.append(name.replace('.', '/'))
+      .append('/')
+      .append(name)
+      .toString();
+
+    String name2 = sb3.toString();
+
+    StringBuilder sb4 = new StringBuilder(name.length());
+    name = sb4.append(name.replace('.', '/'))
+      .insert(0,1)
+      .append('/')
+      .append(name)
+      .toString();
+  }
 }

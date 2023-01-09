@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -129,7 +129,11 @@ class JBCefOsrHandler implements CefRenderHandler {
       Dimension size = getDevImageSize();
       if (size.width != width || size.height != height) {
         image = (JBHiDPIScaledImage)RetinaImage.createFrom(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB_PRE), myScale.getJreBiased(), null);
-        volatileImage = myComponent.createVolatileImage(width, height);
+        GraphicsConfiguration gc = myComponent.getGraphicsConfiguration();
+        if (gc != null)
+          volatileImage = gc.createCompatibleVolatileImage(width, height, Transparency.TRANSLUCENT);
+        else
+          volatileImage = myComponent.createVolatileImage(width, height);
         dirtyRects = new Rectangle[]{new Rectangle(0, 0, width, height)};
       }
     }
@@ -148,7 +152,7 @@ class JBCefOsrHandler implements CefRenderHandler {
         dirtyRects = new Rectangle[]{ new Rectangle(0, 0, width, height) };
       }
       if (result == VolatileImage.IMAGE_INCOMPATIBLE) {
-        volatileImage = myComponent.createVolatileImage(imageWidth, imageHeight);
+        volatileImage = myComponent.getGraphicsConfiguration().createCompatibleVolatileImage(imageWidth, imageHeight, Transparency.TRANSLUCENT);
       }
     }
 
@@ -201,6 +205,7 @@ class JBCefOsrHandler implements CefRenderHandler {
         double sx = viGr.getTransform().getScaleX();
         double sy = viGr.getTransform().getScaleY();
         viGr.scale(1 / sx, 1 / sy);
+        viGr.setComposite(AlphaComposite.Src);
         viGr.drawImage(bufferedImage,
                        outerRect.x, outerRect.y, outerRect.x + outerRect.width, outerRect.y + outerRect.height,
                        outerRect.x, outerRect.y, outerRect.x + outerRect.width, outerRect.y + outerRect.height,
@@ -212,7 +217,18 @@ class JBCefOsrHandler implements CefRenderHandler {
     }
     myImage = image;
     myVolatileImage = volatileImage;
-    SwingUtilities.invokeLater(() -> myComponent.repaint(popup ? scaleDown(new Rectangle(0, 0, imageWidth, imageHeight)) : scaleDown(outerRect)));
+    SwingUtilities.invokeLater(() -> {
+      if (!myComponent.isShowing()) return;
+      JRootPane root = myComponent.getRootPane();
+      RepaintManager rm = RepaintManager.currentManager(root);
+      Rectangle dirtySrc = new Rectangle(0, 0, myComponent.getWidth(), myComponent.getHeight());
+      Rectangle dirtyDst = SwingUtilities.convertRectangle(myComponent, dirtySrc, root);
+      int dx = 1;
+      // NOTE: should mark area outside browser (otherwise background component won't be repainted)
+      rm.addDirtyRegion(root, dirtyDst.x - dx, dirtyDst.y - dx, dirtyDst.width + dx * 2, dirtyDst.height + dx * 2);
+
+      myComponent.repaint(popup ? scaleDown(new Rectangle(0, 0, imageWidth, imageHeight)) : scaleDown(outerRect));
+    });
   }
 
   @Override

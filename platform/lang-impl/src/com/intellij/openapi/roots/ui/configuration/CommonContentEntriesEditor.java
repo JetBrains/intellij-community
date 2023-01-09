@@ -326,12 +326,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
 
   private boolean isAlreadyAdded(VirtualFile file) {
     final VirtualFile[] contentRoots = getModel().getContentRoots();
-    for (VirtualFile contentRoot : contentRoots) {
-      if (contentRoot.equals(file)) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.contains(file, contentRoots);
   }
 
   protected void addContentEntryPanels(ContentEntry[] contentEntriesArray) {

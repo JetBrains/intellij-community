@@ -20,11 +20,13 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PlatformNioHelper;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.*;
 
 import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -231,17 +233,15 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   }
 
   private static boolean startsWith(@Nullable VirtualFile parent, CharSequence name, String symlinkTarget) {
-    if (parent != null) {
-      String symlinkTargetParent = StringUtil.trimEnd(symlinkTarget, "/" + name);
-      return VfsUtilCore.isAncestorOrSelf(symlinkTargetParent, parent);
-    }
     // parent == null means name is root
-    return StringUtil.equal(name, symlinkTarget, SystemInfo.isFileSystemCaseSensitive);
+    //noinspection StaticMethodReferencedViaSubclass
+    return parent != null ? VfsUtilCore.isAncestorOrSelf(StringUtil.trimEnd(symlinkTarget, "/" + name), parent)
+                          : StringUtil.equal(name, symlinkTarget, SystemInfo.isFileSystemCaseSensitive);
   }
 
   @ApiStatus.Internal
   public String @NotNull [] listWithCaching(@NotNull VirtualFile dir) {
-    if (SystemInfo.isWindows && getClass() == LocalFileSystemImpl.class) {
+    if ((SystemInfo.isWindows || SystemInfo.isMac && CpuArch.isArm64()) && getClass() == LocalFileSystemImpl.class) {
       Pair<VirtualFile, Map<String, FileAttributes>> cache = myFileAttributesCache.get();
       if (cache != null) {
         LOG.error("unordered access to " + dir + " without cleaning after " + cache.first);
@@ -275,35 +275,37 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     return super.getAttributes(file);
   }
 
-  @SuppressWarnings("UnnecessaryFullyQualifiedName")
   private static Map<String, FileAttributes> listWithAttributes(VirtualFile dir) {
     try {
-      Map<String, FileAttributes> result = CollectionFactory.createFilePathMap(10, dir.isCaseSensitive());
-      try (DirectoryStream<Path> stream = Files.newDirectoryStream(Path.of(toIoPath(dir)))) {
-        for (Path file : stream) {
-          BasicFileAttributes attrs = null;
-          if (file instanceof sun.nio.fs.BasicFileAttributesHolder) {
-            attrs = ((sun.nio.fs.BasicFileAttributesHolder)file).get();
-          }
-          if (attrs == null) {
-            try {
-              attrs = Files.readAttributes(file, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
-            }
-            catch (IOException e) {
-              LOG.trace(e);
-            }
-          }
-          if (attrs != null) {
-            result.put(file.getFileName().toString(), FileAttributes.fromNio(file, attrs));
-          }
+      var list = CollectionFactory.<FileAttributes>createFilePathMap(10, dir.isCaseSensitive());
+
+      PlatformNioHelper.visitDirectory(Path.of(toIoPath(dir)), (file, result) -> {
+        try {
+          var attrs = copyWithCustomTimestamp(file, FileAttributes.fromNio(file, result.get()));
+          list.put(file.getFileName().toString(), attrs);
         }
+        catch (Exception e) {
+          LOG.warn(e);
+        }
+        return true;
+      });
+
+      return list;
+    }
+    catch (AccessDeniedException e) { LOG.debug(e); }
+    catch (IOException | RuntimeException e) { LOG.warn(e); }
+    return Map.of();
+  }
+
+  private static @Nullable FileAttributes copyWithCustomTimestamp(Path file, FileAttributes attributes) {
+    for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
+      Long custom = provider.getTimestamp(file);
+      if (custom != null) {
+        return attributes.withTimeStamp(custom);
       }
-      return result;
     }
-    catch (InvalidPathException | IOException | SecurityException e) {
-      LOG.warn(e);
-      return Map.of();
-    }
+
+    return attributes;
   }
 
   @Override

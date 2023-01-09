@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.InspectionEngine;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -11,7 +12,6 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.MatchOptions;
-import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
@@ -144,7 +144,7 @@ public class SSBasedInspectionTest extends UsefulTestCase {
     StructuralSearchProfileActionProvider.createNewInspection(configuration, myFixture.getProject());
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
     if (replacement != null) {
-      final IntentionAction intention = myFixture.getAvailableIntention(SSRBundle.message("SSRInspection.replace.with", replacement));
+      final IntentionAction intention = myFixture.getAvailableIntention(CommonQuickFixBundle.message("fix.replace.with.x", replacement));
       assertNotNull(intention);
       myFixture.checkPreviewAndLaunchAction(intention);
       myFixture.checkResultByFile(getTestName(false) + ".after.java");

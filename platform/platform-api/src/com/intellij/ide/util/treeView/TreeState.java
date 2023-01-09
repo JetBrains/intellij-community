@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
-import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -223,18 +222,12 @@ public final class TreeState implements JDOMExternalizable {
   @NotNull
   private static String calcId(@Nullable Object userObject) {
     if (userObject == null) return "";
-    Object value =
-      userObject instanceof NodeDescriptorProvidingKey ? ((NodeDescriptorProvidingKey)userObject).getKey() :
-      userObject instanceof AbstractTreeNode ? ((AbstractTreeNode<?>)userObject).getValue() :
-      userObject;
-    if (value instanceof NavigationItem) {
-      try {
-        String name = ((NavigationItem)value).getName();
-        return name != null ? name : StringUtil.notNullize(value.toString());
-      }
-      catch (Exception ignored) {
-      }
-    }
+    // There used to be a lot of code here that all started in 2005 with IDEA-29734 (back then IDEADEV-2150),
+    // which later was modified many times, but in the end all it did was to invoke some slow operations on EDT
+    // (IDEA-270843, IDEA-305055), and IDEA-29734 was still broken. It's a very edge case anyway (two folders
+    // with the same name under the same parent) and should be fixed in a better way. For now just stick to
+    // the good old way of doing this which should be fast enough for EDT unless the tree model is too slow by
+    // itself, in which case we've got much bigger problems to worry about anyway!
     return StringUtil.notNullize(userObject.toString());
   }
 

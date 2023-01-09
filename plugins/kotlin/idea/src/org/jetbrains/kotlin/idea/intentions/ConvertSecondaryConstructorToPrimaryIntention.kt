@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -12,7 +13,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetin
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.intentions.ConvertSecondaryConstructorToPrimaryIntention.Companion.tryConvertToPropertyByParameterInitialization
 import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -141,23 +141,23 @@ class ConvertSecondaryConstructorToPrimaryIntention : SelfTargetingRangeIntentio
     override fun applyTo(element: KtSecondaryConstructor, editor: Editor?) {
         val klass = element.containingClassOrObject as? KtClass ?: return
         val context = klass.analyzeWithContent()
-        val factory = KtPsiFactory(klass)
+        val psiFactory = KtPsiFactory(klass.project)
         val constructorCommentSaver = CommentSaver(element)
         val initializer = runWriteAction {
             val constructorInClass = klass.createPrimaryConstructorIfAbsent()
-            val constructor = factory.createPrimaryConstructorWithModifiers(element.modifierList?.text?.replace("\n", " "))
+            val constructor = psiFactory.createPrimaryConstructorWithModifiers(element.modifierList?.text?.replace("\n", " "))
 
             val parameterToPropertyMap = mutableMapOf<ValueParameterDescriptor, PropertyDescriptor>()
-            val initializer = element.extractInitializer(parameterToPropertyMap, context, factory) ?: return@runWriteAction null
+            val initializer = element.extractInitializer(parameterToPropertyMap, context, psiFactory) ?: return@runWriteAction null
 
-            element.moveParametersToPrimaryConstructorAndInitializers(constructor, parameterToPropertyMap, context, factory)
+            element.moveParametersToPrimaryConstructorAndInitializers(constructor, parameterToPropertyMap, context, psiFactory)
 
             val argumentList = element.getDelegationCall().valueArgumentList
             for (superTypeListEntry in klass.superTypeListEntries) {
                 val typeReference = superTypeListEntry.typeReference ?: continue
                 val type = context[BindingContext.TYPE, typeReference]
                 if ((type?.constructor?.declarationDescriptor as? ClassifierDescriptorWithTypeParameters)?.kind == ClassKind.CLASS) {
-                    val superTypeCallEntry = factory.createSuperTypeCallEntry(
+                    val superTypeCallEntry = psiFactory.createSuperTypeCallEntry(
                         "${typeReference.text}${argumentList?.text ?: "()"}"
                     )
                     superTypeListEntry.replace(superTypeCallEntry)

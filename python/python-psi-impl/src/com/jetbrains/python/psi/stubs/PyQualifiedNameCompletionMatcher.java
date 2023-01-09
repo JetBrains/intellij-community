@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PyQualifiedNameCompletionMatcher {
+public final class PyQualifiedNameCompletionMatcher {
   private static final Logger LOG = Logger.getInstance(PyQualifiedNameCompletionMatcher.class);
 
   private PyQualifiedNameCompletionMatcher() {

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -58,7 +59,7 @@ class IdeaResolverForProject(
     fallbackModificationTracker,
     delegateResolver,
     projectContext.project.service<IdePackageOracleFactory>(),
-) {
+), Disposable {
 
     companion object {
         val PLATFORM_ANALYSIS_SETTINGS = ModuleCapability<PlatformAnalysisSettings>("PlatformAnalysisSettings")
@@ -121,6 +122,7 @@ class IdeaResolverForProject(
             IDELanguageSettingsProvider.getLanguageVersionSettings(moduleInfo, projectContext.project)
 
         val resolverForModuleFactory = getResolverForModuleFactory(moduleInfo)
+        val optimizingOptions = ResolveOptimizingOptionsProvider.getOptimizingOptions(projectContext.project, descriptor, moduleInfo)
 
         return resolverForModuleFactory.createResolverForModule(
             descriptor as ModuleDescriptorImpl,
@@ -128,7 +130,8 @@ class IdeaResolverForProject(
             moduleContent,
             this,
             languageVersionSettings,
-            sealedInheritorsProvider = IdeSealedClassInheritorsProvider
+            sealedInheritorsProvider = IdeSealedClassInheritorsProvider,
+            resolveOptimizingOptions = optimizingOptions,
         )
     }
 
@@ -139,7 +142,10 @@ class IdeaResolverForProject(
             packagePartProviderFactory = { IDEPackagePartProvider(it.moduleContentScope) },
             moduleByJavaClass = { javaClass: JavaClass ->
                 val psiClass = (javaClass as JavaClassImpl).psi
-                psiClass.getPlatformModuleInfo(JvmPlatforms.unspecifiedJvmPlatform)?.platformModule ?: psiClass.moduleInfoOrNull
+                when (settings) {
+                    is CompositeAnalysisSettings -> psiClass.moduleInfoOrNull
+                    else -> psiClass.getPlatformModuleInfo(JvmPlatforms.unspecifiedJvmPlatform)?.platformModule ?: psiClass.moduleInfoOrNull
+                }
             },
             resolverForReferencedModule = { targetModuleInfo, referencingModuleInfo ->
                 require(targetModuleInfo is IdeaModuleInfo && referencingModuleInfo is IdeaModuleInfo) {
@@ -243,5 +249,11 @@ class IdeaResolverForProject(
         }
 
         return resolverForProjectFromAnchorModule.tryGetResolverForModule(targetModuleInfo)
+    }
+
+    override fun dispose() = Unit
+
+    override fun reportInvalidResolver() {
+        throw ProcessCanceledException(InvalidResolverException("$name is invalidated"))
     }
 }

@@ -6,8 +6,14 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyTypeCheckerInspectionTest;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.types.PyGenericType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
 
 /**
  * @author vlan
@@ -293,7 +299,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorDunderAiter() {
-    doTest("AsyncGenerator[int, Any]",
+    doTest("AsyncIterator[int]",
            """
              async def asyncgen():
                  yield 42
@@ -302,7 +308,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorDunderAnext() {
-    doTest("Coroutine[Any, Any, int]",
+    doTest("Awaitable[int]",
            """
              async def asyncgen():
                  yield 42
@@ -321,7 +327,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorAsend() {
-    doTest("Coroutine[Any, Any, int]",
+    doTest("Awaitable[int]",
            """
              async def asyncgen():
                  yield 42
@@ -1450,7 +1456,7 @@ public class Py3TypeTest extends PyTestCase {
     doTest("UnionType",
            """
              class MyMeta(type):
-                 def __or__(self, other) -> Any:
+                 def __or__(self, other):
                      return other
 
              class Foo(metaclass=MyMeta):
@@ -1540,6 +1546,92 @@ public class Py3TypeTest extends PyTestCase {
              d = {'foo': 42}
              for expr in d.values():
                  pass""");
+  }
+
+  // PY-55734
+  public void testEnumValueType() {
+    doTest("int",
+           """
+             from enum import IntEnum, auto
+                          
+             class State(IntEnum):
+                 A = auto()
+                 B = auto()
+                          
+             def foo(arg: State):
+                 expr = arg.value
+             """);
+  }
+
+  // PY-16622
+  public void testVariableEnumValueType() {
+    doTest("str",
+           """
+             from enum import Enum
+                          
+                          
+             class IDE(Enum):
+                 DS = 'DataSpell'
+                 PY = 'PyCharm'
+                          
+                          
+             IDE_TO_CLEAR_SETTINGS_FOR = IDE.PY
+             expr = IDE_TO_CLEAR_SETTINGS_FOR.value
+             """);
+  }
+
+  // PY-16622
+  public void testFunctionReturnEnumIntValueType() {
+    doTest("int",
+           """
+             from enum import Enum
+                          
+             class Fruit(Enum):
+                 Apple = 1
+                 Banana = 2
+                 
+             def f():
+                 return Fruit.Apple
+                 
+             res = f()
+             expr = res.value
+             """);
+  }
+
+  // PY-54336
+  public void testReusedTypeVarsCauseRecursiveSubstitution() {
+    doTest("Sub",
+           """
+             from typing import Generic, TypeVar
+                          
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+                          
+             class Super(Generic[T1]):
+                 pass
+                          
+             class Sub(Super[T2]):
+                 def __init__(self, xs: list[T2]):
+                     pass
+                          
+             def func(xs: list[T1]):
+                 expr = Sub(xs)
+             """);
+  }
+
+  // PY-54336
+  public void testCyclePreventionDuringGenericsSubstitution() {
+    PyGenericType typeVarT = new PyGenericType("T", null, false);
+    PyGenericType typeVarV = new PyGenericType("V", null, false);
+    TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+
+    PyType substituted = PyTypeChecker.substitute(typeVarT, new GenericSubstitutions(Map.of(typeVarT, typeVarT)), context);
+    assertEquals(typeVarT, substituted);
+
+    substituted = PyTypeChecker.substitute(typeVarT, new GenericSubstitutions(Map.of(typeVarT, typeVarV, typeVarV, typeVarT)), context);
+    assertNull(substituted);
+
+    // TODO add tests on more complex substitutions, e.g T -> list[T2], T2 -> T. These are not implemented at the moment.
   }
 
   private void doTest(final String expectedType, final String text) {

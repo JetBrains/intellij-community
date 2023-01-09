@@ -12,13 +12,14 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.getDiff
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
-import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
+import com.intellij.workspaceModel.storage.impl.exceptions.SymbolicIdAlreadyExistsException
 import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityMapping
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -29,6 +30,10 @@ internal data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: Ent
   override fun resolve(storage: EntityStorage): E? {
     @Suppress("UNCHECKED_CAST")
     return (storage as AbstractEntityStorage).entityDataById(id)?.createEntity(storage) as? E
+  }
+
+  override fun isReferenceTo(entity: WorkspaceEntity): Boolean {
+    return id == (entity as? WorkspaceEntityBase)?.id
   }
 
   override fun equals(other: Any?): Boolean {
@@ -47,15 +52,15 @@ internal class EntityStorageSnapshotImpl constructor(
 ) : EntityStorageSnapshot, AbstractEntityStorage() {
 
   // This cache should not be transferred to other versions of storage
-  private val persistentIdCache = ConcurrentHashMap<PersistentEntityId<*>, WorkspaceEntity>()
+  private val symbolicIdCache = ConcurrentHashMap<SymbolicEntityId<*>, WorkspaceEntity>()
 
   // I suppose that we can use some kind of array of arrays to get a quicker access (just two accesses by-index)
   // However, it's not implemented currently because I'm not sure about threading.
   private val entitiesCache = ConcurrentHashMap<EntityId, WorkspaceEntity>()
 
   @Suppress("UNCHECKED_CAST")
-  override fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
-    val entity = persistentIdCache.getOrPut(id) { super.resolve(id) ?: NULL_ENTITY }
+  override fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E? {
+    val entity = symbolicIdCache.getOrPut(id) { super.resolve(id) ?: NULL_ENTITY }
     return if (entity !== NULL_ENTITY) entity as E else null
   }
 
@@ -132,8 +137,8 @@ internal class MutableEntityStorageImpl(
     return entitiesByType[entityClass.toClassId()]?.all()?.map { it.wrapAsModifiable(this) } as? Sequence<E> ?: emptySequence()
   }
 
-  override fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>,
-                                                                                    entityClass: Class<R>): Sequence<R> {
+  override fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> referrers(id: SymbolicEntityId<E>,
+                                                                                  entityClass: Class<R>): Sequence<R> {
     val classId = entityClass.toClassId()
 
     @Suppress("UNCHECKED_CAST")
@@ -142,8 +147,8 @@ internal class MutableEntityStorageImpl(
       .map { entityDataByIdOrDie(it).wrapAsModifiable(this) as R }
   }
 
-  override fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
-    val entityIds = indexes.persistentIdIndex.getIdsByEntry(id) ?: return null
+  override fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E? {
+    val entityIds = indexes.symbolicIdIndex.getIdsByEntry(id) ?: return null
     val entityData: WorkspaceEntityData<WorkspaceEntity> = entityDataById(entityIds) as? WorkspaceEntityData<WorkspaceEntity> ?: return null
     @Suppress("UNCHECKED_CAST")
     return entityData.wrapAsModifiable(this) as E?
@@ -170,11 +175,16 @@ internal class MutableEntityStorageImpl(
   override fun <T : WorkspaceEntity> addEntity(entity: T): T {
     try {
       lockWrite()
-
-      entity as ModifiableWorkspaceEntityBase<T>
-
-      entity.applyToBuilder(this)
-      entity.changedProperty.clear()
+      val entityToAdd = if (entity is ModifiableWorkspaceEntityBase<*, *>) {
+        entity as ModifiableWorkspaceEntityBase<T, *>
+      }
+      else {
+        @Suppress("USELESS_CAST") //this is needed to work around a bug in Kotlin compiler (KT-55555)
+        createEntityTreeCopy(entity) as ModifiableWorkspaceEntityBase<T, *>
+      }
+      
+      entityToAdd.applyToBuilder(this)
+      entityToAdd.changedProperty.clear()
     }
     finally {
       unlockWrite()
@@ -184,14 +194,14 @@ internal class MutableEntityStorageImpl(
   }
 
   // This should be removed or not extracted into the interface
-  fun <T : WorkspaceEntity, D: ModifiableWorkspaceEntityBase<T>> putEntity(entity: D) {
+  fun <T : WorkspaceEntity, E: WorkspaceEntityData<T>, D: ModifiableWorkspaceEntityBase<T, E>> putEntity(entity: D) {
     try {
       lockWrite()
 
       val newEntityData = entity.getEntityData()
 
       // Check for persistent id uniqueness
-      assertUniquePersistentId(newEntityData)
+      assertUniqueSymbolicId(newEntityData)
 
       entitiesByType.add(newEntityData, entity.getEntityClass().toClassId())
 
@@ -206,38 +216,38 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  private fun <T : WorkspaceEntity> assertUniquePersistentId(pEntityData: WorkspaceEntityData<T>) {
-    pEntityData.persistentId()?.let { persistentId ->
-      val ids = indexes.persistentIdIndex.getIdsByEntry(persistentId)
+  private fun <T : WorkspaceEntity> assertUniqueSymbolicId(pEntityData: WorkspaceEntityData<T>) {
+    pEntityData.symbolicId()?.let { symbolicId ->
+      val ids = indexes.symbolicIdIndex.getIdsByEntry(symbolicId)
       if (ids != null) {
-        // Oh, oh. This persistent id exists already
+        // Oh, oh. This symbolic id exists already
         // Fallback strategy: remove existing entity with all it's references
         val existingEntityData = entityDataByIdOrDie(ids)
         val existingEntity = existingEntityData.createEntity(this)
         removeEntity(existingEntity)
         LOG.error(
           """
-              addEntity: persistent id already exists. Replacing entity with the new one.
-              Persistent id: $persistentId
+              addEntity: symbolic id already exists. Replacing entity with the new one.
+              Symbolic id: $symbolicId
               
               Existing entity data: $existingEntityData
               New entity data: $pEntityData
               
               Broken consistency: $brokenConsistency
-            """.trimIndent(), PersistentIdAlreadyExistsException(persistentId)
+            """.trimIndent(), SymbolicIdAlreadyExistsException(symbolicId)
         )
         if (throwExceptionOnError) {
-          throw PersistentIdAlreadyExistsException(persistentId)
+          throw SymbolicIdAlreadyExistsException(symbolicId)
         }
       }
     }
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
+  override fun <M : WorkspaceEntity.Builder<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
     try {
       lockWrite()
-      if (e is ModifiableWorkspaceEntityBase<*> && e.diff !== this) error("Trying to modify entity from a different builder")
+      if (e is ModifiableWorkspaceEntityBase<*, *> && e.diff !== this) error("Trying to modify entity from a different builder")
       val entityId = (e as WorkspaceEntityBase).id
 
       val originalEntityData = this.getOriginalEntityData(entityId) as WorkspaceEntityData<T>
@@ -245,11 +255,11 @@ internal class MutableEntityStorageImpl(
       // Get entity data that will be modified
       val copiedData = entitiesByType.getEntityDataForModification(entityId) as WorkspaceEntityData<T>
 
-      val modifiableEntity = (if (e is ModifiableWorkspaceEntity<*>) e else copiedData.wrapAsModifiable(this)) as M
-      modifiableEntity as ModifiableWorkspaceEntityBase<*>
+      val modifiableEntity = (if (e is WorkspaceEntity.Builder<*>) e else copiedData.wrapAsModifiable(this)) as M
+      modifiableEntity as ModifiableWorkspaceEntityBase<*, *>
       modifiableEntity.changedProperty.clear()
 
-      val beforePersistentId = if (e is WorkspaceEntityWithPersistentId) e.persistentId else null
+      val beforeSymbolicId = if (e is WorkspaceEntityWithSymbolicId) e.symbolicId else null
 
       val originalParents = this.getOriginalParents(entityId.asChild())
       val beforeParents = this.refs.getParentRefsOfChild(entityId.asChild())
@@ -262,11 +272,11 @@ internal class MutableEntityStorageImpl(
       }
 
       // Check for persistent id uniqueness
-      if (beforePersistentId != null) {
-        val newPersistentId = copiedData.persistentId()
-        if (newPersistentId != null) {
-          val ids = indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
-          if (beforePersistentId != newPersistentId && ids != null) {
+      if (beforeSymbolicId != null) {
+        val newSymbolicId = copiedData.symbolicId()
+        if (newSymbolicId != null) {
+          val ids = indexes.symbolicIdIndex.getIdsByEntry(newSymbolicId)
+          if (beforeSymbolicId != newSymbolicId && ids != null) {
             // Oh, oh. This persistent id exists already.
             // Remove an existing entity and replace it with the new one.
 
@@ -279,9 +289,9 @@ internal class MutableEntityStorageImpl(
               Persistent id: $copiedData
               
               Broken consistency: $brokenConsistency
-            """.trimIndent(), PersistentIdAlreadyExistsException(newPersistentId))
+            """.trimIndent(), SymbolicIdAlreadyExistsException(newSymbolicId))
             if (throwExceptionOnError) {
-              throw PersistentIdAlreadyExistsException(newPersistentId)
+              throw SymbolicIdAlreadyExistsException(newSymbolicId)
             }
           }
         }
@@ -300,7 +310,7 @@ internal class MutableEntityStorageImpl(
 
       val updatedEntity = copiedData.createEntity(this)
 
-      this.indexes.updatePersistentIdIndexes(this, updatedEntity, beforePersistentId, copiedData, modifiableEntity)
+      this.indexes.updateSymbolicIdIndexes(this, updatedEntity, beforeSymbolicId, copiedData, modifiableEntity)
 
       return updatedEntity
     }
@@ -322,7 +332,7 @@ internal class MutableEntityStorageImpl(
   override fun removeEntity(e: WorkspaceEntity): Boolean {
     try {
       lockWrite()
-      if (e is ModifiableWorkspaceEntityBase<*> && e.diff !== this) error("Trying to remove entity from a different builder")
+      if (e is ModifiableWorkspaceEntityBase<*, *> && e.diff !== this) error("Trying to remove entity from a different builder")
 
       LOG.debug { "Removing ${e.javaClass}..." }
       e as WorkspaceEntityBase
@@ -519,7 +529,7 @@ internal class MutableEntityStorageImpl(
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T> {
+  override fun <T> getMutableExternalMapping(identifier: @NonNls String): MutableExternalEntityMapping<T> {
     try {
       lockWrite()
       val mapping = indexes.externalMappings.computeIfAbsent(
@@ -545,7 +555,8 @@ internal class MutableEntityStorageImpl(
   }
 
   internal fun addDiffAndReport(message: String, left: EntityStorage?, right: EntityStorage) {
-    reportConsistencyIssue(message, AddDiffException(message), null, left, right, this)
+    this.reportConsistencyIssue(message, AddDiffException(message), null, left, right,
+                                ConsistencyCheckingMode.current == ConsistencyCheckingMode.ASYNCHRONOUS)
   }
 
   private fun applyDiffProtection(diff: AbstractEntityStorage, method: String) {
@@ -752,8 +763,8 @@ internal sealed class AbstractEntityStorage : EntityStorage {
     //return entities(entityClass.java).filter { property.get(it).resolve(this) == e }
   }
 
-  override fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>,
-                                                                                    entityClass: Class<R>): Sequence<R> {
+  override fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> referrers(id: SymbolicEntityId<E>,
+                                                                                  entityClass: Class<R>): Sequence<R> {
     val classId = entityClass.toClassId()
 
     @Suppress("UNCHECKED_CAST")
@@ -762,14 +773,14 @@ internal sealed class AbstractEntityStorage : EntityStorage {
       .map { entityDataByIdOrDie(it).createEntity(this) as R }
   }
 
-  override fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
-    val entityIds = indexes.persistentIdIndex.getIdsByEntry(id) ?: return null
+  override fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E? {
+    val entityIds = indexes.symbolicIdIndex.getIdsByEntry(id) ?: return null
     @Suppress("UNCHECKED_CAST")
     return entityDataById(entityIds)?.createEntity(this) as E?
   }
 
-  operator override fun <E : WorkspaceEntityWithPersistentId> contains(id: PersistentEntityId<E>): Boolean {
-    return indexes.persistentIdIndex.getIdsByEntry(id) != null
+  operator override fun <E : WorkspaceEntityWithSymbolicId> contains(id: SymbolicEntityId<E>): Boolean {
+    return indexes.symbolicIdIndex.getIdsByEntry(id) != null
   }
 
   override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>> {
@@ -786,7 +797,7 @@ internal sealed class AbstractEntityStorage : EntityStorage {
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T> {
+  override fun <T> getExternalMapping(identifier: @NonNls String): ExternalEntityMapping<T> {
     val index = indexes.externalMappings[identifier] as? ExternalEntityMappingImpl<T>
     if (index == null) return EmptyExternalEntityMapping as ExternalEntityMapping<T>
     index.setTypedEntityStorage(this)
@@ -810,15 +821,25 @@ internal sealed class AbstractEntityStorage : EntityStorage {
       }
       catch (e: Throwable) {
         brokenConsistency = true
-        val storage = if (this is MutableEntityStorage) this.toSnapshot() as AbstractEntityStorage else this
-        val report = { reportConsistencyIssue(message, e, sourceFilter, left, right, storage) }
-        if (ConsistencyCheckingMode.current == ConsistencyCheckingMode.ASYNCHRONOUS) {
-          consistencyChecker.execute(report)
-        }
-        else {
-          report()
-        }
+        reportConsistencyIssue(message, e, sourceFilter, left, right,
+                               ConsistencyCheckingMode.current == ConsistencyCheckingMode.ASYNCHRONOUS)
       }
+    }
+  }
+
+  internal fun reportConsistencyIssue(message: String,
+                                     e: Throwable,
+                                     sourceFilter: ((EntitySource) -> Boolean)?,
+                                     left: EntityStorage?,
+                                     right: EntityStorage?,
+                                     reportInBackgroundThread: Boolean) {
+    val storage = if (this is MutableEntityStorage) this.toSnapshot() as AbstractEntityStorage else this
+    val report = { reportConsistencyIssue(message, e, sourceFilter, left, right, storage) }
+    if (reportInBackgroundThread) {
+      consistencyChecker.execute(report)
+    }
+    else {
+      report()
     }
   }
 

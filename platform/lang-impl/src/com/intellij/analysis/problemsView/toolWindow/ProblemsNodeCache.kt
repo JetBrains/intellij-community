@@ -1,15 +1,17 @@
 package com.intellij.analysis.problemsView.toolWindow
 
+import java.util.WeakHashMap
+
 internal class ProblemsNodeCache<T>(private val producer: (T) -> Node) {
-  private val nodes = mutableMapOf<T, CacheEntry>()
+  private val nodesWeak = WeakHashMap<T, Node>()
+  private val nodesSync = Any()
 
   fun getNodes(keys: Collection<T>): List<Node> {
-    nodes.values.forEach { it.isValid = false }
-    val children = keys.mapNotNull { nodes.computeIfAbsent(it) { key -> CacheEntry(producer(key), true) } }
-    children.forEach { it.isValid = true }
-    nodes.values.removeIf { !it.isValid }
-    return children.map { it.node }
+    synchronized(nodesSync) {
+      val nodes: List<Node> = keys.mapNotNull {
+        return@mapNotNull nodesWeak.computeIfAbsent(it) { k -> producer(k) }
+      }
+      return nodes
+    }
   }
-
-  private data class CacheEntry(val node: Node, var isValid: Boolean)
 }

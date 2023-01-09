@@ -161,7 +161,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     myTestsRootProxy.setDurationStrategy(durationStrategy);
   }
 
-  private static void processTreeBuildEvents(final List<Runnable> runnables) {
+  private static void processTreeBuildEvents(final List<? extends Runnable> runnables) {
     for (Runnable runnable : runnables) {
       runnable.run();
     }

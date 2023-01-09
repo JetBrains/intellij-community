@@ -121,6 +121,9 @@ public interface FileEditor extends UserDataHolder, Disposable {
     return null;
   }
 
+  /**
+   * @see com.intellij.openapi.fileEditor.impl.text.StructureViewFileEditorProvider
+   */
   default @Nullable StructureViewBuilder getStructureViewBuilder() {
     return null;
   }

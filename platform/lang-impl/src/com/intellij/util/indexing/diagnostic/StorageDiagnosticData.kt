@@ -10,9 +10,11 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
+import com.intellij.util.io.DirectByteBufferAllocator
 import com.intellij.util.io.StorageLockContext
 import com.intellij.util.io.delete
 import com.intellij.util.io.stats.FilePageCacheStatistics
@@ -221,38 +223,87 @@ object StorageDiagnosticData {
   /* =========================== Monitoring via OpenTelemetry: ========================================== */
 
   //TODO RC: i'd think it is better to setup such monitoring in apt. component itself, because be
-  //         observable is a responsibility of component, same way as logging is. But a) FilePageCache
-  //         module haven't dependency on monitoring module now b) here we already have monitoring of
-  //         FilePageCache, so better to keep old/new monitoring in one place for a while
+  //         observable is the responsibility of component, the same way as logging is. But:
+  //         a) FilePageCache module hasn't dependency on the monitoring module now
+  //         b) here we already have monitoring of FilePageCache, so better to keep old/new
+  //            monitoring in one place for a while
   private fun setupReportingToOpenTelemetry() {
     val otelMeter = TraceManager.getMeter("storage")
 
     val uncachedFileAccess = otelMeter.counterBuilder("FilePageCache.uncachedFileAccess").buildObserver()
     val maxRegisteredFiles = otelMeter.gaugeBuilder("FilePageCache.maxRegisteredFiles").ofLongs().buildObserver()
-    val maxCacheSizeInBytes = otelMeter.gaugeBuilder("FilePageCache.maxCacheSizeInBytes").ofLongs().buildObserver()
-    val pageHit = otelMeter.counterBuilder("FilePageCache.pageHit").buildObserver()
-    val pageFastCacheHit = otelMeter.counterBuilder("FilePageCache.pageFastCacheHit").buildObserver()
-    val pageMiss = otelMeter.counterBuilder("FilePageCache.pageMiss").buildObserver()
-    val pageLoad = otelMeter.counterBuilder("FilePageCache.pageLoad").buildObserver()
+
+    val pageHits = otelMeter.counterBuilder("FilePageCache.pageHits").buildObserver()
+    val pageFastCacheHit = otelMeter.counterBuilder("FilePageCache.pageFastCacheHits").buildObserver()
+    val pageLoads = otelMeter.counterBuilder("FilePageCache.pageLoads").buildObserver()
+    val pageLoadsAboveSizeThreshold = otelMeter.counterBuilder("FilePageCache.pageLoadsAboveSizeThreshold").buildObserver()
+    val totalPageLoadsUs = otelMeter.counterBuilder("FilePageCache.totalPageLoadsUs")
+      .setUnit("us").buildObserver()
+    val totalPageDisposalsUs = otelMeter.counterBuilder("FilePageCache.totalPageDisposalsUs")
+      .setUnit("us").buildObserver()
+
     val disposedBuffers = otelMeter.counterBuilder("FilePageCache.disposedBuffers").buildObserver()
-    val capacityInBytes = otelMeter.gaugeBuilder("FilePageCache.capacityInBytes").ofLongs().buildObserver()
+
+    val totalCachedSizeInBytes = otelMeter.gaugeBuilder("FilePageCache.totalCachedSizeInBytes")
+      .setUnit("bytes")
+      .setDescription("Total size of all pages currently cached")
+      .ofLongs().buildObserver()
+    val maxCacheSizeInBytes = otelMeter.gaugeBuilder("FilePageCache.maxCacheSizeInBytes")
+      .setUnit("bytes")
+      .setDescription("Max size of all cached pages observed since application start")
+      .ofLongs().buildObserver()
+    val capacityInBytes = otelMeter.gaugeBuilder("FilePageCache.capacityInBytes")
+      .setUnit("bytes")
+      .setDescription("Cache capacity, configured on application startup")
+      .ofLongs().buildObserver()
+
+    val directBufferAllocatorHits = otelMeter.counterBuilder("DirectByteBufferAllocator.hits").buildObserver();
+    val directBufferAllocatorMisses = otelMeter.counterBuilder("DirectByteBufferAllocator.misses").buildObserver();
+    val directBufferAllocatorReclaimed = otelMeter.counterBuilder("DirectByteBufferAllocator.reclaimed").buildObserver();
+    val directBufferAllocatorDisposed = otelMeter.counterBuilder("DirectByteBufferAllocator.disposed").buildObserver();
+    val directBufferAllocatorTotalSizeCached = otelMeter.counterBuilder("DirectByteBufferAllocator.totalSizeOfBuffersCachedInBytes").buildObserver();
 
     otelMeter.batchCallback(
       {
-        val stats = getStorageDataStatistics()
-        uncachedFileAccess.record(stats.pageCacheStats.uncachedFileAccess.toLong())
-        maxRegisteredFiles.record(stats.pageCacheStats.maxRegisteredFiles.toLong())
-        maxCacheSizeInBytes.record(stats.pageCacheStats.maxCacheSizeInBytes)
-        pageHit.record(stats.pageCacheStats.pageHit.toLong())
-        pageFastCacheHit.record(stats.pageCacheStats.pageFastCacheHit.toLong())
-        pageMiss.record(stats.pageCacheStats.pageMiss.toLong())
-        pageLoad.record(stats.pageCacheStats.pageLoad.toLong())
-        disposedBuffers.record(stats.pageCacheStats.disposedBuffers.toLong())
-        capacityInBytes.record(stats.pageCacheStats.capacityInBytes)
+        try {
+          val pageCacheStats = StorageLockContext.getStatistics()
+          uncachedFileAccess.record(pageCacheStats.uncachedFileAccess.toLong())
+          maxRegisteredFiles.record(pageCacheStats.maxRegisteredFiles.toLong())
+
+          maxCacheSizeInBytes.record(pageCacheStats.maxCacheSizeInBytes)
+          capacityInBytes.record(pageCacheStats.capacityInBytes)
+          totalCachedSizeInBytes.record(pageCacheStats.totalCachedSizeInBytes)
+
+          pageFastCacheHit.record(pageCacheStats.pageFastCacheHits.toLong())
+
+          pageHits.record(pageCacheStats.pageHits.toLong())
+          pageLoads.record(pageCacheStats.regularPageLoads.toLong())
+          pageLoadsAboveSizeThreshold.record(pageCacheStats.pageLoadsAboveSizeThreshold.toLong())
+
+          totalPageLoadsUs.record(pageCacheStats.totalPageLoadUs)
+          totalPageDisposalsUs.record(pageCacheStats.totalPageDisposalUs)
+
+          disposedBuffers.record(pageCacheStats.disposedBuffers.toLong())
+
+          val bufferAllocatorStats = DirectByteBufferAllocator.ALLOCATOR.statistics
+          directBufferAllocatorHits.record(bufferAllocatorStats.hits.toLong())
+          directBufferAllocatorMisses.record(bufferAllocatorStats.misses.toLong())
+          directBufferAllocatorReclaimed.record(bufferAllocatorStats.reclaimed.toLong())
+          directBufferAllocatorDisposed.record(bufferAllocatorStats.disposed.toLong())
+          directBufferAllocatorTotalSizeCached.record(bufferAllocatorStats.totalSizeOfBuffersCachedInBytes.toLong())
+        }
+        catch (_: AlreadyDisposedException) {
+
+        }
       },
       uncachedFileAccess, maxRegisteredFiles, maxCacheSizeInBytes,
-      pageHit, pageFastCacheHit, pageMiss, pageLoad,
-      disposedBuffers, capacityInBytes
+      pageHits, pageFastCacheHit, pageLoadsAboveSizeThreshold, pageLoads,
+      totalPageLoadsUs, totalPageDisposalsUs,
+      disposedBuffers, capacityInBytes,
+
+      directBufferAllocatorHits, directBufferAllocatorMisses,
+      directBufferAllocatorReclaimed, directBufferAllocatorDisposed,
+      directBufferAllocatorTotalSizeCached
     )
   }
 }

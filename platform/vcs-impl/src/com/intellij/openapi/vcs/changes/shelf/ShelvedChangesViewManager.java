@@ -26,7 +26,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -129,14 +128,11 @@ public class ShelvedChangesViewManager implements Disposable {
     myUpdateQueue = new MergingUpdateQueue("Update Shelf Content", 200, true, null, myProject, null, true);
 
     MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(ShelveChangesManager.SHELF_TOPIC, e -> onShelveChangelistsChange());
+    connection.subscribe(ShelveChangesManager.SHELF_TOPIC, () -> scheduleTreeUpdate());
   }
 
-  private void onShelveChangelistsChange() {
+  private void scheduleTreeUpdate() {
     myUpdateQueue.queue(new MyContentUpdater());
-    ApplicationManager.getApplication().invokeLater(() -> {
-      myProject.getMessageBus().syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged();
-    });
   }
 
   public static class ContentPreloader implements ChangesViewContentProvider.Preloader {
@@ -155,8 +151,10 @@ public class ShelvedChangesViewManager implements Disposable {
   final static class ContentPredicate implements Predicate<Project> {
     @Override
     public boolean test(Project project) {
-      return !ShelveChangesManager.getInstance(project).getAllLists().isEmpty() &&
-             !hideDefaultShelfTab(project);
+      if (hideDefaultShelfTab(project)) return false;
+      // do not init manager on EDT - wait for ShelveChangesManager.PostStartupActivity
+      ShelveChangesManager shelveManager = project.getServiceIfCreated(ShelveChangesManager.class);
+      return shelveManager != null && !shelveManager.getAllLists().isEmpty();
     }
   }
 
@@ -177,7 +175,7 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public void initTabContent(@NotNull Content content) {
       ShelfToolWindowPanel panel = getInstance(myProject).initToolWindowPanel();
-      content.setComponent(panel.myRootPanel);
+      content.setComponent(panel);
       content.setDisposer(panel);
       content.setPreferredFocusableComponent(panel.myTree);
     }
@@ -387,7 +385,11 @@ public class ShelvedChangesViewManager implements Disposable {
     @NotNull
     @Override
     protected ChangesGroupingSupport installGroupingSupport() {
-      return new ChangesGroupingSupport(myProject, this, false);
+      ChangesGroupingSupport groupingSupport = new ChangesGroupingSupport(myProject, this, false);
+      ChangesTree.installGroupingSupport(this, groupingSupport,
+                                         () -> ShelveChangesManager.getInstance(myProject).getGrouping(),
+                                         (newGrouping) -> ShelveChangesManager.getInstance(myProject).setGrouping(newGrouping));
+      return groupingSupport;
     }
 
     @Override
@@ -691,7 +693,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
   }
 
-  private static final class ShelfToolWindowPanel implements ChangesViewContentManagerListener, DataProvider, Disposable {
+  private static final class ShelfToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
     @NotNull private static final RegistryValue isOpenEditorDiffPreviewWithSingleClick =
       Registry.get("show.diff.preview.as.editor.tab.with.single.click");
 
@@ -701,7 +703,6 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @NotNull private final JScrollPane myTreeScrollPane;
     private final ShelfTree myTree;
-    @NotNull private final SimpleToolWindowPanel myRootPanel = new SimpleToolWindowPanel(true);
 
     private MyShelvedPreviewProcessor myEditorChangeProcessor;
     private MyShelvedPreviewProcessor mySplitterChangeProcessor;
@@ -709,6 +710,7 @@ public class ShelvedChangesViewManager implements Disposable {
     private PreviewDiffSplitterComponent mySplitterDiffPreview;
 
     private ShelfToolWindowPanel(@NotNull Project project) {
+      super(true);
       myProject = project;
       myShelveChangesManager = ShelveChangesManager.getInstance(myProject);
       myVcsConfiguration = VcsConfiguration.getInstance(myProject);
@@ -716,11 +718,6 @@ public class ShelvedChangesViewManager implements Disposable {
       myTree = new ShelfTree(myProject);
       myTree.setEditable(true);
       myTree.setDragEnabled(!ApplicationManager.getApplication().isHeadlessEnvironment());
-      myTree.getGroupingSupport().setGroupingKeysOrSkip(myShelveChangesManager.getGrouping());
-      myTree.addGroupingChangeListener(e -> {
-        myShelveChangesManager.setGrouping(myTree.getGroupingSupport().getGroupingKeys());
-        myTree.rebuildTree();
-      });
       DefaultTreeCellEditor treeCellEditor = new DefaultTreeCellEditor(myTree, null) {
         @Override
         public boolean isCellEditable(EventObject event) {
@@ -758,8 +755,8 @@ public class ShelvedChangesViewManager implements Disposable {
       toolbar.setTargetComponent(myTree);
       myTreeScrollPane = ScrollPaneFactory.createScrollPane(myTree, true);
 
-      myRootPanel.setContent(myTreeScrollPane);
-      myRootPanel.setToolbar(toolbar.getComponent());
+      setContent(myTreeScrollPane);
+      setToolbar(toolbar.getComponent());
       updatePanelLayout();
 
       setDiffPreview();
@@ -770,9 +767,7 @@ public class ShelvedChangesViewManager implements Disposable {
           if (myEditorDiffPreview != null) setDiffPreview();
         }
       }, this);
-      myProject.getMessageBus().connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, this);
-
-      myRootPanel.addDataProvider(this);
+      myProject.getMessageBus().connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, () -> updatePanelLayout());
 
       PopupHandler.installPopupMenu(myTree, "ShelvedChangesPopupMenu", SHELF_CONTEXT_MENU);
       new MyDnDSupport(myProject, myTree, myTreeScrollPane).install(this);
@@ -782,18 +777,18 @@ public class ShelvedChangesViewManager implements Disposable {
     public void dispose() {
     }
 
-    @Override
-    public void toolWindowMappingChanged() {
-      updatePanelLayout();
-    }
-
     private void updatePanelLayout() {
-      myRootPanel.setVertical(isCommitToolWindowShown(myProject));
+      setVertical(isCommitToolWindowShown(myProject));
     }
 
     private void setDiffPreview() {
       boolean isEditorPreview = isEditorPreview(myProject);
       boolean hasSplitterPreview = !isCommitToolWindowShown(myProject);
+
+      //noinspection DoubleNegation
+      boolean needUpdatePreviews = isEditorPreview != (myEditorChangeProcessor != null) ||
+                                   hasSplitterPreview != (mySplitterChangeProcessor != null);
+      if (!needUpdatePreviews) return;
 
       if (myEditorChangeProcessor != null) Disposer.dispose(myEditorChangeProcessor);
       if (mySplitterChangeProcessor != null) Disposer.dispose(mySplitterChangeProcessor);
@@ -804,6 +799,7 @@ public class ShelvedChangesViewManager implements Disposable {
         myEditorDiffPreview = installEditorPreview(myEditorChangeProcessor, hasSplitterPreview);
       }
       else {
+        myEditorChangeProcessor = null;
         myEditorDiffPreview = null;
       }
 
@@ -813,6 +809,7 @@ public class ShelvedChangesViewManager implements Disposable {
         mySplitterDiffPreview = installSplitterPreview(mySplitterChangeProcessor);
       }
       else {
+        mySplitterChangeProcessor = null;
         mySplitterDiffPreview = null;
       }
     }
@@ -860,9 +857,9 @@ public class ShelvedChangesViewManager implements Disposable {
 
       myTree.addSelectionListener(() -> previewSplitter.updatePreview(false), changeProcessor);
 
-      myRootPanel.setContent(previewSplitter);
+      setContent(previewSplitter);
       Disposer.register(changeProcessor, () -> {
-        myRootPanel.setContent(myTreeScrollPane);
+        setContent(myTreeScrollPane);
       });
 
       return previewSplitter;
@@ -938,7 +935,7 @@ public class ShelvedChangesViewManager implements Disposable {
       if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.is(dataId)) {
         return myEditorDiffPreview;
       }
-      return myTree.getData(dataId);
+      return super.getData(dataId);
     }
 
     private class MyToggleDetailsAction extends ShowDiffPreviewAction {
@@ -1137,14 +1134,18 @@ public class ShelvedChangesViewManager implements Disposable {
     }
   }
 
-  /**
-   * @deprecated Implement {@link StartupActivity.Background} directly.
-   */
-  @Deprecated
-  public static class PostStartupActivity implements StartupActivity.Background {
+  public static class MyShelfManagerListener implements ShelveChangesManagerListener {
+    private final Project myProject;
+
+    public MyShelfManagerListener(@NotNull Project project) {
+      myProject = project;
+    }
+
     @Override
-    public void runActivity(@NotNull Project project) {
-      throw new UnsupportedOperationException();
+    public void shelvedListsChanged() {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        BackgroundTaskUtil.syncPublisher(myProject, ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged();
+      });
     }
   }
 }

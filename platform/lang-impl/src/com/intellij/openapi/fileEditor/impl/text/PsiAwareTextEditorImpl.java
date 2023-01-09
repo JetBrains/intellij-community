@@ -13,6 +13,7 @@ import com.intellij.codeInsight.hints.InlayHintsPassFactory;
 import com.intellij.codeInsight.hints.codeVision.CodeVisionPassFactory;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.openapi.actionSystem.CompositeDataProvider;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.ControlFlowException;
@@ -48,9 +49,8 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
     super(project, file, provider, editor);
   }
 
-  @NotNull
   @Override
-  protected Runnable loadEditorInBackground() {
+  protected @NotNull Runnable loadEditorInBackground() {
     Runnable baseResult = super.loadEditorInBackground();
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
     Document document = FileDocumentManager.getInstance().getDocument(myFile);
@@ -116,9 +116,8 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
     return null;
   }
 
-  @NotNull
   @Override
-  protected TextEditorComponent createEditorComponent(@NotNull Project project, @NotNull VirtualFile file, @NotNull EditorImpl editor) {
+  protected @NotNull TextEditorComponent createEditorComponent(@NotNull Project project, @NotNull VirtualFile file, @NotNull EditorImpl editor) {
     return new PsiAwareTextEditorComponent(project, file, this, editor);
   }
 
@@ -155,21 +154,20 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
       }
     }
 
-    @Nullable
     @Override
-    public DataProvider createBackgroundDataProvider() {
+    public @Nullable DataProvider createBackgroundDataProvider() {
       DataProvider superProvider = super.createBackgroundDataProvider();
       if (superProvider == null) return null;
 
-      return dataId -> {
+      return CompositeDataProvider.compose(dataId -> {
         if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
           LookupImpl lookup = (LookupImpl)LookupManager.getInstance(myProject).getActiveLookup();
           if (lookup != null && lookup.isVisible()) {
             return lookup.getBounds();
           }
         }
-        return superProvider.getData(dataId);
-      };
+        return null;
+      }, superProvider);
     }
   }
 }

@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.structuralsearch.*
 import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinAlsoMatchCompanionObjectPredicate
 import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinAlsoMatchValVarPredicate
+import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinExprTypePredicate
 import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinMatchCallSemantics
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
@@ -42,6 +43,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.psi2ir.deparenthesize
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
@@ -51,6 +53,7 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.util.match
 
 class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor) : SSRKtVisitor() {
     /** Gets the next element in the query tree and removes unnecessary parentheses. */
@@ -75,7 +78,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
     }
 
     private inline fun <reified T:KtElement> factory(context: PsiElement, f: KtPsiFactory.() -> T): T {
-        val psiFactory = KtPsiFactory(context, true)
+        val psiFactory = KtPsiFactory(context.project, true)
         val result = psiFactory.f()
         (result.containingFile as KtFile).analysisContext = context
         return result
@@ -315,14 +318,18 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
     override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
         val other = getTreeElementDepar<KtExpression>() ?: return
         val receiverHandler = getHandler(expression.receiverExpression)
-        if (receiverHandler is SubstitutionHandler && receiverHandler.minOccurs == 0) { // can match without receiver
-            myMatchingVisitor.result = other !is KtDotQualifiedExpression
-                    && other.parent !is KtDotQualifiedExpression
-                    && other.parent !is KtCallExpression
+        if (receiverHandler is SubstitutionHandler && receiverHandler.minOccurs == 0 && other !is KtDotQualifiedExpression) { // can match without receiver
+            val receiverType = other.resolveExprType()
+            val receiverTypeMatches = if (receiverType != null) {
+                receiverHandler.findPredicate(KotlinExprTypePredicate::class.java)?.match(receiverType) ?: true
+            } else true
+            myMatchingVisitor.result = other.parent !is KtDotQualifiedExpression
+                    && other.parent !is KtCallExpression // don't match name reference of calls
+                    && receiverTypeMatches
                     && myMatchingVisitor.match(expression.selectorExpression, other)
         } else {
             myMatchingVisitor.result = other is KtDotQualifiedExpression
-                    && myMatchingVisitor.match(expression.receiverExpression, other.receiverExpression)
+                    && myMatchingVisitor.matchOptionally(expression.receiverExpression, other.receiverExpression)
                     && myMatchingVisitor.match(expression.selectorExpression, other.selectorExpression)
         }
     }
@@ -335,7 +342,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         myMatchingVisitor.result =
             (!lambdaExpression.functionLiteral.hasParameterSpecification()
                     || myMatchingVisitor.matchSequentially(lambdaVP, otherVP)
-                    || lambdaVP.map { p -> getHandler(p).let { if (it is SubstitutionHandler) it.minOccurs else 1 } }.sum() == 1
+                    || lambdaVP.sumOf { p -> getHandler(p).let { if (it is SubstitutionHandler) it.minOccurs else 1 } } == 1
                     && !other.functionLiteral.hasParameterSpecification()
                     && (other.functionLiteral.descriptor as AnonymousFunctionDescriptor).valueParameters.size == 1)
                     && myMatchingVisitor.match(lambdaExpression.bodyExpression, other.bodyExpression)
@@ -476,8 +483,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
             queryIndex++
             codeIndex++
         }
-        if (codeIndex != codeArgs.size) return false
-        return true
+        return codeIndex == codeArgs.size
     }
 
     override fun visitCallExpression(expression: KtCallExpression) {
@@ -686,8 +692,10 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
 
     override fun visitObjectDeclaration(declaration: KtObjectDeclaration) {
         val other = getTreeElementDepar<KtObjectDeclaration>() ?: return
-        val inferredNameIdentifier =
-            declaration.nameIdentifier ?: if (declaration.isCompanion()) (declaration.parent.parent as KtClass).nameIdentifier else null
+        val inferredNameIdentifier = declaration.nameIdentifier
+            ?: declaration.takeIf(KtObjectDeclaration::isCompanion)
+                ?.let { it.parents.match(KtClassBody::class, last = KtClass::class) ?: error("Can't typeMatch ${it.parent.parent}") }
+                ?.nameIdentifier
         val handler = inferredNameIdentifier?.let { getHandler(inferredNameIdentifier) }
         val matchIdentifier = if (handler is SubstitutionHandler && handler.maxOccurs > 0 && handler.minOccurs == 0) {
             true // match count filter with companion object without identifier

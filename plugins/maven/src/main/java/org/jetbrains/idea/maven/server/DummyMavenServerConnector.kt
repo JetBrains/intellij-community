@@ -46,6 +46,14 @@ class DummyMavenServerConnector(project: @NotNull Project,
   override fun getState() = State.RUNNING
 
   override fun checkConnected() = true
+
+  companion object {
+
+    @JvmStatic
+    fun MavenServerConnector.isDummy(): Boolean {
+      return this is DummyMavenServerConnector
+    }
+  }
 }
 
 class DummyMavenServer(val project: Project) : MavenServer {
@@ -179,6 +187,7 @@ class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
   override fun resolveProject(files: Collection<File>,
                               activeProfiles: Collection<String>,
                               inactiveProfiles: Collection<String>,
+                              forceResolveDependenciesSequentially: Boolean,
                               token: MavenToken?): Collection<MavenServerExecutionResult> {
     MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(
       object : BuildIssue {

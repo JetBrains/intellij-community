@@ -27,6 +27,7 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
   private static final String KEY = "editor.distraction.free.mode";
   private static final String BEFORE = "BEFORE.DISTRACTION.MODE.";
   private static final String AFTER = "AFTER.DISTRACTION.MODE.";
+  private static final String LAST_ENTER_VALUE = "DISTRACTION.MODE.ENTER.VALUE";
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -58,6 +59,8 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
       return;
     }
 
+    PropertiesComponent.getInstance().setValue(LAST_ENTER_VALUE, String.valueOf(enter));
+
     applyAndSave(PropertiesComponent.getInstance(),
                  UISettings.getInstance(),
                  ToolbarSettings.getInstance(),
@@ -70,13 +73,14 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
       TogglePresentationModeAction.storeToolWindows(project);
     }
 
-    UISettings.getInstance().fireUISettingsChanged();
+    UISettings uiSettings = UISettings.getInstance();
+    uiSettings.fireUISettingsChanged();
     LafManager.getInstance().updateUI();
     EditorUtil.reinitSettings();
     DaemonCodeAnalyzer.getInstance(project).settingsChanged();
     EditorFactory.getInstance().refreshAllEditors();
     if (!enter) {
-      TogglePresentationModeAction.restoreToolWindows(project, false);
+      TogglePresentationModeAction.restoreToolWindows(project, uiSettings.getPresentationMode());
     }
   }
 
@@ -107,6 +111,10 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
     p.setValue(before + "HIDE_TOOL_STRIPES",        String.valueOf(ui.getHideToolStripes()));         ui.setHideToolStripes(p.getBoolean(after + "HIDE_TOOL_STRIPES", !value));
     p.setValue(before + "EDITOR_TAB_PLACEMENT",     String.valueOf(ui.getEditorTabPlacement()));      ui.setEditorTabPlacement(p.getInt(after + "EDITOR_TAB_PLACEMENT", value ? SwingConstants.TOP : UISettings.TABS_NONE));
     // @formatter:on
+  }
+
+  public static boolean shouldMinimizeCustomHeader() {
+    return PropertiesComponent.getInstance().getBoolean(LAST_ENTER_VALUE, false);
   }
 
   public static int getStandardTabPlacement() {

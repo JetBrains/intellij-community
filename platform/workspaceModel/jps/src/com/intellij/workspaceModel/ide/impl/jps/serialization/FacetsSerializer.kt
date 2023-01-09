@@ -9,12 +9,14 @@ import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetsOrderEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.facetOrder
+import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.facet.FacetManagerState
 import org.jetbrains.jps.model.serialization.facet.FacetState
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 internal class FacetsSerializer(private val imlFileUrl: VirtualFileUrl, private val internalSource: JpsFileEntitySource,
                                 private val componentName: String, private val baseModuleDirPath: String?, private val externalStorage: Boolean) {
@@ -45,19 +47,16 @@ internal class FacetsSerializer(private val imlFileUrl: VirtualFileUrl, private 
   private fun loadFacetEntities(facetStates: List<FacetState>, builder: MutableEntityStorage, moduleEntity: ModuleEntity,
                                 orderOfFacets: MutableList<String>) {
 
-    fun evaluateExternalSystemIdAndEntitySource(facetState: FacetState): Pair<String?, EntitySource> {
+    fun evaluateEntitySource(facetState: FacetState): EntitySource {
       val externalSystemId = facetState.externalSystemId ?: facetState.externalSystemIdInInternalStorage
-      val entitySource = if (externalSystemId == null) internalSource
-      else JpsImportedEntitySource(internalSource, externalSystemId, externalStorage)
-      val actualExternalSystemId = if (externalSystemId != null && !externalStorage) externalSystemId else null
-      return actualExternalSystemId to entitySource
+      return if (externalSystemId == null) internalSource else JpsImportedEntitySource(internalSource, externalSystemId, externalStorage)
     }
 
     val facetTypeToSerializer = CustomFacetRelatedEntitySerializer.EP_NAME.extensionList.associateBy { it.supportedFacetType }
     for (facetState in facetStates) {
       orderOfFacets.add(facetState.name)
       val serializer = facetTypeToSerializer[facetState.facetType] ?: DefaultFacetEntitySerializer.instance
-      serializer.loadEntitiesFromFacetState(builder, moduleEntity, facetState, ::evaluateExternalSystemIdAndEntitySource)
+      serializer.loadEntitiesFromFacetState(builder, moduleEntity, facetState, ::evaluateEntitySource)
     }
   }
 
@@ -94,7 +93,7 @@ internal class FacetsSerializer(private val imlFileUrl: VirtualFileUrl, private 
     if (externalStorage && FileUtil.extensionEquals(fileUrl, "iml")) {
       // Trying to catch https://ea.jetbrains.com/browser/ea_problems/239676
       logger<FacetsSerializer>().error("""Incorrect file for the serializer
-        |externalStorage: $externalStorage
+        |externalStorage: true
         |file path: $fileUrl
         |componentName: $componentName
       """.trimMargin())

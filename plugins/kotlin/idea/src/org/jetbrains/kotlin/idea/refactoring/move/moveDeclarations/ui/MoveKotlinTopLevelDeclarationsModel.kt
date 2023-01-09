@@ -304,7 +304,10 @@ internal class MoveKotlinTopLevelDeclarationsModel(
         else elementsToMove
 
         for (element in elementsWithMPPIfNeeded) {
-            target.verify(element.containingFile)?.let { throw ConfigurationException(it) }
+            val verify = target.verify(element.containingFile)
+            if (verify != null) {
+                throw ConfigurationException(verify)
+            }
         }
 
         val options = MoveDeclarationsDescriptor(

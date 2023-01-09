@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.inspections.migration
 
 import com.intellij.analysis.AnalysisScope
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.actions.RunInspectionIntention
 import com.intellij.codeInspection.ex.InspectionManagerEx
@@ -58,6 +59,7 @@ internal interface ObsoleteCodeProblemReporter {
     fun report(holder: ProblemsHolder, isOnTheFly: Boolean, simpleNameExpression: KtSimpleNameExpression): Boolean
 }
 
+@FileModifier.SafeTypeForPreview
 internal interface ObsoleteCodeFix {
     fun applyFix(project: Project, descriptor: ProblemDescriptor)
 }

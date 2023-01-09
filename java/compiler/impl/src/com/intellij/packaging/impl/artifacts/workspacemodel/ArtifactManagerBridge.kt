@@ -22,13 +22,13 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.xmlb.XmlSerializer
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
+import com.intellij.workspaceModel.ide.workspaceModel
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.CustomPackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactId
+import com.intellij.workspaceModel.storage.bridgeEntities.CustomPackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 
 class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), Disposable {
 
@@ -47,8 +47,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   override fun getArtifacts(): Array<ArtifactBridge> {
     initBridges()
 
-    val workspaceModel = WorkspaceModel.getInstance(project)
-    val entityStorage = workspaceModel.entityStorage
+    val entityStorage = project.workspaceModel.entityStorage
 
     val store = entityStorage.current
 
@@ -63,8 +62,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   override fun findArtifact(name: String): Artifact? {
     initBridges()
 
-    val workspaceModel = WorkspaceModel.getInstance(project)
-    val entityStorage = workspaceModel.entityStorage
+    val entityStorage = project.workspaceModel.entityStorage
     val store = entityStorage.current
 
     val artifactEntity = store.resolve(ArtifactId(name)) ?: return null
@@ -83,8 +81,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     ApplicationManager.getApplication().assertReadAccessAllowed()
     initBridges()
 
-    val workspaceModel = WorkspaceModel.getInstance(project)
-    val entityStorage = workspaceModel.entityStorage
+    val entityStorage = project.workspaceModel.entityStorage
     val store = entityStorage.current
     val typeId = type.id
 
@@ -96,12 +93,12 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   }
 
   @RequiresReadLock
-  override fun getAllArtifactsIncludingInvalid(): MutableList<out Artifact> {
+  override fun getAllArtifactsIncludingInvalid(): List<Artifact> {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertReadAccessAllowed()
     initBridges()
 
-    val entityStorage = WorkspaceModel.getInstance(project).entityStorage
+    val entityStorage = project.workspaceModel.entityStorage
     val storage = entityStorage.current
 
     return storage
@@ -122,8 +119,12 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   }
 
   override fun createModifiableModel(): ModifiableArtifactModel {
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
-    return ArtifactModifiableModelBridge(project, MutableEntityStorage.from(storage), this)
+    val storage = project.workspaceModel.entityStorage.current
+    return createModifiableModel(MutableEntityStorage.from(storage))
+  }
+
+  override fun createModifiableModel(mutableEntityStorage: MutableEntityStorage): ModifiableArtifactModel {
+    return ArtifactModifiableModelBridge(project, mutableEntityStorage, this)
   }
 
   override fun getResolvingContext(): PackagingElementResolvingContext = resolvingContext
@@ -162,7 +163,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     LOG.trace { "Committing artifact manager bridge. diff: ${artifactModel.diff}" }
     updateCustomElements(artifactModel.diff)
 
-    val current = WorkspaceModel.getInstance(project).entityStorage.current
+    val current = project.workspaceModel.entityStorage.current
     val changes = artifactModel.diff.collectChanges(current)[ArtifactEntity::class.java] ?: emptyList()
 
     val removed = mutableSetOf<ArtifactBridge>()
@@ -203,7 +204,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
     (ArtifactPointerManager.getInstance(project) as ArtifactPointerManagerImpl).disposePointers(changedArtifacts)
 
-    WorkspaceModel.getInstance(project).updateProjectModel {
+    project.workspaceModel.updateProjectModel("Commit artifact manager") {
       it.addDiff(artifactModel.diff)
     }
 
@@ -226,7 +227,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     artifactWithDiffs.forEach { it.setActualStorage() }
     artifactWithDiffs.clear()
 
-    val entityStorage = WorkspaceModel.getInstance(project).entityStorage
+    val entityStorage = project.workspaceModel.entityStorage
     added.forEach { bridge ->
       bridge.elementsWithDiff.forEach { it.setStorage(entityStorage, project, HashSet(), PackagingElementInitializer) }
       bridge.elementsWithDiff.clear()
@@ -272,7 +273,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   private fun initBridges() {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertReadAccessAllowed()
-    val workspaceModel = WorkspaceModel.getInstance(project)
+    val workspaceModel = project.workspaceModel
     val current = workspaceModel.entityStorage.current
     if (current.entitiesAmount(ArtifactEntity::class.java) != current.artifactsMap.size()) {
 
@@ -292,7 +293,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
             }
             .toList()
 
-          (workspaceModel as WorkspaceModelImpl).updateProjectModelSilent {
+          (workspaceModel as WorkspaceModelImpl).updateProjectModelSilent("Initialize artifact bridges") {
             addBridgesToDiff(newBridges, it)
           }
         }
@@ -323,7 +324,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   fun dropMappings(selector: (ArtifactEntity) -> Boolean) {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-    (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent {
+    (project.workspaceModel as WorkspaceModelImpl).updateProjectModelSilent("Drop artifact mappings") {
       val map = it.mutableArtifactsMap
       it.entities(ArtifactEntity::class.java).filter(selector).forEach { artifact ->
         map.removeMapping(artifact)

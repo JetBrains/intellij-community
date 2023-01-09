@@ -147,19 +147,20 @@ public class GrIntroduceFieldProcessor {
       return (GrVariableDeclaration)targetClass.addAfter(declaration, enumConstants);
     }
 
-    if (targetClass instanceof GrTypeDefinition) {
-      PsiElement anchor = getAnchorForDeclaration((GrTypeDefinition)targetClass);
-      return (GrVariableDeclaration)targetClass.addAfter(declaration, anchor);
-    }
-
-    else {
-      assert targetClass instanceof GroovyScriptClass;
+    if (targetClass instanceof GroovyScriptClass) {
       final GroovyFile file = ((GroovyScriptClass)targetClass).getContainingFile();
       PsiElement[] elements = file.getMethods();
       if (elements.length == 0) elements = file.getStatements();
       final PsiElement anchor = ArrayUtil.getFirstElement(elements);
       return (GrVariableDeclaration)file.addBefore(declaration, anchor);
     }
+
+    if (targetClass instanceof GrTypeDefinition) {
+      PsiElement anchor = getAnchorForDeclaration((GrTypeDefinition)targetClass);
+      return (GrVariableDeclaration)targetClass.addAfter(declaration, anchor);
+    }
+
+    throw new IllegalArgumentException("Unexpected targetClass: " + targetClass.getClass());
   }
 
   @Nullable

@@ -4,6 +4,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
@@ -85,6 +86,7 @@ public class FillPermitsListFix extends LocalQuickFixAndIntentionActionOnPsiElem
   }
 
   private static void reportError(@NotNull Project project, @NotNull @NlsContexts.HintText String message) {
+    if (IntentionPreviewUtils.isIntentionPreviewActive()) return;
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor == null) return;
     HintManager.getInstance().showErrorHint(editor, message);

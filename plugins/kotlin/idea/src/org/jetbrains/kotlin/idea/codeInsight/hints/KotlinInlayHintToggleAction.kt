@@ -103,7 +103,7 @@ private fun findSetting(hintType: HintType, project: Project, hintsSettings: Inl
     val language = KotlinLanguage.INSTANCE
     val providerInfos =
         InlayHintsProviderFactory.EP.extensionList
-            .flatMap { it.getProvidersInfo(project) }
+            .flatMap { it.getProvidersInfo() }
             .filter { it.language == language }
     val provider = providerInfos
         .firstOrNull {

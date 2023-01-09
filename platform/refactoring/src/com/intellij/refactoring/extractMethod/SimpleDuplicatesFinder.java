@@ -45,7 +45,7 @@ public class SimpleDuplicatesFinder {
     } while (sibling != null);
   }
 
-  public List<SimpleMatch> findDuplicates(@Nullable final List<PsiElement> scope,
+  public List<SimpleMatch> findDuplicates(final @Nullable List<? extends PsiElement> scope,
                                           @NotNull final PsiElement generatedMethod) {
     final List<SimpleMatch> result = new ArrayList<>();
     annotatePattern();

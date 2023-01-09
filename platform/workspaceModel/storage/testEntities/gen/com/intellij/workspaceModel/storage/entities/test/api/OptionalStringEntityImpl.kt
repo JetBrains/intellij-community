@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -15,6 +14,9 @@ import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -33,11 +35,15 @@ open class OptionalStringEntityImpl(val dataSource: OptionalStringEntityData) : 
   override val data: String?
     get() = dataSource.data
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: OptionalStringEntityData?) : ModifiableWorkspaceEntityBase<OptionalStringEntity>(), OptionalStringEntity.Builder {
+  class Builder(result: OptionalStringEntityData?) : ModifiableWorkspaceEntityBase<OptionalStringEntity, OptionalStringEntityData>(
+    result), OptionalStringEntity.Builder {
     constructor() : this(OptionalStringEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -57,7 +63,7 @@ open class OptionalStringEntityImpl(val dataSource: OptionalStringEntityData) : 
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -80,8 +86,7 @@ open class OptionalStringEntityImpl(val dataSource: OptionalStringEntityData) : 
       dataSource as OptionalStringEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.data != dataSource?.data) this.data = dataSource.data
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -89,7 +94,7 @@ open class OptionalStringEntityImpl(val dataSource: OptionalStringEntityData) : 
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -98,11 +103,10 @@ open class OptionalStringEntityImpl(val dataSource: OptionalStringEntityData) : 
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
-    override fun getEntityData(): OptionalStringEntityData = result ?: super.getEntityData() as OptionalStringEntityData
     override fun getEntityClass(): Class<OptionalStringEntity> = OptionalStringEntity::class.java
   }
 }
@@ -111,22 +115,17 @@ class OptionalStringEntityData : WorkspaceEntityData<OptionalStringEntity>() {
   var data: String? = null
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<OptionalStringEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<OptionalStringEntity> {
     val modifiable = OptionalStringEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): OptionalStringEntity {
     return getCached(snapshot) {
       val entity = OptionalStringEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

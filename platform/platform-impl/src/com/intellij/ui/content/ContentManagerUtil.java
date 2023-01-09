@@ -37,11 +37,8 @@ public final class ContentManagerUtil {
     for (Content content : messageView.getContentManager().getContents()) {
       if (content.isPinned()) continue;
       if (contentName.equals(content.getDisplayName()) && content != notToRemove) {
-        ErrorTreeView listErrorView = (ErrorTreeView)content.getComponent();
-        if (listErrorView != null) {
-          if (messageView.getContentManager().removeContent(content, true)) {
-            content.release();
-          }
+        if (messageView.getContentManager().removeContent(content, true)) {
+          content.release();
         }
       }
     }

@@ -12,15 +12,22 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> implements ChangesBrowserNode.NodeWithFilePath {
   @NotNull private final FilePath myModuleRoot;
 
-  protected ChangesBrowserModuleNode(Module userObject) {
+  private ChangesBrowserModuleNode(@NotNull Module userObject, @NotNull FilePath moduleRoot) {
     super(userObject);
+    myModuleRoot = moduleRoot;
+  }
 
-    myModuleRoot = getModuleRootFilePath(userObject);
+  @Nullable
+  public static ChangesBrowserModuleNode create(@NotNull Module module) {
+    FilePath moduleRoot = getModuleRootFilePath(module);
+    if (moduleRoot == null) return null;
+    return new ChangesBrowserModuleNode(module, moduleRoot);
   }
 
   @Override
@@ -68,9 +75,10 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> impleme
     return compareFileNames(getUserObject().getName(), o2.getName());
   }
 
-  @NotNull
-  private static FilePath getModuleRootFilePath(Module module) {
+  @Nullable
+  private static FilePath getModuleRootFilePath(@NotNull Module module) {
     return ReadAction.compute(() -> {
+      if (module.isDisposed()) return null;
       VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
       if (roots.length == 1) {
         return VcsUtil.getFilePath(roots[0]);

@@ -2,14 +2,14 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory;
 import com.intellij.ui.UIBundle;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 
-public class LineSeparatorWidgetFactory extends StatusBarEditorBasedWidgetFactory {
+final class LineSeparatorWidgetFactory extends StatusBarEditorBasedWidgetFactory {
   @Override
   public @NotNull String getId() {
     return StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL;
@@ -21,12 +21,7 @@ public class LineSeparatorWidgetFactory extends StatusBarEditorBasedWidgetFactor
   }
 
   @Override
-  public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
-    return new LineSeparatorPanel(project);
-  }
-
-  @Override
-  public void disposeWidget(@NotNull StatusBarWidget widget) {
-    Disposer.dispose(widget);
+  public @NotNull StatusBarWidget createWidget(@NotNull Project project, @NotNull CoroutineScope scope) {
+    return new LineSeparatorPanel(project, scope);
   }
 }

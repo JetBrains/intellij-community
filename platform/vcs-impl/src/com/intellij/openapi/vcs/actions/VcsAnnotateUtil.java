@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -31,8 +30,7 @@ public final class VcsAnnotateUtil {
   @Nullable
   public static Editor getEditorFor(@NotNull VirtualFile file, @NotNull DataContext dataContext) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
-    if (editor instanceof EditorEx &&
-        file.equals(((EditorEx)editor).getVirtualFile())) {
+    if (editor != null && file.equals(editor.getVirtualFile())) {
       return editor;
     }
 

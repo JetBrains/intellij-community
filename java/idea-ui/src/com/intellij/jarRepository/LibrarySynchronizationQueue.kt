@@ -26,9 +26,11 @@ internal class LibrarySynchronizationQueue(private val project: Project) {
     flush()
   }
 
-  fun requestSynchronization(library: LibraryEx) {
-    synchronized(queue) {
-      queue.add(library)
+  fun requestSynchronization(library: LibraryEx) = EXECUTOR.execute {
+    if (library.needToReload()) {
+      synchronized(queue) {
+        queue.add(library)
+      }
     }
   }
 
@@ -45,14 +47,18 @@ internal class LibrarySynchronizationQueue(private val project: Project) {
       val library = nextLibrary()
       if (library == null) break
 
-      val props = library.properties as? RepositoryLibraryProperties ?: continue
-
-      val isValid = runReadAction { LibraryTableImplUtil.isValidLibrary(library) }
-      val needToReload = RepositoryLibrarySynchronizer.isLibraryNeedToBeReloaded(library, props)
-      if (isValid && needToReload) {
+      if (library.needToReload()) {
         RepositoryUtils.reloadDependencies(project, library)
       }
     }
+  }
+  
+  private fun LibraryEx.needToReload(): Boolean {
+    val props = properties as? RepositoryLibraryProperties ?: return false
+
+    val isValid = runReadAction { LibraryTableImplUtil.isValidLibrary(this) }
+    val needToReload = RepositoryLibrarySynchronizer.isLibraryNeedToBeReloaded(this, props)
+    return isValid && needToReload
   }
 
   private fun nextLibrary(): LibraryEx? = synchronized(queue) {

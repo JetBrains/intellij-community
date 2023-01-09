@@ -238,7 +238,7 @@ public final class JsonPointerReferenceProvider extends PsiReferenceProvider {
         String prefix = null;
         PsiElement element = resolveForPath(myElement, text, true);
         int indexOfSlash = part.lastIndexOf('/');
-        if (indexOfSlash != -1 && indexOfSlash < text.length() - 1 && indexOfSlash < index) {
+        if (indexOfSlash != -1 && indexOfSlash < text.length() - 1) {
           prefix = text.substring(indexOfSlash + 1);
           element = resolveForPath(myElement, prepare(text.substring(0, indexOfSlash)), true);
         }

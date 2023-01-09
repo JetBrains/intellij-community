@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.maven.statistics.MavenDependencyInsertionCollector
 import org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion.MavenDependenciesGradleCompletionContributor.Companion.COMPLETION_DATA_KEY
 import org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion.MavenDependenciesGradleCompletionContributor.Companion.CompletionData
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
@@ -19,12 +20,25 @@ abstract class ReplaceEndInsertHandler : InsertHandler<LookupElement> {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
     val element = getLiteral(context) ?: return
     val completed = getCompletedString(item) ?: return
-    val (suffix, quote) = item.getUserData(COMPLETION_DATA_KEY) ?: CompletionData("", '\'')
+    val (completionPrefix, suffix, quote) = item.getUserData(COMPLETION_DATA_KEY) ?: CompletionData("", "", '\'')
     val insertedSuffix = if (context.completionChar == Lookup.REPLACE_SELECT_CHAR) "" else suffix.orEmpty()
     val newText = completed + insertedSuffix
     element.updateText("${quote}$newText${quote}")
     postProcess(completed, element.textRange.endOffset - (insertedSuffix.length + 1), context)
     context.commitDocument()
+
+    val selectedLookupIndex = context.elements.indexOf(item)
+    val artifactInfo = item.`object` as? MavenRepositoryArtifactInfo ?: return
+
+    MavenDependencyInsertionCollector.logPackageAutoCompleted(
+      groupId = artifactInfo.groupId,
+      artifactId = artifactInfo.artifactId,
+      version = artifactInfo.version ?: "",
+      buildSystem = MavenDependencyInsertionCollector.Companion.BuildSystem.GRADLE,
+      dependencyDeclarationNotation = MavenDependencyInsertionCollector.Companion.DependencyDeclarationNotation.GRADLE_STRING_STYLE,
+      completionPrefixLength = completionPrefix.length,
+      selectedLookupIndex = selectedLookupIndex
+    )
   }
 
   abstract fun getCompletedString(item: LookupElement): String?

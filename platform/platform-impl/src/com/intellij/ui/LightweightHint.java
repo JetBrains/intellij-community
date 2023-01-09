@@ -451,7 +451,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   @Override
   public void setLocation(@NotNull RelativePoint point) {
     if (isRealPopup()) {
-      myPopup.setLocation(point.getScreenPoint());
+      if (myPopup != null) {
+        myPopup.setLocation(point.getScreenPoint());
+      }
     }
     else {
       if (myCurrentIdeTooltip != null) {

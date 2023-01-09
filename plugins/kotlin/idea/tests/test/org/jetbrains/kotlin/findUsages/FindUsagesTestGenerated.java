@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.findUsages;
 
@@ -61,6 +61,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             @TestMetadata("withInvoke.0.kt")
             public void testWithInvoke() throws Exception {
                 runTest("testData/findUsages/kotlin/companionObject/withInvoke.0.kt");
+            }
+
+            @TestMetadata("withInvokeExtension.0.kt")
+            public void testWithInvokeExtension() throws Exception {
+                runTest("testData/findUsages/kotlin/companionObject/withInvokeExtension.0.kt");
             }
 
             @TestMetadata("withInvokeFromParent.0.kt")
@@ -1646,6 +1651,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             @TestMetadata("OverriddenMethodSyntheticAccessor2.0.java")
             public void testOverriddenMethodSyntheticAccessor2() throws Exception {
                 runTest("testData/findUsages/java/findJavaMethodUsages/OverriddenMethodSyntheticAccessor2.0.java");
+            }
+
+            @TestMetadata("OverriddenMethodSyntheticAccessorWithFinalModifier.0.java")
+            public void testOverriddenMethodSyntheticAccessorWithFinalModifier() throws Exception {
+                runTest("testData/findUsages/java/findJavaMethodUsages/OverriddenMethodSyntheticAccessorWithFinalModifier.0.java");
             }
 
             @TestMetadata("OverridenArrayType.0.java")

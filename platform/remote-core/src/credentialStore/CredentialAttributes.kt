@@ -53,7 +53,7 @@ class Credentials(@NlsSafe user: String?, @NlsSafe val password: OneTimeString? 
   val userName = user.nullize()
 
   @NlsSafe
-  fun getPasswordAsString() = password?.toString()
+  fun getPasswordAsString(): String? = password?.toString()
 
   override fun equals(other: Any?) = other is Credentials && userName == other.userName && password == other.password
 

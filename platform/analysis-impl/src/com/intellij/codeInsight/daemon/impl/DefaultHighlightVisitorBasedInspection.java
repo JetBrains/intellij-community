@@ -7,6 +7,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.diagnostic.telemetry.IJTracer;
 import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
@@ -22,9 +23,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
 
 public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
   private final boolean highlightErrorElements;
@@ -43,7 +43,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   }
 
   public static class AnnotatorBasedInspection extends DefaultHighlightVisitorBasedInspection {
-    private static final @NonNls String ANNOTATOR_SHORT_NAME = "Annotator";
+    static final @NonNls String ANNOTATOR_SHORT_NAME = "Annotator";
 
     public AnnotatorBasedInspection() {
       super(false, true);
@@ -178,8 +178,12 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
 
     String fileName = file.getName();
     List<Pair<PsiFile, HighlightInfo>> result = new ArrayList<>();
+    IJTracer tracer = TraceManager.INSTANCE.getTracer("highlightVisitor", true);
+
     for (TextEditorHighlightingPass pass : gpasses) {
-      runAndRecordSpan(() -> {
+      runWithSpan(tracer, pass.getClass().getSimpleName(), span -> {
+        span.setAttribute("file", fileName);
+
         pass.doCollectInformation(progress);
         List<HighlightInfo> infos = pass.getInfos();
         for (HighlightInfo info : infos) {
@@ -187,21 +191,9 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
             result.add(Pair.create(file, info));
           }
         }
-      }, fileName, pass.getClass().getSimpleName());
+      });
     }
 
     return result;
-  }
-
-  private static void runAndRecordSpan(@NotNull Runnable runnable, @NotNull String fileName, @NotNull String spanName) {
-    Tracer tracer = TraceManager.INSTANCE.getTracer("highlightVisitor", true);
-    Span span = tracer.spanBuilder(spanName).startSpan();
-    span.setAttribute("file", fileName);
-    try (Scope ignored = span.makeCurrent()) {
-      runnable.run();
-    }
-    finally {
-      span.end();
-    }
   }
 }

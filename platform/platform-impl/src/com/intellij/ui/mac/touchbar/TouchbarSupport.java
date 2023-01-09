@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ide.IdeBundle;
@@ -23,7 +23,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 
-public class TouchbarSupport {
+public final class TouchbarSupport {
   private static final String IS_ENABLED_KEY = "ide.mac.touchbar.enabled";
   private static final Logger LOG = Logger.getInstance(TouchbarSupport.class);
   private static final @NotNull AWTEventListener ourAWTEventListener = e -> {

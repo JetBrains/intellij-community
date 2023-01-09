@@ -40,10 +40,6 @@ internal class FrameInfoHelper {
   @Volatile
   var isDirty = false
 
-  fun setInfoInDeviceSpace(info: FrameInfo) {
-    this.info = info
-  }
-
   fun updateFrameInfo(frameHelper: ProjectFrameHelper, frame: JFrame) {
     info = updateFrameInfo(frameHelper, frame, null, info)
   }
@@ -54,7 +50,7 @@ internal class FrameInfoHelper {
 
   fun update(project: Project, lastNormalFrameBounds: Rectangle?, windowManager: WindowManagerImpl) {
     val frameHelper = windowManager.getFrameHelper(project) ?: return
-    updateAndGetInfo(frameHelper, frameHelper.frameOrNull ?: return, lastNormalFrameBounds, windowManager)
+    updateAndGetInfo(frameHelper, frameHelper.frame, lastNormalFrameBounds, windowManager)
   }
 
   fun updateAndGetInfo(frameHelper: ProjectFrameHelper,

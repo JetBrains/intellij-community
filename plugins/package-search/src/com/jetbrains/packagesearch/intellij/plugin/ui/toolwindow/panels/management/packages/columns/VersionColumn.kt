@@ -49,7 +49,7 @@ internal class VersionColumn(
     fun updateData(onlyStable: Boolean, targetModules: TargetModules) {
         this.onlyStable = onlyStable
         this.targetModules = targetModules
-        cellRenderer.updateData(onlyStable)
+        cellRenderer.updateData(onlyStable, targetModules)
         cellEditor.updateData(onlyStable)
     }
 

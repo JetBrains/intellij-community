@@ -30,7 +30,10 @@ ${getLinksOfConnectionIds(this)}
     }"""
   }
         
-    ${allFields.filter { it.name !in listOf("entitySource", "persistentId") }.lines("    ") { implWsEntityFieldCode }.trimEnd()}
+    ${allFields.filter { it.name !in listOf("entitySource", "symbolicId") }.lines("    ") { implWsEntityFieldCode }.trimEnd()}
+
+    override val entitySource: EntitySource
+        get() = dataSource.entitySource
     
     override fun connectionIdList(): List<${ConnectionId::class.fqn}> {
         return connections

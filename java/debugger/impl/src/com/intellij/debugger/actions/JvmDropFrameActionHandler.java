@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.CommonBundle;
@@ -83,7 +83,9 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
                                       showError(project, JavaDebuggerBundle.message("error.executing.finally", errorMessage),
                                                 UIUtil.removeMnemonic(ActionsBundle.actionText(ACTION_NAME)));
                                     }
-                                  })) return;
+                                  })) {
+          return;
+        }
         popFrame(debugProcess, debuggerContext, stackFrame);
       }
       catch (NativeMethodException e2) {
@@ -96,9 +98,9 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
   }
 
   public static boolean evaluateFinallyBlocks(Project project,
-                                       @Nls String title,
-                                       JavaStackFrame stackFrame,
-                                       XDebuggerEvaluator.XEvaluationCallback callback) {
+                                              @Nls String title,
+                                              JavaStackFrame stackFrame,
+                                              XDebuggerEvaluator.XEvaluationCallback callback) {
     if (!DebuggerSettings.EVALUATE_FINALLY_NEVER.equals(DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME)) {
       List<PsiStatement> statements = getFinallyStatements(project, stackFrame.getDescriptor().getSourcePosition());
       if (!statements.isEmpty()) {

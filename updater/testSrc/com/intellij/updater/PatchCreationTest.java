@@ -1,22 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.IoTestUtil;
 import com.sun.jna.platform.win32.Kernel32;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.*;
 import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.util.io.IoTestUtil.assumeNioSymLinkCreationIsSupported;
 import static com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -294,7 +294,7 @@ public class PatchCreationTest extends PatchTestCase {
 
   @Test
   public void testNoSymlinkNoise() throws IOException {
-    assumeNioSymLinkCreationIsSupported();
+    assumeSymLinkCreationIsSupported();
 
     Files.write(new File(myOlderDir, "bin/_target").toPath(), "test".getBytes(StandardCharsets.UTF_8));
     Files.createSymbolicLink(new File(myOlderDir, "bin/_link").toPath(), Paths.get("_target"));
@@ -306,7 +306,7 @@ public class PatchCreationTest extends PatchTestCase {
 
   @Test
   public void testSymlinkDereferenceAndMove() throws IOException {
-    assumeNioSymLinkCreationIsSupported();
+    assumeSymLinkCreationIsSupported();
 
     long checksum = randomFile(myOlderDir.toPath().resolve("bin/mac_lib.jnilib"));
     Files.createSymbolicLink(myOlderDir.toPath().resolve("bin/mac_lib.dylib"), Paths.get("mac_lib.jnilib"));
@@ -331,7 +331,8 @@ public class PatchCreationTest extends PatchTestCase {
 
     resetNewerDir();
     Files.createDirectories(myOlderDir.toPath().resolve("other_dir"));
-    IoTestUtil.createSymbolicLink(myOlderDir.toPath().resolve("dir"), Paths.get("other_dir"));
+    @NotNull Path target = Paths.get("other_dir");
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("dir"), target);
     Files.createDirectories(myNewerDir.toPath().resolve("dir"));
 
     Patch patch = createPatch();
@@ -351,9 +352,12 @@ public class PatchCreationTest extends PatchTestCase {
 
     randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib.dylib"));
     randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r/res.bin"));
-    IoTestUtil.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Versions/Current"), Paths.get("A"));
-    IoTestUtil.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Libraries"), Paths.get("Versions/Current/Libraries"));
-    IoTestUtil.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Resources"), Paths.get("Versions/Current/Resources"));
+    @NotNull Path target2 = Paths.get("A");
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Versions/Current"), target2);
+    @NotNull Path target1 = Paths.get("Versions/Current/Libraries");
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Libraries"), target1);
+    @NotNull Path target = Paths.get("Versions/Current/Resources");
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Resources"), target);
 
     randomFile(myNewerDir.toPath().resolve("A.framework/Libraries/lib.dylib"));
     randomFile(myNewerDir.toPath().resolve("A.framework/Resources/r/res.bin"));

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -22,17 +23,17 @@ import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeIntention
 import org.jetbrains.kotlin.idea.intentions.addUseSiteTarget
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.BranchedFoldingUtils
+import org.jetbrains.kotlin.idea.j2k.post.processing.InspectionLikeProcessingForElement
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
-import org.jetbrains.kotlin.idea.util.*
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.isInSingleLine
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.idea.j2k.post.processing.InspectionLikeProcessingForElement
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -96,7 +97,8 @@ internal class RemoveRedundantNullabilityProcessing : InspectionLikeProcessingFo
     }
 }
 
-internal class RemoveExplicitTypeArgumentsProcessing : InspectionLikeProcessingForElement<KtTypeArgumentList>(KtTypeArgumentList::class.java) {
+internal class RemoveExplicitTypeArgumentsProcessing :
+    InspectionLikeProcessingForElement<KtTypeArgumentList>(KtTypeArgumentList::class.java) {
     override fun isApplicableTo(element: KtTypeArgumentList, settings: ConverterSettings?): Boolean =
         RemoveExplicitTypeArgumentsIntention.isApplicableTo(element, approximateFlexible = true)
 
@@ -108,7 +110,7 @@ internal class RemoveExplicitTypeArgumentsProcessing : InspectionLikeProcessingF
 // the types arguments for Stream.collect calls cannot be explicitly specified in Kotlin,
 // but we need them in nullability inference, so we remove it here
 internal class RemoveJavaStreamsCollectCallTypeArgumentsProcessing :
-  InspectionLikeProcessingForElement<KtCallExpression>(KtCallExpression::class.java) {
+    InspectionLikeProcessingForElement<KtCallExpression>(KtCallExpression::class.java) {
     override fun isApplicableTo(element: KtCallExpression, settings: ConverterSettings?): Boolean {
         if (element.typeArgumentList == null) return false
         if (element.calleeExpression?.text != COLLECT_FQ_NAME.shortName().identifier) return false
@@ -126,7 +128,7 @@ internal class RemoveJavaStreamsCollectCallTypeArgumentsProcessing :
 
 
 internal class RemoveRedundantOverrideVisibilityProcessing :
-  InspectionLikeProcessingForElement<KtCallableDeclaration>(KtCallableDeclaration::class.java) {
+    InspectionLikeProcessingForElement<KtCallableDeclaration>(KtCallableDeclaration::class.java) {
 
     override fun isApplicableTo(element: KtCallableDeclaration, settings: ConverterSettings?): Boolean {
         if (!element.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
@@ -140,7 +142,7 @@ internal class RemoveRedundantOverrideVisibilityProcessing :
 }
 
 internal class ReplaceGetterBodyWithSingleReturnStatementWithExpressionBody :
-  InspectionLikeProcessingForElement<KtPropertyAccessor>(KtPropertyAccessor::class.java) {
+    InspectionLikeProcessingForElement<KtPropertyAccessor>(KtPropertyAccessor::class.java) {
 
     private fun KtPropertyAccessor.singleBodyStatementExpression() =
         bodyBlockExpression?.statements
@@ -159,14 +161,14 @@ internal class ReplaceGetterBodyWithSingleReturnStatementWithExpressionBody :
         val returnedExpression = element.singleBodyStatementExpression() ?: return
 
         val commentSaver = CommentSaver(body)
-        element.addBefore(KtPsiFactory(element).createEQ(), body)
+        element.addBefore(KtPsiFactory(element.project).createEQ(), body)
         val newBody = body.replaced(returnedExpression)
         commentSaver.restore(newBody)
     }
 }
 
 internal class RemoveRedundantCastToNullableProcessing :
-  InspectionLikeProcessingForElement<KtBinaryExpressionWithTypeRHS>(KtBinaryExpressionWithTypeRHS::class.java) {
+    InspectionLikeProcessingForElement<KtBinaryExpressionWithTypeRHS>(KtBinaryExpressionWithTypeRHS::class.java) {
 
     override fun isApplicableTo(element: KtBinaryExpressionWithTypeRHS, settings: ConverterSettings?): Boolean {
         if (element.right?.typeElement !is KtNullableType) return false
@@ -183,7 +185,7 @@ internal class RemoveRedundantCastToNullableProcessing :
 }
 
 internal class RemoveRedundantSamAdaptersProcessing :
-  InspectionLikeProcessingForElement<KtCallExpression>(KtCallExpression::class.java) {
+    InspectionLikeProcessingForElement<KtCallExpression>(KtCallExpression::class.java) {
     override val writeActionNeeded = false
 
     override fun isApplicableTo(element: KtCallExpression, settings: ConverterSettings?): Boolean =
@@ -200,7 +202,7 @@ internal class RemoveRedundantSamAdaptersProcessing :
 }
 
 internal class UninitializedVariableReferenceFromInitializerToThisReferenceProcessing :
-  InspectionLikeProcessingForElement<KtSimpleNameExpression>(KtSimpleNameExpression::class.java) {
+    InspectionLikeProcessingForElement<KtSimpleNameExpression>(KtSimpleNameExpression::class.java) {
 
     override fun isApplicableTo(element: KtSimpleNameExpression, settings: ConverterSettings?): Boolean {
         val anonymousObject = element.getStrictParentOfType<KtClassOrObject>()?.takeIf { it.name == null } ?: return false
@@ -216,12 +218,12 @@ internal class UninitializedVariableReferenceFromInitializerToThisReferenceProce
     }
 
     override fun apply(element: KtSimpleNameExpression) {
-        element.replaced(KtPsiFactory(element).createThisExpression())
+        element.replaced(KtPsiFactory(element.project).createThisExpression())
     }
 }
 
 internal class UnresolvedVariableReferenceFromInitializerToThisReferenceProcessing :
-  InspectionLikeProcessingForElement<KtSimpleNameExpression>(KtSimpleNameExpression::class.java) {
+    InspectionLikeProcessingForElement<KtSimpleNameExpression>(KtSimpleNameExpression::class.java) {
 
     override fun isApplicableTo(element: KtSimpleNameExpression, settings: ConverterSettings?): Boolean {
         val anonymousObject = element.getStrictParentOfType<KtClassOrObject>() ?: return false
@@ -232,7 +234,7 @@ internal class UnresolvedVariableReferenceFromInitializerToThisReferenceProcessi
     }
 
     override fun apply(element: KtSimpleNameExpression) {
-        element.replaced(KtPsiFactory(element).createThisExpression())
+        element.replaced(KtPsiFactory(element.project).createThisExpression())
     }
 }
 
@@ -257,8 +259,8 @@ internal class VarToValProcessing : InspectionLikeProcessingForElement<KtPropert
     }
 
     override fun apply(element: KtProperty) {
-        val factory = KtPsiFactory(element)
-        element.valOrVarKeyword.replace(factory.createValKeyword())
+        val psiFactory = KtPsiFactory(element.project)
+        element.valOrVarKeyword.replace(psiFactory.createValKeyword())
     }
 }
 
@@ -275,9 +277,9 @@ internal class JavaObjectEqualsToEqOperatorProcessing : InspectionLikeProcessing
     }
 
     override fun apply(element: KtCallExpression) {
-        val factory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         element.getQualifiedExpressionForSelectorOrThis().replace(
-            factory.createExpressionByPattern(
+            psiFactory.createExpressionByPattern(
                 "($0 == $1)",
                 element.valueArguments[0].getArgumentExpression() ?: return,
                 element.valueArguments[1].getArgumentExpression() ?: return
@@ -288,7 +290,7 @@ internal class JavaObjectEqualsToEqOperatorProcessing : InspectionLikeProcessing
 
 
 internal class RemoveForExpressionLoopParameterTypeProcessing :
-  InspectionLikeProcessingForElement<KtForExpression>(KtForExpression::class.java) {
+    InspectionLikeProcessingForElement<KtForExpression>(KtForExpression::class.java) {
     override fun isApplicableTo(element: KtForExpression, settings: ConverterSettings?): Boolean {
         val typeReference = element.loopParameter?.typeReference ?: return false
         return (typeReference.annotationEntries.isEmpty()
@@ -302,7 +304,7 @@ internal class RemoveForExpressionLoopParameterTypeProcessing :
 }
 
 internal class RemoveRedundantConstructorKeywordProcessing :
-  InspectionLikeProcessingForElement<KtPrimaryConstructor>(KtPrimaryConstructor::class.java) {
+    InspectionLikeProcessingForElement<KtPrimaryConstructor>(KtPrimaryConstructor::class.java) {
     override fun isApplicableTo(element: KtPrimaryConstructor, settings: ConverterSettings?): Boolean =
         element.containingClassOrObject is KtClass
                 && element.getConstructorKeyword() != null
@@ -338,10 +340,13 @@ internal class RemoveRedundantVisibilityModifierProcessing : InspectionLikeProce
     override fun isApplicableTo(element: KtDeclaration, settings: ConverterSettings?) = when {
         element.hasModifier(KtTokens.PUBLIC_KEYWORD) && element.hasModifier(KtTokens.OVERRIDE_KEYWORD) ->
             false
+
         element.hasModifier(KtTokens.INTERNAL_KEYWORD) && element.containingClassOrObject?.isLocal == true ->
             true
+
         element.visibilityModifierType() == element.implicitVisibility() ->
             true
+
         else -> false
     }
 
@@ -396,8 +401,9 @@ internal class CanBeValInspectionBasedProcessing : InspectionLikeProcessingForEl
         CanBeValInspection.canBeVal(element, ignoreNotUsedVals = false)
 
     override fun apply(element: KtDeclaration) {
+        val project = element.project
         if (element !is KtValVarKeywordOwner) return
-        element.valOrVarKeyword?.replace(KtPsiFactory(element).createValKeyword())
+        element.valOrVarKeyword?.replace(KtPsiFactory(project).createValKeyword())
     }
 }
 
@@ -416,7 +422,7 @@ internal class MayBeConstantInspectionBasedProcessing : InspectionLikeProcessing
 }
 
 internal class RemoveExplicitGetterInspectionBasedProcessing :
-  InspectionLikeProcessingForElement<KtPropertyAccessor>(KtPropertyAccessor::class.java) {
+    InspectionLikeProcessingForElement<KtPropertyAccessor>(KtPropertyAccessor::class.java) {
     override fun isApplicableTo(element: KtPropertyAccessor, settings: ConverterSettings?): Boolean =
         element.isRedundantGetter()
 
@@ -426,7 +432,7 @@ internal class RemoveExplicitGetterInspectionBasedProcessing :
 }
 
 internal class RemoveExplicitSetterInspectionBasedProcessing :
-  InspectionLikeProcessingForElement<KtPropertyAccessor>(KtPropertyAccessor::class.java) {
+    InspectionLikeProcessingForElement<KtPropertyAccessor>(KtPropertyAccessor::class.java) {
     override fun isApplicableTo(element: KtPropertyAccessor, settings: ConverterSettings?): Boolean =
         element.isRedundantSetter()
 
@@ -436,7 +442,7 @@ internal class RemoveExplicitSetterInspectionBasedProcessing :
 }
 
 internal class ExplicitThisInspectionBasedProcessing :
-  InspectionLikeProcessingForElement<KtExpression>(KtExpression::class.java) {
+    InspectionLikeProcessingForElement<KtExpression>(KtExpression::class.java) {
     override fun isApplicableTo(element: KtExpression, settings: ConverterSettings?): Boolean =
         ExplicitThisInspection.hasExplicitThis(element)
 
@@ -450,7 +456,7 @@ internal class ExplicitThisInspectionBasedProcessing :
 }
 
 internal class LiftReturnInspectionBasedProcessing :
-  InspectionLikeProcessingForElement<KtExpression>(KtExpression::class.java) {
+    InspectionLikeProcessingForElement<KtExpression>(KtExpression::class.java) {
     override fun isApplicableTo(element: KtExpression, settings: ConverterSettings?): Boolean =
         LiftReturnOrAssignmentInspection.getState(element, false)?.any {
             it.liftType == LiftReturnOrAssignmentInspection.Companion.LiftType.LIFT_RETURN_OUT
@@ -462,7 +468,7 @@ internal class LiftReturnInspectionBasedProcessing :
 }
 
 internal class LiftAssignmentInspectionBasedProcessing :
-  InspectionLikeProcessingForElement<KtExpression>(KtExpression::class.java) {
+    InspectionLikeProcessingForElement<KtExpression>(KtExpression::class.java) {
     override fun isApplicableTo(element: KtExpression, settings: ConverterSettings?): Boolean =
         LiftReturnOrAssignmentInspection.getState(element, false)?.any {
             it.liftType == LiftReturnOrAssignmentInspection.Companion.LiftType.LIFT_ASSIGNMENT_OUT
@@ -474,7 +480,7 @@ internal class LiftAssignmentInspectionBasedProcessing :
 }
 
 internal class MoveLambdaOutsideParenthesesProcessing :
-  InspectionLikeProcessingForElement<KtCallExpression>(KtCallExpression::class.java) {
+    InspectionLikeProcessingForElement<KtCallExpression>(KtCallExpression::class.java) {
     override fun isApplicableTo(element: KtCallExpression, settings: ConverterSettings?): Boolean =
         element.canMoveLambdaOutsideParentheses()
 
@@ -484,7 +490,7 @@ internal class MoveLambdaOutsideParenthesesProcessing :
 }
 
 internal class RemoveOpenModifierOnTopLevelDeclarationsProcessing :
-  InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
+    InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
     override fun isApplicableTo(element: KtDeclaration, settings: ConverterSettings?): Boolean =
         element.hasModifier(KtTokens.OPEN_KEYWORD)
                 && (element is KtFunction || element is KtProperty)

@@ -286,6 +286,18 @@ public class XmlTypedHandlersTest extends BasePlatformTestCase {
     myFixture.checkResult("<div><>aa</></div>");
   }
 
+  public void testAttributeValueQuoteEatXml(){
+    myFixture.configureByText("test.xml", "<foo attr<caret>><bar attr<caret>></bar></foo>");
+    myFixture.type("=\"foo\" a2='");
+    myFixture.checkResult("<foo attr=\"foo\" a2=\"'\"><bar attr=\"foo\" a2=\"'\"></bar></foo>");
+  }
+
+  public void testAttributeValueQuoteEatHtml(){
+    myFixture.configureByText("test.html", "<div attr<caret>><div attr<caret>></div></div>");
+    myFixture.type("=\"foo\" a2='bar");
+    myFixture.checkResult("<div attr=\"foo\" a2=\"bar\"><div attr=\"foo\" a2=\"bar\"></div></div>");
+  }
+
   private void doTest(String text, char c, String result) {
     myFixture.configureByText(XmlFileType.INSTANCE, text);
     myFixture.type(c);

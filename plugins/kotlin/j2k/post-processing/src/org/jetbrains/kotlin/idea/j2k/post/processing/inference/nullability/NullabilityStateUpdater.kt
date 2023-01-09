@@ -22,12 +22,12 @@ class NullabilityStateUpdater : StateUpdater() {
 
     companion object {
         fun changeState(typeElement: KtTypeElement, toNullable: Boolean) {
-            val factory = KtPsiFactory(typeElement)
+            val psiFactory = KtPsiFactory(typeElement.project)
             if (typeElement is KtNullableType && !toNullable) {
-                typeElement.replace(factory.createType(typeElement.innerType?.text ?: return).typeElement ?: return)
+                typeElement.replace(psiFactory.createType(typeElement.innerType?.text ?: return).typeElement ?: return)
             }
             if (typeElement !is KtNullableType && toNullable) {
-                typeElement.replace(factory.createType("${typeElement.text}?").typeElement ?: return)
+                typeElement.replace(psiFactory.createType("${typeElement.text}?").typeElement ?: return)
             }
         }
     }

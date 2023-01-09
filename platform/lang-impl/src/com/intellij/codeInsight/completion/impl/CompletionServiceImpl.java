@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.ClassifierFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.diagnostic.telemetry.IJTracer;
 import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -13,8 +14,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.patterns.ElementPattern;
@@ -22,30 +22,31 @@ import com.intellij.psi.Weigher;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.messages.SimpleMessageBusConnection;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
+
+/**
+ * @author peter
+ */
 public final class CompletionServiceImpl extends BaseCompletionService {
   private static final Logger LOG = Logger.getInstance(CompletionServiceImpl.class);
 
   private static final CompletionPhaseHolder DEFAULT_PHASE_HOLDER = new CompletionPhaseHolder(CompletionPhase.NoCompletion, null);
   private static final Map<ClientId, CompletionPhaseHolder> clientId2Holders = new ConcurrentHashMap<>();
 
-  private final Tracer completionTracer = TraceManager.INSTANCE.getTracer("codeCompletion");
+  private final IJTracer myCompletionTracer = TraceManager.INSTANCE.getTracer("codeCompletion");
 
   public CompletionServiceImpl() {
     super();
     SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         List<ClientId> clientIds = new ArrayList<>(clientId2Holders.keySet());  // original set might be modified during iteration
@@ -144,6 +145,15 @@ public final class CompletionServiceImpl extends BaseCompletionService {
     }
 
     @Override
+    public void passResult(@NotNull CompletionResult result) {
+      LookupElement element = result.getLookupElement();
+      if (element != null && element.getUserData(LOOKUP_ELEMENT_CONTRIBUTOR) == null) {
+        element.putUserData(LOOKUP_ELEMENT_CONTRIBUTOR, myContributor);
+      }
+      super.passResult(result);
+    }
+
+    @Override
     @NotNull
     public CompletionResultSet withPrefixMatcher(@NotNull final PrefixMatcher matcher) {
       if (matcher.equals(getPrefixMatcher())) {
@@ -196,15 +206,15 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   private static void assertPhase(@NotNull ClientId clientId,
                                   @NotNull CompletionPhaseHolder phaseHolder,
                                   Class<? extends CompletionPhase> @NotNull ... possibilities) {
-    if (!isPhase(phaseHolder.getPhase(), possibilities)) {
+    if (!isPhase(phaseHolder.phase(), possibilities)) {
       reportPhase(clientId, phaseHolder);
     }
   }
 
   private static void reportPhase(@NotNull ClientId clientId, @NotNull CompletionPhaseHolder phaseHolder) {
-    Throwable phaseTrace = phaseHolder.getPhaseTrace();
+    Throwable phaseTrace = phaseHolder.phaseTrace();
     String traceText = phaseTrace != null ? "; set at " + ExceptionUtil.getThrowableText(phaseTrace) : "";
-    LOG.error(phaseHolder.getPhase() + "; " + clientId + traceText);
+    LOG.error(phaseHolder.phase() + "; " + clientId + traceText);
   }
 
   @SafeVarargs
@@ -276,7 +286,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   }
 
   private static @NotNull CompletionPhase getCompletionPhase(@NotNull ClientId clientId) {
-    return getCompletionPhaseHolder(clientId).getPhase();
+    return getCompletionPhaseHolder(clientId).phase();
   }
 
   private static @NotNull CompletionPhaseHolder getCompletionPhaseHolder(@NotNull ClientId clientId) {
@@ -306,51 +316,31 @@ public final class CompletionServiceImpl extends BaseCompletionService {
 
   @Override
   protected void getVariantsFromContributor(CompletionParameters params, CompletionContributor contributor, CompletionResultSet result) {
-    Span contributionSpan = completionTracer.spanBuilder(contributor.getClass().getSimpleName()).startSpan();
-
-    try (Scope ignored = contributionSpan.makeCurrent()) {
+    runWithSpan(myCompletionTracer, contributor.getClass().getSimpleName(), span -> {
       super.getVariantsFromContributor(params, contributor, result);
-    }
-    finally {
-      contributionSpan.end();
-    }
+      span.setAttribute("avoid_null_value", true);
+    });
   }
 
   @Override
   public void performCompletion(CompletionParameters parameters, Consumer<? super CompletionResult> consumer) {
-    Span span = completionTracer.spanBuilder("performCompletion").startSpan();
-    var countingConsumer = new Consumer<CompletionResult>() {
-      int count = 0;
-      @Override
-      public void consume(CompletionResult result) {
-        count++;
-        consumer.consume(result);
-      }
-    };
-    try (Scope ignored = span.makeCurrent()) {
+    runWithSpan(myCompletionTracer, "performCompletion", span -> {
+      var countingConsumer = new Consumer<CompletionResult>() {
+        int count = 0;
+
+        @Override
+        public void consume(CompletionResult result) {
+          count++;
+          consumer.consume(result);
+        }
+      };
+
       super.performCompletion(parameters, countingConsumer);
-    }
-    finally {
+
       span.setAttribute("lookupsFound", countingConsumer.count);
-      span.end();
-    }
+    });
   }
 
-  private static class CompletionPhaseHolder {
-    private final @NotNull CompletionPhase ourPhase;
-    private final @Nullable Throwable ourPhaseTrace;
-
-    CompletionPhaseHolder(@NotNull CompletionPhase phase, @Nullable Throwable phaseTrace) {
-      ourPhase = phase;
-      ourPhaseTrace = phaseTrace;
-    }
-
-    @NotNull CompletionPhase getPhase() {
-      return ourPhase;
-    }
-
-    @Nullable Throwable getPhaseTrace() {
-      return ourPhaseTrace;
-    }
+  private record CompletionPhaseHolder(@NotNull CompletionPhase phase, @Nullable Throwable phaseTrace) {
   }
 }

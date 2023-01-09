@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -31,9 +31,11 @@ import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class FieldHidesSuperclassFieldInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
@@ -72,11 +74,10 @@ public class FieldHidesSuperclassFieldInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("field.name.hides.in.superclass.ignore.option"), "m_ignoreInvisibleFields");
-    panel.addCheckbox(InspectionGadgetsBundle.message("field.name.hides.in.superclass.ignore.static.field.option"), "ignoreStaticFields");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreInvisibleFields", InspectionGadgetsBundle.message("field.name.hides.in.superclass.ignore.option")),
+      checkbox("ignoreStaticFields", InspectionGadgetsBundle.message("field.name.hides.in.superclass.ignore.static.field.option")));
   }
 
   @Override

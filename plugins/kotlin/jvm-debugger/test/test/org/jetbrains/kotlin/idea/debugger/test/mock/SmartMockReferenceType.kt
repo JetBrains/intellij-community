@@ -94,7 +94,7 @@ class SmartMockReferenceType(val classNode: ClassNode, private val context: Smar
     override fun visibleMethods() = TODO()
     override fun locationsOfLine(lineNumber: Int) = TODO()
     override fun locationsOfLine(stratum: String, sourceName: String, lineNumber: Int) = TODO()
-    override fun getValues(p0: MutableList<out Field>?) = TODO()
+    override fun getValues(p0: List<Field>?) = TODO()
     override fun minorVersion() = TODO()
     override fun classObject() = TODO()
     override fun methodsByName(p0: String?) = TODO()

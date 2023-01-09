@@ -3,12 +3,12 @@
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 
 import com.intellij.codeInsight.FileModificationService
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -31,15 +31,15 @@ class UseWithIndexIntention : SelfTargetingRangeIntention<KtForExpression>(
         if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return
         val (indexVariable, initializationStatement, incrementExpression) = matchIndexToIntroduce(element, reformat = true)!!
 
-        val factory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         val loopRange = element.loopRange!!
         val loopParameter = element.loopParameter!!
 
         runWriteAction {
-            val newLoopRange = factory.createExpressionByPattern("$0.withIndex()", loopRange)
+            val newLoopRange = psiFactory.createExpressionByPattern("$0.withIndex()", loopRange)
             loopRange.replace(newLoopRange)
 
-            val multiParameter = (factory.createExpressionByPattern(
+            val multiParameter = (psiFactory.createExpressionByPattern(
                 "for(($0, $1) in x){}",
                 indexVariable.nameAsSafeName,
                 loopParameter.text

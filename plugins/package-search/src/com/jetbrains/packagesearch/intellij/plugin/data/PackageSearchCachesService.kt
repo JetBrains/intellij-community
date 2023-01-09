@@ -3,8 +3,6 @@ package com.jetbrains.packagesearch.intellij.plugin.data
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
-import com.intellij.util.io.readText
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizer
@@ -13,8 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import java.nio.file.Files
-import kotlin.io.path.writeText
 
 internal class PackageSearchCachesService : Disposable {
 

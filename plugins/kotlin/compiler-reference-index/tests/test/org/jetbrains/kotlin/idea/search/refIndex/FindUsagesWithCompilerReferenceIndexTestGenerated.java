@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search.refIndex;
 
@@ -112,6 +112,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
                 @TestMetadata("withInvoke.0.kt")
                 public void testWithInvoke() throws Exception {
                     runTest("../../idea/tests/testData/findUsages/kotlin/companionObject/withInvoke.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
+            public static class TestWithInvokeExtension extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("withInvokeExtension.0.kt")
+                public void testWithInvokeExtension() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/companionObject/withInvokeExtension.0.kt");
                 }
             }
 
@@ -3773,6 +3786,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
                 @TestMetadata("OverriddenMethodSyntheticAccessor2.0.java")
                 public void testOverriddenMethodSyntheticAccessor2() throws Exception {
                     runTest("../../idea/tests/testData/findUsages/java/findJavaMethodUsages/OverriddenMethodSyntheticAccessor2.0.java");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
+            public static class TestOverriddenMethodSyntheticAccessorWithFinalModifier extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("OverriddenMethodSyntheticAccessorWithFinalModifier.0.java")
+                public void testOverriddenMethodSyntheticAccessorWithFinalModifier() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/java/findJavaMethodUsages/OverriddenMethodSyntheticAccessorWithFinalModifier.0.java");
                 }
             }
 

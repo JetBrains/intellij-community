@@ -12,58 +12,55 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Experimental
 
-suspend fun <T> withBackgroundProgressIndicator(
+suspend fun <T> withBackgroundProgress(
   project: Project,
   title: @ProgressTitle String,
   action: suspend CoroutineScope.() -> T
 ): T {
-  return withBackgroundProgressIndicator(project, title, cancellable = true, action)
+  return withBackgroundProgress(project, title, TaskCancellation.cancellable(), action)
 }
 
-suspend fun <T> withBackgroundProgressIndicator(
+suspend fun <T> withBackgroundProgress(
   project: Project,
   title: @ProgressTitle String,
   cancellable: Boolean,
   action: suspend CoroutineScope.() -> T
 ): T {
   val cancellation = if (cancellable) TaskCancellation.cancellable() else TaskCancellation.nonCancellable()
-  return withBackgroundProgressIndicator(project, title, cancellation, action)
+  return withBackgroundProgress(project, title, cancellation, action)
 }
 
 /**
  * Shows a background progress indicator, and runs the specified [action].
- * The action receives [ProgressSink] in the coroutine context, progress sink updates are reflected in the UI during the action.
- * The indicator is not shown immediately to avoid flickering,
+ * The action receives [ProgressReporter] in the coroutine context, reporter updates are reflected in the UI during the execution.
+ * The progress is not shown in the UI immediately to avoid flickering,
  * i.e. the user won't see anything if the [action] completes within the given timeout.
  *
  * @param project in which frame the progress should be shown
  * @param cancellation controls the UI appearance, e.g. [TaskCancellation.nonCancellable] or [TaskCancellation.cancellable]
- * @throws CancellationException if the calling coroutine was cancelled,
- * or if the indicator was cancelled by the user in the UI
+ * @throws CancellationException if the calling coroutine was cancelled, or if the indicator was cancelled by the user in the UI
  */
-suspend fun <T> withBackgroundProgressIndicator(
+suspend fun <T> withBackgroundProgress(
   project: Project,
   title: @ProgressTitle String,
-  cancellation: TaskCancellation = TaskCancellation.cancellable(),
+  cancellation: TaskCancellation,
   action: suspend CoroutineScope.() -> T
 ): T {
-  return taskSupport().withBackgroundProgressIndicatorInternal(
-    project, title, cancellation, action
-  )
+  return taskSupport().withBackgroundProgressInternal(project, title, cancellation, action)
 }
 
-suspend fun <T> withModalProgressIndicator(
+suspend fun <T> withModalProgress(
   project: Project,
   title: @ProgressTitle String,
   action: suspend CoroutineScope.() -> T,
 ): T {
-  return withModalProgressIndicator(owner = ModalTaskOwner.project(project), title = title, action = action)
+  return withModalProgress(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
 }
 
 /**
  * Shows a modal progress indicator, and runs the specified [action].
- * The action receives [ProgressSink] in the coroutine context, progress sink updates are reflected in the UI during the action.
- * The indicator is not shown immediately to avoid flickering,
+ * The action receives [ProgressReporter] in the coroutine context, reporter updates are reflected in the UI during the execution.
+ * The progress dialog is not shown in the UI immediately to avoid flickering,
  * i.e. the user won't see anything if the [action] completes within the given timeout.
  *
  * Switches to [Dispatchers.EDT][com.intellij.openapi.application.EDT] are allowed inside the action,
@@ -74,13 +71,13 @@ suspend fun <T> withModalProgressIndicator(
  * @throws CancellationException if the calling coroutine was cancelled,
  * or if the indicator was cancelled by the user in the UI
  */
-suspend fun <T> withModalProgressIndicator(
+suspend fun <T> withModalProgress(
   owner: ModalTaskOwner,
   title: @ProgressTitle String,
-  cancellation: TaskCancellation = TaskCancellation.cancellable(),
+  cancellation: TaskCancellation,
   action: suspend CoroutineScope.() -> T,
 ): T {
-  return taskSupport().withModalProgressIndicatorInternal(owner, title, cancellation, action)
+  return taskSupport().withModalProgressInternal(owner, title, cancellation, action)
 }
 
 @RequiresEdt
@@ -94,8 +91,8 @@ fun <T> runBlockingModal(
 
 /**
  * Shows a modal progress indicator, and runs the specified [action].
- * The action receives [ProgressSink] in the coroutine context, progress sink updates are reflected in the UI during the action.
- * The indicator is not shown immediately to avoid flickering,
+ * The action receives [ProgressReporter] in the coroutine context, reporter updates are reflected in the UI during the execution.
+ * The progress dialog is not shown in the UI immediately to avoid flickering,
  * i.e. the user won't see anything if the [action] completes within the given timeout.
  *
  * Switches to [Dispatchers.EDT][com.intellij.openapi.application.EDT] are allowed inside the action,
@@ -156,3 +153,114 @@ fun <T> runBlockingModal(
 }
 
 private fun taskSupport(): TaskSupport = ApplicationManager.getApplication().service()
+
+@Deprecated(
+  message = "This function installs `RawProgressReporter` into action context. " +
+            "Migrate to `ProgressReporter` via `withBackgroundProgress`, " +
+            "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
+  replaceWith = ReplaceWith("withBackgroundProgress(project, title) { withRawProgressReporter (action) }"),
+)
+suspend fun <T> withBackgroundProgressIndicator(
+  project: Project,
+  title: @ProgressTitle String,
+  action: suspend CoroutineScope.() -> T
+): T {
+  return withBackgroundProgressIndicator(project, title, cancellable = true, action)
+}
+
+@Deprecated(
+  message = "This function installs `RawProgressReporter` into action context. " +
+            "Migrate to `ProgressReporter` via `withBackgroundProgress`, " +
+            "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
+  replaceWith = ReplaceWith("withBackgroundProgress(project, title, cancellable) { withRawProgressReporter (action) }"),
+)
+suspend fun <T> withBackgroundProgressIndicator(
+  project: Project,
+  title: @ProgressTitle String,
+  cancellable: Boolean,
+  action: suspend CoroutineScope.() -> T
+): T {
+  val cancellation = if (cancellable) TaskCancellation.cancellable() else TaskCancellation.nonCancellable()
+  return withBackgroundProgressIndicator(project, title, cancellation, action)
+}
+
+@Deprecated(
+  message = "This function installs `RawProgressReporter` into action context. " +
+            "Migrate to `ProgressReporter` via `withBackgroundProgress`, " +
+            "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
+  replaceWith = ReplaceWith("withBackgroundProgress(project, title, cancellation) { withRawProgressReporter (action) }"),
+)
+suspend fun <T> withBackgroundProgressIndicator(
+  project: Project,
+  title: @ProgressTitle String,
+  cancellation: TaskCancellation = TaskCancellation.cancellable(),
+  action: suspend CoroutineScope.() -> T
+): T {
+  return taskSupport().withBackgroundProgressInternal(project, title, cancellation) {
+    withRawProgressReporter(action)
+  }
+}
+
+@Deprecated(
+  message = "This function installs `RawProgressReporter` into action context. " +
+            "Migrate to `ProgressReporter` via `withModalProgress`, " +
+            "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
+  replaceWith = ReplaceWith("withModalProgress(project, title) { withRawProgressReporter(action) }"),
+)
+suspend fun <T> withModalProgressIndicator(
+  project: Project,
+  title: @ProgressTitle String,
+  action: suspend CoroutineScope.() -> T,
+): T {
+  return withModalProgressIndicator(owner = ModalTaskOwner.project(project), title = title, action = action)
+}
+
+@Deprecated(
+  message = "This function installs `RawProgressReporter` into action context. " +
+            "Migrate to `ProgressReporter` via `withModalProgress`, " +
+            "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
+  replaceWith = ReplaceWith("withModalProgress(owner, title, cancellation) { withRawProgressReporter(action) }"),
+)
+suspend fun <T> withModalProgressIndicator(
+  owner: ModalTaskOwner,
+  title: @ProgressTitle String,
+  cancellation: TaskCancellation = TaskCancellation.cancellable(),
+  action: suspend CoroutineScope.() -> T,
+): T {
+  return taskSupport().withModalProgressInternal(owner, title, cancellation) {
+    withRawProgressReporter(action)
+  }
+}
+
+@Deprecated(
+  message = "This function installs `RawProgressReporter` into action context. " +
+            "Migrate to `ProgressReporter` via `runBlockingModal`, " +
+            "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
+  replaceWith = ReplaceWith("runBlockingModal(project, title) { withRawProgressReporter(action) }"),
+)
+@RequiresEdt
+fun <T> runBlockingModalWithRawProgressReporter(
+  project: Project,
+  title: @ProgressTitle String,
+  action: suspend CoroutineScope.() -> T,
+): T {
+  return runBlockingModalWithRawProgressReporter(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
+}
+
+@Deprecated(
+  message = "This function installs `RawProgressReporter` into action context. " +
+            "Migrate to `ProgressReporter` via `runBlockingModal`, " +
+            "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
+  replaceWith = ReplaceWith("runBlockingModal(owner, title, cancellation) { withRawProgressReporter(action) }"),
+)
+@RequiresEdt
+fun <T> runBlockingModalWithRawProgressReporter(
+  owner: ModalTaskOwner,
+  title: @ProgressTitle String,
+  cancellation: TaskCancellation = TaskCancellation.cancellable(),
+  action: suspend CoroutineScope.() -> T,
+): T {
+  return taskSupport().runBlockingModalInternal(owner, title, cancellation) {
+    withRawProgressReporter(action)
+  }
+}

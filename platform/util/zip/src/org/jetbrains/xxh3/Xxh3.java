@@ -65,10 +65,6 @@ public final class Xxh3 {
     return Xxh3Impl.hash(input, ByteArrayAccess.INSTANCE, 0, input.length, seed);
   }
 
-  //public static long hash(String input, int start, int length) {
-  //  return stringLongHash(input, start, length);
-  //}
-
   public static int hash32(String input) {
     return (int)hash(input);
   }

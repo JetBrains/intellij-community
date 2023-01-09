@@ -24,9 +24,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleGroupPathEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import java.io.IOException
 import java.nio.file.Path
@@ -59,7 +57,7 @@ internal class ModifiableModuleModelBridgeImpl(
       source = NonPersistentEntitySource
     )
 
-    val module = moduleManager.createModule(moduleEntity.persistentId, moduleName, null, entityStorageOnDiff, diff)
+    val module = moduleManager.createModule(moduleEntity.symbolicId, moduleName, null, entityStorageOnDiff, diff)
     diff.mutableModuleMap.addMapping(moduleEntity, module)
     myModulesToAdd[moduleName] = module
     currentModulesSet.add(module)
@@ -84,7 +82,6 @@ internal class ModifiableModuleModelBridgeImpl(
     if (findModuleByName(moduleName) != null) {
       throw ModuleWithNameAlreadyExists("Module already exists: $moduleName", moduleName)
     }
-    removeUnloadedModule(moduleName)
 
     val entitySource = JpsEntitySourceFactory.createEntitySourceForModule(project, virtualFileManager.fromPath(PathUtil.getParentPath(canonicalPath)), null)
 
@@ -137,20 +134,6 @@ internal class ModifiableModuleModelBridgeImpl(
     return null
   }
 
-  private fun removeUnloadedModule(moduleName: String) {
-    // If module name equals to already unloaded module, the previous should be removed from store
-    val unloadedModuleDescription = moduleManager.getUnloadedModuleDescription(moduleName)
-    if (unloadedModuleDescription != null) {
-      val moduleEntity = entityStorageOnDiff.current.resolve(ModuleId(unloadedModuleDescription.name))
-      if (moduleEntity != null) {
-        diff.removeEntity(moduleEntity)
-      }
-      else {
-        LOG.error("Could not find module to remove by id: ${unloadedModuleDescription.name}")
-      }
-    }
-  }
-
   override fun loadModule(file: Path) = loadModule(file.systemIndependentPath)
 
   override fun loadModule(filePath: String): Module {
@@ -158,8 +141,6 @@ internal class ModifiableModuleModelBridgeImpl(
     if (findModuleByName(moduleName) != null) {
       error("Module name '$moduleName' already exists. Trying to load module: $filePath")
     }
-
-    removeUnloadedModule(moduleName)
 
     val moduleEntity = moduleManager.loadModuleToBuilder(moduleName, filePath, diff)
     return createModuleInstance(moduleEntity, false)
@@ -241,7 +222,7 @@ internal class ModifiableModuleModelBridgeImpl(
   override fun commit() {
     val diff = collectChanges()
 
-    WorkspaceModel.getInstance(project).updateProjectModel {
+    WorkspaceModel.getInstance(project).updateProjectModel("Module model commit") {
       it.addDiff(diff)
     }
   }
@@ -265,7 +246,6 @@ internal class ModifiableModuleModelBridgeImpl(
     myNewNameToModule.removeValue(module)
     myNewNameToModule.remove(newName)
 
-    removeUnloadedModule(newName)
     val oldName = uncommittedOldName ?: module.name
     if (oldName != newName) { // if renaming to itself, forget it altogether
       val moduleToAdd = myModulesToAdd.remove(oldName)

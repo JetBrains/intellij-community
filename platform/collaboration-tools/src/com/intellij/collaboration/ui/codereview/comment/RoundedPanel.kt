@@ -44,8 +44,8 @@ class RoundedPanel(layout: LayoutManager?, private val arc: Int = 8) : JPanel(la
     val rect = Rectangle(size)
     JBInsets.removeFrom(rect, insets)
     // 2.25 scale is a @#$!% so we adjust sizes manually
-    return RoundRectangle2D.Float(rect.x.toFloat() - 0.5f, rect.y.toFloat() - 0.5f,
-                                  rect.width.toFloat()  + 0.5f, rect.height.toFloat() + 0.5f,
+    return RoundRectangle2D.Float(rect.x.toFloat(), rect.y.toFloat(),
+                                  rect.width.toFloat(), rect.height.toFloat(),
                                   arc.toFloat(), arc.toFloat())
   }
 }

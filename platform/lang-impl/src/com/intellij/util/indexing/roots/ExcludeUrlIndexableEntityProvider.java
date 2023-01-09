@@ -4,7 +4,7 @@ package com.intellij.util.indexing.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*;
+import com.intellij.workspaceModel.storage.bridgeEntities.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -25,7 +25,8 @@ class ExcludeUrlIndexableEntityProvider implements IndexableEntityProvider<Exclu
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ExcludeUrlEntity oldEntity,
-                                                                                                   @NotNull ExcludeUrlEntity newEntity) {
+                                                                                                   @NotNull ExcludeUrlEntity newEntity,
+                                                                                                   @NotNull Project project) {
     if (VirtualFileUrlManagerUtil.isEqualOrParentOf(newEntity.getUrl(), oldEntity.getUrl())) return Collections.emptyList();
     return createBuilders(oldEntity);
   }
@@ -42,11 +43,11 @@ class ExcludeUrlIndexableEntityProvider implements IndexableEntityProvider<Exclu
 
     ContentRootEntity contentRoot = RootsKt.getContentRoot(entity);
     if (contentRoot != null) {
-      return IndexableIteratorBuilders.INSTANCE.forModuleRoots(contentRoot.getModule().getPersistentId(), entity.getUrl());
+      return IndexableIteratorBuilders.INSTANCE.forModuleRoots(contentRoot.getModule().getSymbolicId(), entity.getUrl());
     }
     LibraryEntity library = DependenciesKt.getLibrary(entity);
     if (library != null) {
-      return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(library.getPersistentId(), true);
+      return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(library.getSymbolicId(), true);
     }
     return Collections.emptyList();
   }

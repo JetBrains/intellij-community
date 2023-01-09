@@ -43,7 +43,7 @@ fun CoroutineScope.nestedDisposable(): Disposable {
     "Found no Job in context: $coroutineContext"
   }
   return Disposer.newDisposable().also {
-    job.invokeOnCompletion(onCancelling = true, handler =  { _ ->
+    job.invokeOnCompletion(onCancelling = true, handler = { _ ->
       Disposer.dispose(it)
     })
   }
@@ -67,21 +67,37 @@ fun <T1, T2, T3, R> combineState(scope: CoroutineScope,
     .stateIn(scope, SharingStarted.Eagerly, transform(state1.value, state2.value, state3.value))
 
 @ApiStatus.Experimental
+suspend fun <T1, T2> combineAndCollect(
+  flow1: Flow<T1>,
+  flow2: Flow<T2>,
+  action: (T1, T2) -> Unit
+) {
+  return combine(flow1, flow2) { value1, value2 ->
+    value1 to value2
+  }.collect { (value1, value2) ->
+    action(value1, value2)
+  }
+}
+
+@ApiStatus.Experimental
 fun <T, M> StateFlow<T>.mapState(
   scope: CoroutineScope,
   mapper: (value: T) -> M
 ): StateFlow<M> = map { mapper(it) }.stateIn(scope, SharingStarted.Eagerly, mapper(value))
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @ApiStatus.Experimental
-fun <T, R> StateFlow<T>.mapStateScoped(scope: CoroutineScope, mapper: (CoroutineScope, T) -> R): StateFlow<R> {
-  var nestedScope: CoroutineScope? = null
-  return mapState(scope) {value ->
-    nestedScope?.cancel()
-    scope.childScope(Dispatchers.Main).let {
-      nestedScope = it
-      mapper(scope, value)
-    }
-  }
+fun <T, R> StateFlow<T>.mapStateScoped(scope: CoroutineScope,
+                                       sharingStart: SharingStarted = SharingStarted.Eagerly,
+                                       mapper: (CoroutineScope, T) -> R): StateFlow<R> {
+  var nestedScope: CoroutineScope = scope.childScope()
+  val originalState = this
+  return drop(1).transformLatest { newValue ->
+    nestedScope.cancel()
+    nestedScope = scope.childScope()
+    val mapped = mapper(nestedScope, newValue)
+    emit(mapped)
+  }.stateIn(scope, sharingStart, mapper(nestedScope, originalState.value))
 }
 
 @ApiStatus.Experimental
@@ -92,5 +108,14 @@ suspend fun <T> StateFlow<T>.collectScoped(collector: (CoroutineScope, T) -> Uni
       collector(nestedScope, state)
       awaitCancellation()
     }
+  }
+}
+
+@ApiStatus.Experimental
+suspend fun <T> Flow<T>.collectWithPrevious(initial: T, collector: suspend (prev: T, current: T) -> Unit) {
+  var prev = initial
+  collect {
+    collector(prev, it)
+    prev = it
   }
 }

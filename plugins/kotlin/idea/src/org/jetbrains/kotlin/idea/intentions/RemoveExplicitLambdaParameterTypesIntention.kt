@@ -26,7 +26,7 @@ class RemoveExplicitLambdaParameterTypesIntention : SelfTargetingIntention<KtLam
             it.destructuringDeclaration?.text ?: it.name
         }.joinToString(", ")
 
-        val newParameterList = KtPsiFactory(element).createLambdaParameterList(parameterString)
+        val newParameterList = KtPsiFactory(element.project).createLambdaParameterList(parameterString)
         oldParameterList.replace(newParameterList)
     }
 }

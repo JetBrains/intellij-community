@@ -57,6 +57,31 @@ public class JavaSimilarityFeaturesExtractor extends JavaRecursiveElementVisitor
   }
 
   @Override
+  public void visitBlockStatement(@NotNull PsiBlockStatement statement) {
+    if (Registry.is("similarity.analyze.only.simple.code.blocks")) {
+      takeKeyFeaturesFromBlockStatement(statement);
+    }
+    else {
+      super.visitBlockStatement(statement);
+    }
+  }
+
+  private void takeKeyFeaturesFromBlockStatement(@NotNull PsiBlockStatement statement) {
+    if (shouldCollectFeatures(statement)) {
+      super.visitBlockStatement(statement);
+    }
+    else {
+      myUsageSimilarityFeaturesRecorder.addAllFeatures(statement, "COMPLEX_BLOCK");
+    }
+  }
+
+  private static boolean shouldCollectFeatures(@NotNull PsiBlockStatement statement) {
+    PsiElement parentStatement = statement.getParent();
+    return statement.getCodeBlock().getStatementCount() <= 1 ||
+           !(parentStatement instanceof PsiLoopStatement || parentStatement instanceof PsiIfStatement);
+  }
+
+  @Override
   public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
     myUsageSimilarityFeaturesRecorder.addAllFeatures(statement, "FOREACH");
     super.visitForeachStatement(statement);
@@ -106,16 +131,10 @@ public class JavaSimilarityFeaturesExtractor extends JavaRecursiveElementVisitor
 
   @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
-    String tokenFeature = null;
     if (!(expression instanceof PsiMethodReferenceExpression)) {
-      tokenFeature = null;
       if (!Registry.is("similarity.find.usages.fast.clustering")) {
-        tokenFeature += getTypeRepresentation(expression);
+        myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, getTypeRepresentation(expression));
       }
-    }
-
-    if (tokenFeature != null) {
-      myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, tokenFeature);
     }
     super.visitReferenceExpression(expression);
   }

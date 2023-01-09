@@ -13,6 +13,7 @@ import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,7 +26,6 @@ import java.util.stream.Stream;
 
 import static com.intellij.ui.tree.TreePathUtil.convertArrayToTreePath;
 import static com.intellij.ui.tree.TreeTestUtil.node;
-import static com.intellij.util.containers.ContainerUtil.set;
 
 public final class TreeUtilVisitTest {
   @Before
@@ -794,13 +794,13 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testCollectExpandedPaths() {
-    testCollectExpandedPaths(set("Root", "1", "2", "22", "3", "33", "333"), test
+    testCollectExpandedPaths(Set.of("Root", "1", "2", "22", "3", "33", "333"), test
       -> TreeUtil.collectExpandedPaths(test.getTree()));
   }
 
   @Test
   public void testCollectExpandedPathsUnderCollapsed11() {
-    testCollectExpandedPaths(set(), test -> {
+    testCollectExpandedPaths(Collections.emptySet(),test -> {
       TreePath root = test.getTree().getPathForRow(2); // 11
       return TreeUtil.collectExpandedPaths(test.getTree(), root);
     });
@@ -808,7 +808,7 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testCollectExpandedPathsWithInvisibleRootUnderInvisibleRoot() {
-    testCollectExpandedPaths(set("1", "2", "22", "3", "33", "333"), test -> {
+    testCollectExpandedPaths(Set.of("1", "2", "22", "3", "33", "333"), test -> {
       TreePath root = test.getTree().getPathForRow(0); // Root
       test.getTree().setRootVisible(false);
       return TreeUtil.collectExpandedPaths(test.getTree(), root);
@@ -817,7 +817,7 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testCollectExpandedPathsWithInvisibleRoot() {
-    testCollectExpandedPaths(set("1", "2", "22", "3", "33", "333"), test -> {
+    testCollectExpandedPaths(Set.of("1", "2", "22", "3", "33", "333"), test -> {
       test.getTree().setRootVisible(false);
       return TreeUtil.collectExpandedPaths(test.getTree());
     });
@@ -825,7 +825,7 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testCollectExpandedPathsWithInvisibleRootUnder33() {
-    testCollectExpandedPaths(set("33", "333"), test -> {
+    testCollectExpandedPaths(Set.of("33", "333"), test -> {
       test.getTree().setRootVisible(false);
       TreePath root = test.getTree().getPathForRow(14); // 33
       return TreeUtil.collectExpandedPaths(test.getTree(), root);
@@ -834,7 +834,7 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testCollectExpandedPathsWithInvisibleRootUnder333() {
-    testCollectExpandedPaths(set("333"), test -> {
+    testCollectExpandedPaths(Set.of("333"), test -> {
       test.getTree().setRootVisible(false);
       TreePath root = test.getTree().getPathForRow(17); // 333
       return TreeUtil.collectExpandedPaths(test.getTree(), root);
@@ -852,13 +852,13 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testCollectExpandedUserObjects() {
-    testCollectExpandedUserObjects(set("Root", "1", "2", "22", "3", "33", "333"), test
+    testCollectExpandedUserObjects(Set.of("Root", "1", "2", "22", "3", "33", "333"), test
       -> TreeUtil.collectExpandedUserObjects(test.getTree()));
   }
 
   @Test
   public void testCollectExpandedUserObjectsWithCollapsedPath() {
-    testCollectExpandedUserObjects(set("Root", "1", "2", "22", "3"), test -> {
+    testCollectExpandedUserObjects(Set.of("Root", "1", "2", "22", "3"), test -> {
       test.getTree().collapseRow(15); // 33
       return TreeUtil.collectExpandedUserObjects(test.getTree());
     });
@@ -875,7 +875,7 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testCollectExpandedUserObjectsWithCollapsedPath333Under33() {
-    testCollectExpandedUserObjects(set("33"), test -> {
+    testCollectExpandedUserObjects(Set.of("33"), test -> {
       test.getTree().collapseRow(18); // 333
       TreePath root = test.getTree().getPathForRow(15); // 33
       return TreeUtil.collectExpandedUserObjects(test.getTree(), root);
@@ -893,13 +893,13 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testCollectSelectedPaths() {
-    testCollectSelectedPaths(set("11", "222", "33", "3331", "3332", "3333", "Root"), test
+    testCollectSelectedPaths(Set.of("11", "222", "33", "3331", "3332", "3333", "Root"), test
       -> TreeUtil.collectSelectedPaths(test.getTree()));
   }
 
   @Test
   public void testCollectSelectedPathsWithInvisibleRoot() {
-    testCollectSelectedPaths(set("11", "222", "33", "3331", "3332", "3333"), test -> {
+    testCollectSelectedPaths(Set.of("11", "222", "33", "3331", "3332", "3333"), test -> {
       test.getTree().setRootVisible(false);
       return TreeUtil.collectSelectedPaths(test.getTree());
     });
@@ -907,7 +907,7 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testCollectSelectedPathsWithInvisibleRootUnder33() {
-    testCollectSelectedPaths(set("33", "3331", "3332", "3333"), test -> {
+    testCollectSelectedPaths(Set.of("33", "3331", "3332", "3333"), test -> {
       test.getTree().setRootVisible(false);
       TreePath root = test.getTree().getPathForRow(14); // 33
       return TreeUtil.collectSelectedPaths(test.getTree(), root);
@@ -916,7 +916,7 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testCollectSelectedPathsWithInvisibleRootUnder333() {
-    testCollectSelectedPaths(set("3331", "3332", "3333"), test -> {
+    testCollectSelectedPaths(Set.of("3331", "3332", "3333"), test -> {
       test.getTree().setRootVisible(false);
       TreePath root = test.getTree().getPathForRow(17); // 333
       return TreeUtil.collectSelectedPaths(test.getTree(), root);
@@ -934,13 +934,13 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testCollectSelectedUserObjects() {
-    testCollectSelectedUserObjects(set("11", "222", "33", "3331", "3332", "3333", "Root"), test
+    testCollectSelectedUserObjects(Set.of("11", "222", "33", "3331", "3332", "3333", "Root"), test
       -> TreeUtil.collectSelectedUserObjects(test.getTree()));
   }
 
   @Test
   public void testCollectSelectedUserObjectsWithCollapsedPath() {
-    testCollectSelectedUserObjects(set("11", "222", "33", "Root"), test -> {
+    testCollectSelectedUserObjects(Set.of("11", "222", "33", "Root"), test -> {
       test.getTree().collapseRow(15); // 33
       return TreeUtil.collectSelectedUserObjects(test.getTree());
     });
@@ -948,7 +948,7 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testCollectSelectedUserObjectsWithCollapsedPathUnder33() {
-    testCollectSelectedUserObjects(set("33"), test -> {
+    testCollectSelectedUserObjects(Set.of("33"), test -> {
       test.getTree().collapseRow(15); // 33
       TreePath root = test.getTree().getPathForRow(15); // 33
       return TreeUtil.collectSelectedUserObjects(test.getTree(), root);
@@ -958,7 +958,7 @@ public final class TreeUtilVisitTest {
   @Test
   public void testCollectSelectedUserObjectsWithCollapsedPathUnder333() {
     // collapsed parent node becomes selected if it contains selected children
-    testCollectSelectedUserObjects(set("333"), test -> {
+    testCollectSelectedUserObjects(Set.of("333"), test -> {
       test.getTree().collapseRow(18); // 333
       TreePath root = test.getTree().getPathForRow(18); // 333
       return TreeUtil.collectSelectedUserObjects(test.getTree(), root);

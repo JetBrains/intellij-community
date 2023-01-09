@@ -1,12 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.util.IntentionName;
@@ -16,7 +15,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Segment;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
@@ -69,10 +67,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     return CreateClassKind.CLASS;
   }
 
-  protected void setupClassFromNewExpression(final PsiClass psiClass, final PsiNewExpression newExpression) {
-    PsiClass aClass = psiClass;
-    if (aClass == null) return;
-
+  protected void setupClassFromNewExpression(final PsiClass aClass, final PsiNewExpression newExpression) {
     final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
     if (classReference != null && aClass.isPhysical()) {
       classReference.bindToElement(aClass);
@@ -87,19 +82,10 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       if (aClass.isPhysical()) {
         getReferenceElement(newExpression).bindToElement(aClass);
       }
-      aClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(aClass);
-      final Template template = templateBuilder.buildTemplate();
-      template.setToReformat(true);
-
-      final Editor editor = positionCursor(project, aClass.getContainingFile(), aClass);
-      if (editor == null) return;
-
-      Segment textRange = aClass.getTextRange();
-      editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
-      startTemplate(editor, template, project, null, getText());
+      CreateFromUsageBaseFix.startTemplate(project, aClass, templateBuilder.buildTemplate(), getText());
     }
     else {
-      positionCursor(project, aClass.getContainingFile(), ObjectUtils.notNull(aClass.getNameIdentifier(), aClass));
+      CodeInsightUtil.positionCursor(project, aClass.getContainingFile(), ObjectUtils.notNull(aClass.getNameIdentifier(), aClass));
     }
   }
 

@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.container.ComponentProvider
 import org.jetbrains.kotlin.container.get
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.test.ConfigurationKind
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestWithEnvironment
@@ -48,7 +49,7 @@ abstract class AbstractDescriptorRendererTest : KotlinTestWithEnvironment() {
             }
 
             override fun visitParameter(parameter: KtParameter) {
-                when (val declaringElement = parameter.parent.parent) {
+                when (val declaringElement = (parameter.parent as? KtParameterList)?.parent) {
                     is KtFunctionType -> return
                     is KtNamedFunction ->
                         addCorrespondingParameterDescriptor(getDescriptor(declaringElement, container) as FunctionDescriptor, parameter)

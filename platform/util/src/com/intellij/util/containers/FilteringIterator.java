@@ -112,7 +112,7 @@ public final class FilteringIterator<Dom, E extends Dom> implements PeekableIter
   public static class InstanceOf<T> implements Condition<Object> {
     private final Class<T> myInstancesClass;
 
-    public InstanceOf(Class<T> instancesClass) {
+    public InstanceOf(@NotNull Class<T> instancesClass) {
       myInstancesClass = instancesClass;
     }
 

@@ -123,7 +123,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
     }
   }
 
-  private static void sortRoots(List<String> roots, Map<String, VmData> vms, List<String> ignored, boolean recursive) {
+  private static void sortRoots(List<String> roots, Map<String, VmData> vms, List<? super String> ignored, boolean recursive) {
     for (String root : roots) {
       int nameEnd;
       if (StringUtil.startsWithIgnoreCase(root, WslConstants.UNC_PREFIX) && (nameEnd = root.indexOf('\\', NAME_START)) > NAME_START) {

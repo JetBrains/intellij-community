@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.findUsages
 
@@ -13,6 +13,7 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.properties.psi.PropertiesFile
 import com.intellij.lang.properties.psi.Property
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -41,28 +42,18 @@ import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest.Companion.FindUsageTestType
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.util.projectScope
-import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFunctionFindUsagesOptions
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesOptions
+import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindMemberUsagesHandler
+import org.jetbrains.kotlin.idea.base.util.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.util.clearDialogsResults
-import org.jetbrains.kotlin.idea.core.util.setDialogsResult
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.findUsages.KotlinFunctionFindUsagesOptions
-import org.jetbrains.kotlin.idea.findUsages.KotlinPropertyFindUsagesOptions
-import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinFindMemberUsagesHandler
-import org.jetbrains.kotlin.idea.refactoring.CHECK_SUPER_METHODS_YES_NO_DIALOG
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
-import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.TestFixtureExtension
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 
@@ -389,7 +380,15 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
     }
 
     val finalUsages = filteredUsages.map(convertToString).sorted()
-    KotlinTestUtils.assertEqualsToFile(testType.name, File(rootPath, prefix + "results.txt"), finalUsages.joinToString("\n"))
+
+    var results = File(rootPath, prefix + "results.txt")
+    if (testType == FindUsageTestType.FIR) {
+        val firResults = File(rootPath, prefix + "fir.results.txt")
+        if (firResults.exists()) {
+            results = firResults
+        }
+    }
+    KotlinTestUtils.assertEqualsToFile(testType.name, results, finalUsages.joinToString("\n"))
 
     if (log != null  && !ignoreLog) {
         KotlinTestUtils.assertEqualsToFile(testType.name, File(rootPath, prefix + "log"), log)
@@ -486,4 +485,3 @@ internal fun findUsages(
         clearDialogsResults()
     }
 }
-

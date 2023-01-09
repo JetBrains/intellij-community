@@ -430,7 +430,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     }
 
     private void dispatchKeyEvent(@NotNull KeyEvent e) {
-      if (!skipKeyEvent(e)) {
+      if (e.getID() == KeyEvent.KEY_PRESSED && !skipKeyEvent(e)) {
         if (!JBTerminalPanel.this.isFocusOwner()) {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Prevented attempt to process " + KeyStroke.getKeyStrokeForEvent(e) + " by not focused " +

@@ -2769,4 +2769,13 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     assertNull(myFixture.getLookupElementStrings());
     myFixture.checkResult("class X {void a(Object obj) {if(obj instanceof String) {} else if (obj instanceof )");
   }
+
+  @NeedsIndex.Full
+  public void testNoSelfReferenceInEnum() {
+    configure();
+    LookupElement[] elements = myFixture.completeBasic();
+    LookupElementPresentation presentation = new LookupElementPresentation();
+    elements[0].renderElement(presentation);
+    assertEquals("(\"1\", AN_IMESSAGE_1) (SomeClass)", presentation.getTailText());
+  }
 }

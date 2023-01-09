@@ -15,20 +15,33 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.UtilityClassUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+
 public class AbstractClassWithoutAbstractMethodsInspection
   extends BaseInspection {
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreUtilityClasses = true;
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(checkbox("ignoreUtilityClasses",
+               InspectionGadgetsBundle.message("abstract.class.without.abstract.methods.ignore.utility.class.option")));
+  }
 
   @Override
   @NotNull
@@ -42,7 +55,7 @@ public class AbstractClassWithoutAbstractMethodsInspection
     return new AbstractClassWithoutAbstractMethodsVisitor();
   }
 
-  private static class AbstractClassWithoutAbstractMethodsVisitor
+  private class AbstractClassWithoutAbstractMethodsVisitor
     extends BaseInspectionVisitor {
 
     @Override
@@ -55,6 +68,9 @@ public class AbstractClassWithoutAbstractMethodsInspection
         return;
       }
       if (hasAbstractMethods(aClass)) {
+        return;
+      }
+      if (ignoreUtilityClasses && UtilityClassUtil.isUtilityClass(aClass)) {
         return;
       }
       registerClassError(aClass);

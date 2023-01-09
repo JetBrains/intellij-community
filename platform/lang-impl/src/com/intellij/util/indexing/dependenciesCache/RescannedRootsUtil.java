@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependenciesCache;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -8,19 +9,28 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider;
+import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider.LibraryRoots;
 import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.util.indexing.roots.builders.SyntheticLibraryIteratorBuilder;
+import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryEntityUtils;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId;
+import com.intellij.workspaceModel.storage.EntityStorage;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 @ApiStatus.Internal
+final
 class RescannedRootsUtil {
   static Collection<? extends IndexableIteratorBuilder> getUnexcludedRootsIteratorBuilders(@NotNull Project project,
                                                                                            @NotNull List<? extends SyntheticLibraryDescriptor> libraryDescriptorsBefore,
@@ -49,12 +60,13 @@ class RescannedRootsUtil {
     ProjectFileIndexImpl fileIndex = (ProjectFileIndexImpl)index;
     ArrayList<IndexableIteratorBuilder> result = new ArrayList<>();
     Iterator<VirtualFile> iterator = excludedRoots.iterator();
-    VirtualFileUrlManager urlManager = project.getService(VirtualFileUrlManager.class);
+    VirtualFileUrlManager urlManager = ApplicationManager.getApplication().getService(VirtualFileUrlManager.class);
 
     while (iterator.hasNext()) {
       VirtualFile excluded = iterator.next();
       DirectoryInfo info = fileIndex.getInfoForFileOrDirectory(excluded);
       if (!info.isInProject(excluded)) {
+        iterator.remove();
         continue;
       }
       Module module = info.getModule();
@@ -62,6 +74,7 @@ class RescannedRootsUtil {
         VirtualFileUrl url = urlManager.fromUrl(excluded.getUrl());
         result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleRoots(((ModuleBridge)module).getModuleEntityId(),
                                                                         Collections.singletonList(url)));
+        iterator.remove();
         continue;
       }
 
@@ -87,14 +100,62 @@ class RescannedRootsUtil {
       SyntheticLibraryIteratorBuilder builder = createSyntheticLibraryIterator(librariesDescriptorsAfter, excluded);
       if (builder != null) {
         result.add(builder);
+        iterator.remove();
         continue;
       }
 
-      if (!found) {
-        throw new IllegalStateException("Root " + excluded + " was not found.");
+      if (found) {
+        iterator.remove();
       }
     }
+
+    if (excludedRoots.isEmpty()) {
+      return result;
+    }
+
+    EntityStorage current = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+    for (CustomEntityProjectModelInfoProvider<?> provider : CustomEntityProjectModelInfoProvider.EP.getExtensionList()) {
+      for (LibraryRoots<? extends WorkspaceEntity> roots : getRoots(provider, current)) {
+        Iterator<VirtualFile> rootsIterator = excludedRoots.iterator();
+        while (rootsIterator.hasNext()) {
+          VirtualFile next = rootsIterator.next();
+          if (VfsUtilCore.isUnderFiles(next, roots.sources) || VfsUtilCore.isUnderFiles(next, roots.classes)) {
+            if (!VfsUtilCore.isUnderFiles(next, roots.excluded)) {
+              Collection<? extends IndexableIteratorBuilder> builders = createCustomEntityBuilder(roots.generativeEntity, project);
+              if (!builders.isEmpty()) {
+                result.addAll(builders);
+                rootsIterator.remove();
+              }
+            }
+          }
+        }
+        if (excludedRoots.isEmpty()) {
+          break;
+        }
+      }
+    }
+
+    if (!excludedRoots.isEmpty()) {
+      throw new IllegalStateException("Roots were not found: " + StringUtil.join(excludedRoots, "\n"));
+    }
     return result;
+  }
+
+  @NotNull
+  private static <E extends WorkspaceEntity> Collection<? extends IndexableIteratorBuilder> createCustomEntityBuilder(E entity,
+                                                                                                                      Project project) {
+    for (IndexableEntityProvider<? extends WorkspaceEntity> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
+      if (provider instanceof IndexableEntityProvider.Existing && provider.getEntityClass().equals(entity.getEntityInterface())) {
+        //noinspection unchecked
+        return ((IndexableEntityProvider.Existing<E>)provider).getExistingEntityIteratorBuilder(entity, project);
+      }
+    }
+    return Collections.emptyList();
+  }
+
+  private static <E extends WorkspaceEntity> Iterable<LibraryRoots<E>> getRoots(CustomEntityProjectModelInfoProvider<E> provider,
+                                                                                EntityStorage storage) {
+    return SequencesKt.asIterable(provider.getLibraryRoots(storage.entities(provider.getEntityClass()), storage));
   }
 
   private static SyntheticLibraryIteratorBuilder createSyntheticLibraryIterator(List<? extends SyntheticLibraryDescriptor> librariesDescriptorsAfter,

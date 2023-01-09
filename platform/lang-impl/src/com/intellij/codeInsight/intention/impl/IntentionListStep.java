@@ -225,7 +225,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   @Override
   public Icon getIconFor(IntentionActionWithTextCaching value) {
     Icon icon = getOriginalIconFor(value);
-    if (icon == null) {
+    if (icon == null || icon instanceof EmptyIcon) {
       icon = EmptyIcon.create(myMaxIconSize.width, myMaxIconSize.height);
     }
     return icon;
@@ -281,7 +281,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     for (IntentionActionWithTextCaching action : myCachedIntentions.getAllActions()) {
       if (!action.isShowIcon()) continue;
       Icon icon = myCachedIntentions.getIcon(action);
-      if (icon == null) continue;
+      if (icon == null || icon instanceof EmptyIcon) continue;
       maxWidth = Math.max(maxWidth, icon.getIconWidth());
       maxHeight = Math.max(maxHeight, icon.getIconHeight());
     }

@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.roots.IndexableEntityProvider
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
+import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 /**
  * See recommendations for custom entities indexing
@@ -16,34 +16,52 @@ class KotlinScriptDependencyIndexableEntityProvider : IndexableEntityProvider.Ex
 
     override fun getEntityClass(): Class<KotlinScriptEntity> = KotlinScriptEntity::class.java
 
-    override fun getAddedEntityIteratorBuilders(
-        entity: KotlinScriptEntity,
-        project: Project
-    ): Collection<IndexableEntityProvider.IndexableIteratorBuilder> = buildList {
-        entity.dependencies.forEach {
-            addAll(createIteratorBuildersForDependency(it))
+    override fun getAddedEntityIteratorBuilders(entity: KotlinScriptEntity, project: Project): Collection<IndexableIteratorBuilder> =
+        buildList {
+            fillWithLibsDiff(project, entity)
         }
-    }
 
     override fun getReplacedEntityIteratorBuilders(
         oldEntity: KotlinScriptEntity,
-        newEntity: KotlinScriptEntity
-    ): Collection<IndexableEntityProvider.IndexableIteratorBuilder> {
-        val notYetIndexed = newEntity.dependencies.toSet() - oldEntity.dependencies.toSet()
-        return buildList {
-            notYetIndexed.forEach {
-                addAll(createIteratorBuildersForDependency(it))
-            }
-        }
+        newEntity: KotlinScriptEntity,
+        project: Project
+    ): Collection<IndexableIteratorBuilder> = buildList {
+        fillWithLibsDiff(project, newEntity, oldEntity)
     }
 
     override fun getIteratorBuildersForExistingModule(
         entity: ModuleEntity,
         entityStorage: EntityStorage,
         project: Project
-    ): Collection<IndexableEntityProvider.IndexableIteratorBuilder> = emptyList()
-
-
-    private fun createIteratorBuildersForDependency(dependency: LibraryEntity): Collection<IndexableEntityProvider.IndexableIteratorBuilder> =
-        IndexableIteratorBuilders.forLibraryEntity(dependency.persistentId, true)
+    ): Collection<IndexableIteratorBuilder> = emptyList()
 }
+
+internal data class KotlinScriptLibraryIdIteratorBuilder(val libraryId: KotlinScriptLibraryId) :
+    IndexableIteratorBuilder
+
+private fun MutableList<IndexableIteratorBuilder>.fillWithLibsDiff(
+    project: Project,
+    newEntity: KotlinScriptEntity,
+    oldEntity: KotlinScriptEntity? = null
+) {
+    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+
+    val notYetIndexed = if (oldEntity == null) {
+        newEntity.dependencies.toSet()
+    } else {
+        newEntity.dependencies.toSet() - oldEntity.dependencies.toSet()
+    }
+
+    notYetIndexed.forEach { depId ->
+        storage.resolve(depId)?.let {
+            addAll(createIteratorBuildersForDependency(it))
+        }
+    }
+}
+
+
+private fun createIteratorBuildersForDependency(dependency: KotlinScriptLibraryEntity): Collection<IndexableIteratorBuilder> =
+    forLibraryEntity(dependency.symbolicId)
+
+private fun forLibraryEntity(libraryId: KotlinScriptLibraryId): Collection<IndexableIteratorBuilder> =
+    listOf(KotlinScriptLibraryIdIteratorBuilder(libraryId))

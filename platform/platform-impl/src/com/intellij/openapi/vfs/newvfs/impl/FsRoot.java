@@ -32,7 +32,7 @@ public final class FsRoot extends VirtualDirectoryImpl {
     // assume root has FS-default case-sensitivity
     segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVE, attributes.areChildrenCaseSensitive() == FileAttributes.CaseSensitivity.SENSITIVE);
     segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, true);
-    segment.setFlag(id, VfsDataFlags.IS_OFFLINE, PersistentFS.isOfflineByDefault(ourPersistence.getFileAttributes(id)));
+    segment.setFlag(id, VfsDataFlags.IS_OFFLINE, PersistentFS.isOfflineByDefault(getPersistence().getFileAttributes(id)));
   }
 
   @Override

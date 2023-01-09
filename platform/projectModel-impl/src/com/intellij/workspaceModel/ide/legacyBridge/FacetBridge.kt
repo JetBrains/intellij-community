@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.ide.legacyBridge
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 /**
  * Bridge interface for facet which uses custom module settings entity under the hood
@@ -20,12 +20,12 @@ interface FacetBridge<T: WorkspaceEntity> {
   /**
    * Removes all associated with this bridge entities from the storage
    */
-  fun removeFromStorage(mutableStorage: MutableEntityStorage, moduleEntity: ModuleEntity)
+  fun removeFromStorage(mutableStorage: MutableEntityStorage)
 
   /**
    * Rename entity associated with this bridge
    */
-  fun rename(mutableStorage: MutableEntityStorage, moduleEntity: ModuleEntity, newName: String)
+  fun rename(mutableStorage: MutableEntityStorage, newName: String)
 
   /**
    * Apply changes from the entity which used under the hood into the builder passed as a parameter

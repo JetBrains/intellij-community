@@ -49,7 +49,8 @@ public final class PathUtilEx {
     if (jdks.isEmpty()) {
       return null;
     }
-    jdks.sort(ComparatorUtil.compareBy(jdk -> StringUtil.notNullize(jdk.getVersionString()), String.CASE_INSENSITIVE_ORDER));
-    return jdks.get(jdks.size() - 1);
+    List<Sdk> sorted = ContainerUtil.sorted(jdks, ComparatorUtil.compareBy(jdk -> StringUtil.notNullize(jdk.getVersionString()),
+                                                                           String.CASE_INSENSITIVE_ORDER));
+    return ContainerUtil.getLastItem(sorted);
   }
 }

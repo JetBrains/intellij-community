@@ -141,5 +141,3 @@ fun main() {
     impl.f3()
     impl.f4()
 }
-
-// IGNORE_K2

@@ -178,6 +178,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     checkValueTossedEventually(map);
   }
 
+  @SuppressWarnings("ConstantValue") // Map contract is tested, not implied here
   private void checkClearsEventuallyAfterGCPressure(Map<Object, Object> map, @NotNull Runnable putKey) {
     assertTrue(map.isEmpty());
     assertEquals(0, map.size());
@@ -608,6 +609,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     GCWatcher.fromClearedRef(ref).ensureCollected();
 
     set.add(this);  // to run processQueues();
+    //noinspection ConstantValue -- set contract is tested, not implied here
     assertFalse(set.isEmpty());
     set.remove(this);
 

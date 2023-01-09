@@ -5,6 +5,7 @@ import com.intellij.codeInsight.actions.VcsFacade
 import com.intellij.model.ModelPatch
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.UndoManager
@@ -17,10 +18,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.search.runSearch
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.rename.api.ModifiableRenameUsage
+import com.intellij.refactoring.rename.api.*
 import com.intellij.refactoring.rename.api.ModifiableRenameUsage.*
-import com.intellij.refactoring.rename.api.RenameTarget
-import com.intellij.refactoring.rename.api.RenameUsage
 import com.intellij.refactoring.rename.impl.FileUpdates.Companion.createFileUpdates
 import com.intellij.refactoring.rename.ui.*
 import com.intellij.util.Query
@@ -47,7 +46,7 @@ internal fun showDialogAndRename(project: Project, target: RenameTarget, targetN
     targetName = targetName,
     renameOptions = renameOptions(project, target)
   )
-  val dialog = RenameDialog(project, target.presentation().presentableText, initOptions)
+  val dialog = RenameDialog(project, target.presentation().presentableText, target.validator(), initOptions)
   if (!dialog.showAndGet()) {
     // cancelled
     return
@@ -287,7 +286,7 @@ private suspend fun previewInDialog(project: Project, fileUpdates: FileUpdates):
     override fun getBranchChanges(): Map<VirtualFile, CharSequence> = preview
     override fun applyBranchChanges() = error("not implemented")
   }
-  return withContext(uiDispatcher) {
+  return withContext(Dispatchers.EDT) {
     VcsFacade.getInstance().createPatchPreviewComponent(project, patch)?.let { previewComponent ->
       DialogBuilder(project)
         .title(RefactoringBundle.message("rename.preview.tab.title"))
@@ -322,4 +321,11 @@ fun renameAndWait(project: Project, target: RenameTarget, newName: String) {
     }
   }
   PsiDocumentManager.getInstance(project).commitAllDocuments()
+}
+
+internal object EmptyRenameValidator: RenameValidator {
+  override fun validate(newName: String): RenameValidationResult {
+    return RenameValidationResult.ok()
+  }
+
 }

@@ -23,7 +23,7 @@ class VSXmlParser(settingsFile: File, private val hive: VSHive? = null) {
     const val nameAttr = "name"
     const val versionAttr = "version"
 
-    val logger = logger<VSXmlParser>()
+    private val logger = logger<VSXmlParser>()
   }
 
   private val document: Document

@@ -17,6 +17,10 @@ import training.util.resetPrimaryLanguage
 import javax.swing.JComponent
 
 internal class ChooseProgrammingLanguageForLearningAction(private val learnToolWindow: LearnToolWindow) : ComboBoxAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun createPopupActionGroup(button: JComponent, context: DataContext): DefaultActionGroup {
     val allActionsGroup = DefaultActionGroup()
     val supportedLanguagesExtensions = LangManager.getInstance().supportedLanguagesExtensions.sortedBy { it.language }

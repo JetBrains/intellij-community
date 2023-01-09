@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -17,45 +18,21 @@ import org.jetbrains.intellij.build.io.runProcess
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.nio.file.StandardOpenOption
+import java.nio.file.attribute.FileTime
+import java.util.concurrent.TimeUnit
+import kotlin.io.path.setLastModifiedTime
 import kotlin.time.Duration.Companion.hours
 
-private fun generateInstallationConfigFileForSilentMode(customizer: WindowsDistributionCustomizer, context: BuildContext) {
-  val targetFilePath = context.paths.artifactDir.resolve("silent.config")
-  if (Files.exists(targetFilePath)) {
-    return
-  }
-
-  val customConfigPath = customizer.silentInstallationConfig
-  val silentConfigTemplate = if (customConfigPath != null) {
-    check(Files.exists(customConfigPath)) {
-      "WindowsDistributionCustomizer.silentInstallationConfig points to a file which doesn't exist: $customConfigPath"
+private val isDockerAvailable by lazy {
+    runBlocking {
+      try {
+        runProcess(listOf("docker", "--version"), inheritOut = true)
+        true
+      }
+      catch (e: Exception) {
+        false
+      }
     }
-    customConfigPath
-  }
-  else {
-    context.paths.communityHomeDir.resolve("platform/build-scripts/resources/win/nsis/silent.config")
-  }
-
-  Files.createDirectories(targetFilePath.parent)
-  Files.copy(silentConfigTemplate, targetFilePath, StandardCopyOption.REPLACE_EXISTING)
-
-  val extensionsList = getFileAssociations(customizer)
-  var associations = "\n\n; List of associations. To create an association change value to 1.\n"
-  if (extensionsList.isEmpty()) {
-    associations = "\n\n; There are no associations for the product.\n"
-  }
-  else {
-    associations += extensionsList.joinToString(separator = "") { "$it=0\n" }
-  }
-  Files.writeString(targetFilePath, associations, StandardOpenOption.WRITE, StandardOpenOption.APPEND)
-}
-
-/**
- * Returns list of file extensions with leading dot added
- */
-private fun getFileAssociations(customizer: WindowsDistributionCustomizer): List<String> {
-  return customizer.fileAssociations.map { if (it.startsWith(".")) it else ".$it" }
 }
 
 @Suppress("SpellCheckingInspection")
@@ -63,10 +40,10 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
                                         additionalDirectoryToInclude: Path,
                                         suffix: String,
                                         customizer: WindowsDistributionCustomizer,
-                                        jreDir: Path,
+                                        runtimeDir: Path,
                                         context: BuildContext): Path? {
-  if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
-    Span.current().addEvent("Windows installer can be built only under Windows or Linux")
+  if (SystemInfoRt.isMac && !isDockerAvailable) {
+    Span.current().addEvent("Windows installer cannot be built on macOS without Docker")
     return null
   }
 
@@ -74,15 +51,14 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
   val outFileName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
   Span.current().setAttribute(outFileName, outFileName)
 
-  val box = context.paths.tempDir.resolve("winInstaller${suffix}")
+  val box = context.paths.tempDir.resolve("winInstaller$suffix")
   //noinspection SpellCheckingInspection
   val nsiConfDir = box.resolve("nsiconf")
   withContext(Dispatchers.IO) {
     Files.createDirectories(nsiConfDir)
     copyDir(context.paths.communityHomeDir.resolve("build/conf/nsis"), nsiConfDir)
-    generateInstallationConfigFileForSilentMode(customizer, context)
 
-    if (SystemInfoRt.isLinux) {
+    if (!SystemInfoRt.isWindows) {
       val ideaNsiPath = nsiConfDir.resolve("idea.nsi")
       Files.writeString(ideaNsiPath, BuildUtils.replaceAll(text = Files.readString(ideaNsiPath),
                                                            replacements = mapOf("\${IMAGES_LOCATION}\\" to "\${IMAGES_LOCATION}/"),
@@ -93,14 +69,16 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
     generator.addDirectory(context.paths.distAllDir.toString())
     generator.addDirectory(winDistPath.toString(), listOf("**/idea.properties", "**/*.vmoptions"))
     generator.addDirectory(additionalDirectoryToInclude.toString())
-    generator.addDirectory(jreDir.toString())
+    generator.addDirectory(runtimeDir.toString())
     generator.generateInstallerFile(nsiConfDir.resolve("idea_win.nsh"))
     generator.generateUninstallerFile(nsiConfDir.resolve("unidea_win.nsh"))
 
     prepareConfigurationFiles(nsiConfDir = nsiConfDir, winDistPath = winDistPath, customizer = customizer, context = context)
     for (it in customizer.customNsiConfigurationFiles) {
       val file = Path.of(it)
-      Files.copy(file, nsiConfDir.resolve(file.fileName), StandardCopyOption.REPLACE_EXISTING)
+      val copy = nsiConfDir.resolve(file.fileName)
+      Files.copy(file, copy, StandardCopyOption.REPLACE_EXISTING)
+      copy.setLastModifiedTime(FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
     }
 
     // Log final nsi directory to make debugging easier
@@ -120,34 +98,44 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
       if (SystemInfoRt.isWindows) {
         runProcess(
           args = listOf(
-            "${box}/NSIS/makensis.exe",
+            "$box/NSIS/makensis.exe",
             "/V2",
-            "/DCOMMUNITY_DIR=${communityHome}",
+            "/DCOMMUNITY_DIR=$communityHome",
             "/DIPR=${customizer.associateIpr}",
             "/DOUT_DIR=${context.paths.artifacts}",
-            "/DOUT_FILE=${outFileName}",
-            "${box}/nsiconf/idea.nsi",
+            "/DOUT_FILE=$outFileName",
+            "$box/nsiconf/idea.nsi",
           ),
           workingDir = box,
           timeout = timeout,
         )
       }
       else {
-        val makeNsis = "${box}/NSIS/Bin/makensis${if (JvmArchitecture.currentJvmArch == JvmArchitecture.x64) "" else "-${JvmArchitecture.currentJvmArch.fileSuffix}"}"
+        val makeNsis = "$box/NSIS/Bin/makensis${if (JvmArchitecture.currentJvmArch == JvmArchitecture.x64) "" else "-${JvmArchitecture.currentJvmArch.fileSuffix}"}"
         NioFiles.setExecutable(Path.of(makeNsis))
+        val args = if (SystemInfoRt.isMac) {
+          arrayOf(
+            "docker", "run", "--rm",
+            "--volume=$communityHome:$communityHome:ro",
+            "--volume=${context.paths.buildOutputDir}:${context.paths.buildOutputDir}",
+            "--workdir=$box",
+            "ubuntu:18.04"
+          )
+        }
+        else emptyArray()
         runProcess(
           args = listOf(
-            makeNsis,
+            *args, makeNsis,
             "-V2",
-            "-DCOMMUNITY_DIR=${communityHome}",
+            "-DCOMMUNITY_DIR=$communityHome",
             "-DIPR=${customizer.associateIpr}",
             "-DOUT_DIR=${context.paths.artifacts}",
-            "-DOUT_FILE=${outFileName}",
-            "${box}/nsiconf/idea.nsi",
+            "-DOUT_FILE=$outFileName",
+            "$box/nsiconf/idea.nsi",
           ),
           workingDir = box,
           timeout = timeout,
-          additionalEnvVariables = mapOf("NSISDIR" to "${box}/NSIS"),
+          additionalEnvVariables = mapOf("NSISDIR" to "$box/NSIS"),
         )
       }
     }
@@ -177,8 +165,8 @@ private fun prepareConfigurationFiles(nsiConfDir: Path,
 !define PRODUCT_VM_OPTIONS_FILE "${FileUtilRt.toSystemDependentName("${winDistPath}/bin/")}${'$'}{PRODUCT_VM_OPTIONS_NAME}"
 """)
 
-  val extensionsList = getFileAssociations(customizer)
-  val fileAssociations = if (extensionsList.isEmpty()) "NoAssociation" else extensionsList.joinToString(separator = ",")
+  val fileAssociations = if (customizer.fileAssociations.isEmpty()) "NoAssociation"
+                         else customizer.fileAssociations.joinToString(separator = ",") { if (it.startsWith(".")) it else ".${it}" }
   val appInfo = context.applicationInfo
   Files.writeString(nsiConfDir.resolve("strings.nsi"), """
 !define MANUFACTURER "${appInfo.shortCompanyName}"

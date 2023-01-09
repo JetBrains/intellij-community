@@ -209,4 +209,20 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     result = 31 * result + myPathMappings.hashCode();
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "RemoteSdkPropertiesHolder{" +
+           "mySdkId='" + mySdkId + '\'' +
+           ", myInterpreterPath='" + myInterpreterPath + '\'' +
+           ", myHelpersPath='" + myHelpersPath + '\'' +
+           ", myHelpersDefaultDirName='" + myHelpersDefaultDirName + '\'' +
+           ", myHelpersVersionChecked=" + myHelpersVersionChecked +
+           ", myRemoteRoots=" + myRemoteRoots +
+           ", myInitialized=" + myInitialized +
+           ", myValid=" + myValid +
+           ", myRunAsRootViaSudo=" + myRunAsRootViaSudo +
+           ", myPathMappings=" + myPathMappings +
+           '}';
+  }
 }

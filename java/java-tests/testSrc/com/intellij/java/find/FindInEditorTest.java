@@ -117,6 +117,22 @@ public class FindInEditorTest extends LightJavaCodeInsightTestCase {
     myFindModel.setStringToFind("a");
     checkResults();
   }
+  
+  public void testZeroWidthRegexpAtEndOfFile() {
+    configureFromText("a\nb\nc");
+    initFind();
+    myFindModel.setRegularExpressions(true);
+    myFindModel.setStringToFind("$");
+    checkResults();
+  }
+  
+  public void testSearchAdjacentOccurrences() {
+    configureFromText("testtest");
+    initFind();
+    myFindModel.setRegularExpressions(true);
+    myFindModel.setStringToFind("test");
+    checkResults();
+  }
 
   public void testReplacementWithEmptyString() throws FindManager.MalformedReplacementStringException {
     RegistryValue value = Registry.get("ide.find.show.replacement.hint.for.simple.regexp");

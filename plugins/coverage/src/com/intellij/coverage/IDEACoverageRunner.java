@@ -12,7 +12,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.rt.coverage.instrumentation.SaveHook;
+import com.intellij.rt.coverage.util.CoverageReport;
 import com.intellij.rt.coverage.util.ProjectDataLoader;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 
 public final class IDEACoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance(IDEACoverageRunner.class);
+  private static final String COVERAGE_AGENT_PATH_PROPERTY = "idea.coverage.agent.path";
 
   @Override
   public ProjectData loadCoverageData(@NotNull final File sessionDataFile, @Nullable final CoverageSuite coverageSuite) {
@@ -38,7 +39,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
     File sourceMapFile = new File(JavaCoverageEnabledConfiguration.getSourceMapPath(sessionDataFile.getPath()));
     if (sourceMapFile.exists()) {
       try {
-        SaveHook.loadAndApplySourceMap(projectData, sourceMapFile);
+        CoverageReport.loadAndApplySourceMap(projectData, sourceMapFile);
       }
       catch (IOException e) {
         LOG.warn("Error reading source map associated with coverage data", e);
@@ -51,9 +52,9 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
   public void appendCoverageArgument(String sessionDataFilePath,
                                      String @Nullable [] patterns,
                                      SimpleJavaParameters parameters,
-                                     boolean collectLineInfo,
-                                     boolean isSampling) {
-    appendCoverageArgument(sessionDataFilePath, patterns, null, parameters, collectLineInfo, isSampling, null, null);
+                                     boolean testTracking,
+                                     boolean branchCoverage) {
+    appendCoverageArgument(sessionDataFilePath, patterns, null, parameters, testTracking, branchCoverage, null, null);
   }
 
   @Override
@@ -61,36 +62,45 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                                      final String[] patterns,
                                      final String[] excludePatterns,
                                      final SimpleJavaParameters javaParameters,
-                                     final boolean collectLineInfo,
-                                     final boolean isSampling,
+                                     final boolean testTracking,
+                                     final boolean branchCoverage,
                                      @Nullable String sourceMapPath,
                                      @Nullable final Project project) {
-    String agentPath = handleSpacesInAgentPath(PathUtil.getJarPathForClass(ProjectData.class));
+    final String agentPath = getAgentPath();
     if (agentPath == null) return;
     final String[] excludeAnnotations = getExcludeAnnotations(project);
     List<Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>> targetParameters =
       javaParameters.getTargetDependentParameters().asTargetParameters();
-    targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> createArgumentTargetParameter(agentPath, sessionDataFilePath,
-                                                                                                                                           patterns, excludePatterns, excludeAnnotations,
-                                                                                                                                           collectLineInfo, isSampling, sourceMapPath));
+    targetParameters.add(request -> createArgumentTargetParameter(agentPath, sessionDataFilePath,
+                                                                  patterns, excludePatterns, excludeAnnotations,
+                                                                  testTracking,
+                                                                  branchCoverage, sourceMapPath));
     if (!Registry.is("idea.coverage.thread.safe.enabled")) {
-      targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> JavaTargetParameter.fixed("-Didea.coverage.thread-safe.enabled=false"));
+      targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.coverage.thread-safe.enabled=false"));
     }
-    if (isSampling && Registry.is("idea.coverage.new.sampling.enabled")) {
-      targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> JavaTargetParameter.fixed("-Didea.new.sampling.coverage=true"));
+    if (!branchCoverage && Registry.is("idea.coverage.new.sampling.enabled")) {
+      targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.new.sampling.coverage=true"));
     }
-    if (!isSampling && Registry.is("idea.coverage.new.tracing.enabled")) {
-      targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> JavaTargetParameter.fixed("-Didea.new.tracing.coverage=true"));
-      if (collectLineInfo && !Registry.is("idea.coverage.new.test.tracking.enabled")) {
-        targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> JavaTargetParameter.fixed("-Didea.new.test.tracking.coverage=false"));
+    if (branchCoverage && Registry.is("idea.coverage.new.tracing.enabled")) {
+      targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.new.tracing.coverage=true"));
+      if (testTracking && !Registry.is("idea.coverage.new.test.tracking.enabled")) {
+        targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.new.test.tracking.coverage=false"));
       }
     }
     if (project != null) {
       final JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
       if (optionsProvider.ignoreEmptyPrivateConstructors()) {
-        targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> JavaTargetParameter.fixed("-Dcoverage.ignore.private.constructor.util.class=true"));
+        targetParameters.add(request -> JavaTargetParameter.fixed("-Dcoverage.ignore.private.constructor.util.class=true"));
       }
     }
+  }
+
+  @Nullable
+  private static String getAgentPath() {
+    final String userDefinedAgentPath = System.getProperty(COVERAGE_AGENT_PATH_PROPERTY);
+    final String bundledAgentPath = PathUtil.getJarPathForClass(ProjectData.class);
+    final String agentPath = userDefinedAgentPath != null ? userDefinedAgentPath : bundledAgentPath;
+    return handleSpacesInAgentPath(agentPath);
   }
 
   @Nullable
@@ -99,8 +109,8 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                                                                    String @Nullable [] patterns,
                                                                    String[] excludePatterns,
                                                                    String[] excludeAnnotations,
-                                                                   boolean collectLineInfo,
-                                                                   boolean isSampling,
+                                                                   boolean testTracking,
+                                                                   boolean branchCoverage,
                                                                    String sourceMapPath) {
     try {
       final File tempFile = createTempFile();
@@ -120,7 +130,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                              try {
                                writeOptionsToFile(tempFile, targetSessionDataPath,
                                                   patterns, excludePatterns, excludeAnnotations,
-                                                  collectLineInfo, isSampling, sourceMapPath);
+                                                  testTracking, branchCoverage, sourceMapPath);
                              }
                              catch (IOException e) {
                                throw new RuntimeException(e);
@@ -165,14 +175,14 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                                          String @Nullable [] patterns,
                                          String[] excludePatterns,
                                          String[] excludeAnnotations,
-                                         boolean collectLineInfo,
-                                         boolean isSampling,
+                                         boolean testTracking,
+                                         boolean branchCoverage,
                                          String sourceMapPath) throws IOException {
     write2file(file, sessionDataFilePath);
-    write2file(file, String.valueOf(collectLineInfo));
+    write2file(file, String.valueOf(testTracking));
     write2file(file, Boolean.FALSE.toString()); //append unloaded
-    write2file(file, Boolean.FALSE.toString());//merge with existing
-    write2file(file, String.valueOf(isSampling));
+    write2file(file, String.valueOf(Registry.is("idea.coverage.merge.report"))); //merge with existing
+    write2file(file, String.valueOf(!branchCoverage));
     if (sourceMapPath != null) {
       write2file(file, Boolean.TRUE.toString());
       write2file(file, sourceMapPath);

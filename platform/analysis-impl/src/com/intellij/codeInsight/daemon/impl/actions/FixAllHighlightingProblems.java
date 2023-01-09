@@ -27,10 +27,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class FixAllHighlightingProblems implements IntentionAction {
+class FixAllHighlightingProblems implements IntentionAction {
   private final IntentionActionWithFixAllOption myAction;
 
-  public FixAllHighlightingProblems(IntentionActionWithFixAllOption action) {
+  FixAllHighlightingProblems(@NotNull IntentionActionWithFixAllOption action) {
     myAction = action;
   }
 

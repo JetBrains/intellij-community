@@ -264,6 +264,7 @@ tkinter
 toaiff
 token
 tokenize
+tomllib
 trace
 traceback
 tracemalloc

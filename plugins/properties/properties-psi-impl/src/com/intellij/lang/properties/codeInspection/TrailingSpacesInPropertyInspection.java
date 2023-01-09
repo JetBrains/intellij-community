@@ -6,6 +6,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.IProperty;
@@ -31,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public final class TrailingSpacesInPropertyInspection extends PropertiesInspectionBase {
   public boolean myIgnoreVisibleSpaces;
 
@@ -55,10 +58,10 @@ public final class TrailingSpacesInPropertyInspection extends PropertiesInspecti
     }
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-     return new SingleCheckboxOptionsPanel(PropertiesBundle.message("trailing.spaces.in.property.inspection.ignore.visible.spaces"), this, "myIgnoreVisibleSpaces");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myIgnoreVisibleSpaces", PropertiesBundle.message("trailing.spaces.in.property.inspection.ignore.visible.spaces")));
   }
 
   @Override

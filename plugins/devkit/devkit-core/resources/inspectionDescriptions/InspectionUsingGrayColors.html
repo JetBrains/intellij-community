@@ -1,14 +1,13 @@
 <html>
 <body>
-Reports usages of <code>java.awt.Color</code> or <code>com.intellij.ui.Gray</code> constructor to create gray colors.
+Reports usages of <code>java.awt.Color</code> to create gray colors.
 <p>
-  The <b>Convert to Gray</b> quick fix replaces it using <code>com.intellij.ui.Gray</code> constants instead.
+  The <b>Convert to 'Gray'</b> quick fix replaces it using <code>com.intellij.ui.Gray</code> constants instead.
 </p>
 <p>Examples:</p>
 <pre>
 // bad:
 Color gray = new Color(37, 37, 37);
-Color gray = new Gray(37);
 
 // good:
 Color gray = Gray._37;

@@ -110,11 +110,10 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
   }
 
   private static boolean isResolvedToParameter(PsiElement element) {
-    while (element instanceof PyReferenceExpression) {
-      final PsiReference reference = element.getReference();
-      if (reference != null && reference.resolve() instanceof PyNamedParameter)
+    while (element instanceof PyReferenceExpression ref) {
+      if (ref.getReference().resolve() instanceof PyNamedParameter)
         return true;
-      element = ((PyReferenceExpression)element).getQualifier();
+      element = ref.getQualifier();
     }
     return false;
   }

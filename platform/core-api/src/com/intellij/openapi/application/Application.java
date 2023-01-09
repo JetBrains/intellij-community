@@ -52,13 +52,7 @@ import java.util.concurrent.Future;
  * See also <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>.
  */
 public interface Application extends ComponentManager {
-  /**
-   * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
-   * with {@link ModalityState#defaultModalityState()} modality state.
-   *
-   * @param action the runnable to execute.
-   */
-  @ApiStatus.Experimental
+  @ApiStatus.Obsolete
   void invokeLaterOnWriteThread(@NotNull Runnable action);
 
   /**
@@ -68,7 +62,7 @@ public interface Application extends ComponentManager {
    * @param action the runnable to execute.
    * @param modal  the state in which action will be executed
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Obsolete
   void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal);
 
   /**
@@ -80,7 +74,7 @@ public interface Application extends ComponentManager {
    * @param modal   the state in which action will be executed
    * @param expired condition to check before execution.
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Obsolete
   void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired);
 
   /**
@@ -90,6 +84,7 @@ public interface Application extends ComponentManager {
    * See also {@link ReadAction#run} for a more lambda-friendly version.
    *
    * @param action the action to run.
+   * @see CoroutinesKt#readAction
    */
   void runReadAction(@NotNull Runnable action);
 
@@ -196,7 +191,7 @@ public interface Application extends ComponentManager {
    * Asserts whether the method is being called from under the write-intent lock.
    */
   @ApiStatus.Experimental
-  void assertIsWriteThread();
+  void assertWriteIntentLockAcquired();
 
   /**
    * Adds an {@link ApplicationListener}.
@@ -251,7 +246,7 @@ public interface Application extends ComponentManager {
   /**
    * Checks if the current thread is the event dispatch thread and has IW lock acquired.
    *
-   * @see #isWriteThread()
+   * @see #isWriteIntentLockAcquired()
    * @return {@code true} if the current thread is the Swing dispatch thread with IW lock, {@code false} otherwise.
    */
   @Contract(pure = true)
@@ -264,7 +259,7 @@ public interface Application extends ComponentManager {
    */
   @ApiStatus.Experimental
   @Contract(pure = true)
-  boolean isWriteThread();
+  boolean isWriteIntentLockAcquired();
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
@@ -486,7 +481,16 @@ public interface Application extends ComponentManager {
   boolean isEAP();
 
   @ApiStatus.Internal
-  @ApiStatus.Experimental
+  default void withoutImplicitRead(@NotNull Runnable runnable) {
+    runnable.run();
+  }
+
+  /**
+   * @deprecated this scope will die only with the application => plugin coroutines which use it will leak on unloading.
+   * Instead, use Disposable application service approach described here https://youtrack.jetbrains.com/articles/IDEA-A-237338670
+   */
+  @Deprecated
+  @ApiStatus.Internal
   CoroutineScope getCoroutineScope();
 
   //<editor-fold desc="Deprecated stuff">
@@ -521,5 +525,20 @@ public interface Application extends ComponentManager {
   @Deprecated
   @SuppressWarnings({"override", "DeprecatedIsStillUsed"})
   <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName);
+
+  /** @deprecated bad name, use {@link #isWriteIntentLockAcquired()} instead */
+  @Deprecated
+  @ApiStatus.Experimental
+  @Contract(pure = true)
+  default boolean isWriteThread() {
+    return isWriteIntentLockAcquired();
+  }
+
+  /** @deprecated bad name, use {@link #assertWriteIntentLockAcquired()} instead */
+  @Deprecated
+  @ApiStatus.Experimental
+  default void assertIsWriteThread() {
+    assertWriteIntentLockAcquired();
+  }
   //</editor-fold>
 }

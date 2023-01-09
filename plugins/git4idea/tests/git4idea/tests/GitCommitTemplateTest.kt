@@ -20,7 +20,8 @@ class GitCommitTemplateTest : GitPlatformTest() {
   override fun setUp() {
     super.setUp()
 
-    waitForTemplateTrackerReady()
+    // backgroundPostStartupActivity are not started in unit tests
+    project.service<GitCommitTemplateTracker>().start()
   }
 
   override fun tearDown() {
@@ -208,16 +209,5 @@ class GitCommitTemplateTest : GitPlatformTest() {
   private fun File.refresh() {
     LocalFileSystem.getInstance().refreshIoFiles(setOf(this))
     AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
-  }
-
-  private fun waitForTemplateTrackerReady() {
-    object : WaitFor() {
-      override fun condition(): Boolean = project.service<GitCommitTemplateTracker>().isStarted()
-      override fun assertCompleted(message: String?) {
-        if (!condition()) {
-          fail(message)
-        }
-      }
-    }.assertCompleted("Failed to wait ${this::class.simpleName}")
   }
 }

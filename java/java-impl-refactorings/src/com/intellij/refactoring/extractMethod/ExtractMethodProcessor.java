@@ -2211,7 +2211,7 @@ public class ExtractMethodProcessor implements MatchProvider {
                      .orElse(true);
     }
     return new SignatureSuggesterPreviewDialog(myExtractedMethod, myParametrizedDuplicates.getParametrizedMethod(),
-                                               myMethodCall, myParametrizedDuplicates.getParametrizedCall(),
+                                               myMethodCall, myParametrizedDuplicates.getParametrizedCall(), 0,
                                                myParametrizedDuplicates.getSize()).showAndGet();
   }
 

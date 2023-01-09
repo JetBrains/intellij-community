@@ -68,7 +68,7 @@ fun checkUnresolvedReference(
     }
   }
   UnresolvedReferenceQuickFixProvider.registerReferenceFixes(expression, registrar)
-  QuickFixFactory.getInstance().registerOrderEntryFixes(registrar, expression)
+  QuickFixFactory.getInstance().registerOrderEntryFixes(expression, actions)
   highlightSink.registerProblem(referenceNameElement, LIKE_UNKNOWN_SYMBOL, message("cannot.resolve", referenceName), actions)
 }
 

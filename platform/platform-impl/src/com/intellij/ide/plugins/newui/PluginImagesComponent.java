@@ -16,11 +16,13 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +45,16 @@ import java.util.Objects;
  * @author Alexander Lobas
  */
 public class PluginImagesComponent extends JPanel {
+  private static final Color CURRENT_IMAGE_FILL_COLOR =
+    JBColor.namedColor("Plugins.ScreenshotPagination.CurrentImage.fillColor", new JBColor(0x6C707E, 0xCED0D6));
+
+  private static final int None = -1;
+  private static final int NextImage = -2;
+  private static final int PrevImage = -3;
+  private static final int FullScreen = -4;
+
+  private final Cursor myHandCursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+
   private final Object myLock = new Object();
   private JComponent myParent;
   private final boolean myShowFullContent;
@@ -50,16 +62,21 @@ public class PluginImagesComponent extends JPanel {
   private int myCurrentImage;
   private boolean myHovered;
   private Object myLoadingState;
+  private Object myShowState;
   private JBPopup myFullScreenPopup;
 
-  public PluginImagesComponent(@NotNull JComponent parent) {
-    myParent = parent;
+  public PluginImagesComponent() {
     myShowFullContent = false;
 
-    addMouseListener(new MouseAdapter() {
+    MouseAdapter listener = new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
         handleClick(e);
+      }
+
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        handleMMove(e);
       }
 
       @Override
@@ -73,7 +90,9 @@ public class PluginImagesComponent extends JPanel {
         myHovered = false;
         repaint();
       }
-    });
+    };
+    addMouseListener(listener);
+    addMouseMotionListener(listener);
   }
 
   private PluginImagesComponent(@NotNull List<BufferedImage> images, int currentImage) {
@@ -83,12 +102,23 @@ public class PluginImagesComponent extends JPanel {
     myCurrentImage = currentImage;
     setOpaque(false);
 
-    addMouseListener(new MouseAdapter() {
+    MouseAdapter listener = new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
         handleClick(e);
       }
-    });
+
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        handleMMove(e);
+      }
+    };
+    addMouseListener(listener);
+    addMouseMotionListener(listener);
+  }
+
+  public void setParent(@NotNull JComponent parent) {
+    myParent = parent;
   }
 
   public void show(@NotNull IdeaPluginDescriptor descriptor) {
@@ -97,6 +127,7 @@ public class PluginImagesComponent extends JPanel {
     synchronized (myLock) {
       myImages = null;
       state = myLoadingState = new Object();
+      myShowState = null;
     }
 
     loadImages(descriptor, state);
@@ -109,6 +140,7 @@ public class PluginImagesComponent extends JPanel {
         return;
       }
 
+      myShowState = state;
       myLoadingState = null;
       myImages = images;
       myCurrentImage = 0;
@@ -161,7 +193,14 @@ public class PluginImagesComponent extends JPanel {
             HttpRequests.request(Urls.newFromEncoded(screenShot)).productNameAsUserAgent().saveToFile(imageFile, null);
           }
           try (InputStream stream = new FileInputStream(imageFile)) {
-            images.add(ImageIO.read(stream));
+            BufferedImage image = ImageIO.read(stream);
+            if (image == null) {
+              Logger.getInstance(PluginImagesComponent.class)
+                .info("=== Plugin: " + node.getPluginId() + " screenshot: " + name + " not loaded ===");
+            }
+            else {
+              images.add(image);
+            }
           }
         }
         catch (IOException e) {
@@ -185,20 +224,29 @@ public class PluginImagesComponent extends JPanel {
         isImages = !ContainerUtil.isEmpty(myImages);
       }
       if (isImages) {
-        int fullWidth = parent.getWidth();
-        if (fullWidth > 0) {
-          if (myParent != null) {
-            fullWidth = Math.min(fullWidth, myParent.getWidth());
-          }
-          width = fullWidth;
-          //height = (int)(width / 1.58) + JBUI.scale(28);
-          height = (int)(width / 1.33) + JBUI.scale(28);
-          //height = width / 2 + JBUI.scale(28);
-        }
+        width = getFullWidth();
+        height = (int)(width / 1.58) + JBUI.scale(28);
       }
     }
 
     return new Dimension(width, height);
+  }
+
+  private int getFullWidth() {
+    Container parent = getParent();
+    if (parent != null && myParent != null) {
+      return myParent.getWidth() - parent.getInsets().left;
+    }
+    return getWidth();
+  }
+
+  private void handleMMove(@NotNull MouseEvent e) {
+    int state = handleEvent(e, true);
+    Cursor newCursor = state == None ? null : myHandCursor;
+
+    if (getCursor() != newCursor) {
+      setCursor(newCursor);
+    }
   }
 
   private void handleClick(@NotNull MouseEvent e) {
@@ -206,12 +254,35 @@ public class PluginImagesComponent extends JPanel {
       return;
     }
 
+    int state = handleEvent(e, false);
+    if (state == None) {
+      return;
+    }
+
+    if (state >= 0) {
+      synchronized (myLock) {
+        if (myCurrentImage != state) {
+          myCurrentImage = state;
+          repaint();
+        }
+      }
+    }
+    else if (state == FullScreen) {
+      handleFullScreen();
+    }
+    else {
+      showNextImage(state == PrevImage);
+    }
+  }
+
+  private int handleEvent(@NotNull MouseEvent e, boolean cutFullScreen) {
     Insets insets = getInsets();
     int x = insets.left;
     int y = insets.top;
     int width = getFullWidth() - insets.left - insets.right;
     int height = getHeight() - insets.top - insets.bottom;
     int offset = JBUI.scale(28);
+    int offset2 = offset * 2;
     int actionOffset = JBUI.scale(8);
     int actionSize = getActionSize();
     int leftActionX = x + actionOffset;
@@ -221,43 +292,46 @@ public class PluginImagesComponent extends JPanel {
     int mouseY = e.getY();
 
     if (new Rectangle(leftActionX, actionY, actionSize, actionSize).contains(mouseX, mouseY)) {
-      showNextImage(true);
+      return PrevImage;
     }
-    else if (new Rectangle(rightActionX, actionY, actionSize, actionSize).contains(mouseX, mouseY)) {
-      showNextImage(false);
+    if (new Rectangle(rightActionX, actionY, actionSize, actionSize).contains(mouseX, mouseY)) {
+      return NextImage;
     }
-    else if (new Rectangle(x + offset, y, width - offset, height - offset).contains(mouseX, mouseY)) {
-      handleFullScreen();
-    }
-    else {
-      int count;
-      synchronized (myLock) {
-        if (ContainerUtil.isEmpty(myImages)) {
-          return;
-        }
-        count = myImages.size();
-      }
+    if (new Rectangle(x + offset, y, width - offset2, height - offset).contains(mouseX, mouseY)) {
 
-      int ovalSize = JBUI.scale(myShowFullContent ? 8 : 6);
-      int ovalGap = JBUI.scale(14);
-      int ovalsWidth = count * ovalSize + (count - 1) * ovalGap;
-      int ovalX = x + (width - ovalsWidth) / 2;
-      int ovalY = insets.top + height - (offset + ovalSize) / 2;
-      Rectangle bounds = new Rectangle(ovalX, ovalY, ovalSize, ovalSize);
-
-      for (int i = 0; i < count; i++) {
-        if (bounds.contains(mouseX, mouseY)) {
-          synchronized (myLock) {
-            if (myCurrentImage != i) {
-              myCurrentImage = i;
-              repaint();
-            }
-          }
-          return;
-        }
-        bounds.x += ovalSize + ovalGap;
+      if (cutFullScreen && !new Rectangle(x + offset2, y, width - 2 * offset2, height - offset).contains(mouseX, mouseY)) {
+        return None;
       }
+      return FullScreen;
     }
+
+    int count;
+    synchronized (myLock) {
+      if (ContainerUtil.isEmpty(myImages)) {
+        return None;
+      }
+      count = myImages.size();
+    }
+
+    if (count < 2) {
+      return None;
+    }
+
+    int ovalSize = JBUI.scale(myShowFullContent ? 8 : 6);
+    int ovalGap = JBUI.scale(14);
+    int ovalsWidth = count * ovalSize + (count - 1) * ovalGap;
+    int ovalX = x + (width - ovalsWidth) / 2;
+    int ovalY = insets.top + height - (offset + ovalSize) / 2;
+    Rectangle bounds = new Rectangle(ovalX, ovalY, ovalSize, ovalSize);
+
+    for (int i = 0; i < count; i++) {
+      if (bounds.contains(mouseX, mouseY)) {
+        return i;
+      }
+      bounds.x += ovalSize + ovalGap;
+    }
+
+    return None;
   }
 
   private void handleFullScreen() {
@@ -270,12 +344,14 @@ public class PluginImagesComponent extends JPanel {
 
     List<BufferedImage> images;
     int current;
+    Object showState;
     synchronized (myLock) {
       if (ContainerUtil.isEmpty(myImages)) {
         return;
       }
       images = myImages;
       current = myCurrentImage;
+      showState = myShowState;
     }
 
     PluginImagesComponent component = new PluginImagesComponent(images, current);
@@ -284,6 +360,7 @@ public class PluginImagesComponent extends JPanel {
 
     myFullScreenPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, component).createPopup();
     component.myFullScreenPopup = myFullScreenPopup;
+    component.myShowState = showState;
 
     myFullScreenPopup.addListener(new JBPopupListener() {
       @Override
@@ -297,7 +374,7 @@ public class PluginImagesComponent extends JPanel {
       public void onClosed(@NotNull LightweightWindowEvent event) {
         myFullScreenPopup = null;
         synchronized (myLock) {
-          if (component.myCurrentImage != myCurrentImage) {
+          if (myShowState == component.myShowState && component.myCurrentImage != myCurrentImage) {
             myCurrentImage = component.myCurrentImage;
           }
         }
@@ -385,30 +462,29 @@ public class PluginImagesComponent extends JPanel {
       g.fillRect(x, y, width, height);
     }
 
+    int imageX = insets.left + offset;
+    int imageY = insets.top;
     int imageWidth = image.getWidth();
     int imageHeight = image.getHeight();
+    int paintWidth = width - 2 * offset;
+    int paintHeight = height - offset;
 
-    if (myShowFullContent) {
-      int paintWidth = width - x - 2 * offset;
-      int paintHeight = height - y - offset;
-
-      if (imageWidth <= paintWidth && imageHeight <= paintHeight) {
-        g.drawImage(image, x + offset + (paintWidth - imageWidth) / 2, y + (paintHeight - imageHeight) / 2, null);
-      }
-      else {
-        int newHeight = paintWidth / 2;
-
-        if (newHeight < paintHeight) {
-          int newY = y + (paintHeight - newHeight) / 2;
-          g.drawImage(image, x + offset, newY, x + offset + paintWidth, newY + newHeight, 0, 0, imageWidth, imageHeight, null);
-        }
-        else {
-          g.drawImage(image, x + offset, y, x + offset + paintWidth, y + imageHeight, 0, 0, imageWidth, imageHeight, null);
-        }
-      }
+    if (imageWidth <= paintWidth && imageHeight <= paintHeight) {
+      StartupUiUtil.drawImage(g, image, imageX + (paintWidth - imageWidth) / 2, imageY + (paintHeight - imageHeight) / 2, null);
     }
     else {
-      g.drawImage(image, x + offset, y, width - offset, height - offset, 0, 0, imageWidth, imageHeight, null);
+      int zoomedHeight = imageHeight * paintWidth / imageWidth;
+      int zoomedWidth = imageWidth * paintHeight / imageHeight;
+
+      if (zoomedWidth <= paintWidth) {
+        StartupUiUtil.drawImage(g, image, new Rectangle(imageX + (paintWidth - zoomedWidth) / 2, imageY, zoomedWidth, paintHeight), null);
+      }
+      else if (zoomedHeight <= paintHeight) {
+        StartupUiUtil.drawImage(g, image, new Rectangle(imageX, imageY + (paintHeight - zoomedHeight) / 2, paintWidth, zoomedHeight), null);
+      }
+      else {
+        StartupUiUtil.drawImage(g, image, new Rectangle(imageX, imageY, paintWidth, paintHeight), null);
+      }
     }
 
     Graphics2D g2 = (Graphics2D)g.create();
@@ -418,8 +494,12 @@ public class PluginImagesComponent extends JPanel {
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
       if (!myShowFullContent) {
-        g2.setColor(Gray.xD1);
+        g2.setColor(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR);
         g2.draw(new RoundRectangle2D.Float(x, y, width - 1, height - offset, 7, 7));
+      }
+
+      if (count < 2) {
+        return;
       }
 
       int ovalSize = JBUI.scale(myShowFullContent ? 8 : 6);
@@ -430,17 +510,17 @@ public class PluginImagesComponent extends JPanel {
 
       for (int i = 0; i < count; i++) {
         if (i == current) {
-          g2.setColor(Gray.x6E);
+          g2.setColor(CURRENT_IMAGE_FILL_COLOR);
           g2.fillOval(ovalX, ovalY, ovalSize, ovalSize);
         }
         else {
-          g2.setColor(Gray.xD1);
+          g2.setColor(JBUI.CurrentTheme.Button.buttonOutlineColorStart(false));
           g2.drawOval(ovalX, ovalY, ovalSize - 1, ovalSize - 1);
         }
         ovalX += ovalSize + ovalGap;
       }
 
-      if (myHovered && count > 1) {
+      if (myHovered) {
         paintAction(g2, x, y, width, height, offset, true);
         paintAction(g2, x, y, width, height, offset, false);
       }
@@ -448,14 +528,6 @@ public class PluginImagesComponent extends JPanel {
     finally {
       g2.dispose();
     }
-  }
-
-  private int getFullWidth() {
-    int fullWidth = getWidth();
-    if (myParent != null) {
-      fullWidth = Math.min(fullWidth, myParent.getWidth());
-    }
-    return fullWidth;
   }
 
   private void paintAction(Graphics2D g2, int x, int y, int width, int height, int offset, boolean left) {
@@ -466,9 +538,9 @@ public class PluginImagesComponent extends JPanel {
 
     int actionY = y + (height - offset - actionSize) / 2;
 
-    g2.setColor(Gray.xF8);
+    g2.setColor(JBUI.CurrentTheme.Button.buttonColorStart());
     g2.fillOval(actionX, actionY, actionSize, actionSize);
-    g2.setColor(Gray.xD1);
+    g2.setColor(JBUI.CurrentTheme.Button.buttonOutlineColorStart(false));
     g2.drawOval(actionX, actionY, actionSize, actionSize);
 
     Icon icon = left ? AllIcons.Actions.ArrowCollapse : AllIcons.Actions.ArrowExpand;

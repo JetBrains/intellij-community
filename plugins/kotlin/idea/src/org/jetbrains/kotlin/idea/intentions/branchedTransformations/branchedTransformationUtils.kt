@@ -18,16 +18,17 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.isNullable
 
 fun KtWhenCondition.toExpression(subject: KtExpression?, subjectContext: BindingContext? = null): KtExpression {
-    val factory = KtPsiFactory(this)
+    val psiFactory = KtPsiFactory(project)
+    
     return when (this) {
         is KtWhenConditionIsPattern -> {
             val op = if (isNegated) "!is" else "is"
-            factory.createExpressionByPattern("$0 $op $1", subject ?: "_", typeReference ?: "")
+            psiFactory.createExpressionByPattern("$0 $op $1", subject ?: "_", typeReference ?: "")
         }
 
         is KtWhenConditionInRange -> {
             val op = operationReference.text
-            factory.createExpressionByPattern("$0 $op $1", subject ?: "_", rangeExpression ?: "")
+            psiFactory.createExpressionByPattern("$0 $op $1", subject ?: "_", rangeExpression ?: "")
         }
 
         is KtWhenConditionWithExpression -> {
@@ -37,7 +38,7 @@ fun KtWhenCondition.toExpression(subject: KtExpression?, subjectContext: Binding
                 when {
                     expression?.isTrueConstant() == true && !isNullableSubject -> subject
                     expression?.isFalseConstant() == true && !isNullableSubject -> subject.negate()
-                    else -> factory.createExpressionByPattern("$0 == $1", subject, expression ?: "")
+                    else -> psiFactory.createExpressionByPattern("$0 == $1", subject, expression ?: "")
                 }
             } else {
                 expression!!
@@ -115,7 +116,7 @@ fun KtWhenExpression.introduceSubject(checkConstants: Boolean = true): KtWhenExp
 
     val commentSaver = CommentSaver(this, saveLineBreaks = true)
 
-    val whenExpression = KtPsiFactory(this).buildExpression {
+    val whenExpression = KtPsiFactory(project).buildExpression {
         appendFixedText("when(").appendExpression(subject).appendFixedText("){\n")
 
         for (entry in entries) {

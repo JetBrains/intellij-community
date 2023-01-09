@@ -15,3 +15,4 @@ fun test() {
     c()
     c.invoke()
 }
+// FIR_COMPARISON

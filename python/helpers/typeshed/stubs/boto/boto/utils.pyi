@@ -1,41 +1,22 @@
 import datetime
+import io
 import logging.handlers
 import subprocess
-import sys
 import time
-from typing import IO, Any, Callable, ContextManager, Iterable, Mapping, Sequence, TypeVar
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from contextlib import AbstractContextManager
+from email.message import Message
+from hashlib import _Hash
+from typing import IO, Any, TypeVar
+from typing_extensions import TypeAlias
 
 import boto.connection
 
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")
 
-if sys.version_info >= (3,):
-    # TODO move _StringIO definition into boto.compat once stubs exist and rename to StringIO
-    import io
-
-    _StringIO = io.StringIO
-
-    from hashlib import _Hash
-
-    _HashType = _Hash
-
-    from email.message import Message as _Message
-else:
-    # TODO move _StringIO definition into boto.compat once stubs exist and rename to StringIO
-    import StringIO
-
-    _StringIO = StringIO.StringIO[Any]
-
-    from hashlib import _hash
-
-    _HashType = _hash
-
-    # TODO use email.message.Message once stubs exist
-    _Message = Any
-
-_Provider = Any  # TODO replace this with boto.provider.Provider once stubs exist
-_LockType = Any  # TODO replace this with _thread.LockType once stubs exist
+_Provider: TypeAlias = Any  # TODO replace this with boto.provider.Provider once stubs exist
+_LockType: TypeAlias = Any  # TODO replace this with _thread.LockType once stubs exist
 
 JSONDecodeError: type[ValueError]
 qsa_of_interest: list[str]
@@ -68,7 +49,7 @@ ISO8601_MS: str
 RFC1123: str
 LOCALE_LOCK: _LockType
 
-def setlocale(name: str | tuple[str, str]) -> ContextManager[str]: ...
+def setlocale(name: str | tuple[str, str]) -> AbstractContextManager[str]: ...
 def get_ts(ts: time.struct_time | None = ...) -> str: ...
 def parse_ts(ts: str) -> datetime.datetime: ...
 def find_class(module_name: str, class_name: str | None = ...) -> type[Any] | None: ...
@@ -80,7 +61,7 @@ def fetch_file(
 class ShellCommand:
     exit_code: int
     command: subprocess._CMD
-    log_fp: _StringIO
+    log_fp: io.StringIO
     wait: bool
     fail_fast: bool
     def __init__(
@@ -115,12 +96,12 @@ class LRUCache(dict[_KT, _VT]):
     def __init__(self, capacity: int) -> None: ...
 
 # This exists to work around Password.str's name shadowing the str type
-_str = str
+_str: TypeAlias = str
 
 class Password:
-    hashfunc: Callable[[bytes], _HashType]
+    hashfunc: Callable[[bytes], _Hash]
     str: _str | None
-    def __init__(self, str: _str | None = ..., hashfunc: Callable[[bytes], _HashType] | None = ...) -> None: ...
+    def __init__(self, str: _str | None = ..., hashfunc: Callable[[bytes], _Hash] | None = ...) -> None: ...
     def set(self, value: bytes | _str) -> None: ...
     def __eq__(self, other: _str | bytes | None) -> bool: ...  # type: ignore[override]
     def __len__(self) -> int: ...
@@ -130,7 +111,7 @@ def notify(
     body: str | None = ...,
     html_body: Sequence[str] | str | None = ...,
     to_string: str | None = ...,
-    attachments: Iterable[_Message] | None = ...,
+    attachments: Iterable[Message] | None = ...,
     append_instance_id: bool = ...,
 ) -> None: ...
 def get_utf8_value(value: str) -> bytes: ...

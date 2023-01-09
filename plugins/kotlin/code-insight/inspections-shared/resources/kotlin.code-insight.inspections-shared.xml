@@ -20,6 +20,14 @@
                      cleanupTool="true"
                      key="inspection.sort.modifiers.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AmbiguousNonLocalJumpInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="ambiguous.non.local.break.or.continue.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.DataClassPrivateConstructorInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
@@ -164,6 +172,26 @@
             level="WEAK WARNING"
             language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
             key="inspection.remove.empty.parentheses.from.lambda.call.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RedundantConstructorKeywordInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+            enabledByDefault="true"
+            cleanupTool="true"
+            level="WEAK WARNING"
+            language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+            key="redundant.constructor.keyword" bundle="messages.KotlinBundle"/>
+
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.inspections.EnumValuesSoftDeprecateInJavaInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
+            enabledByDefault="false"
+            cleanupTool="false"
+            level="WARNING"
+            language="JAVA"
+            key="inspection.enum.values.method.soft.deprecate.in.java.display.name" bundle="messages.KotlinBundle"/>
 
   </extensions>
 </idea-plugin>

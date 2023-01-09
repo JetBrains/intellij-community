@@ -68,7 +68,7 @@ class DeferredIconRepaintScheduler {
     return c
   }
 
-  class RepaintRequest(
+  data class RepaintRequest(
     val component: Component?,
     val x: Int,
     val y: Int,

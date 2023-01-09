@@ -11,6 +11,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value;
 import com.intellij.openapi.vcs.VcsVFSListener;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -190,10 +191,16 @@ public final class GitVFSListener extends VcsVFSListener {
       selectedToAdd = selectFilePathsToAdd(toAdd);
       selectedToRemove = selectFilePathsToDelete(toRemove);
     }
+    else if (Value.DO_NOTHING_SILENTLY.equals(myRemoveOption.getValue()) &&
+             Value.DO_NOTHING_SILENTLY.equals(myAddOption.getValue())) {
+      selectedToAdd = Collections.emptyList();
+      selectedToRemove = Collections.emptyList();
+    }
     else {
       selectedToAdd = toAdd;
       selectedToRemove = toRemove;
     }
+    if (toAdd.isEmpty() && toRemove.isEmpty() && toForceMove.isEmpty()) return;
 
     LOG.debug("performMoveRename. \ntoAdd: " + toAdd + "\ntoRemove: " + toRemove + "\ntoForceMove: " + toForceMove);
     GitVcs.runInBackground(new Task.Backgroundable(myProject, message("progress.title.moving.files")) {
@@ -291,8 +298,13 @@ public final class GitVFSListener extends VcsVFSListener {
     if (isStageEnabled()) {
       return super.selectFilePathsToDelete(deletedFiles);
     }
-    // For git asking about vcs delete does not make much sense. The result is practically identical.
-    return deletedFiles;
+    if (Value.DO_NOTHING_SILENTLY.equals(myRemoveOption.getValue())) {
+      return Collections.emptyList();
+    }
+    else {
+      // For git asking about vcs delete does not make much sense. The result is practically identical. Remove silently.
+      return deletedFiles;
+    }
   }
 
   private void performBackgroundOperation(@NotNull Collection<? extends FilePath> files,

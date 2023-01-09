@@ -78,6 +78,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
    * @return new content entry
    */
   ContentEntry addContentEntry(@NotNull String url, @NotNull ProjectModelExternalSource externalSource);
+  ContentEntry addContentEntry(@NotNull String url, boolean useSourceOfModule);
 
   /**
    * Remove the specified content root.

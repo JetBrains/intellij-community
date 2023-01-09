@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-final class ShowDiffFromAnnotation extends DumbAwareAction {
+public final class ShowDiffFromAnnotation extends DumbAwareAction {
   private final @NotNull Project myProject;
   private final FileAnnotation myFileAnnotation;
   private final RevisionChangesProvider myChangesProvider;

@@ -9,14 +9,17 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.io.createDirectories
+import com.intellij.util.io.readText
+import com.intellij.util.io.write
 import org.junit.After
-import org.junit.Assert
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.RuleChain
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.exists
 
 internal val TIMEOUT_UNIT = TimeUnit.SECONDS
 
@@ -62,7 +65,7 @@ internal abstract class SettingsSyncTestBase {
     val serverState = remoteCommunicator.checkServerState()
     if (serverState != ServerState.FileNotExists) {
       LOG.warn("Server state: $serverState")
-      remoteCommunicator.delete()
+      remoteCommunicator.deleteAllFiles()
     }
   }
 
@@ -72,7 +75,7 @@ internal abstract class SettingsSyncTestBase {
       bridge.waitForAllExecuted()
     }
 
-    remoteCommunicator.delete()
+    remoteCommunicator.deleteAllFiles()
   }
 
   protected fun assertSettingsPushed(build: SettingsSnapshotBuilder.() -> Unit) {
@@ -83,9 +86,31 @@ internal abstract class SettingsSyncTestBase {
     }
   }
 
+  protected fun writeToConfig(build: SettingsSnapshotBuilder.() -> Unit) {
+    val builder = SettingsSnapshotBuilder()
+    builder.build()
+    for (file in builder.fileStates) {
+      file as FileState.Modified
+      configDir.resolve(file.file).write(file.content)
+    }
+  }
+
+  protected fun assertFileWithContent(expectedContent: String, file: Path) {
+    assertTrue("File $file does not exist", file.exists())
+    assertEquals("File $file has unexpected content", expectedContent, file.readText())
+  }
+
+  protected fun assertServerSnapshot(build: SettingsSnapshotBuilder.() -> Unit) {
+    val pushedSnapshot = remoteCommunicator.getVersionOnServer()
+    assertNotNull("Nothing has been pushed", pushedSnapshot)
+    pushedSnapshot!!.assertSettingsSnapshot {
+      build()
+    }
+  }
+
   private fun waitForSettingsPush(assertSnapshot: (SettingsSnapshot) -> Unit) {
     val pushedSnap = remoteCommunicator.awaitForPush()
-    Assert.assertNotNull("Changes were not pushed", pushedSnap)
+    assertNotNull("Changes were not pushed", pushedSnap)
     assertSnapshot(pushedSnap!!)
   }
 }

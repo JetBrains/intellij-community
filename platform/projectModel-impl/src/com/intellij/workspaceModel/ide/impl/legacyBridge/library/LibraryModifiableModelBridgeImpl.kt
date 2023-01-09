@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.RootProvider
@@ -13,14 +14,18 @@ import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl.Companion.toLibraryRootType
 import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -34,8 +39,8 @@ internal class LibraryModifiableModelBridgeImpl(
   cacheStorageResult: Boolean = true
 ) : LegacyBridgeModifiableBase(diff, cacheStorageResult), LibraryModifiableModelBridge, RootProvider {
 
-  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(originalLibrary.project)
-  private var entityId = originalLibrarySnapshot.libraryEntity.persistentId
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
+  private var entityId = originalLibrarySnapshot.libraryEntity.symbolicId
   private var reloadKind = false
 
   private val currentLibraryValue = CachedValue { storage ->
@@ -71,7 +76,7 @@ internal class LibraryModifiableModelBridgeImpl(
       error("Library named $name already exists")
     }
 
-    entityId = entity.persistentId.copy(name = name)
+    entityId = entity.symbolicId.copy(name = name)
     diff.modifyEntity(entity) {
       this.name = name
     }
@@ -94,8 +99,14 @@ internal class LibraryModifiableModelBridgeImpl(
         targetBuilder.addDiff(diff)
       }
       else {
-        WorkspaceModel.getInstance(originalLibrary.project).updateProjectModel {
-          it.addDiff(diff)
+        if (originalLibrary.project != null) {
+          WorkspaceModel.getInstance(originalLibrary.project).updateProjectModel("Library model commit") {
+            it.addDiff(diff)
+          }
+        } else {
+          GlobalWorkspaceModel.getInstance().updateModel("Library model commit") {
+            it.addDiff(diff)
+          }
         }
       }
       originalLibrary.entityId = entityId
@@ -114,6 +125,15 @@ internal class LibraryModifiableModelBridgeImpl(
 
   private fun update(updater: LibraryEntity.Builder.() -> Unit) {
     diff.modifyEntity(currentLibrary.libraryEntity, updater)
+  }
+
+  override fun setExternalSource(externalSource: ProjectModelExternalSource) {
+    update {
+      val currentEntitySource = entitySource
+      if (currentEntitySource is JpsFileEntitySource) {
+        entitySource = JpsImportedEntitySource(currentEntitySource, externalSource.id, originalLibrary.project!!.isExternalStorageEnabled)
+      }
+    }
   }
 
   private fun updateProperties(libraryType: String, propertiesXmlTag: String? = null) {

@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.ui.IconReplacer;
+import com.intellij.ui.UpdatableIcon;
 import com.intellij.ui.icons.ReplaceableIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,13 +12,15 @@ import java.awt.*;
 import java.awt.image.RGBImageFilter;
 import java.util.function.Supplier;
 
-class FilteredIcon implements Icon {
+final class FilteredIcon implements ReplaceableIcon {
   private long modificationCount = -1;
 
   private @NotNull final Icon baseIcon;
   private @NotNull final Supplier<? extends RGBImageFilter> filterSupplier;
 
+  // IconLoader.CachedImageIcon uses ScaledIconCache to support several scales simultaneously. Not sure, it is needed here.
   private @Nullable Icon iconToPaint;
+  private double currentScale = 1;
 
   FilteredIcon(@NotNull Icon icon, @NotNull Supplier<? extends RGBImageFilter> filterSupplier) {
     baseIcon = icon;
@@ -26,6 +29,7 @@ class FilteredIcon implements Icon {
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
+    double scale = IconLoader.INSTANCE.getScaleToRenderIcon(baseIcon, c);
     Icon toPaint = iconToPaint;
     if (toPaint == null || modificationCount != -1) {
       long currentModificationCount = calculateModificationCount();
@@ -34,11 +38,23 @@ class FilteredIcon implements Icon {
         toPaint = null;
       }
     }
+    if (scale != currentScale) {
+      toPaint = null;
+    }
     if (toPaint == null) { // try to postpone rendering until it is really needed
-      toPaint = IconLoader.renderFilteredIcon(baseIcon, filterSupplier, c);
+      toPaint = IconLoader.INSTANCE.renderFilteredIcon(baseIcon, scale, filterSupplier, c);
+      currentScale = scale;
       iconToPaint = toPaint;
     }
-    toPaint.paintIcon(c, g, x, y);
+    if (c != null) {
+      new PaintNotifier(c, x, y).replaceIcon(baseIcon);
+    }
+    toPaint.paintIcon(c != null ? c : IconLoaderKt.getFakeComponent(), g, x, y);
+  }
+
+  @Override
+  public @NotNull Icon replaceBy(@NotNull IconReplacer replacer) {
+    return new FilteredIcon(replacer.replaceIcon(baseIcon), filterSupplier);
   }
 
   private long calculateModificationCount() {
@@ -70,6 +86,30 @@ class FilteredIcon implements Icon {
         else {
           modificationCount += withModificationCount.getModificationCount();
         }
+      }
+      if (icon instanceof ReplaceableIcon replaceableIcon) {
+        replaceableIcon.replaceBy(this);
+      }
+      return IconReplacer.super.replaceIcon(icon);
+    }
+  }
+
+  // This replacer play visitor role
+  private static class PaintNotifier implements IconReplacer {
+    final @NotNull Component c;
+    final int x;
+    final int y;
+
+    private PaintNotifier(@NotNull Component c, int x, int y) {
+      this.c = c;
+      this.x = x;
+      this.y = y;
+    }
+
+    @Override
+    public Icon replaceIcon(Icon icon) {
+      if (icon instanceof UpdatableIcon updatableIcon) {
+        updatableIcon.notifyPaint(c, x, y);
       }
       if (icon instanceof ReplaceableIcon replaceableIcon) {
         replaceableIcon.replaceBy(this);

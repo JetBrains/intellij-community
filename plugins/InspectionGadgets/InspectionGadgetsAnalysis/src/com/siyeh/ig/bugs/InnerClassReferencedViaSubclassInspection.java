@@ -41,7 +41,7 @@ public class InnerClassReferencedViaSubclassInspection extends BaseInspection im
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
       final PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement)name.getParent();
       final PsiClass aClass = (PsiClass)reference.resolve();

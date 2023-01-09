@@ -67,6 +67,7 @@ final class JsonPathColorSettingsPage implements ColorSettingsPage {
       $.text[?(@ =~ /9.*9/ && $.enabled == false)]
       $..book[?($.count > @['stats counter'].<functionCall>sum</functionCall>())]
       @.sales[?(@.active == true || $.library != null)]
+      $.store.bicycle[?(@.extra == { 'x': [{}, {'key' : 'value'}] })]
       """;
   }
 

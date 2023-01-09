@@ -1,3 +1,2 @@
 version = "2.27.*"
 requires = ["types-urllib3<1.27"] # keep in sync with requests's setup.py
-python2 = true

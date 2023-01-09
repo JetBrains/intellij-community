@@ -5,13 +5,16 @@ import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.javadoc.DocumentationDelegateProvider
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
 import com.intellij.lang.java.JavaDocumentationProvider
+import com.intellij.openapi.application.ReadAction
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
+import java.util.concurrent.Callable
 
 class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
   fun testConstructorJavadoc() {
@@ -331,7 +334,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
   private fun doTestCtrlHoverDoc(inputFile: String, expectedDoc: String) {
     configure(inputFile.trimIndent())
-    val doc = CtrlMouseHandler.getGoToDeclarationOrUsagesText(myFixture.editor)
+    val doc = ReadAction.nonBlocking (Callable { CtrlMouseHandler.getGoToDeclarationOrUsagesText (myFixture.editor) }).submit(AppExecutorUtil.getAppExecutorService()).get()
     assertEquals(expectedDoc, UIUtil.getHtmlBody(doc!!))
   }
 

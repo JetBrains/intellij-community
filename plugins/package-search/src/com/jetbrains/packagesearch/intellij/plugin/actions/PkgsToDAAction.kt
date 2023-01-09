@@ -48,7 +48,8 @@ internal class PkgsToDAAction : AnAction(
     override fun update(e: AnActionEvent) {
         val data = e.getData(PACKAGES_LIST_PANEL_DATA_KEY)
         with(e.presentation) {
-            val hasData = data != null && data.usageInfo.any { it.projectModule.buildSystemType.dependencyAnalyzerKey != null }
+            val hasData = data != null && data.usagesByModule.values.flatten()
+                .any { it.module.buildSystemType.dependencyAnalyzerKey != null }
             isEnabledAndVisible = hasData
             if (hasData) {
                 text = PackageSearchBundle.message(
@@ -65,17 +66,19 @@ internal class PkgsToDAAction : AnAction(
 
     override fun actionPerformed(e: AnActionEvent) {
         val data = e.getData(PACKAGES_LIST_PANEL_DATA_KEY) ?: return
-        val dependencyAnalyzerSupportedUsages = data.usageInfo.filter { it.projectModule.buildSystemType.dependencyAnalyzerKey != null }
+        val allUsages = data.usagesByModule.values.flatten()
+        val dependencyAnalyzerSupportedUsages = allUsages
+            .filter { it.module.buildSystemType.dependencyAnalyzerKey != null }
         if (dependencyAnalyzerSupportedUsages.size > 1) {
             val defaultActionGroup = buildActionGroup {
                 dependencyAnalyzerSupportedUsages.forEach { usage ->
-                    add(usage.projectModule.name) {
+                    add(usage.module.name) {
                         navigateToDA(
                           group = data.groupId,
                           artifact = data.artifactId,
                           version = usage.getDeclaredVersionOrFallback().versionName,
-                          module = usage.projectModule.nativeModule,
-                          systemId = usage.projectModule.buildSystemType.dependencyAnalyzerKey!!
+                          module = usage.module.nativeModule,
+                          systemId = usage.module.buildSystemType.dependencyAnalyzerKey!!
                         )
                     }
                 }
@@ -94,13 +97,13 @@ internal class PkgsToDAAction : AnAction(
 
             e.project?.let { popup.showCenteredInCurrentWindow(it) } ?: popup.showInBestPositionFor(e.dataContext)
         } else {
-            val usage = data.usageInfo.single()
+            val usage = allUsages.single()
             navigateToDA(
               group = data.groupId,
               artifact = data.artifactId,
               version = usage.getDeclaredVersionOrFallback().versionName,
-              module = usage.projectModule.nativeModule,
-              systemId = usage.projectModule.buildSystemType.dependencyAnalyzerKey!!
+              module = usage.module.nativeModule,
+              systemId = usage.module.buildSystemType.dependencyAnalyzerKey!!
             )
         }
     }

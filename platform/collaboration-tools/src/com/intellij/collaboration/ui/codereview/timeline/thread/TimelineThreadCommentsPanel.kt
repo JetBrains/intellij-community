@@ -3,10 +3,10 @@ package com.intellij.collaboration.ui.codereview.timeline.thread
 
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel.Companion.FOLD_THRESHOLD
-import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ClickListener
+import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.MacUIUtil
@@ -27,17 +27,18 @@ import javax.swing.event.ListDataListener
 class TimelineThreadCommentsPanel<T>(
   private val commentsModel: ListModel<T>,
   private val commentComponentFactory: (T) -> JComponent,
-  offset: Int = JBUI.scale(8)
+  offset: Int = JBUI.scale(8),
+  foldButtonOffset: Int = 30
 ) : BorderLayoutPanel() {
   companion object {
     private const val FOLD_THRESHOLD = 3
   }
 
-  private val foldModel = SingleValueModel(true)
+  val foldModel = SingleValueModel(true)
 
   private val unfoldButtonPanel = BorderLayoutPanel().apply {
     isOpaque = false
-    border = JBUI.Borders.emptyLeft(30)
+    border = JBUI.Borders.emptyLeft(foldButtonOffset)
 
     addToLeft(UnfoldButton(foldModel).apply {
       foreground = UIUtil.getLabelForeground()
@@ -87,7 +88,7 @@ class TimelineThreadCommentsPanel<T>(
     })
 
     foldModel.addListener { updateFolding(it) }
-    updateFolding(true)
+    updateFolding(foldModel.value)
   }
 
   private fun updateFolding(folded: Boolean) {
@@ -109,16 +110,16 @@ class TimelineThreadCommentsPanel<T>(
   /**
    * [FoldablePanel] hides [unfoldButton] and allows to use this panel like it doesn't contain it
    */
-  private class FoldablePanel(private val unfoldButton: JComponent, offset: Int) : JPanel(VerticalLayout(offset)) {
+  private class FoldablePanel(private val unfoldButton: JComponent, offset: Int) : JPanel(ListLayout.vertical(offset)) {
     init {
       isOpaque = false
-      add(unfoldButton, VerticalLayout.FILL_HORIZONTAL)
+      add(unfoldButton)
     }
 
     fun addComponent(component: JComponent, index: Int) {
       remove(unfoldButton)
-      add(component, VerticalLayout.FILL_HORIZONTAL, index)
-      add(unfoldButton, VerticalLayout.FILL_HORIZONTAL, 1)
+      add(component, null, index)
+      add(unfoldButton, null, 1)
     }
 
     fun removeComponent(index: Int) {
@@ -126,7 +127,7 @@ class TimelineThreadCommentsPanel<T>(
       remove(index)
 
       val unfoldButtonIndex = if (components.isEmpty()) 0 else 1
-      add(unfoldButton, VerticalLayout.FILL_HORIZONTAL, unfoldButtonIndex)
+      add(unfoldButton, null, unfoldButtonIndex)
     }
 
     fun getModelComponent(modelIndex: Int): Component =

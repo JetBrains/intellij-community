@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -48,15 +48,13 @@ class TooltipReferencesPanel extends ReferencesPanel {
     super.update();
   }
 
-  @NotNull
   @Override
-  protected Font getLabelsFont() {
+  protected @NotNull Font getLabelsFont() {
     return LabelPainter.getReferenceFont();
   }
 
-  @Nullable
   @Override
-  protected Icon createIcon(@NotNull VcsRefType type, @NotNull Collection<VcsRef> refs, int refIndex, int height) {
+  protected @Nullable Icon createIcon(@NotNull VcsRefType type, @NotNull Collection<VcsRef> refs, int refIndex, int height) {
     if (refIndex == 0) {
       Color color = type.getBackgroundColor();
       return new LabelIcon(this, height, getBackground(),
@@ -70,8 +68,7 @@ class TooltipReferencesPanel extends ReferencesPanel {
     return createEmptyIcon(height);
   }
 
-  @NotNull
-  private static Icon createEmptyIcon(int height) {
+  private static @NotNull Icon createEmptyIcon(int height) {
     return EmptyIcon.create(LabelIcon.getWidth(height, 2), height);
   }
 
@@ -82,9 +79,8 @@ class TooltipReferencesPanel extends ReferencesPanel {
     return label;
   }
 
-  @NotNull
   @Override
-  protected JBLabel createRestLabel(int restSize) {
+  protected @NotNull JBLabel createRestLabel(int restSize) {
     String gray = ColorUtil.toHex(UIManager.getColor("Button.disabledText"));
     String labelText = VcsLogBundle.message("vcs.log.references.more.tooltip", restSize);
     String html = HtmlChunk.text(labelText).wrapWith("font").attr("color", "#" + gray).wrapWith(HtmlChunk.html()).toString();

@@ -17,6 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
@@ -33,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class UnnecessarySuperQualifierInspection extends BaseInspection implements CleanupLocalInspectionTool {
   public boolean ignoreClarification;
 
@@ -44,10 +47,10 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
     );
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.unnecessary.super.qualifier.option"), this, "ignoreClarification");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreClarification", JavaAnalysisBundle.message("inspection.unnecessary.super.qualifier.option")));
   }
 
   @Override
@@ -65,7 +68,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       element.delete();
     }

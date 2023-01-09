@@ -11,6 +11,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
@@ -275,7 +276,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         settings.setAutoReparseDelay(0);
         List<HighlightInfo> infos = new ArrayList<>();
         EdtTestUtil.runInEdtAndWait(() -> {
-          codeAnalyzer.runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), toIgnore, canChangeDocument, null);
+          codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, toIgnore, canChangeDocument, null);
           IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
           if (policy != null) {
             policy.waitForHighlighting(project, editor);
@@ -651,7 +652,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (filePaths.length > 0) {
       configureByFilesInner(filePaths);
     }
-    return getFile().findReferenceAt(myEditor.getCaretModel().getOffset());
+    return ReadAction.compute(() -> getFile().findReferenceAt(myEditor.getCaretModel().getOffset()));
   }
 
   @Override
@@ -947,7 +948,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @Override
   public Presentation testAction(@NotNull AnAction action) {
-    TestActionEvent e = new TestActionEvent(action);
+    AnActionEvent e = TestActionEvent.createTestEvent(action);
     if (ActionUtil.lastUpdateAndCheckDumb(action, e, true)) {
       ActionUtil.performActionDumbAwareWithCallbacks(action, e);
     }
@@ -1642,8 +1643,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public long collectAndCheckHighlighting(@NotNull ExpectedHighlightingData data) {
     Project project = getProject();
     EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
-
     PsiFileImpl file = (PsiFileImpl)getHostFile();
+    if (!ReadAction.compute(() -> ProblemHighlightFilter.shouldHighlightFile(file))) {
+      boolean inSource = ReadAction.compute(() -> ProjectRootManager.getInstance(project).getFileIndex().isInSource(myFile));
+      throw new IllegalStateException("ProblemHighlightFilter.shouldHighlightFile('" + myFile + "') == false, so can't highlight it." +
+                                      (inSource ? "" : " Maybe it's because the file is outside source folders? (source folders: " +
+                                      ReadAction.compute(() -> Arrays.toString(ProjectRootManager.getInstance(project).getContentSourceRoots()))+")"));
+    }
     FileElement hardRefToFileElement = file.calcTreeElement();//to load text
 
     // to load AST for changed files before it's prohibited by "fileTreeAccessFilter"
@@ -1855,13 +1861,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                                @NotNull Collection<? extends T> segments,
                                                                @NotNull String tagName,
                                                                @Nullable Function<? super T, String> attrCalculator) {
-    List<Border> borders = new LinkedList<>();
-    for (T region : segments) {
-      String attr = attrCalculator == null ? null : attrCalculator.fun(region);
-      borders.add(new CodeInsightTestFixtureImpl.Border(true, region.getStartOffset(), attr));
-      borders.add(new CodeInsightTestFixtureImpl.Border(false, region.getEndOffset(), ""));
-    }
-    Collections.sort(borders);
+    List<Border> borders =
+    segments.stream()
+        .flatMap(region -> Stream.of(
+          new CodeInsightTestFixtureImpl.Border(true, region.getStartOffset(), attrCalculator == null ? null : attrCalculator.fun(region)),
+          new CodeInsightTestFixtureImpl.Border(false, region.getEndOffset(), "")))
+      .sorted()
+      .toList();
 
     StringBuilder result = new StringBuilder(text);
     for (CodeInsightTestFixtureImpl.Border border : borders) {

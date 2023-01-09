@@ -10,9 +10,13 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable
  * Represents an entity used to send progress updates to.
  * The client code is not supposed to read the progress updates, thus there are no getters.
  * It's up to implementors of this interface to decide what to do with these updates.
+ *
+ * @see ProgressReporter
+ * @see RawProgressReporter
  */
 @Experimental
 @NonExtendable
+@Deprecated(message = "Migrate to `ProgressReporter`")
 interface ProgressSink {
 
   /**

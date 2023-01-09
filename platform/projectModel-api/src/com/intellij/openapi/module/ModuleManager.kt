@@ -155,18 +155,22 @@ abstract class ModuleManager : SimpleModificationTracker() {
   abstract fun getModifiableModel(): ModifiableModuleModel
 
   /**
-   * Returns the path to the group to which the specified module belongs, as an array of group names starting from the project root.
+   * Returns the path to the group to which was explicitly set for the specified module, as an array of group names starting from the project root.
    *
-   *
-   * **Use [ModuleGrouper.getGroupPath] instead.** Explicit module groups will be replaced
-   * by automatic module grouping accordingly to qualified names of modules, see [IDEA-166061](https://youtrack.jetbrains.com/issue/IDEA-166061) for details.
-   *
-   * @param module the module for which the path is requested.
+   * **Use [ModuleGrouper.getGroupPath] instead.** Explicit module groups are replaced by automatic module grouping accordingly to qualified 
+   * names of modules, see [IDEA-166061](https://youtrack.jetbrains.com/issue/IDEA-166061) for details.
+   * 
    * @return the path to the group for the module, or null if the module does not belong to any group.
    */
-  abstract fun getModuleGroupPath(module: Module): Array<String>?
+  @ApiStatus.Internal
+  open fun getModuleGroupPath(module: Module): Array<String>? = null
 
-  abstract fun hasModuleGroups(): Boolean
+  /**
+   * Returns `true` if at least one of the modules has an explicitly specified module group. Note that explicit module groups are replaced
+   * by automatic grouping, so this method is left for compatibility with some old projects only.
+   */
+  @ApiStatus.Internal
+  open fun hasModuleGroups(): Boolean = false
 
   /**
    * @return description of all modules in the project including unloaded

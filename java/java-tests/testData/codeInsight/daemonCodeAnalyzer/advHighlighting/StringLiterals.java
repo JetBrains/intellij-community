@@ -48,12 +48,12 @@ public class a {
   String perverts2 = "<error descr="Illegal Unicode escape sequence">\uuuuuuuuuuuu123</error>";
   char perv2 = '\uu3264';
 
-  String backSlash1 = <error descr="Illegal line end in string literal">"\u005c";</error><EOLError descr="';' expected"></EOLError>
+  String backSlash1 = <error descr="Illegal line end in string literal">"\u005c";</error>
   String backSlash2 = "\u005c\";
   String backSlash3 = "\\u005c";
   String backSlash4 = "\u005c\u005c";
   String backSlash5 = "\u005c134";
-  String backSlash6 = <error descr="Illegal line end in string literal">"\134\u005c";</error><EOLError descr="';' expected"></EOLError>
+  String backSlash6 = <error descr="Illegal line end in string literal">"\134\u005c";</error>
   String backSlash7 = "\u005c\134";
   String backSlash8 = "\u005c\u0022";
   char backSlash9 = '\u005c\u0027';

@@ -1,5 +1,6 @@
 from _typeshed import Self
-from typing import IO, Any, Iterable, Pattern
+from collections.abc import Iterable
+from typing import IO, Any, Pattern
 
 from paramiko.ssh_exception import ConfigParseError as ConfigParseError, CouldNotCanonicalize as CouldNotCanonicalize
 

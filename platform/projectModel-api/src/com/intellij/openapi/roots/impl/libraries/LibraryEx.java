@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
@@ -78,6 +79,13 @@ public interface LibraryEx extends Library {
     void setKind(@NotNull PersistentLibraryKind<?> type);
 
     PersistentLibraryKind<?> getKind();
+
+    /**
+     * It's supposed that the external source is set when the library is created. This method is used internally to fix the project 
+     * configuration if this information was lost.
+     */
+    @ApiStatus.Internal
+    void setExternalSource(@NotNull ProjectModelExternalSource externalSource);
 
     /**
      * Removes custom library kind and associated properties if any

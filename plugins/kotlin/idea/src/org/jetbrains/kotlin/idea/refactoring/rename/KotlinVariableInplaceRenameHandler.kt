@@ -13,22 +13,13 @@ import org.jetbrains.kotlin.psi.*
 open class KotlinVariableInplaceRenameHandler : VariableInplaceRenameHandler() {
     companion object {
         fun isInplaceRenameAvailable(element: PsiElement): Boolean {
-            when (element) {
-                is KtTypeParameter -> return true
-                is KtDestructuringDeclarationEntry -> return true
-                is KtParameter -> {
-                    val parent = element.parent
-                    if (parent is KtForExpression) {
-                        return true
-                    }
-                    if (parent is KtParameterList) {
-                        val grandparent = parent.parent
-                        return grandparent is KtCatchClause || grandparent is KtFunctionLiteral
-                    }
-                }
-                is KtLabeledExpression, is KtImportAlias -> return true
+            return when (element) {
+                is KtTypeParameter -> true
+                is KtDestructuringDeclarationEntry -> true
+                is KtParameter -> element.isLoopParameter || element.isCatchParameter || element.isLambdaParameter
+                is KtLabeledExpression, is KtImportAlias -> true
+                else -> false
             }
-            return false
         }
     }
 

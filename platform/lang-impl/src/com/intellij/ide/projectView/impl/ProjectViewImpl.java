@@ -4,6 +4,7 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.application.options.OptionsApplicabilityFilter;
 import com.intellij.ide.*;
 import com.intellij.ide.bookmark.BookmarksListener;
+import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
@@ -55,6 +56,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.psi.PsiDocumentManager;
@@ -97,7 +99,7 @@ import java.util.function.Function;
 
 import static com.intellij.application.options.OptionId.PROJECT_VIEW_SHOW_VISIBILITY_ICONS;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
-import static com.intellij.ui.treeStructure.Tree.MOUSE_PRESSED_NON_FOCUSED;
+import static com.intellij.ui.treeStructure.Tree.AUTO_SCROLL_FROM_SOURCE_BLOCKED;
 
 @State(name = "ProjectView", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, QuickActionProvider, BusyObject {
@@ -559,6 +561,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       @Override
       protected String getActionDescription() {
         return ActionsBundle.message("action.ProjectView.AutoscrollToSource.description" );
+      }
+
+      @Override
+      protected boolean needToCheckFocus() {
+        AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
+        return currentProjectViewPane == null || !currentProjectViewPane.isAutoScrollEnabledWithoutFocus();
       }
     };
 
@@ -1062,11 +1070,25 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         window.setTitleActions(titleActions);
       }
     }
+
+    List<AnAction> tabActions = new ArrayList<>();
+    createTabActions(tabActions);
+    if (!tabActions.isEmpty()) {
+      ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
+      if (window instanceof ToolWindowEx) {
+        ((ToolWindowEx)window).setTabActions(tabActions.toArray(AnAction[]::new));
+      }
+    }
   }
 
   protected void createTitleActions(@NotNull List<? super AnAction> titleActions) {
     AnAction action = ActionManager.getInstance().getAction("ProjectViewToolbar");
     if (action != null) titleActions.add(action);
+  }
+
+  protected void createTabActions(@NotNull List<? super AnAction> tabActions) {
+    AnAction action = ActionManager.getInstance().getAction("ProjectViewTabToolbar");
+    if (action != null) tabActions.add(action);
   }
 
   protected boolean isShowMembersOptionSupported() {
@@ -1139,9 +1161,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   public ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
     if (isCurrentSelectionObsolete(requestFocus)) return ActionCallback.REJECTED;
     final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-    if (viewPane instanceof AsyncProjectViewPane) {
+    if (viewPane instanceof AbstractProjectViewPaneWithAsyncSupport) {
       myAutoScrollOnFocusEditor.set(!requestFocus);
-      return ((AsyncProjectViewPane)viewPane).selectCB(element, file, requestFocus);
+      return ((AbstractProjectViewPaneWithAsyncSupport)viewPane).selectCB(element, file, requestFocus);
     }
     select(element, file, requestFocus);
     return ActionCallback.DONE;
@@ -1285,7 +1307,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
       Object paneData = selectedPane == null ? null : selectedPane.getData(dataId);
       if (paneData != null) {
-        return paneData;
+        return DataValidators.validOrNull(paneData, dataId, selectedPane);
       }
       if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
         return myCopyPasteDelegator.getCutProvider();
@@ -1463,14 +1485,22 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public boolean isAutoscrollFromSource(String paneId) {
+    return isAutoscrollFromSourceEnabled(paneId) && isAutoscrollFromSourceNotBlocked(paneId);
+  }
+
+  private boolean isAutoscrollFromSourceEnabled(String paneId) {
     if (myProject.isDisposed()) return false;
     if (!myAutoscrollFromSource.isSelected()) return false;
     if (!myAutoscrollFromSource.isEnabled(paneId)) return false;
+    return true;
+  }
+
+  private boolean isAutoscrollFromSourceNotBlocked(String paneId) {
     AbstractProjectViewPane pane = getProjectViewPaneById(paneId);
     if (pane == null) return false;
     JTree tree = pane.getTree();
     if (tree == null || !tree.isShowing()) return false;
-    return !ClientProperty.isTrue(tree, MOUSE_PRESSED_NON_FOCUSED);
+    return !ClientProperty.isTrue(tree, AUTO_SCROLL_FROM_SOURCE_BLOCKED);
   }
 
   public void setAutoscrollFromSource(boolean autoscrollMode, String paneId) {
@@ -1843,7 +1873,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   boolean isSelectOpenedFileEnabled() {
-    return !isAutoscrollFromSource(myCurrentViewId);
+    return !isAutoscrollFromSourceEnabled(myCurrentViewId);
   }
 
   @Nullable Runnable getSelectOpenedFile() {

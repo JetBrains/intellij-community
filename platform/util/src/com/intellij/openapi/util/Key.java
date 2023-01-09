@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -13,8 +13,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Provides type-safe access to data.
- *
- * Implementation note. Please don't create too many instances of this class, because internal maps could overflow.
+ * <p>
+ * Implementation note: Please don't create too many instances of this class, because internal maps could overflow.
  * Instead, store the Key instance in a private static field and use it from outside.
  * For example,
  * <pre>

@@ -39,7 +39,7 @@ class BarChart(_BarChartBase):
         self, gapWidth: int = ..., overlap: Any | None = ..., serLines: Any | None = ..., extLst: Any | None = ..., **kw
     ) -> None: ...
 
-class BarChart3D(_BarChartBase, _3DBase):  # type: ignore  # incompatible base classes
+class BarChart3D(_BarChartBase, _3DBase):
     tagname: str
     barDir: Any
     grouping: Any

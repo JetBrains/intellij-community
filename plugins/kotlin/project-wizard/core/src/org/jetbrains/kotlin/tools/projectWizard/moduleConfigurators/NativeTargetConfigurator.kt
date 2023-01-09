@@ -5,14 +5,19 @@ import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
+import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
+import org.jetbrains.kotlin.tools.projectWizard.core.Writer
+import org.jetbrains.kotlin.tools.projectWizard.core.compute
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.DefaultTargetConfigurationIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.NonDefaultTargetConfigurationIR
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
+import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.GradlePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.*
 import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.GradlePrinter
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
+import java.nio.file.Path
 import java.util.*
 
 interface NativeTargetConfigurator : TargetConfigurator {
@@ -32,7 +37,13 @@ class RealNativeTargetConfigurator private constructor(
 
     override fun createInnerTargetIrs(reader: Reader, module: Module): List<BuildSystemIR> = irsList {
         +super<SimpleTargetConfigurator>.createInnerTargetIrs(reader, module)
-        if (moduleSubType.isIOS && moduleSubType != ModuleSubType.iosCocoaPods) {
+
+        val dependsOnCocoapodsModule: Boolean = module.sourceSets.any { sourceSet ->
+            sourceSet.dependsOnModules.any { module ->
+                module.configurator == configuratorsByModuleType.getValue(ModuleSubType.iosCocoaPods)
+            }
+        }
+        if (moduleSubType.isIOS && moduleSubType != ModuleSubType.iosCocoaPods && !dependsOnCocoapodsModule) {
             "binaries" {
                 "framework"  {
                     "baseName" assign const(module.parent!!.name)

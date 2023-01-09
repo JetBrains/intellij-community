@@ -14,22 +14,24 @@ import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
@@ -48,7 +50,7 @@ internal class ModuleBridgeImpl(
       project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
         override fun beforeChanged(event: VersionedStorageChange) {
           event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
-            if (it.entity.persistentId != moduleEntityId) return@forEach
+            if (it.entity.symbolicId != moduleEntityId) return@forEach
 
             if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
 
@@ -63,6 +65,18 @@ internal class ModuleBridgeImpl(
           }
         }
       })
+    }
+
+    // This is temporary solution and should be removed after full migration to [TestModulePropertiesBridge]
+    val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
+    val corePluginDescriptor = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
+                               ?: error("Core plugin with id: ${PluginManagerCore.CORE_ID} should be available")
+    if (TestModuleProperties.testModulePropertiesBridgeEnabled()) {
+      registerService(TestModuleProperties::class.java, TestModulePropertiesBridge::class.java, corePluginDescriptor, false)
+    } else {
+      val classLoader = javaClass.classLoader
+      val implClass = classLoader.loadClass("com.intellij.openapi.roots.impl.TestModulePropertiesImpl")
+      registerService(TestModuleProperties::class.java, implClass, corePluginDescriptor, false)
     }
   }
 
@@ -114,16 +128,6 @@ internal class ModuleBridgeImpl(
       return
     }
     unregisterComponent(DeprecatedModuleOptionManager::class.java)
-
-    try {
-      //todo improve
-      val classLoader = javaClass.classLoader
-      val apiClass = classLoader.loadClass("com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager")
-      val implClass = classLoader.loadClass("com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge")
-      registerService(serviceInterface = apiClass, implementation = implClass, pluginDescriptor = corePlugin, override = true)
-    }
-    catch (ignored: Throwable) {
-    }
   }
 
   override fun getOptionValue(key: String): String? {
@@ -170,7 +174,7 @@ internal class ModuleBridgeImpl(
       @Suppress("DEPRECATION")
       if (getOptionValue(key) != value) {
         WriteAction.runAndWait<RuntimeException> {
-          WorkspaceModel.getInstance(project).updateProjectModel { builder ->
+          WorkspaceModel.getInstance(project).updateProjectModel("Set option in module entity") { builder ->
             val entity = this.findModuleEntity(builder)
             if (entity != null) {
               updateOptionInEntity(builder, entity)

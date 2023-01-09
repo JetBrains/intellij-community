@@ -115,7 +115,7 @@ public class ImportSpecBuilder {
     mySpec.setProgressExecutionMode(myProgressExecutionMode);
     mySpec.setCreateDirectoriesForEmptyContentRoots(myCreateDirectoriesForEmptyContentRoots);
     mySpec.setPreviewMode(isPreviewMode);
-    mySpec.setReportRefreshError(isReportRefreshError);
+    mySpec.setActivateBuildToolWindowOnFailure(isReportRefreshError);
     mySpec.setNavigateToError(isNavigateToError);
     mySpec.setArguments(myArguments);
     mySpec.setVmOptions(myVmOptions);
@@ -139,7 +139,7 @@ public class ImportSpecBuilder {
     myCreateDirectoriesForEmptyContentRoots = spec.shouldCreateDirectoriesForEmptyContentRoots();
     myCallback = spec.getCallback();
     isPreviewMode = spec.isPreviewMode();
-    isReportRefreshError = spec.isReportRefreshError();
+    isReportRefreshError = spec.isActivateBuildToolWindowOnFailure();
     myArguments = spec.getArguments();
     myVmOptions = spec.getVmOptions();
   }
@@ -164,8 +164,8 @@ public class ImportSpecBuilder {
       PluginFeatureEnabler.getInstance(myProject).scheduleEnableSuggested();
 
       ProjectDataManager.getInstance().importData(externalProject,
-                                                  myProject,
-                                                  synchronous);
+                                                  myProject
+      );
     }
   }
 }

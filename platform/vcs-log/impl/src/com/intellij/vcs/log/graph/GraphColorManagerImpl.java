@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.containers.FixedHashMap;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
@@ -28,13 +14,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Comparator;
 import java.util.Map;
 
-public class GraphColorManagerImpl implements GraphColorManager<Integer> {
-
+public final class GraphColorManagerImpl implements GraphColorManager<Integer> {
   private static final Logger LOG = Logger.getInstance(GraphColorManagerImpl.class);
   static final int DEFAULT_COLOR = 0;
 
-  @NotNull private final HeadsComparator myHeadsComparator;
-  @NotNull private final RefsModel myRefsModel;
+  private final @NotNull HeadsComparator myHeadsComparator;
+  private final @NotNull RefsModel myRefsModel;
 
   public GraphColorManagerImpl(@NotNull RefsModel refsModel,
                                @NotNull Function<Integer, Hash> hashGetter,
@@ -64,17 +49,12 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
     return myHeadsComparator.compare(head1, head2);
   }
 
-  public static class HeadsComparator implements Comparator<Integer> {
-    @NotNull private final RefsModel myRefsModel;
-    @NotNull private final Map<VirtualFile, VcsLogRefManager> myRefManagers;
-    @NotNull private final Function<? super Integer, ? extends Hash> myHashGetter;
+  public static final class HeadsComparator implements Comparator<Integer> {
+    private final @NotNull RefsModel myRefsModel;
+    private final @NotNull Map<VirtualFile, VcsLogRefManager> myRefManagers;
+    private final @NotNull Function<? super Integer, ? extends Hash> myHashGetter;
 
-    @NotNull private final LinkedHashMap<Integer, Integer> myErrorWasReported = new LinkedHashMap<>(10) {
-      @Override
-      protected boolean removeEldestEntry(Map.Entry<Integer, Integer> eldest) {
-        return size() > 100;
-      }
-    };
+    private final @NotNull Map<Integer, Integer> myErrorWasReported = new FixedHashMap<>(100);
 
     public HeadsComparator(@NotNull RefsModel refsModel,
                            @NotNull Map<VirtualFile, VcsLogRefManager> refManagers,

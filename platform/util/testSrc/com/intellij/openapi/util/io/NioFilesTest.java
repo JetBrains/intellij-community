@@ -1,7 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.rules.InMemoryFsRule;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.Rule;
@@ -15,12 +18,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
-import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
+import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class NioFilesTest {
   @Rule public TempDirectory tempDir = new TempDirectory();
@@ -34,18 +35,48 @@ public class NioFilesTest {
 
   @Test
   public void deleteRecursively() throws IOException {
-    Path dir = Files.createDirectory(memoryFs.getFs().getPath("/dir"));
-    Path file1 = Files.createFile(dir.resolve("file1")), file2 = Files.createFile(dir.resolve("file2"));
-    try (Stream<Path> stream = Files.list(dir)) {
-      assertThat(stream).containsExactlyInAnyOrder(file1, file2);
-    }
-
+    var dir = Files.createDirectory(tempDir.getRootPath().resolve("dir"));
+    Files.createFile(dir.resolve("file1"));
+    Files.createFile(dir.resolve("file2"));
+    NioFiles.deleteRecursively(dir.resolve("no_such_file"));
+    assertThat(dir).isDirectory();
     NioFiles.deleteRecursively(dir);
     assertThat(dir).doesNotExist();
 
-    Path nonExisting = memoryFs.getFs().getPath("non-existing");
-    assertThat(nonExisting).doesNotExist();
-    NioFiles.deleteRecursively(nonExisting);
+    var file = Files.createFile(tempDir.getRootPath().resolve("file"));
+    NioFiles.deleteRecursively(file.resolve("no_such_file"));
+    assertThat(file).isRegularFile();
+    NioFiles.deleteRecursively(file);
+    assertThat(file).doesNotExist();
+  }
+
+  @Test
+  public void deleteLinksRecursively() throws IOException {
+    var dir = Files.createDirectory(tempDir.getRootPath().resolve("dir"));
+    var file = Files.createFile(dir.resolve("file"));
+    var subDir = Files.createDirectory(dir.resolve("subDir"));
+    Files.createFile(subDir.resolve("subFile"));
+    var link = Files.createSymbolicLink(tempDir.getRootPath().resolve("link"), dir);
+    NioFiles.deleteRecursively(link.resolve(subDir.getFileName()));
+    assertThat(subDir).doesNotExist();
+    NioFiles.deleteRecursively(link.resolve(file.getFileName()));
+    assertThat(file).doesNotExist();
+    NioFiles.deleteRecursively(link);
+    assertThat(link).doesNotExist();
+    assertThat(dir).isDirectory();
+
+    var anotherFile = Files.createFile(tempDir.getRootPath().resolve("file"));
+    var fileLink = Files.createSymbolicLink(tempDir.getRootPath().resolve("link"), anotherFile);
+    NioFiles.deleteRecursively(fileLink.resolve("no_such_file"));
+    assertThat(fileLink).isSymbolicLink();
+    NioFiles.deleteRecursively(fileLink);
+    assertThat(fileLink).doesNotExist();
+
+    var nonExistingLink = Files.createSymbolicLink(tempDir.getRootPath().resolve("link"), tempDir.getRootPath().resolve("no_such_file"));
+    NioFiles.deleteRecursively(nonExistingLink.resolve("no_such_file"));
+    assertThat(nonExistingLink).isSymbolicLink();
+    NioFiles.deleteRecursively(nonExistingLink);
+    assertThat(nonExistingLink).doesNotExist();
   }
 
   @Test
@@ -161,5 +192,39 @@ public class NioFilesTest {
     assertThat(NioFiles.list(dir)).containsExactlyInAnyOrder(f1, f2);
     assertThat(NioFiles.list(f1)).isEmpty();
     assertThat(NioFiles.list(dir.resolve("missing_file"))).isEmpty();
+  }
+
+  @Test
+  public void circularSymlinkAttributesReading() throws IOException {
+    assumeSymLinkCreationIsSupported();
+    var symlink = tempDir.getRootPath().resolve("symlink");
+    Files.createSymbolicLink(symlink, symlink);
+    assertTrue(NioFiles.readAttributes(symlink).isSymbolicLink());
+    assertSame(FileAttributes.BROKEN_SYMLINK, FileSystemUtil.getAttributes(symlink.toString()));
+  }
+
+  @Test
+  public void wslSymlinkAttributesReading() throws IOException {
+    var distribution = assumeWorkingWslDistribution();
+    var tempDirPrefix = UsefulTestCase.TEMP_DIR_MARKER + "wslSymlinkAttributesReading" + "_";
+    var tempDir = Files.createTempDirectory(Path.of("\\\\wsl$\\" + distribution + "\\tmp"), tempDirPrefix);
+    var tmpPath = "/tmp/" + tempDir.getFileName() + '/';
+    try {
+      var fileLink = tempDir.resolve("fileLink");
+      var dirLink = tempDir.resolve("dirLink");
+      PlatformTestUtil.assertSuccessful(new GeneralCommandLine("wsl", "-d", distribution, "-e", "ln", "-s", "file", tmpPath + fileLink.getFileName()));
+      PlatformTestUtil.assertSuccessful(new GeneralCommandLine("wsl", "-d", distribution, "-e", "ln", "-s", "dir", tmpPath + dirLink.getFileName()));
+      Files.writeString(tempDir.resolve("file"), "...");
+      Files.createDirectories(tempDir.resolve("dir"));
+
+      assertSame(NioFiles.BROKEN_SYMLINK, NioFiles.readAttributes(fileLink));
+      assertSame(NioFiles.BROKEN_SYMLINK, NioFiles.readAttributes(dirLink));
+
+      assertSame(FileAttributes.BROKEN_SYMLINK, FileSystemUtil.getAttributes(fileLink.toString()));
+      assertSame(FileAttributes.BROKEN_SYMLINK, FileSystemUtil.getAttributes(dirLink.toString()));
+    }
+    finally {
+      PlatformTestUtil.assertSuccessful(new GeneralCommandLine("wsl", "-d", distribution, "-e", "rm", "-rf", tmpPath));
+    }
   }
 }

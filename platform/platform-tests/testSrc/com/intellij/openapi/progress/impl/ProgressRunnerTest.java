@@ -52,7 +52,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   public static List<Object[]> dataOnEdt() {
     List<Object[]> result = new ArrayList<>();
     result.add(new Boolean[]{true, false});
-    if (ApplicationImpl.USE_SEPARATE_WRITE_THREAD) {
+    if (ApplicationImpl.IMPLICIT_READ_ON_EDT_DISABLED) {
       result.add(new Boolean[]{true, true});
     }
     result.add(new Boolean[]{false, false});
@@ -79,7 +79,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
 
   @Test
   public void testToWriteThreadWithEmptyIndicatorSync() {
-    TestTask task = new TestTask().withAssertion(() -> ApplicationManager.getApplication().isWriteThread());
+    TestTask task = new TestTask().withAssertion(() -> ApplicationManager.getApplication().isWriteIntentLockAcquired());
     ProgressResult<?> result = computeAssertingExceptionConditionally(
       myOnEdt && myReleaseIWLockOnRun,
       () -> new ProgressRunner<>(task)
@@ -95,7 +95,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
 
   @Test
   public void testToWriteThreadWithProgressWindowSync() {
-    TestTask task = new TestTask().withAssertion(() -> ApplicationManager.getApplication().isWriteThread());
+    TestTask task = new TestTask().withAssertion(() -> ApplicationManager.getApplication().isWriteIntentLockAcquired());
     ProgressResult<?> result = computeAssertingExceptionConditionally(
       myOnEdt && myReleaseIWLockOnRun,
       () -> new ProgressRunner<>(task)
@@ -113,7 +113,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   @Test
   public void testToWriteThreadWithEmptyIndicatorAsync() throws Exception {
     TestTask task = new TestTask()
-      .withAssertion(() -> ApplicationManager.getApplication().isWriteThread())
+      .withAssertion(() -> ApplicationManager.getApplication().isWriteIntentLockAcquired())
       .lock();
     EmptyProgressIndicator progressIndicator = new EmptyProgressIndicator();
     CompletableFuture<ProgressResult<Object>> future = new ProgressRunner<>(task)
@@ -146,8 +146,8 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   public void testToPooledThreadWithEmptyIndicatorSync() {
     // Running sync task on pooled thread from EDT w/o event polling can lead to deadlock if pooled thread will try to invokeAndWait.
     BooleanSupplier assertion = ApplicationManager.getApplication().isDispatchThread()
-                                ? () -> ApplicationManager.getApplication().isWriteThread()
-                                : () -> !ApplicationManager.getApplication().isWriteThread();
+                                ? () -> ApplicationManager.getApplication().isWriteIntentLockAcquired()
+                                : () -> !ApplicationManager.getApplication().isWriteIntentLockAcquired();
     TestTask task = new TestTask().withAssertion(assertion);
     ProgressResult<?> result = computeAssertingExceptionConditionally(
       myOnEdt && myReleaseIWLockOnRun,
@@ -164,7 +164,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
 
   @Test
   public void testToPooledThreadWithProgressWindowSync() {
-    TestTask task = new TestTask().withAssertion(() -> !ApplicationManager.getApplication().isWriteThread());
+    TestTask task = new TestTask().withAssertion(() -> !ApplicationManager.getApplication().isWriteIntentLockAcquired());
     ProgressResult<?> result = computeAssertingExceptionConditionally(
       myOnEdt && myReleaseIWLockOnRun,
       () -> new ProgressRunner<>(task)
@@ -182,7 +182,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   @Test
   public void testToPooledThreadWithEmptyIndicatorAsync() throws Exception {
     TestTask task = new TestTask()
-      .withAssertion(() -> !ApplicationManager.getApplication().isWriteThread())
+      .withAssertion(() -> !ApplicationManager.getApplication().isWriteIntentLockAcquired())
       .lock();
     CompletableFuture<ProgressResult<Object>> future = new ProgressRunner<>(task)
       .onThread(ProgressRunner.ThreadToUse.POOLED)
@@ -202,7 +202,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   @Test
   public void testToPooledThreadWithEmptyIndicatorAsyncWithCancel() throws Exception {
     TestTask task = new TestTask()
-      .withAssertion(() -> !ApplicationManager.getApplication().isWriteThread())
+      .withAssertion(() -> !ApplicationManager.getApplication().isWriteIntentLockAcquired())
       .lock();
     EmptyProgressIndicator progressIndicator = new EmptyProgressIndicator();
 
@@ -226,7 +226,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   @Test
   public void testToPooledThreadWithProgressWindowAsync() throws Exception {
     TestTask task = new TestTask()
-      .withAssertion(() -> !ApplicationManager.getApplication().isWriteThread())
+      .withAssertion(() -> !ApplicationManager.getApplication().isWriteIntentLockAcquired())
       .lock();
     CompletableFuture<ProgressResult<Object>> future = new ProgressRunner<>(task)
       .onThread(ProgressRunner.ThreadToUse.POOLED)
@@ -246,7 +246,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   @Test
   public void testToPooledThreadWithProgressWindowAsyncWithCancel() throws Exception {
     TestTask task = new TestTask()
-      .withAssertion(() -> !ApplicationManager.getApplication().isWriteThread())
+      .withAssertion(() -> !ApplicationManager.getApplication().isWriteIntentLockAcquired())
       .lock();
     CompletableFuture<ProgressWindow> progressIndicator = createProgressWindow();
 
@@ -297,7 +297,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   @Test
   public void testAsyncModalPooledExecution() throws Exception {
     TestTask task = new TestTask()
-      .withAssertion(() -> !ApplicationManager.getApplication().isWriteThread())
+      .withAssertion(() -> !ApplicationManager.getApplication().isWriteIntentLockAcquired())
       .lock();
     CompletableFuture<ProgressWindow> progressIndicator = createProgressWindow();
 
@@ -440,7 +440,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
         return null;
       });
     }
-    else if (ApplicationManager.getApplication().isWriteThread()) {
+    else if (ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
       LaterInvocator.pollWriteThreadEventsOnce();
       ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
         ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance(), ModalityState.any());

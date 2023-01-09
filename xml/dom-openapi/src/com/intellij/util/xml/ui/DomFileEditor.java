@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
@@ -134,28 +133,6 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
     if (checkIsValid()) {
       myComponent.reset();
     }
-  }
-
-  public static DomFileEditor createDomFileEditor(final @Nls String name,
-                                                  @Nullable final Icon icon,
-                                                  final DomElement element,
-                                                  final Factory<? extends CommittablePanel> committablePanel) {
-
-    final XmlFile file = DomUtil.getFile(element);
-    final Factory<BasicDomElementComponent> factory = () -> {
-
-      CaptionComponent captionComponent = new CaptionComponent(name, icon);
-      captionComponent.initErrorPanel(element);
-      BasicDomElementComponent component = createComponentWithCaption(committablePanel.create(), captionComponent, element);
-      Disposer.register(component, captionComponent);
-      return component;
-    };
-    return new DomFileEditor<>(file.getProject(), file.getVirtualFile(), name, factory) {
-      @Override
-      public JComponent getPreferredFocusedComponent() {
-        return null;
-      }
-    };
   }
 
   public static BasicDomElementComponent createComponentWithCaption(final CommittablePanel committablePanel,

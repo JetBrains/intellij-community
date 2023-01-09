@@ -17,9 +17,9 @@ abstract class ClientAwareComponentManager constructor(
   internal val parent: ComponentManagerImpl?,
   setExtensionsRootArea: Boolean = parent == null
 ) : ComponentManagerImpl(parent, setExtensionsRootArea) {
-  override fun <T : Any> getServices(serviceClass: Class<T>, includeLocal: Boolean): List<T> {
+  override fun <T : Any> getServices(serviceClass: Class<T>, clientKind: ClientKind): List<T> {
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
-    return sessionsManager.getSessions(includeLocal).mapNotNull {
+    return sessionsManager.getSessions(clientKind).mapNotNull {
       (it as? ClientSessionImpl)?.doGetService(serviceClass = serviceClass, createIfNeeded = true, fallbackToShared = false)
     }
   }
@@ -43,11 +43,16 @@ abstract class ClientAwareComponentManager constructor(
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   listenerCallbacks: MutableList<in Runnable>?) {
-    super.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
+    super.registerComponents(modules = modules,
+                             app = app,
+                             precomputedExtensionModel = precomputedExtensionModel,
+                             listenerCallbacks = listenerCallbacks)
 
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
-    for (session in sessionsManager.getSessions(true)) {
-      (session as? ClientSessionImpl)?.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
+    for (session in sessionsManager.getSessions(ClientKind.ALL)) {
+      (session as? ClientSessionImpl)?.registerComponents(modules = modules, app = app,
+                                                          precomputedExtensionModel = precomputedExtensionModel,
+                                                          listenerCallbacks = listenerCallbacks)
     }
   }
 
@@ -55,7 +60,7 @@ abstract class ClientAwareComponentManager constructor(
     super.unloadServices(services, pluginId)
 
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
-    for (session in sessionsManager.getSessions(true)) {
+    for (session in sessionsManager.getSessions(ClientKind.ALL)) {
       (session as? ClientSessionImpl)?.unloadServices(services, pluginId)
     }
   }
@@ -65,7 +70,7 @@ abstract class ClientAwareComponentManager constructor(
                                    syncScope: CoroutineScope,
                                    onlyIfAwait: Boolean) {
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
-    for (session in sessionsManager.getSessions(true)) {
+    for (session in sessionsManager.getSessions(ClientKind.ALL)) {
       session as? ClientSessionImpl ?: continue
       session.preloadServices(modules, activityPrefix, syncScope, onlyIfAwait)
     }

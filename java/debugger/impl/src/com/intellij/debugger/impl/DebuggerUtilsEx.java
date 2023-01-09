@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class DebuggerUtilsEx
@@ -238,7 +238,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return filters.toArray(ClassFilter.EMPTY_ARRAY);
   }
 
-  public static void writeFilters(@NotNull Element parentNode, @NonNls String tagName, ClassFilter[] filters) throws WriteExternalException {
+  public static void writeFilters(@NotNull Element parentNode,
+                                  @NonNls String tagName,
+                                  ClassFilter[] filters) throws WriteExternalException {
     for (ClassFilter filter : filters) {
       Element element = new Element(tagName);
       parentNode.addContent(element);
@@ -692,7 +694,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       // From Oracle's forums:
       // This could be a JPDA bug. Unexpected JDWP Error: 32 means that an 'opaque' frame was detected at the lower JPDA levels,
       // typically a native frame.
-      if (e.errorCode() == JvmtiError.OPAQUE_FRAME /*opaque frame JDI bug*/ ) {
+      if (e.errorCode() == JvmtiError.OPAQUE_FRAME /*opaque frame JDI bug*/) {
         return Collections.emptyList();
       }
       else {
@@ -900,7 +902,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
         if (document != null) {
           TextRange lineRange = DocumentUtil.getLineTextRange(document, getLine());
           TextRange res = range.intersection(lineRange);
-          return res.equals(lineRange) ? null : res; // highlight the whole line for multiline lambdas
+          return lineRange.equals(res) ? null : res; // highlight the whole line for multiline lambdas
         }
       }
       return range;

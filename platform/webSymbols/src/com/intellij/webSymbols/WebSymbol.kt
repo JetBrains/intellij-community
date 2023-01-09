@@ -5,69 +5,58 @@ import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.symbol.DocumentationSymbol
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
-import com.intellij.model.presentation.PresentableSymbol
-import com.intellij.model.presentation.SymbolPresentation
 import com.intellij.navigation.NavigatableSymbol
 import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationTargetImpl
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
-import com.intellij.webSymbols.registry.WebSymbolsRegistry
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.utils.matchedNameOrName
+import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.Icon
 
 /*
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
- * DEPRECATION -> @JvmDefault
  **/
-@Suppress("INAPPLICABLE_JVM_NAME", "DEPRECATION")
-interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, DocumentationSymbol, NavigatableSymbol {
+@Suppress("INAPPLICABLE_JVM_NAME")
+interface WebSymbol : WebSymbolsScope, Symbol, DocumentationSymbol, NavigatableSymbol {
 
   val origin: WebSymbolOrigin
 
-  val namespace: SymbolNamespace
+  val namespace: @NlsSafe SymbolNamespace
 
-  val kind: SymbolKind
+  val kind: @NlsSafe SymbolKind
 
-  val matchedName: String
-    get() = ""
+  val name: @NlsSafe String
 
-  override fun getModificationCount(): Long = 0
-
-  override fun createPointer(): Pointer<out WebSymbol>
-
-  val psiContext: PsiElement?
+  val description: @Nls String?
     get() = null
 
-  @get:JvmName("isCompleteMatch")
-  val completeMatch: Boolean
-    get() = true
-
-  val nameSegments: List<WebSymbolNameSegment>
-    get() = listOf(WebSymbolNameSegment(0, matchedName.length, this))
-
-  val contextContainers: Sequence<WebSymbolsContainer>
-    get() = sequenceOf(this)
-
-  @get:NlsSafe
-  val name: String
-    get() = matchedName
-
-  val description: String?
-    get() = null
-
-  val descriptionSections: Map<String, String>
+  val descriptionSections: Map<@Nls String, @Nls String>
     get() = emptyMap()
 
-  val docUrl: String?
+  val docUrl: @NlsSafe String?
     get() = null
 
   val icon: Icon?
+    get() = null
+
+  val defaultValue: @NlsSafe String?
+    get() = null
+
+  val type: Any?
+    get() = null
+
+  @get:JvmName("isRequired")
+  val required: Boolean?
     get() = null
 
   @get:JvmName("isDeprecated")
@@ -77,6 +66,18 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
   @get:JvmName("isExperimental")
   val experimental: Boolean
     get() = false
+
+  val attributeValue: WebSymbolHtmlAttributeValue?
+    get() = null
+
+  val documentation: WebSymbolDocumentation?
+    get() = WebSymbolDocumentation.create(this)
+
+  val pattern: WebSymbolsPattern?
+    get() = null
+
+  val queryScope: List<WebSymbolsScope>
+    get() = listOf(this)
 
   @get:JvmName("isVirtual")
   val virtual: Boolean
@@ -90,46 +91,22 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
   val extension: Boolean
     get() = false
 
-  @get:JvmName("isRequired")
-  val required: Boolean?
-    get() = null
-
-  val defaultValue: String?
-    get() = null
-
   val priority: Priority?
     get() = null
 
   val proximity: Int?
     get() = null
 
-  val type: Any?
-    get() = null
-
-  val attributeValue: WebSymbolHtmlAttributeValue?
-    get() = null
-
-  val pattern: WebSymbolsPattern?
+  val psiContext: PsiElement?
     get() = null
 
   val properties: Map<String, Any>
     get() = emptyMap()
 
-  val documentation: WebSymbolDocumentation?
-    get() = WebSymbolDocumentation.create(this)
-
-  override fun getDocumentationTarget(): DocumentationTarget =
-    WebSymbolDocumentationTargetImpl(this)
-
-  override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
-    emptyList()
-
-  override fun getSymbolPresentation(): SymbolPresentation {
-    @Suppress("HardCodedStringLiteral")
-    val description = if (name.contains(' ')) {
-      "${name} ${matchedName}"
-    }
-    else {
+  @get:RequiresReadLock
+  @get:RequiresBackgroundThread
+  val presentation: TargetPresentation
+    get() {
       // TODO use kind description provider
       val kindName = kind.replace('-', ' ').lowercase(Locale.US).let {
         when {
@@ -139,25 +116,27 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
           else -> it
         }
       }
-      "${namespace} $kindName '$matchedName'"
-    }
-    return SymbolPresentation.create(icon, name, description, description)
-  }
-
-  val presentation: TargetPresentation
-    get() = symbolPresentation.let {
-      TargetPresentation.builder(it.shortDescription)
-        .icon(it.icon)
+      val description = "$namespace $kindName '$matchedNameOrName'"
+      return TargetPresentation.builder(description)
+        .icon(icon)
         .presentation()
     }
+
+  override fun getDocumentationTarget(): DocumentationTarget =
+    WebSymbolDocumentationTargetImpl(this)
+
+  override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
+    emptyList()
+
+  override fun getModificationCount(): Long = 0
+
+  override fun createPointer(): Pointer<out WebSymbol>
 
   fun isEquivalentTo(symbol: Symbol): Boolean =
     this == symbol
 
-  fun adjustNameForRefactoring(registry: WebSymbolsRegistry, newName: String, occurence: String): String =
-    registry.namesProvider.adjustRename(namespace, kind, matchedName, newName, occurence)
-
-  fun validateName(name: String): String? = null
+  fun adjustNameForRefactoring(queryExecutor: WebSymbolsQueryExecutor, newName: String, occurence: String): String =
+    queryExecutor.namesProvider.adjustRename(namespace, kind, name, newName, occurence)
 
   enum class Priority(val value: Double) {
     LOWEST(0.0),

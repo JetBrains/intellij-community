@@ -2,9 +2,11 @@ import sys
 from _typeshed import Self
 from time import struct_time
 from typing import ClassVar, NamedTuple, NoReturn, SupportsAbs, TypeVar, overload
-from typing_extensions import Literal, final
+from typing_extensions import Literal, TypeAlias, final
 
-if sys.version_info >= (3, 9):
+if sys.version_info >= (3, 11):
+    __all__ = ("date", "datetime", "time", "timedelta", "timezone", "tzinfo", "MINYEAR", "MAXYEAR", "UTC")
+elif sys.version_info >= (3, 9):
     __all__ = ("date", "datetime", "time", "timedelta", "timezone", "tzinfo", "MINYEAR", "MAXYEAR")
 
 _D = TypeVar("_D", bound=date)
@@ -19,7 +21,7 @@ class tzinfo:
     def fromutc(self, __dt: datetime) -> datetime: ...
 
 # Alias required to avoid name conflicts with date(time).tzinfo.
-_tzinfo = tzinfo
+_tzinfo: TypeAlias = tzinfo
 
 @final
 class timezone(tzinfo):
@@ -28,6 +30,9 @@ class timezone(tzinfo):
     max: ClassVar[timezone]
     def __init__(self, offset: timedelta, name: str = ...) -> None: ...
     def __hash__(self) -> int: ...
+
+if sys.version_info >= (3, 11):
+    UTC: timezone
 
 if sys.version_info >= (3, 9):
     class _IsoCalendarDate(NamedTuple):
@@ -65,7 +70,7 @@ class date:
     def isoformat(self) -> str: ...
     def timetuple(self) -> struct_time: ...
     def toordinal(self) -> int: ...
-    def replace(self, year: int = ..., month: int = ..., day: int = ...) -> date: ...
+    def replace(self: Self, year: int = ..., month: int = ..., day: int = ...) -> Self: ...
     def __le__(self, __other: date) -> bool: ...
     def __lt__(self, __other: date) -> bool: ...
     def __ge__(self, __other: date) -> bool: ...
@@ -140,7 +145,7 @@ class time:
     def tzname(self) -> str | None: ...
     def dst(self) -> timedelta | None: ...
     def replace(
-        self,
+        self: Self,
         hour: int = ...,
         minute: int = ...,
         second: int = ...,
@@ -148,10 +153,10 @@ class time:
         tzinfo: _tzinfo | None = ...,
         *,
         fold: int = ...,
-    ) -> time: ...
+    ) -> Self: ...
 
-_date = date
-_time = time
+_date: TypeAlias = date
+_time: TypeAlias = time
 
 class timedelta(SupportsAbs[timedelta]):
     min: ClassVar[timedelta]
@@ -261,7 +266,7 @@ class datetime(date):
     def time(self) -> _time: ...
     def timetz(self) -> _time: ...
     def replace(
-        self,
+        self: Self,
         year: int = ...,
         month: int = ...,
         day: int = ...,
@@ -272,7 +277,7 @@ class datetime(date):
         tzinfo: _tzinfo | None = ...,
         *,
         fold: int = ...,
-    ) -> datetime: ...
+    ) -> Self: ...
     if sys.version_info >= (3, 8):
         def astimezone(self: Self, tz: _tzinfo | None = ...) -> Self: ...
     else:

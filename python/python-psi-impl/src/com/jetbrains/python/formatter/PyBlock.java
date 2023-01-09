@@ -355,9 +355,7 @@ public class PyBlock implements ASTBlock {
 
       if (!PyTokenTypes.ALL_BRACES.contains(childType)) {
         childAlignment = getAlignmentForChildren();
-        if (parentType != PyElementTypes.CALL_EXPRESSION) {
-          childIndent = Indent.getNormalIndent();
-        }
+        childIndent = Indent.getNormalIndent();
       }
       else if (childType == PyTokenTypes.RPAR) {
         childIndent = Indent.getNoneIndent();

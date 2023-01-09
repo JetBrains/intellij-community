@@ -2,6 +2,7 @@
 package com.intellij.webSymbols.webTypes.impl
 
 import com.intellij.model.Pointer
+import com.intellij.model.Symbol
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.UserDataHolderEx
@@ -15,43 +16,42 @@ import com.intellij.webSymbols.WebSymbol.Priority
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
-import com.intellij.webSymbols.registry.WebSymbolsCodeCompletionQueryParams
-import com.intellij.webSymbols.registry.WebSymbolsNameMatchQueryParams
-import com.intellij.webSymbols.registry.WebSymbolsRegistry
-import com.intellij.webSymbols.registry.impl.WebSymbolsRegistryImpl.Companion.asSymbolNamespace
+import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
+import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.utils.merge
-import com.intellij.webSymbols.webTypes.WebTypesSymbol
-import com.intellij.webSymbols.webTypes.WebTypesSymbolsContainerBase
 import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
+import com.intellij.webSymbols.webTypes.WebTypesSymbol
+import com.intellij.webSymbols.webTypes.WebTypesSymbolsScopeBase
 import com.intellij.webSymbols.webTypes.json.*
 import javax.swing.Icon
 
 internal abstract class WebTypesJsonContributionWrapper private constructor(protected val contribution: BaseContribution,
                                                                             private val jsonOrigin: WebTypesJsonOrigin,
                                                                             protected val cacheHolder: UserDataHolderEx,
-                                                                            protected val rootContainer: WebTypesSymbolsContainerBase,
+                                                                            protected val rootScope: WebTypesSymbolsScopeBase,
                                                                             val namespace: SymbolNamespace,
                                                                             val kind: String) {
 
 
   companion object {
     fun BaseContribution.wrap(origin: WebTypesJsonOrigin,
-                              rootContainer: WebTypesSymbolsContainerBase,
+                              rootScope: WebTypesSymbolsScopeBase,
                               root: SymbolNamespace,
                               kind: SymbolKind): WebTypesJsonContributionWrapper =
       if (pattern != null) {
-        Pattern(this, origin, UserDataHolderBase(), rootContainer, root, kind)
+        Pattern(this, origin, UserDataHolderBase(), rootScope, root, kind)
       }
       else if ((name != null && name.startsWith(VUE_DIRECTIVE_PREFIX))
                && origin.framework == VUE_FRAMEWORK
                && kind == KIND_HTML_ATTRIBUTES) {
-        LegacyVueDirective(this, origin, UserDataHolderBase(), rootContainer, root)
+        LegacyVueDirective(this, origin, UserDataHolderBase(), rootScope, root)
       }
       else if (name != null && kind == KIND_HTML_VUE_LEGACY_COMPONENTS && this is HtmlElement) {
-        LegacyVueComponent(this, origin, UserDataHolderBase(), rootContainer, root)
+        LegacyVueComponent(this, origin, UserDataHolderBase(), rootScope, root)
       }
       else {
-        Static(this, origin, UserDataHolderBase(), rootContainer, root, kind)
+        Static(this, origin, UserDataHolderBase(), rootScope, root, kind)
       }
   }
 
@@ -65,7 +65,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
 
   val pattern: WebSymbolsPattern?
     get() = jsonPattern?.wrap(contribution.name)
-  open val contributionForRegistryQuery: GenericContributionsHost get() = contribution
+  open val contributionForQuery: GenericContributionsHost get() = contribution
 
   private var exclusiveContributions: Set<Pair<SymbolNamespace, String>>? = null
 
@@ -79,7 +79,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
            if (!path.startsWith('/')) return@mapNotNull null
            val slash = path.indexOf('/', 1)
            if (path.lastIndexOf('/') != slash) return@mapNotNull null
-           val n = path.substring(1, slash).asSymbolNamespace()
+           val n = path.substring(1, slash).asWebTypesSymbolNamespace()
                    ?: return@mapNotNull null
            val k = path.substring(slash + 1, path.length)
            Pair(n, k)
@@ -90,11 +90,11 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
       .takeIf { it.isNotEmpty() }
       ?.contains(Pair(namespace, kind)) == true
 
-  fun withRegistryContext(registry: WebSymbolsRegistry): WebTypesSymbolImpl =
-    WebTypesSymbolImpl(this, registry)
+  fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): WebTypesSymbolImpl =
+    WebTypesSymbolImpl(this, queryExecutor)
 
   internal class WebTypesSymbolImpl(private val base: WebTypesJsonContributionWrapper,
-                                    private val registry: WebSymbolsRegistry)
+                                    private val queryExecutor: WebSymbolsQueryExecutor)
     : WebTypesSymbol {
 
     private var _superContributions: List<WebSymbol>? = null
@@ -103,29 +103,29 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
       get() = _superContributions
               ?: base.contribution.extends
                 .also { _superContributions = emptyList() }
-                ?.resolve(null, listOf(), registry, true, true)
+                ?.resolve(null, listOf(), queryExecutor, true, true)
                 ?.toList()
                 ?.also { contributions -> _superContributions = contributions }
               ?: emptyList()
 
-    override fun getSymbols(namespace: SymbolNamespace?,
+    override fun getSymbols(namespace: SymbolNamespace,
                             kind: String,
                             name: String?,
                             params: WebSymbolsNameMatchQueryParams,
-                            context: Stack<WebSymbolsContainer>): List<WebSymbolsContainer> =
-      base.rootContainer
-        .getSymbols(base.contributionForRegistryQuery, this.namespace, base.jsonOrigin,
-                    namespace, kind, name, params, context)
+                            scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+      base.rootScope
+        .getSymbols(base.contributionForQuery, this.namespace, base.jsonOrigin,
+                    namespace, kind, name, params, scope)
         .toList()
 
-    override fun getCodeCompletions(namespace: SymbolNamespace?,
+    override fun getCodeCompletions(namespace: SymbolNamespace,
                                     kind: String,
                                     name: String?,
                                     params: WebSymbolsCodeCompletionQueryParams,
-                                    context: Stack<WebSymbolsContainer>): List<WebSymbolCodeCompletionItem> =
-      base.rootContainer
-        .getCodeCompletions(base.contributionForRegistryQuery, this.namespace, base.jsonOrigin,
-                            namespace, kind, name, params, context)
+                                    scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
+      base.rootScope
+        .getCodeCompletions(base.contributionForQuery, this.namespace, base.jsonOrigin,
+                            namespace, kind, name, params, scope)
         .toList()
 
     override val kind: SymbolKind
@@ -137,11 +137,8 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
     override val namespace: SymbolNamespace
       get() = base.namespace
 
-    override val nameSegments: List<WebSymbolNameSegment>
-      get() = listOf(WebSymbolNameSegment(0, if (base is Pattern) 0 else matchedName.length, this))
-
     override val name: String
-      get() = base.contributionName
+      get() = if (base is Pattern) base.contributionName else base.name
 
     override val description: String?
       get() = base.contribution.description
@@ -173,9 +170,9 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
       // Should not reach to super contributions, because it can lead to stack overflow
       // when special containers are trying to merge symbols
       get() = base.contribution.source
-                ?.let {
-                  base.jsonOrigin.resolveSourceSymbol(it, base.cacheHolder)
-                }
+        ?.let {
+          base.jsonOrigin.resolveSourceSymbol(it, base.cacheHolder)
+        }
 
     override val attributeValue: WebSymbolHtmlAttributeValue?
       get() = (base.contribution.attributeValue?.let { sequenceOf(HtmlAttributeValueImpl(it)) } ?: emptySequence())
@@ -223,35 +220,36 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
     override val pattern: WebSymbolsPattern?
       get() = base.jsonPattern?.wrap(base.contribution.name)
 
-    override val matchedName: String
-      get() = base.name
-
     override fun createPointer(): Pointer<WebTypesSymbolImpl> {
-      val registry = this.registry.createPointer()
-      val base = this.base.createPointer()
+      val queryExecutorPtr = this.queryExecutor.createPointer()
+      val basePtr = this.base.createPointer()
       return Pointer<WebTypesSymbolImpl> {
-        val newRegistry = registry.dereference() ?: return@Pointer null
-        val newBase = base.dereference() ?: return@Pointer null
-        newBase.withRegistryContext(newRegistry)
+        val queryExecutor = queryExecutorPtr.dereference() ?: return@Pointer null
+        val base = basePtr.dereference() ?: return@Pointer null
+        base.withQueryExecutorContext(queryExecutor)
       }
     }
 
-    override val contextContainers: Sequence<WebSymbolsContainer>
+    override val queryScope: List<WebSymbolsScope>
       get() = superContributions.asSequence()
-        .flatMap { it.contextContainers }
+        .flatMap { it.queryScope }
         .plus(this)
+        .toList()
 
     override val properties: Map<String, Any>
       get() = base.contribution.genericProperties
 
-    override fun isExclusiveFor(namespace: SymbolNamespace?, kind: SymbolKind): Boolean =
-      namespace != null
-      && namespace == this.namespace
+    override fun isExclusiveFor(namespace: SymbolNamespace, kind: SymbolKind): Boolean =
+      namespace == this.namespace
       && (base.isExclusiveFor(namespace, kind)
           || superContributions.any { it.isExclusiveFor(namespace, kind) })
 
     override fun toString(): String =
       base.toString()
+
+    override fun isEquivalentTo(symbol: Symbol): Boolean =
+      (symbol is WebTypesSymbolImpl && symbol.base == this.base)
+      || super.isEquivalentTo(symbol)
 
     private inner class HtmlAttributeValueImpl(private val value: HtmlAttributeValue) : WebSymbolHtmlAttributeValue {
       override val kind: WebSymbolHtmlAttributeValue.Kind?
@@ -278,9 +276,9 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
   private class Static(contribution: BaseContribution,
                        context: WebTypesJsonOrigin,
                        cacheHolder: UserDataHolderEx,
-                       rootContainer: WebTypesSymbolsContainerBase,
+                       rootScope: WebTypesSymbolsScopeBase,
                        namespace: SymbolNamespace,
-                       kind: String) : WebTypesJsonContributionWrapper(contribution, context, cacheHolder, rootContainer, namespace, kind) {
+                       kind: String) : WebTypesJsonContributionWrapper(contribution, context, cacheHolder, rootScope, namespace, kind) {
 
     override val name: String
       get() = contribution.name ?: "<no-name>"
@@ -293,7 +291,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
     override fun createPointer(): Pointer<Static> =
       object : WebTypesJsonContributionWrapperPointer<Static>(this) {
         override fun dereference(): Static? =
-          rootContainer.dereference()?.let {
+          rootScope.dereference()?.let {
             Static(contribution, jsonContext, cacheHolder, it, namespace, kind)
           }
 
@@ -304,10 +302,10 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
   private class Pattern(contribution: BaseContribution,
                         context: WebTypesJsonOrigin,
                         cacheHolder: UserDataHolderEx,
-                        rootContainer: WebTypesSymbolsContainerBase,
+                        rootScope: WebTypesSymbolsScopeBase,
                         namespace: SymbolNamespace,
                         kind: String)
-    : WebTypesJsonContributionWrapper(contribution, context, cacheHolder, rootContainer, namespace, kind) {
+    : WebTypesJsonContributionWrapper(contribution, context, cacheHolder, rootScope, namespace, kind) {
 
     override val jsonPattern: NamePatternRoot?
       get() = contribution.pattern
@@ -321,7 +319,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
       object : WebTypesJsonContributionWrapperPointer<Pattern>(this) {
 
         override fun dereference(): Pattern? =
-          rootContainer.dereference()?.let {
+          rootScope.dereference()?.let {
             Pattern(contribution, jsonContext, cacheHolder, it, namespace, kind)
           }
 
@@ -332,9 +330,9 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
   private class LegacyVueDirective(contribution: BaseContribution,
                                    context: WebTypesJsonOrigin,
                                    cacheHolder: UserDataHolderEx,
-                                   rootContainer: WebTypesSymbolsContainerBase,
+                                   rootScope: WebTypesSymbolsScopeBase,
                                    root: SymbolNamespace)
-    : WebTypesJsonContributionWrapper(contribution, context, cacheHolder, rootContainer, root, KIND_HTML_VUE_DIRECTIVES) {
+    : WebTypesJsonContributionWrapper(contribution, context, cacheHolder, rootScope, root, KIND_HTML_VUE_DIRECTIVES) {
 
     override val name: String =
       contribution.name.substring(2)
@@ -351,7 +349,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
       object : WebTypesJsonContributionWrapperPointer<LegacyVueDirective>(this) {
 
         override fun dereference(): LegacyVueDirective? =
-          rootContainer.dereference()?.let {
+          rootScope.dereference()?.let {
             LegacyVueDirective(contribution, jsonContext, cacheHolder, it, namespace)
           }
 
@@ -361,11 +359,11 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
   private class LegacyVueComponent(contribution: HtmlElement,
                                    context: WebTypesJsonOrigin,
                                    cacheHolder: UserDataHolderEx,
-                                   rootContainer: WebTypesSymbolsContainerBase,
+                                   rootScope: WebTypesSymbolsScopeBase,
                                    root: SymbolNamespace)
-    : WebTypesJsonContributionWrapper(contribution, context, cacheHolder, rootContainer, root, KIND_HTML_VUE_COMPONENTS) {
+    : WebTypesJsonContributionWrapper(contribution, context, cacheHolder, rootScope, root, KIND_HTML_VUE_COMPONENTS) {
 
-    private var _contributionForRegistryQuery: GenericContributionsHost? = null
+    private var _contributionForQuery: GenericContributionsHost? = null
 
     override val name: String = contribution.name.let {
       if (it.contains('-'))
@@ -378,15 +376,15 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
 
     override val jsonPattern: NamePatternRoot? get() = null
 
-    override val contributionForRegistryQuery: GenericContributionsHost
-      get() = _contributionForRegistryQuery
-              ?: (contribution as HtmlElement).convertToComponentContribution().also { _contributionForRegistryQuery = it }
+    override val contributionForQuery: GenericContributionsHost
+      get() = _contributionForQuery
+              ?: (contribution as HtmlElement).convertToComponentContribution().also { _contributionForQuery = it }
 
     override fun createPointer(): Pointer<LegacyVueComponent> =
       object : WebTypesJsonContributionWrapperPointer<LegacyVueComponent>(this) {
 
         override fun dereference(): LegacyVueComponent? =
-          rootContainer.dereference()?.let {
+          rootScope.dereference()?.let {
             LegacyVueComponent(contribution as HtmlElement, jsonContext, cacheHolder, it, namespace)
           }
 
@@ -465,7 +463,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
     val contribution = wrapper.contribution
     val jsonContext = wrapper.jsonOrigin
     val cacheHolder = wrapper.cacheHolder
-    val rootContainer = wrapper.rootContainer.createPointer()
+    val rootScope = wrapper.rootScope.createPointer()
     val namespace = wrapper.namespace
     val kind = wrapper.kind
 

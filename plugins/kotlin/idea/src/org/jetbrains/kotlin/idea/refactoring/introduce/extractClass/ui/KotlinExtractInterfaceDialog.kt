@@ -80,9 +80,9 @@ class KotlinExtractInterfaceDialog(
                 val result = super.checkForProblems(memberInfo)
                 if (result != MemberInfoModel.OK) return result
 
-                if (!memberInfo.isSuperClass || memberInfo.overrides != false || memberInfo.isChecked) return result
+                if (!memberInfo.isSuperClass || memberInfo.overrides != false || memberInfo.isChecked) return MemberInfoModel.OK
 
-                val psiSuperInterface = lightElementForMemberInfo(memberInfo.member) as? PsiClass ?: return result
+                val psiSuperInterface = lightElementForMemberInfo(memberInfo.member) as? PsiClass ?: return MemberInfoModel.OK
 
                 for (info in memberInfos) {
                     if (!info.isChecked || info.isToAbstract) continue
@@ -91,20 +91,20 @@ class KotlinExtractInterfaceDialog(
                     if (psiSuperInterface.findMethodBySignature(psiMethodToCheck, true) != null) return MemberInfoModel.ERROR
                 }
 
-                return result
+                return MemberInfoModel.OK
             }
         }
     }
 
     override fun getDestinationPackageRecentKey() = DESTINATION_PACKAGE_RECENT_KEY
 
-    override fun getClassNameLabelText() = RefactoringBundle.message("interface.name.prompt")!!
+    override fun getClassNameLabelText() = RefactoringBundle.message("interface.name.prompt")
 
-    override fun getPackageNameLabelText() = RefactoringBundle.message("package.for.new.interface")!!
+    override fun getPackageNameLabelText() = RefactoringBundle.message("package.for.new.interface")
 
-    override fun getEntityName() = RefactoringBundle.message("extractSuperInterface.interface")!!
+    override fun getEntityName() = RefactoringBundle.message("extractSuperInterface.interface")
 
-    override fun getTopLabelText() = RefactoringBundle.message("extract.interface.from")!!
+    override fun getTopLabelText() = RefactoringBundle.message("extract.interface.from")
 
     override fun getDocCommentPolicySetting() = KotlinRefactoringSettings.instance.EXTRACT_INTERFACE_JAVADOC
 
@@ -112,7 +112,7 @@ class KotlinExtractInterfaceDialog(
         KotlinRefactoringSettings.instance.EXTRACT_INTERFACE_JAVADOC = policy
     }
 
-    override fun getExtractedSuperNameNotSpecifiedMessage() = RefactoringBundle.message("no.interface.name.specified")!!
+    override fun getExtractedSuperNameNotSpecifiedMessage() = RefactoringBundle.message("no.interface.name.specified")
 
     override fun getHelpId() = HelpID.EXTRACT_INTERFACE
 

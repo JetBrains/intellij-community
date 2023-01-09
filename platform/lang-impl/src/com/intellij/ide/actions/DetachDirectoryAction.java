@@ -66,7 +66,7 @@ public class DetachDirectoryAction extends DumbAwareAction {
     return IdeBundle.message("detach.directory.dialog.title.detach");
   }
 
-  public static void detachDirectoriesWithUndo(@NotNull Project project, @NotNull List<VirtualFile> files) {
+  public static void detachDirectoriesWithUndo(@NotNull Project project, @NotNull List<? extends VirtualFile> files) {
     AttachDirectoryUtils.addRemoveEntriesWithUndo(project, null, files, false);
   }
 }

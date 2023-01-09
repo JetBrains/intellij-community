@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
+import com.intellij.openapi.wm.IdeGlassPane
 import java.awt.*
 import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
@@ -41,7 +41,7 @@ class UIMouseTracker : IdeEventQueue.EventDispatcher {
     val clickedComponent = if (component is Container) component.findComponentAt(e.point) else null
 
     if (clickedComponent != null) {
-      if (clickedComponent is IdeGlassPaneImpl) {
+      if (clickedComponent is IdeGlassPane) {
         val dialog = DialogWrapper.findInstance(clickedComponent)
         if (dialog != null) {
           val pointOnDialog = SwingUtilities.convertPoint(e.component, e.point, dialog.contentPane)
@@ -50,7 +50,8 @@ class UIMouseTracker : IdeEventQueue.EventDispatcher {
             componentClicked(comp)
           }
         }
-      } else {
+      }
+      else {
         componentClicked(clickedComponent)
       }
     }

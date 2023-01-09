@@ -45,7 +45,7 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
 
   @Override
   public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
-                                                                                                                @NotNull VirtualFile file) {
+                                                                                                                 @NotNull VirtualFile file) {
     if (!DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE) {
       return null;
     }

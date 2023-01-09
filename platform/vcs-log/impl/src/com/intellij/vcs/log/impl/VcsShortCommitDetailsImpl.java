@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,10 +11,10 @@ import java.util.List;
 
 public class VcsShortCommitDetailsImpl extends TimedVcsCommitImpl implements VcsShortCommitDetails {
 
-  @NotNull private final String mySubject;
-  @NotNull private final VcsUser myAuthor;
-  @NotNull private final VirtualFile myRoot;
-  @NotNull private final VcsUser myCommitter;
+  private final @NotNull String mySubject;
+  private final @NotNull VcsUser myAuthor;
+  private final @NotNull VirtualFile myRoot;
+  private final @NotNull VcsUser myCommitter;
   private final long myAuthorTime;
 
   public VcsShortCommitDetailsImpl(@NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
@@ -26,27 +27,23 @@ public class VcsShortCommitDetailsImpl extends TimedVcsCommitImpl implements Vcs
     myAuthorTime = authorTime;
   }
 
-  @NotNull
   @Override
-  public VirtualFile getRoot() {
+  public @NotNull VirtualFile getRoot() {
     return myRoot;
   }
 
   @Override
-  @NotNull
-  public final String getSubject() {
+  public final @NotNull String getSubject() {
     return mySubject;
   }
 
   @Override
-  @NotNull
-  public final VcsUser getAuthor() {
+  public final @NotNull VcsUser getAuthor() {
     return myAuthor;
   }
 
-  @NotNull
   @Override
-  public VcsUser getCommitter() {
+  public @NotNull VcsUser getCommitter() {
     return myCommitter;
   }
 

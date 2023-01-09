@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.presentation.*
-import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -181,5 +180,4 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
 
 internal fun refreshHints() {
     InlayHintsPassFactory.forceHintsUpdateOnNextPass()
-    InlayHintsConfigurable.updateInlayHintsUI()
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.encoding;
 
 import com.intellij.largeFilesEditor.editor.LargeFileEditor;
@@ -7,7 +7,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import org.jetbrains.annotations.Nullable;
 
-public class LargeFileEditorAccessor {
+public final class LargeFileEditorAccessor {
 
   /**
    * @return null - if no access

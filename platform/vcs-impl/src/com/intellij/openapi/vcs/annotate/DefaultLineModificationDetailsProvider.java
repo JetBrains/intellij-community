@@ -151,7 +151,7 @@ public class DefaultLineModificationDetailsProvider implements FileAnnotation.Li
   @Nullable
   private static AnnotatedLineModificationDetails createFragmentDetails(@NotNull String lineContentAfter,
                                                                         @NotNull LineOffsets afterLineOffsets,
-                                                                        @NotNull List<LineFragment> fragments,
+                                                                        @NotNull List<? extends LineFragment> fragments,
                                                                         int originalLineNumber) {
     LineFragment lineFragment = ContainerUtil.find(fragments.iterator(), fragment -> {
       return fragment.getStartLine2() <= originalLineNumber && originalLineNumber < fragment.getEndLine2();
@@ -216,7 +216,7 @@ public class DefaultLineModificationDetailsProvider implements FileAnnotation.Li
   private static int findOriginalLine(@NotNull String afterContent,
                                       @NotNull LineOffsets afterLineOffsets,
                                       @NotNull String originalLine,
-                                      @NotNull List<LineFragment> fragments) {
+                                      @NotNull List<? extends LineFragment> fragments) {
     for (LineFragment fragment : fragments) {
       for (int i = fragment.getStartLine2(); i < fragment.getEndLine2(); i++) {
         String line = getLine(afterContent, afterLineOffsets, i);

@@ -8,6 +8,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
 import java.util.concurrent.ThreadLocalRandom
 
@@ -321,7 +322,7 @@ class BuildOptions {
   var resolveDependenciesDelayMs = System.getProperty(RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY, "1000").toLong()
 
   /**
-   * See https://reproducible-builds.org/specs/source-date-epoch/
+   * See [GlobalOptions.BUILD_DATE_IN_SECONDS]
    */
   var buildDateInSeconds: Long = 0
   var randomSeedNumber: Long = 0
@@ -342,7 +343,7 @@ class BuildOptions {
       else -> throw IllegalStateException("Unknown target OS $targetOsId")
     }
 
-    val sourceDateEpoch = System.getenv("SOURCE_DATE_EPOCH")
+    val sourceDateEpoch = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS)
     buildDateInSeconds = sourceDateEpoch?.toLong() ?: (System.currentTimeMillis() / 1000)
     val randomSeedString = System.getProperty("intellij.build.randomSeed")
     randomSeedNumber = if (randomSeedString == null || randomSeedString.isBlank()) {

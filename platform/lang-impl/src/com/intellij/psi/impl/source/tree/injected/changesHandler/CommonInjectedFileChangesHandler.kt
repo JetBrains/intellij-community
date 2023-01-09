@@ -122,7 +122,7 @@ open class CommonInjectedFileChangesHandler(
         currentHost!! // should never happen
 
         // fixme we could optimize here and check if host text has been changed and update only really changed fragments, not all of them
-        if (localInsideFile.endOffset <= text.length && !localInsideFile.isEmpty) {
+        if (localInsideFile.endOffset <= text.length) {
           val decodedText = localInsideFile.substring(text)
           currentHost = updateHostOrFail(currentHost, localInsideHost, decodedText, e)
         }

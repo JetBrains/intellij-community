@@ -8,8 +8,6 @@ import com.intellij.codeInsight.hints.presentation.withTranslated
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.util.SlowOperations
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -94,14 +92,11 @@ abstract class LinearOrderInlayRenderer<Constraint : Any>(
   }
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
-    // TODO remove it when it will be clear how to solve it
-    return SlowOperations.allowSlowOperations(
-      ThrowableComputable<Int, Exception> { cachedPresentation.width })
+    return cachedPresentation.width
   }
 
   override fun calcHeightInPixels(inlay: Inlay<*>): Int {
-    return SlowOperations.allowSlowOperations(
-      ThrowableComputable<Int, Exception> { cachedPresentation.height })
+    return cachedPresentation.height
   }
 
   // this should not be shown anywhere

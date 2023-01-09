@@ -1,3 +1,4 @@
+from types import TracebackType
 from typing import Any
 
 GLYPHS: Any
@@ -18,7 +19,12 @@ class Spinner:
     def sleep(self) -> None: ...
     def clear(self) -> None: ...
     def __enter__(self): ...
-    def __exit__(self, exc_type: Any | None = ..., exc_value: Any | None = ..., traceback: Any | None = ...) -> None: ...
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None = ...,
+        exc_value: BaseException | None = ...,
+        traceback: TracebackType | None = ...,
+    ) -> None: ...
 
 class AutomaticSpinner:
     label: Any
@@ -27,4 +33,9 @@ class AutomaticSpinner:
     subprocess: Any
     def __init__(self, label, show_time: bool = ...) -> None: ...
     def __enter__(self) -> None: ...
-    def __exit__(self, exc_type: Any | None = ..., exc_value: Any | None = ..., traceback: Any | None = ...) -> None: ...
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None = ...,
+        exc_value: BaseException | None = ...,
+        traceback: TracebackType | None = ...,
+    ) -> None: ...

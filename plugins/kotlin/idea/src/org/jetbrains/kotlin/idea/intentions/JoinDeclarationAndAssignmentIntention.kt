@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.core.canOmitDeclaredType
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 @Suppress("DEPRECATION")
 class JoinDeclarationAndAssignmentInspection : IntentionBasedInspection<KtProperty>(
@@ -78,7 +80,7 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         element.initializer = initializer
         if (element.hasModifier(KtTokens.LATEINIT_KEYWORD)) element.removeModifier(KtTokens.LATEINIT_KEYWORD)
 
-        val grandParent = assignment.parent.parent
+        val grandParent = (assignment.parent as? KtBlockExpression)?.parent
         val initializerBlock = grandParent as? KtAnonymousInitializer
         val secondaryConstructor = grandParent as? KtSecondaryConstructor
         val newProperty = if (!element.isLocal && (initializerBlock != null || secondaryConstructor != null)) {
@@ -143,7 +145,9 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         if (assignments.any { it.parent.invalidParent() }) return null
 
         val firstAssignment = assignments.firstOrNull() ?: return null
-        if (assignments.any { it !== firstAssignment && it.parent.parent is KtSecondaryConstructor }) return null
+        if (assignments.any {
+            it !== firstAssignment && it.parents.match(KtBlockExpression::class, last = KtSecondaryConstructor::class) != null
+            }) return null
 
         val context = firstAssignment.analyze()
         if (!property.isLocal &&

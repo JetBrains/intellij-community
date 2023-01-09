@@ -3,32 +3,20 @@ package org.jetbrains.plugins.gradle.frameworkSupport
 
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.KotlinDslGradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit4Version
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit5Version
-import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.*
 import org.jetbrains.plugins.gradle.testFramework.util.buildscript
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
-class GradleBuildScriptBuilderTest {
+class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
+
   @Test
   fun `test empty build script`() {
-    assertThat(buildscript(GradleVersion.current()) {})
-      .isEqualTo("")
+    assertBuildScript(GradleVersion.current() to ("" to "")) {}
   }
 
   @Test
   fun `test build script with plugins block`() {
-    assertThat(buildscript(GradleVersion.current()) {
-      addImport("org.example.Class1")
-      addImport("org.example.Class2")
-      withPlugin("plugin-id")
-      addRepository("repositoryCentral()")
-      addDependency("dependency", "my-dependency-id")
-      withPrefix { call("println", "Hello, Prefix!") }
-      withPostfix { call("println", call("hello", code("postfix"))) }
-    }).isEqualTo("""
+    assertBuildScript("""
       import org.example.Class1
       import org.example.Class2
       
@@ -47,24 +35,39 @@ class GradleBuildScriptBuilderTest {
       }
       
       println hello(postfix)
-    """.trimIndent())
+    """.trimIndent(), """
+      import org.example.Class1
+      import org.example.Class2
+      
+      plugins {
+          id("plugin-id")
+      }
+      
+      println("Hello, Prefix!")
+      
+      repositories {
+          repositoryCentral()
+      }
+      
+      dependencies {
+          dependency("my-dependency-id")
+      }
+      
+      println(hello(postfix))
+    """.trimIndent()) {
+      addImport("org.example.Class1")
+      addImport("org.example.Class2")
+      withPlugin("plugin-id")
+      addRepository("repositoryCentral()")
+      addDependency("dependency", "my-dependency-id")
+      withPrefix { call("println", "Hello, Prefix!") }
+      withPostfix { call("println", call("hello", code("postfix"))) }
+    }
   }
 
   @Test
   fun `test build script with buildscript block`() {
-    assertThat(buildscript(GradleVersion.current()) {
-      addBuildScriptPrefix("println 'Hello, Prefix!'")
-      withBuildScriptRepository { call("repo", code("file('build/repo')")) }
-      withBuildScriptDependency { call("classpath", code("file('build/targets/org/classpath/archive.jar')")) }
-      addBuildScriptPostfix("println 'Hello, Postfix!'")
-      applyPlugin("'gradle-build'")
-      addImport("org.classpath.Build")
-      withPrefix {
-        call("Build.configureSuperGradleBuild") {
-          call("makeBeautiful")
-        }
-      }
-    }).isEqualTo("""
+    assertBuildScript("""
       import org.classpath.Build
       
       buildscript {
@@ -85,188 +88,244 @@ class GradleBuildScriptBuilderTest {
       Build.configureSuperGradleBuild {
           makeBeautiful()
       }
-    """.trimIndent())
+    """.trimIndent(), """
+      import org.classpath.Build
+      
+      buildscript {
+          println("Hello, Prefix!")
+      
+          repositories {
+              repo(file("build/repo"))
+          }
+      
+          dependencies {
+              classpath(file("build/targets/org/classpath/archive.jar"))
+          }
+      
+          println("Hello, Postfix!")
+      }
+      
+      apply(plugin = "gradle-build")
+      Build.configureSuperGradleBuild {
+          makeBeautiful()
+      }
+    """.trimIndent()) {
+      withBuildScriptPrefix { call("println", "Hello, Prefix!") }
+      withBuildScriptRepository { call("repo", call("file", "build/repo")) }
+      withBuildScriptDependency { call("classpath", call("file", "build/targets/org/classpath/archive.jar")) }
+      withBuildScriptPostfix { call("println", "Hello, Postfix!") }
+      applyPlugin("gradle-build")
+      addImport("org.classpath.Build")
+      withPrefix {
+        call("Build.configureSuperGradleBuild") {
+          call("makeBeautiful")
+        }
+      }
+    }
   }
 
   @Test
   fun `test build script deduplication`() {
-    val junit5 = getJunit5Version()
-    assertThat(buildscript(GradleVersion.current()) {
-      withJUnit()
-      withJUnit()
-      withGroovyPlugin()
-      withGroovyPlugin()
-    }).isEqualTo("""
+    assertBuildScript("""
       plugins {
-          id 'groovy'
+          id 'java'
       }
       
       repositories {
-          maven {
-              url 'https://repo.labs.intellij.net/repo1'
-          }
+          mavenCentral()
       }
       
-      dependencies {
-          testImplementation 'org.junit.jupiter:junit-jupiter-api:$junit5'
-          testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:$junit5'
-          implementation 'org.codehaus.groovy:groovy-all:3.0.5'
+      block('name') {
+          configure()
+      }
+    """.trimIndent(), """
+      plugins {
+          id("java")
       }
       
-      test {
-          useJUnitPlatform()
+      repositories {
+          mavenCentral()
       }
-    """.trimIndent())
+      
+      block("name") {
+          configure()
+      }
+    """.trimIndent()) {
+      withJavaPlugin()
+      withJavaPlugin()
+      withMavenCentral()
+      withMavenCentral()
+      withPostfix {
+        call("block", "name") {
+          call("configure")
+        }
+      }
+      withPostfix {
+        call("block", "name") {
+          call("configure")
+        }
+      }
+    }
   }
 
   @Test
   fun `test compile-implementation dependency scope`() {
-    val junit4 = getJunit4Version()
-    val junit5 = getJunit5Version()
-    val configureScript: TestGradleBuildScriptBuilder.() -> Unit = {
-      withJUnit()
-      addImplementationDependency("my-dep")
-      addRuntimeOnlyDependency(code("my-runtime-dep"))
-    }
-    assertThat(buildscript(GradleVersion.current(), configureScript))
-      .isEqualTo("""
-        repositories {
-            maven {
-                url 'https://repo.labs.intellij.net/repo1'
-            }
-        }
-        
+    assertBuildScript(
+      GradleVersion.current() to ("""
         dependencies {
-            testImplementation 'org.junit.jupiter:junit-jupiter-api:$junit5'
-            testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:$junit5'
             implementation 'my-dep'
-            runtimeOnly my-runtime-dep
+            runtimeOnly 'my-runtime-dep'
+            testImplementation 'my-test-dep'
+            testRuntimeOnly 'my-runtime-dep'
         }
-        
-        test {
-            useJUnitPlatform()
-        }
-      """.trimIndent())
-    assertThat(buildscript(GradleVersion.version("3.0"), configureScript))
-      .isEqualTo("""
-        repositories {
-            maven {
-                url 'https://repo.labs.intellij.net/repo1'
-            }
-        }
-        
+      """.trimIndent() to """
         dependencies {
-            testCompile 'junit:junit:$junit4'
+            implementation("my-dep")
+            runtimeOnly("my-runtime-dep")
+            testImplementation("my-test-dep")
+            testRuntimeOnly("my-runtime-dep")
+        }
+      """.trimIndent()),
+
+      GradleVersion.version("3.0") to ("""
+        dependencies {
             compile 'my-dep'
-            runtime my-runtime-dep
+            runtime 'my-runtime-dep'
+            testCompile 'my-test-dep'
+            testRuntime 'my-runtime-dep'
         }
-      """.trimIndent())
-    assertThat(buildscript(GradleVersion.version("4.0"), configureScript))
-      .isEqualTo("""
-        repositories {
-            maven {
-                url 'https://repo.labs.intellij.net/repo1'
-            }
-        }
-        
+      """.trimIndent() to """
         dependencies {
-            testImplementation 'junit:junit:$junit4'
-            implementation 'my-dep'
-            runtimeOnly my-runtime-dep
+            compile("my-dep")
+            runtime("my-runtime-dep")
+            testCompile("my-test-dep")
+            testRuntime("my-runtime-dep")
         }
       """.trimIndent())
+    ) {
+      addImplementationDependency("my-dep")
+      addRuntimeOnlyDependency("my-runtime-dep")
+      addTestImplementationDependency("my-test-dep")
+      addTestRuntimeOnlyDependency("my-runtime-dep")
+    }
   }
 
   @Test
   fun `test application plugin building`() {
-    assertThat(buildscript(GradleVersion.current()) {
+    assertBuildScript("""
+      plugins {
+          id 'application'
+      }
+    """.trimIndent(), """
+      plugins {
+          id("application")
+      }
+    """.trimIndent()) {
       withApplicationPlugin()
-    }).isEqualTo("""
-        plugins {
-            id 'application'
-        }
-      """.trimIndent())
-    assertThat(buildscript(GradleVersion.current()) {
+    }
+    assertBuildScript("""
+      plugins {
+          id 'application'
+      }
+      
+      application {
+          mainClass = 'MyMain'
+      }
+    """.trimIndent(), """
+      plugins {
+          id("application")
+      }
+      
+      application {
+          mainClass = "MyMain"
+      }
+    """.trimIndent()) {
       withApplicationPlugin("MyMain")
-    }).isEqualTo("""
-        plugins {
-            id 'application'
-        }
-        
-        application {
-            mainClass = 'MyMain'
-        }
-      """.trimIndent())
-    assertThat(buildscript(GradleVersion.current()) {
+    }
+    assertBuildScript("""
+      plugins {
+          id 'application'
+      }
+      
+      application {
+          mainModule = 'org.gradle.sample.app'
+          mainClass = 'org.gradle.sample.Main'
+          executableDir = 'custom_bin_dir'
+          applicationDefaultJvmArgs = ['-Dgreeting.language=en']
+      }
+    """.trimIndent(), """
+      plugins {
+          id("application")
+      }
+      
+      application {
+          mainModule = "org.gradle.sample.app"
+          mainClass = "org.gradle.sample.Main"
+          executableDir = "custom_bin_dir"
+          applicationDefaultJvmArgs = listOf("-Dgreeting.language=en")
+      }
+    """.trimIndent()) {
       withApplicationPlugin(
         mainClass = "org.gradle.sample.Main",
         mainModule = "org.gradle.sample.app",
         executableDir = "custom_bin_dir",
         defaultJvmArgs = listOf("-Dgreeting.language=en"))
-    }).isEqualTo("""
-        plugins {
-            id 'application'
-        }
-        
-        application {
-            mainModule = 'org.gradle.sample.app'
-            mainClass = 'org.gradle.sample.Main'
-            executableDir = 'custom_bin_dir'
-            applicationDefaultJvmArgs = ['-Dgreeting.language=en']
-        }
-      """.trimIndent())
+    }
   }
 
   @Test
   fun `test child build script build`() {
-    val junit4 = getJunit4Version()
-    val junit5 = getJunit5Version()
     assertThat(buildscript(GradleVersion.current()) {
-      withJUnit4()
+      withJavaPlugin()
       allprojects {
         withJavaPlugin()
-        withJUnit5()
       }
     }).isEqualTo("""
+        plugins {
+            id 'java'
+        }
+      
         allprojects {
             apply plugin: 'java'
-        
-            repositories {
-                maven {
-                    url 'https://repo.labs.intellij.net/repo1'
-                }
-            }
-        
-            dependencies {
-                testImplementation 'org.junit.jupiter:junit-jupiter-api:$junit5'
-                testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:$junit5'
-            }
-        
-            test {
-                useJUnitPlatform()
-            }
-        }
-        
-        repositories {
-            maven {
-                url 'https://repo.labs.intellij.net/repo1'
-            }
-        }
-        
-        dependencies {
-            testImplementation 'junit:junit:$junit4'
         }
       """.trimIndent())
   }
 
   @Test
-  fun `test kotlin-groovy dsl generation`() {
+  fun `test junit dependency generation`() {
+    val junit4 = getJunit4Version()
     val junit5 = getJunit5Version()
-    assertThat(
-      GroovyDslGradleBuildScriptBuilder.create(GradleVersion.current())
-        .withJUnit5()
-        .generate()
-    ).isEqualTo("""
+
+    assertBuildScript(
+      GradleVersion.current() to ("""
+        repositories {
+            mavenCentral()
+        }
+        
+        dependencies {
+            testImplementation platform('org.junit:junit-bom:$junit5')
+            testImplementation 'org.junit.jupiter:junit-jupiter'
+        }
+        
+        test {
+            useJUnitPlatform()
+        }
+      """.trimIndent() to """
+        repositories {
+            mavenCentral()
+        }
+        
+        dependencies {
+            testImplementation(platform("org.junit:junit-bom:$junit5"))
+            testImplementation("org.junit.jupiter:junit-jupiter")
+        }
+        
+        tasks.test {
+            useJUnitPlatform()
+        }
+      """.trimIndent()),
+
+      GradleVersion.version("4.9") to ("""
         repositories {
             mavenCentral()
         }
@@ -279,12 +338,7 @@ class GradleBuildScriptBuilderTest {
         test {
             useJUnitPlatform()
         }
-    """.trimIndent())
-    assertThat(
-      KotlinDslGradleBuildScriptBuilder(GradleVersion.current())
-        .withJUnit5()
-        .generate()
-    ).isEqualTo("""
+      """.trimIndent() to """
         repositories {
             mavenCentral()
         }
@@ -294,9 +348,30 @@ class GradleBuildScriptBuilderTest {
             testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junit5")
         }
         
-        tasks.getByName<Test>("test") {
+        tasks.test {
             useJUnitPlatform()
         }
-    """.trimIndent())
+      """.trimIndent()),
+
+      GradleVersion.version("4.6") to ("""
+        repositories {
+            mavenCentral()
+        }
+        
+        dependencies {
+            testImplementation 'junit:junit:$junit4'
+        }
+      """.trimIndent() to """
+        repositories {
+            mavenCentral()
+        }
+        
+        dependencies {
+            testImplementation("junit:junit:$junit4")
+        }
+      """.trimIndent())
+    ) {
+      withJUnit()
+    }
   }
 }

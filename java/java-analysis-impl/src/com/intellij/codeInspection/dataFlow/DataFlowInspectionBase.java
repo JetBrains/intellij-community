@@ -59,11 +59,6 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   public boolean REPORT_UNSOUND_WARNINGS = true;
 
   @Override
-  public JComponent createOptionsPanel() {
-    throw new RuntimeException("no UI in headless mode");
-  }
-
-  @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     node.addContent(new Element("option").setAttribute("name", "SUGGEST_NULLABLE_ANNOTATIONS").setAttribute("value", String.valueOf(SUGGEST_NULLABLE_ANNOTATIONS)));
     // Preserved for serialization compatibility

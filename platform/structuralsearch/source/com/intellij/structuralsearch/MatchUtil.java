@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 /**
  * @author Bas Leijdekkers
  */
-public class MatchUtil {
+public final class MatchUtil {
   private static final String REG_EXP_META_CHARS = ".$|()[]{}^?*+\\";
   private static final Pattern ACCENTS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 

@@ -6,6 +6,7 @@ import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
@@ -21,6 +22,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
@@ -278,7 +280,14 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
         allRenames.put(sibling, newName);
       }
 
-      OverridingMethodsSearch.search(sibling, scope, true).forEach(overrider -> {
+      Collection<PsiMethod> allOverriders = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> OverridingMethodsSearch.search(sibling, scope, true).findAll(),
+        RefactoringBundle.message("searching.for.overrides"),
+        true,
+        element.getProject()
+      );
+
+      for (PsiMethod overrider : allOverriders) {
         if (overrider instanceof PsiMirrorElement) {
           final PsiElement prototype = ((PsiMirrorElement)overrider).getPrototype();
           if (prototype instanceof PsiMethod) {
@@ -286,7 +295,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
           }
         }
 
-        if (overrider instanceof SyntheticElement) return true;
+        if (overrider instanceof SyntheticElement) continue;
 
         final String overriderName = overrider.getName();
         final String baseName = sibling.getName();
@@ -295,8 +304,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
           RenameUtil.assertNonCompileElement(overrider);
           allRenames.put(overrider, newOverriderName);
         }
-        return true;
-      });
+      }
     }
   }
 
@@ -341,7 +349,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   @Override
   public void substituteElementToRename(@NotNull PsiElement element,
                                         @NotNull final Editor editor,
-                                        @NotNull final Pass<PsiElement> renameCallback) {
+                                        final @NotNull Pass<? super PsiElement> renameCallback) {
     final PsiMethod psiMethod = (PsiMethod)element;
     if (psiMethod.isConstructor()) {
       final PsiClass containingClass = psiMethod.getContainingClass();

@@ -2,11 +2,13 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory.getLightClassForDecompiledClassOrObject
@@ -35,7 +37,6 @@ import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
 import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 import org.jetbrains.kotlin.idea.caches.project.getPlatformModuleInfo
 import org.jetbrains.kotlin.idea.stubindex.*
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -162,10 +163,11 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
         return facadeKtFiles.mapNotNull { facadeKtFile ->
             if (facadeKtFile is KtClsFile) {
                 val partClassFile = facadeKtFile.virtualFile.parent.findChild(partClassFileShortName) ?: return@mapNotNull null
+                val psiFile = PsiManager.getInstance(project).findFile(partClassFile) as? KtClsFile ?: facadeKtFile
                 val javaClsClass =
-                    DecompiledLightClassesFactory.createClsJavaClassFromVirtualFile(facadeKtFile, partClassFile, null, project)
+                    DecompiledLightClassesFactory.createClsJavaClassFromVirtualFile(psiFile, partClassFile, null, project)
                         ?: return@mapNotNull null
-                KtLightClassForDecompiledDeclaration(javaClsClass, javaClsClass.parent, facadeKtFile, null)
+                KtLightClassForDecompiledDeclaration(javaClsClass, javaClsClass.parent, psiFile, null)
             } else {
                 // TODO should we build light classes for parts from source?
                 null

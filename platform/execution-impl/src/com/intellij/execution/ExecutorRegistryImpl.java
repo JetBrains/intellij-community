@@ -20,6 +20,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunConfigurationStartHistory;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunState;
+import com.intellij.execution.ui.RunStatusHistory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.ui.ToolbarSettings;
@@ -51,6 +52,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -329,7 +331,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
         // We can consider to add spinning to the inlined run actions. But there is a problem with redrawing
         if (ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {
-          RunConfigurationStartHistory startHistory = RunConfigurationStartHistory.getInstance(project);
+          RunStatusHistory startHistory = RunStatusHistory.getInstance(project);
 
           boolean isLoading = startHistory.firstOrNull(selectedSettings, it ->
             (it.getExecutorId().equals(myExecutor.getId()) && it.getState() == RunState.SCHEDULED)
@@ -338,12 +340,13 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
             SpinningProgressIcon spinningIcon = presentation.getClientProperty(spinningIconKey);
             if (spinningIcon == null) {
               spinningIcon = new SpinningProgressIcon();
-              spinningIcon.setIconColor(Color.WHITE);
+              spinningIcon.setIconColor(JBUI.CurrentTheme.RunWidget.FOREGROUND);
               presentation.putClientProperty(spinningIconKey, spinningIcon);
             }
             presentation.setDisabledIcon(spinningIcon);
           } else {
             presentation.putClientProperty(spinningIconKey, null);
+            presentation.setDisabledIcon(null);
           }
         }
 
@@ -367,7 +370,12 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
         if (ExperimentalUI.isNewUI() &&
             needRerunPresentation(selectedSettings.getConfiguration(), getRunningDescriptors(project, selectedSettings))) {
-          text = ExecutionBundle.message("run.toolbar.widget.restart.text", myExecutor.getActionName(), configuration.getName());
+          if (myExecutor.getId().equals(DefaultRunExecutor.EXECUTOR_ID)) {
+            text = ExecutionBundle.message("run.toolbar.widget.rerun.text", configuration);
+          }
+          else {
+            text = ExecutionBundle.message("run.toolbar.widget.restart.text", myExecutor.getActionName(), configuration.getName());
+          }
         }
         else {
           text = myExecutor.getStartActionText(configuration.getName());
@@ -513,7 +521,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       return cache.myRunConfigs;
     }
 
-    private @NotNull List<RunnerAndConfigurationSettings> filterConfigsThatHaveRunner(@NotNull List<RunnerAndConfigurationSettings> runConfigs) {
+    private @NotNull List<RunnerAndConfigurationSettings> filterConfigsThatHaveRunner(@NotNull List<? extends RunnerAndConfigurationSettings> runConfigs) {
       return ContainerUtil.filter(runConfigs, config -> ProgramRunner.getRunner(myExecutor.getId(), config.getConfiguration()) != null);
     }
 
@@ -816,7 +824,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
                            @Nullable RunnerAndConfigurationSettings settings,
                            @NotNull DataContext dataContext,
                            @NotNull Executor executor) {
-
+      if (settings != null) {
+        RunConfigurationStartHistory.getInstance(project).register(settings);
+      }
       runSubProcess(project, configuration, settings, dataContext, executor, RunToolbarProcessData.prepareBaseSettingCustomization(settings, null));
     }
 

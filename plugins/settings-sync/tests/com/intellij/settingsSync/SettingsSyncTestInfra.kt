@@ -14,7 +14,7 @@ import com.intellij.util.toBufferExposingByteArray
 import com.intellij.util.xmlb.Constants
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
-import org.junit.Assert
+import org.junit.Assert.assertEquals
 import java.nio.charset.StandardCharsets
 import java.time.Instant
 
@@ -22,19 +22,25 @@ import java.time.Instant
 fun SettingsSnapshot.assertSettingsSnapshot(build: SettingsSnapshotBuilder.() -> Unit) {
   val settingsSnapshotBuilder = SettingsSnapshotBuilder()
   settingsSnapshotBuilder.build()
+  assertFileStates(settingsSnapshotBuilder.fileStates, fileStates)
+  assertFileStates(settingsSnapshotBuilder.additionalFiles, additionalFiles)
+  assertEquals(settingsSnapshotBuilder.plugins, plugins?.plugins ?: emptyMap<PluginId, PluginData>())
+}
+
+private fun assertFileStates(expectedFileStates: List<FileState>, actualFileStates: Set<FileState>) {
   val transformation = { fileState: FileState ->
     val content = if (fileState is FileState.Modified) String(fileState.content, StandardCharsets.UTF_8) else DELETED_FILE_MARKER
     fileState.file to content
   }
-  val actualMap = this.fileStates.associate(transformation).toSortedMap()
-  val expectedMap = settingsSnapshotBuilder.fileStates.associate(transformation).toSortedMap()
+  val actualMap = actualFileStates.associate(transformation).toSortedMap()
+  val expectedMap = expectedFileStates.associate(transformation).toSortedMap()
   if (actualMap != expectedMap) {
     val missingKeys = expectedMap.keys - actualMap.keys
     val extraKeys = actualMap.keys - expectedMap.keys
     val message = StringBuilder()
     if (missingKeys.isNotEmpty()) message.append("Missing: $missingKeys\n")
     if (extraKeys.isNotEmpty()) message.append("Extra: $extraKeys\n")
-    Assert.assertEquals("Incorrect snapshot: $message", expectedMap, actualMap)
+    assertEquals("Incorrect snapshot: $message", expectedMap, actualMap)
   }
 }
 
@@ -61,13 +67,14 @@ internal fun settingsSnapshot(metaInfo: MetaInfo = MetaInfo(Instant.now(), getLo
                               build: SettingsSnapshotBuilder.() -> Unit) : SettingsSnapshot {
   val builder = SettingsSnapshotBuilder()
   builder.build()
-  return SettingsSnapshot(metaInfo, builder.fileStates.toSet(), SettingsSyncPluginsState(builder.plugins))
+  return SettingsSnapshot(metaInfo, builder.fileStates.toSet(), SettingsSyncPluginsState(builder.plugins), builder.additionalFiles.toSet())
 }
 
 @ApiStatus.Internal
 class SettingsSnapshotBuilder {
   val fileStates = mutableListOf<FileState>()
   val plugins = mutableMapOf<PluginId, PluginData>()
+  val additionalFiles = mutableListOf<FileState>()
 
   fun fileState(function: () -> PersistentStateComponent<*>) {
     val component : PersistentStateComponent<*> = function()
@@ -88,5 +95,9 @@ class SettingsSnapshotBuilder {
              category: SettingsCategory = SettingsCategory.PLUGINS,
              dependencies: Set<String> = emptySet()) {
     plugins[PluginId.getId(id)] = PluginData(enabled, category, dependencies)
+  }
+
+  fun additionalFile(file: String, content: String) {
+    additionalFiles += FileState.Modified(file, content.toByteArray())
   }
 }

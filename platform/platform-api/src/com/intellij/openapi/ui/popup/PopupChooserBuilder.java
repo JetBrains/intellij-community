@@ -127,6 +127,8 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     default JComponent buildFinalComponent() {
       return getComponent();
     }
+
+    default void setFixedRendererSize(@NotNull Dimension dimension) {}
   }
 
   @Override
@@ -326,12 +328,6 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   @Override
   public @NotNull JBPopup createPopup() {
     JPanel contentPane = new JPanel(new BorderLayout());
-    if (!myForceMovable && myTitle != null) {
-      JLabel label = new JLabel(myTitle);
-      label.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
-      label.setHorizontalAlignment(SwingConstants.CENTER);
-      contentPane.add(label, BorderLayout.NORTH);
-    }
 
     if (myAutoselect) {
       myChooserComponent.autoSelect();
@@ -408,7 +404,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       .setRequestFocus(myRequestFocus)
       .setResizable(myForceResizable)
       .setMovable(myForceMovable)
-      .setTitle(myForceMovable ? myTitle : null)
+      .setTitle(myTitle)
       .setAlpha(myAlpha)
       .setFocusOwners(myFocusOwners)
       .setCancelKeyEnabled(myCancelKeyEnabled)
@@ -610,6 +606,12 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   @Override
   public IPopupChooserBuilder<T> setVisibleRowCount(int visibleRowCount) {
     myVisibleRowCount = visibleRowCount;
+    return this;
+  }
+
+  @Override
+  public IPopupChooserBuilder<T> withFixedRendererSize(@NotNull Dimension dimension) {
+    myChooserComponent.setFixedRendererSize(dimension);
     return this;
   }
 

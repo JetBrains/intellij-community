@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.api.data.pullrequest
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
+import com.intellij.openapi.util.NlsSafe
 
 @GraphQLFragment("/graphql/fragment/gitRefName.graphql")
-class GHGitRefName(val name: String)
+class GHGitRefName(val name: @NlsSafe String)

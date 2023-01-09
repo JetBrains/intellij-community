@@ -1,0 +1,2 @@
+version = "3.3.*"
+requires = [] # excluding pyasn1 until typing is available

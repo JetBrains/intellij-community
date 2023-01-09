@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from socket import socket
-from typing import Any, Sequence
+from typing import Any
 
 from waitress.adjustments import Adjustments
 from waitress.channel import HTTPChannel

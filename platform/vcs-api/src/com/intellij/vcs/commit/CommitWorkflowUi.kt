@@ -22,8 +22,6 @@ interface CommitWorkflowUi : DataProvider, Disposable {
 
   fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable)
 
-  fun refreshData()
-
   fun getDisplayedChanges(): List<Change>
   fun getIncludedChanges(): List<Change>
   fun getDisplayedUnversionedFiles(): List<FilePath>

@@ -64,7 +64,7 @@ public class KotlinLambdaUnwrapper extends KotlinUnwrapRemoveBase {
     }
 
     @Override
-    public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
+    public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<? super PsiElement> toExtract) {
         super.collectAffectedElements(e, toExtract);
         return getLambdaEnclosingElement((KtLambdaExpression) e);
     }

@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -18,6 +17,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -41,11 +43,15 @@ open class SoftLinkReferencedChildImpl(val dataSource: SoftLinkReferencedChildDa
   override val parentEntity: EntityWithSoftLinks
     get() = snapshot.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this)!!
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: SoftLinkReferencedChildData?) : ModifiableWorkspaceEntityBase<SoftLinkReferencedChild>(), SoftLinkReferencedChild.Builder {
+  class Builder(result: SoftLinkReferencedChildData?) : ModifiableWorkspaceEntityBase<SoftLinkReferencedChild, SoftLinkReferencedChildData>(
+    result), SoftLinkReferencedChild.Builder {
     constructor() : this(SoftLinkReferencedChildData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -65,7 +71,7 @@ open class SoftLinkReferencedChildImpl(val dataSource: SoftLinkReferencedChildDa
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -97,12 +103,7 @@ open class SoftLinkReferencedChildImpl(val dataSource: SoftLinkReferencedChildDa
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SoftLinkReferencedChild
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (parents != null) {
-        val parentEntityNew = parents.filterIsInstance<EntityWithSoftLinks>().single()
-        if ((this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id) {
-          this.parentEntity = parentEntityNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -110,7 +111,7 @@ open class SoftLinkReferencedChildImpl(val dataSource: SoftLinkReferencedChildDa
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -129,21 +130,21 @@ open class SoftLinkReferencedChildImpl(val dataSource: SoftLinkReferencedChildDa
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
         }
         else {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
@@ -154,7 +155,6 @@ open class SoftLinkReferencedChildImpl(val dataSource: SoftLinkReferencedChildDa
         changedProperty.add("parentEntity")
       }
 
-    override fun getEntityData(): SoftLinkReferencedChildData = result ?: super.getEntityData() as SoftLinkReferencedChildData
     override fun getEntityClass(): Class<SoftLinkReferencedChild> = SoftLinkReferencedChild::class.java
   }
 }
@@ -162,22 +162,17 @@ open class SoftLinkReferencedChildImpl(val dataSource: SoftLinkReferencedChildDa
 class SoftLinkReferencedChildData : WorkspaceEntityData<SoftLinkReferencedChild>() {
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SoftLinkReferencedChild> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SoftLinkReferencedChild> {
     val modifiable = SoftLinkReferencedChildImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): SoftLinkReferencedChild {
     return getCached(snapshot) {
       val entity = SoftLinkReferencedChildImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

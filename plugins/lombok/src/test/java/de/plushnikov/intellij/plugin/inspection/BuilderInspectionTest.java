@@ -48,4 +48,8 @@ public class BuilderInspectionTest extends LombokInspectionTest {
   public void testBuilderConstructorAnnotations() {
     doTest();
   }
+
+  public void testBuilderSingularInvalidOnArray() {
+    doTest();
+  }
 }

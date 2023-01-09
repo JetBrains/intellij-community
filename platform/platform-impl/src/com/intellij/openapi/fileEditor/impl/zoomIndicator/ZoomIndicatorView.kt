@@ -93,8 +93,8 @@ class ZoomIndicatorView(val editor: EditorImpl) : JPanel(MigLayout("novisualpadd
 
     updateFontSize()
 
-    add(fontSizeLabel, "wmin ${JBUI.scale(100)}, gapbottom ${JBUI.scale(1)}, gapleft ${JBUI.scale(3)}")
-    add(resetLink, "gapbottom ${JBUI.scale(1)}")
+    add(fontSizeLabel, "wmin 100, gapbottom 1, gapleft 3")
+    add(resetLink, "gapbottom 1")
     add(settingsBtn)
   }
 

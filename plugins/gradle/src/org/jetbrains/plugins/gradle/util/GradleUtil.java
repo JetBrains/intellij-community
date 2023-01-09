@@ -5,6 +5,9 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.project.ContentRootData;
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl;
@@ -48,6 +51,8 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.util.io.FileUtil.isAncestor;
+import static com.intellij.openapi.util.io.FileUtil.toCanonicalPath;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.EXTENSION;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION;
@@ -346,5 +351,36 @@ public final class GradleUtil {
     File data = dataNode.getData().getBuildScriptSource();
     if (data == null) return null;
     return VfsUtil.findFileByIoFile(data, true);
+  }
+
+  public static void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
+    ContentRootData excludedContentRootData;
+    DataNode<ContentRootData> contentRootDataDataNode = ExternalSystemApiUtil.find(ideModule, ProjectKeys.CONTENT_ROOT);
+    if (contentRootDataDataNode == null || !isContentRootAncestor(contentRootDataDataNode.getData(), ideaOutDir)) {
+      excludedContentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, ideaOutDir.getPath());
+      ideModule.createChild(ProjectKeys.CONTENT_ROOT, excludedContentRootData);
+    }
+    else {
+      excludedContentRootData = contentRootDataDataNode.getData();
+    }
+
+    excludedContentRootData.storePath(ExternalSystemSourceType.EXCLUDED, ideaOutDir.getPath());
+  }
+
+  public static void unexcludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
+    DataNode<ContentRootData> contentRootDataDataNode = ExternalSystemApiUtil.find(ideModule, ProjectKeys.CONTENT_ROOT);
+
+    if (contentRootDataDataNode != null && isContentRootAncestor(contentRootDataDataNode.getData(), ideaOutDir)) {
+          ContentRootData excludedContentRootData;
+          excludedContentRootData = contentRootDataDataNode.getData();
+          excludedContentRootData.getPaths(ExternalSystemSourceType.EXCLUDED).removeIf(sourceRoot -> {
+            return sourceRoot.getPath().equals(ideaOutDir.getPath()); });
+        }
+  }
+
+  private static boolean isContentRootAncestor(@NotNull ContentRootData data, @NotNull File ideaOutDir) {
+    var canonicalIdeOutPath = toCanonicalPath(ideaOutDir.getPath());
+    var canonicalRootPath = data.getRootPath();
+    return isAncestor(canonicalRootPath, canonicalIdeOutPath, false);
   }
 }

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.test.TestMetadata
 @TestMetadata("testData/inspections/dfa")
 class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testAlwaysZero() = doTest()
+    fun testAnyType() = doTest()
     fun testArrays() = doTest()
     fun testBoolean() = doTest()
     fun testBooleanConst() = doTest()
@@ -21,10 +22,12 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testClassRef() = doTest()
     fun testCollectionConstructors() = doTest()
     fun testComparison() = doTest()
+    fun testComparisonNoValues() = doTest(false)
     fun testCustomObjectComparison() = doTest()
     fun testDestructuringInLoop() = doTest()
     fun testDoubleComparison() = doTest()
     fun testEnumComparison() = doTest()
+    fun testEnumOrdinal() = doTest()
     fun testExclamation() = doTest()
     fun testForLoop() = doTest()
     fun testInRange() = doTest()
@@ -75,13 +78,15 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testWhen() = doTest()
     fun testWhileLoop() = doTest()
 
-    fun doTest() {
+    fun doTest(warnOnConstantRefs: Boolean = true) {
         val fileName = "${getTestName(false)}.kt"
         KotlinCommonCompilerArgumentsHolder.getInstance(myFixture.project).update {
             languageVersion = "1.8" // `rangeUntil` operator
         }
         myFixture.configureByFile(fileName)
-        myFixture.enableInspections(KotlinConstantConditionsInspection())
+        val inspection = KotlinConstantConditionsInspection()
+        inspection.warnOnConstantRefs = warnOnConstantRefs 
+        myFixture.enableInspections(inspection)
         myFixture.testHighlighting(true, false, true, fileName)
     }
 }

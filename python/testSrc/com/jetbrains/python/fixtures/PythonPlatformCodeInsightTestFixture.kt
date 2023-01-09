@@ -42,6 +42,8 @@ class PythonPlatformCodeInsightTestFixture(languageLevel: LanguageLevel) : Pytho
     get() = requireNotNull(myDelegateFixture.tempDirFixture.getFile("."))
   override val testRootDisposable: Disposable
     get() = myDelegateFixture.testRootDisposable
+  override val caretOffset: Int
+    get() = myDelegateFixture.caretOffset
 
   override fun setUp() {
     super.setUp()

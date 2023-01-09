@@ -1,9 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.MainConfigurationStateSplitter
 import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil
 import com.intellij.openapi.util.JDOMUtil
@@ -12,7 +10,6 @@ import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
@@ -22,10 +19,8 @@ import java.nio.file.Files
 private suspend fun StateStorageBase<*>.setStateAndSave(componentName: String, state: String?) {
   val saveSessionProducer = createSaveSessionProducer()!!
   saveSessionProducer.setState(null, componentName, if (state == null) Element("state") else JDOMUtil.load(state))
-  withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-    runWriteAction {
-      saveSessionProducer.createSaveSession()!!.save()
-    }
+  writeAction {
+    saveSessionProducer.createSaveSession()!!.save()
   }
 }
 

@@ -18,6 +18,7 @@ package com.intellij.java.execution.actions;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.testFramework.MapDataContext;
@@ -29,6 +30,7 @@ public class ConfigurationFromEditorTest extends LightJavaCodeInsightFixtureTest
   @Override
   public void setUp() throws Exception {
     super.setUp();
+    JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture);
     myFixture.addClass("package org.junit; public @interface Test{}");
     myFixture.addClass("package junit.framework; public class TestCase{}");
     myFixture.addClass("package org.junit.runner; public @interface RunWith{ Class<?> value();}");
@@ -85,6 +87,24 @@ public class ConfigurationFromEditorTest extends LightJavaCodeInsightFixtureTest
                                                                    }""");
     Set<String> patterns = configuration.getPersistentData().getPatterns();
     assertSameElements(patterns, "MyTest,t1", "MyTest,t2");
+  }
+
+  public void testConfigurationFromParameterizedValue() {
+    JUnitConfiguration configuration = setupConfigurationContext(
+      """
+        import org.junit.jupiter.params.ParameterizedTest;
+        import org.junit.jupiter.params.provider.ValueSource;
+
+        public class MyTest {
+          @ParameterizedTest
+          @ValueSource(strings = {
+            "racecar",
+            "ra<caret>dar",
+            "able was I ere I saw elba"
+          })
+        public void palindromes(String candidate) {}}""");
+    String parameters = configuration.getPersistentData().getProgramParameters();
+    assertEquals("valueSource 1", parameters);
   }
 
   public void testStaticNestedClassWithAnnotations() {

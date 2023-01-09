@@ -27,7 +27,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.CachedImageIcon
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -188,19 +188,31 @@ class CompletionInvokerImpl(private val project: Project,
   override fun emulateCompletionGolfSession(expectedLine: String, offset: Int, nodeProperties: TokenProperties): Session {
     val document = editor!!.document
     val emulator = CompletionGolfEmulation.createFromSettings(completionGolfSettings, expectedLine)
+    val invokeOnEachChar = completionGolfSettings?.invokeOnEachChar ?: false
     val session = Session(offset, expectedLine, null, nodeProperties)
     val line = document.getLineNumber(offset)
     val tail = document.getLineEndOffset(line) - offset
     var currentString = ""
 
     while (currentString != expectedLine) {
+      val nextChar = expectedLine[currentString.length].toString()
+
+      if (emulator.isSkippable(nextChar)) {
+        printText(nextChar)
+        currentString += nextChar
+        continue
+      }
+
       val lookup = callCompletion(expectedLine, null)
 
       emulator.pickBestSuggestion(currentString, lookup, session).also {
-        printText(it.selectedWithoutPrefix() ?: expectedLine[currentString.length].toString())
+        if (invokeOnEachChar) {
+          LookupManager.hideActiveLookup(project)
+        }
+        printText(it.selectedWithoutPrefix() ?: nextChar)
         currentString = document.getText(TextRange(offset, document.getLineEndOffset(line) - tail))
 
-        if (currentString.isNotEmpty()) {
+        if (currentString.isNotEmpty() && !invokeOnEachChar) {
           if (it.suggestions.isEmpty() || currentString.last().let { ch -> !(ch == '_' || ch.isLetter() || ch.isDigit()) }) {
             LookupManager.hideActiveLookup(project)
           }
@@ -276,7 +288,7 @@ class CompletionInvokerImpl(private val project: Project,
     val typeText = presentation.typeText
 
     return when {
-      icon is IconLoader.CachedImageIcon && icon.originalPath == "/icons/codota-color-icon.png" -> SuggestionSource.CODOTA
+      icon is CachedImageIcon && icon.originalPath == "/icons/codota-color-icon.png" -> SuggestionSource.CODOTA
       typeText == "@tab-nine" -> SuggestionSource.TAB_NINE
       typeText == "full-line" -> SuggestionSource.INTELLIJ
       else -> SuggestionSource.STANDARD

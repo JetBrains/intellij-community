@@ -71,7 +71,7 @@ sealed class ConvertFunctionWithDemorgansLawIntention(
         val returnExpression = lastStatement.safeAs<KtReturnExpression>()
         val predicate = returnExpression?.returnedExpression ?: lastStatement
         if (negatePredicate) negate(predicate)
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         if (returnExpression?.getLabelName() == element.calleeExpression?.text) {
             returnExpression?.labelQualifier?.replace(psiFactory.createLabelQualifier(toFunctionName))
         }
@@ -97,7 +97,8 @@ sealed class ConvertFunctionWithDemorgansLawIntention(
             return
         }
 
-        val replaced = predicate.replaced(KtPsiFactory(predicate).createExpressionByPattern("!($0)", predicate)) as KtPrefixExpression
+        val psiFactory = KtPsiFactory(predicate.project)
+        val replaced = predicate.replaced(psiFactory.createExpressionByPattern("!($0)", predicate)) as KtPrefixExpression
         replaced.baseExpression.removeUnnecessaryParentheses()
         when (val baseExpression = replaced.baseExpression?.deparenthesize()) {
             is KtBinaryExpression -> {

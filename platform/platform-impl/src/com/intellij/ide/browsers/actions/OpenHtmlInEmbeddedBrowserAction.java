@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -29,7 +30,7 @@ import static com.intellij.ide.browsers.OpenInBrowserRequestKt.createOpenInBrows
 /**
  * @author Konstantin Bulenkov
  */
-class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
+final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
   OpenHtmlInEmbeddedBrowserAction() {
     super(IdeBundle.message("action.open.web.preview.text"), null, AppUIUtil.loadSmallApplicationIconForRelease(ScaleContext.create(), 16));
   }
@@ -56,8 +57,9 @@ class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
               null,
               false
             );
-          } else {
-            FileEditorManagerEx.getInstanceEx(project).openFileWithProviders(file, false, true);
+          }
+          else {
+            FileEditorManagerEx.getInstanceEx(project).openFile(file, null, new FileEditorOpenOptions().withReuseOpen());
           }
         });
       }

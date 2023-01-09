@@ -8,9 +8,6 @@ import com.intellij.ui.paint.LinePainter2D;
 
 import java.awt.*;
 
-/**
- * @author kir
- */
 public final class DrawUtil {
   private DrawUtil() {
   }

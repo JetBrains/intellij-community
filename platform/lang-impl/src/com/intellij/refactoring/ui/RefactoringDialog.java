@@ -5,6 +5,7 @@ import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.options.ConfigurationException;
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.Refactoring;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -245,7 +247,9 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      doRefactorAction();
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+        doRefactorAction();
+      }
     }
   }
 

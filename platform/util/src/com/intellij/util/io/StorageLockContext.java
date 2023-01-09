@@ -5,50 +5,79 @@ import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.stats.FilePageCacheStatistics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.intellij.util.io.PageCacheUtils.FILE_PAGE_CACHE_NEW_CAPACITY_BYTES;
+import static com.intellij.util.io.PageCacheUtils.FILE_PAGE_CACHE_OLD_CAPACITY_BYTES;
+
 @ApiStatus.Internal
 public final class StorageLockContext {
-  private static final FilePageCache ourDefaultCache = new FilePageCache();
+
+  private static final FilePageCache DEFAULT_FILE_PAGE_CACHE = new FilePageCache(FILE_PAGE_CACHE_OLD_CAPACITY_BYTES);
+  @Nullable
+  private static final FilePageCacheLockFree DEFAULT_FILE_PAGE_CACHE_NEW = PageCacheUtils.LOCK_FREE_VFS_ENABLED ?
+                                                                           new FilePageCacheLockFree(FILE_PAGE_CACHE_NEW_CAPACITY_BYTES) :
+                                                                           null;
+
+  static final StorageLockContext ourDefaultContext = new StorageLockContext(false);
+
+  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
 
   @NotNull
-  private final ReentrantReadWriteLock myLock;
-  @NotNull
   private final FilePageCache myFilePageCache;
+
+  /** In general, null if {@link PageCacheUtils#LOCK_FREE_VFS_ENABLED} is false */
+  @Nullable
+  private final FilePageCacheLockFree myFilePageCacheLockFree;
+
   private final boolean myUseReadWriteLock;
   private final boolean myCacheChannels;
   private final boolean myDisableAssertions;
 
-  private StorageLockContext(@NotNull FilePageCache filePageCache,
-                             boolean useReadWriteLock,
-                             boolean cacheChannels,
-                             boolean disableAssertions) {
-    myLock = new ReentrantReadWriteLock();
+  @VisibleForTesting
+  StorageLockContext(@NotNull FilePageCache filePageCache,
+                     @Nullable FilePageCacheLockFree filePageCacheLockFree,
+                     boolean useReadWriteLock,
+                     boolean cacheChannels,
+                     boolean disableAssertions) {
     myFilePageCache = filePageCache;
     myUseReadWriteLock = useReadWriteLock;
     myCacheChannels = cacheChannels;
     myDisableAssertions = disableAssertions;
+    myFilePageCacheLockFree = filePageCacheLockFree;
   }
 
-  public StorageLockContext(boolean useReadWriteLock,
-                            boolean cacheChannels) {
-    this(ourDefaultCache, useReadWriteLock, cacheChannels, false);
+  @VisibleForTesting
+  StorageLockContext(@Nullable FilePageCacheLockFree filePageCacheLockFree,
+                     boolean useReadWriteLock,
+                     boolean cacheChannels,
+                     boolean disableAssertions) {
+    this(DEFAULT_FILE_PAGE_CACHE, filePageCacheLockFree, useReadWriteLock, cacheChannels, disableAssertions);
   }
 
   public StorageLockContext(boolean useReadWriteLock,
                             boolean cacheChannels,
                             boolean disableAssertions) {
-    this(ourDefaultCache, useReadWriteLock, cacheChannels, disableAssertions);
+    this(DEFAULT_FILE_PAGE_CACHE,
+         DEFAULT_FILE_PAGE_CACHE_NEW,
+         useReadWriteLock, cacheChannels, disableAssertions);
+  }
+
+  public StorageLockContext(boolean useReadWriteLock,
+                            boolean cacheChannels) {
+    this(useReadWriteLock, cacheChannels, false);
   }
 
   public StorageLockContext(boolean useReadWriteLock) {
-    this(ourDefaultCache, useReadWriteLock, false, false);
+    this(useReadWriteLock, false, false);
   }
 
   public StorageLockContext() {
-    this(ourDefaultCache, false, false, false);
+    this(false, false, false);
   }
 
   boolean useChannelCache() {
@@ -58,6 +87,7 @@ public final class StorageLockContext {
   public Lock readLock() {
     return myUseReadWriteLock ? myLock.readLock() : myLock.writeLock();
   }
+
   public Lock writeLock() {
     return myLock.writeLock();
   }
@@ -83,6 +113,7 @@ public final class StorageLockContext {
   public void lockWrite() {
     myLock.writeLock().lock();
   }
+
   public void unlockWrite() {
     myLock.writeLock().unlock();
   }
@@ -91,6 +122,23 @@ public final class StorageLockContext {
   @NotNull
   FilePageCache getBufferCache() {
     return myFilePageCache;
+  }
+
+  /** @throws UnsupportedOperationException if new FilePageCache implementation is absent (disabled) */
+  @ApiStatus.Internal
+  @NotNull
+  public FilePageCacheLockFree pageCache() {
+    if (myFilePageCacheLockFree == null) {
+      if (PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
+        throw new UnsupportedOperationException(
+          "lock-free FilePageCache is not available in this storageLockContext."
+        );
+      }
+      throw new UnsupportedOperationException(
+        "lock-free FilePageCache is not available: PageCacheUtils.ENABLE_LOCK_FREE_VFS=false."
+      );
+    }
+    return myFilePageCacheLockFree;
   }
 
   @ApiStatus.Internal
@@ -105,7 +153,8 @@ public final class StorageLockContext {
   public void checkReadAccess() {
     if (!myDisableAssertions && IndexDebugProperties.DEBUG) {
       if (myLock.getReadHoldCount() > 0 || myLock.writeLock().isHeldByCurrentThread()) return;
-      throw new IllegalStateException("Must hold StorageLock read lock to access PagedFileStorage"); }
+      throw new IllegalStateException("Must hold StorageLock read lock to access PagedFileStorage");
+    }
   }
 
   void assertUnderSegmentAllocationLock() {
@@ -116,21 +165,21 @@ public final class StorageLockContext {
 
   @ApiStatus.Internal
   public static void forceDirectMemoryCache() {
-    ourDefaultCache.flushBuffers();
+    DEFAULT_FILE_PAGE_CACHE.flushBuffers();
   }
 
   @ApiStatus.Internal
   public static @NotNull FilePageCacheStatistics getStatistics() {
-    return ourDefaultCache.getStatistics();
+    return DEFAULT_FILE_PAGE_CACHE.getStatistics();
   }
 
   @ApiStatus.Internal
   public static void assertNoBuffersLocked() {
-    ourDefaultCache.assertNoBuffersLocked();
+    DEFAULT_FILE_PAGE_CACHE.assertNoBuffersLocked();
   }
 
   @ApiStatus.Internal
   public static long getCacheMaxSize() {
-    return ourDefaultCache.getMaxSize();
+    return DEFAULT_FILE_PAGE_CACHE.getMaxSize();
   }
 }

@@ -21,7 +21,6 @@ import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.UIUtil;
@@ -237,7 +236,7 @@ public class CustomizableActionsPanel {
     TreeUtil.ensureSelection(myActionsTree);
   }
 
-  private static List<String> toActionIDs(List<TreePath> paths) {
+  private static List<String> toActionIDs(List<? extends TreePath> paths) {
     return ContainerUtil.map(paths, path -> getActionId((DefaultMutableTreeNode)path.getLastPathComponent()));
   }
 
@@ -515,21 +514,24 @@ public class CustomizableActionsPanel {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
         AddActionDialog dlg = new AddActionDialog(mySelectedSchema, isInsideMenu(selectionPath));
         if (dlg.showAndGet()) {
-          Object actionIdOrGroup = dlg.getAddedActionIdOrGroup();
-          if (actionIdOrGroup != null) {
+          List<Object> addedActions = dlg.getAddedActions();
+          if (!addedActions.isEmpty()) {
             boolean isGroupSelected = CustomizationUtil.getGroupForNode(node) != null;
-            int newActionPosition = isGroupSelected ? node.getChildCount() : node.getParent().getIndex(node) + 1;
-            if (actionIdOrGroup instanceof Group group) {
-              group.setForceShowAsPopup(true);
+            for (int ind = 0; ind < addedActions.size(); ind++) {
+              Object action = addedActions.get(ind);
+              if (action instanceof Group group) {
+                group.setForceShowAsPopup(true);
+              }
+              int newActionPosition = isGroupSelected ? node.getChildCount() : node.getParent().getIndex(node) + ind + 1;
+              ActionUrl url = new ActionUrl(getGroupPath(new TreePath(node.getPath()), true), action, ADDED, newActionPosition);
+              addCustomizedAction(url);
+              changePathInActionsTree(myActionsTree, url);
             }
-            ActionUrl url = new ActionUrl(getGroupPath(new TreePath(node.getPath()), true), actionIdOrGroup, ADDED, newActionPosition);
-            addCustomizedAction(url);
-            changePathInActionsTree(myActionsTree, url);
 
             ((DefaultTreeModel)myActionsTree.getModel()).reload();
             TreeUtil.restoreExpandedPaths(myActionsTree, expandedPaths);
             if (isGroupSelected) myActionsTree.expandPath(selectionPath);
-            int newSelectedRow = isGroupSelected ? row + newActionPosition + 1 : row + 1;
+            int newSelectedRow = row + (isGroupSelected ? node.getChildCount() : addedActions.size());
             myActionsTree.setSelectionRow(newSelectedRow);
           }
         }
@@ -654,9 +656,9 @@ public class CustomizableActionsPanel {
         ActionUrl addUrl = CustomizationUtil.getActionUrl(targetPath, ADDED);
         if (position == INTO) {
           addUrl.setAbsolutePosition(((DefaultMutableTreeNode)targetPath.getLastPathComponent()).getChildCount());
-          ObjectUtils.consumeIfCast(TreeUtil.getUserObject(targetPath.getLastPathComponent()), Group.class, group -> {
+          if (TreeUtil.getUserObject(targetPath.getLastPathComponent()) instanceof Group group) {
             addUrl.getGroupPath().add(group.getName());
-          });
+          }
         }
         addUrl.setComponent(removeUrl.getComponent());
         changePathInActionsTree(myActionsTree, addUrl);

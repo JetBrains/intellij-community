@@ -10,19 +10,20 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtTypeElement
 
 data class InferenceContext(
-  val elements: List<KtElement>,
-  val typeVariables: List<TypeVariable>,
-  val typeElementToTypeVariable: Map<KtTypeElement, TypeVariable>,
-  val declarationToTypeVariable: Map<KtNamedDeclaration, TypeVariable>,
-  val declarationDescriptorToTypeVariable: Map<DeclarationDescriptor, TypeVariable>,
-  val superTypesSubstitutions: Map<ClassDescriptor, SuperTypesSubstitutor>
+    val elements: List<KtElement>,
+    val typeVariables: List<TypeVariable>,
+    val typeElementToTypeVariable: Map<KtTypeElement, TypeVariable>,
+    val declarationToTypeVariable: Map<KtNamedDeclaration, TypeVariable>,
+    val declarationDescriptorToTypeVariable: Map<DeclarationDescriptor, TypeVariable>,
+    val superTypesSubstitutions: Map<ClassDescriptor, SuperTypesSubstitutor>
 
 ) {
     fun isInConversionScope(childCandidate: PsiElement) = when (childCandidate) {
         is KtElement -> elements.any { element ->
-          element.containingKtFile == childCandidate.containingKtFile
-          && element.textRange.contains(childCandidate.textRange)
+            element.containingKtFile == childCandidate.containingKtFile
+                    && element.textRange.contains(childCandidate.textRange)
         }
+
         else -> false
     }
 }

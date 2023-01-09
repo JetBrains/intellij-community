@@ -16,9 +16,7 @@
 
 package com.intellij.codeInsight.completion.actions;
 
-import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +25,6 @@ public class CodeCompletionAction extends BaseCodeCompletionAction implements Li
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_BASIC);
     invokeCompletion(e, CompletionType.BASIC, 1);
   }
 

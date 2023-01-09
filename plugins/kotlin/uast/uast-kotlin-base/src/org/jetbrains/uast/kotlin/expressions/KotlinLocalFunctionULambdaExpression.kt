@@ -14,6 +14,10 @@ class KotlinLocalFunctionULambdaExpression(
 ) : KotlinAbstractUExpression(givenParent), ULambdaExpression {
     override val functionalInterfaceType: PsiType? = null
 
+    override fun getExpressionType(): PsiType? {
+        return baseResolveProviderService.getFunctionType(sourcePsi, uastParent)
+    }
+
     override val body by lz {
         sourcePsi.bodyExpression?.let { wrapExpressionBody(this, it) } ?: UastEmptyExpression(this)
     }

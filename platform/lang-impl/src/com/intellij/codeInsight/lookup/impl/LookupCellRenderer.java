@@ -548,7 +548,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
       if (myShrinkLookup || maxWidth > myLookupTextWidth) {
         myLookupTextWidth = maxWidth;
         myLookup.requestResize();
-        try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RENDERING)) {
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RENDERING)) {
           myLookup.refreshUi(false, false);
         }
       }

@@ -95,6 +95,7 @@ public class UnivocityTest extends BaseUnivocityTest {
   public void testRandomActivity() {
     RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
     Generator<PsiJavaFile> javaFiles = psiJavaFiles();
+    initCompiler();
     PropertyChecker.customized()
       .withIterationCount(30).checkScenarios(() -> env ->
       MadTestingUtil.changeAndRevert(myProject, () ->

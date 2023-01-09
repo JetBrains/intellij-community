@@ -489,7 +489,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       List<Proxy> proxies = CommonProxy.getInstance().select(uri);
       // we will just take the first returned proxy, but we have an option to test connection through each of them,
       // for instance, by calling prepareUrl()
-      if (proxies != null && !proxies.isEmpty()) {
+      if (!proxies.isEmpty()) {
         for (Proxy proxy : proxies) {
           if (isRealProxy(proxy)) {
             SocketAddress address = proxy.address();

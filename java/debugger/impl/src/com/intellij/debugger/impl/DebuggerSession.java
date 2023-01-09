@@ -65,7 +65,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public final class DebuggerSession implements AbstractDebuggerSession {
   private static final Logger LOG = Logger.getInstance(DebuggerSession.class);
-  // flags
   private final MyDebuggerStateManager myContextManager;
 
   public enum State {STOPPED, RUNNING, WAITING_ATTACH, PAUSED, WAIT_EVALUATION, DISPOSED}
@@ -84,7 +83,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   private final Sdk myRunJre;
 
   private final DebuggerContextImpl SESSION_EMPTY_CONTEXT;
-  //Thread, user is currently stepping through
+  /** The thread that the user is currently stepping through. */
   private final AtomicReference<ThreadReferenceProxyImpl> mySteppingThroughThread = new AtomicReference<>();
   private final AtomicReference<ThreadReferenceProxyImpl> myLastThread = new AtomicReference<>();
   private final Alarm myUpdateAlarm = new Alarm();
@@ -148,12 +147,11 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     }
 
     /**
-     * actually state changes not in the same sequence as you call setState
-     * the 'resuming' setState with context.getSuspendContext() == null may be set prior to
-     * the setState for the context with context.getSuspendContext()
+     * Actually, the state does not change in the same sequence as you call setState.
+     * The 'resuming' setState with context.getSuspendContext() == null may be set prior to
+     * the setState for the context with context.getSuspendContext().
      * <p>
-     * in this case we assume that the latter setState is ignored
-     * since the thread was resumed
+     * In this case, assume that the latter setState is ignored since the thread was resumed.
      */
     @Override
     public void setState(@NotNull final DebuggerContextImpl context,
@@ -508,7 +506,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
             // heuristics: try to pre-select EventDispatchThread
             currentThread = ContainerUtil.find(allThreads, thread -> ThreadState.isEDT(thread.name()));
             if (currentThread == null) {
-              // heuristics: try to pre-select main thread
+              // heuristics: try to pre-select the main thread
               currentThread = ContainerUtil.find(allThreads, thread -> "main".equals(thread.name()));
             }
             if (currentThread == null) {
@@ -531,8 +529,9 @@ public final class DebuggerSession implements AbstractDebuggerSession {
         if (currentThread != null) {
           try {
             while (!currentThread.isSuspended()) {
-              // wait until thread is considered suspended. Querying data from a thread immediately after VM.suspend()
-              // may result in IncompatibleThreadStateException, most likely some time after suspend() VM erroneously thinks that thread is still running
+              // Wait until the thread is considered suspended.
+              // Querying data from a thread immediately after VM.suspend() may result in IncompatibleThreadStateException,
+              // most likely because some time after suspend() VM erroneously thinks that the thread is still running.
               TimeoutUtil.sleep(10);
             }
             proxy = (currentThread.frameCount() > 0) ? currentThread.frame(0) : null;
@@ -581,7 +580,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
               breakpoint.updateUI();
             }
             else if (sourceMissing) {
-              // adjust position to be position of the breakpoint in order to show the real originator of the event
+              // Adjust the position to be the position of the breakpoint in order to show the real originator of the event.
               position = breakpointPosition;
               final StackFrameProxy frameProxy = positionContext.getFrameProxy();
               String className;

@@ -151,7 +151,7 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
     val treeStringPresentation = runInEdtAndGet {
       val tree = testsExecutionConsole!!.resultsViewer.treeView!!
       TestConsoleProperties.HIDE_PASSED_TESTS.set(testsExecutionConsole!!.properties, false)
-      TreeUtil.expandAll(tree)
+      PlatformTestUtil.expandAll(tree)
       PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
       PlatformTestUtil.waitWhileBusy(tree)
 
@@ -309,7 +309,7 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
     return runInEdtAndGet {
       val tree = console.resultsViewer.treeView!!
       TestConsoleProperties.HIDE_PASSED_TESTS.set(console.properties, false)
-      TreeUtil.expandAll(tree)
+      PlatformTestUtil.expandAll(tree)
       PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
       PlatformTestUtil.waitWhileBusy(tree)
       return@runInEdtAndGet PlatformTestUtil.print(tree, false)

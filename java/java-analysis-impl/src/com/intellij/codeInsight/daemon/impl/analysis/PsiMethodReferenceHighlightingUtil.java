@@ -11,7 +11,7 @@ import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 
 public final class PsiMethodReferenceHighlightingUtil {
-  static HighlightInfo checkRawConstructorReference(@NotNull PsiMethodReferenceExpression expression) {
+  static HighlightInfo.Builder checkRawConstructorReference(@NotNull PsiMethodReferenceExpression expression) {
     if (expression.isConstructor()) {
       PsiType[] typeParameters = expression.getTypeParameters();
       if (typeParameters.length > 0) {
@@ -20,7 +20,7 @@ public final class PsiMethodReferenceHighlightingUtil {
           PsiElement resolve = ((PsiReferenceExpression)qualifier).resolve();
           if (resolve instanceof PsiClass && ((PsiClass)resolve).hasTypeParameters()) {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
-              .descriptionAndTooltip(JavaAnalysisBundle.message("text.raw.ctor.reference.with.type.parameters")).create();
+              .descriptionAndTooltip(JavaAnalysisBundle.message("text.raw.ctor.reference.with.type.parameters"));
           }
         }
       }

@@ -63,7 +63,7 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
   public @NotNull Pair<String, Map<String, String>> readBatOutputAndEnv(@Nullable Path batchFile,
                                                                         @Nullable List<@NotNull String> args,
                                                                         @NotNull String cmdExePath,
-                                                                        @NotNull Consumer<@NotNull Map<String, String>> scriptEnvironmentProcessor) throws IOException {
+                                                                        @NotNull Consumer<? super @NotNull Map<String, String>> scriptEnvironmentProcessor) throws IOException {
     if (batchFile != null && !Files.exists(batchFile)) {
       throw new NoSuchFileException(batchFile.toString());
     }

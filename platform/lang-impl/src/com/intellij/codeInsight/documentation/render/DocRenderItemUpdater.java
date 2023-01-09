@@ -23,7 +23,7 @@ public final class DocRenderItemUpdater implements Runnable {
     return ApplicationManager.getApplication().getService(DocRenderItemUpdater.class);
   }
 
-  void updateFoldRegions(@NotNull Collection<CustomFoldRegion> foldRegions, boolean recreateContent) {
+  void updateFoldRegions(@NotNull Collection<? extends CustomFoldRegion> foldRegions, boolean recreateContent) {
     if (foldRegions.isEmpty()) return;
     boolean wasEmpty = myQueue.isEmpty();
     for (CustomFoldRegion foldRegion : foldRegions) {

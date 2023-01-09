@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.target
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.joinTargetPaths
+import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
@@ -117,7 +118,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
         }.bind(getter = { isCreateNewVirtualenv }, setter = { isCreateNewVirtualenv = it })
       }
       else {
-        newEnvironmentModeSelected = ConstantComponentPredicate.FALSE
+        newEnvironmentModeSelected = ComponentPredicate.FALSE
       }
 
       row(PyBundle.message("sdk.create.venv.dialog.interpreter.label")) {
@@ -164,12 +165,16 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
     }
   }
 
-  override fun validateAll(): List<ValidationInfo> =
-    when (newEnvironmentModeSelected()) {
-      true -> listOfNotNull(validateEnvironmentDirectoryLocation(locationField, pathInfoProvider),
-                            validateSdkComboBox(baseInterpreterCombobox, this))
-      false -> listOfNotNull(validateSdkComboBox(interpreterCombobox, this))
+  override fun validateAll(): List<ValidationInfo> {
+    if (newEnvironmentModeSelected()) {
+      val provider = pathInfoProvider ?: if (targetEnvironmentConfiguration.isLocal()) PathInfo.localPathInfoProvider else null
+      return listOfNotNull(validateEnvironmentDirectoryLocation(locationField, provider),
+                           validateSdkComboBox(baseInterpreterCombobox, this))
     }
+    else {
+      return listOfNotNull(validateSdkComboBox(interpreterCombobox, this))
+    }
+  }
 
   override fun getOrCreateSdk(): Sdk? = getOrCreateSdk(targetEnvironmentConfiguration = null)
 
@@ -268,16 +273,6 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
 
   private fun applyOptionalProjectSyncConfiguration(targetConfiguration: TargetEnvironmentConfiguration?) {
     if (targetConfiguration != null) projectSync?.apply(targetConfiguration)
-  }
-
-  private class ConstantComponentPredicate(private val value: Boolean) : ComponentPredicate() {
-    override fun addListener(listener: (Boolean) -> Unit) = Unit
-
-    override fun invoke(): Boolean = value
-
-    companion object {
-      val FALSE = ConstantComponentPredicate(value = false)
-    }
   }
 
   companion object {

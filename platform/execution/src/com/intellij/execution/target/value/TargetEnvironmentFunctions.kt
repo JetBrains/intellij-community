@@ -170,10 +170,14 @@ private fun TargetEnvironment.getTargetPath(localPath: Path): String? {
   return joinPaths(volume.targetRoot, relativePath, targetPlatform)
 }
 
-private fun ExternallySynchronized.tryMapToSynchronizedVolume(localPath: Path): String? {
+private fun ExternallySynchronized.tryMapToSynchronizedVolume(localPath: Path): FullPathOnTarget? {
   // TODO [targets] Does not look nice
   this as TargetEnvironment
-  val (volume, relativePath) = findRemotePathByMapping(synchronizedVolumes, localPath, targetPlatform) ?: return null
+  return synchronizedVolumes.tryMapToSynchronizedVolume(localPath, targetPlatform)
+}
+
+fun List<TargetEnvironment.SynchronizedVolume>.tryMapToSynchronizedVolume(localPath: Path, targetPlatform: TargetPlatform): FullPathOnTarget? {
+  val (volume, relativePath) = findRemotePathByMapping(this, localPath, targetPlatform) ?: return null
   return joinPaths(volume.targetPath, relativePath, targetPlatform)
 }
 
@@ -188,7 +192,7 @@ fun TargetEnvironmentRequest.getUploadRootForLocalPath(localPath: Path): Pair<Ta
  * If [localPath] could be mapped to the remote system by one of the [mappings], return
  * both: mapping and mapped path
  */
-private fun <T> findRemotePathByMapping(mappings: Collection<T>, localPath: Path, target: TargetPlatform): Pair<T, String>?
+private fun <T> findRemotePathByMapping(mappings: Collection<T>, localPath: Path, target: TargetPlatform): Pair<T, FullPathOnTarget>?
   where T : TargetEnvironment.MappingWithLocalPath = mappings.firstNotNullOfOrNull { uploadRoot ->
   val targetFileSep = target.platform.fileSeparator
   getRelativePathIfAncestor(ancestor = uploadRoot.localRootPath, file = localPath)?.let { relativePath ->

@@ -46,7 +46,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
                           boolean typed,
                           @Nullable PyQualifiedNameOwner declaration) {
     super(tupleClass,
-          Collections.unmodifiableList(ContainerUtil.map(fields.values(), typeAndValue -> typeAndValue.getType())),
+          ContainerUtil.map(fields.values(), typeAndValue -> typeAndValue.getType()),
           false,
           isDefinition);
 

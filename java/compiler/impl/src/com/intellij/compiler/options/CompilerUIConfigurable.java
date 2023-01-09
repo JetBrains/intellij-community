@@ -140,7 +140,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     controls.put(Setting.DISPLAY_NOTIFICATION_POPUP, Collections.singleton(myCbDisplayNotificationPopup));
     controls.put(Setting.AUTO_MAKE, ContainerUtil.newArrayList(myCbEnableAutomake, myEnableAutomakeLegendLabel));
     controls.put(Setting.PARALLEL_COMPILATION, ContainerUtil.newArrayList(myCbParallelCompilation, myParallelCompilationLegendLabel));
-    controls.put(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE, ContainerUtil.newArrayList(myCbRebuildOnDependencyChange));
+    controls.put(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE, List.of(myCbRebuildOnDependencyChange));
     controls.put(Setting.HEAP_SIZE, ContainerUtil.newArrayList(myHeapSizeLabel, myHeapSizeField, mySharedHeapSizeLabel, mySharedHeapSizeField));
     controls.put(Setting.COMPILER_VM_OPTIONS, ContainerUtil.newArrayList(myVMOptionsLabel, myVMOptionsField, mySharedVMOptionsLabel, mySharedVMOptionsField));
 

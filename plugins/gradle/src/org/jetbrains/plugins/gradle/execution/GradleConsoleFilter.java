@@ -67,7 +67,7 @@ public class GradleConsoleFilter implements Filter {
       }
     }
 
-    if (filePrefix == null || linePrefix == null) {
+    if (filePrefix == null) {
       return null;
     }
 

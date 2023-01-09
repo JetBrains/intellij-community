@@ -1,0 +1,12 @@
+{
+  "icons": {
+    "groovy": {
+      "newui": {
+        "groovy.svg": [
+          "icons/groovy/groovy_16x16.svg",
+          "icons/groovy/groovyFile.svg"
+        ]
+      }
+    }
+  }
+}

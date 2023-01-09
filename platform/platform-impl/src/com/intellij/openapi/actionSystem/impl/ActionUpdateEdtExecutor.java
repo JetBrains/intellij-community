@@ -65,23 +65,25 @@ public final class ActionUpdateEdtExecutor {
     else {
       ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any());
     }
-    FList<Throwable> prevTraces = initialTraces, nextTraces = FList.emptyList();
+    FList<Throwable> curTraces = FList.emptyList();
+    boolean started = false;
     long start = System.nanoTime();
     while (!semaphore.waitFor(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)) {
       ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(indicator);
-      long elapsed = TimeoutUtil.getDurationMillis(start);
-      if (ourEDTExecTraces.compareAndSet(prevTraces, nextTraces)) {
-        // execution started
-        prevTraces = nextTraces;
-        int prevSize = prevTraces.size();
-        if (prevSize < MAX_TRACES && elapsed > (prevSize + 1) * TRACE_DELTA_MS) {
+      if (!started && ourEDTExecTraces.compareAndSet(initialTraces, curTraces)) {
+        started = true;
+        start = System.nanoTime();
+      }
+      else if (started) {
+        long elapsed = TimeoutUtil.getDurationMillis(start);
+        int size = curTraces.size();
+        if (size < MAX_TRACES && elapsed > (size + 1) * TRACE_DELTA_MS) {
           Throwable throwable = new Throwable("EDT-trace-at-" + elapsed + "-ms");
           throwable.setStackTrace(EDT.getEventDispatchThread().getStackTrace());
-          nextTraces = prevTraces.prepend(throwable);
+          FList<Throwable> nextTraces = curTraces.prepend(throwable);
+          ourEDTExecTraces.compareAndSet(curTraces, nextTraces);
+          curTraces = nextTraces;
         }
-      }
-      else {
-        // the wait continues
       }
     }
     ExceptionUtil.rethrowAllAsUnchecked(result.get().second);

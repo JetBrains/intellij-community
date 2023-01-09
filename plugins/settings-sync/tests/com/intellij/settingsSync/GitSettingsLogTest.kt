@@ -1,7 +1,6 @@
 package com.intellij.settingsSync
 
 import com.intellij.openapi.components.SettingsCategory
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
@@ -207,6 +206,32 @@ internal class GitSettingsLogTest {
   }
 
   @Test
+  fun `do not fail if unknown gpg option is written in global config`() {
+    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = initializeGitSettingsLog(editorXml)
+
+    (settingsSyncStorage / ".git" / "config").writeText("""
+      [commit]
+          gpgsign = true
+      [user]
+          signingkey = KEYHERE
+      [gpg]
+	        format = ssh
+      [gpg "ssh"]
+        allowedSignersFile = ~/.config/git/allowed_signers""".trimIndent())
+
+    settingsLog.forceWriteToMaster(
+      settingsSnapshot {
+        fileState("options/editor.xml", "ideEditorContent")
+      }, "Local changes"
+    )
+    settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
+      fileState("options/editor.xml", "ideEditorContent")
+    }
+  }
+
+  @Test
   fun `plugins state is written to the settings log`() {
     val editorXml = (configDir / "options" / "editor.xml").createFile()
     editorXml.writeText("editorContent")
@@ -219,14 +244,9 @@ internal class GitSettingsLogTest {
     }, "Install plugin")
 
     val snapshot = settingsLog.collectCurrentSnapshot()
-    assertNotNull(snapshot.plugins)
-    val pluginData = snapshot.plugins!!.plugins[PluginId.getId(id)]
-    assertNotNull(pluginData)
-    assertTrue(pluginData!!.enabled)
-    assertEquals(SettingsCategory.UI, pluginData.category)
-    assertEquals(dependencies, pluginData.dependencies)
     snapshot.assertSettingsSnapshot {
       fileState("options/editor.xml", "editorContent")
+      plugin(id, enabled = true, SettingsCategory.UI, dependencies)
     }
   }
 
@@ -271,7 +291,7 @@ internal class GitSettingsLogTest {
   private fun initializeGitSettingsLog(vararg filesToCopyInitially: Path): GitSettingsLog {
     val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable) {
       val fileStates = collectFileStatesFromFiles(filesToCopyInitially.toSet(), configDir)
-      SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), null), fileStates, plugins = null)
+      SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), null), fileStates, plugins = null, emptySet())
     }
     settingsLog.initialize()
     settingsLog.logExistingSettings()

@@ -164,6 +164,10 @@ public final class FileAttributes {
     return new FileAttributes(newFlags, length, lastModified);
   }
 
+  public @NotNull FileAttributes withTimeStamp(long timestamp) {
+    return new FileAttributes(flags, length, timestamp);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -188,17 +192,13 @@ public final class FileAttributes {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-
     sb.append("[type:").append(getType());
-
     if (isSet(flags, SYM_LINK)) sb.append(" l");
     if (isSet(flags, HIDDEN)) sb.append(" .");
     if (isSet(flags, READ_ONLY)) sb.append(" ro");
-
     sb.append(" length:").append(length);
-
     sb.append(" modified:").append(lastModified);
-    sb.append(" case sensitive: ").append(areChildrenCaseSensitive());
+    sb.append(" case-sensitive: ").append(areChildrenCaseSensitive());
     sb.append(']');
     return sb.toString();
   }
@@ -222,7 +222,7 @@ public final class FileAttributes {
       isWritable = attrs.isDirectory() || !((DosFileAttributes)attrs).isReadOnly();
     }
     else {
-      try { isWritable = Files.isWritable(path); }
+      try { isWritable = attrs.isDirectory() || Files.isWritable(path); }
       catch (SecurityException ignored) { }
     }
 

@@ -4,9 +4,11 @@ package com.intellij.psi.stubs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
@@ -19,17 +21,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 public abstract class StubIndex {
-
-  private static StubIndex ourInstance = CachedSingletonsRegistry.markCachedField(StubIndex.class);
+  private static final Supplier<StubIndex> ourInstance = CachedSingletonsRegistry.lazy(() -> {
+    return ApplicationManager.getApplication().getService(StubIndex.class);
+  });
 
   public static StubIndex getInstance() {
-    var instance = ourInstance;
-    if (instance == null) {
-      ourInstance = instance = ApplicationManager.getApplication().getService(StubIndex.class);
-    }
-    return instance;
+    return ourInstance.get();
   }
 
   /**
@@ -143,4 +143,20 @@ public abstract class StubIndex {
 
 
   public abstract void forceRebuild(@NotNull Throwable e);
+
+  /**
+   * @param fileElementType {@link StubFileElementType} to track changes for.
+   * @return {@link ModificationTracker} that changes stamp on every file update (with corresponding {@link StubFileElementType})
+   * for which the stub has changed.
+   * @implNote doesn't track changes of files with binary content. Modification tracking happens before the StubIndex update, so one can use
+   * this tracker to react on stub changes without performing the index update. File is considered modified if a stub for its actual content
+   * differs from what is stored in the index. Modification detector might react false-positively when the number of changed files is big.
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public abstract @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull StubFileElementType<?> fileElementType);
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public abstract @NotNull ModificationTracker getStubIndexModificationTracker(@NotNull Project project);
 }

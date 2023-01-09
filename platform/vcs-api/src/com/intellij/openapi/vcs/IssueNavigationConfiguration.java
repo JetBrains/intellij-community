@@ -132,7 +132,7 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
     result.add(new LinkMatch(range, replacement));
   }
 
-  public static void processTextWithLinks(@Nls String text, @NotNull List<IssueNavigationConfiguration.LinkMatch> matches,
+  public static void processTextWithLinks(@Nls String text, @NotNull List<? extends LinkMatch> matches,
                                           @NotNull Consumer<? super @Nls String> textConsumer,
                                           @NotNull BiConsumer<? super @Nls String, ? super @NlsSafe String> linkWithTargetConsumer) {
     int pos = 0;

@@ -60,8 +60,6 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
     e.presentation.isEnabledAndVisible = true
     e.presentation.text = selectedContext!!.label
     e.presentation.icon = selectedContext!!.icon
-
-    containingPanel.revalidate()
   }
 
   override  fun getActionUpdateThread() = ActionUpdateThread.EDT

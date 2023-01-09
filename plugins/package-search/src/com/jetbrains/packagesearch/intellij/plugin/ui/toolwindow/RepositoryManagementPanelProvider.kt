@@ -23,13 +23,12 @@ class RepositoryManagementPanelProvider : DependenciesToolWindowTabProvider {
 
     companion object : DependenciesToolWindowTabProvider.Id
 
-    @Service(Level.PROJECT)
     private class PanelContainer(private val project: Project) {
         val packageManagementPanel by lazy { RepositoryManagementPanel(project).initialize(ContentFactory.getInstance()) }
 
         val isAvailableFlow =
             combine(
-                project.packageSearchProjectService.projectModulesStateFlow.map { it.isNotEmpty() },
+                project.packageSearchProjectService.packageSearchModulesStateFlow.map { it.isNotEmpty() },
                 FeatureFlags.showRepositoriesTabFlow
             ) { isServiceReady, isFlagEnabled -> isServiceReady && isFlagEnabled }
                 .stateIn(project.lifecycleScope, SharingStarted.Eagerly, false)

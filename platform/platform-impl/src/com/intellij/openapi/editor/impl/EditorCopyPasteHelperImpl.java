@@ -7,9 +7,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.BasePasteHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,12 +25,14 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.function.BiPredicate;
+
+import static com.intellij.openapi.editor.impl.CopiedFromEmptySelectionPasteMode.*;
 
 public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
+  public static final String COPIED_FROM_EMPTY_SELECTION_PASTE_MODE = "editor.paste.line.copied.from.empty.selection";
+
   @Override
   public @Nullable Transferable getSelectionTransferable(@NotNull Editor editor, @NotNull CopyPasteOptions options) {
     if (editor.getContentComponent() instanceof JPasswordField) return null;
@@ -87,6 +91,10 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     int textLength = text.length();
     if (BasePasteHandler.isContentTooLarge(textLength)) throw new TooLargeContentException(textLength);
 
+    CopyPasteOptions copyPasteOptions = CopyPasteOptionsTransferableData.valueFromTransferable(content);
+    CopiedFromEmptySelectionPasteMode pasteMode = copyPasteOptions.isCopiedFromEmptySelection()
+                                                  ? getCopiedFromEmptySelectionPasteMode() : AT_CARET;
+
     CaretModel caretModel = editor.getCaretModel();
     if (caretModel.supportsMultipleCarets()) {
       CaretStateTransferableData caretData = null;
@@ -108,8 +116,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       else {
         caretData = CaretStateTransferableData.getFrom(content);
       }
-      CopyPasteOptions copyPasteOptions = CopyPasteOptionsTransferableData.valueFromTransferable(content);
-      boolean isInsertingEntireLineAboveCaret = copyPasteOptions.isCopiedFromEmptySelection() &&
+      boolean isInsertingEntireLineAboveCaret = pasteMode == ENTIRE_LINE_ABOVE_CARET &&
                                                 !editor.getSelectionModel().hasSelection(true);
 
       final TextRange[] ranges = new TextRange[caretCount];
@@ -118,8 +125,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       if (isInsertingEntireLineAboveCaret) {
         caretModel.runBatchCaretOperation(() -> {
           List<CaretLineState> caretLineStateList = ContainerUtil.map(caretModel.getAllCarets(), CaretLineState::create);
-          List<List<CaretLineState>> caretsGroupedByLine = ContainerUtil.groupSublistRuns(caretLineStateList,
-                                                                                          CaretLineState::isOnSameLine);
+          List<List<CaretLineState>> caretsGroupedByLine = groupSublistRuns(caretLineStateList, CaretLineState::isOnSameLine);
           int shift = 0;
           for (List<CaretLineState> caretsOnSameLine : caretsGroupedByLine) {
             int lineStartOffset = caretsOnSameLine.get(0).lineStartOffset + shift;
@@ -140,16 +146,32 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       else {
         caretModel.runForEachCaret(caret -> {
           String normalizedText = normalizeText(editor, segments.next());
-          ranges[index[0]++] = insertStringAtCaret(editor, normalizedText);
+          ranges[index[0]++] = insertStringAtCaret(editor, normalizedText, pasteMode == TRIM_IF_MIDDLE_LINE);
         });
       }
       return ranges;
     }
     else {
       String normalizedText = normalizeText(editor, text);
-      TextRange textRange = insertStringAtCaret(editor, normalizedText);
+      TextRange textRange = insertStringAtCaret(editor, normalizedText, pasteMode == TRIM_IF_MIDDLE_LINE);
       return new TextRange[]{textRange};
     }
+  }
+  private static <T> @NotNull List<List<T>> groupSublistRuns(@NotNull List<T> list,
+                                                             @NotNull BiPredicate<? super T, ? super T> equality) {
+    if (list.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<List<T>> result = new ArrayList<>();
+    int lastIndex = 0;
+    for (int i = 0, size = list.size(); i < size; i++) {
+      if (i == size - 1 || !equality.test(list.get(i), list.get(i + 1))) {
+        result.add(list.subList(lastIndex, i + 1));
+        lastIndex = i + 1;
+      }
+    }
+    return result;
   }
 
   private record CaretLineState(
@@ -209,9 +231,19 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
   }
 
   public static @NotNull TextRange insertStringAtCaret(@NotNull Editor editor, @NotNull String text) {
-    int caretOffset = editor.getSelectionModel().getSelectionStart();
+    return insertStringAtCaret(editor, text, false);
+  }
+
+  public static @NotNull TextRange insertStringAtCaret(@NotNull Editor editor, @NotNull String text, boolean trimIfMiddleLine) {
+    int selectionStart = editor.getSelectionModel().getSelectionStart();
+    if (trimIfMiddleLine) {
+      int selectionEnd = editor.getSelectionModel().getSelectionEnd();
+      if (!DocumentUtil.isAtLineStart(selectionEnd, editor.getDocument())) {
+        text = text.trim();
+      }
+    }
     int newOffset = EditorModificationUtilEx.insertStringAtCaret(editor, text, false, true);
-    return new TextRange(caretOffset, newOffset);
+    return new TextRange(selectionStart, newOffset);
   }
 
   private static @NotNull String normalizeText(@NotNull Editor editor, @NotNull String text) {
@@ -229,6 +261,10 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       }
     }
     return text;
+  }
+
+  public static @NotNull CopiedFromEmptySelectionPasteMode getCopiedFromEmptySelectionPasteMode() {
+    return AdvancedSettings.getEnum(COPIED_FROM_EMPTY_SELECTION_PASTE_MODE, CopiedFromEmptySelectionPasteMode.class);
   }
 
   public static class CopyPasteOptionsTransferableData implements TextBlockTransferableData, Serializable {

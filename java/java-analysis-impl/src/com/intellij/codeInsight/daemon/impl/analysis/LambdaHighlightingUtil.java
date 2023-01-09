@@ -36,15 +36,14 @@ public final class LambdaHighlightingUtil {
     return JavaErrorBundle.message("multiple.non.overriding.abstract.methods.found.in.interface.0", HighlightUtil.formatClass(psiClass));
   }
 
-  static HighlightInfo checkParametersCompatible(@NotNull PsiLambdaExpression expression,
+  static HighlightInfo.Builder checkParametersCompatible(@NotNull PsiLambdaExpression expression,
                                                  PsiParameter @NotNull [] methodParameters,
                                                  @NotNull PsiSubstitutor substitutor) {
     PsiParameter[] lambdaParameters = expression.getParameterList().getParameters();
     if (lambdaParameters.length != methodParameters.length) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .range(expression.getParameterList())
-        .descriptionAndTooltip(JavaErrorBundle.message("incompatible.parameter.types.in.lambda.wrong.number.of.parameters", methodParameters.length, lambdaParameters.length))
-        .create();
+        .descriptionAndTooltip(JavaErrorBundle.message("incompatible.parameter.types.in.lambda.wrong.number.of.parameters", methodParameters.length, lambdaParameters.length));
     }
     boolean hasFormalParameterTypes = expression.hasFormalParameterTypes();
     for (int i = 0; i < lambdaParameters.length; i++) {
@@ -58,8 +57,7 @@ public final class LambdaHighlightingUtil {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(expression.getParameterList())
           .descriptionAndTooltip(
-            JavaErrorBundle.message("incompatible.parameter.types.in.lambda", expectedType, actualType))
-          .create();
+            JavaErrorBundle.message("incompatible.parameter.types.in.lambda", expectedType, actualType));
       }
     }
     return null;
@@ -101,7 +99,7 @@ public final class LambdaHighlightingUtil {
     return JavaErrorBundle.message("not.a.functional.interface",functionalInterfaceType.getPresentableText());
   }
 
-  static HighlightInfo checkConsistentParameterDeclaration(@NotNull PsiLambdaExpression expression) {
+  static HighlightInfo.Builder checkConsistentParameterDeclaration(@NotNull PsiLambdaExpression expression) {
     PsiParameter[] parameters = expression.getParameterList().getParameters();
     if (parameters.length < 2) return null;
     boolean hasExplicitParameterTypes = hasExplicitType(parameters[0]);
@@ -109,8 +107,7 @@ public final class LambdaHighlightingUtil {
       if (hasExplicitParameterTypes != hasExplicitType(parameters[i])) {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
                             .descriptionAndTooltip(JavaErrorBundle.message("lambda.parameters.consistency.message"))
-                            .range(expression.getParameterList())
-                            .create();
+                            .range(expression.getParameterList());
       }
     }
 

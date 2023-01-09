@@ -13,12 +13,12 @@ import java.util.List;
 
 public class MoveChanges implements ChangeListCommand {
   private final String myName;
-  private final List<Change> myChanges;
+  private final @NotNull List<? extends Change> myChanges;
 
   private MultiMap<LocalChangeList, Change> myMovedFrom;
   private LocalChangeList myListCopy;
 
-  public MoveChanges(@NotNull String name, @NotNull List<Change> changes) {
+  public MoveChanges(@NotNull String name, @NotNull List<? extends Change> changes) {
     myName = name;
     myChanges = changes;
   }

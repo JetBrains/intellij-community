@@ -109,7 +109,59 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         package org.apache.commons.lang3;
         public class Validate {
           public native static <T> T notNull(T object);
-        }"""};
+        }""",
+      """
+        package org.junit.jupiter.api.function;
+        public interface Executable {
+          void execute() throws Throwable;
+        }""",
+      """
+        package org.junit.jupiter.api;
+        import org.junit.jupiter.api.function.Executable;
+        import java.util.function.Supplier;
+        public class Assertions {
+        public static <T extends Throwable> T assertThrows(Class<T> expectedType, Executable executable) {
+            return null;
+          }
+        public static <T extends Throwable> T assertThrows(Class<T> expectedType, Executable executable, Supplier<String> messageSupplier) {
+            return null;
+          }
+        }""",
+      """
+        package org.assertj.core.api.ThrowableAssert;
+        public interface ThrowingCallable {
+          void call() throws Throwable;
+        }""",
+      """
+        package org.assertj.core.api;
+        import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
+        public class Assertions {
+          public static Object assertThatThrownBy(ThrowingCallable shouldRaiseThrowable) {
+            return null;
+          }
+        }""",
+      """
+       package org.mockito;
+       public interface MockedStatic<T> {
+        Object when(Verification v);
+        interface Verification {
+         void apply();
+        }
+       }""",
+      """
+      package java.nio;
+      public abstract class ByteBuffer{
+        abstract boolean hasRemaining();
+      }
+      """,
+      """
+      package java.nio.channels;
+      import java.nio.ByteBuffer;
+      import java.io.IOException;
+      public abstract class FileChannel{
+        public abstract int write(ByteBuffer src) throws IOException;
+      }
+      """};
   }
 
   public void testCanIgnoreReturnValue() {
@@ -623,5 +675,66 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
           }
         }
         """);
+  }
+  @SuppressWarnings("Convert2Lambda")
+  public void testIgnoreInTestContainers() {
+    doTest(
+      """        
+        import org.junit.jupiter.api.function.Executable;
+        import org.mockito.MockedStatic;
+        class X {
+          public static String name(){return "name";}
+          public void test(String s, MockedStatic<Object> mockedStatic){
+            mockedStatic.when(X::name);
+            org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, ()->Short.parseShort(s));
+            org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, ()->Short.parseShort(s),
+            () -> {
+                Short./*Result of 'Short.parseShort()' is ignored*/parseShort/**/(s);
+                return "test";
+             });
+            org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, ()-> {
+              Short.parseShort("s");
+            });
+            org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, ()-> {
+                twice("abc");
+            });
+            org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, (new Executable() {
+              @Override
+              public void execute() {
+               twice("abc");
+            }}));
+            org.assertj.core.api.Assertions.assertThatThrownBy((((()->Short.parseShort(s)))));
+          }
+          private static String twice(String s) {
+            return s+s;
+          }
+        }
+        """);
+  }
+
+  public void testArgumentSideEffects() {
+    doTest(
+        """
+      import java.nio.channels.FileChannel;
+      import java.nio.ByteBuffer;
+      import java.io.IOException;
+      class X {
+        public static void withoutSideEffects(FileChannel fch, ByteBuffer[] srcs) throws IOException {
+          fch./*Result of 'FileChannel.write()' is ignored*/write/**/(srcs);
+        }
+        public static long useResult(FileChannel fch, ByteBuffer[] srcs) throws IOException {
+          return fch.write(srcs);
+        }
+        public static void hasSideEffect(FileChannel fch, ByteBuffer[] srcs) throws IOException {
+          do{
+            fch.write(srcs);
+          } while (test(srcs));
+        }
+        
+        public static boolean test(ByteBuffer[] srcs){
+          return srcs[0].hasRemaining();
+        }
+      }
+    """);
   }
 }

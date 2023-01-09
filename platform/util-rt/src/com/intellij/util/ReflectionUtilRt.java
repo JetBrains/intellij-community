@@ -18,7 +18,7 @@ public final class ReflectionUtilRt {
     return result;
   }
 
-  private static void collectFields(Class<?> clazz, List<? super Field> result) {
+  private static void collectFields(@NotNull Class<?> clazz, @NotNull List<? super Field> result) {
     result.addAll(Arrays.asList(clazz.getDeclaredFields()));
 
     Class<?> superClass = clazz.getSuperclass();
@@ -38,8 +38,8 @@ public final class ReflectionUtilRt {
     Field field = findField(objectClass, fieldName, fieldType);
     if (field != null) {
       try {
-        @SuppressWarnings("unchecked") T t = (T)field.get(object);
-        return t;
+        //noinspection unchecked
+        return (T)field.get(object);
       }
       catch (IllegalAccessException ignored) { }
     }
@@ -48,7 +48,7 @@ public final class ReflectionUtilRt {
   }
 
   @Nullable
-  private static Field findField(Class<?> clazz, String fieldName, @Nullable Class<?> fieldType) {
+  private static Field findField(@NotNull Class<?> clazz, @NotNull String fieldName, @Nullable Class<?> fieldType) {
     for (Field field : clazz.getDeclaredFields()) {
       if (fieldName.equals(field.getName()) && (fieldType == null || fieldType.isAssignableFrom(field.getType()))) {
         field.setAccessible(true);

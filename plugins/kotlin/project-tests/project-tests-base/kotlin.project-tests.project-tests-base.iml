@@ -34,6 +34,8 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.gradle" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.performance-tests.performance-test-utils" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jackson" level="project" />
     <orderEntry type="library" scope="TEST" name="jackson-databind" level="project" />

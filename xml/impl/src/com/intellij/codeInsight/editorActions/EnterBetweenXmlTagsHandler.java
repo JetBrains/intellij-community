@@ -37,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class EnterBetweenXmlTagsHandler extends EnterHandlerDelegateAdapter {
   @Override
-  public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffset, @NotNull final Ref<Integer> caretAdvance,
+  public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffset, final @NotNull Ref<Integer> caretAdvance,
                                 @NotNull final DataContext dataContext, final EditorActionHandler originalHandler) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     

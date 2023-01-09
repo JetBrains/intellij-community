@@ -1,13 +1,15 @@
 import sys
 import threading
+from collections.abc import Callable
 from contextlib import AbstractContextManager
 from multiprocessing.context import BaseContext
 from types import TracebackType
-from typing import Any, Callable, Union
+from typing import Any
+from typing_extensions import TypeAlias
 
 __all__ = ["Lock", "RLock", "Semaphore", "BoundedSemaphore", "Condition", "Event"]
 
-_LockLike = Union[Lock, RLock]
+_LockLike: TypeAlias = Lock | RLock
 
 class Barrier(threading.Barrier):
     def __init__(

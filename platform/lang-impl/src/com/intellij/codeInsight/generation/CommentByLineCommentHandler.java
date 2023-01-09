@@ -4,7 +4,6 @@ package com.intellij.codeInsight.generation;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CommentUtil;
 import com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.formatting.IndentData;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.injected.editor.EditorWindow;
@@ -155,8 +154,6 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
 
   @Override
   public void postInvoke() {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.comment.line");
-
     // second pass - determining whether we need to comment or to uncomment
     boolean allLinesCommented = true;
     for (Block block : myBlocks) {

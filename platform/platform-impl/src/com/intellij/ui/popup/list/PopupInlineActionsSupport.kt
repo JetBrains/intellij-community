@@ -10,34 +10,36 @@ import javax.swing.JComponent
 import javax.swing.JList
 
 private val Empty = object : PopupInlineActionsSupport {
-  override fun calcExtraButtonsCount(element: Any): Int = 0
+  override fun calcExtraButtonsCount(element: Any?): Int = 0
   override fun calcButtonIndex(element: Any?, point: Point): Int? = null
-  override fun runInlineAction(element: Any, index: Int, event: InputEvent?) = false
-  override fun getExtraButtons(list: JList<*>, value: Any, isSelected: Boolean): List<JComponent> = emptyList()
+  override fun getInlineAction(element: Any?, index: Int, event: InputEvent?) = InlineActionDescriptor({}, false)
+  override fun getExtraButtons(list: JList<*>, value: Any?, isSelected: Boolean): List<JComponent> = emptyList()
   override fun getActiveButtonIndex(list: JList<*>): Int? = null
-  override fun getActiveExtraButtonToolTipText(list: JList<*>, value: Any): String? = null
+  override fun getActiveExtraButtonToolTipText(list: JList<*>, value: Any?): String? = null
 }
 
 internal interface PopupInlineActionsSupport {
 
-  fun hasExtraButtons(element: Any): Boolean = calcExtraButtonsCount(element) > 0
+  fun hasExtraButtons(element: Any?): Boolean = calcExtraButtonsCount(element) > 0
 
-  fun calcExtraButtonsCount(element: Any): Int
+  fun calcExtraButtonsCount(element: Any?): Int
 
   fun calcButtonIndex(element: Any?, point: Point): Int?
 
-  fun runInlineAction(element: Any, index: Int, event: InputEvent? = null) : Boolean
+  fun getInlineAction(element: Any?, index: Int, event: InputEvent? = null) : InlineActionDescriptor
 
-  fun getExtraButtons(list: JList<*>, value: Any, isSelected: Boolean): List<JComponent>
+  fun getExtraButtons(list: JList<*>, value: Any?, isSelected: Boolean): List<JComponent>
 
   @ActionText
-  fun getActiveExtraButtonToolTipText(list: JList<*>, value: Any): String?
+  fun getActiveExtraButtonToolTipText(list: JList<*>, value: Any?): String?
 
   fun getActiveButtonIndex(list: JList<*>): Int?
 
   companion object {
-    fun create(popup: ListPopupImpl): PopupInlineActionsSupport =
-      if (ExperimentalUI.isNewUI() && popup.listStep is ActionPopupStep) PopupInlineActionsSupportImpl(popup)
-      else NonActionsPopupInlineSupport(popup)
+    fun create(popup: ListPopupImpl): PopupInlineActionsSupport {
+      if (!ExperimentalUI.isNewUI()) return Empty
+      if (popup.listStep is ActionPopupStep) return PopupInlineActionsSupportImpl(popup)
+      return NonActionsPopupInlineSupport(popup)
+    }
   }
 }

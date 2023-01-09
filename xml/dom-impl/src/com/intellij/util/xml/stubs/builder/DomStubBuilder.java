@@ -49,12 +49,10 @@ final class DomStubBuilder implements BinaryFileStubBuilder.CompositeBinaryFileS
       PsiFile psiFile = fileContent.getPsiFile();
       if (!(psiFile instanceof XmlFile)) return null;
 
-      Project project = fileContent.getProject();
-      XmlFile xmlFile = (XmlFile)psiFile;
-      DomFileElement<? extends DomElement> fileElement = DomManager.getDomManager(project).getFileElement(xmlFile);
-      if (fileElement == null) return null;
+      DomFileDescription<?> description = DomApplicationComponent.getInstance().findDescription((XmlFile)psiFile);
+      if (description == null) return null;
 
-      DomFileMetaData meta = DomApplicationComponent.getInstance().findMeta(fileElement.getFileDescription());
+      DomFileMetaData meta = DomApplicationComponent.getInstance().findMeta(description);
       if (meta == null || !meta.hasStubs()) return null;
       return meta;
     }

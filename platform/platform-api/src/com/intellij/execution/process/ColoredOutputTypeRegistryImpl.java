@@ -305,7 +305,7 @@ public final class ColoredOutputTypeRegistryImpl extends ColoredOutputTypeRegist
     return new ConsoleViewContentType(attribute, attrs);
   }
 
-  private static Color getColor(int colorIndex, Color enforcedColor, Supplier<Color> getDefaultColor) {
+  private static Color getColor(int colorIndex, Color enforcedColor, Supplier<? extends Color> getDefaultColor) {
     if (enforcedColor != null) {
       return enforcedColor;
     }

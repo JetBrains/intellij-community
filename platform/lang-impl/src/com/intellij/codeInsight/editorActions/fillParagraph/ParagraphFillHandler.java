@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Defines general re-flow paragraph functionality.
@@ -39,13 +40,13 @@ public class ParagraphFillHandler {
     final StringBuilder stringBuilder = new StringBuilder();
     appendPrefix(element, text, stringBuilder);
 
-    for (String string : subStrings) {
-      final String startTrimmed = StringUtil.trimStart(string.trim(), prefix.trim());
-      final String str = StringUtil.trimEnd(startTrimmed, postfix.trim());
-      final String finalString = str.trim();
-      if (!StringUtil.isEmptyOrSpaces(finalString))
-        stringBuilder.append(finalString).append(" ");
-    }
+    stringBuilder.append(subStrings.stream()
+                           .map(string -> StringUtil.trimStart(string.trim(), prefix.trim()))
+                           .map(string -> StringUtil.trimEnd(string, postfix.trim()))
+                           .map(String::trim)
+                           .filter(finalString -> !StringUtil.isEmptyOrSpaces(finalString))
+                           .collect(Collectors.joining(" ")));
+
     appendPostfix(element, text, stringBuilder);
 
     final String replacementText = stringBuilder.toString();
@@ -91,8 +92,7 @@ public class ParagraphFillHandler {
   private int getStartOffset(@NotNull final PsiElement element, @NotNull final Editor editor) {
     if (isBunchOfElement(element)) {
       final PsiElement firstElement = getFirstElement(element);
-      return firstElement != null? firstElement.getTextRange().getStartOffset()
-                                        : element.getTextRange().getStartOffset();
+      return firstElement.getTextRange().getStartOffset();
     }
     final int offset = editor.getCaretModel().getOffset();
     final int elementTextOffset = element.getTextOffset();
@@ -123,8 +123,7 @@ public class ParagraphFillHandler {
   private int getEndOffset(@NotNull final PsiElement element, @NotNull final Editor editor) {
     if (isBunchOfElement(element)) {
       final PsiElement next = getLastElement(element);
-      return next != null? next.getTextRange().getEndOffset()
-                         : element.getTextRange().getEndOffset();
+      return next.getTextRange().getEndOffset();
     }
     final int offset = editor.getCaretModel().getOffset();
     final int elementTextOffset = element.getTextRange().getEndOffset();

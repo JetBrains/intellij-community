@@ -41,7 +41,7 @@ class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
     return null
   }
 
-  override fun logClickToFUS(element: PsiElement) {
+  override fun logClickToFUS(element: PsiElement, hint: String) {
     val location = if (element is PsiClass) JavaCodeVisionUsageCollector.CLASS_LOCATION else JavaCodeVisionUsageCollector.METHOD_LOCATION
     JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.project, location)
   }

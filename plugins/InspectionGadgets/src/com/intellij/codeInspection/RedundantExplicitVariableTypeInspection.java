@@ -6,13 +6,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceVariableUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
@@ -49,6 +52,22 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
         }
       }
 
+      @Override
+      public void visitPatternVariable(@NotNull PsiPatternVariable variable) {
+        PsiPattern deconstructionComponent = variable.getPattern();
+        if (deconstructionComponent.getParent() instanceof PsiDeconstructionList deconstructionList &&
+            deconstructionList.getParent() instanceof PsiDeconstructionPattern deconstruction) {
+          PsiTypeElement typeElement = variable.getTypeElement();
+          if (!typeElement.isInferredType()) {
+            @NotNull PsiPattern @NotNull [] patterns = deconstructionList.getDeconstructionComponents();
+            int index = ArrayUtil.indexOf(patterns, deconstructionComponent);
+            PsiDeconstructionPattern deconstructionCopy = (PsiDeconstructionPattern)deconstruction.copy();
+            PsiPattern componentCopy = deconstructionCopy.getDeconstructionList().getDeconstructionComponents()[index];
+            doCheck(variable, Objects.requireNonNull(JavaPsiPatternUtil.getPatternVariable(componentCopy)), typeElement);
+          }
+        }
+      }
+
       private void doCheck(PsiVariable variable,
                            PsiVariable copyVariable,
                            PsiTypeElement element2Highlight) {
@@ -67,11 +86,11 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
         }
        }
 
-      private PsiType getNormalizedType(PsiVariable copyVariable) {
+      private static PsiType getNormalizedType(PsiVariable copyVariable) {
         PsiType type = copyVariable.getType();
         PsiClass refClass = PsiUtil.resolveClassInType(type);
-        if (refClass instanceof PsiAnonymousClass) {
-          type = ((PsiAnonymousClass)refClass).getBaseClassType();
+        if (refClass instanceof PsiAnonymousClass anonymousClass) {
+          type = anonymousClass.getBaseClassType();
         }
         return type;
       }

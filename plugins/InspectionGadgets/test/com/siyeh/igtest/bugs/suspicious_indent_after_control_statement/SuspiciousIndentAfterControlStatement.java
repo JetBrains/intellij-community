@@ -31,7 +31,7 @@ public class SuspiciousIndentAfterControlStatement {
 
     public int get(Class baseClass) {
         // "interesting" parse tree.
-        if (baseClass.equals(<error descr="')' expected"><error descr="Expression expected">.</error></error><error descr="')' expected"><error descr="Identifier expected">c</error></error>lass<error descr="Identifier expected"><error descr="Unexpected token">)</error></error><error descr="Unexpected token">)</error> {
+        if (baseClass.equals(<error descr="',' or ')' expected"><error descr="Expression expected">.</error></error><error descr="')' expected"><error descr="Identifier expected">c</error></error>lass<error descr="Identifier expected"><error descr="Unexpected token">)</error></error><error descr="Unexpected token">)</error> {
             return 1;
         }
         return 0;

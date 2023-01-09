@@ -74,8 +74,8 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
 
   @NotNull
   private MergeConflictType getConflictType(@NotNull ComparisonPolicy comparisonPolicy,
-                                            @NotNull List<CharSequence> sequences,
-                                            @NotNull List<LineOffsets> lineOffsets,
+                                            @NotNull List<? extends CharSequence> sequences,
+                                            @NotNull List<? extends LineOffsets> lineOffsets,
                                             @NotNull MergeLineFragment fragment) {
     return switch (myColorsMode) {
       case MERGE_CONFLICT -> MergeRangeUtil.getLineThreeWayDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
@@ -89,8 +89,8 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
 
   @NotNull
   private static List<CharSequence> getChunks(@NotNull MergeLineFragment fragment,
-                                              @NotNull List<CharSequence> sequences,
-                                              @NotNull List<LineOffsets> lineOffsets,
+                                              @NotNull List<? extends CharSequence> sequences,
+                                              @NotNull List<? extends LineOffsets> lineOffsets,
                                               @NotNull MergeConflictType conflictType) {
     return ThreeSide.map(side -> {
       if (!conflictType.isChange(side)) return null;

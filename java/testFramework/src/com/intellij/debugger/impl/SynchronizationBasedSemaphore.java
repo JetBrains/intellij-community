@@ -72,5 +72,4 @@ public class SynchronizationBasedSemaphore {
       throw new RuntimeException(e);
     }
   }
-
 }

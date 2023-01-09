@@ -2,7 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,12 +24,12 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -37,12 +37,10 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
 
   public boolean mySuggestSetAll = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.explicit.array.filling.suggest.set.all"),
-                                          this,
-                                          "mySuggestSetAll");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("mySuggestSetAll", JavaBundle.message("inspection.explicit.array.filling.suggest.set.all")));
   }
 
   @NotNull

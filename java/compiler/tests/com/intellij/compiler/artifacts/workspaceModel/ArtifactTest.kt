@@ -28,18 +28,16 @@ import com.intellij.packaging.impl.artifacts.workspacemodel.forThisAndFullTree
 import com.intellij.packaging.impl.artifacts.workspacemodel.toElement
 import com.intellij.packaging.impl.elements.*
 import com.intellij.testFramework.JUnit38AssumeSupportRunner
+import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactRootElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addCustomPackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactRootElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactPropertiesEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactRootElementEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase
 import org.junit.runner.RunWith
@@ -529,14 +527,15 @@ class ArtifactTest : ArtifactsTestCase() {
 
   fun `test async artifact initializing`() {
     repeat(1_000) {
-      val rootEntity = runWriteAction {
+      var rootEntity: ArtifactRootElementEntity? = null
+      runWriteAction {
         WorkspaceModel.getInstance(project).updateProjectModel {
-          it.addArtifactRootElementEntity(emptyList(), MySource)
+          rootEntity = it.addArtifactRootElementEntity(emptyList(), MySource)
         }
       }
       val threads = List(10) {
         Callable {
-          rootEntity.toElement(project, WorkspaceModel.getInstance(project).entityStorage)
+          rootEntity!!.toElement(project, WorkspaceModel.getInstance(project).entityStorage)
         }
       }
 
@@ -549,14 +548,15 @@ class ArtifactTest : ArtifactsTestCase() {
   fun `test artifacts with exceptions during initialization`() {
     var exceptionsThrown: List<Int> = emptyList()
     repeat(4) {
-      val rootEntity = runWriteAction {
+      var rootEntity: ArtifactRootElementEntity? = null
+      runWriteAction {
         WorkspaceModel.getInstance(project).updateProjectModel {
-          it.addArtifactRootElementEntity(emptyList(), MySource)
+          rootEntity = it.addArtifactRootElementEntity(emptyList(), MySource)
         }
       }
       ArtifactsTestingState.testLevel = it + 1
       try {
-        rootEntity.toElement(project, WorkspaceModel.getInstance(project).entityStorage)
+        rootEntity!!.toElement(project, WorkspaceModel.getInstance(project).entityStorage)
       } catch (e: IllegalStateException) {
         if (e.message?.contains("Exception on level") != true) {
           error("Unexpected exception")
@@ -695,11 +695,11 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test work with removed artifact via bridge`() = runWriteAction {
-    val artifactEntity = WorkspaceModel.getInstance(project).updateProjectModel {
+    WorkspaceModel.getInstance(project).updateProjectModel {
       val element = it.addArtifactRootElementEntity(emptyList(), MySource)
       it.addArtifactEntity("MyArtifact", PlainArtifactType.getInstance().id, true, null, element, MySource)
     }
-
+    val artifactEntity = WorkspaceModel.getInstance(project).currentSnapshot.entities(ArtifactEntity::class.java).single()
     val artifactBridge = ArtifactManager.getInstance(project).artifacts[0]
 
     WorkspaceModel.getInstance(project).updateProjectModel {
@@ -728,7 +728,7 @@ class ArtifactTest : ArtifactsTestCase() {
     assertEmpty(newArtifact.rootElement.children)
   }
 
-  private inline fun <T> runWithRegisteredExtension(extension: T, extensionPoint: ExtensionPointName<T>, action: () -> Unit) {
+  private inline fun <T : Any> runWithRegisteredExtension(extension: T, extensionPoint: ExtensionPointName<T>, action: () -> Unit) {
     val disposable = Disposer.newDisposable()
     registerExtension(extension, extensionPoint, disposable)
     try {
@@ -739,7 +739,7 @@ class ArtifactTest : ArtifactsTestCase() {
     }
   }
 
-  private fun <T> registerExtension(type: T, extensionPointName: ExtensionPointName<T>, disposable: Disposable) {
+  private fun <T : Any> registerExtension(type: T, extensionPointName: ExtensionPointName<T>, disposable: Disposable) {
     val artifactTypeDisposable = Disposer.newDisposable()
     Disposer.register(disposable, Disposable {
       runWriteAction {

@@ -18,7 +18,6 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBColor;
-import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -116,10 +115,6 @@ public class CaptionComponent extends JPanel implements Committable, Highlightab
 
   @Override
   public final void dispose() {
-  }
-
-  public void initErrorPanel(final DomElement... elements) {
-    DomUIFactory.getDomUIFactory().addErrorPanel(this, elements);
   }
 
   public void initErrorPanel(final CommittablePanel errorPanel) {

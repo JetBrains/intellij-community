@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.configurationStore.StoreUtil;
@@ -22,7 +22,7 @@ import java.util.Collections;
 import static git4idea.GitNotificationIdsHolder.INIT_FAILED;
 import static git4idea.GitNotificationIdsHolder.INIT_STAGE_FAILED;
 
-public class GitRepositoryInitializerImpl implements GitRepositoryInitializer {
+final class GitRepositoryInitializerImpl implements GitRepositoryInitializer {
   @Override
   public void initRepository(@NotNull Project project, @NotNull VirtualFile root, boolean addFilesToVcs) {
     ProgressManager.progress2(GitBundle.message("progress.title.creating.git.repository"));
@@ -37,7 +37,7 @@ public class GitRepositoryInitializerImpl implements GitRepositoryInitializer {
     GitInit.configureVcsMappings(project, root);
     GitUtil.generateGitignoreFileIfNeeded(project, root);
     // make sure .idea/.gitignore is created before adding files
-    project.getService(GitIgnoreInStoreDirGenerator.class).generateGitignoreInStoreDirIfNeeded();
+    project.getService(GitIgnoreInStoreDirGenerator.class).generateGitignoreInStoreDirIfNeededSync();
 
     if (addFilesToVcs) {
       StoreUtil.saveSettings(project, true); // ensure vcs.xml is up-to-date

@@ -1,8 +1,10 @@
 import sys
 from _typeshed import Self
+from collections.abc import Awaitable, Callable, Iterable, Mapping, Sequence
 from contextlib import _GeneratorContextManager
-from typing import Any, Awaitable, Callable, Generic, Iterable, Mapping, Sequence, TypeVar, overload
-from typing_extensions import Literal
+from types import TracebackType
+from typing import Any, Generic, TypeVar, overload
+from typing_extensions import Literal, TypeAlias
 
 _T = TypeVar("_T")
 _TT = TypeVar("_TT", bound=type[Any])
@@ -76,9 +78,9 @@ class _Sentinel:
 sentinel: Any
 DEFAULT: Any
 
-_ArgsKwargs = tuple[tuple[Any, ...], Mapping[str, Any]]
-_NameArgsKwargs = tuple[str, tuple[Any, ...], Mapping[str, Any]]
-_CallValue = str | tuple[Any, ...] | Mapping[str, Any] | _ArgsKwargs | _NameArgsKwargs
+_ArgsKwargs: TypeAlias = tuple[tuple[Any, ...], Mapping[str, Any]]
+_NameArgsKwargs: TypeAlias = tuple[str, tuple[Any, ...], Mapping[str, Any]]
+_CallValue: TypeAlias = str | tuple[Any, ...] | Mapping[str, Any] | _ArgsKwargs | _NameArgsKwargs
 
 class _Call(tuple[Any, ...]):
     def __new__(
@@ -263,7 +265,9 @@ class _patch(Generic[_T]):
     temp_original: Any
     is_local: bool
     def __enter__(self) -> _T: ...
-    def __exit__(self, *exc_info: Any) -> None: ...
+    def __exit__(
+        self, __exc_type: type[BaseException] | None, __exc_value: BaseException | None, __traceback: TracebackType | None
+    ) -> None: ...
     def start(self) -> _T: ...
     def stop(self) -> None: ...
 
@@ -275,121 +279,71 @@ class _patch_dict:
     def __call__(self, f: Any) -> Any: ...
     def decorate_class(self, klass: Any) -> Any: ...
     def __enter__(self) -> Any: ...
-    def __exit__(self, *args: Any) -> Any: ...
+    def __exit__(self, *args: object) -> Any: ...
     start: Any
     stop: Any
+
+if sys.version_info >= (3, 8):
+    _Mock: TypeAlias = MagicMock | AsyncMock
+else:
+    _Mock: TypeAlias = MagicMock
 
 class _patcher:
     TEST_PREFIX: str
     dict: type[_patch_dict]
-    if sys.version_info >= (3, 8):
-        # This overload also covers the case, where new==DEFAULT. In this case, the return type is _patch[Any].
-        # Ideally we'd be able to add an overload for it so that the return type is _patch[MagicMock],
-        # but that's impossible with the current type system.
-        @overload
-        def __call__(  # type: ignore[misc]
-            self,
-            target: Any,
-            new: _T,
-            spec: Any | None = ...,
-            create: bool = ...,
-            spec_set: Any | None = ...,
-            autospec: Any | None = ...,
-            new_callable: Any | None = ...,
-            **kwargs: Any,
-        ) -> _patch[_T]: ...
-        @overload
-        def __call__(
-            self,
-            target: Any,
-            *,
-            spec: Any | None = ...,
-            create: bool = ...,
-            spec_set: Any | None = ...,
-            autospec: Any | None = ...,
-            new_callable: Any | None = ...,
-            **kwargs: Any,
-        ) -> _patch[MagicMock | AsyncMock]: ...
-    else:
-        @overload
-        def __call__(  # type: ignore[misc]
-            self,
-            target: Any,
-            new: _T,
-            spec: Any | None = ...,
-            create: bool = ...,
-            spec_set: Any | None = ...,
-            autospec: Any | None = ...,
-            new_callable: Any | None = ...,
-            **kwargs: Any,
-        ) -> _patch[_T]: ...
-        @overload
-        def __call__(
-            self,
-            target: Any,
-            *,
-            spec: Any | None = ...,
-            create: bool = ...,
-            spec_set: Any | None = ...,
-            autospec: Any | None = ...,
-            new_callable: Any | None = ...,
-            **kwargs: Any,
-        ) -> _patch[MagicMock]: ...
-    if sys.version_info >= (3, 8):
-        @overload
-        def object(  # type: ignore[misc]
-            self,
-            target: Any,
-            attribute: str,
-            new: _T,
-            spec: Any | None = ...,
-            create: bool = ...,
-            spec_set: Any | None = ...,
-            autospec: Any | None = ...,
-            new_callable: Any | None = ...,
-            **kwargs: Any,
-        ) -> _patch[_T]: ...
-        @overload
-        def object(
-            self,
-            target: Any,
-            attribute: str,
-            *,
-            spec: Any | None = ...,
-            create: bool = ...,
-            spec_set: Any | None = ...,
-            autospec: Any | None = ...,
-            new_callable: Any | None = ...,
-            **kwargs: Any,
-        ) -> _patch[MagicMock | AsyncMock]: ...
-    else:
-        @overload
-        def object(  # type: ignore[misc]
-            self,
-            target: Any,
-            attribute: str,
-            new: _T,
-            spec: Any | None = ...,
-            create: bool = ...,
-            spec_set: Any | None = ...,
-            autospec: Any | None = ...,
-            new_callable: Any | None = ...,
-            **kwargs: Any,
-        ) -> _patch[_T]: ...
-        @overload
-        def object(
-            self,
-            target: Any,
-            attribute: str,
-            *,
-            spec: Any | None = ...,
-            create: bool = ...,
-            spec_set: Any | None = ...,
-            autospec: Any | None = ...,
-            new_callable: Any | None = ...,
-            **kwargs: Any,
-        ) -> _patch[MagicMock]: ...
-
+    # This overload also covers the case, where new==DEFAULT. In this case, the return type is _patch[Any].
+    # Ideally we'd be able to add an overload for it so that the return type is _patch[MagicMock],
+    # but that's impossible with the current type system.
+    @overload
+    def __call__(  # type: ignore[misc]
+        self,
+        target: str,
+        new: _T,
+        spec: Any | None = ...,
+        create: bool = ...,
+        spec_set: Any | None = ...,
+        autospec: Any | None = ...,
+        new_callable: Any | None = ...,
+        **kwargs: Any,
+    ) -> _patch[_T]: ...
+    @overload
+    def __call__(
+        self,
+        target: str,
+        *,
+        spec: Any | None = ...,
+        create: bool = ...,
+        spec_set: Any | None = ...,
+        autospec: Any | None = ...,
+        new_callable: Any | None = ...,
+        **kwargs: Any,
+    ) -> _patch[_Mock]: ...
+    @overload
+    def object(  # type: ignore[misc]
+        self,
+        target: Any,
+        attribute: str,
+        new: _T,
+        spec: Any | None = ...,
+        create: bool = ...,
+        spec_set: Any | None = ...,
+        autospec: Any | None = ...,
+        new_callable: Any | None = ...,
+        **kwargs: Any,
+    ) -> _patch[_T]: ...
+    @overload
+    def object(
+        self,
+        target: Any,
+        attribute: str,
+        *,
+        spec: Any | None = ...,
+        create: bool = ...,
+        spec_set: Any | None = ...,
+        autospec: Any | None = ...,
+        new_callable: Any | None = ...,
+        **kwargs: Any,
+    ) -> _patch[_Mock]: ...
     def multiple(
         self,
         target: Any,
@@ -432,7 +386,7 @@ if sys.version_info >= (3, 8):
     class AsyncMagicMixin(MagicMixin):
         def __init__(self, *args: Any, **kw: Any) -> None: ...
 
-    class AsyncMock(AsyncMockMixin, AsyncMagicMixin, Mock): ...  # type: ignore # argument disparities between base classes
+    class AsyncMock(AsyncMockMixin, AsyncMagicMixin, Mock): ...
 
 class MagicProxy:
     name: str

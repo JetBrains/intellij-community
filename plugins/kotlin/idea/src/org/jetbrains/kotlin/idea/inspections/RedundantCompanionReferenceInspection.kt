@@ -90,7 +90,7 @@ class RedundantCompanionReferenceInspection : AbstractKotlinInspection() {
             ?.let { if (it != containingClassDescriptor) return false }
 
         if (selectorExpression is KtCallExpression && referenceText == selectorExpression.calleeExpression?.text) {
-            val newExpression = KtPsiFactory(reference).createExpressionByPattern("$0", selectorExpression)
+            val newExpression = KtPsiFactory(reference.project).createExpressionByPattern("$0", selectorExpression)
             val newContext = newExpression.analyzeAsReplacement(parent, context)
             val descriptor = newExpression.getResolvedCall(newContext)?.resultingDescriptor as? FunctionDescriptor
             if (descriptor?.isOperator == true) return false

@@ -10,11 +10,12 @@ import com.intellij.util.indexing.EntityIndexingServiceEx
 import com.intellij.util.indexing.IndexableFilesIndex
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableFilesIndexImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleDependencyIndexImpl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 internal class ProjectRootsChangeListener(private val project: Project) {
   fun beforeChanged(event: VersionedStorageChange) {
@@ -29,6 +30,7 @@ internal class ProjectRootsChangeListener(private val project: Project) {
   fun changed(event: VersionedStorageChange) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
+    (ModuleDependencyIndex.getInstance(project) as ModuleDependencyIndexImpl).workspaceModelChanged(event);
     if (IndexableFilesIndex.shouldBeUsed()) {
       IndexableFilesIndexImpl.getInstanceImpl(project).workspaceModelChanged(event)
     }
@@ -114,7 +116,7 @@ internal class ProjectRootsChangeListener(private val project: Project) {
     }
 
     private fun hasDependencyOn(library: LibraryEntity, project: Project): Boolean {
-      return ModuleDependencyIndex.getInstance(project).hasDependencyOn(library.persistentId)
+      return ModuleDependencyIndex.getInstance(project).hasDependencyOn(library.symbolicId)
     }
   }
 }

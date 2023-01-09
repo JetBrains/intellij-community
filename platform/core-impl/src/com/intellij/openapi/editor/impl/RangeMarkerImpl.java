@@ -112,7 +112,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       return TextRange.EMPTY_RANGE;
     }
     int delta = node.computeDeltaUpToRoot();
-    return TextRangeScalarUtil.create(TextRangeScalarUtil.deltaScalarRange(node.toScalarRange(), delta, delta));
+    return TextRangeScalarUtil.create(TextRangeScalarUtil.shift(node.toScalarRange(), delta, delta));
   }
 
   void invalidate(@NotNull final Object reason) {

@@ -68,7 +68,9 @@ public class JvmMethodNameReferenceInjector extends ReferenceInjector {
 
     @Override
     public Object @NotNull [] getVariants() {
-      return StreamEx.of(myContainingClass.getMethods()).distinct(PsiMethod::getName).toArray(PsiMethod.EMPTY_ARRAY);
+      return StreamEx.of(myContainingClass.getJavaPsi().getAllMethods())
+        .remove(method -> method.hasModifierProperty(PsiModifier.STATIC))
+        .distinct(PsiMethod::getName).toArray(PsiMethod.EMPTY_ARRAY);
     }
 
     @Override

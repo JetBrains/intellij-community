@@ -2,59 +2,40 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import git4idea.remote.hosting.HostedGitRepositoryConnectionManager
-import git4idea.remote.hosting.HostedGitRepositoryConnectionValidator
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
+import git4idea.remote.hosting.ValidatingHostedGitRepositoryConnectionManager
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GHRepositoryConnection
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
-internal class GHRepositoryConnectionManager(scope: CoroutineScope,
-                                             private val repositoriesManager: GHHostedRepositoriesManager,
-                                             private val accountManager: GHAccountManager,
-                                             private val executorManager: GithubApiRequestExecutorManager,
-                                             private val settings: GithubPullRequestsProjectUISettings)
-  : HostedGitRepositoryConnectionManager<GHGitRepositoryMapping, GithubAccount, GHRepositoryConnection> {
+internal typealias GHRepositoryConnectionManager = HostedGitRepositoryConnectionManager<GHGitRepositoryMapping, GithubAccount, GHRepositoryConnection>
 
-  override val state = MutableStateFlow<GHRepositoryConnection?>(null)
-
-  init {
-    scope.launch {
-      settings.selectedRepoAndAccount?.let {
-        tryConnect(it.first, it.second)
+internal fun GHRepositoryConnectionManager(repositoriesManager: GHHostedRepositoriesManager,
+                                           accountManager: GHAccountManager,
+                                           dataContextRepository: GHPRDataContextRepository): GHRepositoryConnectionManager =
+  ValidatingHostedGitRepositoryConnectionManager(repositoriesManager, accountManager) { repo, account, tokenState ->
+    val tokenSupplier = GithubApiRequestExecutor.MutableTokenSupplier(tokenState.value)
+    launch {
+      tokenState.collect {
+        tokenSupplier.token = it
       }
     }
+    val executor = GithubApiRequestExecutor.Factory.getInstance().create(tokenSupplier)
 
-    scope.launch {
-      HostedGitRepositoryConnectionValidator.validate(state, repositoriesManager, accountManager)
-    }
-  }
-
-  override suspend fun tryConnect(repo: GHGitRepositoryMapping, account: GithubAccount) {
-    return try {
-      val connection = withContext(Dispatchers.IO) {
-        GHRepositoryConnection(repo, account, executorManager.getExecutor(account))
+    val dataContext = dataContextRepository.getContext(repo.repository, repo.remote, account, executor)
+    launch(start = CoroutineStart.UNDISPATCHED) {
+      try {
+        awaitCancellation()
       }
-      withContext(Dispatchers.Main) {
-        settings.selectedRepoAndAccount = repo to account
+      catch (_: Exception) {
       }
-      state.value = connection
+      dataContextRepository.clearContext(repo.repository)
     }
-    catch (_: Exception) {
-    }
+    GHRepositoryConnection(this, repo, account, dataContext)
   }
-
-  override suspend fun disconnect() {
-    withContext(Dispatchers.Main) {
-      settings.selectedRepoAndAccount = null
-    }
-    state.value = null
-  }
-}

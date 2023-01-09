@@ -43,4 +43,7 @@ interface PathsProvider {
 
   val dockerVolumesToWritable: Map<File, Boolean>
     get() = emptyMap()
+
+  val pluginsFolder: File
+    get() = configFolder.resolve("plugins")
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
@@ -36,6 +37,11 @@ interface CellBase<out T : CellBase<T>> {
   fun visibleIf(predicate: ComponentPredicate): CellBase<T>
 
   /**
+   * Binds cell visibility to provided [property] predicate
+   */
+  fun visibleIf(property: ObservableProperty<Boolean>): CellBase<T>
+
+  /**
    * Sets enabled state of the cell and all children recursively.
    * The cell is disabled if there is a disabled parent
    */
@@ -47,19 +53,20 @@ interface CellBase<out T : CellBase<T>> {
   fun enabledIf(predicate: ComponentPredicate): CellBase<T>
 
   /**
-   * Will be deprecated soon. Use [align] instead
+   * Binds cell enabled state to provided [property] predicate
    */
+  fun enabledIf(property: ObservableProperty<Boolean>): CellBase<T>
+
+  @Deprecated("Use align method instead")
   fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T>
 
-  /**
-   * Will be deprecated soon. Use [align] instead
-   */
+  @Deprecated("Use align method instead")
   fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T>
 
   /**
    * Updates horizontal and/or vertical alignment of the component inside the cell. To stretch the content on whole cell
-   * use [AlignX.FILL]/[AlignY.FILL]/[Align.FILL]. For setting both horizontal and vertical alignment use overloaded plus operator
-   * like `align(AlignX.LEFT + AlignY.TOP)`. Default alignment is [AlignX.LEFT] + [AlignY.CENTER].
+   * use [AlignX.FILL]/[AlignY.FILL]/[Align.FILL]. For setting both horizontal and vertical alignment use [Align] constants or
+   * overloaded plus operator like `align(AlignX.LEFT + AlignY.TOP)`. Default alignment is [AlignX.LEFT] + [AlignY.CENTER].
    *
    * In case the cell should occupy all available width or height in parent mark the column as [resizableColumn]
    * or the row as [Row.resizableRow] (or both if needed).
@@ -73,7 +80,7 @@ interface CellBase<out T : CellBase<T>> {
    * Marks column of the cell as resizable: the column occupies all extra horizontal space in parent and changes size together with parent.
    * It's possible to have several resizable columns, which means extra space is shared between them.
    * There is no need to set resizable for cells in different rows but in the same column: it has no additional effect.
-   * Note that horizontal size and placement of component in columns are managed by [horizontalAlign]
+   * Note that alignment inside the cell is managed by [align] method
    *
    * @see [Grid.resizableColumns]
    */

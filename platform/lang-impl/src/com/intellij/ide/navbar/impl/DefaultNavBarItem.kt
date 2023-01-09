@@ -7,7 +7,6 @@ import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
-import com.intellij.ide.structureView.StructureViewBundle
 import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
 import com.intellij.navigation.NavigationRequest
@@ -39,6 +38,7 @@ import com.intellij.ui.SimpleTextAttributes.*
 import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -53,9 +53,8 @@ open class DefaultNavBarItem<out T>(val data: T) : NavBarItem {
 
     val icon: Icon? = fromOldExtensions { ext -> ext.getIcon(data) } ?: getIcon()
 
-    val invalidText = StructureViewBundle.message("node.structureview.invalid")
-    val text: String = fromOldExtensions { ext -> ext.getPresentableText(data, false) } ?: invalidText
-    val popupText: String = fromOldExtensions { ext -> ext.getPresentableText(data, true) } ?: invalidText
+    val text: String = fromOldExtensions { ext -> ext.getPresentableText(data, false) } ?: getText(false)
+    val popupText: String = fromOldExtensions { ext -> ext.getPresentableText(data, true) } ?: getText(true)
 
     val textAttributes = getTextAttributes(selected = false)
     val selectedTextAttributes = getTextAttributes(selected = true)
@@ -149,7 +148,8 @@ internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelEx
   override fun getIcon(): Icon? =
     try {
       data.getIcon(0)?.let {
-        IconUtil.cropIcon(it, 16 * 2, 16 * 2)
+        val maxDimension = JBUI.scale(16 * 2)
+        IconUtil.cropIcon(it, maxDimension, maxDimension)
       }
     }
     catch (e: IndexNotReadyException) {

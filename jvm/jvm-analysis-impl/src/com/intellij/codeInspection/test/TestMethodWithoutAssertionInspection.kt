@@ -48,6 +48,8 @@ class TestMethodWithoutAssertionInspection : AbstractBaseUastLocalInspectionTool
     .add("mockit.Verifications", "Verifications")
     .add("kotlin.PreconditionsKt__AssertionsJVMKt", "assert")
     .add("kotlin.test.AssertionsKt__AssertionsKt", "assert.*|fail.*|expect")
+    .add("org.testng.Assert", "assert.*|fail.*|expect.*")
+    .add("org.testng.AssertJUnit", "assert.*|fail.*")
     .finishDefault()
 
   override fun createOptionsPanel(): JComponent? {

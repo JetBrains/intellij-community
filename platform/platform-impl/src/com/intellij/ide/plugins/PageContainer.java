@@ -24,7 +24,7 @@ public class PageContainer<T> {
     return myItems;
   }
 
-  public void addItems(@NotNull List<T> items) {
+  public void addItems(@NotNull List<? extends T> items) {
     myItems.addAll(items);
     myCurrentPage++;
     myLastPage = items.size() < myPageSize;

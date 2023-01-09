@@ -34,6 +34,7 @@ import com.intellij.psi.impl.search.PsiTodoSearchHelperImpl;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.SmartList;
@@ -159,6 +160,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   @Override
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     List<HighlightInfo> outsideResult = new ArrayList<>(100);
     List<HighlightInfo> insideResult = new ArrayList<>(100);
 
@@ -342,13 +344,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       for (HighlightVisitor visitor : visitors) {
         try {
           visitor.visit(element);
-
-          // assume that the visitor is done messing with just created HighlightInfo after its visit() method completed,
-          // so we can start applying them incrementally at last.
-          // (but not sooner, thanks to awfully racey HighlightInfo.setXXX() and .registerFix() API)
-          holder.queueToUpdateIncrementally();
         }
-        catch (ProcessCanceledException | IndexNotReadyException e) {
+        catch (ProcessCanceledException | IndexNotReadyException | AlreadyDisposedException e) {
           throw e;
         }
         catch (Exception e) {
@@ -459,31 +456,22 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     HighlightInfoFilter[] filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions();
     EditorColorsScheme actualScheme = getColorsScheme() == null ? EditorColorsManager.getInstance().getGlobalScheme() : getColorsScheme();
     return new HighlightInfoHolder(file, filters) {
-      int queued; // all infos at [0..queued) indices are scheduled to EDT via queueInfoToUpdateIncrementally()
       @Override
       public @NotNull TextAttributesScheme getColorsScheme() {
         return actualScheme;
       }
-
       @Override
-      public void queueToUpdateIncrementally() {
-        for (int i = queued; i < size(); i++) {
-          HighlightInfo info = get(i);
-          queueInfoToUpdateIncrementally(info);
+      public boolean add(@Nullable HighlightInfo info) {
+        boolean added = super.add(info);
+        if (info != null && added) {
+          queueInfoToUpdateIncrementally(info, info.getGroup() == 0 ? Pass.UPDATE_ALL : info.getGroup());
         }
-        queued = size();
-      }
-
-      @Override
-      public void clear() {
-        super.clear();
-        queued = 0;
+        return added;
       }
     };
   }
 
-  protected void queueInfoToUpdateIncrementally(@NotNull HighlightInfo info) {
-    int group = info.getGroup() == 0 ? Pass.UPDATE_ALL : info.getGroup();
+  void queueInfoToUpdateIncrementally(@NotNull HighlightInfo info, int group) {
     if (info.getSeverity() == HighlightSeverity.ERROR) {
       myHasErrorSeverity = true;
     }
@@ -590,7 +578,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   @Override
   public String toString() {
-    return super.toString() + " updateAll="+myUpdateAll+" range= "+myRestrictRange;
+    return super.toString() + " updateAll="+myUpdateAll+" range="+myRestrictRange;
   }
 
   private static @Nls String getPresentableNameText() {

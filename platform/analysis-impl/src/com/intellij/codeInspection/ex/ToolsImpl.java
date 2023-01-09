@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -342,16 +343,20 @@ public final class ToolsImpl implements Tools {
   
   public ScopeToolState getState(PsiElement element) {
     if (myTools == null || element == null) return myDefaultState;
-    Project project = element.getProject();
-    DependencyValidationManager manager = DependencyValidationManager.getInstance(project);
-    for (ScopeToolState state : myTools) {
-      NamedScope scope = state.getScope(project);
-      PackageSet set = scope != null ? scope.getValue() : null;
-      if (set != null && set.contains(element.getContainingFile(), manager)) {
-        return state;
+    return ReadAction.compute(() -> {
+      if (!element.isValid()) return myDefaultState;
+      
+      Project project = element.getProject();
+      DependencyValidationManager manager = DependencyValidationManager.getInstance(project);
+      for (ScopeToolState state : myTools) {
+        NamedScope scope = state.getScope(project);
+        PackageSet set = scope != null ? scope.getValue() : null;
+        if (set != null && set.contains(element.getContainingFile(), manager)) {
+          return state;
+        }
       }
-    }
-    return myDefaultState;
+      return myDefaultState;
+    });
   }
   
   @Nullable

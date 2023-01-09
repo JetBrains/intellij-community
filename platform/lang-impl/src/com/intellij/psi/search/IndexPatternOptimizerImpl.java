@@ -17,6 +17,10 @@ import java.util.List;
 public class IndexPatternOptimizerImpl implements IndexPatternOptimizer {
   @Override
   public @NotNull List<String> extractStringsToFind(@NotNull String regexp) {
+    // short circuit for known built-in patterns, no need to spin up RegExp parser and its elements
+    if ("\\btodo\\b.*".equals(regexp)) return StringUtil.getWordsIn("todo");
+    if ("\\bfixme\\b.*".equals(regexp)) return StringUtil.getWordsIn("fixme");
+
     // TODO some datagrip tests are not passed with unknown reason (no exception in logs but it's)
     if (ApplicationManager.getApplication().isUnitTestMode() && PlatformUtils.isDataGrip()) {
       return Collections.emptyList();

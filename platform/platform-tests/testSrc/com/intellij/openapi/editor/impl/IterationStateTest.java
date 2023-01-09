@@ -83,8 +83,7 @@ public class IterationStateTest extends AbstractEditorTest {
   }
 
   public void testColumnModeBlockSelectionAtLastEmptyLine() {
-    init("a\n" +
-         "");
+    init("a\n");
     setColumnModeOn();
     mouse().pressAt(1, 1).dragTo(1, 2).release();
     verifySplitting(false,

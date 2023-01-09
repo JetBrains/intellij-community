@@ -24,6 +24,7 @@ import com.intellij.structuralsearch.impl.matcher.JavaMatchUtil;
 import com.intellij.structuralsearch.impl.matcher.filters.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
+import com.intellij.structuralsearch.impl.matcher.predicates.ExprTypePredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -546,12 +547,14 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       final PsiElement reference = expressionStatement.getFirstChild();
       final MatchingHandler referenceHandler = pattern.getHandler(reference);
 
-      if (referenceHandler instanceof SubstitutionHandler && (reference instanceof PsiReferenceExpression)) {
+      if (referenceHandler instanceof SubstitutionHandler substitutionHandler &&
+          substitutionHandler.findPredicate(ExprTypePredicate.class) == null &&
+          reference instanceof PsiReferenceExpression) {
         // symbol
         pattern.setHandler(expressionStatement, referenceHandler);
         referenceHandler.setFilter(SymbolNodeFilter.getInstance());
 
-        myCompilingVisitor.setHandler(expressionStatement, new SymbolHandler((SubstitutionHandler)referenceHandler));
+        myCompilingVisitor.setHandler(expressionStatement, new SymbolHandler(substitutionHandler));
       }
       else if (reference instanceof PsiLiteralExpression) {
         final MatchingHandler handler = new ExpressionHandler();

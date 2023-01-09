@@ -75,8 +75,8 @@ class CommonIntentionActionsParametersTest : LightPlatformCodeInsightFixtureTest
             ).entries
         )
     ).find { it.text.contains("Change signature of Foo") }
-    if (action == null) fail("Change signature intention not found")
-    myFixture.launchAction(action!!)
+    if (action == null) kotlin.test.fail("Change signature intention not found")
+    myFixture.launchAction(action)
     myFixture.checkResult(
         """
         import java.io.File

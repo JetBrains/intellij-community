@@ -2,10 +2,10 @@ import sys
 from _typeshed import Self
 from decimal import Decimal
 from numbers import Integral, Rational, Real
-from typing import Any, Union, overload
-from typing_extensions import Literal
+from typing import Any, overload
+from typing_extensions import Literal, TypeAlias
 
-_ComparableNum = Union[int, float, Decimal, Real]
+_ComparableNum: TypeAlias = int | float | Decimal | Real
 
 if sys.version_info >= (3, 9):
     __all__ = ["Fraction"]

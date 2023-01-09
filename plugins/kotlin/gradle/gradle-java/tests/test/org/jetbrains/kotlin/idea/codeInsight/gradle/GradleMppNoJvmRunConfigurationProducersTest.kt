@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNa
 import org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNativeTestMethodGradleConfigurationProducer
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducerTestCase
-import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder
+import org.jetbrains.plugins.gradle.testFramework.util.buildSettings
 import org.jetbrains.plugins.gradle.testFramework.util.buildscript
 import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
@@ -199,8 +199,8 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
             """.trimIndent()
         )
 
-        createProjectSubFile("settings.gradle", GroovyScriptBuilder.groovy {
-            assign("rootProject.name", "project")
+        createProjectSubFile("settings.gradle", buildSettings {
+            setProjectName("project")
         })
 
         createProjectSubFile("build.gradle", buildscript {

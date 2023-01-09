@@ -38,6 +38,7 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
                                 private val avatarIconsProvider: GHAvatarIconsProvider,
                                 private val repositoryDataService: GHPRRepositoryDataService,
                                 private val diffData: GHPRChangeDiffData,
+                                private val ghostUser: GHUser,
                                 private val currentUser: GHUser)
   : GHPRDiffReviewSupport {
 
@@ -82,6 +83,7 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
     val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(project,
                                                                       reviewDataProvider, avatarIconsProvider,
                                                                       createCommentParametersHelper, suggestedChangesHelper,
+                                                                      ghostUser,
                                                                       currentUser)
     val cumulative = diffData is GHPRChangeDiffData.Cumulative
     when (viewer) {

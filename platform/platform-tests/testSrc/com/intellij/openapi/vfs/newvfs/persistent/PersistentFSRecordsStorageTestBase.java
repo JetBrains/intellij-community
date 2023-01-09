@@ -94,7 +94,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       records[i] = generateRecordFields(recordId);
     }
 
-    final int threadsCount = Runtime.getRuntime().availableProcessors() * 2;
+    final int threadsCount = Runtime.getRuntime().availableProcessors();
 
     final Thread[] threads = new Thread[threadsCount];
     for (int i = 0; i < threads.length; i++) {
@@ -139,7 +139,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       records[i] = generateRecordFields(recordId);
     }
 
-    final int threadsCount = Runtime.getRuntime().availableProcessors() * 2;
+    final int threadsCount = Runtime.getRuntime().availableProcessors();
 
     final Thread[] threads = new Thread[threadsCount];
     for (int threadNo = 0; threadNo < threads.length; threadNo++) {
@@ -222,7 +222,9 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
 
   @After
   public void tearDown() throws Exception {
-    storage.close();
+    if (storage != null) {
+      storage.close();
+    }
   }
 
 
@@ -278,13 +280,29 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     }
 
     public void updateInStorage(final PersistentFSRecordsStorage storage) throws IOException {
-      storage.setParent(id, this.parentRef);
-      storage.setNameId(id, this.nameRef);
-      storage.setFlags(id, this.flags);
-      storage.setAttributeRecordId(id, this.attributeRef);
-      storage.setContentRecordId(id, this.contentRef);
-      storage.putTimestamp(id, this.timestamp);
-      storage.putLength(id, this.length);
+      //storage.fillRecord(id, this.timestamp, this.length, this.flags, this.nameRef, this.parentRef, false);
+      if (storage instanceof PersistentFSRecordsOverLockFreePagedStorage) {
+        final PersistentFSRecordsOverLockFreePagedStorage newStorage = (PersistentFSRecordsOverLockFreePagedStorage)storage;
+        newStorage.updateRecord(id, record -> {
+          record.setParent(this.parentRef);
+          record.setNameId(this.nameRef);
+          record.setFlags(this.flags);
+          record.setAttributeRecordId(this.attributeRef);
+          record.setContentRecordId(this.contentRef);
+          record.setTimestamp(this.timestamp);
+          record.setLength(this.length);
+          return true;
+        });
+      } else {
+        storage.setParent(id, this.parentRef);
+        storage.setNameId(id, this.nameRef);
+        storage.setFlags(id, this.flags);
+        storage.setAttributeRecordId(id, this.attributeRef);
+        storage.setContentRecordId(id, this.contentRef);
+        storage.setTimestamp(id, this.timestamp);
+        storage.setLength(id, this.length);
+      }
+
       //storage.overwriteModCount(id, this.modCount);
     }
 
@@ -387,8 +405,8 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
                                                 final FSRecord recordOriginal,
                                                 final FSRecord recordReadBack) {
     assertTrue(message + "\n" +
-                 "\toriginal:  " + recordOriginal + "\n" +
-                 "\tread back: " + recordReadBack + "\n",
-                 recordOriginal.equalsExceptModCount(recordReadBack));
+               "\toriginal:  " + recordOriginal + "\n" +
+               "\tread back: " + recordReadBack + "\n",
+               recordOriginal.equalsExceptModCount(recordReadBack));
   }
 }

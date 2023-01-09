@@ -1,0 +1,6 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <iconMapper mappingFile="CollaborationToolsIconMappings.json"/>
+    <themeMetadataProvider path="/META-INF/CollaborationTools.themeMetadata.json"/>
+  </extensions>
+</idea-plugin>

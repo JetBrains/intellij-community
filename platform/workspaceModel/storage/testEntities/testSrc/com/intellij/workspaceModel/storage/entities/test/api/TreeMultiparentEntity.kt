@@ -4,29 +4,36 @@ package com.intellij.workspaceModel.storage.entities.test.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 
-interface TreeMultiparentRootEntity : WorkspaceEntityWithPersistentId {
+interface TreeMultiparentRootEntity : WorkspaceEntityWithSymbolicId {
   val data: String
 
   val children: List<@Child TreeMultiparentLeafEntity>
 
-  override val persistentId: TreeMultiparentPersistentId
-    get() = TreeMultiparentPersistentId(data)
+  override val symbolicId: TreeMultiparentSymbolicId
+    get() = TreeMultiparentSymbolicId(data)
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : TreeMultiparentRootEntity, ModifiableWorkspaceEntity<TreeMultiparentRootEntity>, ObjBuilder<TreeMultiparentRootEntity> {
+  interface Builder : TreeMultiparentRootEntity, WorkspaceEntity.Builder<TreeMultiparentRootEntity>, ObjBuilder<TreeMultiparentRootEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var children: List<TreeMultiparentLeafEntity>
   }
 
   companion object : Type<TreeMultiparentRootEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): TreeMultiparentRootEntity {
       val builder = builder()
       builder.data = data
@@ -53,7 +60,7 @@ interface TreeMultiparentLeafEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : TreeMultiparentLeafEntity, ModifiableWorkspaceEntity<TreeMultiparentLeafEntity>, ObjBuilder<TreeMultiparentLeafEntity> {
+  interface Builder : TreeMultiparentLeafEntity, WorkspaceEntity.Builder<TreeMultiparentLeafEntity>, ObjBuilder<TreeMultiparentLeafEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var mainParent: TreeMultiparentRootEntity?
@@ -62,6 +69,9 @@ interface TreeMultiparentLeafEntity : WorkspaceEntity {
   }
 
   companion object : Type<TreeMultiparentLeafEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): TreeMultiparentLeafEntity {
       val builder = builder()
       builder.data = data
@@ -79,7 +89,7 @@ fun MutableEntityStorage.modifyEntity(entity: TreeMultiparentLeafEntity,
   TreeMultiparentLeafEntity.Builder::class.java, entity, modification)
 //endregion
 
-data class TreeMultiparentPersistentId(val data: String) : PersistentEntityId<TreeMultiparentRootEntity> {
+data class TreeMultiparentSymbolicId(val data: String) : SymbolicEntityId<TreeMultiparentRootEntity> {
   override val presentableName: String
     get() = data
 }

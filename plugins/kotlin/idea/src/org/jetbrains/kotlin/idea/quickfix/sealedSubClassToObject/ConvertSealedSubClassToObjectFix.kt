@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix.sealedSubClassToObject
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.lang.Language
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
@@ -18,7 +19,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgressIfEdt
 import org.jetbrains.kotlin.idea.intentions.ConvertSecondaryConstructorToPrimaryIntention
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -51,10 +51,10 @@ class ConvertSealedSubClassToObjectFix : LocalQuickFix {
     private fun changeDeclaration(pointer: SmartPsiElementPointer<KtClass>) {
         runWriteAction {
             val element = pointer.element ?: return@runWriteAction
-            val factory = KtPsiFactory(element)
+            val psiFactory = KtPsiFactory(element.project)
 
-            element.changeToObject(factory)
-            element.transformToObject(factory)
+            element.changeToObject(psiFactory)
+            element.transformToObject(psiFactory)
         }
     }
 
@@ -102,7 +102,7 @@ class ConvertSealedSubClassToObjectFix : LocalQuickFix {
      */
     private fun Map<Language, List<PsiElement>>.replaceKotlin(klass: KtClass) {
         val list = this[KOTLIN_LANG] ?: return
-        val singletonCall = KtPsiFactory(klass).buildExpression { appendName(klass.nameAsSafeName) }
+        val singletonCall = KtPsiFactory(klass.project).buildExpression { appendName(klass.nameAsSafeName) }
 
         list.filter { it.node.elementType == KtNodeTypes.CALL_EXPRESSION }
             .forEach { it.replace(singletonCall) }

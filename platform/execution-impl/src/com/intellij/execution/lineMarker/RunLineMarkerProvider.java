@@ -108,7 +108,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   public static @NotNull LineMarkerInfo<PsiElement> createLineMarker(@NotNull PsiElement element,
                                                                      @NotNull Icon icon,
-                                                                     @NotNull List<Info> infos) {
+                                                                     @NotNull List<? extends Info> infos) {
     if (infos.size() > 1) {
       infos.sort(COMPARATOR);
       final Info first = infos.get(0);

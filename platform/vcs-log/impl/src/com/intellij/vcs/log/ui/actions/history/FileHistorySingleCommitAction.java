@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions.history;
 
 import com.google.common.primitives.Ints;
@@ -10,7 +10,9 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.DataGetter;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.history.FileHistoryUi;
@@ -24,6 +26,10 @@ import java.util.Objects;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
+/**
+ * @deprecated replaced by {@link FileHistoryOneCommitAction}
+ */
+@Deprecated
 public abstract class FileHistorySingleCommitAction<T extends VcsCommitMetadata> extends AnAction implements DumbAware {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -78,11 +84,9 @@ public abstract class FileHistorySingleCommitAction<T extends VcsCommitMetadata>
                                                           MessageType.ERROR), null);
   }
 
-  @NotNull
-  protected abstract List<T> getSelection(@NotNull FileHistoryUi ui);
+  protected abstract @NotNull List<T> getSelection(@NotNull FileHistoryUi ui);
 
-  @NotNull
-  protected abstract DataGetter<T> getDetailsGetter(@NotNull FileHistoryUi ui);
+  protected abstract @NotNull DataGetter<T> getDetailsGetter(@NotNull FileHistoryUi ui);
 
   protected abstract void performAction(@NotNull Project project,
                                         @NotNull FileHistoryUi ui,

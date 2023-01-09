@@ -323,7 +323,7 @@ class GitPullDialog(private val project: Project,
       add(repositoryField,
           CC()
             .gapAfter("0")
-            .minWidth("${JBUI.scale(115)}px")
+            .minWidth("115")
             .growX())
     }
 
@@ -331,17 +331,17 @@ class GitPullDialog(private val project: Project,
         CC()
           .gapAfter("0")
           .alignY("top")
-          .minWidth("${JBUI.scale(85)}px"))
+          .minWidth("85"))
 
     add(remoteField,
         CC()
           .alignY("top")
-          .minWidth("${JBUI.scale(90)}px"))
+          .minWidth("90"))
 
     add(branchField,
         CC()
           .alignY("top")
-          .minWidth("${JBUI.scale(250)}px")
+          .minWidth("250")
           .growX())
   }
 

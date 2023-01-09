@@ -172,7 +172,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
   }
 
   @Override
-  public final @NotNull Object deserializeList(@Nullable Object context, @NotNull List<Element> elements) {
+  public final @NotNull Object deserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
     if (!isSurroundWithTag()) {
       return doDeserializeList(context, elements);
     }
@@ -193,7 +193,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
     return doDeserializeList2(context == null && element.name.equals(Constants.SET) ? new HashSet<>() : context, element.children);
   }
 
-  protected abstract @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<Element> elements);
+  protected abstract @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<? extends Element> elements);
 
   protected abstract @NotNull Object doDeserializeList2(@Nullable Object context, @NotNull List<XmlElement> elements);
 

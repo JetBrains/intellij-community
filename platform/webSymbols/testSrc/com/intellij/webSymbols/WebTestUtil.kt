@@ -45,11 +45,12 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation
 import com.intellij.usages.Usage
 import com.intellij.util.ObjectUtils.coalesce
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.declarations.WebSymbolDeclaration
 import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
-import com.intellij.webSymbols.registry.WebSymbolMatch
-import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
+import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.File
@@ -362,6 +363,7 @@ fun CodeInsightTestFixture.findUsages(target: SearchTarget): MutableCollection<o
 }
 
 @JvmOverloads
+@RequiresEdt
 fun CodeInsightTestFixture.checkGTDUOutcome(expectedOutcome: GotoDeclarationOrUsageHandler2.GTDUOutcome?, signature: String? = null) {
   if (signature != null) {
     moveToOffsetBySignature(signature)
@@ -373,9 +375,10 @@ fun CodeInsightTestFixture.checkGTDUOutcome(expectedOutcome: GotoDeclarationOrUs
     file = editor.injectedFile
     offset -= InjectedLanguageManager.getInstance(project).injectedToHost(file, 0)
   }
+  val gtduOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcomeInNonBlockingReadAction(editor, file, offset)
   Assert.assertEquals(signature,
                       expectedOutcome,
-                      GotoDeclarationOrUsageHandler2.testGTDUOutcome(editor, file, offset))
+                      gtduOutcome)
 }
 
 fun CodeInsightTestFixture.checkGotoDeclaration(signature: String, expectedOffset: Int, expectedFileName: String? = null) {
@@ -409,6 +412,19 @@ fun CodeInsightTestFixture.checkListByFile(actualList: List<String>, @TestDataFi
   }
   else if (expectedContents != actualContents) {
     throw FileComparisonFailure(expectedFile, expectedContents, actualContents, path)
+  }
+}
+
+fun CodeInsightTestFixture.checkTextByFile(actualContents: String, @TestDataFile expectedFile: String) {
+  val path = "$testDataPath/$expectedFile"
+  val file = File(path)
+  if (!file.exists() && file.createNewFile()) {
+    Logger.getInstance("#WebTestUtilKt").warn("File $file has been created.")
+  }
+  val actualContentsTrimmed = actualContents.trim() + "\n"
+  val expectedContents = FileUtil.loadFile(file, "UTF-8", true).trim() + "\n"
+  if (expectedContents != actualContentsTrimmed) {
+    throw FileComparisonFailure(expectedFile, expectedContents, actualContentsTrimmed, path)
   }
 }
 
@@ -453,7 +469,7 @@ fun CodeInsightTestFixture.testWebSymbolRename(fileAfter: String, newName: Strin
 fun doCompletionItemsTest(fixture: CodeInsightTestFixture, fileName: String) {
   val fileNameNoExt = FileUtil.getNameWithoutExtension(fileName)
   fixture.configureByFile(fileName)
-  WriteAction.runAndWait<Throwable> { WebSymbolsRegistryManager.getInstance(fixture.project) }
+  WriteAction.runAndWait<Throwable> { WebSymbolsQueryExecutorFactory.getInstance(fixture.project) }
 
   val document = fixture.getDocument(fixture.file)
 

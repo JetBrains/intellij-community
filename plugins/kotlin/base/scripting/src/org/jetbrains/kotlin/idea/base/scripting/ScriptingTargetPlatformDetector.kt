@@ -14,17 +14,21 @@ import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.facet.platform.TargetPlatformDetector
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsTracker
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker
-import org.jetbrains.kotlin.platform.*
+import org.jetbrains.kotlin.platform.CommonPlatforms
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.TargetPlatformVersion
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
-import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms.defaultJvmPlatform
+import org.jetbrains.kotlin.platform.subplatformsOfType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -65,6 +69,11 @@ internal object ScriptingTargetPlatformDetector : TargetPlatformDetector {
         }
 
         val platformNameFromDefinition = definition.platform
+
+        if ("JVM" == platformNameFromDefinition) { // optional compiler arg "-jvmTarget" is considered in getScriptSettings()
+            return defaultJvmPlatform
+        }
+
         for (compilerPlatform in CommonPlatforms.allSimplePlatforms) {
             // FIXME(dsavvinov): get rid of matching by name
             if (compilerPlatform.single().platformName == platformNameFromDefinition) {
@@ -72,7 +81,7 @@ internal object ScriptingTargetPlatformDetector : TargetPlatformDetector {
             }
         }
 
-        return JvmPlatforms.defaultJvmPlatform
+        return defaultJvmPlatform
     }
 
     private fun getScriptSettings(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): ScriptLanguageSettings {
@@ -92,7 +101,10 @@ internal object ScriptingTargetPlatformDetector : TargetPlatformDetector {
                 parseCommandLineArguments(args.toList(), compilerArguments)
 
                 // TODO: reporting
-                val languageVersionSettings = compilerArguments.toLanguageVersionSettings(MessageCollector.NONE)
+                val languageVersionSettings = compilerArguments.toLanguageVersionSettings(
+                    MessageCollector.NONE,
+                    mapOf(AnalysisFlags.ideMode to true)
+                )
                 val platformVersion = compilerArguments.jvmTarget?.let { JvmTarget.fromString(it) }
                     ?: detectDefaultTargetPlatformVersion(scriptModule?.platform)
 

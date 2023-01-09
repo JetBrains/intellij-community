@@ -118,7 +118,7 @@ final class TrafficLightPopup {
 
   private void showPopup(@NotNull InputEvent event, @NotNull AnalyzerStatus analyzerStatus) {
     hidePopup();
-    if (myPopupState.isRecentlyHidden() || AnalyzerStatus.isEmpty(analyzerStatus)) return; // do not show new popup
+    if (myPopupState.isRecentlyHidden() || analyzerStatus.isEmpty()) return; // do not show new popup
 
     updateContentPanel(analyzerStatus);
 
@@ -165,7 +165,7 @@ final class TrafficLightPopup {
 
     if (!presentableNames.isEmpty() && myProgressBarMap.keySet().equals(presentableNames)) {
       for (PassWrapper pass : passes) {
-        myProgressBarMap.get(pass.getPresentableName()).setValue(pass.toPercent());
+        myProgressBarMap.get(pass.getPresentableName()).setValue(pass.getPercent());
       }
       return;
     }
@@ -217,7 +217,7 @@ final class TrafficLightPopup {
                           progressGC.nextLine().next().anchor(GridBagConstraints.LINE_START).weightx(0).insets(0, 10, 0, 6));
 
       JProgressBar pb = new JProgressBar(0, 100);
-      pb.setValue(pass.toPercent());
+      pb.setValue(pass.getPercent());
       myProgressPanel.add(pb, progressGC.next().anchor(GridBagConstraints.LINE_START).weightx(1).fillCellHorizontally().insets(0, 0, 0, 6));
       myProgressBarMap.put(pass.getPresentableName(), pb);
     }

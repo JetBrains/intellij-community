@@ -54,11 +54,12 @@ import javax.swing.SwingUtilities
  * via [SingleContentSupplier.KEY] that in case of single content view
  * all [JBTabs] and actions are moved into this header.
  *
- * When two or more contents exist then header looks like [TabContentLayout].
+ * When two or more contents exist, then header looks like [TabContentLayout].
  */
 internal class SingleContentLayout(
   ui: ToolWindowContentUi
 ) : TabContentLayout(ui) {
+  val closeCurrentContentAction: AnAction = CloseCurrentContentAction()
   private var tabAdapter: TabAdapter? = null
   private val toolbars = mutableMapOf<ToolbarType, ActionToolbar>()
   private var wrapper: JComponent? = null
@@ -149,7 +150,7 @@ internal class SingleContentLayout(
     if (!isNewUI()) {
       let {
         val contentActions = DefaultActionGroup()
-        contentActions.add(CloseCurrentContentAction())
+        contentActions.add(closeCurrentContentAction)
         contentActions.add(Separator.create())
         contentActions.addAll(supplier.getContentActions())
         contentActions.add(MyInvisibleAction())
@@ -324,7 +325,7 @@ internal class SingleContentLayout(
         if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
           val tabLabel = e.component as? MyContentTabLabel
           if (tabLabel != null && tabLabel.content.isCloseable) {
-            tabLabel?.closeContent()
+            tabLabel.closeContent()
           }
         }
       }
@@ -344,7 +345,9 @@ internal class SingleContentLayout(
       updateTabs()
 
       jbTabs.addListener(object : TabsListener {
-        override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) = checkAndUpdate()
+        override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
+          checkAndUpdate()
+        }
         override fun tabRemoved(tabToRemove: TabInfo) = checkAndUpdate()
         override fun tabsMoved() = checkAndUpdate()
       }, this)
@@ -558,7 +561,7 @@ internal class SingleContentLayout(
       }
   }
 
-  inner class CloseCurrentContentAction : DumbAwareAction(CommonBundle.messagePointer("action.close"), AllIcons.Actions.Cancel) {
+  private inner class CloseCurrentContentAction : DumbAwareAction(CommonBundle.messagePointer("action.close"), AllIcons.Actions.Cancel) {
     override fun actionPerformed(e: AnActionEvent) {
       val content = getSingleContentOrNull()
       if (content != null && content.isPinned) {

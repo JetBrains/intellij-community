@@ -120,7 +120,7 @@ public class InstalledPluginsTableModel {
   private static void setNewEnabled(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
                                     @NotNull Map<PluginId, PluginEnabledState> enabledMap,
                                     @NotNull PluginEnableDisableAction action,
-                                    @NotNull BiConsumer<? super IdeaPluginDescriptor, @NotNull Pair<PluginEnableDisableAction, PluginEnabledState>> beforeHandler) {
+                                    @NotNull BiConsumer<? super IdeaPluginDescriptor, ? super @NotNull Pair<PluginEnableDisableAction, PluginEnabledState>> beforeHandler) {
     for (IdeaPluginDescriptor descriptor : descriptors) {
       PluginId pluginId = descriptor.getPluginId();
       PluginEnabledState oldState = enabledMap.get(pluginId);

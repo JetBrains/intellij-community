@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections.migration
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryWithPsiElement
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -23,6 +24,6 @@ class InlineClassDeprecatedMigrationInspection :
 
     override fun descriptionMessage(): String = KotlinBundle.message("inspection.deprecated.inline.class.text")
 
-    override val diagnosticFactory: DiagnosticFactoryWithPsiElement<PsiElement, *>
-        get() = Errors.INLINE_CLASS_DEPRECATED
+    override fun getDiagnosticFactory(languageVersionSettings: LanguageVersionSettings): DiagnosticFactoryWithPsiElement<PsiElement, *> =
+        Errors.INLINE_CLASS_DEPRECATED
 }

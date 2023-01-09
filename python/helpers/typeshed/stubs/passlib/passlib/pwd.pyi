@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from collections import MutableMapping
+from collections.abc import MutableMapping
 from typing import Any
 
 class SequenceGenerator:

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Declarations")
 
 package com.intellij.model.psi.impl
@@ -49,7 +49,7 @@ private val declarationProviderEP = ExtensionPointName<PsiSymbolDeclarationProvi
 private fun declarationsInElement(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolDeclaration> {
   val result = SmartList<PsiSymbolDeclaration>()
   result.addAll(element.ownDeclarations)
-  for (extension: PsiSymbolDeclarationProvider in declarationProviderEP.iterable) {
+  for (extension: PsiSymbolDeclarationProvider in declarationProviderEP.lazySequence()) {
     ProgressManager.checkCanceled()
     result.addAll(extension.getDeclarations(element, offsetInElement))
   }

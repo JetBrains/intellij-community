@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
@@ -36,13 +37,16 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class TodoCommentInspection extends LocalInspectionTool {
 
   public boolean onlyWarnOnEmpty = true;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(LangBundle.message("todo.comment.only.warn.on.empty.option"), this, "onlyWarnOnEmpty");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyWarnOnEmpty", LangBundle.message("todo.comment.only.warn.on.empty.option")));
   }
 
   @Override

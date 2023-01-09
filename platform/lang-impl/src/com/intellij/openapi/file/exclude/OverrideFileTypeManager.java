@@ -39,15 +39,15 @@ public final class OverrideFileTypeManager extends PersistentFileSetManager {
 
   @TestOnly
   @ApiStatus.Internal
-  public static void performTestWithMarkedAsPlainText(@NotNull VirtualFile file, @NotNull Runnable runnable) {
+  public void performTestWithMarkedAsPlainText(@NotNull VirtualFile file, @NotNull Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    getInstance().addFile(file, PlainTextFileType.INSTANCE);
+    addFile(file, PlainTextFileType.INSTANCE);
     UIUtil.dispatchAllInvocationEvents();
     try {
       runnable.run();
     }
     finally {
-      getInstance().removeFile(file);
+      removeFile(file);
       UIUtil.dispatchAllInvocationEvents();
     }
   }

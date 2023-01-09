@@ -24,6 +24,6 @@ class MockStackFrame(private val location: Location) : StackFrame {
     override fun thread(): ThreadReference { TODO("Not yet implemented") }
     override fun thisObject(): ObjectReference? { TODO("Not yet implemented") }
     override fun getValue(variable: LocalVariable?): Value { TODO("Not yet implemented") }
-    override fun getValues(variables: MutableList<out LocalVariable>?): MutableMap<LocalVariable, Value> { TODO("Not yet implemented") }
+    override fun getValues(variables: List<LocalVariable>?): MutableMap<LocalVariable, Value> { TODO("Not yet implemented") }
     override fun setValue(variable: LocalVariable?, value: Value?) { TODO("Not yet implemented") }
 }

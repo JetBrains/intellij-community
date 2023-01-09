@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
@@ -33,7 +34,6 @@ import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.idea.test.allKotlinFiles
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.projectStructure.sdk
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.psi.KtFile
@@ -193,10 +193,10 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
 
     fun testLanguageVersionsViaFacets() {
         val m1 = module("m1").setupKotlinFacet {
-            settings.languageLevel = LanguageVersion.KOTLIN_1_1
+            settings.languageLevel = LanguageVersion.KOTLIN_1_6
         }
         val m2 = module("m2").setupKotlinFacet {
-            settings.languageLevel = LanguageVersion.KOTLIN_1_0
+            settings.languageLevel = LanguageVersion.KOTLIN_1_7
         }
 
         m1.addDependency(m2)

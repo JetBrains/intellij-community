@@ -80,7 +80,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement tailCallToken = descriptor.getPsiElement();
       final PsiMethod method =
         PsiTreeUtil.getParentOfType(tailCallToken, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);

@@ -1,6 +1,7 @@
 from _typeshed import Self
+from collections.abc import Callable
 from types import ModuleType
-from typing import Any, Callable, Generic, TypeVar, overload
+from typing import Any, Generic, TypeVar, overload
 from unittest import TestLoader, TestSuite
 
 from setuptools import Command

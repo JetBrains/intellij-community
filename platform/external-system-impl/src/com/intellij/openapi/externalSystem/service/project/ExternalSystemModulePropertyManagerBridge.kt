@@ -16,7 +16,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModuleOptionsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.getOrCreateExternalSystemModuleOptions
 
 class ExternalSystemModulePropertyManagerBridge(private val module: Module) : ExternalSystemModulePropertyManager() {
@@ -42,7 +42,7 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
     }
     else {
       WriteAction.runAndWait<RuntimeException> {
-        WorkspaceModel.getInstance(module.project).updateProjectModel { builder ->
+        WorkspaceModel.getInstance(module.project).updateProjectModel("Modify external system module options") { builder ->
           val moduleEntity = module.findModuleEntity(builder) ?: return@updateProjectModel
           val options = builder.getOrCreateExternalSystemModuleOptions(moduleEntity, moduleEntity.entitySource)
           builder.modifyEntity(ExternalSystemModuleOptionsEntity.Builder::class.java, options, action)

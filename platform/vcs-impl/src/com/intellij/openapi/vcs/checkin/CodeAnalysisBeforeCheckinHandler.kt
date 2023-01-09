@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
@@ -11,16 +11,13 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.nls.NlsMessages.formatAndList
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.contextModality
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.ProgressSink
+import com.intellij.openapi.progress.jobToIndicator
 import com.intellij.openapi.progress.progressSink
-import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -52,18 +49,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.containers.ConcurrentFactoryMap
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.getWarningIcon
+import com.intellij.vcs.commit.CommitSessionCollector
 import com.intellij.vcs.commit.isPostCommitCheck
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
-import javax.swing.JComponent
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KMutableProperty0
 
@@ -72,12 +66,10 @@ class CodeAnalysisCheckinHandlerFactory : CheckinHandlerFactory() {
     CodeAnalysisBeforeCheckinHandler(panel.project)
 }
 
-class CodeAnalysisCommitProblem(private val codeSmells: List<CodeSmellInfo>) : CommitProblemWithDetails {
+class CodeAnalysisCommitProblem(private val codeSmells: List<CodeSmellInfo>,
+                                private val errors: Int, private val warnings: Int) : CommitProblemWithDetails {
   override val text: String
     get() {
-      val errors = codeSmells.count { it.severity == HighlightSeverity.ERROR }
-      val warnings = codeSmells.size - errors
-
       val errorsText = if (errors > 0) HighlightSeverity.ERROR.getCountMessage(errors) else null
       val warningsText = if (warnings > 0) HighlightSeverity.WARNING.getCountMessage(warnings) else null
 
@@ -113,32 +105,30 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
     val sink = coroutineContext.progressSink
     sink?.text(message("progress.text.analyzing.code"))
 
-    val isPostCommit = commitInfo.commitContext.isPostCommitCheck
-    val changesByFile = mutableMapOf<VirtualFile, Change>()
-    for (change in commitInfo.committedChanges) {
-      val changeFile = change.afterRevision?.file?.virtualFile ?: continue
-      if (isGeneratedOrExcluded(project, changeFile)) continue
-
-      val oldChange = changesByFile.put(changeFile, change)
-      if (oldChange != null) {
-        logger<CodeAnalysisCheckinHandlerFactory>().warn("Multiple changes for the same file: $oldChange, $change")
-      }
-    }
-    if (changesByFile.isEmpty()) return null
+    val isPostCommit = commitInfo.isPostCommitCheck
+    val changes = commitInfo.committedChanges
+    if (changes.isEmpty()) return null
 
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
     lateinit var codeSmells: List<CodeSmellInfo>
     val text2DetailsSink = sink?.let(::TextToDetailsProgressSink)
     withContext(Dispatchers.Default) {
+      val changesByFile = groupChangesByFile(changes)
       // [findCodeSmells] requires [ProgressIndicatorEx] set for thread
       val progressIndicatorEx = ProgressSinkIndicatorEx(text2DetailsSink, coroutineContext.contextModality() ?: ModalityState.NON_MODAL)
-      runUnderIndicator(coroutineContext.job, progressIndicatorEx) {
+      jobToIndicator(coroutineContext.job, progressIndicatorEx) {
         // TODO suspending [findCodeSmells]
         codeSmells = findCodeSmells(changesByFile, isPostCommit)
       }
     }
-    return if (codeSmells.isNotEmpty()) CodeAnalysisCommitProblem(codeSmells) else null
+    if (codeSmells.isEmpty()) return null
+
+    val errors = codeSmells.count { it.severity == HighlightSeverity.ERROR }
+    val warnings = codeSmells.size - errors
+    CommitSessionCollector.getInstance(project).logCodeAnalysisWarnings(warnings, errors)
+
+    return CodeAnalysisCommitProblem(codeSmells, errors, warnings)
   }
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
@@ -147,7 +137,24 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
                    settings::CODE_SMELLS_PROFILE_LOCAL,
                    settings::CODE_SMELLS_PROFILE,
                    "before.checkin.standard.options.check.smells",
-                   "before.checkin.options.check.smells.profile")
+                   "before.checkin.options.check.smells.profile").build(this)
+
+  private suspend fun groupChangesByFile(changes: List<Change>): Map<VirtualFile, Change> {
+    val changesByFile = mutableMapOf<VirtualFile, Change>()
+    for (change in changes) {
+      val changeFile = readAction {
+        change.afterRevision?.file?.virtualFile
+          ?.takeUnless { isGeneratedOrExcluded(project, it) }
+      }
+      if (changeFile == null) continue
+
+      val oldChange = changesByFile.put(changeFile, change)
+      if (oldChange != null) {
+        logger<CodeAnalysisCheckinHandlerFactory>().warn("Multiple changes for the same file: $oldChange, $change")
+      }
+    }
+    return changesByFile
+  }
 
   /**
    * Puts a closure in PsiFile user data that extracts PsiElement elements that are being committed.
@@ -224,14 +231,12 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
 }
 
 class ProfileChooser(private val project: Project,
-                     property: KMutableProperty0<Boolean>,
+                     private val property: KMutableProperty0<Boolean>,
                      private val isLocalProperty: KMutableProperty0<Boolean>,
                      private val profileProperty: KMutableProperty0<String?>,
                      private val emptyTitleKey: @PropertyKey(resourceBundle = "messages.VcsBundle") String,
-                     private val profileTitleKey: @PropertyKey(resourceBundle = "messages.VcsBundle") String)
-  : BooleanCommitOption(project, message(emptyTitleKey), true, property) {
-
-  override fun getComponent(): JComponent {
+                     private val profileTitleKey: @PropertyKey(resourceBundle = "messages.VcsBundle") String) {
+  fun build(checkinHandler: CheckinHandler?): RefreshableOnComponent {
     var profile: InspectionProfileImpl? = null
     val profileName = profileProperty.get()
     if (profileName != null) {
@@ -239,32 +244,33 @@ class ProfileChooser(private val project: Project,
       else InspectionProjectProfileManager.getInstance(project)
       profile = manager.getProfile(profileName)
     }
-    setProfileText(profile)
+    val initialText = getProfileText(profile)
 
-    val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
-      JBPopupMenu.showBelow(sourceLink, ActionPlaces.CODE_INSPECTION, createProfileChooser())
+    return BooleanCommitOption.createLink(
+      project, checkinHandler, disableWhenDumb = true,
+      initialText,
+      property,
+      message("before.checkin.options.check.smells.choose.profile")) { sourceLink, linkData ->
+      JBPopupMenu.showBelow(sourceLink, ActionPlaces.CODE_INSPECTION, createProfileChooser(linkData))
     }
-    val configureFilterLink = LinkLabel(message("before.checkin.options.check.smells.choose.profile"), null, showFiltersPopup)
-
-    return JBUI.Panels.simplePanel(4, 0).addToLeft(checkBox).addToCenter(configureFilterLink)
   }
 
-  private fun setProfileText(profile: InspectionProfileImpl?) {
-    checkBox.text = if (profile == null || profile == InspectionProjectProfileManager.getInstance(project).currentProfile)
+  private fun getProfileText(profile: InspectionProfileImpl?): @Nls String {
+    return if (profile == null || profile == InspectionProjectProfileManager.getInstance(project).currentProfile)
       message(emptyTitleKey)
     else message(profileTitleKey, profile.displayName)
   }
 
-  private fun createProfileChooser(): DefaultActionGroup {
+  private fun createProfileChooser(linkContext: BooleanCommitOption.LinkContext): DefaultActionGroup {
     val group = DefaultActionGroup()
     group.add(Separator.create(IdeBundle.message("separator.scheme.stored.in", IdeBundle.message("scheme.project"))))
-    fillActions(group, InspectionProjectProfileManager.getInstance(project))
+    fillActions(group, InspectionProjectProfileManager.getInstance(project), linkContext)
     group.add(Separator.create(IdeBundle.message("separator.scheme.stored.in", IdeBundle.message("scheme.ide"))))
-    fillActions(group, InspectionProfileManager.getInstance())
+    fillActions(group, InspectionProfileManager.getInstance(), linkContext)
     return group
   }
 
-  private fun fillActions(group: DefaultActionGroup, manager: InspectionProfileManager) {
+  private fun fillActions(group: DefaultActionGroup, manager: InspectionProfileManager, linkContext: BooleanCommitOption.LinkContext) {
     for (profile in manager.profiles) {
       group.add(object : AnAction() {
         init {
@@ -275,7 +281,7 @@ class ProfileChooser(private val project: Project,
         override fun actionPerformed(e: AnActionEvent) {
           profileProperty.set(profile.name)
           isLocalProperty.set(manager !is InspectionProjectProfileManager)
-          setProfileText(profile)
+          linkContext.setCheckboxText(getProfileText(profile))
         }
       })
     }

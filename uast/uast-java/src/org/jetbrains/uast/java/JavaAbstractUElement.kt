@@ -98,7 +98,7 @@ private fun JavaAbstractUElement.unwrapSwitch(uParent: UElement): UElement {
       if (parentSourcePsi is PsiSwitchLabeledRuleStatement && parentSourcePsi.body?.children?.contains(sourcePsi) == true) {
         val psi = sourcePsi
         return if (psi is PsiExpression && uParent.body.expressions.size == 1)
-          DummyYieldExpression(psi, uParent.body)
+          DummyYieldExpression(psi, uParent.body, parentSourcePsi.enclosingSwitchBlock)
         else uParent.body
       }
       else

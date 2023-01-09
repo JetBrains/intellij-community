@@ -4,7 +4,9 @@
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
@@ -89,7 +91,11 @@ class KotlinGradleProjectSettingsDataService : AbstractProjectDataService<Projec
         project: Project,
         modelsProvider: IdeModifiableModelsProvider,
     ) {
-        KotlinCommonCompilerArgumentsHolder.getInstance(project).updateLanguageAndApi(project, modelsProvider.modules)
+        runInEdt {
+            runWriteAction {
+                KotlinCommonCompilerArgumentsHolder.getInstance(project).updateLanguageAndApi(project, modelsProvider.modules)
+            }
+        }
     }
 }
 

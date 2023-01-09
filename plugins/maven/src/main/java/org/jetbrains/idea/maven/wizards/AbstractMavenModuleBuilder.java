@@ -265,6 +265,11 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   @Nullable
   @Override
   public Project createProject(String name, String path) {
-    return ExternalProjectsManagerImpl.setupCreatedProject(super.createProject(name, path));
+    Project project = super.createProject(name, path);
+    if (project != null) {
+      ExternalProjectsManagerImpl.setupCreatedProject(project);
+      MavenProjectsManager.setupCreatedMavenProject(project);
+    }
+    return project;
   }
 }

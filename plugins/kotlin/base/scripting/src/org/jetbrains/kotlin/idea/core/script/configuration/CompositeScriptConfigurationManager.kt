@@ -12,20 +12,16 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.Futures
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangesNotifier
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
 import org.jetbrains.kotlin.idea.core.script.ucache.*
-import org.jetbrains.kotlin.idea.core.script.ucache.syncScriptEntities
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
-import java.nio.file.Paths
 
 /**
  * The [CompositeScriptConfigurationManager] will provide redirection of [ScriptConfigurationManager] calls to the
@@ -60,19 +56,7 @@ class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigur
         }
 
         override fun afterUpdate() {
-            if (scriptsAsEntities) {
-                val manager = VirtualFileManager.getInstance()
-                val scriptFiles = classpathRoots.scriptsPaths().takeUnless { it.isEmpty() }?.asSequence()
-                    ?.map { checkNotNull(manager.findFileByNioPath(Paths.get(it))) { "Couldn't find script as a VFS file: $it" } }
-                    ?: return
-
-                // We're called under read-lock (at least now). That is why syncScriptEntities() (requires write-lock) is to be rescheduled.
-                Futures.runInBackgroundAsync { project.syncScriptEntities(scriptFiles) }
-                    .thenRun { plugins.forEach { it.afterUpdate() } }
-
-            } else {
-                plugins.forEach { it.afterUpdate() }
-            }
+            plugins.forEach { it.afterUpdate() }
         }
     }
 

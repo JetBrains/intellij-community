@@ -5,6 +5,7 @@ import com.intellij.diagnostic.AttachmentFactory
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
+import com.intellij.util.containers.addAllIfNotNull
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.visitor.UastVisitor
@@ -49,6 +50,10 @@ inline fun <reified T : UElement> convertOrReport(psiElement: PsiElement, parent
 
 private val isInsideReporting = ThreadLocal<Boolean>()
 
+private val conversionLoggerCollector = ThreadLocalTroubleCollector()
+
+val CONVERSION_LOGGER = conversionLoggerCollector.logger
+
 fun <T : UElement> convertOrReport(psiElement: PsiElement, parent: UElement, expectedType: Class<T>): T? {
 
   fun UElement.safeToString(): String = if (isInsideReporting.get() != true)
@@ -57,10 +62,11 @@ fun <T : UElement> convertOrReport(psiElement: PsiElement, parent: UElement, exp
     }
   else "<recursive `safeToString()` computation $javaClass>"
 
-  fun mkAttachments(): Array<Attachment> = ArrayList<Attachment>().also { result ->
+  fun mkAttachments(vararg attachments: Attachment): Array<Attachment> = ArrayList<Attachment>().also { result ->
+    result.addAllIfNotNull(*attachments)
     result.add(Attachment("info.txt", buildString {
       appendLine("context: ${parent.javaClass}")
-      appendLine("psiElement: ${psiElement.javaClass}")
+      appendLine("psiElement: ${psiElement.javaClass}, valid = ${runCatching { psiElement.isValid }.getOrNull()}")
       appendLine("expectedType: $expectedType")
     }))
     result.add(Attachment("psiElementContent.txt", runCatching { psiElement.text ?: "<null>" }.getOrElse { it.stackTraceToString() }))
@@ -77,15 +83,19 @@ fun <T : UElement> convertOrReport(psiElement: PsiElement, parent: UElement, exp
         .error("cant get UAST plugin for ${parent.safeToString()} to convert element $psiElement", *mkAttachments())
     return null
   }
-  val result = expectedType.cast(plugin.convertElement(psiElement, parent, expectedType))
+  val (result, log) = conversionLoggerCollector.withCollectingInfo {
+    expectedType.cast(plugin.convertElement(psiElement, parent, expectedType))
+  }
   if (result == null && isInsideReporting.get() != true) {
     Logger.getInstance(parent.javaClass)
-      .error("failed to convert element $psiElement in ${parent.safeToString()}", *mkAttachments())
+      .error(
+        "failed to convert element $psiElement (${psiElement.javaClass}) in ${parent.safeToString()}, plugin = $plugin",
+        *mkAttachments(Attachment("conversion-log.txt", log)))
   }
   return result
 }
 
-private inline fun <T, R> ThreadLocal<T>.withValue(value: T, block: () -> R): R {
+internal inline fun <T, R> ThreadLocal<T>.withValue(value: T, block: () -> R): R {
   val old = this.get()
   if (old == value) return block.invoke();
   try {

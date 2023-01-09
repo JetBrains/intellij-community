@@ -127,13 +127,12 @@ public final class ReplacementBuilder {
       return replacement;
     }
 
-    final StringBuilder result = new StringBuilder(replacement);
-
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(type);
     assert profile != null;
 
     final List<ParameterInfo> sorted = new SmartList<>(parameterizations.values());
     sorted.sort(Comparator.comparingInt(ParameterInfo::getStartIndex).reversed());
+    final StringBuilder result = new StringBuilder(replacement);
     for (ParameterInfo info : sorted) {
       final MatchResult r = replacementInfo.getNamedMatchResult(info.getName());
       if (info.isReplacementVariable()) {

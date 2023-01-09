@@ -5,13 +5,14 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.util.isLineBreak
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 fun isRedundantSemicolon(semicolon: PsiElement): Boolean {
     val nextLeaf = semicolon.nextLeaf { it !is PsiWhiteSpace && it !is PsiComment || it.isLineBreak() }
@@ -33,7 +34,7 @@ fun isRedundantSemicolon(semicolon: PsiElement): Boolean {
 
     if (semicolon.parent is KtEnumEntry) return false
 
-    (semicolon.parent.parent as? KtClass)?.let { clazz ->
+    semicolon.parents.match(KtClassBody::class, last = KtClass::class)?.let { clazz ->
         if (clazz.isEnum() && clazz.getChildrenOfType<KtEnumEntry>().isEmpty()) {
             if (semicolon.prevLeaf {
                     it !is PsiWhiteSpace && it !is PsiComment && !it.isLineBreak()
@@ -51,7 +52,7 @@ fun isRedundantSemicolon(semicolon: PsiElement): Boolean {
             return false
     }
 
-    semicolon.prevLeaf()?.parent?.safeAs<KtIfExpression>()?.also { ifExpression ->
+    (semicolon.prevLeaf()?.parent as? KtIfExpression)?.also { ifExpression ->
         if (ifExpression.then == null)
             return false
     }
@@ -78,7 +79,7 @@ private fun isSemicolonRequired(semicolon: PsiElement): Boolean {
     val prevSibling = semicolon.getPrevSiblingIgnoringWhitespaceAndComments()
     val nextSibling = semicolon.getNextSiblingIgnoringWhitespaceAndComments()
 
-    if (prevSibling.safeAs<KtNameReferenceExpression>()?.text in softModifierKeywords && nextSibling is KtDeclaration) {
+    if (prevSibling is KtNameReferenceExpression && prevSibling.text in softModifierKeywords && nextSibling is KtDeclaration) {
         // enum; class Foo
         return true
     }

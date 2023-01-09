@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
 import com.jetbrains.python.debugger.*;
+import com.jetbrains.python.debugger.values.DataFrameDebugValue;
 import com.thoughtworks.xstream.io.naming.NoNameCoder;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import io.github.xstream.mxparser.MXParser;
@@ -294,6 +295,10 @@ public final class ProtocolParser {
     }
     if (shape.isEmpty()) shape = null;
     if (typeRendererId.isEmpty()) typeRendererId = null;
+    if (type.equals("DataFrame")) {
+      return new DataFrameDebugValue(name, type, qualifier, value, "True".equals(isContainer), shape, "True".equals(isReturnedValue),
+                                     "True".equals(isIPythonHidden), "True".equals(isErrorOnEval), typeRendererId, frameAccessor);
+    }
     return new PyDebugValue(name, type, qualifier, value, "True".equals(isContainer), shape, "True".equals(isReturnedValue),
                             "True".equals(isIPythonHidden), "True".equals(isErrorOnEval), typeRendererId, frameAccessor);
   }

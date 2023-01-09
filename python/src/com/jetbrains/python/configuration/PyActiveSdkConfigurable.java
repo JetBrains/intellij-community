@@ -377,7 +377,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   protected @NotNull List<Sdk> getAvailableSdks() {
-    return myInterpreterList.getAllPythonSdks(myProject);
+    return myInterpreterList.getAllPythonSdks(myProject, myModule);
   }
 
   private void updateSdkListAndSelect(@Nullable Sdk selectedSdk) {

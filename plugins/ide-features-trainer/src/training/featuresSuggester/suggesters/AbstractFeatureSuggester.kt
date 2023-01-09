@@ -12,7 +12,7 @@ import training.featuresSuggester.settings.FeatureSuggesterSettings
 import java.util.concurrent.TimeUnit
 
 abstract class AbstractFeatureSuggester : FeatureSuggester {
-  protected open val suggestingTipFileName: String? = null
+  protected open val suggestingTipId: String? = null
   protected open val suggestingDocUrl: String? = null
 
   protected abstract val message: String
@@ -41,8 +41,8 @@ abstract class AbstractFeatureSuggester : FeatureSuggester {
   protected fun createSuggestion(): Suggestion {
     if (isRedoOrUndoRunning()) return NoSuggestion
     val fullMessage = "$message ${getShortcutText(suggestingActionId)}"
-    return if (suggestingTipFileName != null) {
-      TipSuggestion(fullMessage, id, suggestingTipFileName!!)
+    return if (suggestingTipId != null) {
+      TipSuggestion(fullMessage, id, suggestingTipId!!)
     }
     else if (suggestingDocUrl != null) {
       DocumentationSuggestion(fullMessage, id, suggestingDocUrl!!)

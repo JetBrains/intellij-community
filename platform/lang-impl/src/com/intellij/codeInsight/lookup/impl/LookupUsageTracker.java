@@ -50,7 +50,7 @@ public final class LookupUsageTracker {
                                                                          EventFields.Language,
                                                                          EventFields.CurrentFile,
                                                                          SCHEMA,
-                                                                         ALPHABETICALLY ,
+                                                                         ALPHABETICALLY,
                                                                          FINISH_TYPE,
                                                                          DURATION,
                                                                          SELECTED_INDEX,
@@ -74,12 +74,12 @@ public final class LookupUsageTracker {
   }
 
   private static class MyLookupTracker implements LookupListener {
-    private final LookupImpl myLookup;
+    private final @NotNull LookupImpl myLookup;
     private final long myCreatedTimestamp;
     private final long myTimeToShow;
     private final boolean myIsDumbStart;
-    private final Language myLanguage;
-    private final MyTypingTracker myTypingTracker;
+    private final @Nullable Language myLanguage;
+    private final @NotNull MyTypingTracker myTypingTracker;
 
     private int mySelectionChangedCount = 0;
 
@@ -140,17 +140,25 @@ public final class LookupUsageTracker {
       FeatureUsageData featureUsageData = new FeatureUsageData();
       getCommonUsageInfo(finishType, currentItem, completionChar).forEach(pair -> pair.addData(featureUsageData));
 
+      ArrayList<EventPair<?>> additionalData = new ArrayList<>();
       LookupUsageDescriptor.EP_NAME.forEachExtensionSafe(usageDescriptor -> {
         if (PluginInfoDetectorKt.getPluginInfo(usageDescriptor.getClass()).isSafeToReport()) {
-          List<EventPair<?>> data = usageDescriptor.getAdditionalUsageData(new MyLookupResultDescriptor(myLookup, currentItem, finishType));
-          if(!data.isEmpty()) {
-            ADDITIONAL.addData(featureUsageData, new ObjectEventData(data));
-          } else {
+          List<EventPair<?>> data = usageDescriptor.getAdditionalUsageData(
+            new MyLookupResultDescriptor(myLookup, currentItem, finishType, myLanguage));
+          if (!data.isEmpty()) {
+            additionalData.addAll(data);
+          }
+          else {
             // it is required to support usages in Iren plugin
             usageDescriptor.fillUsageData(myLookup, featureUsageData);
           }
         }
       });
+
+      if (!additionalData.isEmpty()) {
+        ADDITIONAL.addData(featureUsageData, new ObjectEventData(additionalData));
+      }
+
       FUCounterUsageLogger.getInstance().logEvent(myLookup.getProject(), GROUP.getId(), FINISHED_EVENT_ID, featureUsageData);
     }
 
@@ -167,7 +175,7 @@ public final class LookupUsageTracker {
         if (vFile != null) {
           String schema = FileTypeUsageCounterCollector.findSchema(myLookup.getProject(), vFile);
           if (schema != null) {
-            SCHEMA.with(schema);
+            data.add(SCHEMA.with(schema));
           }
         }
       }
@@ -248,13 +256,16 @@ public final class LookupUsageTracker {
     private final Lookup myLookup;
     private final LookupElement mySelectedItem;
     private final FinishType myFinishType;
+    private final Language myLanguage;
 
     private MyLookupResultDescriptor(Lookup lookup,
                                      LookupElement item,
-                                     FinishType type) {
+                                     FinishType type,
+                                     Language language) {
       myLookup = lookup;
       mySelectedItem = item;
       myFinishType = type;
+      myLanguage = language;
     }
 
     @Override
@@ -270,6 +281,11 @@ public final class LookupUsageTracker {
     @Override
     public FinishType getFinishType() {
       return myFinishType;
+    }
+
+    @Override
+    public @Nullable Language getLanguage() {
+      return myLanguage;
     }
   }
 }

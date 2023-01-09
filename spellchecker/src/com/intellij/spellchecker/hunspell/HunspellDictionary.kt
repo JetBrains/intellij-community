@@ -39,9 +39,10 @@ class HunspellDictionary(path: String, name: String? = null) : Dictionary {
 
     val bundle = loadHunspellBundle(path)
     if (bundle !== null) {
+      // TODO: [Ivan.Posti] Pass input streams or paths instead of the whole file content after updating grazie platform
       this.dict = HunspellWordList(
-        bundle.aff.path,
-        bundle.dic.path,
+        bundle.aff.readText(),
+        bundle.dic.readText(),
         checkCanceled = { ProgressManager.checkCanceled() }
       )
 

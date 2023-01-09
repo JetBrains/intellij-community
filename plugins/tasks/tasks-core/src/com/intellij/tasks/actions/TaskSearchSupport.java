@@ -3,9 +3,7 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -39,8 +37,8 @@ public final class TaskSearchSupport {
     tasks.addAll(myManager.getLocalTasks(withClosed));
     tasks.addAll(ContainerUtil.filter(myManager.getCachedIssues(withClosed),
                                                      task -> myManager.findTask(task.getId()) == null));
-    List<Task> filteredTasks = filterTasks(pattern, tasks);
-    ContainerUtil.sort(filteredTasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
+    List<Task> filteredTasks = ContainerUtil.sorted(filterTasks(pattern, tasks),
+    TaskManagerImpl.TASK_UPDATE_COMPARATOR);
     return filteredTasks;
   }
 

@@ -16,7 +16,7 @@ Reports call chain on a <code>Collection</code> that should be converted into <b
       .filter { it.size == 2 }
       .map { Entity(it[0], it[1]) }
 </code></pre>
-<p>A quick-fix wraps call chain into <code>asSequence()</code> and <code>toList()</code>:</p>
+<p>The quick-fix wraps call chain into <code>asSequence()</code> and <code>toList()</code>:</p>
 <pre><code>
   class Entity(val key: String, val value: String)
 

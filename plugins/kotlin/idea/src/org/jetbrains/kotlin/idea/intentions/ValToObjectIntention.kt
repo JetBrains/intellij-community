@@ -3,13 +3,13 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.FileModificationService
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
@@ -47,8 +47,10 @@ class ValToObjectIntention : SelfTargetingIntention<KtProperty>(
         val superTypesText = superTypeList?.text?.plus(" ") ?: ""
 
         val replacementText = "${prefix}object $name: $superTypesText${body.text}"
-        val replaced =
-            runWriteAction { element.replaced(KtPsiFactory(element).createDeclarationByPattern<KtObjectDeclaration>(replacementText)) }
+        val replaced = runWriteAction {
+            val psiFactory = KtPsiFactory(element.project)
+            element.replaced(psiFactory.createDeclarationByPattern<KtObjectDeclaration>(replacementText))
+        }
 
         editor?.caretModel?.moveToOffset(replaced.nameIdentifier?.endOffset ?: return)
     }

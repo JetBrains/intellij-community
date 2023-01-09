@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 
 public class LombokHighlightErrorFilter implements HighlightInfoFilter {
 
-  private static class Holder {
+  private static final class Holder {
     static final Pattern LOMBOK_ANY_ANNOTATION_REQUIRED =
       Pattern.compile(JavaErrorBundle.message("incompatible.types", "lombok.*AnyAnnotation\\[\\]", "__*"));
 

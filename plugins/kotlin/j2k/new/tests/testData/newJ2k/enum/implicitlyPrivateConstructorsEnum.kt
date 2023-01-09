@@ -1,5 +1,6 @@
 enum class JavaEnum {
-    A("a"), B;
+    A("a"),
+    B;
 
     constructor(x: String) {
         this.x = x

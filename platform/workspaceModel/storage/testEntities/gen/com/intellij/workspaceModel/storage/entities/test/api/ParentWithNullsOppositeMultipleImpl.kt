@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -14,6 +13,9 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -33,11 +35,15 @@ open class ParentWithNullsOppositeMultipleImpl(val dataSource: ParentWithNullsOp
   override val parentData: String
     get() = dataSource.parentData
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: ParentWithNullsOppositeMultipleData?) : ModifiableWorkspaceEntityBase<ParentWithNullsOppositeMultiple>(), ParentWithNullsOppositeMultiple.Builder {
+  class Builder(result: ParentWithNullsOppositeMultipleData?) : ModifiableWorkspaceEntityBase<ParentWithNullsOppositeMultiple, ParentWithNullsOppositeMultipleData>(
+    result), ParentWithNullsOppositeMultiple.Builder {
     constructor() : this(ParentWithNullsOppositeMultipleData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -57,7 +63,7 @@ open class ParentWithNullsOppositeMultipleImpl(val dataSource: ParentWithNullsOp
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -83,8 +89,7 @@ open class ParentWithNullsOppositeMultipleImpl(val dataSource: ParentWithNullsOp
       dataSource as ParentWithNullsOppositeMultiple
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.parentData != dataSource.parentData) this.parentData = dataSource.parentData
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -92,7 +97,7 @@ open class ParentWithNullsOppositeMultipleImpl(val dataSource: ParentWithNullsOp
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -101,12 +106,9 @@ open class ParentWithNullsOppositeMultipleImpl(val dataSource: ParentWithNullsOp
       get() = getEntityData().parentData
       set(value) {
         checkModificationAllowed()
-        getEntityData().parentData = value
+        getEntityData(true).parentData = value
         changedProperty.add("parentData")
       }
-
-    override fun getEntityData(): ParentWithNullsOppositeMultipleData = result
-                                                                        ?: super.getEntityData() as ParentWithNullsOppositeMultipleData
 
     override fun getEntityClass(): Class<ParentWithNullsOppositeMultiple> = ParentWithNullsOppositeMultiple::class.java
   }
@@ -117,22 +119,17 @@ class ParentWithNullsOppositeMultipleData : WorkspaceEntityData<ParentWithNullsO
 
   fun isParentDataInitialized(): Boolean = ::parentData.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ParentWithNullsOppositeMultiple> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ParentWithNullsOppositeMultiple> {
     val modifiable = ParentWithNullsOppositeMultipleImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): ParentWithNullsOppositeMultiple {
     return getCached(snapshot) {
       val entity = ParentWithNullsOppositeMultipleImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

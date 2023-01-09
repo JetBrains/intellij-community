@@ -24,46 +24,46 @@ internal object RecentProjectPanelComponentFactory {
 
   @JvmStatic
   fun createComponent(parentDisposable: Disposable, collectors: List<() -> List<RecentProjectTreeItem>>): RecentProjectFilteringTree {
-    ProjectDetector.runDetectors {} // Run detectors that will add projects to the RecentProjectsManagerBase
-
     val tree = Tree()
     val filteringTree = RecentProjectFilteringTree(tree, parentDisposable, collectors).apply {
       installSearchField()
       expandGroups()
     }
 
-    ApplicationManager.getApplication().messageBus.connect(parentDisposable).apply {
-      subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
-        override fun change() {
-          filteringTree.updateTree()
-        }
-      })
-      subscribe(CloneableProjectsService.TOPIC, object : CloneProjectListener {
-        override fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) {
-          filteringTree.updateTree()
-          WelcomeScreenCloneCollector.cloneAdded(CloneableProjectsService.getInstance().cloneCount())
-        }
+    val connection = ApplicationManager.getApplication().messageBus.connect(parentDisposable)
+    connection.subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
+      override fun change() {
+        filteringTree.updateTree()
+      }
+    })
+    connection.subscribe(CloneableProjectsService.TOPIC, object : CloneProjectListener {
+      override fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) {
+        filteringTree.updateTree()
+        WelcomeScreenCloneCollector.cloneAdded(CloneableProjectsService.getInstance().cloneCount())
+      }
 
-        override fun onCloneRemoved() {
-          filteringTree.updateTree()
-        }
+      override fun onCloneRemoved() {
+        filteringTree.updateTree()
+      }
 
-        override fun onCloneSuccess() {
-          filteringTree.updateTree()
-          WelcomeScreenCloneCollector.cloneSuccess()
-        }
+      override fun onCloneSuccess() {
+        filteringTree.updateTree()
+        WelcomeScreenCloneCollector.cloneSuccess()
+      }
 
-        override fun onCloneFailed() {
-          filteringTree.updateTree()
-          WelcomeScreenCloneCollector.cloneFailed()
-        }
+      override fun onCloneFailed() {
+        filteringTree.updateTree()
+        WelcomeScreenCloneCollector.cloneFailed()
+      }
 
-        override fun onCloneCanceled() {
-          filteringTree.updateTree()
-          WelcomeScreenCloneCollector.cloneCanceled()
-        }
-      })
-    }
+      override fun onCloneCanceled() {
+        filteringTree.updateTree()
+        WelcomeScreenCloneCollector.cloneCanceled()
+      }
+    })
+
+    // Run detectors that will add projects to the RecentProjectsManagerBase
+    ProjectDetector.runDetectors {}
 
     val updateQueue = MergingUpdateQueue("Welcome screen UI updater", UPDATE_INTERVAL, true, null,
                                          parentDisposable, tree, Alarm.ThreadToUse.SWING_THREAD)

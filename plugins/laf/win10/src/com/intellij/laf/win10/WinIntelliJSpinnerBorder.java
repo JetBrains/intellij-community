@@ -38,10 +38,10 @@ public final class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder {
       Rectangle r = new Rectangle(x, y, width, height);
 
       int bw = 1;
-      Object op = spinner.getClientProperty("JComponent.outline");
+      DarculaUIUtil.Outline op = DarculaUIUtil.getOutline(spinner);
 
       if (c.isEnabled() && op != null) {
-        DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, DarculaSpinnerBorder.isFocused(c));
+        op.setGraphicsColor(g2, DarculaSpinnerBorder.isFocused(c));
         bw = 2;
       }
       else if (c.isEnabled()) {

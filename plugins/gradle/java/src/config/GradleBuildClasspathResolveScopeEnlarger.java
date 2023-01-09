@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElementFinder;
@@ -18,6 +19,9 @@ import java.util.List;
 final class GradleBuildClasspathResolveScopeEnlarger extends ResolveScopeEnlarger {
   @Override
   public SearchScope getAdditionalResolveScope(@NotNull VirtualFile file, @NotNull Project project) {
+    if (ProjectRootManager.getInstance(project).getFileIndex().isInSourceContent(file)) {
+      return null;
+    }
     GradleClassFinder gradleClassFinder = PsiElementFinder.EP.findExtension(GradleClassFinder.class, project);
     if (gradleClassFinder == null) {
       return null;

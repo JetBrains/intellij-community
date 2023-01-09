@@ -31,7 +31,7 @@ class EvaluateCompileTimeExpressionIntention : SelfTargetingOffsetIndependentInt
 
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
         val constantValue = element.getConstantValue() ?: return
-        element.replace(KtPsiFactory(element).createExpression(constantValue))
+        element.replace(KtPsiFactory(element.project).createExpression(constantValue))
     }
 
     private fun KtExpression?.isConstantExpression(): Boolean {

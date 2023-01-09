@@ -5,10 +5,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.ui.popup.PopupComponent
+import com.intellij.ui.awt.RelativePoint
+import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
-import java.awt.Window
+import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JPanel
@@ -32,10 +33,11 @@ internal class CodeFragmentPopup(val editor: Editor, val lines: IntRange, privat
     })
   }
 
-  private val popupWrapper = PopupComponent.DialogPopupWrapper(editor.component, content, 0, 0, createFragmentPopup(content))
+  private val popup = createFragmentPopup(content)
 
   private fun createFragmentPopup(content: JPanel): JBPopup {
     return JBPopupFactory.getInstance().createComponentPopupBuilder(content, null)
+      .setNormalWindowLevel(true)
       .setCancelOnClickOutside(false)
       .setRequestFocus(false)
       .setFocusable(false)
@@ -57,26 +59,30 @@ internal class CodeFragmentPopup(val editor: Editor, val lines: IntRange, privat
     val editorFragmentComponent = createEditorFragment(editor, lines)
     content.removeAll()
     content.add(editorFragmentComponent, fillConstraints)
-    window.preferredSize = editorFragmentComponent.preferredSize
-    window.validate()
   }
 
   fun show() {
-    if (! window.isVisible) {
-      popupWrapper.setRequestFocus(false)
-      popupWrapper.show()
+    if (popup.canShow()){
+      popup.show(RelativePoint(editor.component, Point(0, 0)))
     }
+    else {
+      popup.setUiVisible(true)
+    }
+    popup.setMinimumSize(Dimension(editor.component.width, 0))
   }
 
   fun hide() {
-    popupWrapper.hide(false)
+    popup.setUiVisible(false)
   }
 
   override fun dispose() {
-    popupWrapper.hide(true)
-    popupWrapper.window.dispose()
+    popup.dispose()
   }
 
-  val window: Window
-    get() = popupWrapper.window
+  val size: Dimension
+    get() = content.size
+
+  fun setLocation(screenPoint: Point){
+    popup.setLocation(screenPoint)
+  }
 }

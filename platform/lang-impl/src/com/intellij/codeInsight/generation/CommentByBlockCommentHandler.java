@@ -8,7 +8,6 @@ import com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.formatting.IndentData;
 import com.intellij.ide.highlighter.custom.CustomFileTypeLexer;
 import com.intellij.lang.*;
@@ -66,7 +65,6 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
     myDocument = editor.getDocument();
     myLanguage = getLanguage(caret, file);
 
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.comment.block");
     final Commenter commenter = findCommenter(myFile, myEditor, caret);
     if (commenter == null) return;
     myCommenter = commenter;

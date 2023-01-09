@@ -1,4 +1,4 @@
-// "Replace with findFirst()" "false"
+// "Collapse loop with stream 'findFirst()'" "false"
 
 import java.util.List;
 

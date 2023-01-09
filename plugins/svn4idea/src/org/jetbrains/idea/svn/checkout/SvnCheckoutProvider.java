@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus;
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTask;
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTaskInfo;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -146,7 +147,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         finally {
           VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
           if (vf != null) {
-            vf.refresh(true, true, () -> getApplication().invokeLater(() -> notifyListener()));
+            vf.refresh(true, true, () -> getApplication().executeOnPooledThread(() -> notifyListener()));
           }
           else {
             notifyListener();
@@ -154,6 +155,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         }
       }
 
+      @RequiresBackgroundThread
       private void notifyListener() {
         notifyRootManagerIfUnderProject(project, target);
         if (listener != null) {

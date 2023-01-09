@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.serialization.facet.FacetState
@@ -45,11 +45,11 @@ interface CustomFacetRelatedEntitySerializer<T: WorkspaceEntity> {
    * @param builder storage to add read from facet state entities
    * @param moduleEntity module to which these settings belong
    * @param facetState intermediate representation of facet related data read out from external sources
-   * @param evaluateExternalSystemIdAndEntitySource function which should be invoked to get [com.intellij.workspaceModel.storage.EntitySource]
+   * @param evaluateEntitySource function which should be invoked to get [com.intellij.workspaceModel.storage.EntitySource]
    * for your entities and externalSystemId which should be stored somewhere in your entities
    */
   fun loadEntitiesFromFacetState(builder: MutableEntityStorage, moduleEntity: ModuleEntity, facetState: FacetState,
-                                 evaluateExternalSystemIdAndEntitySource: (FacetState) -> Pair<String?, EntitySource>)
+                                 evaluateEntitySource: (FacetState) -> EntitySource)
 
   /**
    * Create intermediate representation from entities of declared at [rootEntityType] type which will be used for serialization on disk.

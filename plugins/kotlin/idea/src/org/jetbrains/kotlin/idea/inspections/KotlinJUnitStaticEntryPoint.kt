@@ -9,8 +9,8 @@ import com.intellij.codeInspection.reference.EntryPoint
 import com.intellij.codeInspection.reference.RefElement
 import com.intellij.openapi.util.DefaultJDOMExternalizer
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
 import org.jdom.Element
+import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 class KotlinJUnitStaticEntryPoint(@JvmField var wasSelected: Boolean = true) : EntryPoint() {
@@ -28,9 +28,9 @@ class KotlinJUnitStaticEntryPoint(@JvmField var wasSelected: Boolean = true) : E
         "org.junit.runners.Parameterized.Parameters"
     )
 
-    override fun isEntryPoint(psiElement: PsiElement) = psiElement is PsiMethod &&
+    override fun isEntryPoint(psiElement: PsiElement) = psiElement is KtLightMethod &&
             AnnotationUtil.isAnnotated(psiElement, staticJUnitAnnotations, AnnotationUtil.CHECK_TYPE) &&
-            AnnotationUtil.isAnnotated(psiElement, listOf("kotlin.jvm.JvmStatic"), AnnotationUtil.CHECK_TYPE)
+            AnnotationUtil.isAnnotated(psiElement, "kotlin.jvm.JvmStatic", AnnotationUtil.CHECK_TYPE)
 
     override fun readExternal(element: Element) {
         DefaultJDOMExternalizer.readExternal(this, element)

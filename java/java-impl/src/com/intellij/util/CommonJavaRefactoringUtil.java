@@ -48,7 +48,7 @@ import java.util.*;
 /**
  * Common utils shared between refactorings module and 'java.impl' module.
  */
-public class CommonJavaRefactoringUtil {
+public final class CommonJavaRefactoringUtil {
   private static final Logger LOG = Logger.getInstance(CommonJavaRefactoringUtil.class);
   private static final List<? extends PsiType> PRIMITIVE_TYPES = Arrays.asList(
       PsiType.BYTE, PsiType.CHAR, PsiType.SHORT, PsiType.INT, PsiType.LONG, PsiType.FLOAT, PsiType.DOUBLE

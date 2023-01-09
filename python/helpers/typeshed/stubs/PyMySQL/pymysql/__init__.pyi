@@ -1,5 +1,3 @@
-import sys
-
 from .connections import Connection as Connection
 from .constants import FIELD_TYPE as FIELD_TYPE
 from .converters import escape_dict as escape_dict, escape_sequence as escape_sequence, escape_string as escape_string
@@ -43,12 +41,7 @@ TIMESTAMP: DBAPISet
 DATETIME: DBAPISet
 ROWID: DBAPISet
 
-if sys.version_info >= (3, 0):
-    def Binary(x) -> bytes: ...
-
-else:
-    def Binary(x) -> bytearray: ...
-
+def Binary(x) -> bytes: ...
 def get_client_info() -> str: ...
 
 __version__: str

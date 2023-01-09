@@ -7,10 +7,6 @@ import com.intellij.navigation.TargetPresentation
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationTargetImpl
 
-/*
- * DEPRECATION -> @JvmDefault
- **/
-@Suppress("DEPRECATION")
 interface WebSymbolDocumentationTarget : DocumentationTarget {
 
   val symbol: WebSymbol
@@ -24,5 +20,5 @@ interface WebSymbolDocumentationTarget : DocumentationTarget {
   override fun computeDocumentation(): DocumentationResult? =
     symbol.documentation
       ?.takeIf { it.isNotEmpty() }
-      ?.let { doc -> WebSymbolDocumentationTargetImpl.buildDocumentation(doc) }
+      ?.let { doc -> WebSymbolDocumentationTargetImpl.buildDocumentation(symbol.origin, doc) }
 }

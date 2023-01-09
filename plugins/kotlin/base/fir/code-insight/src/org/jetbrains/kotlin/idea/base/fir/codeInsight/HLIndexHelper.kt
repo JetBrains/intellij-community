@@ -5,7 +5,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StringStubIndexExtension
+import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.project.structure.allDirectDependencies
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.idea.stubindex.*
@@ -16,29 +16,28 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 
 class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) {
     fun getTopLevelCallables(nameFilter: (Name) -> Boolean): Collection<KtCallableDeclaration> {
-        fun sequenceOfElements(index: StringStubIndexExtension<out KtCallableDeclaration>): Sequence<KtCallableDeclaration> =
-            index.getAllKeys(project).asSequence()
-                .onEach { ProgressManager.checkCanceled() }
-                .filter { fqName -> nameFilter(getShortName(fqName)) }
-                .flatMap { fqName -> index[fqName, project, scope] }
-                .filter { it.receiverTypeReference == null }
+        val values = SmartList<KtCallableDeclaration>()
+        val processor = CancelableCollectFilterProcessor(values) {
+            it.receiverTypeReference == null
+        }
 
-        val functions = sequenceOfElements(KotlinTopLevelFunctionFqnNameIndex)
-        val properties = sequenceOfElements(KotlinTopLevelPropertyFqnNameIndex)
+        val keyFilter: (String) -> Boolean = { nameFilter(getShortName(it)) }
+        KotlinTopLevelFunctionFqnNameIndex.processAllElements(project, scope, keyFilter, processor)
+        KotlinTopLevelPropertyFqnNameIndex.processAllElements(project, scope, keyFilter, processor)
 
-        return (functions + properties).toList()
+        return values
     }
 
-    fun getTopLevelExtensions(nameFilter: (Name) -> Boolean, receiverTypeNames: Set<String>): Collection<KtCallableDeclaration> {
-        val index = KotlinTopLevelExtensionsByReceiverTypeIndex
-
-        return index.getAllKeys(project).asSequence()
-            .onEach { ProgressManager.checkCanceled() }
-            .filter { KotlinTopLevelExtensionsByReceiverTypeIndex.receiverTypeNameFromKey(it) in receiverTypeNames }
-            .filter { nameFilter(Name.identifier(KotlinTopLevelExtensionsByReceiverTypeIndex.callableNameFromKey(it))) }
-            .flatMap { key -> index[key, project, scope] }
-            .toList()
-    }
+    fun getTopLevelExtensions(nameFilter: (Name) -> Boolean, receiverTypeNames: Set<String>): Collection<KtCallableDeclaration> =
+        KotlinTopLevelExtensionsByReceiverTypeIndex.getAllElements(
+            project,
+            scope,
+            {
+                KotlinTopLevelExtensionsByReceiverTypeIndex.receiverTypeNameFromKey(it) in receiverTypeNames &&
+                        nameFilter(Name.identifier(KotlinTopLevelExtensionsByReceiverTypeIndex.callableNameFromKey(it)))
+            },
+            valueFilter = CancelableCollectFilterProcessor.ALWAYS_TRUE
+        )
 
     fun getPossibleTypeAliasExpansionNames(originalTypeName: String): Set<String> {
         val index = KotlinTypeAliasByExpansionShortNameIndex

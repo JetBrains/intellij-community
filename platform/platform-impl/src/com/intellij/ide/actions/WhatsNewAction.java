@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.idea.AppMode;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class WhatsNewAction extends AnAction implements DumbAware {
@@ -62,7 +65,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
 
   @ApiStatus.Internal
   public static boolean isAvailable() {
-    return ApplicationInfoEx.getInstanceEx().isShowWhatsNewOnUpdate() || Boolean.getBoolean("whats.new.notification");
+    return ApplicationInfoEx.getInstanceEx().isShowWhatsNewOnUpdate() && !AppMode.isRemoteDevHost();
   }
 
   public static void openWhatsNewPage(@NotNull Project project, @NotNull String url) {
@@ -79,7 +82,15 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     else {
       boolean darkTheme = UIUtil.isUnderDarcula();
 
-      Map<String, String> parameters = darkTheme ? Map.of("var", "embed", "theme", "dark") : Map.of("var", "embed");
+      Map<String, String> parameters = new HashMap<>();
+      parameters.put("var", "embed");
+      if (darkTheme) {
+        parameters.put("theme", "dark");
+      }
+      Locale locale = Locale.getDefault();
+      if (locale != null) {
+        parameters.put("lang", locale.toLanguageTag().toLowerCase(Locale.ENGLISH));
+      }
       String embeddedUrl = Urls.newFromEncoded(url).addParameters(parameters).toExternalForm();
 
       String timeoutContent = null;

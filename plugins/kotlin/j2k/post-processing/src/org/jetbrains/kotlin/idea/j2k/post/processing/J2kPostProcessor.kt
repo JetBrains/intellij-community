@@ -8,6 +8,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.RemoveUnnecessaryParenthesesIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.canBeSimplifiedWithoutChangingSemantics
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.KotlinInspectionFacade
 import org.jetbrains.kotlin.idea.inspections.*
@@ -18,6 +20,7 @@ import org.jetbrains.kotlin.idea.intentions.*
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnAsymmetricallyIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isTrivialStatementBody
+import org.jetbrains.kotlin.idea.j2k.post.processing.processings.*
 import org.jetbrains.kotlin.idea.quickfix.*
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.j2k.ConverterContext
@@ -25,8 +28,8 @@ import org.jetbrains.kotlin.j2k.JKPostProcessingTarget
 import org.jetbrains.kotlin.j2k.PostProcessor
 import org.jetbrains.kotlin.j2k.files
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.lexer.KtTokens.CONST_KEYWORD
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.idea.j2k.post.processing.processings.*
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -216,7 +219,9 @@ private val inspectionLikePostProcessingGroup =
         },
         inspectionBasedProcessing(IfThenToSafeAccessInspection(inlineWithPrompt = false), writeActionNeeded = false),
         inspectionBasedProcessing(IfThenToElvisInspection(highlightStatement = true, inlineWithPrompt = false), writeActionNeeded = false),
-        inspectionBasedProcessing(KotlinInspectionFacade.instance.simplifyNegatedBinaryExpression),
+        inspectionBasedProcessing(KotlinInspectionFacade.instance.simplifyNegatedBinaryExpression) {
+            it.canBeSimplifiedWithoutChangingSemantics()
+        },
         inspectionBasedProcessing(ReplaceGetOrSetInspection()),
         intentionBasedProcessing(ObjectLiteralToLambdaIntention(), writeActionNeeded = true),
         intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()),
@@ -231,16 +236,9 @@ private val inspectionLikePostProcessingGroup =
         intentionBasedProcessing(ReplaceMapGetOrDefaultIntention()),
         inspectionBasedProcessing(ReplaceGuardClauseWithFunctionCallInspection()),
         inspectionBasedProcessing(KotlinInspectionFacade.instance.sortModifiers),
-        intentionBasedProcessing(ConvertToRawStringTemplateIntention()) { element ->
-            element.parents.none {
-                (it as? KtProperty)?.hasModifier(KtTokens.CONST_KEYWORD) == true
-            } && ConvertToStringTemplateIntention.buildReplacement(element).entries.any {
-                (it as? KtEscapeStringTemplateEntry)?.unescapedValue == "\n"
-            }
-        },
+        intentionBasedProcessing(ConvertToRawStringTemplateIntention(), additionalChecker = ::shouldConvertToRawString),
         intentionBasedProcessing(IndentRawStringIntention())
     )
-
 
 private val cleaningUpDiagnosticBasedPostProcessingGroup =
     DiagnosticBasedPostProcessingGroup(
@@ -293,3 +291,17 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
         )
     )
 )
+
+private fun shouldConvertToRawString(element: KtBinaryExpression): Boolean {
+    fun KtStringTemplateEntry.isNewline(): Boolean =
+        this is KtEscapeStringTemplateEntry && unescapedValue == "\n"
+
+    val middleNewlinesExist = ConvertToStringTemplateIntention.buildReplacement(element)
+        .entries
+        .dropLastWhile { it.isNewline() }
+        .any { it.isNewline() }
+
+    return middleNewlinesExist && element.parents.none {
+        (it as? KtProperty)?.hasModifier(CONST_KEYWORD) == true
+    }
+}

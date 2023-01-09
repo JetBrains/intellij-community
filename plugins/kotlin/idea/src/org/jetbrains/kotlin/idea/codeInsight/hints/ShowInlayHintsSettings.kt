@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.SettingsKey
-import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
+import com.intellij.codeInsight.hints.settings.showInlaySettings
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -13,9 +13,6 @@ class ShowInlayHintsSettings(private val providerKey: SettingsKey<*>) : AnAction
     override fun actionPerformed(e: AnActionEvent) {
         val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
         val fileLanguage = file.language
-        InlayHintsConfigurable.showSettingsDialogForLanguage(
-            file.project,
-            fileLanguage
-        ) { it.id == providerKey.id }
+        showInlaySettings(file.project, fileLanguage) { it.id == providerKey.id }
     }
 }

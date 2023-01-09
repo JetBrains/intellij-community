@@ -1,12 +1,12 @@
 from collections.abc import Mapping
 from typing import Any
-from typing_extensions import Literal
+from typing_extensions import Literal, TypeAlias
 
 from .aggregation import AggregateRequest, AggregateResult, Cursor
 from .query import Query
 from .result import Result
 
-_QueryParams = Mapping[str, str | float]
+_QueryParams: TypeAlias = Mapping[str, str | float]
 
 NUMERIC: Literal["NUMERIC"]
 

@@ -37,8 +37,12 @@ private class GraphPropertyView<S, T>(
   map: (S) -> T,
   private val comap: (T) -> S
 ) : GraphProperty<T>, ObservableMutablePropertyView<S, T>(instance, map, comap) {
+
   override fun dependsOn(parent: ObservableProperty<*>, update: () -> T) =
     instance.dependsOn(parent) { comap(update()) }
+
+  override fun dependsOn(parent: ObservableProperty<*>, deleteWhenModified: Boolean, update: () -> T) =
+    instance.dependsOn(parent, deleteWhenModified) { comap(update()) }
 
   override fun afterPropagation(listener: () -> Unit) =
     instance.afterPropagation(listener)
@@ -67,18 +71,6 @@ private open class ObservableMutablePropertyView<S, T>(
   override fun set(value: T) =
     instance.set(comap(value))
 
-  override fun afterChange(listener: (T) -> Unit) =
-    instance.afterChange { listener(map(it)) }
-
-  override fun afterChange(listener: (T) -> Unit, parentDisposable: Disposable) =
-    instance.afterChange({ listener(map(it)) }, parentDisposable)
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    return instance == other
-  }
-
-  override fun hashCode(): Int {
-    return instance.hashCode()
-  }
+  override fun afterChange(parentDisposable: Disposable?, listener: (T) -> Unit) =
+    instance.afterChange(parentDisposable) { listener(map(it)) }
 }

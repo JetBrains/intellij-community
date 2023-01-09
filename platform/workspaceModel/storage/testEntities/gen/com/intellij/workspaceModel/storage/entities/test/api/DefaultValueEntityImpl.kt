@@ -7,7 +7,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -15,6 +14,9 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -37,11 +39,15 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
 
   override var anotherName: String = dataSource.anotherName
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: DefaultValueEntityData?) : ModifiableWorkspaceEntityBase<DefaultValueEntity>(), DefaultValueEntity.Builder {
+  class Builder(result: DefaultValueEntityData?) : ModifiableWorkspaceEntityBase<DefaultValueEntity, DefaultValueEntityData>(
+    result), DefaultValueEntity.Builder {
     constructor() : this(DefaultValueEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -61,7 +67,7 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -89,8 +95,7 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.isGenerated != dataSource.isGenerated) this.isGenerated = dataSource.isGenerated
       if (this.anotherName != dataSource.anotherName) this.anotherName = dataSource.anotherName
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -98,7 +103,7 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -107,7 +112,7 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
       get() = getEntityData().name
       set(value) {
         checkModificationAllowed()
-        getEntityData().name = value
+        getEntityData(true).name = value
         changedProperty.add("name")
       }
 
@@ -115,7 +120,7 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
       get() = getEntityData().isGenerated
       set(value) {
         checkModificationAllowed()
-        getEntityData().isGenerated = value
+        getEntityData(true).isGenerated = value
         changedProperty.add("isGenerated")
       }
 
@@ -123,11 +128,10 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
       get() = getEntityData().anotherName
       set(value) {
         checkModificationAllowed()
-        getEntityData().anotherName = value
+        getEntityData(true).anotherName = value
         changedProperty.add("anotherName")
       }
 
-    override fun getEntityData(): DefaultValueEntityData = result ?: super.getEntityData() as DefaultValueEntityData
     override fun getEntityClass(): Class<DefaultValueEntity> = DefaultValueEntity::class.java
   }
 }
@@ -139,22 +143,17 @@ class DefaultValueEntityData : WorkspaceEntityData<DefaultValueEntity>() {
 
   fun isNameInitialized(): Boolean = ::name.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<DefaultValueEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<DefaultValueEntity> {
     val modifiable = DefaultValueEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): DefaultValueEntity {
     return getCached(snapshot) {
       val entity = DefaultValueEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

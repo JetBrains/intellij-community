@@ -33,7 +33,7 @@ public abstract class ExecutionTargetManager {
   public static List<ExecutionTarget> getTargetsToChooseFor(@NotNull Project project, @Nullable RunConfiguration configuration) {
     List<ExecutionTarget> result = getInstance(project).getTargetsFor(configuration);
     if (result.size() == 1 && DefaultExecutionTarget.INSTANCE.equals(result.get(0))) return Collections.emptyList();
-    result = Collections.unmodifiableList(ContainerUtil.filter(result, target -> !target.isExternallyManaged()));
+    result = ContainerUtil.filter(result, target -> !target.isExternallyManaged());
     if (result.size() == 1 && DefaultExecutionTarget.INSTANCE.equals(result.get(0))) {
       return Collections.emptyList();
     }

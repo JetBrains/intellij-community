@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.PathManager
@@ -8,12 +8,12 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import kotlin.io.path.deleteExisting
+import kotlin.io.path.exists
 
 @ApiStatus.Internal
 object CorruptionMarker {
@@ -67,6 +67,7 @@ object CorruptionMarker {
 
   @JvmStatic
   fun dropIndexes() {
+    FileBasedIndexImpl.LOG.info("Indexes are dropped")
     val indexRoot = PathManager.getIndexRoot()
 
     if (Files.exists(indexRoot)) {

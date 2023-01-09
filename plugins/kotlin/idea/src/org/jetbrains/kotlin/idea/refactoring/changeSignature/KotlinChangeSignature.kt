@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeProp
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog
 import org.jetbrains.kotlin.idea.refactoring.createJavaMethod
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
@@ -216,7 +215,7 @@ class KotlinChangeSignature(
             append("class $previewClassName {\n").append(ktSignature).append("{}\n}")
             toString()
         }
-        val dummyFile = KtPsiFactory(project).createFileWithLightClassSupport("dummy.kt", dummyFileText, originalMethod)
+        val dummyFile = KtPsiFactory(originalMethod.project).createPhysicalFile("dummy.kt", dummyFileText)
         val dummyDeclaration = (dummyFile.declarations.first() as KtClass).body!!.declarations.first()
 
         // Convert to PsiMethod which can be used in Change Signature dialog

@@ -63,7 +63,7 @@ public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
         module.getProject(),
         model,
         libraryDescription,
-        false, true);
+        false, true, false);
       if (!dialog.showAndGet()) {
         return Promises.rejectedPromise();
       }

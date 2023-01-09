@@ -30,8 +30,6 @@ import java.util.Objects;
 //endregion
 @SuppressWarnings("UnusedDeclaration")
 public class GithubUser {
-  @NotNull public static final GithubUser UNKNOWN = createUnknownUser();
-
   private String login;
   private Long id;
   private String nodeId;
@@ -75,13 +73,5 @@ public class GithubUser {
   @Override
   public int hashCode() {
     return Objects.hash(id);
-  }
-
-  @NotNull
-  private static GithubUser createUnknownUser() {
-    GithubUser user = new GithubUser();
-    user.id = -1L;
-    user.login = "ghost";
-    return user;
   }
 }

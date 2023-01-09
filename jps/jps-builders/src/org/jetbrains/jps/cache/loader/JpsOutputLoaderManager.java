@@ -1,9 +1,9 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.loader;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import io.netty.channel.Channel;
@@ -14,6 +14,7 @@ import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+import org.jetbrains.jps.cache.JpsCachesLoaderUtil;
 import org.jetbrains.jps.cache.client.JpsNettyClient;
 import org.jetbrains.jps.cache.client.JpsServerAuthUtil;
 import org.jetbrains.jps.cache.client.JpsServerClient;
@@ -58,6 +59,7 @@ public class JpsOutputLoaderManager {
   private final JpsServerClient myServerClient;
   private boolean isCacheDownloaded;
   private final boolean isForceCachesDownload;
+  private final boolean isCleanupAsynchronously;
   private final String myBuildOutDir;
   private final String myProjectPath;
   private final String myCommitHash;
@@ -82,6 +84,7 @@ public class JpsOutputLoaderManager {
     myCommitsCountBetweenCompilation = cacheDownloadSettings.getCommitsCountLatestBuild();
     myMaxDownloadDuration = cacheDownloadSettings.getMaxDownloadDuration() * 60;
     isForceCachesDownload = cacheDownloadSettings.getForceDownload();
+    isCleanupAsynchronously = cacheDownloadSettings.getCleanupAsynchronously();
     JpsServerAuthUtil.setRequestHeaders(cacheDownloadSettings.getAuthHeadersMap());
     JpsCacheLoadingSystemStats.setDeletionSpeed(cacheDownloadSettings.getDeletionSpeed());
     JpsCacheLoadingSystemStats.setDecompressionSpeed(cacheDownloadSettings.getDecompressionSpeed());
@@ -91,6 +94,7 @@ public class JpsOutputLoaderManager {
                    @NotNull List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes,
                    @NotNull Runnable beforeDownload) {
     if (!canRunNewLoading()) return;
+    if (isCleanupAsynchronously) JpsCachesLoaderUtil.runCleanUpAsynchronously();
     if (isForceCachesDownload || isDownloadQuickerThanLocalBuild(buildRunner, myCommitsCountBetweenCompilation, scopes)) {
       LOG.info("Before download task execution...");
       beforeDownload.run();
@@ -102,7 +106,7 @@ public class JpsOutputLoaderManager {
         if (outDir.exists()) {
           LOG.info("Start removing old caches before downloading");
           myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.removing.old.caches"));
-          FileUtil.delete(outDir);
+          JpsCachesLoaderUtil.delete(outDir, isCleanupAsynchronously);
         }
         LOG.info("Compilation output folder empty");
       }
@@ -328,7 +332,7 @@ public class JpsOutputLoaderManager {
 
   private List<JpsOutputLoader<?>> getLoaders() {
     if (myJpsOutputLoadersLoaders != null) return myJpsOutputLoadersLoaders;
-    myJpsOutputLoadersLoaders = Arrays.asList(new JpsCacheLoader(myServerClient, myProjectPath),
+    myJpsOutputLoadersLoaders = Arrays.asList(new JpsCacheLoader(myServerClient, myProjectPath, isCleanupAsynchronously),
                                               new JpsCompilationOutputLoader(myServerClient, myBuildOutDir));
     return myJpsOutputLoadersLoaders;
   }

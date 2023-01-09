@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class FieldEvaluator
@@ -33,6 +33,7 @@ public class FieldEvaluator implements Evaluator {
 
   public interface TargetClassFilter {
     TargetClassFilter ALL = refType -> true;
+
     boolean acceptClass(ReferenceType refType);
   }
 
@@ -44,7 +45,7 @@ public class FieldEvaluator implements Evaluator {
 
   @NotNull
   public static TargetClassFilter createClassFilter(@Nullable PsiType psiType) {
-    if(psiType == null || psiType instanceof PsiArrayType) {
+    if (psiType == null || psiType instanceof PsiArrayType) {
       return TargetClassFilter.ALL;
     }
     PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
@@ -62,14 +63,14 @@ public class FieldEvaluator implements Evaluator {
       return new LocalClassFilter(psiClass.getName());
     }
     final String name = JVMNameUtil.getNonAnonymousClassName(psiClass);
-    return name != null? new FQNameClassFilter(name) : TargetClassFilter.ALL;
+    return name != null ? new FQNameClassFilter(name) : TargetClassFilter.ALL;
   }
 
   @Nullable
   private Field findField(@Nullable Type t) {
-    if(t instanceof ClassType) {
-      ClassType cls = (ClassType) t;
-      if(myTargetClassFilter.acceptClass(cls)) {
+    if (t instanceof ClassType) {
+      ClassType cls = (ClassType)t;
+      if (myTargetClassFilter.acceptClass(cls)) {
         return cls.fieldByName(myFieldName);
       }
       for (final InterfaceType interfaceType : cls.interfaces()) {
@@ -80,9 +81,9 @@ public class FieldEvaluator implements Evaluator {
       }
       return findField(cls.superclass());
     }
-    else if(t instanceof InterfaceType) {
-      InterfaceType iface = (InterfaceType) t;
-      if(myTargetClassFilter.acceptClass(iface)) {
+    else if (t instanceof InterfaceType) {
+      InterfaceType iface = (InterfaceType)t;
+      if (myTargetClassFilter.acceptClass(iface)) {
         return iface.fieldByName(myFieldName);
       }
       for (final InterfaceType interfaceType : iface.superinterfaces()) {
@@ -102,7 +103,6 @@ public class FieldEvaluator implements Evaluator {
     Object object = myObjectEvaluator.evaluate(context);
 
     return evaluateField(object, context);
-
   }
 
   private Object evaluateField(Object object, EvaluationContextImpl context) throws EvaluateException {
@@ -143,10 +143,10 @@ public class FieldEvaluator implements Evaluator {
       }
       myEvaluatedQualifier = field.isStatic() ? refType : objRef;
       myEvaluatedField = field;
-      return field.isStatic()? refType.getValue(field) : objRef.getValue(field);
+      return field.isStatic() ? refType.getValue(field) : objRef.getValue(field);
     }
 
-    if(object == null) {
+    if (object == null) {
       throw EvaluateExceptionUtil.createEvaluateException(new NullPointerException());
     }
 
@@ -187,10 +187,12 @@ public class FieldEvaluator implements Evaluator {
 
         @Override
         public NodeDescriptorImpl getInspectItem(Project project) {
-          if(myEvaluatedQualifier instanceof ObjectReference) {
+          if (myEvaluatedQualifier instanceof ObjectReference) {
             return new FieldDescriptorImpl(project, (ObjectReference)myEvaluatedQualifier, myEvaluatedField);
-          } else
+          }
+          else {
             return null;
+          }
         }
       };
     }
@@ -215,7 +217,7 @@ public class FieldEvaluator implements Evaluator {
     }
   }
 
-  private static final class LocalClassFilter implements TargetClassFilter{
+  private static final class LocalClassFilter implements TargetClassFilter {
     private final String myLocalClassShortName;
 
     private LocalClassFilter(String localClassShortName) {

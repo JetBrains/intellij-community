@@ -193,12 +193,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       }
     });
 
-    if (Registry.is("debugger.variablesView.rss")) {
-      new XDebuggerTreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
-    }
-    else {
-      new TreeSpeedSearch(this, false, SPEED_SEARCH_CONVERTER.asFunction());
-    }
+    installSpeedSearch();
     PopupHandler.installPopupMenu(this, popupActionGroupId, "XDebuggerTreePopup");
     registerShortcuts();
 
@@ -246,6 +241,18 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       }
     };
     addTreeExpansionListener(myTreeExpansionListener);
+  }
+
+  /**
+   * Called from the tree constructor during initialization. Override if the speed search is not required for a derived class.
+   */
+  protected void installSpeedSearch() {
+    if (Registry.is("debugger.variablesView.rss")) {
+      new XDebuggerTreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
+    }
+    else {
+      new TreeSpeedSearch(this, false, SPEED_SEARCH_CONVERTER.asFunction());
+    }
   }
 
   @NotNull

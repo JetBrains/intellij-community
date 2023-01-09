@@ -4,9 +4,10 @@ package org.jetbrains.intellij.build.pycharm
 import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import java.nio.file.Path
 
 open class PyCharmWindowsDistributionCustomizer : WindowsDistributionCustomizer() {
-  override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
+  override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: Path) {
     PyCharmBuildUtils.copySkeletons(context, targetDirectory, "skeletons-win*.zip")
   }
 

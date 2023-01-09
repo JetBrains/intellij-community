@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.flavors.conda;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.readableFs.PathInfo;
 import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.SystemDependent;
 
 import javax.swing.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -35,11 +37,10 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor<PyCondaFlavorData>
     return PythonSdkFlavor.EP_NAME.findExtension(CondaEnvSdkFlavor.class);
   }
 
+
   @Override
-  public boolean supportsVirtualEnvActivation() {
-    // Conda has its own machinery to set env vars, so it doesn't need explicit activation.
-    // Even worse: settings ``PATH`` read from base environment activation script executes python
-    // from base environment (instead of selected one), hence breaks everything
+  public boolean providePyCharmHosted() {
+    // Conda + Colorama doesn't play well with this var, see DS-4036
     return false;
   }
 
@@ -58,9 +59,8 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor<PyCondaFlavorData>
     return PyCondaFlavorData.class;
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
     // There is no such thing as "conda homepath" since conda doesn't store python path
     return Collections.emptyList();
   }
@@ -70,7 +70,11 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor<PyCondaFlavorData>
                                @NotNull PyCondaFlavorData flavorData,
                                @Nullable TargetEnvironmentConfiguration targetConfig) {
     var condaPath = flavorData.getEnv().getFullCondaPathOnTarget();
-    return isFileExecutable(condaPath, targetConfig);
+    boolean executable = isFileExecutable(condaPath, targetConfig);
+    if (! executable) {
+      Logger.getInstance(CondaEnvSdkFlavor.class).warn("file not executable on conda flavor: "  + condaPath);
+    }
+    return executable;
   }
 
   @Override

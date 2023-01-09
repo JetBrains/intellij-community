@@ -1,8 +1,8 @@
 from collections.abc import Iterable
 from typing import Any
-from typing_extensions import Literal
+from typing_extensions import Literal, TypeAlias
 
-_Unit = Literal["pt", "mm", "cm", "in"]
+_Unit: TypeAlias = Literal["pt", "mm", "cm", "in"]
 
 def substr(s, start, length: int = ...): ...
 def enclose_in_parens(s): ...

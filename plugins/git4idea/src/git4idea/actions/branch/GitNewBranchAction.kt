@@ -12,7 +12,7 @@ import git4idea.actions.branch.GitBranchActionsUtil.getAffectedRepositories
 import git4idea.ui.branch.createOrCheckoutNewBranch
 
 class GitNewBranchAction
-  : DumbAwareAction(DvcsBundle.messagePointer("new.branch.action.text"),
+  : DumbAwareAction(DvcsBundle.messagePointer("new.branch.action.text.with.ellipsis"),
                     DvcsBundle.messagePointer("new.branch.action.description"),
                     AllIcons.General.Add) {
 

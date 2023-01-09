@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.util.io.createFile
-import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import kotlinx.serialization.decodeFromString
@@ -16,11 +15,8 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeResult.MergeStatus.CONFLICTING
 import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.api.errors.EmptyCommitException
-import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.lib.Constants.R_HEADS
-import org.eclipse.jgit.lib.ObjectId
-import org.eclipse.jgit.lib.Ref
-import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
@@ -29,6 +25,7 @@ import java.nio.file.Path
 import java.time.Instant
 import java.util.regex.Pattern
 import kotlin.io.path.div
+import kotlin.io.path.exists
 
 internal class GitSettingsLog(private val settingsSyncStorage: Path,
                               private val rootConfigPath: Path,
@@ -135,11 +132,14 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     val addCommand = git.add()
     for (fileState in snapshot.fileStates) {
       val file = settingsSyncStorage.resolve(fileState.file)
-      when (fileState) {
-        is FileState.Modified -> file.write(fileState.content)
-        is FileState.Deleted -> file.write(DELETED_FILE_MARKER)
-      }
+      writeFileStateContent(fileState, file)
       addCommand.addFilepattern(fileState.file)
+    }
+
+    for (additionalFile in snapshot.additionalFiles) {
+      val file = settingsSyncStorage.resolve(METAINFO_FOLDER).resolve(additionalFile.file)
+      writeFileStateContent(additionalFile, file)
+      addCommand.addFilepattern("$METAINFO_FOLDER/${additionalFile.file}")
     }
 
     if (snapshot.plugins != null) {
@@ -151,17 +151,39 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
     addCommand.call()
 
-    commit(message, snapshot.metaInfo.dateCreated)
+    val info = snapshot.metaInfo.appInfo
+    val body = if (info != null) {
+      val thisOrThat = if (info.applicationId == SettingsSyncLocalSettings.getInstance().applicationId) "[this]" else "[other]"
+      "\n\n" + """
+        id:     $thisOrThat ${info.applicationId}
+        user:   ${info.userName}
+        host:   ${info.hostName}
+        config: ${info.configFolder}
+      """.trimIndent()
+    }
+    else {
+      ""
+    }
+    commit("$message$body", snapshot.metaInfo.dateCreated)
+  }
+
+  private fun writeFileStateContent(fileState: FileState, fileToWrite: Path) {
+    when (fileState) {
+      is FileState.Modified -> fileToWrite.write(fileState.content)
+      is FileState.Deleted -> fileToWrite.write(DELETED_FILE_MARKER)
+    }
   }
 
   private fun commit(message: String, dateCreated: Instant? = null) {
     try {
       // Don't allow empty commit: sometimes the stream provider can notify about changes but there are no actual changes on disk
+      val mockGpgConfig = GpgConfig("", GpgConfig.GpgFormat.OPENPGP, "")
       val commit = git.commit()
         .setMessage(message)
         .setAllowEmpty(false)
         .setNoVerify(true)
         .setSign(false)
+        .setGpgConfig(mockGpgConfig)
         .call()
 
       if (dateCreated != null) {
@@ -198,13 +220,19 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     git.checkout().setName(MASTER_REF_NAME).setForced(true).call()
 
     val lastModifiedDate = getDate(getBranchTip(master))
-    val files = settingsSyncStorage.toFile().walkTopDown()
+
+    val settingFiles = settingsSyncStorage.toFile().walkTopDown()
       .onEnter { it.name != ".git" && it.name != METAINFO_FOLDER }
       .filter { it.isFile && it.name != ".gitignore" }
       .mapTo(HashSet()) { getFileStateFromFileWithDeletedMarker(it.toPath(), settingsSyncStorage) }
 
+    val metaInfoFolder = settingsSyncStorage.resolve(METAINFO_FOLDER)
+    val additionalFiles = metaInfoFolder.toFile().walkTopDown()
+      .filter { it.isFile && it.name != PLUGINS_FILE }
+      .mapTo(HashSet()) { getFileStateFromFileWithDeletedMarker(it.toPath(), metaInfoFolder) }
+
     val pluginsState = readPluginsState()
-    return SettingsSnapshot(MetaInfo(lastModifiedDate, getLocalApplicationInfo()), files, pluginsState)
+    return SettingsSnapshot(MetaInfo(lastModifiedDate, getLocalApplicationInfo()), settingFiles, pluginsState, additionalFiles)
   }
 
   private fun readPluginsState(): SettingsSyncPluginsState? {

@@ -4,8 +4,8 @@ fun some() {
     typealias TestInFun = Any
 }
 
-interface SomeTrait {
-    typealias TestInTrait = Any
+interface SomeInterface {
+    typealias TestInInterface = Any
 }
 
 class Some() {
@@ -20,4 +20,4 @@ class Some() {
 // REF: (<root>).TestGlobal
 // REF: (in Some).TestInClass
 // REF: (in Some.Companion).TestInClassObject
-// REF: (in SomeTrait).TestInTrait
+// REF: (in SomeInterface).TestInInterface

@@ -10,27 +10,113 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.maven.server" />
     <orderEntry type="module-library">
+      <library name="lucene-core:ind-deps" type="repository">
+        <properties maven-id="org.apache.lucene:lucene-core:8.11.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/8.11.1/lucene-core-8.11.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="lucene-query-parser:ind-deps" type="repository">
+        <properties maven-id="org.apache.lucene:lucene-queryparser:8.11.1">
+          <exclude>
+            <dependency maven-id="org.apache.lucene:lucene-core" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queryparser/8.11.1/lucene-queryparser-8.11.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/8.11.1/lucene-queries-8.11.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/8.11.1/lucene-sandbox-8.11.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="lucene-analyzer:ind-deps" type="repository">
+        <properties maven-id="org.apache.lucene:lucene-analyzers-common:8.11.1">
+          <exclude>
+            <dependency maven-id="org.apache.lucene:lucene-core" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analyzers-common/8.11.1/lucene-analyzers-common-8.11.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="lucene-backward-codecs:ind-deps" type="repository">
+        <properties maven-id="org.apache.lucene:lucene-backward-codecs:8.11.1">
+          <exclude>
+            <dependency maven-id="org.apache.lucene:lucene-core" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-backward-codecs/8.11.1/lucene-backward-codecs-8.11.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="lucene-highlighter:ind-deps" type="repository">
+        <properties maven-id="org.apache.lucene:lucene-highlighter:8.11.1">
+          <exclude>
+            <dependency maven-id="org.apache.lucene:lucene-core" />
+            <dependency maven-id="org.apache.lucene:lucene-queries" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/8.11.1/lucene-highlighter-8.11.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/8.11.1/lucene-memory-8.11.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="maven-resolver-util:ind-deps" type="repository">
+        <properties maven-id="org.apache.maven.resolver:maven-resolver-util:1.8.0">
+          <exclude>
+            <dependency maven-id="org.codehaus.plexus:plexus-utils" />
+            <dependency maven-id="org.apache.maven:maven-model" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-api/1.8.0/maven-resolver-api-1.8.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-util/1.8.0/maven-resolver-util-1.8.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
       <library name="apache.maven.indexer.core:6.2.2" type="repository">
         <properties maven-id="org.apache.maven.indexer:indexer-core:6.2.2">
           <exclude>
             <dependency maven-id="javax.inject:javax.inject" />
             <dependency maven-id="org.codehaus.plexus:plexus-utils" />
+            <dependency maven-id="org.apache.maven.resolver:maven-resolver-util" />
+            <dependency maven-id="org.apache.maven.resolver:maven-resolver-api" />
+            <dependency maven-id="org.apache.maven:maven-model" />
+            <dependency maven-id="org.apache.lucene:lucene-sandbox" />
+            <dependency maven-id="org.apache.lucene:lucene-queryparser" />
+            <dependency maven-id="org.apache.lucene:lucene-queries" />
+            <dependency maven-id="org.apache.lucene:lucene-memory" />
+            <dependency maven-id="org.apache.lucene:lucene-highlighter" />
+            <dependency maven-id="org.apache.lucene:lucene-core" />
+            <dependency maven-id="org.apache.lucene:lucene-backward-codecs" />
+            <dependency maven-id="org.apache.lucene:lucene-analyzers-common" />
+            <dependency maven-id="org.slf4j:slf4j-api" />
           </exclude>
         </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/indexer/indexer-core/6.2.2/indexer-core-6.2.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/8.11.1/lucene-core-8.11.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queryparser/8.11.1/lucene-queryparser-8.11.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/8.11.1/lucene-queries-8.11.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/8.11.1/lucene-sandbox-8.11.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analyzers-common/8.11.1/lucene-analyzers-common-8.11.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-backward-codecs/8.11.1/lucene-backward-codecs-8.11.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/8.11.1/lucene-highlighter-8.11.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/8.11.1/lucene-memory-8.11.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-api/1.8.0/maven-resolver-api-1.8.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-util/1.8.0/maven-resolver-util-1.8.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/3.8.5/maven-model-3.8.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

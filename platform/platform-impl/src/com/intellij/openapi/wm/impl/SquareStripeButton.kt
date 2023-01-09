@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
+import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
@@ -20,15 +21,14 @@ import com.intellij.ui.UIBundle
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.Component
-import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
 
 internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
-  ActionButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 40)) {
+  ActionButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, { ActionToolbar.experimentalToolbarMinimumButtonSize() }) {
   companion object {
-    fun createMoveGroup(toolWindow: ToolWindow) = ToolWindowMoveToAction.Group(toolWindow)
+    fun createMoveGroup(toolWindow: ToolWindow) = ToolWindowMoveAction.Group()
   }
 
   init {
@@ -140,14 +140,12 @@ private class HideAction(private val toolWindow: ToolWindowImpl)
 }
 
 private class SquareAnActionButton(private val window: ToolWindowImpl) : ToggleActionButton(window.stripeTitle, null), DumbAware {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
   override fun isSelected(e: AnActionEvent): Boolean {
     e.presentation.icon = window.icon ?: AllIcons.Toolbar.Unknown
     scaleIcon(e.presentation)
     return window.isVisible
-  }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {

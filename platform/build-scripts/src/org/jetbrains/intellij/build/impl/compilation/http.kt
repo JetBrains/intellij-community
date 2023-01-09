@@ -10,12 +10,16 @@ import java.util.concurrent.TimeUnit
 
 internal val MEDIA_TYPE_BINARY = "application/octet-stream".toMediaType()
 
-internal fun OkHttpClient.head(url: String): Response {
-  return newCall(Request.Builder().url(url).head().build()).execute()
+internal fun OkHttpClient.head(url: String, authHeader: String): Response {
+  return newCall(Request.Builder().url(url).head()
+                   .header("Authorization", authHeader)
+                   .build()).execute()
 }
 
-internal fun OkHttpClient.get(url: String): Response {
-  return newCall(Request.Builder().url(url).build()).execute()
+internal fun OkHttpClient.get(url: String, authHeader: String): Response {
+  return newCall(Request.Builder().url(url)
+                   .header("Authorization", authHeader)
+                   .build()).execute()
 }
 
 internal inline fun <T> Response.useSuccessful(task: (Response) -> T): T {

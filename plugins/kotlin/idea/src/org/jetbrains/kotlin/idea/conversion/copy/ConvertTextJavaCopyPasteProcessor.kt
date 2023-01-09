@@ -6,6 +6,7 @@ import com.intellij.codeInsight.editorActions.CopyPastePostProcessor
 import com.intellij.codeInsight.editorActions.TextBlockTransferable
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -29,7 +30,6 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -139,7 +139,7 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
             ProgressManager.checkCanceled()
 
             if (useNewJ2k) {
-                val postProcessor = J2kConverterExtension.extension(useNewJ2k).createPostProcessor(formatCode = true)
+                val postProcessor = J2kConverterExtension.extension(useNewJ2k = true).createPostProcessor(formatCode = true)
                 convertedResult.importsToAdd.forEach { fqName ->
                     postProcessor.insertImport(targetFile, fqName)
                 }

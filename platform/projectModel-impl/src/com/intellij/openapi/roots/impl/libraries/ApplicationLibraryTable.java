@@ -35,6 +35,10 @@ public class ApplicationLibraryTable extends LibraryTableBase {
     }
   };
 
+  /**
+   * @deprecated Use {@link com.intellij.openapi.roots.libraries.LibraryTablesRegistrar#getLibraryTable()} instead
+   */
+  @Deprecated(forRemoval = true)
   public static ApplicationLibraryTable getApplicationTable() {
     return ApplicationManager.getApplication().getService(ApplicationLibraryTable.class);
   }

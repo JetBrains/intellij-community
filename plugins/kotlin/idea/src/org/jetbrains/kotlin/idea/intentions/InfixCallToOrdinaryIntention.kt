@@ -29,7 +29,7 @@ class InfixCallToOrdinaryIntention : SelfTargetingIntention<KtBinaryExpression>(
                 else -> "($2)"
             }
 
-            val replacement = KtPsiFactory(element).createExpressionByPattern(
+            val replacement = KtPsiFactory(element.project).createExpressionByPattern(
                 pattern,
                 element.left!!,
                 element.operationReference.text,

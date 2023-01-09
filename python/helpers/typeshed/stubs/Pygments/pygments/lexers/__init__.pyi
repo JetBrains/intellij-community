@@ -1,10 +1,11 @@
 from _typeshed import StrOrBytesPath, StrPath
 from collections.abc import Iterator
-from typing import Any, Union
+from typing import Any
+from typing_extensions import TypeAlias
 
 from pygments.lexer import Lexer, LexerMeta
 
-_OpenFile = Union[StrOrBytesPath, int]  # copy/pasted from builtins.pyi
+_OpenFile: TypeAlias = StrOrBytesPath | int  # copy/pasted from builtins.pyi
 
 def get_all_lexers() -> Iterator[tuple[str, tuple[str, ...], tuple[str, ...], tuple[str, ...]]]: ...
 def find_lexer_class(name: str) -> LexerMeta | None: ...

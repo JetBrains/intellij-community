@@ -1,10 +1,12 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 // Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.console.pydev;
 
 
 import com.intellij.openapi.util.text.StringUtil;
 
-public class AbstractPyCodeCompletion  {
+public final class AbstractPyCodeCompletion  {
     public static final int LOOKING_FOR_INSTANCE_UNDEFINED=0;
     public static final int LOOKING_FOR_INSTANCED_VARIABLE=1;
     public static final int LOOKING_FOR_UNBOUND_VARIABLE=2;

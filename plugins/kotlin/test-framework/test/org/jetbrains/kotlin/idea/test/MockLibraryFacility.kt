@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.platform.js.JsPlatform
+import org.jetbrains.kotlin.platform.JsPlatform
 import java.io.File
 
 data class MockLibraryFacility(

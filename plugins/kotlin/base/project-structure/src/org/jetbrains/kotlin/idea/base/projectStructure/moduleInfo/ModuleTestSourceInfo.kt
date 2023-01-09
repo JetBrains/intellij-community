@@ -46,4 +46,8 @@ data class ModuleTestSourceInfo internal constructor(
         }
 
     private object KeyForModulesWhoseInternalsAreVisible
+
+    override fun keyForSdk() = KeyForSdks
+
+    protected object KeyForSdks
 }

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,18 +22,18 @@ public interface FileEditorManagerListener extends EventListener {
    * This method is called synchronously (in the same EDT event), as the creation of {@link FileEditor}s.
    *
    * @see #fileOpened(FileEditorManager, VirtualFile)
-   * @deprecated use {@link #fileOpenedSync(FileEditorManager, VirtualFile, List)}
+   * @deprecated use {@link FileOpenedSyncListener#fileOpenedSync(FileEditorManager, VirtualFile, List)}
    */
+  @SuppressWarnings("unused")
   @Deprecated
   default void fileOpenedSync(@NotNull FileEditorManager source, @NotNull VirtualFile file,
                               @NotNull Pair<FileEditor[], FileEditorProvider[]> editors) {
   }
 
   /**
-   * This method is called synchronously (in the same EDT event), as the creation of {@link FileEditor}s.
-   *
-   * @see #fileOpened(FileEditorManager, VirtualFile)
+   * @deprecated use {@link FileOpenedSyncListener#fileOpenedSync(FileEditorManager, VirtualFile, List)}
    */
+  @Deprecated
   default void fileOpenedSync(@NotNull FileEditorManager source, @NotNull VirtualFile file,
                               @NotNull List<FileEditorWithProvider> editorsWithProviders) {
     fileOpenedSync(source, file, new Pair<>(
@@ -43,12 +42,6 @@ public interface FileEditorManagerListener extends EventListener {
   }
 
   /**
-   * This method is called after the focus settles down (if requested) in a newly created {@link FileEditor}.
-   * Be aware that this isn't always true in the case of asynchronously loaded editors, which, in general,
-   * may happen with any text editor. In that case, the focus request is postponed until after the editor is fully loaded,
-   * which means that it may gain the focus way after this method is called.
-   * When necessary, use {@link FileEditorManager#runWhenLoaded(Editor, Runnable)}) to ensure the desired ordering.
-   * <p>
    * {@link #fileOpenedSync(FileEditorManager, VirtualFile, List)} is always invoked before this method,
    * either in the same or the previous EDT event.
    *

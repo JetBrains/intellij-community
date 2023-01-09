@@ -2,11 +2,13 @@
 package com.intellij.ide.navbar.ide
 
 import com.intellij.ide.navbar.NavBarItem
+import com.intellij.ide.navbar.actions.NavBarActionHandler
 import com.intellij.ide.navbar.impl.ProjectNavBarItem
+import com.intellij.ide.navbar.impl.isModuleContentRoot
 import com.intellij.ide.navbar.impl.pathToItem
-import com.intellij.ide.navbar.ui.FloatingModeHelper
+import com.intellij.ide.navbar.ui.NewNavBarPanel
 import com.intellij.ide.navbar.ui.StaticNavBarPanel
-import com.intellij.ide.navbar.vm.NavBarVmItem
+import com.intellij.ide.navbar.ui.showHint
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -14,57 +16,103 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level.PROJECT
+import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import java.awt.Window
 import javax.swing.JComponent
 
 @Service(PROJECT)
 internal class NavBarService(private val project: Project) : Disposable {
 
-  private val cs: CoroutineScope = CoroutineScope(SupervisorJob())
+  companion object {
+
+    @JvmStatic
+    fun getInstance(project: Project): NavBarService = project.service()
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val cs: CoroutineScope = CoroutineScope(
+    SupervisorJob() +
+    Dispatchers.Default.limitedParallelism(1) // allows to reason about the ordering
+  )
 
   override fun dispose() {
     cs.cancel()
   }
 
   private val staticNavBarVm = StaticNavBarVmImpl(cs, project, UISettings.getInstance().isNavbarShown())
+  private var floatingBarJob: Job? = null
 
   fun uiSettingsChanged(uiSettings: UISettings) {
+    if (uiSettings.isNavbarShown()) {
+      floatingBarJob?.cancel()
+    }
     staticNavBarVm.isVisible = uiSettings.isNavbarShown()
   }
 
   val staticNavBarPanel: JComponent by lazy(LazyThreadSafetyMode.NONE) {
     EDT.assertIsEdt()
-    StaticNavBarPanel(cs, staticNavBarVm)
+    StaticNavBarPanel(cs, staticNavBarVm, project)
   }
 
   fun jumpToNavbar(dataContext: DataContext) {
     val navBarVm = staticNavBarVm.vm.value
     if (navBarVm != null) {
       navBarVm.selectTail()
+      navBarVm.showPopup()
     }
     else {
       showFloatingNavbar(dataContext)
     }
   }
 
+  fun selectTail() {
+    staticNavBarVm.vm.value?.selectTail()
+  }
+
   private fun showFloatingNavbar(dataContext: DataContext) {
-    cs.launch(ModalityState.current().asContextElement()) {
-      val model = contextModel(dataContext, project)
+    val job = cs.launch(ModalityState.current().asContextElement()) {
+      val model = contextModel(dataContext, project).ifEmpty {
+        defaultModel(project)
+      }
       val barScope = this@launch
       val vm = NavBarVmImpl(cs = barScope, project, model, activityFlow = emptyFlow())
       withContext(Dispatchers.EDT) {
-        FloatingModeHelper.showHint(dataContext, barScope, vm, project)
+        val component = NewNavBarPanel(barScope, vm, project, true)
+        while (component.componentCount == 0) {
+          // wait while panel will fill itself with item components
+          yield()
+        }
+        showHint(dataContext, project, component)
         vm.selectTail()
+        vm.showPopup()
       }
+    }
+
+    floatingBarJob = job
+
+    job.invokeOnCompletion {
+      floatingBarJob = null
     }
   }
 }
 
 internal suspend fun focusModel(project: Project): List<NavBarVmItem> {
   val ctx = focusDataContext()
+  if (ctx.getData(NavBarActionHandler.NAV_BAR_ACTION_HANDLER) != null) {
+    // ignore updates while nav bar has focus
+    return emptyList()
+  }
+  val window: Window? = WindowManager.getInstance().getFrame(project)
+  if (window != null && !window.isFocused) {
+    // IDEA-307406, IDEA-304798 Skip event when window is out of focus (user is in a popup)
+    return emptyList()
+  }
   return contextModel(ctx, project)
 }
 
@@ -72,12 +120,6 @@ private suspend fun contextModel(ctx: DataContext, project: Project): List<NavBa
   if (CommonDataKeys.PROJECT.getData(ctx) != project) {
     return emptyList()
   }
-  return contextModel(ctx).ifEmpty {
-    defaultModel(project)
-  }
-}
-
-private suspend fun contextModel(ctx: DataContext): List<NavBarVmItem> {
   try {
     return readAction {
       contextModelInner(ctx)
@@ -85,6 +127,9 @@ private suspend fun contextModel(ctx: DataContext): List<NavBarVmItem> {
   }
   catch (ce: CancellationException) {
     throw ce
+  }
+  catch (pce: ProcessCanceledException) {
+    throw pce
   }
   catch (t: Throwable) {
     LOG.error(t)
@@ -101,13 +146,13 @@ private fun contextModelInner(ctx: DataContext): List<NavBarVmItem> {
 internal fun List<NavBarItem>.toVmItems(): List<NavBarVmItem> {
   ApplicationManager.getApplication().assertReadAccessAllowed()
   return map {
-    NavBarVmItem(it.createPointer(), it.presentation(), it.javaClass)
+    NavBarVmItem(it.createPointer(), it.presentation(), it.isModuleContentRoot(), it.javaClass)
   }
 }
 
-private suspend fun defaultModel(project: Project): List<NavBarVmItem> {
+internal suspend fun defaultModel(project: Project): List<NavBarVmItem> {
   return readAction {
     val item = ProjectNavBarItem(project)
-    listOf(NavBarVmItem(item.createPointer(), item.presentation(), item.javaClass))
+    listOf(NavBarVmItem(item.createPointer(), item.presentation(), true, item.javaClass))
   }
 }

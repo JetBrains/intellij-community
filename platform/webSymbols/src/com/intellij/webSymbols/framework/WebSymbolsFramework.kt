@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.SymbolKind
 import com.intellij.webSymbols.SymbolNamespace
-import com.intellij.webSymbols.registry.WebSymbolNamesProvider
+import com.intellij.webSymbols.query.WebSymbolNamesProvider
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
 import javax.swing.Icon

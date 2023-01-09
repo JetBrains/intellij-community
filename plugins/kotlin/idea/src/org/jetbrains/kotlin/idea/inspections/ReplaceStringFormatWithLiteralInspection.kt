@@ -78,7 +78,7 @@ class ReplaceStringFormatWithLiteralInspection : AbstractKotlinInspection() {
             val replaceArgs = args.asSequence().drop(1).mapTo(LinkedList()) { ConvertToStringTemplateIntention.buildText(it, true) }
             val stringLiteral = stringPlaceHolder.replace(format) { replaceArgs.pop() }
             (qualifiedExpression ?: callExpression)
-                .let { it.replaced(KtPsiFactory(it).createStringTemplate(stringLiteral)) }
+                .let { it.replaced(KtPsiFactory(project).createStringTemplate(stringLiteral)) }
                 .entries
                 .forEach {
                     val blockEntry = (it as? KtBlockStringTemplateEntry)

@@ -2,10 +2,10 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ExcludeUrlEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.RootsKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.RootsKt;
+import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

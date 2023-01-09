@@ -111,7 +111,7 @@ internal class KotlinNonJvmSourceRootConverterProvider : ConverterProvider() {
             context.projectLibrariesSettings.projectLibraries.groupBy { it.getAttributeValue(NAME_ATTRIBUTE) }
         }
 
-        private fun findGlobalLibrary(name: String) = ApplicationLibraryTable.getApplicationTable().getLibraryByName(name)
+        private fun findGlobalLibrary(name: String) = LibraryTablesRegistrar.getInstance().libraryTable.getLibraryByName(name)
 
         private fun findProjectLibrary(name: String) = projectLibrariesByName[name]?.firstOrNull()
 

@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.psi.KtElement
  * It should not do some additional checks to verify that  [KotlinApplicator] is applicable
  * as it is responsibility of [KotlinApplicator.isApplicableByPsi]
  *
- * No resolve operations should be called inside [getApplicabilityRanges]
- * I.e no [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] or [PsiElement] resolve can be used inside
+ * No resolve operations should be called inside [getApplicabilityRanges],
+ * i.e no [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] or [PsiElement] resolve can be used inside
  *
  * [getApplicabilityRanges] is guarantied to be called inside read action
  */
@@ -44,13 +44,14 @@ private class KotlinApplicabilityRangeImpl<ELEMENT : PsiElement>(
 
 /**
  * Create [KotlinApplicabilityRange] by list of possible ranges
+ *
  * [getRanges] should return `empty list if no applicability ranges found
 
- * [getRanges] should return ranges relative to passed [ELEMENT]
+ * [getRanges] should return ranges relative to passed [ELEMENT],
  * i.e. if range covers the whole element when it should return `[0, element.length)`
  *
- * No resolve operations should be called inside [getRanges]
- * I.e no [KtAnalyisSession] or [PsiElement] resolve can be used inside
+ * No resolve operations should be called inside [getRanges],
+ * i.e. no [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] or [PsiElement] resolve can be used inside
  *
  * [getRanges] is guarantied to be called inside read action
  *
@@ -64,12 +65,13 @@ fun <ELEMENT : KtElement> applicabilityRanges(
 
 /**
  * Create [KotlinApplicabilityRange] with a single applicability range
+ *
  * [getRange] should return `null` if no applicability ranges found
  *
- * No resolve operations should be called inside [getRanges]
- * I.e no [KtAnalyisSession] or [PsiElement] resolve can be used inside
+ * No resolve operations should be called inside [getRange],
+ * i.e. no [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] or [PsiElement] resolve can be used inside
  *
- * [getRange] should return range relative to passed [ELEMENT]
+ * [getRange] should return range relative to passed [ELEMENT],
  * i.e. if range covers the whole element when it should return `[0, element.length)`
  *
  * [getRange] is guarantied to be called inside read action
@@ -84,10 +86,11 @@ fun <ELEMENT : KtElement> applicabilityRange(
 
 /**
  * Create [KotlinApplicabilityRange] with a single applicability range represented by [PsiElement]
+ *
  * [getTarget] should return [PsiElement] which range will be used or `null` if no applicability ranges found
  *
- * No resolve operations should be called inside [getTarget]
- * I.e no [KtAnalyisSession] or [PsiElement] resolve can be used inside
+ * No resolve operations should be called inside [getTarget],
+ * i.e. no [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] or [PsiElement] resolve can be used inside
  *
  * [getTarget] should return element inside the element passed
  *
@@ -99,11 +102,26 @@ fun <ELEMENT : KtElement> applicabilityRange(
 fun <ELEMENT : PsiElement> applicabilityTarget(
     getTarget: (ELEMENT) -> PsiElement?
 ): KotlinApplicabilityRange<ELEMENT> =
-    KotlinApplicabilityRangeImpl { element ->
-        when (val target = getTarget(element)) {
-            null -> emptyList()
-            element -> listOf(TextRange(0, element.textLength))
-            else -> listOf(target.textRangeIn(element))
-        }
-    }
+    applicabilityTargets { listOfNotNull(getTarget(it)) }
+
+/**
+ * Create [KotlinApplicabilityRange] with multiple applicability ranges represented by [PsiElement]
+ *
+ * [getTargets] should return a list of [PsiElement]s which ranges will be used,
+ * or empty list if no applicability ranges were found
+ *
+ * No resolve operations should be called inside [getTargets],
+ * i.e. no [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] or [PsiElement] resolve can be used inside
+ *
+ * [getTargets] should only return elements inside the element passed
+ *
+ * [getTargets] is guarantied to be called inside read action
+ *
+ * @see applicabilityRanges
+ * @see applicabilityTarget
+ */
+fun <ELEMENT : PsiElement> applicabilityTargets(
+    getTargets: (ELEMENT) -> List<PsiElement>
+): KotlinApplicabilityRange<ELEMENT> =
+    KotlinApplicabilityRangeImpl { element -> getTargets(element).map { it.textRangeIn(element) } }
 

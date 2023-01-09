@@ -29,10 +29,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Processor;
-import com.intellij.util.Query;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FindSymbolParameters;
@@ -401,6 +398,10 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
                                                        final boolean checkBoxState,
                                                        final String pattern,
                                                        final GlobalSearchScope searchScope);
+
+  public void setInitialSelection(Function<Set<Object>, Object> initialSelection) {
+    myGotoByNamePanel.setInitialSelection(initialSelection);
+  }
 
   protected static class MyGotoClassModel<T extends PsiNamedElement> extends GotoClassModel2 {
     private final AbstractTreeClassChooserDialog<T> myTreeClassChooserDialog;

@@ -29,7 +29,7 @@ class AddExceptionToThrowsFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val annotationEntry = element ?: return
-        val psiFactory = KtPsiFactory(annotationEntry)
+        val psiFactory = KtPsiFactory(project)
 
         val argumentText = "${argumentClassFqName.asString()}::class"
         val added = annotationEntry.valueArgumentList?.addArgument(psiFactory.createArgument(argumentText))

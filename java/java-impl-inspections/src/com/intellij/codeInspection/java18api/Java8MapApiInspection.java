@@ -7,7 +7,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,11 +28,12 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.*;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.MapCheckCondition.fromConditional;
 
@@ -57,18 +58,17 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
   @SuppressWarnings("PublicField")
   public boolean mySideEffects = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(JavaBundle.message("checkbox.suggest.conversion.to.map.computeifabsent"), "mySuggestMapComputeIfAbsent");
-    panel.addCheckbox(JavaBundle.message("checkbox.suggest.conversion.to.map.getordefault"), "mySuggestMapGetOrDefault");
-    panel.addCheckbox(JavaBundle.message("checkbox.suggest.conversion.to.map.putifabsent"), "mySuggestMapPutIfAbsent");
-    panel.addCheckbox(JavaBundle.message("checkbox.suggest.conversion.to.map.merge"), "mySuggestMapMerge");
-    panel.addCheckbox(JavaBundle.message("checkbox.suggest.conversion.to.map.replaceall"), "mySuggestMapReplaceAll");
-    panel.addCheckbox(JavaBundle.message("checkbox.treat.get.k.null.the.same.as.containskey.k.may.change.semantics"), "myTreatGetNullAsContainsKey");
-    panel.addCheckbox(JavaBundle.message("checkbox.suggest.replacement.even.if.lambda.may.have.side.effects"), "mySideEffects");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("mySuggestMapComputeIfAbsent", JavaBundle.message("checkbox.suggest.conversion.to.map.computeifabsent")),
+      checkbox("mySuggestMapGetOrDefault", JavaBundle.message("checkbox.suggest.conversion.to.map.getordefault")),
+      checkbox("mySuggestMapPutIfAbsent", JavaBundle.message("checkbox.suggest.conversion.to.map.putifabsent")),
+      checkbox("mySuggestMapMerge", JavaBundle.message("checkbox.suggest.conversion.to.map.merge")),
+      checkbox("mySuggestMapReplaceAll", JavaBundle.message("checkbox.suggest.conversion.to.map.replaceall")),
+      checkbox("myTreatGetNullAsContainsKey",
+               JavaBundle.message("checkbox.treat.get.k.null.the.same.as.containskey.k.may.change.semantics")),
+      checkbox("mySideEffects", JavaBundle.message("checkbox.suggest.replacement.even.if.lambda.may.have.side.effects")));
   }
 
   @NotNull

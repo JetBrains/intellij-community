@@ -28,11 +28,11 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
    * @deprecated use {@link #CreateWithTemplatesDialogPanel(String, List)}
    */
   @Deprecated(forRemoval = true)
-  public CreateWithTemplatesDialogPanel(@NotNull List<Trinity<@Nls String, Icon, String>> templates, @Nullable String selectedItem) {
+  public CreateWithTemplatesDialogPanel(@NotNull List<? extends Trinity<@Nls String, Icon, String>> templates, @Nullable String selectedItem) {
     this(selectedItem, ContainerUtil.map(templates, trinity -> new TemplatePresentation(trinity.first, trinity.second, trinity.third)));
   }
 
-  public CreateWithTemplatesDialogPanel(@Nullable String selectedItem, @NotNull List<TemplatePresentation> templates) {
+  public CreateWithTemplatesDialogPanel(@Nullable String selectedItem, @NotNull List<? extends TemplatePresentation> templates) {
     super(templates, new TemplateListCellRenderer());
     myTemplatesList.addListSelectionListener(e -> {
       TemplatePresentation selectedValue = myTemplatesList.getSelectedValue();

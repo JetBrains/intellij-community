@@ -106,7 +106,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (myIsIfStatement) {
         final PsiElement parent = descriptor.getPsiElement().getParent();
         if (!(parent instanceof PsiIfStatement)) return;
@@ -169,7 +169,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement parent = descriptor.getPsiElement().getParent();
       if (!(parent instanceof PsiIfStatement)) {
         return;

@@ -6,7 +6,9 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ComparisonFailureData {
@@ -15,18 +17,19 @@ public class ComparisonFailureData {
 
   public static final String OPENTEST4J_ASSERTION = "org.opentest4j.AssertionFailedError";
 
+  private static final List<String> COMPARISON_FAILURES = Arrays.asList("org.junit.ComparisonFailure", "org.junit.ComparisonFailure");
+
   private final String myExpected;
   private final String myActual;
   private final String myFilePath;
   private final String myActualFilePath;
 
-  private static final Map<String, Field> EXPECTED = new HashMap<>();
-  private static final Map<String, Field> ACTUAL = new HashMap<>();
+  private static final Map<Class<?>, Field> EXPECTED = new HashMap<>();
+  private static final Map<Class<?>, Field> ACTUAL = new HashMap<>();
 
   static {
     try {
-      init("junit.framework.ComparisonFailure");
-      init("org.junit.ComparisonFailure");
+      for (String failure : COMPARISON_FAILURES) init(failure);
     }
     catch (Throwable ignored) { }
   }
@@ -35,11 +38,11 @@ public class ComparisonFailureData {
     Class<?> exceptionClass = Class.forName(exceptionClassName, false, ComparisonFailureData.class.getClassLoader());
     final Field expectedField = exceptionClass.getDeclaredField("fExpected");
     expectedField.setAccessible(true);
-    EXPECTED.put(exceptionClassName, expectedField);
+    EXPECTED.put(exceptionClass, expectedField);
 
     final Field actualField = exceptionClass.getDeclaredField("fActual");
     actualField.setAccessible(true);
-    ACTUAL.put(exceptionClassName, actualField);
+    ACTUAL.put(exceptionClass, actualField);
   }
 
   public ComparisonFailureData(String expected, String actual) {
@@ -214,10 +217,10 @@ public class ComparisonFailureData {
     try {
       return new ComparisonFailureData(getExpected(assertion), getActual(assertion));
     }
-    catch (Throwable e) {
+    catch (IllegalAccessException | NoSuchFieldException e) {
       return null;
     }
-  }
+}
 
   /** @noinspection SSBasedInspection*/
   private static ComparisonFailureData createCommonAssertion(Throwable assertion) {
@@ -245,25 +248,23 @@ public class ComparisonFailureData {
   }
 
   public static String getActual(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
-     return get(assertion, ACTUAL, "fActual");
-   }
+    return get(assertion, ACTUAL, "fActual");
+  }
 
-   public static String getExpected(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
-     return get(assertion, EXPECTED, "fExpected");
-   }
+  public static String getExpected(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
+    return get(assertion, EXPECTED, "fExpected");
+  }
 
-   private static String get(final Throwable assertion, final Map<String, Field> staticMap, final String fieldName) throws IllegalAccessException, NoSuchFieldException {
-     String actual;
-     Class<? extends Throwable> assertionClass = assertion.getClass();
-     Field actualField = staticMap.get(assertionClass.getName());
-     if (actualField != null) {
-       actual = (String)actualField.get(assertion);
-     }
-     else {
-       Field field = assertionClass.getDeclaredField(fieldName);
-       field.setAccessible(true);
-       actual = (String)field.get(assertion);
-     }
-     return actual;
-   }
+  private static String get(final Throwable assertion, final Map<Class<?>, Field> staticMap, final String fieldName) throws IllegalAccessException, NoSuchFieldException {
+    Class<? extends Throwable> assertionClass = assertion.getClass();
+    for (Class<?> comparisonClass : staticMap.keySet()) {
+      if (comparisonClass.isAssignableFrom(assertionClass)) {
+        return (String)staticMap.get(comparisonClass).get(assertion);
+      }
+    }
+
+    Field field = assertionClass.getDeclaredField(fieldName);
+    field.setAccessible(true);
+    return (String)field.get(assertion);
+  }
 }

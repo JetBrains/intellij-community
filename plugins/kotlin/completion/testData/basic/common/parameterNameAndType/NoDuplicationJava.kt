@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 import java.sql.*
 
 fun f(blob<caret>)

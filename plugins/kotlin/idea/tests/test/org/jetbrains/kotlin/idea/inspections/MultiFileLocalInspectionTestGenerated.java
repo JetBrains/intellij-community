@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections;
 
@@ -131,5 +131,15 @@ public class MultiFileLocalInspectionTestGenerated extends AbstractMultiFileLoca
     @TestMetadata("unusedSymbol/internalConstructorUsedInJava/internalConstructorUsedInJava.test")
     public void testUnusedSymbol_internalConstructorUsedInJava_InternalConstructorUsedInJava() throws Exception {
         runTest("testData/multiFileLocalInspections/unusedSymbol/internalConstructorUsedInJava/internalConstructorUsedInJava.test");
+    }
+
+    @TestMetadata("usePropertyAccessSyntax/excludedCustomAccessor/excludedCustomAccessor.test")
+    public void testUsePropertyAccessSyntax_excludedCustomAccessor_ExcludedCustomAccessor() throws Exception {
+        runTest("testData/multiFileLocalInspections/usePropertyAccessSyntax/excludedCustomAccessor/excludedCustomAccessor.test");
+    }
+
+    @TestMetadata("usePropertyAccessSyntax/notExcludedCustomAccessor/notExcludedCustomAccessor.test")
+    public void testUsePropertyAccessSyntax_notExcludedCustomAccessor_NotExcludedCustomAccessor() throws Exception {
+        runTest("testData/multiFileLocalInspections/usePropertyAccessSyntax/notExcludedCustomAccessor/notExcludedCustomAccessor.test");
     }
 }

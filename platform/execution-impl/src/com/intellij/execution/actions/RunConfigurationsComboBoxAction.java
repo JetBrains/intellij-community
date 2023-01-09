@@ -20,6 +20,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -63,8 +64,15 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     if (PlatformUtils.isRubyMine()) return true;
     if (PlatformUtils.isPyCharmPro()) return true;
     if (PlatformUtils.isPyCharmCommunity()) return true;
+    if (PlatformUtils.isDataGrip()) return true;
 
     return Registry.is("run.current.file.item.in.run.configurations.combobox");
+  }
+
+  private static boolean hasRunSubActions(@NotNull Project project) {
+    return hasRunCurrentFileItem(project) ||
+           ExperimentalUI.isNewUI() ||
+           PlatformUtils.isCLion();
   }
 
   @Override
@@ -115,13 +123,20 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
                                          String actionPlace) {
     presentation.putClientProperty(BUTTON_MODE, null);
     if (project != null && target != null && settings != null) {
-      String name = Executor.shortenNameIfNeeded(settings.getName());
-      if (target != DefaultExecutionTarget.INSTANCE && !target.isExternallyManaged()) {
-        name += " | " + target.getDisplayName();
-      } else {
-        if (!ExecutionTargetManager.canRun(settings.getConfiguration(), target)) {
-          name += " | " + ExecutionBundle.message("run.configurations.combo.action.nothing.to.run.on");
+      String name;
+      if (!ExperimentalUI.isNewUI()) { // there's a separate combo-box for execution targets in new UI
+        name = Executor.shortenNameIfNeeded(settings.getName());
+        if (target != DefaultExecutionTarget.INSTANCE && !target.isExternallyManaged()) {
+          name += " | " + target.getDisplayName();
         }
+        else {
+          if (!ExecutionTargetManager.canRun(settings.getConfiguration(), target)) {
+            name += " | " + ExecutionBundle.message("run.configurations.combo.action.nothing.to.run.on");
+          }
+        }
+      }
+      else {
+        name = StringUtil.shortenTextWithEllipsis(settings.getName(), 25, 8, true);
       }
       presentation.setText(name, false);
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -223,7 +238,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     allActionsGroup.add(new SaveTemporaryAction());
     allActionsGroup.addSeparator();
 
-    addTargetGroup(project, allActionsGroup);
+
+    if (!ExperimentalUI.isNewUI()) {
+      // no need for targets list in `All configurations` in new UI, since there is a separate combobox for them
+      addTargetGroup(project, allActionsGroup);
+    }
 
     allActionsGroup.add(new RunCurrentFileAction(executor -> true));
     allActionsGroup.addSeparator(ExecutionBundle.message("run.configurations.popup.existing.configurations.separator.text"));
@@ -231,15 +250,14 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     addRunConfigurations(allActionsGroup, project,
                          settings -> createFinalAction(settings, project),
                          folderName -> DefaultActionGroup.createPopupGroup(() -> folderName));
-    allActionsGroup.addSeparator();
     return allActionsGroup;
   }
 
   @ApiStatus.Internal
   public static void addRunConfigurations(DefaultActionGroup allActionsGroup,
                                           Project project,
-                                          Function<RunnerAndConfigurationSettings, AnAction> createAction,
-                                          Function<@NlsSafe String, DefaultActionGroup> createFolder) {
+                                          Function<? super RunnerAndConfigurationSettings, ? extends AnAction> createAction,
+                                          Function<? super @NlsSafe String, ? extends DefaultActionGroup> createFolder) {
     for (Map<String, List<RunnerAndConfigurationSettings>> structure : RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(true).values()) {
       final DefaultActionGroup actionGroup = new DefaultActionGroup();
       for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
@@ -255,6 +273,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
 
       allActionsGroup.add(actionGroup);
+      allActionsGroup.addSeparator();
     }
   }
 
@@ -501,7 +520,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
       // Secondary menu for the existing run configurations is not directly related to the 'Run Current File' feature.
       // We may reconsider changing this to `if (!RunManager.getInstance(project).isRunWidgetActive()) { addSubActions(); }`
-      if (hasRunCurrentFileItem(project)) {
+      if (hasRunSubActions(project)) {
         addSubActions();
       }
     }

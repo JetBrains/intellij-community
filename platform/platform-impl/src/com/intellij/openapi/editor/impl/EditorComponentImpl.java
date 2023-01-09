@@ -7,6 +7,10 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.actions.UndoRedoAction;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorPreciseContextProvider;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,6 +47,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.Grayer;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
@@ -70,7 +75,8 @@ import java.util.List;
 import java.util.Map;
 
 @DirtyUI
-public class EditorComponentImpl extends JTextComponent implements Scrollable, DataProvider, Queryable, TypingTarget, Accessible {
+public class EditorComponentImpl extends JTextComponent implements Scrollable, DataProvider, Queryable, TypingTarget, Accessible,
+                                                                   UISettingsListener, UiInspectorPreciseContextProvider {
   private static final Logger LOG = Logger.getInstance(EditorComponentImpl.class);
 
   private final EditorImpl myEditor;
@@ -118,6 +124,13 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     // Remove JTextComponent's mouse/focus listeners added in its ctor.
     for (MouseListener l : getMouseListeners()) removeMouseListener(l);
     for (FocusListener l : getFocusListeners()) removeFocusListener(l);
+  }
+
+  @Override
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
+    if (uiSettings.getPresentationMode() && myEditor.getFontSize() != uiSettings.getPresentationModeFontSize()) {
+      myEditor.setFontSize(uiSettings.getPresentationModeFontSize());
+    }
   }
 
   @DirtyUI
@@ -833,6 +846,23 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         myEditor.getCaretModel().moveToOffset(offset);
       }
     }
+  }
+
+  @Override
+  public @Nullable UiInspectorPreciseContextProvider.UiInspectorInfo getUiInspectorContext(@NotNull MouseEvent event) {
+    Point point = event.getPoint();
+    Inlay<?> inlay = myEditor.getInlayModel().getElementAt(point);
+    if (inlay != null) {
+      List<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Inlay Renderer", inlay.getRenderer()));
+      result.add(new PropertyBean("Inlay Renderer Class", UiInspectorUtil.getClassPresentation(inlay.getRenderer()), true));
+      if (inlay.getGutterIconRenderer() != null) {
+        result.add(new PropertyBean("Inlay Gutter Renderer", inlay.getGutterIconRenderer()));
+      }
+      result.add(new PropertyBean("Inlay Properties", inlay.getProperties()));
+      return new UiInspectorInfo("EditorInlay", result, null);
+    }
+    return null;
   }
 
   /**

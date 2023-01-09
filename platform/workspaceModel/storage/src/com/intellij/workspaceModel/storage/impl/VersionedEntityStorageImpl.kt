@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.storage.impl
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.workspaceModel.storage.*
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 internal class ValuesCache {
@@ -146,7 +145,7 @@ open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : V
       return snapshotCache.cache
     }
 
-  override val current: EntityStorage
+  override val current: EntityStorageSnapshot
     get() = currentPointer.storage
 
   override val base: EntityStorage
@@ -175,14 +174,12 @@ open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : V
 
   @Synchronized
   fun replace(newStorage: EntityStorageSnapshot, changes: Map<Class<*>, List<EntityChange<*>>>,
-              beforeChanged: (VersionedStorageChange) -> Unit, afterChanged: (VersionedStorageChange) -> Unit,
-              locker: AtomicBoolean?) {
+              beforeChanged: (VersionedStorageChange) -> Unit, afterChanged: (VersionedStorageChange) -> Unit) {
     val oldCopy = currentPointer
     if (oldCopy.storage == newStorage) return
     val change = VersionedStorageChangeImpl(this, oldCopy.storage, newStorage, changes)
     beforeChanged(change)
     currentPointer = Current(version = oldCopy.version + 1, storage = newStorage)
-    locker?.set(false)
     afterChanged(change)
   }
 

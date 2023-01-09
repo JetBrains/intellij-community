@@ -12,11 +12,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
-import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
@@ -36,6 +38,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -124,7 +129,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
 
-  private Map<String, String> getTerminalEnvironment(@Nullable String workingDir) {
+  private Map<String, String> getTerminalEnvironment(@NotNull String workingDir) {
     Map<String, String> envs = SystemInfo.isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
     EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(myProject).getEnvData();
     if (envData.isPassParentEnvs()) {
@@ -150,7 +155,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       for (Map.Entry<String, String> env : envData.getEnvs().entrySet()) {
         envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
       }
-      if (workingDir != null && WslPath.isWslUncPath(workingDir)) {
+      if (WslPath.isWslUncPath(workingDir)) {
         setupWslEnv(envData.getEnvs(), envs);
       }
     }
@@ -169,13 +174,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
-  public PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
-    return super.createProcess(directory, null);
-  }
-
-  @Override
-  public @NotNull PtyProcess createProcess(@NotNull TerminalProcessOptions options,
-                                           @Nullable JBTerminalWidget widget) throws ExecutionException {
+  public @NotNull PtyProcess createProcess(@NotNull TerminalProcessOptions options) throws ExecutionException {
     String workingDir = getWorkingDirectory(options.getWorkingDirectory());
     Map<String, String> envs = getTerminalEnvironment(workingDir);
 
@@ -189,16 +188,16 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         LOG.error("Exception during customization of the terminal session", e);
       }
     }
-    String commandHistoryFilePath = ShellTerminalWidget.getCommandHistoryFilePath(widget);
-    if (commandHistoryFilePath != null) {
-      envs.put(IJ_COMMAND_HISTORY_FILE_ENV, commandHistoryFilePath);
-    }
+    //String commandHistoryFilePath = ShellTerminalWidget.getCommandHistoryFilePath(widget);
+    //if (commandHistoryFilePath != null) {
+    //  envs.put(IJ_COMMAND_HISTORY_FILE_ENV, commandHistoryFilePath);
+    //}
 
     TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command);
     try {
       if (LOG.isTraceEnabled()) {
         LOG.trace("Starting " + Arrays.toString(command) + " in " + workingDir +
-                  " (" + (workingDir != null && new File(workingDir).isDirectory() ? "exists" : "does not exist") + ")" +
+                  " (" + (new File(workingDir).isDirectory() ? "exists" : "does not exist") + ")" +
                   " [" + options.getInitialColumns() + "," + options.getInitialRows() + "], envs=" + envs);
       }
       long startNano = System.nanoTime();
@@ -218,17 +217,44 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
     catch (IOException e) {
       String errorMessage = "Failed to start " + Arrays.toString(command) + " in " + workingDir;
-      if (workingDir != null && !new File(workingDir).isDirectory()) {
+      if (!new File(workingDir).isDirectory()) {
         errorMessage = "No such directory: " + workingDir;
       }
       throw new ExecutionException(errorMessage, e);
     }
   }
 
-  @Nullable
-  private String getWorkingDirectory(@Nullable String directory) {
-    if (directory != null) return directory;
-    return TerminalProjectOptionsProvider.getInstance(myProject).getStartingDirectory();
+  private @NotNull String getWorkingDirectory(@Nullable String directory) {
+    if (directory != null && checkDirectoryExistence(directory)) {
+      return directory;
+    }
+    String configuredWorkingDirectory = TerminalProjectOptionsProvider.getInstance(myProject).getStartingDirectory();
+    if (configuredWorkingDirectory != null && checkDirectoryExistence(configuredWorkingDirectory)) {
+      return configuredWorkingDirectory;
+    }
+    String defaultWorkingDirectory = TerminalProjectOptionsProvider.getInstance(myProject).getDefaultStartingDirectory();
+    if (defaultWorkingDirectory != null && checkDirectoryExistence(defaultWorkingDirectory)) {
+      return defaultWorkingDirectory;
+    }
+    VirtualFile projectDir = ProjectUtil.guessProjectDir(myProject);
+    if (projectDir != null) {
+      return VfsUtilCore.virtualToIoFile(projectDir).getAbsolutePath();
+    }
+    return SystemProperties.getUserHome();
+  }
+
+  private static boolean checkDirectoryExistence(@NotNull String directory) {
+    try {
+      boolean ok = Files.isDirectory(Path.of(directory));
+      if (!ok) {
+        LOG.info("Cannot start local terminal in " + directory + ": no such directory");
+      }
+      return ok;
+    }
+    catch (InvalidPathException e) {
+      LOG.info("Cannot start local terminal in " + directory + ": invalid path", e);
+      return false;
+    }
   }
 
   @Override

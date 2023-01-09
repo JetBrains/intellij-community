@@ -438,25 +438,25 @@ class InternalDecoratorImpl internal constructor(
 
     private fun doPaintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
       val insets = getBorderInsets(c)
-      val graphics2D = g as Graphics2D
+      g as Graphics2D
       if (insets.top > 0) {
-        LinePainter2D.paint(graphics2D, x.toDouble(), (y + insets.top - 1).toDouble(), (x + width - 1).toDouble(),
+        LinePainter2D.paint(g, x.toDouble(), (y + insets.top - 1).toDouble(), (x + width - 1).toDouble(),
                             (y + insets.top - 1).toDouble())
-        LinePainter2D.paint(graphics2D, x.toDouble(), (y + insets.top).toDouble(), (x + width - 1).toDouble(), (y + insets.top).toDouble())
+        LinePainter2D.paint(g, x.toDouble(), (y + insets.top).toDouble(), (x + width - 1).toDouble(), (y + insets.top).toDouble())
       }
       if (insets.left > 0) {
-        LinePainter2D.paint(graphics2D, (x - 1).toDouble(), y.toDouble(), (x - 1).toDouble(), (y + height).toDouble())
-        LinePainter2D.paint(graphics2D, x.toDouble(), y.toDouble(), x.toDouble(), (y + height).toDouble())
+        LinePainter2D.paint(g, (x - 1).toDouble(), y.toDouble(), (x - 1).toDouble(), (y + height).toDouble())
+        LinePainter2D.paint(g, x.toDouble(), y.toDouble(), x.toDouble(), (y + height).toDouble())
       }
       if (insets.right > 0) {
-        LinePainter2D.paint(graphics2D, (x + width - 1).toDouble(), (y + insets.top).toDouble(), (x + width - 1).toDouble(),
+        LinePainter2D.paint(g, (x + width - 1).toDouble(), (y + insets.top).toDouble(), (x + width - 1).toDouble(),
                             (y + height).toDouble())
-        LinePainter2D.paint(graphics2D, (x + width).toDouble(), (y + insets.top).toDouble(), (x + width).toDouble(),
+        LinePainter2D.paint(g, (x + width).toDouble(), (y + insets.top).toDouble(), (x + width).toDouble(),
                             (y + height).toDouble())
       }
       if (insets.bottom > 0) {
-        LinePainter2D.paint(graphics2D, x.toDouble(), (y + height - 1).toDouble(), (x + width).toDouble(), (y + height - 1).toDouble())
-        LinePainter2D.paint(graphics2D, x.toDouble(), (y + height).toDouble(), (x + width).toDouble(), (y + height).toDouble())
+        LinePainter2D.paint(g, x.toDouble(), (y + height - 1).toDouble(), (x + width).toDouble(), (y + height - 1).toDouble())
+        LinePainter2D.paint(g, x.toDouble(), (y + height).toDouble(), (x + width).toDouble(), (y + height).toDouble())
       }
     }
 

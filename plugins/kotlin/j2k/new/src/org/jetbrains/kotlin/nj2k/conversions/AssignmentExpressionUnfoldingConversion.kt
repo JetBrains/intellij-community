@@ -35,6 +35,7 @@ class AssignmentExpressionUnfoldingConversion(context: NewJ2kConverterContext) :
                         .unfoldToStatementsList(assignmentTarget = null)
                         .withFormattingFrom(statement)
                 }
+
                 statement is JKDeclarationStatement && statement.containsAssignment() -> {
                     val variable = statement.declaredStatements.single() as JKVariable
                     val assignment = variable.initializer as JKJavaAssignmentExpression
@@ -42,6 +43,7 @@ class AssignmentExpressionUnfoldingConversion(context: NewJ2kConverterContext) :
                         .unfoldToStatementsList(variable.detached(statement))
                         .withFormattingFrom(statement)
                 }
+
                 else -> {
                     newStatements += statement
                 }
@@ -56,6 +58,7 @@ class AssignmentExpressionUnfoldingConversion(context: NewJ2kConverterContext) :
         return when {
             canBeConvertedToBlock() && assignment.expression is JKJavaAssignmentExpression ->
                 blockStatement(assignment.unfoldToStatementsList(assignmentTarget = null))
+
             else -> createKtAssignmentStatement(
                 assignment::field.detached(),
                 assignment::expression.detached(),
@@ -121,6 +124,7 @@ class AssignmentExpressionUnfoldingConversion(context: NewJ2kConverterContext) :
         return when {
             operator.isSimpleToken() ->
                 JKAssignmentChainAlsoLink(receiver, assignment, field.copyTreeAndDetach())
+
             else ->
                 JKAssignmentChainLetLink(receiver, assignment, field.copyTreeAndDetach())
         }
@@ -148,6 +152,7 @@ class AssignmentExpressionUnfoldingConversion(context: NewJ2kConverterContext) :
                 ),
                 JKOperatorToken.EQ
             )
+
         else -> JKKtAssignmentStatement(field, expression, operator.token)
     }
 
@@ -157,6 +162,7 @@ class AssignmentExpressionUnfoldingConversion(context: NewJ2kConverterContext) :
                 || token == JKOperatorToken.MINUSEQ
                 || token == JKOperatorToken.MULTEQ
                 || token == JKOperatorToken.DIVEQ -> false
+
         else -> true
     }
 

@@ -25,7 +25,6 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
-import org.jetbrains.intellij.build.impl.SVGPreBuilder.createPrebuildSvgIconsJob
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.tasks.ZipSource
@@ -570,7 +569,7 @@ fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout:
   for (moduleName in modules) {
     val customLayouts = pluginLayoutsByMainModule.get(moduleName)
     if (customLayouts == null) {
-      check(moduleName == "kotlin-ultimate.kmm-plugin" || result.add(PluginLayout.simplePlugin(moduleName))) {
+      check(moduleName == "kotlin-ultimate.kmm-plugin" || result.add(PluginLayout.plugin(moduleName))) {
         "Plugin layout for module $moduleName is already added (duplicated module name?)"
       }
     }

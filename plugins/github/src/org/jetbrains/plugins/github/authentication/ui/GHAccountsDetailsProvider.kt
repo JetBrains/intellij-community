@@ -5,27 +5,27 @@ import com.intellij.collaboration.auth.ui.LazyLoadingAccountsDetailsProvider
 import com.intellij.collaboration.auth.ui.cancelOnRemoval
 import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
+import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import java.awt.Image
 
 internal class GHAccountsDetailsProvider(
   scope: CoroutineScope,
-  private val executorSupplier: (GithubAccount) -> GithubApiRequestExecutor?
-) : LazyLoadingAccountsDetailsProvider<GithubAccount, GithubUserDetailed>(scope, GithubIcons.DefaultAvatar) {
+  private val executorSupplier: suspend (GithubAccount) -> GithubApiRequestExecutor?
+) : LazyLoadingAccountsDetailsProvider<GithubAccount, GithubUserDetailed>(scope, CollaborationToolsIcons.Review.DefaultAvatar) {
 
   constructor(scope: CoroutineScope, accountManager: GHAccountManager, accountsModel: GHAccountsListModel)
     : this(scope, { getExecutor(accountManager, accountsModel, it) }) {
@@ -34,7 +34,7 @@ internal class GHAccountsDetailsProvider(
 
   constructor(scope: CoroutineScope, accountManager: GHAccountManager)
     : this(scope, { getExecutor(accountManager, it) }) {
-    cancelOnRemoval(scope, accountManager.accountsState)
+    cancelOnRemoval(scope, accountManager)
   }
 
   override suspend fun loadDetails(account: GithubAccount): Result<GithubUserDetailed> {
@@ -46,7 +46,7 @@ internal class GHAccountsDetailsProvider(
     }
     if (executor == null) return Result.Error(GithubBundle.message("account.token.missing"), true)
     return withContext(Dispatchers.IO) {
-      runUnderIndicator {
+      coroutineToIndicator {
         doLoadDetails(executor, account)
       }
     }
@@ -56,11 +56,12 @@ internal class GHAccountsDetailsProvider(
     : Result<GithubAuthenticatedUser> {
 
     val (details, scopes) = try {
-      GHSecurityUtil.loadCurrentUserWithScopes(executor, ProgressManager.getInstance().progressIndicator, account.server)
+      GHSecurityUtil.loadCurrentUserWithScopes(executor, account.server)
     }
     catch (e: Throwable) {
       val errorMessage = ExceptionUtil.getPresentableMessage(e)
-      return Result.Error(errorMessage, false)
+      val needReLogin = e is GithubAuthenticationException
+      return Result.Error(errorMessage, needReLogin)
     }
     if (!GHSecurityUtil.isEnoughScopes(scopes.orEmpty())) {
       return Result.Error(GithubBundle.message("account.scopes.insufficient"), true)
@@ -75,7 +76,7 @@ internal class GHAccountsDetailsProvider(
   }
 
   companion object {
-    private fun getExecutor(accountManager: GHAccountManager, accountsModel: GHAccountsListModel, account: GithubAccount)
+    private suspend fun getExecutor(accountManager: GHAccountManager, accountsModel: GHAccountsListModel, account: GithubAccount)
       : GithubApiRequestExecutor? {
       return accountsModel.newCredentials.getOrElse(account) {
         accountManager.findCredentials(account)
@@ -84,7 +85,7 @@ internal class GHAccountsDetailsProvider(
       }
     }
 
-    private fun getExecutor(accountManager: GHAccountManager, account: GithubAccount)
+    private suspend fun getExecutor(accountManager: GHAccountManager, account: GithubAccount)
       : GithubApiRequestExecutor? {
       return accountManager.findCredentials(account)?.let { token ->
         service<GithubApiRequestExecutor.Factory>().create(token)

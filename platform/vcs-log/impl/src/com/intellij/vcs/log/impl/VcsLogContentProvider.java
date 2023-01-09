@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.google.common.util.concurrent.Futures;
@@ -38,15 +38,15 @@ import java.util.function.Supplier;
  */
 public final class VcsLogContentProvider implements ChangesViewContentProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogContentProvider.class);
-  @NonNls public static final String TAB_NAME = "Log"; // used as tab id, not user-visible
-  @NonNls public static final String MAIN_LOG_ID = "MAIN";
+  public static final @NonNls String TAB_NAME = "Log"; // used as tab id, not user-visible
+  public static final @NonNls String MAIN_LOG_ID = "MAIN";
 
-  @NotNull private final VcsProjectLog myProjectLog;
-  @NotNull private final JPanel myContainer = new JBPanel<>(new BorderLayout());
-  @Nullable private SettableFuture<MainVcsLogUi> myLogCreationCallback;
+  private final @NotNull VcsProjectLog myProjectLog;
+  private final @NotNull JPanel myContainer = new JBPanel<>(new BorderLayout());
+  private @Nullable SettableFuture<MainVcsLogUi> myLogCreationCallback;
 
-  @Nullable private MainVcsLogUi myUi;
-  @Nullable private Content myContent;
+  private @Nullable MainVcsLogUi myUi;
+  private @Nullable Content myContent;
 
   public VcsLogContentProvider(@NotNull Project project) {
     myProjectLog = VcsProjectLog.getInstance(project);
@@ -177,8 +177,7 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
     disposeMainUi();
   }
 
-  @Nullable
-  public static VcsLogContentProvider getInstance(@NotNull Project project) {
+  public static @Nullable VcsLogContentProvider getInstance(@NotNull Project project) {
     for (ChangesViewContentEP ep : ChangesViewContentEP.EP_NAME.getExtensions(project)) {
       if (ep.getClassName().equals(VcsLogContentProvider.class.getName())) {
         return (VcsLogContentProvider)ep.getCachedInstance();
@@ -187,14 +186,14 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
     return null;
   }
 
-  final static class VcsLogVisibilityPredicate implements Predicate<Project> {
+  static final class VcsLogVisibilityPredicate implements Predicate<Project> {
     @Override
     public boolean test(@NotNull Project project) {
       return !VcsProjectLog.getLogProviders(project).isEmpty();
     }
   }
 
-  final static class VcsLogContentPreloader implements ChangesViewContentProvider.Preloader {
+  static final class VcsLogContentPreloader implements ChangesViewContentProvider.Preloader {
     @Override
     public void preloadTabContent(@NotNull Content content) {
       content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
@@ -202,7 +201,7 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
     }
   }
 
-  final static class DisplayNameSupplier implements Supplier<String> {
+  static final class DisplayNameSupplier implements Supplier<String> {
     @Override
     public String get() {
       return VcsLogBundle.message("vcs.log.tab.name");

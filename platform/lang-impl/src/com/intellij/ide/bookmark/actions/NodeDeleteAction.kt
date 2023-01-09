@@ -6,8 +6,10 @@ import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.BookmarkGroup
 import com.intellij.ide.bookmark.BookmarksListProviderService
 import com.intellij.ide.bookmark.FileBookmark
+import com.intellij.ide.bookmark.ui.BookmarksViewState
 import com.intellij.ide.bookmark.ui.tree.FileNode
 import com.intellij.ide.bookmark.ui.tree.GroupNode
+import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
@@ -35,7 +37,7 @@ internal class NodeDeleteAction : DumbAwareAction(messagePointer("button.delete"
     val shouldDelete = when {
       bookmarksViewState == null -> true
       nodes.any { it is GroupNode || it is FileNode } -> {
-        if (!bookmarksViewState.askBeforeDeletingLists || nodes.size == 1 && nodes.first().children.size <= 1) true
+        if (!askBeforeDeleting(bookmarksViewState, nodes)) true
         else {
           val fileNode = nodes.any { it is FileNode }
           val title = when {
@@ -70,6 +72,17 @@ internal class NodeDeleteAction : DumbAwareAction(messagePointer("button.delete"
 
     if (shouldDelete) {
         BookmarksListProviderService.findProvider(project) { it.canDelete(nodes) }?.performDelete(nodes, view.tree)
+    }
+  }
+
+  private fun askBeforeDeleting(bookmarksViewState: BookmarksViewState, nodes: List<AbstractTreeNode<*>>): Boolean {
+    if (!bookmarksViewState.askBeforeDeletingLists || nodes.isEmpty()) return false
+    if (nodes.size > 1) return true
+    val firstNode = nodes.first()
+    return when (firstNode.children.size) {
+      0 -> false
+      1 -> firstNode.children.first().children.size > 1
+      else -> true
     }
   }
 

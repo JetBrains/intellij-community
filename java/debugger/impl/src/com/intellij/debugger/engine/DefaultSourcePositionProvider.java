@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
@@ -141,7 +141,7 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
     if (psiVariable == null) return null;
 
     PsiFile containingFile = psiVariable.getContainingFile();
-    if(containingFile == null) return null;
+    if (containingFile == null) return null;
     try {
       if (nearest) {
         return DebuggerContextUtil.findNearest(context, psiVariable, containingFile);

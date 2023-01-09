@@ -5,7 +5,7 @@ apply plugin: 'kotlin-multiplatform'
 apply plugin: 'maven-publish'
 
 kotlin {
-    js() {
+    js(IR) {
         browser()
         nodejs()
     }

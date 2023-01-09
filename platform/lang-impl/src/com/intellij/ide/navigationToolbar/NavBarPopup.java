@@ -36,7 +36,9 @@ import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
+ * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
+@Deprecated
 public class NavBarPopup extends LightweightHint implements Disposable{
   private static final String JBLIST_KEY = "OriginalList";
   private static final String DISPOSED_OBJECTS = "DISPOSED_OBJECTS";
@@ -52,6 +54,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     myItemIndex = itemIndex;
     setFocusRequestor(getComponent());
     setForceShowAsPopup(true);
+    setCancelOnOtherWindowOpen(false);
     panel.installPopupHandler(getList(), selectedIndex);
     
     getList().addMouseListener(new MouseAdapter() {
@@ -168,6 +171,12 @@ public class NavBarPopup extends LightweightHint implements Disposable{
 
       @Override
       public Component getListCellRendererComponent(JList<?> list, Object obj, int index, boolean isSelected, boolean cellHasFocus) {
+        if (panel.isDisposed()) {
+          // Don't create new NavBarItem if panel is disposed. See: IDEA-306495
+          //noinspection MissingAccessibleContext
+          return new SelectablePanel();
+        }
+
         SelectablePanel selectable = null;
 
         for (SelectablePanel cachedSelectable : selectables) {

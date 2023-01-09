@@ -43,7 +43,7 @@ public class SimpleDiffModel {
     return ContainerUtil.filter(myAllChanges, it -> !it.isDestroyed());
   }
 
-  public void setChanges(@NotNull List<SimpleDiffChange> changes, boolean isContentsEqual) {
+  public void setChanges(@NotNull List<? extends SimpleDiffChange> changes, boolean isContentsEqual) {
     clear();
 
     for (int i = 0; i < changes.size(); i++) {
@@ -111,10 +111,10 @@ public class SimpleDiffModel {
   }
 
   private static class MyPaintable implements DiffDividerDrawUtil.DividerPaintable {
-    private final List<SimpleDiffChange> myChanges;
+    private final @NotNull List<? extends SimpleDiffChange> myChanges;
     private final boolean myNeedAlignChanges;
 
-    private MyPaintable(@NotNull List<SimpleDiffChange> changes, boolean alignChanges) {
+    private MyPaintable(@NotNull List<? extends SimpleDiffChange> changes, boolean alignChanges) {
       myChanges = changes;
       myNeedAlignChanges = alignChanges;
     }

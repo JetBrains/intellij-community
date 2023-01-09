@@ -40,7 +40,7 @@ internal class PackageVersionNormalizerTest {
             assertThat(normalizer.parseBlocking(aVersion)).isInstanceOf(NormalizedPackageVersion.Semantic::class)
                 .isEqualTo(
                     NormalizedPackageVersion.Semantic(
-                        original = aVersion,
+                        originalVersion = aVersion,
                         semanticPart = "1.0.0",
                         stabilityMarker = null,
                         nonSemanticSuffix = null
@@ -54,7 +54,7 @@ internal class PackageVersionNormalizerTest {
             assertThat(normalizer.parseBlocking(aVersion)).isInstanceOf(NormalizedPackageVersion.Semantic::class)
                 .isEqualTo(
                     NormalizedPackageVersion.Semantic(
-                        original = aVersion,
+                        originalVersion = aVersion,
                         semanticPart = "1.0.0",
                         stabilityMarker = "-RC02",
                         nonSemanticSuffix = null
@@ -68,7 +68,7 @@ internal class PackageVersionNormalizerTest {
             assertThat(normalizer.parseBlocking(aVersion)).isInstanceOf(NormalizedPackageVersion.Semantic::class)
                 .isEqualTo(
                     NormalizedPackageVersion.Semantic(
-                        original = aVersion,
+                        originalVersion = aVersion,
                         semanticPart = "1.0.0",
                         stabilityMarker = null,
                         nonSemanticSuffix = "-banana2"
@@ -82,7 +82,7 @@ internal class PackageVersionNormalizerTest {
             assertThat(normalizer.parseBlocking(aVersion)).isInstanceOf(NormalizedPackageVersion.Semantic::class)
                 .isEqualTo(
                     NormalizedPackageVersion.Semantic(
-                        original = aVersion,
+                        originalVersion = aVersion,
                         semanticPart = "1.0.0",
                         stabilityMarker = "-b03",
                         nonSemanticSuffix = "-banana2"

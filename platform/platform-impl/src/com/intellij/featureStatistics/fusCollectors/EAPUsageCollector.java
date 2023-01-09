@@ -18,12 +18,13 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public class EAPUsageCollector extends ApplicationUsagesCollector implements AllowedDuringStartupCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("user.advanced.info", 4);
+  private static final EventLogGroup GROUP = new EventLogGroup("user.advanced.info", 5);
   private static final EventId1<BuildType> BUILD = GROUP.registerEvent("build", EventFields.Enum("value", BuildType.class));
   private static final EnumEventField<LicenceType> LICENSE_VALUE = EventFields.Enum("value", LicenceType.class);
   private static final StringEventField METADATA = EventFields.StringValidatedByRegexp("metadata", "license_metadata");
+  private static final PrimitiveEventField<String> LOGIN_HASH = new AnonymizedEventField("login_hash");
   private static final BooleanEventField IS_JB_TEAM = EventFields.Boolean("is_jb_team");
-  private static final VarargEventId LICENSING = GROUP.registerVarargEvent("licencing", LICENSE_VALUE, METADATA, IS_JB_TEAM);
+  private static final VarargEventId LICENSING = GROUP.registerVarargEvent("licencing", LICENSE_VALUE, METADATA, LOGIN_HASH, IS_JB_TEAM);
 
   @Override
   public EventLogGroup getGroup() {
@@ -78,6 +79,7 @@ public class EAPUsageCollector extends ApplicationUsagesCollector implements All
       data.add(METADATA.with(metadata));
     }
     data.add(LICENSE_VALUE.with(value));
+    data.add(LOGIN_HASH.with(licensingFacade.getLicenseeEmail()));
     return LICENSING.metric(data);
   }
 

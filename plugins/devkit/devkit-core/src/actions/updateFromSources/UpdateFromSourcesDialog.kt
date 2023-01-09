@@ -12,8 +12,8 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.UIBundle
-import com.intellij.ui.layout.*
-import com.intellij.util.io.exists
+import com.intellij.ui.layout.enteredTextSatisfies
+import com.intellij.ui.layout.panel
 import com.intellij.util.io.isWritable
 import org.jetbrains.idea.devkit.DevKitBundle
 import java.awt.event.ActionEvent
@@ -21,6 +21,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.AbstractAction
 import javax.swing.Action
+import kotlin.io.path.exists
 
 class UpdateFromSourcesDialog(private val project: Project,
                               private val showApplyButton: Boolean) : DialogWrapper(project, true) {

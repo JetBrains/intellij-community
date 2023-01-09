@@ -111,7 +111,7 @@ class VfsEventsTest : BareTestFixtureTestCase() {
 
     // execute nested event while async refresh below
     connectToAppBus().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun after(events: MutableList<out VFileEvent>) {
+      override fun after(events: List<VFileEvent>) {
         if (fireMove.get() && !movePerformed.get()) {
           movePerformed.set(true)
           PersistentFS.getInstance().moveFile(this, fileForNestedMove, nestedMoveTarget)
@@ -139,7 +139,7 @@ class VfsEventsTest : BareTestFixtureTestCase() {
 
     // execute nested event manually via vfs changes message bus publisher
     connectToAppBus().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun after(events: MutableList<out VFileEvent>) {
+      override fun after(events: List<VFileEvent>) {
         if (fireReparse.get() && !reparsePerformed.get()) {
           reparsePerformed.set(true)
           FileContentUtilCore.reparseFiles(fileToReparse)

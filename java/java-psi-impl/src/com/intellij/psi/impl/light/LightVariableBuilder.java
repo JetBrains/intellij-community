@@ -70,15 +70,17 @@ public class LightVariableBuilder<T extends LightVariableBuilder<?>> extends Lig
     return myModifierList;
   }
 
-  @SuppressWarnings("unchecked")
-  public T setModifiers(String... modifiers) {
+  @NotNull
+  public T setModifiers(@NotNull String @NotNull ... modifiers) {
     myModifierList = new LightModifierList(getManager(), getLanguage(), modifiers);
+    //noinspection unchecked
     return (T)this;
   }
 
-  @SuppressWarnings("unchecked")
+  @NotNull
   public T setModifierList(LightModifierList modifierList) {
     myModifierList = modifierList;
+    //noinspection unchecked
     return (T)this;
   }
 

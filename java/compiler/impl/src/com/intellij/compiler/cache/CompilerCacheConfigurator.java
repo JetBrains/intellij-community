@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.cache;
 
 import com.intellij.compiler.CompilerConfigurationSettings;
@@ -19,7 +19,7 @@ import java.util.Set;
 
 import static org.jetbrains.jps.cache.JpsCachesLoaderUtil.INTELLIJ_REPO_NAME;
 
-public class CompilerCacheConfigurator {
+public final class CompilerCacheConfigurator {
   private static final Logger LOG = Logger.getInstance(CompilerCacheConfigurator.class);
 
   public static @Nullable CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings getCacheDownloadSettings(@NotNull Project project) {
@@ -42,6 +42,7 @@ public class CompilerCacheConfigurator {
     builder.setDeletionSpeed(CompilerCacheLoadingSettings.getApproximateDeletionSpeed());
     builder.setForceDownload(CompilerCacheLoadingSettings.getForceUpdateValue());
     builder.setDisableDownload(CompilerCacheLoadingSettings.getDisableUpdateValue());
+    builder.setCleanupAsynchronously(CompilerCacheLoadingSettings.getCleanupAsynchronouslyValue());
     builder.setMaxDownloadDuration(CompilerCacheLoadingSettings.getMaxDownloadDuration());
     return builder.build();
   }

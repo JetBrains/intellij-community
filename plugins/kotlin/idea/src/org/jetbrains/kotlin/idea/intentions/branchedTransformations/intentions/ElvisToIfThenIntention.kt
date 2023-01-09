@@ -66,6 +66,8 @@ class ElvisToIfThenIntention : SelfTargetingRangeIntention<KtBinaryExpression>(
         val left = KtPsiUtil.safeDeparenthesize(element.left!!)
         val right = KtPsiUtil.safeDeparenthesize(element.right!!)
 
+        val psiFactory = KtPsiFactory(element.project)
+
         val leftSafeCastReceiver = left.findSafeCastReceiver(context)
         if (leftSafeCastReceiver == null) {
             val property = (KtPsiUtil.safeDeparenthesize(element).parent as? KtProperty)
@@ -77,10 +79,9 @@ class ElvisToIfThenIntention : SelfTargetingRangeIntention<KtBinaryExpression>(
                     || right.getType(context)?.isNothing() == true
             if (rightIsReturnOrJumps && propertyName != null) {
                 val parent = property.parent
-                val factory = KtPsiFactory(element)
-                factory.createExpressionByPattern("if ($0 == null) $1", propertyName, right)
-                parent.addAfter(factory.createExpressionByPattern("if ($0 == null) $1", propertyName, right), property)
-                parent.addAfter(factory.createNewLine(), property)
+                psiFactory.createExpressionByPattern("if ($0 == null) $1", propertyName, right)
+                parent.addAfter(psiFactory.createExpressionByPattern("if ($0 == null) $1", propertyName, right), property)
+                parent.addAfter(psiFactory.createNewLine(), property)
                 element.replace(left)
                 return
             }
@@ -89,10 +90,9 @@ class ElvisToIfThenIntention : SelfTargetingRangeIntention<KtBinaryExpression>(
         val (leftIsStable, ifStatement) = if (leftSafeCastReceiver != null) {
             val newReceiver = leftSafeCastReceiver.left
             val typeReference = leftSafeCastReceiver.right!!
-            val factory = KtPsiFactory(element)
             newReceiver.isStableSimpleExpression(context) to element.convertToIfStatement(
-                factory.createExpressionByPattern("$0 is $1", newReceiver, typeReference),
-                left.buildExpressionWithReplacedReceiver(factory, newReceiver),
+                psiFactory.createExpressionByPattern("$0 is $1", newReceiver, typeReference),
+                left.buildExpressionWithReplacedReceiver(psiFactory, newReceiver),
                 right
             )
         } else {

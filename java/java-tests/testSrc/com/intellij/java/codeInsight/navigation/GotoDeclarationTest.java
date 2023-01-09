@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.JavaTestUtil;
@@ -53,6 +53,8 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   public void testFromIfToDestructuringPattern() { doGotoTest(); }
 
   public void testToGuardedTypeTest() { doGotoTest(); }
+
+  public void testRecordPatternInForEach() { doGotoTest(); }
 
   private void doGotoTest() {
     String name = getTestName(false);

@@ -5,7 +5,9 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
@@ -50,6 +52,8 @@ public final class DumbServiceSyncTaskQueue {
         try (QueuedDumbModeTask nextTask = myTaskQueue.extractNextTask()) {
           if (nextTask == null) break;
           doRunTaskSynchronously(nextTask);
+        } catch (ProcessCanceledException ignored) {
+          Logger.getInstance(DumbServiceSyncTaskQueue.class).info("Canceled dumb mode task. Continue to the following task (if any).");
         }
       }
     } finally {

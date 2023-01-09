@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -22,11 +22,11 @@ import java.nio.file.Path
 
 @ApiStatus.Internal
 object GitLogIndexDataUtils {
-  private val LOG = Logger.getInstance(GitIndexUtil::class.java)
+  private val LOG = logger<GitIndexUtil>()
 
   internal fun extractLogDataFromArchive(project: Project, virtualFile: VirtualFile) {
     val logId = PersistentUtil.calcLogId(project, VcsProjectLog.getLogProviders(project))
-    val logCache: Path = PersistentUtil.LOG_CACHE.toPath()
+    val logCache = PersistentUtil.LOG_CACHE
 
     val logIndexDirName = PersistentUtil.getProjectLogDataDirectoryName(project.name, logId)
     val currentLogDataPath = logCache.resolve(logIndexDirName)
@@ -68,11 +68,11 @@ object GitLogIndexDataUtils {
     VcsProjectLog.getInstance(project).runOnDisposedLog {
       val runnable = Runnable {
         val logId = PersistentUtil.calcLogId(project, VcsProjectLog.getLogProviders(project))
-        val logCache: Path = PersistentUtil.LOG_CACHE.toPath()
+        val logCache = PersistentUtil.LOG_CACHE
         val logIndexDirName = PersistentUtil.getProjectLogDataDirectoryName(project.name, logId)
-        val archive: Path = outputArchiveDir.resolve("$logIndexDirName.zip")
+        val archive = outputArchiveDir.resolve("$logIndexDirName.zip")
 
-        Compressor.Zip(archive.toFile()).use { zip ->
+        Compressor.Zip(archive).use { zip ->
           zip.addDirectory(logCache.resolve(logIndexDirName))
         }
       }

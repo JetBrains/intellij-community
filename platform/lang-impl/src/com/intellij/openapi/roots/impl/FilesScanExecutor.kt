@@ -32,7 +32,7 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.kind.SdkOrigin
 import com.intellij.util.indexing.roots.kind.SyntheticLibraryOrigin
-import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.Future
 import java.util.concurrent.FutureTask
@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-@VisibleForTesting
+@Internal
 object FilesScanExecutor {
   private val LOG = Logger.getInstance(FilesScanExecutor::class.java)
   private val THREAD_COUNT = (UnindexedFilesUpdater.getNumberOfScanningThreads() - 1).coerceAtLeast(1)
@@ -53,15 +53,14 @@ object FilesScanExecutor {
     for (i in 0 until THREAD_COUNT) {
       results.add(ourExecutor.submit { ProgressManager.getInstance().runProcess(runnable, ProgressWrapper.wrap(progress)) })
     }
-    resetThreadContext().use {
-      // put the current thread to work too so the total thread count is `getNumberOfScanningThreads`
-      // and avoid thread starvation due to a recursive `runOnAllThreads` invocation
-      runnable.run()
-      for (result in results) {
-        // complete the future to avoid waiting for it forever if `ourExecutor` is fully booked
-        (result as FutureTask<*>).run()
-        ProgressIndicatorUtils.awaitWithCheckCanceled(result)
-      }
+
+    // put the current thread to work too so the total thread count is `getNumberOfScanningThreads`
+    // and avoid thread starvation due to a recursive `runOnAllThreads` invocation
+    runnable.run()
+    for (result in results) {
+      // complete the future to avoid waiting for it forever if `ourExecutor` is fully booked
+      (result as FutureTask<*>).run()
+      ProgressIndicatorUtils.awaitWithCheckCanceled(result)
     }
   }
 

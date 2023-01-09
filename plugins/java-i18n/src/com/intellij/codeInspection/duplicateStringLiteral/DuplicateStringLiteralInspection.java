@@ -1,9 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateStringLiteral;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.java.i18n.JavaI18nBundle;
@@ -25,7 +27,6 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.util.occurrences.BaseOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.IncorrectOperationException;
@@ -41,10 +42,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.util.*;
 import java.util.stream.Stream;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final int MAX_FILES_TO_ON_THE_FLY_SEARCH = 10;
@@ -235,29 +236,11 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final OptionsPanel optionsPanel = new OptionsPanel();
-    optionsPanel.myIgnorePropertyKeyExpressions.addActionListener(
-      e -> IGNORE_PROPERTY_KEYS = optionsPanel.myIgnorePropertyKeyExpressions.isSelected());
-    optionsPanel.myMinStringLengthField.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(@NotNull final DocumentEvent e) {
-        try {
-          MIN_STRING_LENGTH = Integer.parseInt(optionsPanel.myMinStringLengthField.getText());
-        }
-        catch (NumberFormatException ignored) {
-        }
-      }
-    });
-    optionsPanel.myIgnorePropertyKeyExpressions.setSelected(IGNORE_PROPERTY_KEYS);
-    optionsPanel.myMinStringLengthField.setText(Integer.toString(MIN_STRING_LENGTH));
-    return optionsPanel.myPanel;
-  }
-
-  public static class OptionsPanel {
-     private JTextField myMinStringLengthField;
-     private JPanel myPanel;
-     private JCheckBox myIgnorePropertyKeyExpressions;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("MIN_STRING_LENGTH", JavaI18nBundle.message("inspection.duplicates.option"), 1, 10_000),
+      checkbox("IGNORE_PROPERTY_KEYS", JavaI18nBundle.message("inspection.duplicates.option.report.propertykey.expressions"))
+    );
   }
 
   private class IntroduceLiteralConstantFix extends IntroduceConstantFix {
@@ -378,6 +361,27 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     @Override
     public String getFamilyName() {
       return JavaI18nBundle.message("inspection.duplicates.navigate.to.occurrences");
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiElement element = previewDescriptor.getPsiElement();
+      if (element instanceof PsiLiteralExpression literal) {
+        final PsiExpression[] duplicates = getDuplicateLiterals(project, literal, true);
+        if (duplicates.length < 10) {
+          return new IntentionPreviewInfo.Html(JavaI18nBundle.message(
+            "inspection.duplicates.navigate.to.occurrences.preview",
+            duplicates.length,
+            literal.getText()
+          ));
+        }
+        return new IntentionPreviewInfo.Html(JavaI18nBundle.message(
+          "inspection.duplicates.navigate.to.many.occurrences.preview",
+          duplicates.length,
+          literal.getText()
+        ));
+      }
+      return IntentionPreviewInfo.EMPTY;
     }
   }
 

@@ -112,11 +112,13 @@ public final class PsiClassUtil {
   @NotNull
   public static PsiClassType getTypeWithGenerics(@NotNull PsiClass psiClass) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
-    final PsiType[] psiTypes = Stream.of(psiClass.getTypeParameters()).map(factory::createType).toArray(PsiType[]::new);
-    if (psiTypes.length > 0)
+    if (psiClass.hasTypeParameters()) {
+      final PsiType[] psiTypes = Stream.of(psiClass.getTypeParameters()).map(factory::createType).toArray(PsiType[]::new);
       return factory.createType(psiClass, psiTypes);
-    else
+    }
+    else {
       return factory.createType(psiClass);
+    }
   }
 
   /**

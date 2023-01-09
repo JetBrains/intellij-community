@@ -1,3 +1,31 @@
+redis.Sentinel.master_for
+redis.Sentinel.slave_for
+redis.sentinel.Sentinel.master_for
+redis.sentinel.Sentinel.slave_for
 redis.client.Pipeline.transaction  # instance attribute has same name as superclass method
-redis.commands.search.commands.SearchCommands.explain  # https://github.com/redis/redis-py/pull/1997
 redis.ocsp  # requires cryptography to be installed
+
+# TypeAlias-related problems
+redis.asyncio.client.CommandStackT
+redis.asyncio.client.CommandT
+redis.asyncio.client.PubSubHandler
+redis.asyncio.connection.ExceptionMappingT
+
+# Protocol-related problems
+redis.asyncio.client.AsyncPubsubWorkerExceptionHandler.__init__
+redis.asyncio.client.AsyncResponseCallbackProtocol.__init__
+redis.asyncio.client.PubsubWorkerExceptionHandler.__init__
+redis.asyncio.client.ResponseCallbackProtocol.__init__
+redis.asyncio.connection.AsyncConnectCallbackProtocol.__init__
+redis.asyncio.connection.ConnectCallbackProtocol.__init__
+redis.typing.CommandsProtocol.__init__
+
+# unclear problems
+redis.Sentinel.master_for
+redis.Sentinel.slave_for
+redis.asyncio.Sentinel.master_for
+redis.asyncio.Sentinel.slave_for
+redis.asyncio.sentinel.Sentinel.master_for
+redis.asyncio.sentinel.Sentinel.slave_for
+redis.sentinel.Sentinel.master_for
+redis.sentinel.Sentinel.slave_for

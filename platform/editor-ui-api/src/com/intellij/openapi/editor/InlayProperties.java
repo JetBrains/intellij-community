@@ -112,4 +112,15 @@ public final class InlayProperties {
   public boolean isSoftWrappingDisabled() {
     return myDisableSoftWrapping;
   }
+
+  @Override
+  public String toString() {
+    return "InlayProperties{" +
+           "myRelatesToPrecedingText=" + myRelatesToPrecedingText +
+           ", myShowAbove=" + myShowAbove +
+           ", myPriority=" + myPriority +
+           ", myShowWhenFolded=" + myShowWhenFolded +
+           ", myDisableSoftWrapping=" + myDisableSoftWrapping +
+           '}';
+  }
 }

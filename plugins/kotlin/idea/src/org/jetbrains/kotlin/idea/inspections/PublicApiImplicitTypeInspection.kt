@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.*
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
@@ -33,10 +35,7 @@ class PublicApiImplicitTypeInspection(
                 KotlinBundle.message("for.api.stability.it.s.recommended.to.specify.explicitly.declaration.types")
         }
 
-    override fun createOptionsPanel(): JComponent {
-        val panel = MultipleCheckboxOptionsPanel(this)
-        panel.addCheckbox(KotlinBundle.message("apply.also.to.internal.members"), "reportInternal")
-        panel.addCheckbox(KotlinBundle.message("apply.also.to.private.members"), "reportPrivate")
-        return panel
-    }
+  override fun getOptionsPane() = pane(
+    checkbox("reportInternal", KotlinBundle.message("apply.also.to.internal.members")),
+    checkbox("reportPrivate", KotlinBundle.message("apply.also.to.private.members")))
 }

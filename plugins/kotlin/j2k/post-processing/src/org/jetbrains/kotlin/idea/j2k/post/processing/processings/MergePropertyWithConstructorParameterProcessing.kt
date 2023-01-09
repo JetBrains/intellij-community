@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.LocalSearchScope
@@ -14,7 +15,6 @@ import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.intentions.addUseSiteTarget
 import org.jetbrains.kotlin.idea.j2k.post.processing.*
 import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens.DATA_KEYWORD
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
@@ -115,7 +115,7 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
         val (property, parameter, _) = this
 
         parameter.addBefore(property.valOrVarKeyword, parameter.nameIdentifier!!)
-        parameter.addAfter(KtPsiFactory(property).createWhiteSpace(), parameter.valOrVarKeyword!!)
+        parameter.addAfter(KtPsiFactory(property.project).createWhiteSpace(), parameter.valOrVarKeyword!!)
         parameter.rename(property.name!!)
         parameter.setVisibility(property.visibilityModifierTypeOrDefault())
         val commentSaver = CommentSaver(property, saveLineBreaks = true)
@@ -139,10 +139,10 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
     }
 
     private fun KtCallableDeclaration.rename(newName: String) {
-        val factory = KtPsiFactory(this)
+        val psiFactory = KtPsiFactory(project)
         val escapedName = newName.escaped()
         ReferencesSearch.search(this, LocalSearchScope(containingKtFile)).forEach {
-            it.element.replace(factory.createExpression(escapedName))
+            it.element.replace(psiFactory.createExpression(escapedName))
         }
         setName(escapedName)
     }

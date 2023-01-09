@@ -1,13 +1,9 @@
 package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import de.plushnikov.intellij.plugin.LombokBundle;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
-import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.handler.FieldNameConstantsHandler;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
@@ -35,7 +31,7 @@ public class FieldNameConstantsPredefinedInnerClassFieldProcessor extends Abstra
       PsiClass parentClass = (PsiClass) psiClass.getParent();
       PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(parentClass, getSupportedAnnotationClasses());
       if (null != psiAnnotation && supportAnnotationVariant(psiAnnotation)) {
-        ProblemEmptyBuilder problemBuilder = ProblemEmptyBuilder.getInstance();
+        ProblemProcessingSink problemBuilder = new ProblemProcessingSink();
         if (super.validate(psiAnnotation, parentClass, problemBuilder)) {
           final String typeName = FieldNameConstantsHandler.getTypeName(parentClass, psiAnnotation);
           if (typeName.equals(psiClass.getName())
@@ -53,13 +49,13 @@ public class FieldNameConstantsPredefinedInnerClassFieldProcessor extends Abstra
   }
 
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     final String typeName = FieldNameConstantsHandler.getTypeName(psiClass, psiAnnotation);
     Optional<PsiClass> innerClass = PsiClassUtil.getInnerClassInternByName(psiClass, typeName);
     if (innerClass.isPresent()) {
       final boolean asEnum = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "asEnum", false);
       if (innerClass.get().isEnum() != asEnum) {
-        builder.addError(LombokBundle.message("inspection.message.field.name.constants.inner.type", asEnum));
+        builder.addErrorMessage("inspection.message.field.name.constants.inner.type", asEnum);
         return false;
       }
     }
@@ -72,9 +68,9 @@ public class FieldNameConstantsPredefinedInnerClassFieldProcessor extends Abstra
   }
 
   private void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiClass existingInnerClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    final Collection<PsiField> psiFields = filterFields(psiClass, psiAnnotation);
-    if (!psiFields.isEmpty()) {
-      List<PsiField> newFields = FieldNameConstantsHandler.createFields(existingInnerClass, psiFields);
+    final Collection<PsiMember> psiMembers = filterMembers(psiClass, psiAnnotation);
+    if (!psiMembers.isEmpty()) {
+      List<PsiField> newFields = FieldNameConstantsHandler.createFields(existingInnerClass, psiMembers);
       target.addAll(newFields);
     }
   }

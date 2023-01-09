@@ -2,7 +2,6 @@
 package com.intellij.ide.ui.search;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
-import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -33,8 +32,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.EdtInvocationManager;
-import io.opentelemetry.api.trace.SpanBuilder;
-import io.opentelemetry.api.trace.Tracer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -259,7 +256,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
 
   private static void wordsToOptionDescriptors(@NotNull Set<String> optionsPath,
                                                @Nullable String path,
-                                               @NotNull Set<OptionDescription> result) {
+                                               @NotNull Set<? super OptionDescription> result) {
     SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
     for (String opt : optionsPath) {
       for (@NlsSafe String word : registrar.getProcessedWordsWithoutStemming(opt)) {

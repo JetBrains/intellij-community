@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.inline
 
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
@@ -22,7 +23,6 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.refactoring.inline.J2KInlineCache.Companion.findOrCreateUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.inline.J2KInlineCache.Companion.findUsageReplacementStrategy
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.j2k.ConverterSettings
@@ -115,17 +115,12 @@ private fun NewJavaToKotlinConverter.convertToKotlinNamedDeclaration(
                 )
             }
 
-            val factory = KtPsiFactory(project)
-            val className = runReadAction { referenced.containingClass?.qualifiedName }
-            val j2kResult = j2kResults.first() ?: error("Can't convert to Kotlin ${referenced.text}")
             val file = runReadAction {
-                factory.createAnalyzableFile(
-                    fileName = "dummy.kt",
-                    text = "class DuMmY_42_ : $className {\n${j2kResult.text}\n}",
-                    contextToAnalyzeIn = context,
-                ).also {
-                    it.addImports(j2kResult.importsToAdd)
-                }
+                val factory = KtPsiFactory.contextual(context)
+                val className = referenced.containingClass?.qualifiedName
+                val j2kResult = j2kResults.first() ?: error("Can't convert to Kotlin ${referenced.text}")
+                factory.createFile("dummy.kt", text = "class DuMmY_42_ : $className {\n${j2kResult.text}\n}")
+                    .also { it.addImports(j2kResult.importsToAdd) }
             }
 
             postProcessor.doAdditionalProcessing(
@@ -157,7 +152,7 @@ private fun unwrapElement(unwrappedUsage: KtReferenceExpression, referenced: Psi
     val argument = assignment.right ?: return unwrappedUsage
     if (unwrappedUsage.resolveToCall()?.resultingDescriptor?.isSynthesized != true) return unwrappedUsage
 
-    val psiFactory = KtPsiFactory(unwrappedUsage)
+    val psiFactory = KtPsiFactory(unwrappedUsage.project)
     val callExpression = psiFactory.createExpressionByPattern("$name($0)", argument) as? KtCallExpression ?: return unwrappedUsage
     val resultExpression = assignment.replaced(unwrappedUsage.replaced(callExpression).getQualifiedExpressionForSelectorOrThis())
     return resultExpression.getQualifiedElementSelector() as KtReferenceExpression

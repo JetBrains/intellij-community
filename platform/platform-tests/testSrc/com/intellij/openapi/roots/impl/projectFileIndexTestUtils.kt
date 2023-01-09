@@ -8,7 +8,7 @@ import org.intellij.lang.annotations.MagicConstant
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.fail
 
-internal object ProjectFileIndexScopes {
+object ProjectFileIndexScopes {
   const val NOT_IN_PROJECT = 0
   const val IN_CONTENT = 1 shl 0 
   const val IN_LIBRARY = 1 shl 1
@@ -31,6 +31,11 @@ internal object ProjectFileIndexScopes {
   
   fun ProjectFileIndex.assertScope(file: VirtualFile, @MagicConstant(flagsFromClass = ProjectFileIndexPerformanceTest::class) scope: Int) {
     assertScope(file, scope, null, null)
+  }
+  
+  fun ProjectFileIndex.assertInUnloadedModule(file: VirtualFile, moduleName: String, contentRoot: VirtualFile) {
+    assertScope(file, EXCLUDED, null, contentRoot)
+    assertEquals(moduleName, getUnloadedModuleNameForFile(file))
   }
   
   private fun ProjectFileIndex.assertScope(file: VirtualFile, @MagicConstant(flagsFromClass = ProjectFileIndexPerformanceTest::class) scope: Int = IN_CONTENT,

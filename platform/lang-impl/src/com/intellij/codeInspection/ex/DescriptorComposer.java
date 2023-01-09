@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -85,14 +86,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
 
     int problemIdx = 0;
     if (descriptions != null) { //server-side inspections
-      problemIdx = -1;
-      for (int i = 0; i < descriptions.length; i++) {
-        CommonProblemDescriptor description = descriptions[i];
-        if (description == descriptor) {
-          problemIdx = i;
-          break;
-        }
-      }
+      problemIdx = ArrayUtil.indexOf(descriptions, descriptor);
       if (problemIdx == -1) return;
     }
 

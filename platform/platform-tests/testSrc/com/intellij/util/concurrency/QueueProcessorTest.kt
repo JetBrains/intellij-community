@@ -16,10 +16,11 @@
 package com.intellij.util.concurrency
 
 import com.intellij.execution.ExecutionException
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.PlatformTestUtil
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
@@ -79,5 +80,15 @@ class QueueProcessorTest : LightPlatformTestCase() {
     check(6)
     check(ExecutionException("EE"))
     check(7)
+  }
+
+  fun `test it's a bad idea to wait in EDT`() {
+    val processor = QueueProcessor<String>({ _, r -> r.run()}, true, QueueProcessor.ThreadToUse.AWT, { _ -> false })
+    processor.add("")
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    assertThrows(IllegalStateException::class.java) { processor.waitFor() }
+    assertThrows(IllegalStateException::class.java) { processor.waitFor(1) }
+    PlatformTestUtil.waitForFuture(ApplicationManager.getApplication().executeOnPooledThread { processor.waitFor() }, 100_000)
+    PlatformTestUtil.waitForFuture(ApplicationManager.getApplication().executeOnPooledThread { processor.waitFor(2) }, 100_000)
   }
 }

@@ -1,8 +1,8 @@
 from _typeshed import Self, SupportsRead, SupportsWrite
-from collections.abc import Iterable, Iterator, MutableMapping
+from collections.abc import Callable, Iterable, Iterator, MutableMapping, Sequence
 from pathlib import Path
-from typing import Any, Callable, ClassVar, Protocol, Sequence, SupportsBytes, Union
-from typing_extensions import Literal
+from typing import Any, ClassVar, Protocol, SupportsBytes, Union
+from typing_extensions import Literal, TypeAlias
 
 from ._imaging import (
     DEFAULT_STRATEGY as DEFAULT_STRATEGY,
@@ -14,15 +14,15 @@ from ._imaging import (
 from .ImageFilter import Filter
 from .ImagePalette import ImagePalette
 
-_Mode = Literal["1", "CMYK", "F", "HSV", "I", "L", "LAB", "P", "RGB", "RGBA", "RGBX", "YCbCr"]
-_Resample = Literal[0, 1, 2, 3, 4, 5]
-_Size = tuple[int, int]
-_Box = tuple[int, int, int, int]
+_Mode: TypeAlias = Literal["1", "CMYK", "F", "HSV", "I", "L", "LAB", "P", "RGB", "RGBA", "RGBX", "YCbCr"]
+_Resample: TypeAlias = Literal[0, 1, 2, 3, 4, 5]
+_Size: TypeAlias = tuple[int, int]
+_Box: TypeAlias = tuple[int, int, int, int]
 
-_ConversionMatrix = Union[
+_ConversionMatrix: TypeAlias = Union[
     tuple[float, float, float, float], tuple[float, float, float, float, float, float, float, float, float, float, float, float],
 ]
-_Color = Union[float, tuple[float, ...]]
+_Color: TypeAlias = float | tuple[float, ...]
 
 class _Writeable(SupportsWrite[bytes], Protocol):
     def seek(self, __offset: int) -> Any: ...
@@ -99,7 +99,7 @@ class _E:
     def __add__(self, other) -> _E: ...
     def __mul__(self, other) -> _E: ...
 
-_ImageState = tuple[dict[str, Any], str, tuple[int, int], Any, bytes]
+_ImageState: TypeAlias = tuple[dict[str, Any], str, tuple[int, int], Any, bytes]
 
 class Image:
     format: ClassVar[str | None]
@@ -119,7 +119,7 @@ class Image:
     @property
     def size(self) -> tuple[int, int]: ...
     def __enter__(self: Self) -> Self: ...
-    def __exit__(self, *args: Any) -> None: ...
+    def __exit__(self, *args: object) -> None: ...
     def close(self) -> None: ...
     def __eq__(self, other: object) -> bool: ...
     def __array__(self, dtype=...) -> Any: ...  # returns numpy.array()

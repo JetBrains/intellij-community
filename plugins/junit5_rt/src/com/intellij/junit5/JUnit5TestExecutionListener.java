@@ -193,7 +193,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
           testFailure(CLASS_CONFIGURATION, getId(testIdentifier), parentId, messageName, throwableOptional, 0, reason, true);
           myPrintStream.println("##teamcity[testFinished" + nameAndId + "]");
         }
-        else if (status == TestExecutionResult.Status.ABORTED && descendants.isEmpty()) {
+        else if (descendants.isEmpty()) {
           testFailure(testIdentifier, MapSerializerUtil.TEST_IGNORED, throwableOptional, 0, reason, true);
         }
 
@@ -344,11 +344,11 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     return root.getSource()
       .map(testSource -> getLocationHintValue(testSource, rootParent != null ? rootParent.getSource().orElse(null) : null))
       .filter(maybeLocationHintValue -> !NO_LOCATION_HINT_VALUE.equals(maybeLocationHintValue))
-      .map(locationHintValue -> "locationHint='" + locationHintValue + "'" + getMetainfo(root))
+      .map(locationHintValue -> "locationHint='" + locationHintValue + "'" + getMetaInfo(root))
       .orElse(NO_LOCATION_HINT);
   }
 
-  private static String getMetainfo(TestIdentifier root) {
+  private static String getMetaInfo(TestIdentifier root) {
     return root.getSource()
       .map(testSource -> {
         if (testSource instanceof MethodSource) {

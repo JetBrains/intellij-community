@@ -106,7 +106,7 @@ internal class GenerateTableOfContentsAction: AnAction() {
     }
 
     private fun collectTopLevelElements(file: MarkdownFile): Sequence<PsiElement> {
-      val elements = file.firstChild?.firstChild?.siblings(forward = true, withSelf = true)
+      val elements = file.firstChild?.siblings(forward = true, withSelf = true)
       return elements.orEmpty()
     }
 

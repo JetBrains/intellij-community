@@ -2,11 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.types
 
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiParameter
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.psi.impl.source.PsiAnnotationMethodImpl
 import org.jetbrains.kotlin.builtins.PrimitiveType
@@ -22,7 +18,9 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.ENUM
 import org.jetbrains.kotlin.nj2k.types.JKVarianceTypeParameterType.Variance
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtParameter
@@ -37,7 +35,7 @@ fun JKType.asTypeElement(annotationList: JKAnnotationList = JKAnnotationList()) 
     JKTypeElement(this, annotationList)
 
 fun JKClassSymbol.asType(nullability: Nullability = Default): JKClassType =
-    JKClassType(this, emptyList(), nullability)
+    JKClassType(this, nullability = nullability)
 
 val PsiType.isKotlinFunctionalType: Boolean
     get() {
@@ -132,6 +130,14 @@ fun JKType.isStringType(): Boolean =
 fun JKClassSymbol.isStringType(): Boolean =
     fqName == CommonClassNames.JAVA_LANG_STRING
             || fqName == StandardNames.FqNames.string.asString()
+
+fun JKSymbol.isEnumType(): Boolean =
+    when (val target = target) {
+        is JKClass -> target.classKind == ENUM
+        is KtClass -> target.isEnum()
+        is PsiClass -> target.isEnum
+        else -> false
+    }
 
 fun JKJavaPrimitiveType.toLiteralType(): JKLiteralExpression.LiteralType? =
     when (this) {

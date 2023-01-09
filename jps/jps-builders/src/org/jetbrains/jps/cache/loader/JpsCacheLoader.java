@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.loader;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +8,7 @@ import com.intellij.util.io.Decompressor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.JpsBuildBundle;
+import org.jetbrains.jps.cache.JpsCachesLoaderUtil;
 import org.jetbrains.jps.cache.client.JpsServerClient;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
 import org.jetbrains.jps.cache.statistics.JpsCacheLoadingSystemStats;
@@ -22,12 +24,14 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
   private static final String FS_STATE_FILE = "fs_state.dat";
   private final File myBuildCacheFolder;
   private final JpsServerClient myClient;
+  private final boolean isCleanupAsynchronously;
   private JpsLoaderContext myContext;
   private File myTmpCacheFolder;
 
-  JpsCacheLoader(@NotNull JpsServerClient client, @NotNull String myProjectPath) {
+  JpsCacheLoader(@NotNull JpsServerClient client, @NotNull String myProjectPath, boolean cleanupAsynchronously) {
     myBuildCacheFolder = Utils.getDataStorageRoot(myProjectPath);
     myClient = client;
+    isCleanupAsynchronously = cleanupAsynchronously;
   }
 
   @Nullable
@@ -128,7 +132,7 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
       }
 
       // Remove old cache dir
-      FileUtil.delete(myBuildCacheFolder);
+      JpsCachesLoaderUtil.delete(myBuildCacheFolder, isCleanupAsynchronously);
       myTmpCacheFolder.renameTo(myBuildCacheFolder);
       //subTaskIndicator.finished();
       LOG.debug("JPS cache downloads finished");

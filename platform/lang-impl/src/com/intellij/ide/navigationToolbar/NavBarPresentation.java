@@ -27,8 +27,10 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +40,9 @@ import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
+ * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
+@Deprecated
 public final class NavBarPresentation {
   private final Project project;
 
@@ -67,7 +71,7 @@ public final class NavBarPresentation {
     }
 
     if (object instanceof Project) {
-      return AllIcons.Nodes.Project;
+      return ExperimentalUI.isNewUI() ? NavBarItem.MODULE_ICON : AllIcons.Nodes.Project;
     }
     if (object instanceof Module) {
       return ModuleType.get(((Module)object)).getIcon();
@@ -78,8 +82,9 @@ public final class NavBarPresentation {
         Icon icon = ReadAction
           .compute(() -> ((PsiElement)object).isValid() ? ((PsiElement)object).getIcon(0) : null);
 
-        if (icon != null && (icon.getIconHeight() > 16 * 2 || icon.getIconWidth() > 16 * 2)) {
-          icon = IconUtil.cropIcon(icon, 16 * 2, 16 * 2);
+        int maxDimension = JBUI.scale(16 * 2);
+        if (icon != null && (icon.getIconHeight() > maxDimension || icon.getIconWidth() > maxDimension)) {
+          icon = IconUtil.cropIcon(icon, maxDimension, maxDimension);
         }
         return icon;
       }

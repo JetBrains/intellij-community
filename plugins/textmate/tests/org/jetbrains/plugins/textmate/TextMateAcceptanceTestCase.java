@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
-
 /**
  * Base class for tests needs in fixture.
  * It loads defined bundles on setUp.
@@ -24,7 +22,7 @@ import static com.intellij.util.containers.ContainerUtil.newHashSet;
  * <p/>
  */
 public abstract class TextMateAcceptanceTestCase extends BasePlatformTestCase {
-  private static final Set<String> loadingBundles = newHashSet(TestUtil.MARKDOWN_TEXTMATE, TestUtil.HTML, TestUtil.LATEX, TestUtil.PHP, TestUtil.BAT, TestUtil.JAVASCRIPT);
+  private static final Set<String> loadingBundles = ContainerUtil.newHashSet(TestUtil.MARKDOWN_TEXTMATE, TestUtil.HTML, TestUtil.LATEX, TestUtil.PHP, TestUtil.BAT, TestUtil.JAVASCRIPT);
 
   @Override
   public void setUp() throws Exception {

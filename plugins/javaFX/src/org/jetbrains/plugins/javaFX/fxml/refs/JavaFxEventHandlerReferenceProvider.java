@@ -58,11 +58,9 @@ class JavaFxEventHandlerReferenceProvider extends JavaFxControllerBasedReference
       return new PsiReference[]{new PsiMultiReference(references, xmlAttributeValue)};
     }
 
-    if (references.length == 0) {
-      final XmlTag rootTag = ((XmlFile)xmlAttributeValue.getContainingFile()).getRootTag();
-      if (rootTag == null || FxmlConstants.FX_ROOT.equals(rootTag.getName())) {
-        return PsiReference.EMPTY_ARRAY;
-      }
+    final XmlTag rootTag = ((XmlFile)xmlAttributeValue.getContainingFile()).getRootTag();
+    if (rootTag == null || FxmlConstants.FX_ROOT.equals(rootTag.getName())) {
+      return PsiReference.EMPTY_ARRAY;
     }
     return new PsiReference[]{new JavaFxEventHandlerReference(xmlAttributeValue, null, controllerClass)};
   }

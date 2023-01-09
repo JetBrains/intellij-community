@@ -7,11 +7,16 @@ import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractBasicCompletio
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.utils.IgnoreTests
+import java.io.File
 
 abstract class AbstractHighLevelWeigherTest : AbstractBasicCompletionWeigherTest() {
     override fun isFirPlugin(): Boolean = true
 
     override val captureExceptions: Boolean = false
+
+    override fun handleTestPath(path: String): File =
+        IgnoreTests.getFirTestFileIfFirPassing(File(path), IgnoreTests.DIRECTIVES.FIR_COMPARISON)
+
 
     override fun executeTest(test: () -> Unit) {
         IgnoreTests.runTestIfEnabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON, ".after") {

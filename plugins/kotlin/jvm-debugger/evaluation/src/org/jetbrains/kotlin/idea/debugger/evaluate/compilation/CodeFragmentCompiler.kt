@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.impl.*
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.debugger.evaluate.EvaluationStatus
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
@@ -45,7 +44,7 @@ import org.jetbrains.kotlin.utils.Printer
 
 class CodeFragmentCodegenException(val reason: Exception) : Exception()
 
-class CodeFragmentCompiler(private val executionContext: ExecutionContext, private val status: EvaluationStatus) {
+class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
     companion object {
         fun useIRFragmentCompiler(): Boolean =
@@ -108,7 +107,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext, priva
             fragmentCompilerBackend.configureCompiler(this)
         }
 
-        val parameterInfo = fragmentCompilerBackend.computeFragmentParameters(executionContext, codeFragment, bindingContext, status)
+        val parameterInfo = fragmentCompilerBackend.computeFragmentParameters(executionContext, codeFragment, bindingContext)
 
         val (classDescriptor, methodDescriptor) = createDescriptorsForCodeFragment(
             codeFragment, Name.identifier(GENERATED_CLASS_NAME), Name.identifier(GENERATED_FUNCTION_NAME),

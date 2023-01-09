@@ -220,7 +220,7 @@ open class LanguageToolChecker : TextChecker() {
             tr {
               td {
                 valign = "top"
-                style = "padding-right: 5px; color: gray; vertical-align: top;"
+                style = "padding-right: 5px; color: gray; vertical-align: top; white-space: nowrap;"
                 +" "
                 +GrazieBundle.message("grazie.settings.grammar.rule.incorrect")
                 +" "
@@ -237,7 +237,7 @@ open class LanguageToolChecker : TextChecker() {
               tr {
                 td {
                   valign = "top"
-                  style = "padding-top: 5px; padding-right: 5px; color: gray; vertical-align: top;"
+                  style = "padding-top: 5px; padding-right: 5px; color: gray; vertical-align: top; white-space: nowrap;"
                   +" "
                   +GrazieBundle.message("grazie.settings.grammar.rule.correct")
                   +" "

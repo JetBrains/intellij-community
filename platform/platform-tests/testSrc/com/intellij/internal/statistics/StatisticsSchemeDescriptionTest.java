@@ -8,7 +8,6 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.fus.reporting.model.lion3.LogEvent;
 import junit.framework.TestCase;
 import kotlin.Unit;
@@ -191,16 +190,16 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
   public void testStringListField() {
     doTestListField(
       EventFields.StringListValidatedByCustomRule("errors", CustomValidationRule.class),
-      ContainerUtil.newArrayList("foo", "bar"),
-      ContainerUtil.newArrayList("foo", "bar")
+      List.of("foo", "bar"),
+      List.of("foo", "bar")
     );
   }
 
   public void testLongListField() {
     doTestListField(
       EventFields.LongList("performance"),
-      ContainerUtil.newArrayList(123L, 15L, 123456L),
-      ContainerUtil.newArrayList("123", "15", "123456")
+      List.of(123L, 15L, 123456L),
+      List.of("123", "15", "123456")
     );
   }
 

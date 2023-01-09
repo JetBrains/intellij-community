@@ -96,12 +96,13 @@ public class CreateVariableFix extends AbstractFix {
 
     @Override
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
-        if (!myReference.isValid()) {
-            return false;
-        }
-        final PsiFile psiFile = myReference.getContainingFile();
-        assert psiFile != null;
-        return myReference.isValid() && psiFile.isValid();
+      if (!myReference.isValid()) {
+        return false;
+      }
+      final PsiFile psiFile = myReference.getContainingFile();
+      assert psiFile != null;
+      //noinspection ConstantValue -- rechecking of isValid is intended
+      return myReference.isValid() && psiFile.isValid();
     }
 
     @Override

@@ -28,7 +28,7 @@
 static in_addr_t g_egress_ip;
 
 // Bind to eth0 only
-static in_addr_t jb_get_wsl_public_ip() {
+static in_addr_t jb_get_wsl_public_ip(void) {
     struct ifaddrs *ifaddrs_p_base;
     if (getifaddrs(&ifaddrs_p_base) != 0) {
         perror("getifaddrs failed");
@@ -36,11 +36,16 @@ static in_addr_t jb_get_wsl_public_ip() {
     }
     for (struct ifaddrs *ifaddrs_p = ifaddrs_p_base; ifaddrs_p != NULL; ifaddrs_p = ifaddrs_p->ifa_next) {
         // Search for interface and ipv4
-        if ((ifaddrs_p->ifa_addr->sa_family != AF_INET) ||
+        const struct sockaddr *sockaddr_p = ifaddrs_p->ifa_addr;
+        if (sockaddr_p == NULL) {
+            continue;
+        }
+
+        if ((sockaddr_p->sa_family != AF_INET) ||
             ((strcmp(ifaddrs_p->ifa_name, JB_EGRESS_INTERFACE) != 0))) {
             continue;
         }
-        const struct sockaddr_in *in_addr = (struct sockaddr_in *) ifaddrs_p->ifa_addr;
+        const struct sockaddr_in *in_addr = (struct sockaddr_in *) sockaddr_p;
         const in_addr_t result = in_addr->sin_addr.s_addr;
         freeifaddrs(ifaddrs_p_base);
         return result;
@@ -181,7 +186,7 @@ _Noreturn static void *jb_listen_ingress(const int *p_ingress_srv_sock_fd) {
 
 static int g_ingress_srv_sock_fd;
 
-int main() {
+int main(void) {
     g_egress_ip = jb_get_wsl_public_ip();
 
     // IP address

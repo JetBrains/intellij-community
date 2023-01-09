@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
 public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
   private static final String WHITESPACE = " \t";
 
-  public IndexPatternSearcher() {
+  IndexPatternSearcher() {
     super(true);
   }
 
@@ -217,11 +217,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
                                                                                            commentEnd + commentSuffixLength));
       Matcher matcher = pattern.matcher(input);
       while (true) {
-        //long time1 = System.currentTimeMillis();
         boolean found = matcher.find();
-        //long time2 = System.currentTimeMillis();
-        //System.out.println("scanned text of length " + (lexer.getTokenEnd() - lexer.getTokenStart() + " in " + (time2 - time1) + " ms"));
-
         if (!found) break;
         int suffixStartOffset = input.length() - commentSuffixLength;
         int start = fitToRange(matcher.start(), commentPrefixLength, suffixStartOffset) + commentStart - commentPrefixLength;
@@ -235,7 +231,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
               continue;
             }
             matches.add(start);
-            IndexPatternOccurrenceImpl occurrence = new IndexPatternOccurrenceImpl(file, start, end, indexPattern, additionalRanges);
+            IndexPatternOccurrence occurrence = new IndexPatternOccurrenceImpl(file, start, end, indexPattern, additionalRanges);
             if (!consumer.process(occurrence)) {
               return false;
             }

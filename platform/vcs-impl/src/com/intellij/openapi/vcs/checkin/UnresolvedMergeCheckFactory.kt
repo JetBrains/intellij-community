@@ -31,7 +31,7 @@ private class UnresolvedMergeCheckHandler(
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
     val providerResult = UnresolvedMergeCheckProvider.EP_NAME.extensions.asSequence()
-      .mapNotNull { it.checkUnresolvedConflicts(panel, commitContext, commitInfo.executor) }
+      .mapNotNull { it.checkUnresolvedConflicts(panel, commitContext, commitInfo) }
       .firstOrNull()
     if (providerResult != null) return createProblemFor(providerResult)
 

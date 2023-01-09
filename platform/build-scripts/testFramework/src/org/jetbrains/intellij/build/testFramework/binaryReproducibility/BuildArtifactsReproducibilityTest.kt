@@ -3,13 +3,16 @@ package org.jetbrains.intellij.build.testFramework.binaryReproducibility
 
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.reproducibleBuilds.diffTool.FileTreeContentComparison
+import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.extension
 import kotlin.io.path.writeText
 
 class BuildArtifactsReproducibilityTest {
-  private val buildDateInSeconds = System.getenv("SOURCE_DATE_EPOCH")?.toLongOrNull()
+  private val buildDateInSeconds = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS)?.toLongOrNull()
   private val randomSeedNumber = Random().nextLong()
 
   companion object {
@@ -19,11 +22,10 @@ class BuildArtifactsReproducibilityTest {
   fun configure(options: BuildOptions) {
     assert(isEnabled)
     requireNotNull(buildDateInSeconds) {
-      "SOURCE_DATE_EPOCH environment variable is required"
+      "${GlobalOptions.BUILD_DATE_IN_SECONDS} environment variable is required"
     }
     options.buildDateInSeconds = buildDateInSeconds
     options.randomSeedNumber = randomSeedNumber
-    options.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES) // FIXME IJI-823 workaround
     options.buildStepsToSkip.remove(BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP)
     options.buildMacArtifactsWithRuntime = true
     options.buildUnixSnaps = true
@@ -42,21 +44,27 @@ class BuildArtifactsReproducibilityTest {
                                                    buildId)
       else -> build1.paths.projectHome
     }.resolve(".diff")
-    val test = FileTreeContentTest(diffDirectory, build1.paths.tempDir)
-    val result = test.assertTheSameDirectoryContent(build1.paths.artifactDir, build2.paths.artifactDir)
+    val test = FileTreeContentComparison(diffDirectory, build1.paths.tempDir)
+    val result = test.assertTheSameDirectoryContent(
+      build1.paths.artifactDir,
+      build2.paths.artifactDir,
+      deleteBothAfterwards = true
+    )
     if (result.error != null) {
       build1.messages.artifactBuilt("$diffDirectory")
     }
     report(result, diffDirectory, build1)
   }
 
-  private fun report(result: FileTreeContentTest.ComparisonResult, diffDirectory: Path, context: BuildContext) {
+  private fun report(result: FileTreeContentComparison.ComparisonResult, diffDirectory: Path, context: BuildContext) {
     val report = context.applicationInfo.productName
       .replace(" ", "-")
       .plus("-compared-files.txt")
       .let(diffDirectory::resolve)
     Files.createDirectories(report.parent)
-    val reportText = result.comparedFiles.joinToString(separator = "\n")
+    val reportText = result.comparedFiles
+      .sortedBy { it.extension }
+      .joinToString(separator = "\n")
     report.writeText(reportText)
     context.messages.artifactBuilt("$report")
     context.messages.info("Compared:\n$reportText")

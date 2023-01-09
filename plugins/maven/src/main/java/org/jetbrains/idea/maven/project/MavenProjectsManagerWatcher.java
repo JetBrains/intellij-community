@@ -83,7 +83,7 @@ public final class MavenProjectsManagerWatcher {
 
   @TestOnly
   public synchronized void enableAutoImportInTests() {
-    AutoImportProjectTracker.getInstance(myProject).enableAutoImportInTests();
+    AutoImportProjectTracker.enableAutoReloadInTests(myDisposable);
   }
 
   public synchronized void stop() {
@@ -245,7 +245,11 @@ public final class MavenProjectsManagerWatcher {
         myProject = project;
         myModule = module;
         myOldName = oldName;
-        myNewName = module.getName();
+
+        // handle module groups: group.subgroup.module
+        var myNewNameHierarchy = module.getName().split("\\.");
+        myNewName = myNewNameHierarchy[myNewNameHierarchy.length - 1];
+
         myProjectsManager = MavenProjectsManager.getInstance(project);
       }
 

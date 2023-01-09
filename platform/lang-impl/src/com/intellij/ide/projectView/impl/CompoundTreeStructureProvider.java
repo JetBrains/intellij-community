@@ -71,7 +71,7 @@ public final class CompoundTreeStructureProvider implements TreeStructureProvide
 
   @Nullable
   @Override
-  public Object getData(@NotNull Collection<AbstractTreeNode<?>> selection, @NotNull String dataId) {
+  public Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selection, @NotNull String dataId) {
     if (!myProject.isDisposed() && !selection.isEmpty()) {
       for (TreeStructureProvider provider : EP.getExtensions(myProject)) {
         try {

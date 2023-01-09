@@ -4,7 +4,6 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginNode;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.updateSettings.impl.DetectedPluginsPanel;
@@ -15,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -24,8 +22,6 @@ import java.util.function.Predicate;
  * @author anna
  */
 public final class PluginsAdvertiserDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance(PluginsAdvertiserDialog.class);
-
   private final Collection<PluginDownloader> myPluginToInstall;
   private final @Nullable Project myProject;
   private final @NotNull List<PluginNode> myCustomPlugins;
@@ -63,9 +59,19 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   protected @NotNull JComponent createCenterPanel() {
     if (myPanel == null) {
       myPanel = new DetectedPluginsPanel(myProject);
-      Iterator<PluginDownloader> iterator = myPluginToInstall.iterator();
-      myPanel.addAll(myPluginToInstall, mySelectAllSuggestions || !iterator.hasNext() ? null : iterator.next());
+
+      // all or nothing, single plugin always gets selected automatically
+      boolean checkAll = mySelectAllSuggestions || myPluginToInstall.size() == 1;
+      for (PluginDownloader downloader : myPluginToInstall) {
+        myPanel.setChecked(downloader, checkAll);
+      }
+      myPanel.addAll(myPluginToInstall);
     }
+    return myPanel;
+  }
+
+  @Override
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myPanel;
   }
 

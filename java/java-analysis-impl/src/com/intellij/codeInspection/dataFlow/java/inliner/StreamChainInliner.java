@@ -170,7 +170,7 @@ public class StreamChainInliner implements CallInliner {
     }
   };
 
-  static abstract class Step {
+  abstract static class Step {
     final Step myNext;
     final PsiMethodCallExpression myCall;
     final PsiExpression myFunction;
@@ -243,7 +243,7 @@ public class StreamChainInliner implements CallInliner {
     }
   }
 
-  static abstract class TerminalStep extends Step {
+  abstract static class TerminalStep extends Step {
     DfaVariableValue myResult;
 
     TerminalStep(@NotNull PsiMethodCallExpression call, PsiExpression function) {
@@ -312,23 +312,30 @@ public class StreamChainInliner implements CallInliner {
         call = MethodCallUtils.getQualifierMethodCall(call);
         if (FILTER.matches(call) || STATE_FILTER.matches(call)) {
           exact = false;
-        } else if (ARRAYS_STREAM.matches(call) || COLLECTION_STREAM.matches(call)){
-          return LongRangeSet.range(1, Integer.MAX_VALUE);
+        } else if (ARRAYS_STREAM.matches(call) || COLLECTION_STREAM.matches(call)) {
+          return LongRangeSet.range(0, Integer.MAX_VALUE);
         }
-        else if (STREAM_OF.matches(call) || OPTIONAL_STREAM.matches(call)) {
-          return LongRangeSet.point(1);
-        } else if (STREAM_OF_ARRAY.matches(call)) {
-          if (MethodCallUtils.isVarArgCall(call)) {
-            return exact
-                   ? LongRangeSet.point(call.getArgumentList().getExpressionCount())
-                   : LongRangeSet.range(1, call.getArgumentList().getExpressionCount());
-          } else {
-            return JvmPsiRangeSetUtil.indexRange();
+        else if (STREAM_OF.matches(call)) {
+          return exact ? LongRangeSet.point(1) : LongRangeSet.range(0, 1);
+        }
+        else if (OPTIONAL_STREAM.matches(call)) {
+          return LongRangeSet.range(0, 1);
+        }
+        else {
+          if (STREAM_OF_ARRAY.matches(call)) {
+            if (MethodCallUtils.isVarArgCall(call)) {
+              return exact
+                     ? LongRangeSet.point(call.getArgumentList().getExpressionCount())
+                     : LongRangeSet.range(0, call.getArgumentList().getExpressionCount());
+            }
+            else {
+              return JvmPsiRangeSetUtil.indexRange();
+            }
           }
-        }
-        else if (!BOXED.matches(call) && !MAP.matches(call) && !PEEK.matches(call) && !SORTED.matches(call) &&
-                 !SKIP_STEP.matches(call) && !AS_STREAM.matches(call)) {
-          return LongRangeSet.range(1, Long.MAX_VALUE);
+          else if (!BOXED.matches(call) && !MAP.matches(call) && !PEEK.matches(call) && !SORTED.matches(call) &&
+                   !SKIP_STEP.matches(call) && !AS_STREAM.matches(call)) {
+            return LongRangeSet.range(0, Long.MAX_VALUE);
+          }
         }
       }
     }
@@ -693,7 +700,7 @@ public class StreamChainInliner implements CallInliner {
         } else {
           dfType = dfType.meet(DfTypes.LOCAL_OBJECT);
         }
-        if (SpecialField.fromQualifierType(dfType) == SpecialField.COLLECTION_SIZE) {
+        if (SpecialField.COLLECTION_SIZE.isMyQualifierType(dfType)) {
           dfType = dfType.meet(SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(0)));
         }
         builder.push(dfType);

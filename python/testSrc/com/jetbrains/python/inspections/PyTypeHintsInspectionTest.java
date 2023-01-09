@@ -1202,6 +1202,118 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                        ...""");
   }
 
+  // PY-53104
+  public void testInstanceAndClassChecksOnTypingSelf() {
+    doTestByText("""
+                   from typing import Self
+
+
+                   class A:
+                       pass
+
+
+                   class B:
+                       def foo(self: Self):
+                           assert isinstance(A(), <error descr="'Self' cannot be used with instance and class checks">Self</error>)
+                           assert issubclass(A, <error descr="'Self' cannot be used with instance and class checks">Self</error>)
+                   """);
+  }
+
+  // PY-53104
+  public void testTypingSelfSubscription() {
+    doTestByText("""
+                   from typing import Self, Generic, TypeVar
+
+                   T = TypeVar("T")
+
+
+                   class A(Generic[T]):
+                       def foo(self):
+                           x: Self[<error descr="'Self' cannot be parameterized">int</error>]
+                   """);
+  }
+
+  // PY-53104
+  public void testTypingSelfAnnotationOutsideClass() {
+    doTestByText("""
+                   from typing import Self
+
+                   def foo() -> <warning descr="Cannot use 'Self' outside class">Self</warning>:
+                       pass
+                   """);
+  }
+
+  // PY-53104
+  public void testTypingSelfAnnotationForVariableOutsideClass() {
+    doTestByText("""
+                   from typing import Self
+
+                   something: <warning descr="Cannot use 'Self' outside class">Self</warning> | None = None
+                   """);
+  }
+
+  // PY-53104
+  public void testTypingSelfInStaticMethod() {
+    doTestByText("""
+                   from __future__ import annotations
+                   from typing import Self
+
+                   class SomeClass:
+                       @staticmethod
+                       def foo(bar: <warning descr="Cannot use 'Self' in staticmethod">Self</warning>) -> <warning descr="Cannot use 'Self' in staticmethod">Self</warning>:
+                           return bar
+                   """);
+  }
+
+  // PY-53104
+  public void testTypingSelfParameterHasDifferentAnnotation() {
+    doTestByText("""
+                   from __future__ import annotations
+                   from typing import Self
+
+                   class SomeClass:
+                       def foo(self: SomeClass, bar: <warning descr="Cannot use 'Self' if 'self' parameter is not 'Self' annotated">Self</warning>) -> <warning descr="Cannot use 'Self' if 'self' parameter is not 'Self' annotated">Self</warning>:
+                           return self
+                   """);
+  }
+
+  // PY-53104
+  public void testTypingSelfClsParameterHasDifferentAnnotation() {
+    doTestByText("""
+                   from __future__ import annotations
+                   from typing import Self
+
+                   class SomeClass:
+                       @classmethod
+                       def foo(cls: SomeClass, bar: <warning descr="Cannot use 'Self' if 'cls' parameter is not 'Self' annotated">Self</warning>) -> <warning descr="Cannot use 'Self' if 'cls' parameter is not 'Self' annotated">Self</warning>:
+                           return self
+                   """);
+  }
+
+  // PY-53104
+  public void testTypingSelfInStaticMethodBody() {
+    doTestByText("""
+                   from typing import Self
+
+
+                   class C:
+                       @staticmethod
+                       def m():
+                           obj: <warning descr="Cannot use 'Self' in staticmethod">Self</warning> = None""");
+  }
+
+  // PY-53104
+  public void testTypingSelfInFunctionBodySelfParameterHasDifferentAnnotation() {
+    doTestByText("""
+                   from typing import Self
+
+
+                   class C:
+                       def m(self: C):
+                           obj: <warning descr="Cannot use 'Self' if 'self' parameter is not 'Self' annotated">Self</warning> = None
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

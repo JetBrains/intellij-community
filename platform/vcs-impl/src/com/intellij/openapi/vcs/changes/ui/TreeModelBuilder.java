@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -13,6 +15,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -36,7 +39,7 @@ import static java.util.Comparator.comparingInt;
 public class TreeModelBuilder implements ChangesViewModelBuilder {
   public static final Key<Function<StaticFilePath, ChangesBrowserNode<?>>> PATH_NODE_BUILDER = Key.create("ChangesTree.PathNodeBuilder");
   public static final NotNullLazyKey<Map<String, ChangesBrowserNode<?>>, ChangesBrowserNode<?>> DIRECTORY_CACHE =
-    NotNullLazyKey.create("ChangesTree.DirectoryCache", node -> new HashMap<>());
+    NotNullLazyKey.createLazyKey("ChangesTree.DirectoryCache", node -> new HashMap<>());
   private static final Key<ChangesGroupingPolicy> GROUPING_POLICY = Key.create("ChangesTree.GroupingPolicy");
   // This is used in particular for the case when module contains files from different repositories. So there could be several nodes for
   // the same module in one subtree (for change list), but under different repository nodes. And we should perform node caching not just
@@ -69,10 +72,12 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   /**
    * Order in which nodes should be added into the tree while using {@link #insertChangeNode(Object, ChangesBrowserNode, ChangesBrowserNode)}.
-   * This ensures that helper {@link #createPathNode} node will not be created if there is already a 'data' node with the same path.
+   * This ensures that helper {@link #createPathNode} node will not be created if there is already a 'data' node with the same path,
+   * as all 'parents' are processed before their 'children'.
    */
   public final static Comparator<FilePath> PATH_COMPARATOR = comparingInt(path -> path.getPath().length());
   public final static Comparator<Change> CHANGE_COMPARATOR = comparing(ChangesUtil::getFilePath, PATH_COMPARATOR);
+  public final static Comparator<VirtualFile> FILE_COMPARATOR = VirtualFileHierarchicalComparator.getInstance();
 
   /**
    * Requires non-null Project for local changes.
@@ -161,7 +166,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setUnversioned(@Nullable List<FilePath> unversionedFiles) {
+  public TreeModelBuilder setUnversioned(@Nullable List<? extends FilePath> unversionedFiles) {
     assert myProject != null;
     if (ContainerUtil.isEmpty(unversionedFiles)) return this;
     ChangesBrowserUnversionedFilesNode node = new ChangesBrowserUnversionedFilesNode(myProject, unversionedFiles);
@@ -169,7 +174,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setIgnored(@Nullable List<FilePath> ignoredFiles) {
+  public TreeModelBuilder setIgnored(@Nullable List<? extends FilePath> ignoredFiles) {
     assert myProject != null;
     if (ContainerUtil.isEmpty(ignoredFiles)) return this;
     ChangesBrowserIgnoredFilesNode node = new ChangesBrowserIgnoredFilesNode(myProject, ignoredFiles);
@@ -288,7 +293,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   @Override
   public void insertFilesIntoNode(@NotNull Collection<? extends VirtualFile> files, @NotNull ChangesBrowserNode<?> subtreeRoot) {
-    List<VirtualFile> sortedFiles = sorted(files, VirtualFileHierarchicalComparator.getInstance());
+    List<VirtualFile> sortedFiles = sorted(files, FILE_COMPARATOR);
     for (VirtualFile file : sortedFiles) {
       insertChangeNode(file, subtreeRoot, ChangesBrowserNode.createFile(myProject, file));
     }
@@ -335,7 +340,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
                                                         SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES,
                                                         true);
 
-    List<VirtualFile> files = sorted(switchedRoots.keySet(), VirtualFileHierarchicalComparator.getInstance());
+    List<VirtualFile> files = sorted(switchedRoots.keySet(), FILE_COMPARATOR);
 
     for (VirtualFile vf : files) {
       final ContentRevision cr = new CurrentContentRevision(VcsUtil.getFilePath(vf));
@@ -360,7 +365,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     if (switchedFiles.isEmpty()) return this;
     ChangesBrowserNode<?> subtreeRoot = createTagNode(ChangesBrowserNode.SWITCHED_FILES_TAG);
     for (@Nls String branchName : switchedFiles.keySet()) {
-      List<VirtualFile> switchedFileList = sorted(switchedFiles.get(branchName), VirtualFileHierarchicalComparator.getInstance());
+      List<VirtualFile> switchedFileList = sorted(switchedFiles.get(branchName), FILE_COMPARATOR);
       if (switchedFileList.size() > 0) {
         ChangesBrowserNode<?> branchNode = new ChangesBrowserStringNode(branchName);
         branchNode.markAsHelperNode();
@@ -380,7 +385,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     if (ContainerUtil.isEmpty(logicallyLockedFiles)) return this;
     ChangesBrowserNode<?> subtreeRoot = createTagNode(ChangesBrowserNode.LOGICALLY_LOCKED_TAG);
 
-    List<VirtualFile> keys = sorted(logicallyLockedFiles.keySet(), VirtualFileHierarchicalComparator.getInstance());
+    List<VirtualFile> keys = sorted(logicallyLockedFiles.keySet(), FILE_COMPARATOR);
 
     for (VirtualFile file : keys) {
       final LogicalLock lock = logicallyLockedFiles.get(file);
@@ -435,8 +440,34 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   public DefaultTreeModel build() {
     TreeUtil.sort(myModel, BROWSER_NODE_COMPARATOR);
     collapseDirectories(myModel, myRoot);
+
+    if (myProject != null && !ApplicationManager.getApplication().isDispatchThread()) {
+      // Incrementally fill background colors
+      // read lock is required for background colors calculation as it requires project file index
+      ReadAction.nonBlocking(() -> {
+        precalculateFileColors(myProject, myRoot);
+        // skip deprecation warning about com.intellij.openapi.application.ReadAction.nonBlocking(java.lang.Runnable)
+        return 1;
+      }).executeSynchronously();
+    }
+
     myModel.nodeStructureChanged((TreeNode)myModel.getRoot());
     return myModel;
+  }
+
+  /**
+   * Unfortunately calculating file background color is a costly operation.
+   * (it requires e.g. project file index to detect whether a file in test sources or not)
+   * TreeModelBuilder calls this method on a background thread to have
+   * this calculation ready for Tree rendering
+   */
+  @RequiresReadLock
+  private static void precalculateFileColors(@NotNull Project project, @NotNull ChangesBrowserNode<?> root) {
+    root.traverse().forEach(node -> {
+      node.getBackgroundColorCached(project);
+      // Allow to interrupt read lock
+      ProgressManager.checkCanceled();
+    });
   }
 
   private static void collapseDirectories(@NotNull DefaultTreeModel model, @NotNull ChangesBrowserNode<?> node) {

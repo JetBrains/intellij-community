@@ -63,8 +63,12 @@ public class EditorColorPaletteTest extends LightPlatformTestCase {
     final TextAttributes bcOrigAttr = colorsScheme.getAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT);
     checkUsed(colorsScheme, bcOrigAttr.getForegroundColor(), false);
 
-    final TextAttributesKey generatedRainbowKey = RainbowHighlighter.getRainbowTempKeys()[0];
-    
+    final TextAttributesKey generatedRainbowKey = RainbowHighlighter.getRainbowTempKeys(colorsScheme)[0];
+
+    // check that `generatedRainbowKey` is based on real `colorsScheme` scheme
+    Color generatedColor = colorsScheme.getAttributes(generatedRainbowKey).getForegroundColor();
+    assertEquals(RainbowHighlighter.testRainbowGenerateColors(colorsScheme)[0], generatedColor);
+
     // make BLOCK_COMMENT the same as LOCAL_VARIABLE => has conflict with non-rainbow BLOCK_COMMENT color 
     colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, newColorAttrInPallete);
     checkUsed(colorsScheme, newColorInPalette, false);
@@ -77,15 +81,15 @@ public class EditorColorPaletteTest extends LightPlatformTestCase {
     assertNull(colorsScheme.getAttributes(generatedRainbowKey));  
 
     // resolve conflict for BLACK color (checking overflow)
-    final TextAttributes blackColorAttrInPallete = new TextAttributes();
-    blackColorAttrInPallete.setForegroundColor(Color.BLACK);
-    colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, blackColorAttrInPallete);
+    final TextAttributes blackColorAttrInPalette = new TextAttributes();
+    blackColorAttrInPalette.setForegroundColor(Color.BLACK);
+    colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, blackColorAttrInPalette);
     checkUsed(colorsScheme, Color.BLACK, false);
 
     // resolve conflict for WHITE color (checking overflow)
-    final TextAttributes whiteColorAttrInPallete = new TextAttributes();
-    whiteColorAttrInPallete.setForegroundColor(Color.WHITE);
-    colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, whiteColorAttrInPallete);
+    final TextAttributes whiteColorAttrInPalette = new TextAttributes();
+    whiteColorAttrInPalette.setForegroundColor(Color.WHITE);
+    colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, whiteColorAttrInPalette);
     checkUsed(colorsScheme, Color.WHITE, false);
   }
 

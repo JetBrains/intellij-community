@@ -6,6 +6,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
+import java.nio.file.Paths
 import kotlin.io.path.name
 
 abstract class AbstractKotlinPostfixTemplateTest : NewLightKotlinCodeInsightFixtureTestCase() {
@@ -22,11 +23,11 @@ abstract class AbstractKotlinPostfixTemplateTest : NewLightKotlinCodeInsightFixt
     }
 
     protected fun performTest() {
-        myFixture.configureByMainPath()
+        myFixture.configureByDefaultFile()
         myFixture.type(".$templateName\t")
         myFixture.checkContentByExpectedPath(".after")
     }
 
     private val templateName: String
-        get() = mainPath.parent.name
+        get() = Paths.get(testDataPath).name
 }

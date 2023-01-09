@@ -16,6 +16,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,15 +35,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class ExperimentalUI {
   private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
   private IconPathPatcher iconPathPatcher;
-  private static final String KEY = "ide.experimental.ui";
+  public static final String KEY = "ide.experimental.ui";
 
+  @Contract(pure = true)
   public static boolean isNewUI() {
-    // CWM-7348 thin client does not support new UI
+    // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
+    // Please, apply any modifications here and there synchronously. Or solve the dependency problem :)
+
     return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && isSupported();
   }
 
   public static boolean isSupported() {
-    return !PlatformUtils.isJetBrainsClient();
+    // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
+    // Please, apply any modifications here and there synchronously. Or solve the dependency problem :)
+
+    return true;
   }
 
   public static boolean isNewNavbar() {
@@ -58,30 +65,35 @@ public abstract class ExperimentalUI {
   }
 
   @SuppressWarnings("unused")
-  private final static class NewUiRegistryListener implements RegistryValueListener {
+  public static class NewUiRegistryListener implements RegistryValueListener {
+    protected boolean isApplicable() {
+      return !PlatformUtils.isJetBrainsClient(); // JetBrains Client has custom listener
+    }
+
     @Override
     public void afterValueChanged(@NotNull RegistryValue value) {
-      if (!value.getKey().equals(KEY)) {
+      if (!isApplicable() || !value.getKey().equals(KEY)) {
         return;
       }
 
       boolean isEnabled = value.asBoolean();
 
       patchUIDefaults(isEnabled);
+      ExperimentalUI instance = getInstance();
       if (isEnabled) {
-        if (getInstance().isIconPatcherSet.compareAndSet(false, true)) {
-          if (getInstance().iconPathPatcher != null) {
-            IconLoader.removePathPatcher(getInstance().iconPathPatcher);
+        if (instance.isIconPatcherSet.compareAndSet(false, true)) {
+          if (instance.iconPathPatcher != null) {
+            IconLoader.removePathPatcher(instance.iconPathPatcher);
           }
-          getInstance().iconPathPatcher = getInstance().createPathPatcher();
-          IconLoader.installPathPatcher(getInstance().iconPathPatcher);
+          instance.iconPathPatcher = instance.createPathPatcher();
+          IconLoader.installPathPatcher(instance.iconPathPatcher);
         }
-        getInstance().onExpUIEnabled();
+        instance.onExpUIEnabled(true);
       }
-      else if (getInstance().isIconPatcherSet.compareAndSet(true, false)) {
-        IconLoader.removePathPatcher(getInstance().iconPathPatcher);
-        getInstance().iconPathPatcher = null;
-        getInstance().onExpUIDisabled();
+      else if (instance.isIconPatcherSet.compareAndSet(true, false)) {
+        IconLoader.removePathPatcher(instance.iconPathPatcher);
+        instance.iconPathPatcher = null;
+        instance.onExpUIDisabled(true);
       }
     }
   }
@@ -99,7 +111,7 @@ public abstract class ExperimentalUI {
     }
   }
 
-  private IconPathPatcher createPathPatcher() {
+  private @NotNull IconPathPatcher createPathPatcher() {
     Map<ClassLoader, Map<String, String>> paths = getIconMappings();
     return new IconPathPatcher() {
       @Override
@@ -115,10 +127,10 @@ public abstract class ExperimentalUI {
     };
   }
 
-  public abstract Map<ClassLoader, Map<String, String>> getIconMappings();
+  public abstract @NotNull Map<ClassLoader, Map<String, String>> getIconMappings();
 
-  public abstract void onExpUIEnabled();
-  public abstract void onExpUIDisabled();
+  public abstract void onExpUIEnabled(boolean suggestRestart);
+  public abstract void onExpUIDisabled(boolean suggestRestart);
 
   private static void patchUIDefaults(boolean isNewUiEnabled) {
     if (!isNewUiEnabled) {
@@ -139,7 +151,7 @@ public abstract class ExperimentalUI {
     }
 
     if (SystemInfo.isJetBrainsJvm && EarlyAccessRegistryManager.INSTANCE.getBoolean("ide.experimental.ui.inter.font")) {
-      installInterFont(defaults);
+      installInterFont();
     }
   }
 
@@ -148,21 +160,18 @@ public abstract class ExperimentalUI {
     defaults.put(key, value);
   }
 
-  private static void installInterFont(UIDefaults defaults) {
+  private static void installInterFont() {
     if (UISettings.getInstance().getOverrideLafFonts()) {
       //todo[kb] add RunOnce
       UISettings.getInstance().setOverrideLafFonts(false);
     }
   }
 
-  public static class Icons {
-    public static class Gutter {
+  public static final class Icons {
+    public static final class Gutter {
       public static final Icon Fold = loadIcon("expui/gutter/fold.svg");
+      public static final Icon FoldBottom = loadIcon("expui/gutter/foldBottom.svg");
       public static final Icon Unfold = loadIcon("expui/gutter/unfold.svg");
-    }
-
-    public static class General {
-      public static final Icon ChevronDownLargeWhite = loadIcon("expui/general/chevronDownLargeWhite.svg");
     }
 
     private static Icon loadIcon(String path) {

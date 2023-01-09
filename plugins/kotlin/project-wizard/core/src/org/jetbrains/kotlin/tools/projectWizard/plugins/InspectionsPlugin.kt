@@ -24,7 +24,6 @@ class InspectionsPlugin(context: Context) : Plugin(context) {
 
         val createInspectionTasks by pipelineTask(GenerationPhase.PROJECT_IMPORT) {
             withAction {
-                // The service is only available in K1 (yet)
                 serviceOrNull<InspectionWizardService>()?.changeInspectionSettings()
                 UNIT_SUCCESS
             }

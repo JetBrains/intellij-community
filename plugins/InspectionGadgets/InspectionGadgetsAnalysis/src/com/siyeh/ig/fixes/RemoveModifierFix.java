@@ -44,7 +44,7 @@ public class RemoveModifierFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(Project project, ProblemDescriptor descriptor) {
+  public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement modifierElement = descriptor.getPsiElement();
     //if (modifierElement instanceof PsiKeyword) {
       deleteElement(modifierElement);

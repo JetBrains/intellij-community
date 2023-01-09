@@ -4,9 +4,11 @@ package com.intellij.vcs.log.ui.editor
 import com.intellij.diff.util.FileEditorBase
 import com.intellij.icons.AllIcons
 import com.intellij.ide.FileIconProvider
+import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -56,7 +58,7 @@ class VcsLogEditor(private val project: Project, private val vcsLogFile: VcsLogF
   override fun getFile() = vcsLogFile
 }
 
-class VcsLogEditorProvider : FileEditorProvider, DumbAware {
+class VcsLogEditorProvider : FileEditorProvider, StructureViewFileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean = file is VcsLogFile
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
@@ -65,6 +67,7 @@ class VcsLogEditorProvider : FileEditorProvider, DumbAware {
 
   override fun getEditorTypeId(): String = "VcsLogEditor"
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
+  override fun getStructureViewBuilder(project: Project, file: VirtualFile): StructureViewBuilder? = null
 
   override fun disposeEditor(editor: FileEditor) {
     editor.disposeLogUis()

@@ -393,22 +393,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
     private final static int HISTORY_LIMIT = 50;
 
-    private static class HistoryItem {
-      private final String searchText;
-      private final String contributorID;
-
-      HistoryItem(String searchText, String contributorID) {
-        this.searchText = searchText;
-        this.contributorID = contributorID;
-      }
-
-      public String getSearchText() {
-        return searchText;
-      }
-
-      public String getContributorID() {
-        return contributorID;
-      }
+    private record HistoryItem(String searchText, String contributorID) {
     }
 
     private final List<HistoryItem> historyList = new ArrayList<>();
@@ -420,16 +405,16 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
     public void saveText(@NotNull String text, @NotNull String contributorID) {
       historyList.stream()
-        .filter(item -> text.equals(item.getSearchText()) && contributorID.equals(item.getContributorID()))
+        .filter(item -> text.equals(item.searchText()) && contributorID.equals(item.contributorID()))
         .findFirst()
         .ifPresent(historyList::remove);
 
       historyList.add(new HistoryItem(text, contributorID));
 
-      List<String> list = filteredHistory(item -> item.getContributorID().equals(contributorID));
+      List<String> list = filteredHistory(item -> item.contributorID().equals(contributorID));
       if (list.size() > HISTORY_LIMIT) {
         historyList.stream()
-          .filter(item -> item.getContributorID().equals(contributorID))
+          .filter(item -> item.contributorID().equals(contributorID))
           .findFirst()
           .ifPresent(historyList::remove);
       }
@@ -442,7 +427,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
         return size > HISTORY_LIMIT ? res.subList(size - HISTORY_LIMIT, size) : res;
       }
       else {
-        return filteredHistory(item -> item.getContributorID().equals(contributorID));
+        return filteredHistory(item -> item.contributorID().equals(contributorID));
       }
     }
 
@@ -450,7 +435,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     private List<String> filteredHistory(Predicate<? super HistoryItem> predicate) {
       return historyList.stream()
         .filter(predicate)
-        .map(item -> item.getSearchText())
+        .map(item -> item.searchText())
         .collect(distinctCollector);
     }
 

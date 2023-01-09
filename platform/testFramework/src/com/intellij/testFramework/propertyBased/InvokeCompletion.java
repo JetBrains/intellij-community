@@ -182,7 +182,7 @@ public class InvokeCompletion extends ActionOnFile {
     return expectedEnd == caretOffset && getFile().getText().substring(0, caretOffset).endsWith(expectedVariant);
   }
 
-  private void checkNoDuplicates(List<LookupElement> items) {
+  private void checkNoDuplicates(List<? extends LookupElement> items) {
     Map<List<?>, LookupElement> presentations = new HashMap<>();
     for (LookupElement item : items) {
       LookupElementPresentation p = TestLookupElementPresentation.renderReal(item);

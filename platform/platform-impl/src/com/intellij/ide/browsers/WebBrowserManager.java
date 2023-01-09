@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -126,12 +127,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
 
   boolean isPredefinedBrowser(@NotNull ConfigurableWebBrowser browser) {
     UUID id = browser.getId();
-    for (UUID predefinedBrowserId : PREDEFINED_BROWSER_IDS) {
-      if (id.equals(predefinedBrowserId)) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.contains(id, PREDEFINED_BROWSER_IDS);
   }
 
   public @NotNull DefaultBrowserPolicy getDefaultBrowserPolicy() {

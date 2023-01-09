@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ikv;
 
 import kotlin.Pair;
@@ -24,15 +24,14 @@ public class IkvBenchmark {
     public int averageBucketSize;
 
     private Path dbFile;
-    private Ikv.SizeAwareIkv<Integer> ikv;
+    private Ikv.SizeAwareIkv ikv;
     private int key;
 
     @Setup
     public void setupDb() throws Exception {
       dbFile = Files.createTempDirectory("ikv-").resolve("db");
-      RecSplitSettings settings = new RecSplitSettings(averageBucketSize);
-      List<Pair<Integer, byte[]>> list = BenchmarkHelperKt.generateDb(dbFile, 5_000, settings);
-      ikv = (Ikv.SizeAwareIkv<Integer>)Ikv.doLoadIkv(dbFile, new UniversalHash.IntHash(), settings);
+      List<Pair<Integer, byte[]>> list = BenchmarkHelperKt.generateDb(dbFile, 5_000);
+      ikv = (Ikv.SizeAwareIkv)Ikv.loadIkv(dbFile);
       key = list.get(3000).getFirst();
     }
 

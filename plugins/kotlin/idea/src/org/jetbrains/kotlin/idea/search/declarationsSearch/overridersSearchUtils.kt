@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.idea.search.declarationsSearch
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
@@ -23,7 +25,6 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
 import org.jetbrains.kotlin.idea.refactoring.resolveToExpectedDescriptorIfPossible
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.getTypeSubstitution
 import org.jetbrains.kotlin.idea.util.toSubstitutor
 import org.jetbrains.kotlin.psi.*
@@ -51,22 +52,29 @@ fun forEachKotlinOverride(
             val substitutor = getTypeSubstitution(baseClassDescriptor.defaultType, inheritorDescriptor.defaultType)?.toSubstitutor()
                 ?: return@runReadAction true
 
-            baseDescriptors.forEach { baseDescriptor ->
-                val superMember = baseDescriptor.source.getPsi()!!
-                val overridingDescriptor = (baseDescriptor.substitute(substitutor) as? CallableMemberDescriptor)?.let { memberDescriptor ->
-                    inheritorDescriptor.findCallableMemberBySignature(memberDescriptor)
+            baseDescriptors.asSequence()
+                .mapNotNull { baseDescriptor ->
+                    val superMember = baseDescriptor.source.getPsi()!!
+                    val overridingDescriptor =
+                        (baseDescriptor.substitute(substitutor) as? CallableMemberDescriptor)?.let { memberDescriptor ->
+                            inheritorDescriptor.findCallableMemberBySignature(memberDescriptor)
+                        }
+                    overridingDescriptor?.source?.getPsi()?.let { overridingMember -> superMember to overridingMember }
                 }
-                val overridingMember = overridingDescriptor?.source?.getPsi()
-                if (overridingMember != null) {
-                    if (!processor(superMember, overridingMember)) return@runReadAction false
-                }
-            }
-            true
+                .all { (superMember, overridingMember) -> processor(superMember, overridingMember) }
         }
     })
 
     return true
 }
+
+fun PsiMethod.forEachImplementation(
+    scope: SearchScope = runReadAction { useScope() },
+    processor: (PsiElement) -> Boolean
+): Boolean = forEachOverridingMethod(scope, processor) && FunctionalExpressionSearch.search(
+    this,
+    scope.excludeKotlinSources(project)
+).forEach(Processor { processor(it) })
 
 fun PsiMethod.forEachOverridingMethod(
     scope: SearchScope = runReadAction { useScope() },

@@ -45,7 +45,7 @@ import java.util.List;
 
 import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled;
 
-public class PackageViewPane extends AsyncProjectViewPane {
+public class PackageViewPane extends AbstractProjectViewPaneWithAsyncSupport {
   @NonNls public static final String ID = "PackagesPane";
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
 

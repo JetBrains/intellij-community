@@ -63,6 +63,10 @@ class NormalSwitchCompletionTest extends NormalCompletionTestCase {
     doTest()
   }
 
+  @NeedsIndex.ForStandardLibrary
+  void testCompleteFinalInsideSwitch() { doTest('\n') }
+  void testCompleteYieldInsideSwitch() { doTest() }
+
   private void doTestPostfixCompletion() {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.testRootDisposable)
     configure()

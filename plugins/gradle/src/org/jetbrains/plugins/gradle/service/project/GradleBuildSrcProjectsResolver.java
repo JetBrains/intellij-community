@@ -137,6 +137,7 @@ public final class GradleBuildSrcProjectsResolver {
           buildSrcProjectSettings.setRemoteProcessIdleTtlInMs(myMainBuildExecutionSettings.getRemoteProcessIdleTtlInMs());
           buildSrcProjectSettings.setVerboseProcessing(myMainBuildExecutionSettings.isVerboseProcessing());
           buildSrcProjectSettings.setWrapperPropertyFile(myMainBuildExecutionSettings.getWrapperPropertyFile());
+          buildSrcProjectSettings.setDelegatedBuild(myMainBuildExecutionSettings.isDelegatedBuild());
           buildSrcProjectSettings.withArguments(myMainBuildExecutionSettings.getArguments())
             .withEnvironmentVariables(myMainBuildExecutionSettings.getEnv())
             .passParentEnvs(myMainBuildExecutionSettings.isPassParentEnvs())
@@ -255,7 +256,7 @@ public final class GradleBuildSrcProjectsResolver {
 
     if (buildSrcProjectDataNode == null) return;
     for (DataNode<LibraryData> libraryDataNode : getChildren(buildSrcProjectDataNode, ProjectKeys.LIBRARY)) {
-      GradleProjectResolverUtil.linkProjectLibrary(myResolverContext, resultProjectDataNode, libraryDataNode.getData());
+      GradleProjectResolverUtil.linkProjectLibrary(resultProjectDataNode, libraryDataNode.getData());
     }
 
     Map<String, DataNode<? extends ModuleData>> buildSrcModules = new HashMap<>();

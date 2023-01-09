@@ -72,7 +72,7 @@ class GradleMiscContributor : GradleMethodContextContributor {
       val methodResult = parent.advancedResolve().asSafely<GroovyMethodResult>() ?: return null
       val closureParameter = methodResult.candidate?.argumentMapping?.expectedType(ExpressionArgument(closure))
       if (closureParameter?.equalsToText(GROOVY_LANG_CLOSURE) == true) {
-        val returnType = methodResult.substitutor.substitute(methodResult.element.returnType)
+        val returnType = methodResult.substitutor.substitute(methodResult.element.returnType).let(::decoratePsiType)
         if (returnType !is PsiPrimitiveType) {
           return DelegatesToInfo(returnType, Closure.DELEGATE_FIRST)
         }

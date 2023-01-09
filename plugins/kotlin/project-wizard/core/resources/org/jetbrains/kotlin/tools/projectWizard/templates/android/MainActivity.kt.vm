@@ -9,7 +9,7 @@ import android.widget.TextView
 
 #if( $sharedPackage )
 fun greet(): String {
-    return Greeting().greeting()
+    return Greeting().greet()
 }
 #end
 

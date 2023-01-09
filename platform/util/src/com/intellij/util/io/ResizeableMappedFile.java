@@ -259,12 +259,8 @@ public class ResizeableMappedFile implements Forceable, Closeable {
   public void close() throws IOException {
     List<Exception> exceptions = new SmartList<>();
     ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> {
-      if (!getLengthFile().getFileSystem().isReadOnly()) {
-        writeLength(myLogicalSize);
-      }
-      else {
-        assert myLogicalSize == myLastWrittenLogicalSize;
-      }
+      ensureLengthWritten();
+      assert myLogicalSize == myLastWrittenLogicalSize;
       myStorage.force();
       if (truncateOnClose && myLogicalSize < myStorage.length()) {
         myStorage.resize(myLogicalSize);

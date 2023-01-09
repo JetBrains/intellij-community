@@ -17,20 +17,18 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.customization.CustomizableActionGroupProvider
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.ide.ui.customization.CustomizeActionGroupPanel
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.ui.popup.*
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolder
@@ -46,10 +44,12 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.PopupState
+import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.xmlb.annotations.*
@@ -62,7 +62,8 @@ import java.awt.geom.Area
 import java.awt.geom.Line2D
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
-import java.util.concurrent.locks.ReentrantLock
+import java.util.*
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.swing.*
@@ -70,7 +71,8 @@ import javax.swing.plaf.ButtonUI
 import javax.swing.plaf.basic.BasicButtonListener
 import javax.swing.plaf.basic.BasicButtonUI
 import javax.swing.plaf.basic.BasicGraphicsUtils
-import kotlin.concurrent.withLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 import kotlin.properties.Delegates
 
 private const val RUN_TOOLBAR_WIDGET_GROUP = "RunToolbarWidgetCustomizableActionGroup"
@@ -124,7 +126,7 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
     }
 
     val selectedConfiguration = runManager.selectedConfiguration
-    val history = RunConfigurationStartHistory.getInstance(project)
+    val history = RunStatusHistory.getInstance(project)
     val run = history.firstOrNull(selectedConfiguration) { it.state.isRunningState() } ?: history.firstOrNull(selectedConfiguration)
     val isLoading = run?.state?.isBusyState() == true
     val lastExecutorId = run?.executorId ?: DefaultRunExecutor.EXECUTOR_ID
@@ -154,7 +156,7 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
 
   private fun iconFor(executorId: String, needRerunIcon: Boolean): Icon {
     val icon = getExecutorByIdOrDefault(executorId).let { if (needRerunIcon) it.rerunIcon else it.icon }
-    return IconUtil.toStrokeIcon(icon, Color.WHITE)
+    return IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.FOREGROUND)
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
@@ -211,7 +213,7 @@ internal fun createRunConfigurationsActionGroup(project: Project, addHeader: Boo
     }
   }
   actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
-  RunConfigurationStartHistory.getInstance(project).history().mapTo(mutableSetOf()) { it.configuration }.forEach { conf ->
+  RunConfigurationStartHistory.getInstance(project).history().forEach { conf ->
     val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project)
     actions.add(actionGroupWithInlineActions)
   }
@@ -255,6 +257,11 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
     (list as? JBList<*>)?.setExpandableItemsEnabled(false)
   }
 
+  override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): WizardPopup {
+    val popup = super.createPopup(parent, step, parentValue)
+    popup.setMinimumSize(JBDimension(MINIMAL_POPUP_WIDTH, 0))
+    return popup
+  }
 
   override fun shouldBeShowing(value: Any?): Boolean {
     if (!super.shouldBeShowing(value)) return false
@@ -286,8 +293,10 @@ private class AllRunConfigurationsToggle : ToggleAction(
     selected = state
 
     val inputEvent = e.inputEvent ?: return
-    val listPopupModel = (inputEvent.source as? JList<*>)?.model as? ListPopupModel<*> ?: return
+    val jList = inputEvent.source as? JList<*>
+    val listPopupModel = jList?.model as? ListPopupModel<*> ?: return
     listPopupModel.refilter()
+    PopupUtil.getPopupContainerFor(jList).pack(true, true)
   }
 
   override fun update(e: AnActionEvent) {
@@ -378,7 +387,7 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
     e.presentation.isEnabled = activeProcesses > 0
     // presentations should be visible because it has to take some fixed space
     //e.presentation.isVisible = activeProcesses > 0
-    e.presentation.icon = IconUtil.toStrokeIcon(AllIcons.Actions.Suspend, Color.WHITE)
+    e.presentation.icon = IconUtil.toStrokeIcon(AllIcons.Actions.Suspend, JBUI.CurrentTheme.RunWidget.FOREGROUND)
     if (activeProcesses == 1) {
       val first = running.first()
       getConfigurations(manger, first)
@@ -398,7 +407,9 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
       }
       isPaintEnable = false
       isCombined = true
-    }.let { Wrapper(it).apply { border = JBUI.Borders.empty(7,6) } }
+    }.let { Wrapper(it).apply {
+      border = JBUI.Borders.empty(if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) JBUI.CurrentTheme.RunWidget.toolbarBorderHeight() else 7,6)
+    } }
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
@@ -479,8 +490,8 @@ private class RunToolbarWidgetRunAction(
 private enum class RunButtonColors {
   BLUE {
     override fun updateColors(button: RunDropDownButton) {
-      button.foreground = getColor("RunWidget.foreground") { Color.WHITE }
-      button.separatorColor = getColor("RunWidget.separatorColor") { ColorUtil.withAlpha(Color.WHITE, 0.3) }
+      button.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
+      button.separatorColor = getColor("RunWidget.separatorColor") { ColorUtil.withAlpha(JBUI.CurrentTheme.RunWidget.FOREGROUND, 0.3) }
       button.background = getColor("RunWidget.background") { ColorUtil.fromHex("#3574F0") }
       button.hoverBackground = getColor("RunWidget.leftHoverBackground") { ColorUtil.fromHex("#3369D6") }
       button.pressedBackground = getColor("RunWidget.leftPressedBackground") { ColorUtil.fromHex("#315FBD") }
@@ -488,8 +499,8 @@ private enum class RunButtonColors {
   },
   GREEN {
     override fun updateColors(button: RunDropDownButton) {
-      button.foreground = getColor("RunWidget.Running.foreground") { Color.WHITE }
-      button.separatorColor = getColor("RunWidget.Running.separatorColor") { ColorUtil.withAlpha(Color.WHITE, 0.3) }
+      button.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
+      button.separatorColor = getColor("RunWidget.Running.separatorColor") { ColorUtil.withAlpha(JBUI.CurrentTheme.RunWidget.FOREGROUND, 0.3) }
       button.background = getColor("RunWidget.Running.background") { ColorUtil.fromHex("#599E5E") }
       button.hoverBackground = getColor("RunWidget.Running.leftHoverBackground") { ColorUtil.fromHex("#4F8453") }
       button.pressedBackground = getColor("RunWidget.Running.leftPressedBackground") { ColorUtil.fromHex("#456B47") }
@@ -497,7 +508,7 @@ private enum class RunButtonColors {
   },
   RED {
     override fun updateColors(button: RunDropDownButton) {
-      button.foreground = getColor("RunWidget.StopButton.foreground") { Color.WHITE }
+      button.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
       button.background = getColor("RunWidget.StopButton.background") { ColorUtil.fromHex("#EB7171") }
       button.hoverBackground = getColor("RunWidget.StopButton.leftHoverBackground") { ColorUtil.fromHex("#E35252") }
       button.pressedBackground = getColor("RunWidget.StopButton.leftPressedBackground") { ColorUtil.fromHex("#C94F4F") }
@@ -576,7 +587,7 @@ private class RunDropDownButtonUI : BasicButtonUI() {
     b as RunDropDownButton
     b.border = JBUI.Borders.empty(0, 7)
     b.isOpaque = false
-    b.foreground = Color.WHITE
+    b.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
     b.background = ColorUtil.fromHex("#3574F0")
     b.hoverBackground = ColorUtil.fromHex("#3369D6")
     b.pressedBackground = ColorUtil.fromHex("#315FBD")
@@ -593,7 +604,7 @@ private class RunDropDownButtonUI : BasicButtonUI() {
     val prefSize = BasicGraphicsUtils.getPreferredButtonSize(c, c.iconTextGap)
     return prefSize?.apply {
       width = maxOf(width, if (c.isCombined) 0 else 72)
-      height = JBUIScale.scale(26)
+      height = JBUIScale.scale(if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) JBUI.CurrentTheme.RunWidget.toolbarHeight() else 26)
       /**
        * If combined view is enabled the button should not draw a separate line
        * and reserve a place if dropdown is not enabled. Therefore, add only a half
@@ -773,68 +784,70 @@ private class RunDropDownButtonUI : BasicButtonUI() {
 }
 
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
+class RunStatusHistory {
+  private val history = WeakHashMap<RunnerAndConfigurationSettings, MutableList<RunElement>>()
+
+  class RunElement(
+    val executorId: String,
+    var state: RunState
+  )
+
+  private val lock = ReentrantReadWriteLock()
+
+
+  fun changeState(setting: RunnerAndConfigurationSettings, executorId: String, state: RunState) = lock.write {
+    val runElements = history.computeIfAbsent(setting) {
+      ArrayList(5)
+    }
+    runElements.firstOrNull { it.executorId == executorId }?.let { it.state = state } ?: runElements.add(RunElement(executorId, state))
+  }
+
+  fun firstOrNull(setting: RunnerAndConfigurationSettings?, predicate: Predicate<RunElement> = Predicate { true }): RunElement? = lock.read {
+    setting ?: return null
+
+    return history[setting]?.firstOrNull { predicate.test(it) }
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): RunStatusHistory = project.service()
+  }
+}
+
+@Service(Service.Level.PROJECT)
 @State(name = "RunConfigurationStartHistory", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 @ApiStatus.Internal
 class RunConfigurationStartHistory(private val project: Project) : PersistentStateComponent<RunConfigurationStartHistory.State> {
   class State {
     @XCollection(style = XCollection.Style.v2)
     @OptionTag("element")
-    var history = mutableSetOf<Element>()
+    var history: MutableSet<Element>
+
+    constructor() {
+      history = mutableSetOf()
+    }
+
+    internal constructor(history: MutableSet<Element>) {
+      this.history = history
+    }
   }
 
   @Tag("element")
   data class Element(
     @Attribute
     var setting: String? = "",
-    @Attribute
-    var executorId: String = "",
-  ) {
-    @get:Transient
-    var state: RunState = RunState.UNDEFINED
-  }
+  )
 
-  class RunElement(
-    val configuration: RunnerAndConfigurationSettings,
-    val executorId: String,
-    state: RunState
-  ) {
-    var state: RunState = state
-      set(value) {
-        if (field != value) {
-          getInstance(configuration.configuration.project)._state.history.find {
-            it.setting == configuration.uniqueID && it.executorId == executorId
-          }?.apply {
-            state = value
-          }
-        }
-        field = value
-      }
-  }
-
-  fun history(): List<RunElement> {
+  fun history(): List<RunnerAndConfigurationSettings> {
     val settings = RunManager.getInstance(project).allSettings.associateBy { it.uniqueID }
-    return _state.history.mapNotNull { settings[it.setting]?.let { setting ->
-      RunElement(setting, it.executorId, it.state)
-    } }
+    return _state.history.mapNotNull { settings[it.setting] }
   }
 
-  fun register(setting: RunnerAndConfigurationSettings, executorId: String, state: RunState) {
-    _state.apply {
-      history = history.take(30).toMutableList().apply {
-        add(0, Element(setting.uniqueID, executorId).also {
-          it.state = state
-        })
-      }.toMutableSet()
-    }
-  }
-
-  fun firstOrNull(setting: RunnerAndConfigurationSettings?, predicate: Predicate<RunElement> = Predicate { true }): RunElement? {
-    setting ?: return null
-    return _state.history.firstOrNull {
-      it.setting == setting.uniqueID && predicate.test(RunElement(setting, it.executorId, it.state))
-    }?.let {
-      RunElement(setting, it.executorId, it.state)
-    }
+  fun register(setting: RunnerAndConfigurationSettings) {
+    _state = State(_state.history.take(30).toMutableList().apply {
+      add(0, Element(setting.uniqueID))
+    }.toMutableSet())
   }
 
   private var _state = State()
@@ -851,97 +864,36 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
   }
 }
 
-/**
- * Registers one [ExecutionReasonableHistory] per project and
- * disposes it with the project.
- */
-private class ExecutionReasonableHistoryManager : StartupActivity.DumbAware {
-  override fun runActivity(project: Project) {
-    ExecutionReasonableHistory(
-      project,
-      onHistoryChanged = ::processHistoryChanged,
-      onAnyChange = ::configurationHistoryStateChanged
-    )
-  }
-
-  private fun processHistoryChanged(latest: ReasonableHistory.Elem<ExecutionEnvironment, RunState>?) {
-    if (latest != null) {
-      val (env, reason) = latest
-      getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->
-        if (reason == RunState.SCHEDULED) {
-          RunConfigurationStartHistory.getInstance(env.project).register(conf, env.executor.id, reason)
-        }
-        val runManager = RunManager.getInstance(env.project)
-        if (reason.isRunningState() && ExperimentalUI.isNewUI() && !runManager.isRunWidgetActive()) {
-          runManager.selectedConfiguration = conf
-        }
-        ActivityTracker.getInstance().inc()
-      } ?: thisLogger().warn(
-        "Cannot find persisted configuration of '${env.runnerAndConfigurationSettings}'." +
-        "It won't be saved in the run history."
-      )
-    }
-  }
-
-  private fun configurationHistoryStateChanged(env: ExecutionEnvironment, reason: RunState) {
-    RunConfigurationStartHistory.getInstance(env.project).firstOrNull(
-      getPersistedConfiguration(env.runnerAndConfigurationSettings)
-    ) {
-      env.executor.id == it.executorId
-    }?.apply {
-      state = reason
-      ActivityTracker.getInstance().inc()
-    }
-  }
-}
-
-/**
- * Listens to process startup and finish.
- */
-private class ExecutionReasonableHistory(
-  project: Project,
-  onHistoryChanged: (latest: Elem<ExecutionEnvironment, RunState>?) -> Unit,
-  val onAnyChange: (ExecutionEnvironment, RunState) -> Unit
-) : ReasonableHistory<ExecutionEnvironment, RunState>(onHistoryChanged), Disposable {
-
-  init {
-    Disposer.register(project, this)
-    project.messageBus.connect(this).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
+private class ExecutionReasonableHistoryManager : ProjectPostStartupActivity {
+  override suspend fun execute(project: Project) {
+    project.messageBus.connect(project).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
       override fun processStartScheduled(executorId: String, env: ExecutionEnvironment) {
-        if (isPersistedTask(env)) {
-          advise(env, RunState.SCHEDULED)
-        }
-        onAnyChange(env, RunState.SCHEDULED)
+        onAnyChange(executorId, env, RunState.SCHEDULED)
       }
 
       override fun processNotStarted(executorId: String, env: ExecutionEnvironment, cause: Throwable?) {
-        discard(env, RunState.NOT_STARTED)
-        onAnyChange(env, RunState.NOT_STARTED)
+        onAnyChange(executorId, env, RunState.NOT_STARTED)
       }
 
       override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
-        if (isPersistedTask(env)) {
-          advise(env, RunState.STARTED)
-        }
-        onAnyChange(env, RunState.STARTED)
+        onAnyChange(executorId, env, RunState.STARTED)
       }
 
       override fun processTerminating(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
-        if (isPersistedTask(env)) {
-          advise(env, RunState.TERMINATING)
-        }
-        onAnyChange(env, RunState.TERMINATING)
+        onAnyChange(executorId, env, RunState.TERMINATING)
       }
 
       override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
-        discard(env, RunState.TERMINATED)
-        onAnyChange(env, RunState.TERMINATED)
+        onAnyChange(executorId, env, RunState.TERMINATED)
+      }
+
+      private fun onAnyChange(executorId: String, env: ExecutionEnvironment, reason: RunState) {
+        getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->
+          RunStatusHistory.getInstance(env.project).changeState(conf, executorId, reason)
+          ActivityTracker.getInstance().inc() // Not sure is it needed at all
+        }
       }
     })
-  }
-
-  override fun dispose() {
-    history.clear()
   }
 }
 
@@ -959,68 +911,6 @@ enum class RunState {
 
   fun isRunningState(): Boolean {
     return this == SCHEDULED || this == STARTED
-  }
-}
-
-/**
- * Tracks some values and returns the latest one.
- *
- * @param listener fired if current value is changed; same as [latest]
- */
-private open class ReasonableHistory<T, R>(
-  val listener: (latest: Elem<T, R>?) -> Unit
-) {
-  class Elem<T, R>(val value: T, var reason: R) {
-    operator fun component1() = value
-    operator fun component2() = reason
-  }
-  protected val history = mutableListOf<Elem<T, R>>()
-  private val lock = ReentrantLock()
-
-  /**
-   * Returns the latest value in the history.
-   */
-  private val latest: Elem<T, R>?
-    get() = lock.withLock { history.lastOrNull() }
-
-
-  /**
-   * Add a new value. If history doesn't contain the value or previous reason was different,
-   * then adds and fires [listener]. Nothing will be changed if the value is already in the history or
-   * the value is the latest but has same reason.
-   */
-  fun advise(value: T, reason: R) = lock.withLock {
-    var l = latest
-    if (l != null && l.value == value) {
-      if (l.reason != reason) {
-        l.reason = reason
-        listener(l)
-      }
-      return
-    }
-    l = history.find { it.value == value }
-    if (l != null) {
-      // just update a reason
-      l.reason = reason
-      return
-    }
-    val newValue = Elem(value, reason)
-    history += newValue
-    listener(newValue)
-  }
-
-  /**
-   * Removes value from the history. Also, if removed value was the latest, then fires [listener].
-   */
-  fun discard(value: T, reason: R) = lock.withLock {
-    if (history.lastOrNull()?.value == value) {
-      val oldValue = history.removeLast()
-      oldValue.reason = reason
-      listener(latest)
-    }
-    else {
-      history.removeIf { it.value == value }
-    }
   }
 }
 

@@ -70,7 +70,8 @@ class Catalog:
         charset: Any | None = ...,
         fuzzy: bool = ...,
     ) -> None: ...
-    locale_identifier: Any
+    @property
+    def locale_identifier(self): ...
     header_comment: Any
     mime_headers: Any
     @property

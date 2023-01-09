@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
@@ -501,6 +501,24 @@ public final class ExpectedTypesProvider {
     }
 
     @Override
+    public void visitPatternGuard(@NotNull PsiPatternGuard guard) {
+      processGuard(guard);
+    }
+
+    @Override
+    public void visitGuardedPattern(@NotNull PsiGuardedPattern pattern) {
+      processGuard(pattern);
+    }
+
+    private void processGuard(@NotNull PsiCaseLabelElement guard) {
+      final PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(guard, PsiSwitchBlock.class);
+      if (switchBlock != null) {
+        final TailType caseTail = TailTypes.forSwitchLabel(switchBlock);
+        myResult.add(createInfoImpl(PsiType.BOOLEAN, ExpectedTypeInfo.TYPE_STRICTLY, PsiType.BOOLEAN, caseTail));
+      }
+    }
+
+    @Override
     public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       if (myExpr.equals(statement.getIteratedValue())) {
         PsiType type = statement.getIterationParameter().getType();
@@ -556,9 +574,9 @@ public final class ExpectedTypesProvider {
 
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {
-      if (variable instanceof PsiLocalVariable && myForCompletion && myHops < MAX_VAR_HOPS) {
-        PsiTypeElement typeElement = variable.getTypeElement();
-        if (typeElement != null && typeElement.isInferredType()) {
+      if (variable instanceof PsiLocalVariable local && myForCompletion && myHops < MAX_VAR_HOPS) {
+        PsiTypeElement typeElement = local.getTypeElement();
+        if (typeElement.isInferredType()) {
           PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
           if (block != null) {
             myHops++;

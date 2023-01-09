@@ -9,6 +9,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
@@ -21,7 +22,6 @@ import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.function.BiConsumer
 import java.util.function.BiPredicate
-import java.util.function.Consumer
 import java.util.function.UnaryOperator
 
 typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
@@ -29,8 +29,15 @@ typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
 /**
  * Describes layout of a plugin in the product distribution
  */
-class PluginLayout private constructor(val mainModule: String, mainJarNameWithoutExtension: String): BaseLayout() {
-  constructor(mainModule: String) : this(mainModule, convertModuleNameToFileName(mainModule))
+class PluginLayout private constructor(
+  val mainModule: String,
+  mainJarNameWithoutExtension: String,
+) : BaseLayout() {
+
+  constructor(mainModule: String) : this(
+    mainModule,
+    convertModuleNameToFileName(mainModule),
+  )
 
   private var mainJarName = "$mainJarNameWithoutExtension.jar"
 
@@ -69,7 +76,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
      * Creates the plugin layout description. The default plugin layout is composed of a jar with name {@code mainModuleName}.jar containing
      * production output of {@code mainModuleName} module, and the module libraries of {@code mainModuleName} with scopes 'Compile' and 'Runtime'
      * placed under 'lib' directory in a directory with name {@code mainModuleName}.
-     * If you need to include additional resources or modules into the plugin layout specify them in
+     * If you need to include additional resources or modules in the plugin layout, specify them in
      * {@code body} parameter. If you don't need to change the default layout there is no need to call this method at all, it's enough to
      * specify the plugin module in [org.jetbrains.intellij.build.ProductModulesLayout.bundledPluginModules],
      * [org.jetbrains.intellij.build.ProductModulesLayout.bundledPluginModules],
@@ -77,46 +84,45 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
      *
      * <p>Note that project-level libraries on which the plugin modules depend, are automatically put to 'IDE_HOME/lib' directory for all IDEs
      * which are compatible with the plugin. If this isn't desired (e.g. a library is used in a single plugin only, or if plugins where
-     * a library is used aren't bundled with IDEs, so we don't want to increase size of the distribution, you may invoke {@link PluginLayoutSpec#withProjectLibrary}
+     * a library is used aren't bundled with IDEs, so we don't want to increase the size of the distribution, you may invoke {@link PluginLayoutSpec#withProjectLibrary}
      * to include such a library to the plugin distribution.</p>
      * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
      */
     @JvmStatic
-    fun plugin(mainModuleName: String, body: Consumer<PluginLayoutSpec>): PluginLayout {
-      if (mainModuleName.isEmpty()) {
-        error("mainModuleName must be not empty")
-      }
-
+    fun plugin(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
       val layout = PluginLayout(mainModuleName)
+
       val spec = PluginLayoutSpec(layout)
-      body.accept(spec)
+      body(spec)
+
+      layout.mainJarName = spec.mainJarName
       layout.directoryName = spec.directoryName
-      if (!layout.includedModuleNames.contains(mainModuleName)) {
-        layout.withModule(mainModuleName, layout.mainJarName)
-      }
       layout.directoryNameSetExplicitly = spec.directoryNameSetExplicitly
       layout.bundlingRestrictions = spec.bundlingRestrictions.build()
+      layout.withModule(mainModuleName)
+
       return layout
     }
 
     @JvmStatic
-    fun plugin(modules: List<String>, builder: Consumer<PluginLayoutBuilder>): PluginLayout {
-      val layout = plugin(modules)
-      builder.accept(PluginLayoutSpec(layout))
+    fun plugin(moduleNames: List<String>, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout {
+      val layout = PluginLayout(mainModule = moduleNames.first())
+      moduleNames.forEach(layout::withModule)
+      body(SimplePluginLayoutSpec(layout))
       return layout
     }
 
     @JvmStatic
-    fun plugin(modules: List<String>): PluginLayout {
-      val layout = PluginLayout(mainModule = modules.first())
-      layout.setModules(modules)
+    fun plugin(moduleNames: List<String>): PluginLayout {
+      val layout = PluginLayout(mainModule = moduleNames.first())
+      moduleNames.forEach(layout::withModule)
       return layout
     }
 
     @JvmStatic
-    fun simplePlugin(mainModule: String): PluginLayout {
-      val layout = PluginLayout(mainModule)
-      layout.setModules(listOf(mainModule))
+    fun plugin(mainModule: String): PluginLayout {
+      val layout = PluginLayout(mainModule = mainModule)
+      layout.withModule(mainModule)
       return layout
     }
   }
@@ -129,11 +135,11 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
       super.withModule(moduleName)
     }
     else {
-      withModuleImpl(moduleName, mainJarName)
+      withModule(moduleName, mainJarName)
     }
   }
 
-  open class PluginLayoutBuilder(@JvmField protected val layout: PluginLayout) : BaseLayoutSpec(layout) {
+  sealed class PluginLayoutBuilder(@JvmField protected val layout: PluginLayout) : BaseLayoutSpec(layout) {
     /**
      * @param resourcePath path to resource file or directory relative to the plugin's main module content root
      * @param relativeOutputPath target path relative to the plugin root directory
@@ -165,13 +171,16 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     }
   }
 
+  @ApiStatus.Experimental
+  class SimplePluginLayoutSpec(layout: PluginLayout) : PluginLayoutBuilder(layout)
+
   // as a builder for PluginLayout, that ideally should be immutable
-  class PluginLayoutSpec(layout: PluginLayout): PluginLayoutBuilder(layout) {
+  class PluginLayoutSpec(layout: PluginLayout) : PluginLayoutBuilder(layout) {
     var directoryName: String = convertModuleNameToFileName(layout.mainModule)
       /**
        * Custom name of the directory (under 'plugins' directory) where the plugin should be placed. By default, the main module name is used
        * (with stripped {@code intellij} prefix and dots replaced by dashes).
-       * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep layout of old plugins unchanged.
+       * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep the layout of old plugins unchanged.
        */
       set(value) {
         field = value
@@ -222,9 +231,10 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     var mainJarName: String
       get() = layout.mainJarName
       /**
-       * Custom name of the main plugin JAR file. By default, the main module name with 'jar' extension is used (with stripped {@code intellij}
+       * Custom name of the main plugin JAR file.
+       * By default, the main module name with 'jar' an extension is used (with stripped {@code intellij}
        * prefix and dots replaced by dashes).
-       * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep layout of old plugins unchanged.
+       * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep the layout of old plugins unchanged.
        */
       set(value) {
         layout.mainJarName = value
@@ -277,7 +287,8 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     }
 
     /**
-     * By default, version of a plugin is equal to the build number of the IDE it's built with. This method allows to specify custom version evaluator.
+     * By default, a version of a plugin is equal to the build number of the IDE it's built with.
+     * This method allows specifying custom version evaluator.
      */
     fun withCustomVersion(versionEvaluator: VersionEvaluator) {
       layout.versionEvaluator = versionEvaluator
@@ -398,7 +409,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     }
 
     /**
-     * Enables support for symlinks and files with posix executable bit set, such as required by macOS.
+     * Enables support for symlinks and files with a posix executable bit set, such as required by macOS.
      */
     fun enableSymlinksAndExecutableResources() {
       layout.enableSymlinksAndExecutableResources = true
@@ -407,24 +418,5 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
 
   interface VersionEvaluator {
     fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String
-  }
-
-  internal fun setModules(modules: List<String>) {
-    check(moduleNameToJarPath.isEmpty())
-    check(_jarToModules.isEmpty())
-
-    for (module in modules) {
-      check(!module.isEmpty()) {
-        "module name must be not empty"
-      }
-
-      if (module.endsWith(".jps") || module.endsWith(".rt")) {
-        // must be in a separate JAR
-        withModuleImpl(module, "${convertModuleNameToFileName(module)}.jar")
-      }
-      else {
-        withModuleImpl(module, mainJarName)
-      }
-    }
   }
 }

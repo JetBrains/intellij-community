@@ -24,11 +24,13 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class BuildDataManager implements StorageOwner {
+public class BuildDataManager {
   private static final int VERSION = 39 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
   private static final Logger LOG = Logger.getInstance(BuildDataManager.class);
   private static final String SRC_TO_FORM_STORAGE = "src-form";
@@ -36,8 +38,7 @@ public class BuildDataManager implements StorageOwner {
   private static final String OUT_TARGET_STORAGE = "out-target";
   private static final String MAPPINGS_STORAGE = "mappings";
   private static final String SRC_TO_OUTPUT_FILE_NAME = "data";
-  private final ConcurrentMap<BuildTarget<?>, BuildTargetStorages> myTargetStorages = new ConcurrentHashMap<>(16, 0.75f,
-                                                                                                              getConcurrencyLevel());
+  private final ConcurrentMap<BuildTarget<?>, BuildTargetStorages> myTargetStorages = new ConcurrentHashMap<>(16, 0.75f, getConcurrencyLevel());
   private final OneToManyPathsMapping mySrcToFormMap;
   private final Mappings myMappings;
   private final BuildDataPaths myDataPaths;
@@ -45,24 +46,8 @@ public class BuildDataManager implements StorageOwner {
   private final OutputToTargetRegistry myOutputToTargetRegistry;
   private final File myVersionFile;
   private final PathRelativizerService myRelativizer;
-  private final StorageOwner myTargetStoragesOwner = new CompositeStorageOwner() {
-    @Override
-    public void clean() throws IOException {
-      try {
-        close();
-      }
-      finally {
-        FileUtil.delete(myDataPaths.getTargetsDataRoot());
-      }
-    }
 
-    @Override
-    protected Iterable<BuildTargetStorages> getChildStorages() {
-      return () -> myTargetStorages.values().iterator();
-    }
-  };
-
-  private final StorageProvider<SourceToOutputMappingImpl> SRC_TO_OUT_MAPPING_PROVIDER = new StorageProvider<SourceToOutputMappingImpl>() {
+  private final StorageProvider<SourceToOutputMappingImpl> SRC_TO_OUT_MAPPING_PROVIDER = new StorageProvider<>() {
     @NotNull
     @Override
     public SourceToOutputMappingImpl createStorage(File targetDataDir) throws IOException {
@@ -138,10 +123,9 @@ public class BuildDataManager implements StorageOwner {
     }
   }
 
-  @Override
-  public void clean() throws IOException {
+  public void clean(Consumer<Future<?>> asyncTaskCollector) throws IOException {
     try {
-      myTargetStoragesOwner.clean();
+      allTargetStorages(asyncTaskCollector).clean();
       myTargetStorages.clear();
     }
     finally {
@@ -169,9 +153,8 @@ public class BuildDataManager implements StorageOwner {
     saveVersion();
   }
 
-  @Override
   public void flush(boolean memoryCachesOnly) {
-    myTargetStoragesOwner.flush(memoryCachesOnly);
+    allTargetStorages().flush(memoryCachesOnly);
     myOutputToTargetRegistry.flush(memoryCachesOnly);
     mySrcToFormMap.flush(memoryCachesOnly);
     final Mappings mappings = myMappings;
@@ -182,12 +165,11 @@ public class BuildDataManager implements StorageOwner {
     }
   }
 
-  @Override
   public void close() throws IOException {
     try {
       myTargetsState.save();
       try {
-        myTargetStoragesOwner.close();
+        allTargetStorages().close();
       }
       finally {
         myTargetStorages.clear();
@@ -400,4 +382,29 @@ public class BuildDataManager implements StorageOwner {
       return myDelegate.getSourcesIterator();
     }
   }
+
+  @NotNull
+  private StorageOwner allTargetStorages() {
+    return allTargetStorages(f -> {});
+  }
+  
+  private StorageOwner allTargetStorages(Consumer<Future<?>> asyncTaskCollector) {
+    return new CompositeStorageOwner() {
+      @Override
+      public void clean() throws IOException {
+        try {
+          close();
+        }
+        finally {
+          asyncTaskCollector.accept(FileUtil.asyncDelete(myDataPaths.getTargetsDataRoot()));
+        }
+      }
+
+      @Override
+      protected Iterable<BuildTargetStorages> getChildStorages() {
+        return () -> myTargetStorages.values().iterator();
+      }
+    };
+  }
+
 }

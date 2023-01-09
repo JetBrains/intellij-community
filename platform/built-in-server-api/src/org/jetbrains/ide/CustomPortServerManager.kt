@@ -25,9 +25,4 @@ abstract class CustomPortServerManager {
   }
 
   abstract fun setManager(manager: CustomPortService?)
-
-  /**
-   * This server will accept only XML-RPC requests if this method returns not-null map of XMl-RPC handlers
-   */
-  open fun createXmlRpcHandlers(): Map<String, Any>? = null
 }

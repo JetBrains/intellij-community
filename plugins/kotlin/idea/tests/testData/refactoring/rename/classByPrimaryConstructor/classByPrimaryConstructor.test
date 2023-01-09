@@ -1,5 +1,6 @@
 {
   "type": "AUTO_DETECT",
   "mainFile": "test.kt",
-  "newName": "Bar"
+  "newName": "Bar",
+  "enabledInK2": true
 }

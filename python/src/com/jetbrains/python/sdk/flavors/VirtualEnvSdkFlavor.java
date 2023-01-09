@@ -49,10 +49,9 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
     return PyFlavorData.Empty.class;
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
-    return ReadAction.compute(() -> {
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
+    return ContainerUtil.map(ReadAction.compute(() -> {
       final List<String> candidates = new ArrayList<>();
       final VirtualFile baseDirFromModule = module == null ? null : BasePySdkExtKt.getBaseDir(module);
       final Path baseDirFromContext = context == null ? null : context.getUserData(PySdkExtKt.getBASE_DIR());
@@ -78,7 +77,7 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
       }
 
       return ContainerUtil.filter(candidates, PythonSdkUtil::isVirtualEnv);
-    });
+    }), Path::of);
   }
 
   @Nullable

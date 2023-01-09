@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.ChangeModifierRequest;
@@ -43,7 +44,7 @@ public final class HighlightControlFlowUtil {
 
   private HighlightControlFlowUtil() { }
 
-  static HighlightInfo checkMissingReturnStatement(@Nullable PsiCodeBlock body, @Nullable PsiType returnType) {
+  static HighlightInfo.Builder checkMissingReturnStatement(@Nullable PsiCodeBlock body, @Nullable PsiType returnType) {
     if (body == null || returnType == null || PsiType.VOID.equals(returnType.getDeepComponentType())) {
       return null;
     }
@@ -56,15 +57,18 @@ public final class HighlightControlFlowUtil {
         PsiJavaToken rBrace = body.getRBrace();
         PsiElement context = rBrace == null ? body.getLastChild() : rBrace;
         String message = JavaErrorBundle.message("missing.return.statement");
-        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(message).create();
+        HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(message);
         PsiElement parent = body.getParent();
         if (parent instanceof PsiMethod) {
           PsiMethod method = (PsiMethod)parent;
-          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddReturnFix(method));
-          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.VOID, true));
+          IntentionAction action1 = QUICK_FIX_FACTORY.createAddReturnFix(method);
+          info.registerFix(action1, null, null, null, null);
+          IntentionAction action = QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.VOID, true);
+          info.registerFix(action, null, null, null, null);
         }
         if (parent instanceof PsiLambdaExpression) {
-          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddReturnFix((PsiLambdaExpression)parent));
+          IntentionAction action = QUICK_FIX_FACTORY.createAddReturnFix((PsiLambdaExpression)parent);
+          info.registerFix(action, null, null, null, null);
         }
         return info;
       }
@@ -84,7 +88,7 @@ public final class HighlightControlFlowUtil {
     return ControlFlowFactory.getControlFlow(context, policy, ControlFlowOptions.create(true, true, true));
   }
 
-  static HighlightInfo checkUnreachableStatement(@Nullable PsiCodeBlock codeBlock) {
+  static HighlightInfo.Builder checkUnreachableStatement(@Nullable PsiCodeBlock codeBlock) {
     if (codeBlock == null) return null;
     // do not compute constant expressions for if() statement condition
     // see JLS 14.20 Unreachable Statements
@@ -101,9 +105,10 @@ public final class HighlightControlFlowUtil {
           if (parent instanceof PsiWhileStatement || parent instanceof PsiForStatement) {
             PsiExpression condition = ((PsiConditionalLoopStatement)parent).getCondition();
             if (Boolean.FALSE.equals(ExpressionUtils.computeConstantExpression(condition))) {
-              HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(condition)
-                .descriptionAndTooltip(JavaErrorBundle.message("unreachable.statement.false.condition")).create();
-              QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createSimplifyBooleanFix(condition, false));
+              HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(condition)
+                .descriptionAndTooltip(JavaErrorBundle.message("unreachable.statement.false.condition"));
+              IntentionAction action = QUICK_FIX_FACTORY.createSimplifyBooleanFix(condition, false);
+              info.registerFix(action, null, null, null, null);
               return info;
             }
           }
@@ -123,10 +128,11 @@ public final class HighlightControlFlowUtil {
           keyword = unreachableStatement.getFirstChild();
         }
         PsiElement element = keyword != null ? keyword : unreachableStatement;
-        HighlightInfo info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
-        QuickFixAction.registerQuickFixAction(
-          info, QUICK_FIX_FACTORY.createDeleteFix(unreachableStatement, QuickFixBundle.message("delete.unreachable.statement.fix.text")));
+        HighlightInfo.Builder info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description);
+        IntentionAction action =
+          QUICK_FIX_FACTORY.createDeleteFix(unreachableStatement, QuickFixBundle.message("delete.unreachable.statement.fix.text"));
+        info.registerFix(action, null, null, null, null);
         return info;
       }
     }
@@ -257,7 +263,7 @@ public final class HighlightControlFlowUtil {
     }
   }
 
-  static HighlightInfo checkRecordComponentInitialized(PsiRecordComponent component) {
+  static HighlightInfo.Builder checkRecordComponentInitialized(PsiRecordComponent component) {
     PsiClass aClass = component.getContainingClass();
     if (aClass == null) return null;
     PsiIdentifier identifier = component.getNameIdentifier();
@@ -271,35 +277,39 @@ public final class HighlightControlFlowUtil {
     if (field == null) return null;
     if (variableDefinitelyAssignedIn(field, body)) return null;
     String description = JavaErrorBundle.message("record.component.not.initialized", field.getName());
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(description).create();
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(description);
   }
 
-  static HighlightInfo checkFinalFieldInitialized(@NotNull PsiField field) {
+  static HighlightInfo.Builder checkFinalFieldInitialized(@NotNull PsiField field) {
     if (!field.hasModifierProperty(PsiModifier.FINAL)) return null;
     if (isFieldInitializedAfterObjectConstruction(field)) return null;
 
     String description = JavaErrorBundle.message("variable.not.initialized", field.getName());
     TextRange range = HighlightNamesUtil.getFieldDeclarationTextRange(field);
-    HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(description).create();
-    QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(field), QUICK_FIX_FACTORY.createCreateConstructorParameterFromFieldFix(field));
-    QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(field), QUICK_FIX_FACTORY.createInitializeFinalFieldInConstructorFix(field));
-    QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddVariableInitializerFix(field));
+    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(description);
+    IntentionAction action3 = QUICK_FIX_FACTORY.createCreateConstructorParameterFromFieldFix(field);
+    builder.registerFix(action3, null, null, HighlightMethodUtil.getFixRange(field), null);
+    IntentionAction action2 = QUICK_FIX_FACTORY.createInitializeFinalFieldInConstructorFix(field);
+    builder.registerFix(action2, null, null, HighlightMethodUtil.getFixRange(field), null);
+    IntentionAction action1 = QUICK_FIX_FACTORY.createAddVariableInitializerFix(field);
+    builder.registerFix(action1, null, null, null, null);
     PsiClass containingClass = field.getContainingClass();
     if (containingClass != null && !containingClass.isInterface()) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createModifierListFix(field, PsiModifier.FINAL, false, false));
+      IntentionAction action = QUICK_FIX_FACTORY.createModifierListFix(field, PsiModifier.FINAL, false, false);
+      builder.registerFix(action, null, null, null, null);
     }
-    return highlightInfo;
+    return builder;
   }
 
 
-  public static HighlightInfo checkVariableInitializedBeforeUsage(@NotNull PsiReferenceExpression expression,
+  public static HighlightInfo.Builder checkVariableInitializedBeforeUsage(@NotNull PsiReferenceExpression expression,
                                                                   @NotNull PsiVariable variable,
                                                                   @NotNull Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems,
                                                                   @NotNull PsiFile containingFile) {
     return checkVariableInitializedBeforeUsage(expression, variable, uninitializedVarProblems, containingFile, false);
   }
 
-  public static HighlightInfo checkVariableInitializedBeforeUsage(@NotNull PsiReferenceExpression expression,
+  public static HighlightInfo.Builder checkVariableInitializedBeforeUsage(@NotNull PsiReferenceExpression expression,
                                                                   @NotNull PsiVariable variable,
                                                                   @NotNull Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems,
                                                                   @NotNull PsiFile containingFile,
@@ -440,17 +450,21 @@ public final class HighlightControlFlowUtil {
     if (codeBlockProblems.contains(expression)) {
       String name = expression.getElement().getText();
       String description = JavaErrorBundle.message("variable.not.initialized", name);
-      HighlightInfo highlightInfo =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddVariableInitializerFix(variable));
+      HighlightInfo.Builder builder =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description);
+      IntentionAction action1 = QUICK_FIX_FACTORY.createAddVariableInitializerFix(variable);
+      builder.registerFix(action1, null, null, null, null);
       if (variable instanceof PsiLocalVariable) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, HighlightFixUtil.createInsertSwitchDefaultFix(variable, topBlock, expression));
+        IntentionAction action = HighlightFixUtil.createInsertSwitchDefaultFix(variable, topBlock, expression);
+        if (action != null) {
+          builder.registerFix(action, null, null, null, null);
+        }
       }
       if (variable instanceof PsiField) {
         ChangeModifierRequest request = MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false);
-        QuickFixAction.registerQuickFixActions(highlightInfo, null, JvmElementActionFactories.createModifierActions((PsiField)variable, request));
+        QuickFixAction.registerQuickFixActions(builder, null, JvmElementActionFactories.createModifierActions((PsiField)variable, request));
       }
-      return highlightInfo;
+      return builder;
     }
 
     return null;
@@ -507,7 +521,7 @@ public final class HighlightControlFlowUtil {
   }
 
 
-  public static HighlightInfo checkFinalVariableMightAlreadyHaveBeenAssignedTo(@NotNull PsiVariable variable,
+  public static HighlightInfo.Builder checkFinalVariableMightAlreadyHaveBeenAssignedTo(@NotNull PsiVariable variable,
                                                                                @NotNull PsiReferenceExpression expression,
                                                                                @NotNull Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems) {
     if (!PsiUtil.isAccessedForWriting(expression)) return null;
@@ -531,10 +545,11 @@ public final class HighlightControlFlowUtil {
 
     String description =
       JavaErrorBundle.message(inLoop ? "variable.assigned.in.loop" : "variable.already.assigned", variable.getName());
-    HighlightInfo highlightInfo =
-      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+    HighlightInfo.Builder highlightInfo =
+      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description);
     if (canDefer) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createDeferFinalAssignmentFix(variable, expression));
+      IntentionAction action = QUICK_FIX_FACTORY.createDeferFinalAssignmentFix(variable, expression);
+      highlightInfo.registerFix(action, null, null, null, null);
     }
     HighlightFixUtil.registerMakeNotFinalAction(variable, highlightInfo);
     return highlightInfo;
@@ -627,7 +642,7 @@ public final class HighlightControlFlowUtil {
   }
 
 
-  static HighlightInfo checkCannotWriteToFinal(@NotNull PsiExpression expression, @NotNull PsiFile containingFile) {
+  static HighlightInfo.Builder checkCannotWriteToFinal(@NotNull PsiExpression expression, @NotNull PsiFile containingFile) {
     PsiExpression operand = null;
     if (expression instanceof PsiAssignmentExpression) {
       operand = ((PsiAssignmentExpression)expression).getLExpression();
@@ -642,14 +657,15 @@ public final class HighlightControlFlowUtil {
     if (canWrite) return null;
     String name = variable.getName();
     String description = JavaErrorBundle.message("assignment.to.final.variable", name);
-    HighlightInfo highlightInfo =
-      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(reference).descriptionAndTooltip(description).create();
+    HighlightInfo.Builder highlightInfo =
+      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(reference).descriptionAndTooltip(description);
     PsiElement scope = getElementVariableReferencedFrom(variable, expression);
     if (scope == null || variable instanceof PsiField) {
       HighlightFixUtil.registerMakeNotFinalAction(variable, highlightInfo);
     }
     else {
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, scope));
+      IntentionAction action = QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, scope);
+      highlightInfo.registerFix(action, null, null, null, null);
     }
     return highlightInfo;
   }
@@ -689,7 +705,7 @@ public final class HighlightControlFlowUtil {
   }
 
 
-  static HighlightInfo checkVariableMustBeFinal(@NotNull PsiVariable variable,
+  static HighlightInfo.Builder checkVariableMustBeFinal(@NotNull PsiVariable variable,
                                                 @NotNull PsiJavaCodeReferenceElement context,
                                                 @NotNull LanguageLevel languageLevel) {
     if (variable.hasModifierProperty(PsiModifier.FINAL)) return null;
@@ -709,12 +725,13 @@ public final class HighlightControlFlowUtil {
       String description = JavaErrorBundle
         .message(isToBeEffectivelyFinal ? "variable.must.be.final.or.effectively.final" : "variable.must.be.final", context.getText());
 
-      HighlightInfo highlightInfo =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(description).create();
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, scope));
+      HighlightInfo.Builder highlightInfo =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(description);
+      IntentionAction action = QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, scope);
+      highlightInfo.registerFix(action, null, null, null, null);
       return highlightInfo;
     }
-    HighlightInfo finalInsideLambdaInfo = checkWriteToFinalInsideLambda(variable, context);
+    HighlightInfo.Builder finalInsideLambdaInfo = checkWriteToFinalInsideLambda(variable, context);
     if (finalInsideLambdaInfo != null) {
       return finalInsideLambdaInfo;
     }
@@ -722,7 +739,7 @@ public final class HighlightControlFlowUtil {
   }
 
   @Nullable
-  private static HighlightInfo checkWriteToFinalInsideLambda(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
+  private static HighlightInfo.Builder checkWriteToFinalInsideLambda(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
     PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(context, PsiLambdaExpression.class);
     if (lambdaExpression != null && !PsiTreeUtil.isAncestor(lambdaExpression, variable, true)) {
       PsiElement parent = variable.getParent();
@@ -735,10 +752,15 @@ public final class HighlightControlFlowUtil {
       }
       if (!isEffectivelyFinal(variable, lambdaExpression, context)) {
         String text = JavaErrorBundle.message("lambda.variable.must.be.final");
-        HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(text).create();
-        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, lambdaExpression));
-        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createMakeVariableEffectivelyFinalFix(variable));
-        return ErrorFixExtensionPoint.registerFixes(highlightInfo, context, "lambda.variable.must.be.final");
+        HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(text);
+        IntentionAction action1 = QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, lambdaExpression);
+        builder.registerFix(action1, null, null, null, null);
+        IntentionAction action = QUICK_FIX_FACTORY.createMakeVariableEffectivelyFinalFix(variable);
+        if (action != null) {
+          builder.registerFix(action, null, null, null, null);
+        }
+        ErrorFixExtensionPoint.registerFixes(builder, context, "lambda.variable.must.be.final");
+        return builder;
       }
     }
     return null;
@@ -749,15 +771,17 @@ public final class HighlightControlFlowUtil {
    * <p>Any variable that is used but not declared in the guarding expression of a guarded pattern must either be final or effectively final.
    */
   @Nullable
-  private static HighlightInfo checkFinalUsageInsideGuardedPattern(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
+  private static HighlightInfo.Builder checkFinalUsageInsideGuardedPattern(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
     PsiCaseLabelElement refGuardedPattern = PsiTreeUtil.getParentOfType(context, PsiGuardedPattern.class, PsiPatternGuard.class);
     if (refGuardedPattern == null) return null;
     PsiCaseLabelElement varGuardedPattern = PsiTreeUtil.getParentOfType(variable, PsiGuardedPattern.class, PsiPatternGuard.class);
     if (refGuardedPattern != varGuardedPattern && !isEffectivelyFinal(variable, refGuardedPattern, context)) {
       String message = JavaErrorBundle.message("guarded.pattern.variable.must.be.final");
-      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(message).create();
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, refGuardedPattern));
-      return ErrorFixExtensionPoint.registerFixes(info, context, "guarded.pattern.variable.must.be.final");
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(message);
+      IntentionAction action = QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, refGuardedPattern);
+      builder.registerFix(action, null, null, null, null);
+      ErrorFixExtensionPoint.registerFixes(builder, context, "guarded.pattern.variable.must.be.final");
+      return builder;
     }
     return null;
   }
@@ -851,7 +875,7 @@ public final class HighlightControlFlowUtil {
     return null;
   }
 
-  static HighlightInfo checkInitializerCompleteNormally(@NotNull PsiClassInitializer initializer) {
+  static HighlightInfo.Builder checkInitializerCompleteNormally(@NotNull PsiClassInitializer initializer) {
     PsiCodeBlock body = initializer.getBody();
     // unhandled exceptions already reported
     try {
@@ -859,7 +883,7 @@ public final class HighlightControlFlowUtil {
       int completionReasons = ControlFlowUtil.getCompletionReasons(controlFlow, 0, controlFlow.getSize());
       if (!BitUtil.isSet(completionReasons, ControlFlowUtil.NORMAL_COMPLETION_REASON)) {
         String description = JavaErrorBundle.message("initializer.must.be.able.to.complete.normally");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(body).descriptionAndTooltip(description).create();
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(body).descriptionAndTooltip(description);
       }
     }
     catch (AnalysisCanceledException e) {

@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.actions.ShowCommandQueueAction;
 import icons.PythonIcons;
@@ -49,8 +48,8 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
     getSwitchConsoleActionPresentation().setIcon(PythonIcons.Python.PythonConsole);
     getSwitchConsoleActionPresentation().setText(PyBundle.messagePointer("run.configuration.show.command.line.action.name"));
 
-    List<AnAction> actions = ContainerUtil.newArrayList(PyConsoleUtil.createTabCompletionAction(getPydevConsoleView()));
-    actions.add(PyConsoleUtil.createInterruptAction(getPydevConsoleView()));
+    List<AnAction> actions = List.of(PyConsoleUtil.createTabCompletionAction(getPydevConsoleView()),
+    PyConsoleUtil.createInterruptAction(getPydevConsoleView()));
     AbstractConsoleRunnerWithHistory.registerActionShortcuts(actions, getPydevConsoleView().getEditor().getComponent());
     boolean isUseSoftWraps = EditorSettingsExternalizable.getInstance().isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE);
     getPydevConsoleView().getEditor().getSettings().setUseSoftWraps(isUseSoftWraps);

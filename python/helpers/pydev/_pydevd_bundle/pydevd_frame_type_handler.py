@@ -71,7 +71,7 @@ class Handler(object):
 
 
 class DunderVarsHandler(Handler):
-    def handle(self, key, value, hidden_ns, evaluate_full_value, user_type_renderers):
+    def handle(self, key, value, hidden_ns, evaluate_full_value, user_type_renderers=None):
         self.regular_handle(key, value, hidden_ns, evaluate_full_value, user_type_renderers)
 
     @staticmethod
@@ -80,7 +80,7 @@ class DunderVarsHandler(Handler):
 
 
 class SpecialVarsHandler(Handler):
-    def handle(self, key, value, hidden_ns, evaluate_full_value, user_type_renderers):
+    def handle(self, key, value, hidden_ns, evaluate_full_value, user_type_renderers=None):
         self.regular_handle(key, value, hidden_ns, evaluate_full_value, user_type_renderers)
 
     @staticmethod
@@ -89,7 +89,7 @@ class SpecialVarsHandler(Handler):
 
 
 class IpythonVarsHandler(Handler):
-    def handle(self, key, value, hidden_ns, evaluate_full_value, user_type_renderers):
+    def handle(self, key, value, hidden_ns, evaluate_full_value, user_type_renderers=None):
         self.regular_handle(key, value, hidden_ns, evaluate_full_value, user_type_renderers)
 
     @staticmethod
@@ -97,8 +97,17 @@ class IpythonVarsHandler(Handler):
         return hidden_ns is not None and key in hidden_ns
 
 
+class PytestVarsHandler(Handler):
+    def handle(self, key, value, hidden_ns, evaluate_full_value, user_type_renderers=None):
+        self.regular_handle(key, value, hidden_ns, evaluate_full_value, user_type_renderers)
+
+    @staticmethod
+    def is_belong_to_group(key, value, hidden_ns):
+        return str(key).startswith('@')
+
+
 class ReturnVarsHandler(Handler):
-    def handle(self, key, value, hidden_ns, evaluate_full_value, user_type_renderers):
+    def handle(self, key, value, hidden_ns, evaluate_full_value, user_type_renderers=None):
         self.regular_handle(key, value, hidden_ns, evaluate_full_value, True, user_type_renderers)
 
     @staticmethod
@@ -107,13 +116,13 @@ class ReturnVarsHandler(Handler):
 
 
 class AnotherVarsHandler(Handler):
-    def handle(self, key, value, hidden_ns, evaluate_full_value, user_type_renderers):
+    def handle(self, key, value, hidden_ns, evaluate_full_value, user_type_renderers=None):
         if is_special_var(key, value):
             self.lst.append(self.fun(key, value, hidden_ns, evaluate_full_value, user_type_renderers))
 
 
 class DefaultVarHandler(Handler):
-    def handle(self, key, value, hidden_ns, evaluate_full_value, user_type_renderers):
+    def handle(self, key, value, hidden_ns, evaluate_full_value, user_type_renderers=None):
         self.lst.append(self.fun(key, value, evaluate_full_value, user_type_renderers))
 
 
@@ -123,7 +132,7 @@ class DummyVarHandler(Handler):
         self.cls = cls
         self.added_var = False
 
-    def handle(self, key, value, hidden_ns, evaluate_full_value, user_type_renderers):
+    def handle(self, key, value, hidden_ns, evaluate_full_value, user_type_renderers=None):
         if self.cls.is_belong_to_group(key, value, hidden_ns):
             if self.added_var:
                 return
@@ -221,6 +230,11 @@ class VarsHandler:
         ).set_next(
             DummyVarHandler(
                 lambda: self.func(DUMMY_SPECIAL_VAR, DUMMY_SPECIAL_VAR),
+                PytestVarsHandler
+            )
+        ).set_next(
+            DummyVarHandler(
+                lambda: self.func(DUMMY_SPECIAL_VAR, DUMMY_SPECIAL_VAR),
                 DunderVarsHandler
             )
         ).set_next(
@@ -261,6 +275,8 @@ class VarsHandler:
             SpecialVarsHandler(special_lambda)
         ).set_next(
             IpythonVarsHandler(special_lambda)
+        ).set_next(
+            PytestVarsHandler(special_lambda)
         ).set_next(
             AnotherVarsHandler(special_lambda)
         )

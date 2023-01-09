@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -70,9 +70,9 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
   @Nullable
   private static StackFrameDescriptorImpl getSelectedStackFrameDescriptor(AnActionEvent e) {
     DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
-    if(selectedNode != null) {
+    if (selectedNode != null) {
       NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
-      if(descriptor instanceof StackFrameDescriptorImpl) {
+      if (descriptor instanceof StackFrameDescriptorImpl) {
         return (StackFrameDescriptorImpl)descriptor;
       }
     }
@@ -104,7 +104,7 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
       enable = xDropFrameHandler.canDrop(xStackFrame);
     }
 
-    if((ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace()))
+    if ((ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace()))
         && xDropFrameHandler != null) {
       e.getPresentation().setEnabled(enable);
     }

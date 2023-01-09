@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.dfaassist;
 
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
@@ -23,6 +23,7 @@ public interface DfaAssistProvider {
 
   /**
    * A sentinel to represent null constant.
+   *
    * @see #getJdiValueForDfaVariable(StackFrameProxyEx, DfaVariableValue, PsiElement)
    */
   Value NullConst = new Value() {
@@ -38,7 +39,8 @@ public interface DfaAssistProvider {
 
   /**
    * Quick check whether code location matches the source code in the editor
-   * @param element PsiElement in the editor
+   *
+   * @param element  PsiElement in the editor
    * @param location location reported by debugger
    * @return true if debugger location likely matches to the editor location;
    * false if definitely doesn't match (in this case, DFA Assist will be turned off)
@@ -77,7 +79,7 @@ public interface DfaAssistProvider {
   @NotNull DebuggerDfaListener createListener();
 
   /**
-   * @param anchor a context PsiElement previously returned by {@link #getAnchor(PsiElement)}
+   * @param anchor       a context PsiElement previously returned by {@link #getAnchor(PsiElement)}
    * @param jvmClassName JVM class name like "java/lang/String"
    * @return a {@link TypeConstraint} suitable for the current language;
    * {@link TypeConstraints#TOP} if class is not resolved

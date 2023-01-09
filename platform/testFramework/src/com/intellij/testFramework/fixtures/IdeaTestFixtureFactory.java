@@ -69,5 +69,5 @@ public abstract class IdeaTestFixtureFactory {
   public abstract BareTestFixture createBareFixture();
 
   @NotNull
-  public abstract SdkTestFixture createSdkFixture(@NotNull SdkType sdkType, @NotNull Predicate<String> versionFilter);
+  public abstract SdkTestFixture createSdkFixture(@NotNull SdkType sdkType, @NotNull Predicate<? super String> versionFilter);
 }

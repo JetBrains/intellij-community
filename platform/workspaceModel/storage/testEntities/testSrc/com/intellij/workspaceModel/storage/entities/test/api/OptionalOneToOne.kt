@@ -4,8 +4,11 @@ package com.intellij.workspaceModel.storage.entities.test.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -15,12 +18,15 @@ interface OptionalOneToOneParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OptionalOneToOneParentEntity, ModifiableWorkspaceEntity<OptionalOneToOneParentEntity>, ObjBuilder<OptionalOneToOneParentEntity> {
+  interface Builder : OptionalOneToOneParentEntity, WorkspaceEntity.Builder<OptionalOneToOneParentEntity>, ObjBuilder<OptionalOneToOneParentEntity> {
     override var entitySource: EntitySource
     override var child: OptionalOneToOneChildEntity?
   }
 
   companion object : Type<OptionalOneToOneParentEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OptionalOneToOneParentEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -43,13 +49,16 @@ interface OptionalOneToOneChildEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OptionalOneToOneChildEntity, ModifiableWorkspaceEntity<OptionalOneToOneChildEntity>, ObjBuilder<OptionalOneToOneChildEntity> {
+  interface Builder : OptionalOneToOneChildEntity, WorkspaceEntity.Builder<OptionalOneToOneChildEntity>, ObjBuilder<OptionalOneToOneChildEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var parent: OptionalOneToOneParentEntity?
   }
 
   companion object : Type<OptionalOneToOneChildEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OptionalOneToOneChildEntity {
       val builder = builder()
       builder.data = data

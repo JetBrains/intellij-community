@@ -79,7 +79,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiExpression expression = tryCast(descriptor.getPsiElement(), PsiExpression.class);
       if (expression == null) return;
       final PsiVariable toRemove;
@@ -387,8 +387,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
     @Override
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
-      final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
-      if (parent instanceof PsiAssignmentExpression) {
+      if (PsiUtil.isAccessedForWriting(expression)) {
         if (expression.isReferenceTo(myKey) ||
             EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(myMapReference, expression)) {
           myTainted = true;

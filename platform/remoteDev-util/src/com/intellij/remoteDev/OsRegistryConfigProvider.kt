@@ -19,12 +19,28 @@ class OsRegistryConfigProvider(private val configName: String) {
   }
 
   init {
-    require(!configName.contains(' ')) { "'$configName' should not contains spaces" }
+    require(!configName.contains(' ')) { "'$configName' should not contain spaces" }
   }
 
   class OsRegistrySystemSetting<T>(val value: T, val osOriginLocation: String?)
 
   private val keyRegex = Regex("^\\w+$")
+
+  /**
+   * Gets value for [key] from system storage and tries to convert it into boolean
+   * "true" string (with any casing) will be interpreted as true
+   * "false" string (with any casing) will be interpreted as false
+   * defaultValue otherwise
+   */
+  fun `is`(key: String, defaultValue: Boolean): Boolean {
+    val osSetting = get(key)
+    if (osSetting == null) return defaultValue
+    if (osSetting.value.lowercase() == "true") return true
+    if (osSetting.value.lowercase() == "false") return false
+    logger.warn("Unknown value '${osSetting.value}' from ${osSetting.osOriginLocation} (only 'true' or 'false' are recognized). Assume '$defaultValue'")
+    return defaultValue
+  }
+
   fun get(key: String): OsRegistrySystemSetting<String>? {
     require(key.matches(keyRegex)) { "Key '$key' does not match regex '${keyRegex.pattern}'" }
 

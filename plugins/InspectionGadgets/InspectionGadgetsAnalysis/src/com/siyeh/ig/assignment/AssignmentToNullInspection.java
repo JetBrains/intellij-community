@@ -17,7 +17,7 @@ package com.siyeh.ig.assignment;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -28,7 +28,8 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class AssignmentToNullInspection extends BaseInspection {
 
@@ -68,9 +69,10 @@ public class AssignmentToNullInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "assignment.to.null.option"), this, "ignoreAssignmentsToFields");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreAssignmentsToFields", InspectionGadgetsBundle.message(
+        "assignment.to.null.option")));
   }
 
   @Override

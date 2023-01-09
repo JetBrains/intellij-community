@@ -1,12 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Target;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
@@ -26,10 +24,11 @@ import static java.nio.file.StandardOpenOption.WRITE;
 /**
  * This implementation keeps all FSRecords always in RAM, but it still loads them from file,
  * and persist changes into the file on {@linkplain #close()}
- *
+ * <p>
  * Intended for use as a reference implementation, to compare other impls against
  * (e.g. by performance)
  */
+@ApiStatus.Internal
 public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStorage {
 
   /* ================ RECORD FIELDS LAYOUT (in ints = 4 bytes) ======================================== */
@@ -71,7 +70,7 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
   private final AtomicInteger allocatedRecordsCount = new AtomicInteger(0);
   //TODO RC: it would be better to directly access PersistentFSHeaders.HEADER_GLOBAL_MOD_COUNT_OFFSET position in a bytebuffer,
   //         but issue is with incrementAndGet(): VarHandle doesn't have this method. It could be emulated with CAS, but this is
-  //         slightly less effective, and also
+  //         slightly less effective
   private final AtomicInteger globalModCount = new AtomicInteger(0);
   private final AtomicBoolean dirty = new AtomicBoolean(false);
 
@@ -159,7 +158,7 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
 
   @Override
   public boolean setFlags(final int recordId,
-                          @PersistentFS.Attributes final int newFlags) throws IOException {
+                          final @PersistentFS.Attributes int newFlags) throws IOException {
     final boolean reallyChanged = getIntField(recordId, FLAGS_OFFSET) != newFlags;
     if (reallyChanged) {
       setIntField(recordId, FLAGS_OFFSET, newFlags);
@@ -179,7 +178,7 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
   }
 
   @Override
-  public boolean putLength(final int recordId,
+  public boolean setLength(final int recordId,
                            final long newLength) throws IOException {
     final boolean reallyChanged = getLongField(recordId, LENGTH_OFFSET) != newLength;
     if (reallyChanged) {
@@ -194,7 +193,7 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
   }
 
   @Override
-  public boolean putTimestamp(final int recordId,
+  public boolean setTimestamp(final int recordId,
                               final long newTimestamp) throws IOException {
     final boolean reallyChanged = getLongField(recordId, TIMESTAMP_OFFSET) != newTimestamp;
     if (reallyChanged) {
@@ -242,14 +241,14 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
     if (overwriteAttrRef) {
       setAttributeRecordId(recordId, 0);
     }
-    putTimestamp(recordId, timestamp);
-    putLength(recordId, length);
+    setTimestamp(recordId, timestamp);
+    setLength(recordId, length);
   }
 
   @Override
   public void cleanRecord(final int recordId) throws IOException {
     allocatedRecordsCount.updateAndGet(allocatedRecords -> Math.max(recordId + 1, allocatedRecords));
-    //fill record with zeros with 4 bytes
+    //fill record with zeros, by 4 bytes at once:
     final int recordStartAtBytes = offsetOfInBytes(recordId, 0);
     for (int wordNo = 0; wordNo < RECORD_SIZE_IN_INTS; wordNo++) {
       final int offset = recordStartAtBytes + wordNo * Integer.BYTES;
@@ -431,16 +430,10 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
   }
 
   private void markDirty() {
-    dirty.compareAndSet(false, true);
+    dirty.set(true);
   }
 
   private void markNotDirty() {
-    dirty.compareAndSet(true, false);
-  }
-
-
-  @MagicConstant(flagsFromClass = PersistentFSHeaders.class)
-  @Target(ElementType.TYPE_USE)
-  public @interface HeaderOffset {
+    dirty.set(false);
   }
 }

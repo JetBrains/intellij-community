@@ -11,6 +11,9 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10ShortenReferencesFacility"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.codeInsight.overrideImplement.OverrideImplementFacility"
+            serviceImplementation="org.jetbrains.kotlin.idea.core.overrideImplement.Fe10OverrideImplementFacility"/>
 
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.util.FirPluginOracleService"
@@ -82,6 +85,7 @@
                           implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinExpressionTypeProviderDescriptorsImpl"/>
 
     <testCreator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.testIntegration.KotlinTestCreator"/>
+    <testDiffProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.testIntegration.KotlinTestDiffProvider"/>
     <testFinder implementation="org.jetbrains.kotlin.idea.testIntegration.KotlinTestFinder"/>
 
     <lang.jvm.actions.jvmElementActionsFactory
@@ -98,6 +102,7 @@
     <lang.documentationProvider language="JAVA" implementationClass="org.jetbrains.kotlin.idea.KotlinDocumentationProvider" order="first"/>
     <documentationProvider implementation="org.jetbrains.kotlin.idea.KotlinDocumentationProvider"/>
 
+    <definitionsScopedSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDefinitionsSearcher"/>
 
   </extensions>
 
@@ -216,7 +221,6 @@
     <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightImplicitItHandlerFactory"/>
 
     <overridingMethodsSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinOverridingMethodsWithGenericsSearcher"/>
-    <annotatedElementsSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinAnnotatedElementsSearcher"/>
 
     <iconProvider implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10KotlinIconProvider"/>
 

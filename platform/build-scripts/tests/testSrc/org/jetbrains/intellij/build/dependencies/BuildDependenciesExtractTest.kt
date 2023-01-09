@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.dependencies
 
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
@@ -24,6 +23,7 @@ import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
+import kotlin.io.path.exists
 
 @RunWith(Parameterized::class)
 class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {

@@ -1,4 +1,4 @@
-// "Create field 'field'" "true"
+// "Create field 'field'" "true-preview"
 import java.util.*;
 class A {
     private Map<String, String> field<caret>;

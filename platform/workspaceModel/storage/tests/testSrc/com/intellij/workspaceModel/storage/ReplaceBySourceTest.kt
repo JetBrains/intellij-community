@@ -419,7 +419,7 @@ class ReplaceBySourceTest {
   @RepeatedTest(10)
   fun `entity with soft reference`() {
     val named = builder.addNamedEntity("MyName")
-    builder.addWithSoftLinkEntity(named.persistentId)
+    builder.addWithSoftLinkEntity(named.symbolicId)
     resetChanges()
     builder.assertConsistency()
 
@@ -440,7 +440,7 @@ class ReplaceBySourceTest {
   @RepeatedTest(10)
   fun `entity with soft reference remove reference`() {
     val named = builder.addNamedEntity("MyName")
-    val linked = builder.addWithListSoftLinksEntity("name", listOf(named.persistentId))
+    val linked = builder.addWithListSoftLinksEntity("name", listOf(named.symbolicId))
     resetChanges()
     builder.assertConsistency()
 
@@ -460,8 +460,8 @@ class ReplaceBySourceTest {
   fun `replace by source with composite id`() {
     replacement = createEmptyBuilder()
     val namedEntity = replacement.addNamedEntity("MyName")
-    val composedEntity = replacement.addComposedIdSoftRefEntity("AnotherName", namedEntity.persistentId)
-    replacement.addComposedLinkEntity(composedEntity.persistentId)
+    val composedEntity = replacement.addComposedIdSoftRefEntity("AnotherName", namedEntity.symbolicId)
+    replacement.addComposedLinkEntity(composedEntity.symbolicId)
 
     replacement.assertConsistency()
     rbsAllSources()
@@ -1574,6 +1574,34 @@ class ReplaceBySourceTest {
     }
 
     builder.changeLog.clear()
+
+    rbsAllSources()
+
+    builder.assertConsistency()
+  }
+
+  @RepeatedTest(10)
+  fun `move left entity`() {
+    val left0 = builder add LeftEntity(MySource)
+    val left1 = builder add LeftEntity(MySource) {
+      this.parentEntity = left0
+    }
+    builder add LeftEntity(MySource) {
+      this.parentEntity = left1
+    }
+    builder add LeftEntity(MySource)
+
+    val leftR0 = replacement add LeftEntity(MySource)
+    val leftR1 = replacement add LeftEntity(MySource) {
+      this.parentEntity = leftR0
+    }
+    replacement add LeftEntity(MySource) {
+      this.parentEntity = leftR1
+    }
+    val leftR3 = replacement add LeftEntity(MySource)
+    replacement add LeftEntity(MySource) {
+      this.children = listOf(leftR3, leftR0)
+    }
 
     rbsAllSources()
 

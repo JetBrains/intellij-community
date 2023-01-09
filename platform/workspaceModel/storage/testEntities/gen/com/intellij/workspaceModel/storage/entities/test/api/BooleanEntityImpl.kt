@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -15,6 +14,9 @@ import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -32,11 +34,15 @@ open class BooleanEntityImpl(val dataSource: BooleanEntityData) : BooleanEntity,
 
   override val data: Boolean get() = dataSource.data
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: BooleanEntityData?) : ModifiableWorkspaceEntityBase<BooleanEntity>(), BooleanEntity.Builder {
+  class Builder(result: BooleanEntityData?) : ModifiableWorkspaceEntityBase<BooleanEntity, BooleanEntityData>(
+    result), BooleanEntity.Builder {
     constructor() : this(BooleanEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -56,7 +62,7 @@ open class BooleanEntityImpl(val dataSource: BooleanEntityData) : BooleanEntity,
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -79,8 +85,7 @@ open class BooleanEntityImpl(val dataSource: BooleanEntityData) : BooleanEntity,
       dataSource as BooleanEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.data != dataSource.data) this.data = dataSource.data
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -88,7 +93,7 @@ open class BooleanEntityImpl(val dataSource: BooleanEntityData) : BooleanEntity,
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -97,11 +102,10 @@ open class BooleanEntityImpl(val dataSource: BooleanEntityData) : BooleanEntity,
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
-    override fun getEntityData(): BooleanEntityData = result ?: super.getEntityData() as BooleanEntityData
     override fun getEntityClass(): Class<BooleanEntity> = BooleanEntity::class.java
   }
 }
@@ -110,22 +114,17 @@ class BooleanEntityData : WorkspaceEntityData<BooleanEntity>() {
   var data: Boolean = false
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<BooleanEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<BooleanEntity> {
     val modifiable = BooleanEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): BooleanEntity {
     return getCached(snapshot) {
       val entity = BooleanEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

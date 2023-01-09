@@ -6,17 +6,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.google.gson.Gson
 import com.intellij.execution.processTools.getResultStdoutStr
+import com.intellij.execution.processTools.mapFlat
+import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.createProcessWithResult
-import com.intellij.util.io.exists
-import com.jetbrains.python.FullPathOnTarget
 import com.jetbrains.python.psi.LanguageLevel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.exists
 
 /**
  * @see [com.jetbrains.env.conda.PyCondaTest]
@@ -34,24 +34,24 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
         addParameters("info", "--envs", "--json")
       }.build()
       val json = env.createProcessWithResult(commandLine)
-        .getOrElse { return@withContext Result.failure(it) }
-        .getResultStdoutStr()
-        .await()
+        .mapFlat { it.getResultStdoutStr() }
         .getOrElse { return@withContext Result.failure(it) }
 
-      val info = Gson().fromJson(json, CondaInfoJson::class.java)
-      val fileSeparator = request.targetPlatform.platform.fileSeparator
-      val result = info.envs.distinctBy { it.trim().lowercase(Locale.getDefault()) }.map { envPath ->
-        // Env name is the basename for envs inside of default location
-        val envName = if (info.envs_dirs.any { envPath.startsWith(it) }) envPath.split(fileSeparator).last() else null
-        val base = envPath.equals(info.conda_prefix, ignoreCase = true)
-        PyCondaEnv(envName?.let { PyCondaEnvIdentity.NamedEnv(it) } ?: PyCondaEnvIdentity.UnnamedEnv(envPath, base),
-                   command.fullCondaPathOnTarget)
+     return@withContext kotlin.runCatching { // External command may return junk
+        val info = Gson().fromJson(json, CondaInfoJson::class.java)
+        val fileSeparator = request.targetPlatform.platform.fileSeparator
+        info.envs.distinctBy { it.trim().lowercase(Locale.getDefault()) }.map { envPath ->
+          // Env name is the basename for envs inside of default location
+          val envName = if (info.envs_dirs.any { envPath.startsWith(it) }) envPath.split(fileSeparator).last() else null
+          val base = envPath.equals(info.conda_prefix, ignoreCase = true)
+          PyCondaEnv(envName?.let { PyCondaEnvIdentity.NamedEnv(it) } ?: PyCondaEnvIdentity.UnnamedEnv(envPath, base),
+                     command.fullCondaPathOnTarget)
+
+        }
       }
-      return@withContext Result.success(result)
     }
 
-    fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequest): Result<Process> {
+    suspend fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequest): Result<Process> {
 
       val (_, env, commandLineBuilder) = command.createRequestEnvAndCommandLine().getOrElse { return Result.failure(it) }
 
@@ -84,9 +84,27 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
           addParameter(identity.envName)
         }
       }
-      // Otherwise we wouldn't have interactive output (for console etc)
+      // Otherwise we wouldn't have interactive output (for console etc.)
       addParameter("--no-capture-output")
-      addParameter("--live-stream")
+    }
+  }
+
+  /**
+   * Add conda prefix to [targetedCommandLineBuilder] without specifying the 'run' command
+   */
+  fun addCondaEnvironmentToTargetBuilder(targetedCommandLineBuilder: TargetedCommandLineBuilder) {
+    targetedCommandLineBuilder.apply {
+      when (val identity = this@PyCondaEnv.envIdentity) {
+        is PyCondaEnvIdentity.UnnamedEnv -> {
+          addParameter("-p")
+          addParameter(identity.envPath) // TODO: Escape. Shouldn't target have something like "addEscaped"?
+        }
+        is PyCondaEnvIdentity.NamedEnv -> {
+          addParameter("-n")
+          addParameter(identity.envName)
+        }
+      }
+      targetedCommandLineBuilder.fixCondaPathEnvIfNeeded(fullCondaPathOnTarget)
     }
   }
 

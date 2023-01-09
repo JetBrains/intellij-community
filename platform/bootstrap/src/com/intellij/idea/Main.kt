@@ -4,32 +4,36 @@
 package com.intellij.idea
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
-import com.intellij.diagnostic.*
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.rootTask
+import com.intellij.diagnostic.runActivity
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.PathManager
+import com.jetbrains.JBR
 import kotlinx.coroutines.*
+import java.awt.GraphicsEnvironment
 import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.function.Supplier
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.system.exitProcess
 
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 fun main(rawArgs: Array<String>) {
   val startupTimings = LinkedHashMap<String, Long>(6)
   startupTimings.put("startup begin", System.nanoTime())
 
-  val args: List<String> = if (rawArgs.size == 1 && rawArgs[0] == "%f") emptyList() else Arrays.asList(*rawArgs)
+  val args: List<String> = preProcessRawArgs(rawArgs)
   AppMode.setFlags(args)
   try {
     bootstrap(startupTimings)
     startupTimings.put("main scope creating", System.nanoTime())
+    @Suppress("RAW_RUN_BLOCKING")
     runBlocking(rootTask()) {
       StartUpMeasurer.addTimings(startupTimings, "bootstrap")
       val appInitPreparationActivity = StartUpMeasurer.startActivity("app initialization preparation")
@@ -69,7 +73,16 @@ private fun initProjectorIfNeeded(args: List<String>) {
     return
   }
 
+  if (!JBR.isProjectorUtilsSupported()) {
+    error("JBR version 17.0.5b653.12 or later is required to run a remote-dev server")
+  }
+
   runActivity("cwm host init") {
+    JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider( Supplier {
+      val projectorEnvClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment")
+      projectorEnvClass.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
+    })
+
     val projectorMainClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.server.ProjectorLauncher\$Starter")
     MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(
       projectorMainClass, "runProjectorServer", MethodType.methodType(Boolean::class.javaPrimitiveType)
@@ -97,16 +110,30 @@ private fun bootstrap(startupTimings: LinkedHashMap<String, Long>) {
   }
 
   startupTimings.put("classloader init", System.nanoTime())
-  BootstrapClassLoaderUtil.initClassLoader(AppMode.isIsRemoteDevHost())
+  BootstrapClassLoaderUtil.initClassLoader(AppMode.isRemoteDevHost())
+}
+
+private fun preProcessRawArgs(rawArgs: Array<String>): List<String> {
+  if (rawArgs.size == 1 && rawArgs[0] == "%f") return emptyList()
+
+  // Parse java properties from arguments and activate them
+  val (propArgs, other) = rawArgs.partition { it.startsWith("-D") && it.contains("=") }
+  propArgs.forEach { arg ->
+    val (option, value) = arg.removePrefix("-D").split("=")
+
+    System.setProperty(option, value)
+  }
+
+  return other
 }
 
 @Suppress("HardCodedStringLiteral")
 private fun installPluginUpdates() {
   try {
-    // referencing `StartupActionScriptManager` is ok - a string constant will be inlined
+    // referencing `StartupActionScriptManager` is OK - a string constant will be inlined
     val scriptFile = Path.of(PathManager.getPluginTempPath(), StartupActionScriptManager.ACTION_SCRIPT_FILE)
     if (Files.isRegularFile(scriptFile)) {
-      // load StartupActionScriptManager and all others related class (ObjectInputStream and so on loaded as part of class define)
+      // load StartupActionScriptManager and all other related class (ObjectInputStream and so on loaded as part of class define)
       // only if there is an action script to execute
       StartupActionScriptManager.executeActionScript()
     }

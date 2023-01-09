@@ -152,7 +152,7 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
         };
 
         Runnable importTask =
-          () -> ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project, false);
+          () -> ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project);
 
         boolean showSelectiveImportDialog = GradleSettings.getInstance(project).showSelectiveImportDialogOnInitialImport();
         if (showSelectiveImportDialog && !ApplicationManager.getApplication().isHeadlessEnvironment()) {

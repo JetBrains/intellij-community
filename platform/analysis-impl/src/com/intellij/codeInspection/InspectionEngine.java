@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.SmartHashSet;
@@ -278,11 +279,11 @@ public final class InspectionEngine {
         };
         LocalInspectionTool tool = toolWrapper.getTool();
 
-        long inspectionStartTime = System.currentTimeMillis();
+        long inspectionStartTime = System.nanoTime();
         boolean inspectionWasRun = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
-        long inspectionDuration = System.currentTimeMillis() - inspectionStartTime;
+        long inspectionDuration = TimeoutUtil.getDurationMillis(inspectionStartTime);
 
-        boolean needToReportStatsToQodana = (inspectionWasRun && !isOnTheFly);
+        boolean needToReportStatsToQodana = inspectionWasRun && !isOnTheFly;
         if (needToReportStatsToQodana) {
           publisher.inspectionFinished(inspectionDuration, Thread.currentThread().getId(), holder.getResultCount(), toolWrapper,
                                        InspectListener.InspectionKind.LOCAL, file, file.getProject());
@@ -413,12 +414,8 @@ public final class InspectionEngine {
       boolean applyToDialects = tool.applyToDialects();
       Map<String, Boolean> map = applyToDialects ? resultsWithDialects : resultsNoDialects;
       return map.computeIfAbsent(language, __ ->
-        ContainerUtil.intersects(elementDialectIds, getDialectIdsSpecifiedForTool(language, applyToDialects)));
+        ToolLanguageUtil.isToolLanguageOneOf(elementDialectIds, language, applyToDialects));
     });
-  }
-
-  private static @NotNull Set<String> getDialectIdsSpecifiedForTool(@NotNull String langId, boolean applyToDialects) {
-    return ToolLanguageUtil.getAllMatchingLanguages(langId, applyToDialects);
   }
 
   public static @NotNull Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> inside, @NotNull List<? extends PsiElement> outside) {

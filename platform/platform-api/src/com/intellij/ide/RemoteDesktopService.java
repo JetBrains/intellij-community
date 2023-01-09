@@ -4,22 +4,26 @@ package com.intellij.ide;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
+
+import java.util.function.Supplier;
 
 public abstract class RemoteDesktopService {
-  private static volatile RemoteDesktopService ourInstance = CachedSingletonsRegistry.markCachedField(RemoteDesktopService.class);
+  private static final Supplier<RemoteDesktopService> ourInstance = CachedSingletonsRegistry.lazy(() -> {
+    return ApplicationManager.getApplication().getService(RemoteDesktopService.class);
+  });
 
   public static RemoteDesktopService getInstance() {
-    RemoteDesktopService service = ourInstance;
-    if (service == null) {
-      ourInstance = service = ApplicationManager.getApplication().getService(RemoteDesktopService.class);
-    }
-    return service;
+    return ourInstance.get();
   }
 
   public static boolean isRemoteSession() {
-    if (!SystemInfo.isWindows) return false;
-    if (ApplicationManager.getApplication() == null || !LoadingState.COMPONENTS_REGISTERED.isOccurred()) return false;
+    if (!SystemInfoRt.isWindows) {
+      return false;
+    }
+    if (!LoadingState.COMPONENTS_REGISTERED.isOccurred() || ApplicationManager.getApplication() == null) {
+      return false;
+    }
     RemoteDesktopService instance = getInstance();
     return instance != null && instance.isRemoteDesktopConnected();
   }

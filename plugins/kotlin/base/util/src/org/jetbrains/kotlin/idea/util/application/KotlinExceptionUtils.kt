@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
+@Deprecated("use org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments#withPsiAttachment directly")
 fun KotlinExceptionWithAttachments.withPsiAttachment(name: String, element: PsiElement?): KotlinExceptionWithAttachments {
     try {
         val text = element?.getElementTextWithContext()

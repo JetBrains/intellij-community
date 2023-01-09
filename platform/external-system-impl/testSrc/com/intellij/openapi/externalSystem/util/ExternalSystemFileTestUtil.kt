@@ -1,24 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("MemberVisibilityCanBePrivate", "unused")
 package com.intellij.openapi.externalSystem.util
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.file.VirtualFileUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.testFramework.runInEdtAndGet as runInEdtAndGetImpl
 import com.intellij.testFramework.runInEdtAndWait as runInEdtAndWaitImpl
 import com.intellij.util.ui.UIUtil
 
-var VirtualFile.text: String
-  get() = runReadAction {
-    loadText()
-  }
-  set(text) {
-    runWriteActionAndWait {
-      reloadFromDisk()
-      saveText(text)
-    }
-  }
+val VirtualFile.textContent: String
+  get() = VirtualFileUtil.getTextContent(this)
+
+val VirtualFile.binaryContent: ByteArray
+  get() = VirtualFileUtil.getBinaryContent(this)
 
 fun VirtualFile.refreshAndWait() {
   runWriteActionAndWait {
@@ -30,15 +27,13 @@ fun VirtualFile.refreshAndWait() {
 }
 
 fun <R> runReadAction(action: () -> R): R {
-  @Suppress("RemoveExplicitTypeArguments")
   return ApplicationManager.getApplication()
-    .runReadAction(ThrowableComputable<R, Throwable> { action() })
+    .runReadAction(ThrowableComputable { action() })
 }
 
 fun <R> runWriteAction(action: () -> R): R {
-  @Suppress("RemoveExplicitTypeArguments")
   return ApplicationManager.getApplication()
-    .runWriteAction(ThrowableComputable<R, Throwable> { action() })
+    .runWriteAction(ThrowableComputable { action() })
 }
 
 fun <R> runWriteActionAndGet(action: () -> R): R {

@@ -487,7 +487,7 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   @Nullable
-  public String getVersionString(@Nullable final String sdkHome) {
+  public String getVersionString(final @NotNull String sdkHome) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
     return flavor != null ? flavor.getVersionString(sdkHome) : null;
   }
@@ -550,8 +550,13 @@ public final class PythonSdkType extends SdkType {
   @Nullable
   public static Sdk findLocalCPython(@Nullable Module module) {
     final Sdk moduleSDK = PythonSdkUtil.findPythonSdk(module);
-    if (moduleSDK != null && !PythonSdkUtil.isRemote(moduleSDK) && PythonSdkFlavor.getFlavor(moduleSDK) instanceof CPythonSdkFlavor) {
-      return moduleSDK;
+    return findLocalCPythonForSdk(moduleSDK);
+  }
+
+  @Nullable
+  public static Sdk findLocalCPythonForSdk(@Nullable Sdk existingSdk) {
+    if (existingSdk != null && !PythonSdkUtil.isRemote(existingSdk) && PythonSdkFlavor.getFlavor(existingSdk) instanceof CPythonSdkFlavor) {
+      return existingSdk;
     }
     for (Sdk sdk : ContainerUtil.sorted(PythonSdkUtil.getAllSdks(), PreferredSdkComparator.INSTANCE)) {
       if (!PythonSdkUtil.isRemote(sdk)) {

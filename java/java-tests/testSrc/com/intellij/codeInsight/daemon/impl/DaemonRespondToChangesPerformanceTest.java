@@ -45,6 +45,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @HardwareAgentRequired
 public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCase {
+  private static final boolean DEBUG = false;
+
   public void testHugeAppendChainDoesNotCauseSOE() {
     StringBuilder text = new StringBuilder("class S { String ffffff =  new StringBuilder()\n");
     for (int i=0; i<2000; i++) {
@@ -167,15 +169,14 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
           long end = System.currentTimeMillis();
           long interruptTime = end - now;
           interruptTimes[finalI] = interruptTime;
-          assertTrue(codeAnalyzer.getUpdateProgress().isCanceled());
+          assertTrue(codeAnalyzer.getUpdateProgress().values().iterator().next().isCanceled());
           System.out.println(interruptTime);
           throw new ProcessCanceledException();
         };
         long hiStart = System.currentTimeMillis();
-        codeAnalyzer
-          .runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, false, interrupt);
+        codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, interrupt);
         long hiEnd = System.currentTimeMillis();
-        DaemonProgressIndicator progress = codeAnalyzer.getUpdateProgress();
+        DaemonProgressIndicator progress = codeAnalyzer.getUpdateProgress().values().iterator().next();
         String message = "Should have been interrupted: " + progress + "; Elapsed: " + (hiEnd - hiStart) + "ms";
         dumpThreadsToConsole();
         throw new RuntimeException(message);
@@ -196,7 +197,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
     assertTrue(ave < 300);
   }
 
-  public static void dumpThreadsToConsole() {
+  static void dumpThreadsToConsole() {
     System.err.println("----all threads---");
     for (Thread thread : Thread.getAllStackTraces().keySet()) {
 
@@ -210,8 +211,6 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
   }
 
   public void testTypingLatencyPerformance() throws Throwable {
-    boolean debug = false;
-
     @NonNls String filePath = "/psi/resolve/ThinletBig.java";
 
     configureByFile(filePath);
@@ -220,7 +219,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
     CompletionContributor.forLanguage(getFile().getLanguage());
     long s = System.currentTimeMillis();
     highlightErrors();
-    if (debug) {
+    if (DEBUG) {
       System.out.println("Hi elapsed: "+(System.currentTimeMillis() - s));
     }
 
@@ -242,7 +241,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
         }
         // uncomment to debug what's causing pauses
         AtomicBoolean finished = new AtomicBoolean();
-        if (debug) {
+        if (DEBUG) {
           AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
             if (!finished.get()) {
               dumps.add(ThreadDumper.dumpThreadsToString());
@@ -254,7 +253,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
         finished.set(true);
         long interruptTime = end - now;
         interruptTimes[finalI] = interruptTime;
-        assertTrue(codeAnalyzer.getUpdateProgress().isCanceled());
+        assertTrue(codeAnalyzer.getUpdateProgress().values().iterator().next().isCanceled());
         throw new ProcessCanceledException();
       };
       try {
@@ -264,8 +263,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
         CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
         TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        codeAnalyzer
-          .runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, false, interrupt);
+        codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, interrupt);
 
         throw new RuntimeException("should have been interrupted");
       }
@@ -277,7 +275,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
 
     System.out.println("Interrupt times: " + Arrays.toString(interruptTimes));
 
-    if (debug) {
+    if (DEBUG) {
       for (String dump : dumps) {
         System.out.println("\n\n-----------------------------\n\n" + dump);
       }
@@ -310,7 +308,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
         CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
         TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
         Runnable callbackWhileWaiting = () -> type(' ');
-        codeAnalyzer.runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, true, callbackWhileWaiting);
+        codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, true, callbackWhileWaiting);
       }
       catch (ProcessCanceledException ignored) {
         codeAnalyzer.waitForTermination();

@@ -91,10 +91,7 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
 
       buildConfigurables();
       if (isChildrenMerged()) {
-        if (children.length == 0) {
-          rootComponent = root == null ? null : root.getComponent();
-        }
-        else if (root == null && children.length == 1) {
+        if (root == null) {
           rootComponent = children[0].createComponent();
         }
         else {

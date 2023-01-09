@@ -11,4 +11,7 @@ class GitLabAccount(
   override val id: String = generateId(),
   override val name: @NlsSafe String = "",
   override val server: GitLabServerPath = GitLabServerPath()
-) : ServerAccount()
+) : ServerAccount() {
+  @NlsSafe
+  override fun toString(): String = "$server/$name"
+}

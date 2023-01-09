@@ -59,7 +59,7 @@ object TracerProviderManager {
       }
 
       override fun shutdown() {
-        jaegerJsonSpanExporter.get()?.shutdown()
+        jaegerJsonSpanExporter.getAndSet(null)?.shutdown()
       }
     })
     val endpoint = System.getenv("OTLP_ENDPOINT")

@@ -19,6 +19,12 @@ internal open class ExternalEntityMappingImpl<T> internal constructor(internal o
     } ?: emptyList()
   }
 
+  override fun getFirstEntity(data: T): WorkspaceEntity? {
+    return index.getKeysByValue(data)?.firstOrNull()?.let {
+      entityStorage.entityDataById(it)?.createEntity(entityStorage)
+    }
+  }
+
   override fun getDataByEntity(entity: WorkspaceEntity): T? {
     entity as WorkspaceEntityBase
     return getDataByEntityId(entity.id)
@@ -229,6 +235,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
 
 internal object EmptyExternalEntityMapping : ExternalEntityMapping<Any> {
   override fun getEntities(data: Any): List<WorkspaceEntity> = emptyList()
+  override fun getFirstEntity(data: Any): WorkspaceEntity? = null
   override fun getDataByEntity(entity: WorkspaceEntity): Any? = null
   override fun forEach(action: (key: WorkspaceEntity, value: Any) -> Unit) {}
   override fun size(): Int = 0

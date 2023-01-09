@@ -14,6 +14,7 @@ import com.intellij.psi.impl.RecaptureTypeMapper;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -1125,9 +1126,6 @@ public final class RedundantCastUtil {
   }
 
   private static boolean isExceptionThrown(PsiClassType exceptionType, PsiClassType[] thrownTypes) {
-    for (final PsiClassType type : thrownTypes) {
-      if (type.equals(exceptionType)) return true;
-    }
-    return false;
+    return ArrayUtil.contains(exceptionType, thrownTypes);
   }
 }

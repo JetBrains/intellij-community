@@ -3,7 +3,9 @@ package com.intellij.ide
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
 import com.intellij.util.PathUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.SystemIndependent
@@ -18,7 +20,11 @@ interface RecentProjectsManager {
     fun getInstance(): RecentProjectsManager = ApplicationManager.getApplication().getService(RecentProjectsManager::class.java)
 
     fun fireChangeEvent() {
-      ApplicationManager.getApplication().messageBus.syncPublisher(RECENT_PROJECTS_CHANGE_TOPIC).change()
+      ApplicationManager.getApplication().invokeLater {
+        ApplicationManager.getApplication().messageBus
+          .syncPublisher(RECENT_PROJECTS_CHANGE_TOPIC)
+          .change()
+      }
     }
   }
 
@@ -66,9 +72,13 @@ interface RecentProjectsManager {
   @ApiStatus.Internal
   suspend fun reopenLastProjectsOnStart(): Boolean
 
+  @ApiStatus.Internal
+  fun setActivationTimestamp(project: Project, timestamp: Long)
+
   fun suggestNewProjectLocation(): String
 
   interface RecentProjectsChange {
+    @RequiresEdt
     fun change()
   }
 }

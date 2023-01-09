@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.psi
 
 import com.google.common.collect.HashMultimap
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.JvmNames
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.resolve.jvm.annotations.JVM_OVERLOADS_FQ_NAME
@@ -306,5 +308,17 @@ object KotlinPsiHeuristics {
         }
 
         return true
+    }
+
+    fun isEnumCompanionPropertyWithEntryConflict(element: PsiElement, expectedName: String): Boolean {
+        if (element !is KtProperty) return false
+
+        val propertyClass = element.containingClassOrObject as? KtObjectDeclaration ?: return false
+        if (!propertyClass.isCompanion()) return false
+
+        val outerClass = propertyClass.containingClassOrObject as? KtClass ?: return false
+        if (!outerClass.isEnum()) return false
+
+        return outerClass.declarations.any { it is KtEnumEntry && it.name == expectedName }
     }
 }

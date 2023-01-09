@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github
 
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -13,7 +14,7 @@ class GithubCreateGistContentTest : GithubCreateGistContentTestBase() {
 
   override fun tearDown() {
     runAll(
-      { if (::editor.isInitialized) EditorFactory.getInstance().releaseEditor(editor) },
+      { invokeAndWaitIfNeeded { if (::editor.isInitialized) EditorFactory.getInstance().releaseEditor(editor) } },
       { super.tearDown() }
     )
   }

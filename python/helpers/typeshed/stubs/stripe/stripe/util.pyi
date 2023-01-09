@@ -1,4 +1,5 @@
 from typing import Any, overload
+from typing_extensions import TypeAlias
 
 from stripe.stripe_object import StripeObject
 from stripe.stripe_response import StripeResponse
@@ -21,7 +22,7 @@ def populate_headers(idempotency_key: None) -> None: ...
 @overload
 def populate_headers(idempotency_key: str) -> dict[str, str]: ...
 
-_RespType = dict[Any, Any] | StripeObject | StripeResponse
+_RespType: TypeAlias = dict[Any, Any] | StripeObject | StripeResponse
 
 # undocumented
 @overload

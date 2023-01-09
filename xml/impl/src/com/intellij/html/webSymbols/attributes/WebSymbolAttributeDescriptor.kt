@@ -3,7 +3,7 @@ package com.intellij.html.webSymbols.attributes
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
-import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension
+import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -14,8 +14,8 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.util.ArrayUtil
 import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.WebSymbolsBundle
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.utils.unwrapMatchedSymbols
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor
 import com.intellij.xml.impl.XmlAttributeDescriptorEx
@@ -49,10 +49,8 @@ open class WebSymbolAttributeDescriptor private constructor(val tag: XmlTag?,
 
   override fun getDefaultValue(): String? = defaultValue
 
-  override fun validateValue(context: XmlElement?, value: String?): String? {
-    // todo validateValue comes from XML plugin, not aware of frameworks,
-    //   so might be a good idea to eagerly discard stringified value here if it comes from an expression
-    return when {
+  override fun validateValue(context: XmlElement?, value: String?): String? =
+    when {
       value == null -> null
       !acceptsValue -> WebSymbolsBundle.message("web.inspection.message.attribute.does.not.accept.value", name)
       supportsEnums && strictEnumValues -> {
@@ -67,7 +65,6 @@ open class WebSymbolAttributeDescriptor private constructor(val tag: XmlTag?,
       }
       else -> null
     }
-  }
 
   override fun validateAttributeName(attribute: XmlAttribute, holder: ProblemsHolder, isOnTheFly: Boolean) {
 
@@ -120,12 +117,12 @@ open class WebSymbolAttributeDescriptor private constructor(val tag: XmlTag?,
 
   override fun hasIdType(): Boolean =
     symbol.unwrapMatchedSymbols()
-      .filterIsInstance<WebSymbolsHtmlRegistryExtension.HtmlAttributeDescriptorBasedSymbol>()
+      .filterIsInstance<WebSymbolsHtmlQueryConfigurator.HtmlAttributeDescriptorBasedSymbol>()
       .any { it.descriptor.hasIdType() }
 
   override fun hasIdRefType(): Boolean =
     symbol.unwrapMatchedSymbols()
-      .filterIsInstance<WebSymbolsHtmlRegistryExtension.HtmlAttributeDescriptorBasedSymbol>()
+      .filterIsInstance<WebSymbolsHtmlQueryConfigurator.HtmlAttributeDescriptorBasedSymbol>()
       .any { it.descriptor.hasIdRefType() }
 
   private fun matchEnum(value: String): List<WebSymbolCodeCompletionItem> =

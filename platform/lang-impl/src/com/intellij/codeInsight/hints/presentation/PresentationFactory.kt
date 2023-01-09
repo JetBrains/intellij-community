@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints.presentation
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
+import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.InlayPresentationFactory
 import com.intellij.codeInsight.hints.InlayPresentationFactory.*
 import com.intellij.openapi.command.CommandProcessor
@@ -40,21 +41,7 @@ import kotlin.math.max
  */
 @ApiStatus.Experimental
 class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFactory {
-  companion object {
-    private val TEXT_METRICS_STORAGE = Key.create<InlayTextMetricsStorage>("InlayTextMetricsStorage")
-
-    private fun getTextMetricStorage(editor: EditorImpl): InlayTextMetricsStorage {
-      val storage = editor.getUserData(TEXT_METRICS_STORAGE)
-      if (storage == null) {
-        val newStorage = InlayTextMetricsStorage(editor)
-        editor.putUserData(TEXT_METRICS_STORAGE, newStorage)
-        return newStorage
-      }
-      return storage
-    }
-  }
-
-  private val textMetricsStorage = getTextMetricStorage(editor)
+  private val textMetricsStorage = InlayHintsUtils.getTextMetricStorage(editor)
   private val offsetFromTopProvider = object : InsetValueProvider {
     override val top: Int
       get() = textMetricsStorage.getFontMetrics(true).offsetFromTop()

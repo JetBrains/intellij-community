@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
@@ -31,7 +32,7 @@ public final class ChangeStringLiteralToCharInMethodCallFix implements Intention
   private final @NotNull PsiLiteralExpression myLiteral;
   private final @NotNull PsiCall myCall;
 
-  public ChangeStringLiteralToCharInMethodCallFix(@NotNull PsiLiteralExpression literal, @NotNull PsiCall methodCall) {
+  private ChangeStringLiteralToCharInMethodCallFix(@NotNull PsiLiteralExpression literal, @NotNull PsiCall methodCall) {
     myLiteral = literal;
     myCall = methodCall;
   }
@@ -92,7 +93,7 @@ public final class ChangeStringLiteralToCharInMethodCallFix implements Intention
   }
 
   public static void registerFixes(final PsiMethod @NotNull [] candidates, @NotNull final PsiConstructorCall call,
-                                   @NotNull final HighlightInfo out, TextRange fixRange) {
+                                   @NotNull final HighlightInfo.Builder out, TextRange fixRange) {
     final Set<PsiLiteralExpression> literals = new HashSet<>();
     if (call.getArgumentList() == null) {
       return;
@@ -108,7 +109,7 @@ public final class ChangeStringLiteralToCharInMethodCallFix implements Intention
 
   public static void registerFixes(final CandidateInfo @NotNull [] candidates,
                                    @NotNull final PsiMethodCallExpression methodCall,
-                                   @Nullable final HighlightInfo info, 
+                                   @Nullable final HighlightInfo.Builder info,
                                    @Nullable TextRange fixRange) {
     if (info == null) return;
     final Set<PsiLiteralExpression> literals = new HashSet<>();
@@ -126,10 +127,10 @@ public final class ChangeStringLiteralToCharInMethodCallFix implements Intention
 
   private static void processLiterals(@NotNull final Set<? extends PsiLiteralExpression> literals,
                                       @NotNull final PsiCall call,
-                                      @NotNull final HighlightInfo info, TextRange fixRange) {
+                                      @NotNull final HighlightInfo.Builder info, TextRange fixRange) {
     for (PsiLiteralExpression literal : literals) {
       final ChangeStringLiteralToCharInMethodCallFix fix = new ChangeStringLiteralToCharInMethodCallFix(literal, call);
-      QuickFixAction.registerQuickFixAction(info, fixRange, fix);
+      info.registerFix(fix, null, null, fixRange, null);
     }
   }
 

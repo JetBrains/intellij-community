@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.JavaValueModifier;
@@ -83,7 +83,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
   @Override
   public void displayAs(NodeDescriptor descriptor) {
     super.displayAs(descriptor);
-    if(descriptor instanceof LocalVariableDescriptorImpl) {
+    if (descriptor instanceof LocalVariableDescriptorImpl) {
       myIsNewLocal = ((LocalVariableDescriptorImpl)descriptor).myIsNewLocal;
     }
   }

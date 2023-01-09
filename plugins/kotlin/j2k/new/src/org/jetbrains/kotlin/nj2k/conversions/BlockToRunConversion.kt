@@ -12,7 +12,7 @@ class BlockToRunConversion(context: NewJ2kConverterContext) : RecursiveApplicabl
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKBlockStatement) return recurse(element)
         if (element.parent !is JKBlock) return recurse(element)
-        if(element.parents().none { it is JKDeclaration || it is JKLambdaExpression }) return recurse(element)
+        if (element.parents().none { it is JKDeclaration || it is JKLambdaExpression }) return recurse(element)
         element.invalidate()
         val call = runExpression(JKBlockStatement(element.block), symbolProvider)
         return recurse(JKExpressionStatement(call).withFormattingFrom(element))

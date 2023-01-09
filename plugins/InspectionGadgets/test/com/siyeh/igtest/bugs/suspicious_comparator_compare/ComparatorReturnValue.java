@@ -16,11 +16,11 @@
 import java.util.Comparator;
 
 class ComparatorReturnValue implements Comparator<Integer> {
-  public int <warning descr="Comparator never returns negative value">compare</warning>(Integer v1, Integer v2) {
+  public int <warning descr="Comparator never returns negative values">compare</warning>(Integer v1, Integer v2) {
     if(v1 > v2) return 1;
     if(v1 < v2) return 2;
     return 0;
   }
 
-  Comparator<String> cmp = <warning descr="Comparator never returns positive value">(s1, s2)</warning> -> s1.equals(s2) ? 0 : s1.charAt(0) < s2.charAt(0) ? -1 : -2;
+  Comparator<String> cmp = <warning descr="Comparator never returns positive values">(s1, s2)</warning> -> s1.equals(s2) ? 0 : s1.charAt(0) < s2.charAt(0) ? -1 : -2;
 }

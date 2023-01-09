@@ -1014,7 +1014,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     int delta = root.delta;
     root.setCachedValues(0, true, 0);
     if (delta != 0) {
-      root.setRange(TextRangeScalarUtil.deltaScalarRange(root.toScalarRange(), delta, delta));
+      root.setRange(TextRangeScalarUtil.shift(root.toScalarRange(), delta, delta));
       root.maxEnd += delta;
       root.delta = 0;
       //noinspection NonShortCircuitBooleanExpression

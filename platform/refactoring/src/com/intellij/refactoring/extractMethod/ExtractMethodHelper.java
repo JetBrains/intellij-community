@@ -35,7 +35,7 @@ import java.util.*;
 public final class ExtractMethodHelper {
   public static void processDuplicates(@NotNull final PsiElement callElement,
                                        @NotNull final PsiElement generatedMethod,
-                                       @NotNull final List<PsiElement> scope,
+                                       final @NotNull List<? extends PsiElement> scope,
                                        @NotNull final SimpleDuplicatesFinder finder,
                                        @NotNull final Editor editor,
                                        @NotNull final Consumer<? super Pair<SimpleMatch, PsiElement>> replacer) {
@@ -70,7 +70,7 @@ public final class ExtractMethodHelper {
    */
   @NotNull
   public static List<SimpleMatch> collectDuplicates(@NotNull SimpleDuplicatesFinder finder,
-                                                    @NotNull List<PsiElement> searchScopes,
+                                                    @NotNull List<? extends PsiElement> searchScopes,
                                                     @NotNull PsiElement generatedMethod) {
     final Project project = generatedMethod.getProject();
     try {

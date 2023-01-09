@@ -109,6 +109,10 @@ public interface Project extends ComponentManager, AreaInstance {
 
   void save();
 
+  default void scheduleSave() {
+    save();
+  }
+
   boolean isOpen();
 
   boolean isInitialized();
@@ -117,8 +121,12 @@ public interface Project extends ComponentManager, AreaInstance {
     return false;
   }
 
+  /**
+   * @deprecated this scope will die only with the project => plugin coroutines which use it will leak on unloading.
+   * Instead, use Disposable project service approach described here https://youtrack.jetbrains.com/articles/IDEA-A-237338670
+   */
+  @Deprecated
   @ApiStatus.Internal
-  @ApiStatus.Experimental
   CoroutineScope getCoroutineScope();
 
   @ApiStatus.Internal

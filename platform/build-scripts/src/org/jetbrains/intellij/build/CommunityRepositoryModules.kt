@@ -80,9 +80,10 @@ object CommunityRepositoryModules {
     plugin("intellij.xslt.debugger") { spec ->
       spec.withModule("intellij.xslt.debugger.rt", "xslt-debugger-rt.jar")
       spec.withModule("intellij.xslt.debugger.impl.rt", "rt/xslt-debugger-impl-rt.jar")
-      spec.withModuleLibrary("Saxon-6.5.5", "intellij.xslt.debugger.impl.rt", "rt")
-      spec.withModuleLibrary("Saxon-9HE", "intellij.xslt.debugger.impl.rt", "rt")
-      spec.withModuleLibrary("Xalan-2.7.2", "intellij.xslt.debugger.impl.rt", "rt")
+      spec.withModuleLibrary("Saxon-6.5.5", "intellij.xslt.debugger.impl.rt", "rt/saxon.jar")
+      spec.withModuleLibrary("Saxon-9HE", "intellij.xslt.debugger.impl.rt", "rt/saxon9he.jar")
+      spec.withModuleLibrary("Xalan-2.7.2", "intellij.xslt.debugger.impl.rt", "rt/xalan-2.7.2.jar")
+      spec.withModuleLibrary("RMI Stubs", "intellij.xslt.debugger.rt", "rmi-stubs.jar")
     },
     plugin("intellij.maven") { spec ->
       spec.withModule("intellij.maven.jps")
@@ -92,6 +93,21 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.maven.server.m36.impl", "maven36-server.jar")
       spec.withModule("intellij.maven.errorProne.compiler")
       spec.withModule("intellij.maven.server.indexer", "maven-server-indexer.jar")
+      /*
+
+       */
+      spec.withModuleLibrary(libraryName = "lucene-core:ind-deps", moduleName = "intellij.maven.server.indexer",
+                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+      spec.withModuleLibrary(libraryName = "lucene-query-parser:ind-deps", moduleName = "intellij.maven.server.indexer",
+                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+      spec.withModuleLibrary(libraryName = "lucene-backward-codecs:ind-deps", moduleName = "intellij.maven.server.indexer",
+                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+      spec.withModuleLibrary(libraryName = "lucene-highlighter:ind-deps", moduleName = "intellij.maven.server.indexer",
+                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+      spec.withModuleLibrary(libraryName = "lucene-analyzer:ind-deps", moduleName = "intellij.maven.server.indexer",
+                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+      spec.withModuleLibrary(libraryName = "maven-resolver-util:ind-deps", moduleName = "intellij.maven.server.indexer",
+                             relativeOutputPath = "intellij.maven.server.indexer/lib")
       spec.withModuleLibrary(libraryName = "apache.maven.indexer.core:6.2.2", moduleName = "intellij.maven.server.indexer",
                              relativeOutputPath = "intellij.maven.server.indexer/lib")
       spec.withModuleLibrary(libraryName = "apache.maven.core:3.8.3", moduleName = "intellij.maven.server.indexer",
@@ -126,26 +142,30 @@ object CommunityRepositoryModules {
         copyDir(mavenDist, targetLib.resolve("maven3"))
       })
     },
-    plugin("intellij.gradle") { spec ->
-      spec.withModule("intellij.gradle.common")
+    plugin(listOf(
+      "intellij.gradle",
+      "intellij.gradle.common",
+      "intellij.gradle.toolingProxy",
+    )) { spec ->
       spec.withModule("intellij.gradle.toolingExtension", "gradle-tooling-extension-api.jar")
       spec.withModule("intellij.gradle.toolingExtension.impl", "gradle-tooling-extension-impl.jar")
-      spec.withModule("intellij.gradle.toolingProxy")
       spec.withProjectLibrary("Gradle", LibraryPackMode.STANDALONE_SEPARATE)
     },
-    plugin("intellij.packageSearch") { spec ->
-      spec.withModule("intellij.packageSearch.gradle")
+    plugin(listOf(
+      "intellij.packageSearch",
+      "intellij.packageSearch.gradle",
+      "intellij.packageSearch.maven",
+      "intellij.packageSearch.kotlin",
+      )) { spec ->
       spec.withModule("intellij.packageSearch.gradle.tooling", "pkgs-tooling-extension.jar")
-      spec.withModule("intellij.packageSearch.maven")
-      spec.withModule("intellij.packageSearch.kotlin")
+      spec.withProjectLibrary("kotlinx-serialization-protobuf")
+      spec.withProjectLibrary("package-search-version-utils")
     },
     plugin("intellij.android.gradle.dsl") { spec ->
       spec.withModule("intellij.android.gradle.dsl.kotlin")
       spec.withModule("intellij.android.gradle.dsl.toml")
     },
-    plugin("intellij.gradle.java") { spec ->
-      spec.withModule("intellij.gradle.jps")
-    },
+    plugin(listOf("intellij.gradle.java", "intellij.gradle.jps")),
     plugin("intellij.junit") { spec ->
       spec.mainJarName = "idea-junit.jar"
       spec.withModule("intellij.junit.rt", "junit-rt.jar")
@@ -159,9 +179,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.testng.rt", "testng-rt.jar")
       spec.withProjectLibrary("TestNG")
     },
-    plugin("intellij.dev") { spec ->
-      spec.withModule("intellij.dev.psiViewer")
-    },
+    plugin(listOf("intellij.dev", "intellij.dev.psiViewer")),
     plugin("intellij.devkit") { spec ->
       spec.withModule("intellij.devkit.core")
       spec.withModule("intellij.devkit.git")
@@ -212,54 +230,54 @@ object CommunityRepositoryModules {
     plugin("intellij.statsCollector") { spec ->
       spec.bundlingRestrictions.includeInEapOnly = true
     },
-    plugin("intellij.lombok") { spec ->
-      spec.withModule("intellij.lombok.generated")
-    },
-    plugin("intellij.grazie") { spec ->
-      spec.withModule("intellij.grazie.core")
-      spec.withModule("intellij.grazie.java")
-      spec.withModule("intellij.grazie.json")
-      spec.withModule("intellij.grazie.markdown")
-      spec.withModule("intellij.grazie.properties")
-      spec.withModule("intellij.grazie.xml")
-      spec.withModule("intellij.grazie.yaml")
-    },
-    plugin("intellij.toml") { spec ->
-      spec.withModule("intellij.toml.core")
-      spec.withModule("intellij.toml.json")
-    },
-    plugin("intellij.markdown") { spec ->
-      spec.withModule("intellij.markdown.core")
-      spec.withModule("intellij.markdown.fenceInjection")
-      spec.withModule("intellij.markdown.frontmatter")
-    },
-    plugin("intellij.settingsSync") { spec ->
-      spec.withModule("intellij.settingsSync.git")
-    },
-    plugin("intellij.sh") { spec ->
-      spec.withModules(listOf(
-        "intellij.sh.core",
-        "intellij.sh.terminal",
-        "intellij.sh.copyright",
-        "intellij.sh.python",
-        "intellij.sh.markdown")
-      )
-    },
+    plugin(listOf("intellij.lombok", "intellij.lombok.generated")),
+    plugin(listOf(
+      "intellij.grazie",
+      "intellij.grazie.core",
+      "intellij.grazie.java",
+      "intellij.grazie.json",
+      "intellij.grazie.markdown",
+      "intellij.grazie.properties",
+      "intellij.grazie.xml",
+      "intellij.grazie.yaml",
+    )),
+    plugin(listOf("intellij.toml", "intellij.toml.core", "intellij.toml.json")),
+    plugin(listOf(
+      "intellij.markdown",
+      "intellij.markdown.core",
+      "intellij.markdown.fenceInjection",
+      "intellij.markdown.frontmatter",
+      "intellij.markdown.frontmatter.yaml",
+      "intellij.markdown.frontmatter.toml",
+    )),
+    plugin(listOf("intellij.settingsSync", "intellij.settingsSync.git")),
+    plugin(listOf(
+      "intellij.sh",
+      "intellij.sh.core",
+      "intellij.sh.terminal",
+      "intellij.sh.copyright",
+      "intellij.sh.python",
+      "intellij.sh.markdown",
+    )),
     plugin("intellij.featuresTrainer") { spec ->
       spec.withModule("intellij.vcs.git.featuresTrainer")
       spec.withProjectLibrary("assertJ")
       spec.withProjectLibrary("assertj-swing")
       spec.withProjectLibrary("git-learning-project")
     },
-    plugin("intellij.searchEverywhereMl") { spec ->
-      spec.withModule("intellij.searchEverywhereMl.yaml")
-      spec.withModule("intellij.searchEverywhereMl.vcs")
-    },
+    plugin(listOf(
+      "intellij.searchEverywhereMl",
+      "intellij.searchEverywhereMl.yaml",
+      "intellij.searchEverywhereMl.vcs",
+    )),
     plugin("intellij.platform.testFramework.ui") { spec ->
       spec.withModuleLibrary("intellij.remoterobot.remote.fixtures", spec.mainModule, "")
       spec.withModuleLibrary("intellij.remoterobot.robot.server.core", spec.mainModule, "")
       spec.withProjectLibrary("okhttp")
     },
+    plugin("intellij.editorconfig") { spec ->
+      spec.withProjectLibrary("ec4j-core")
+    }
   )
 
   @Suppress("SpellCheckingInspection")
@@ -296,17 +314,15 @@ object CommunityRepositoryModules {
       @Suppress("SpellCheckingInspection")
       spec.withModule("intellij.android.designer.customview", "design-tools.jar")
       spec.withModule("intellij.android.designer", "design-tools.jar")
+      spec.withModule("intellij.android.glance-designer", "design-tools.jar")
       spec.withModule("intellij.android.layoutlib", "design-tools.jar")
       spec.withModule("intellij.android.nav.editor", "design-tools.jar")
 
 
       // libs:
-      spec.withProjectLibrary("layout_inspector_compose_java_proto") // <= ADDED
-      spec.withProjectLibrary("layout_inspector_snapshot_java_proto") // <= ADDED
-      spec.withProjectLibrary("layout_inspector_view_java_proto") // <= ADDED
       spec.withProjectLibrary("layoutlib")
 
-      spec.withProjectLibrary("studio-analytics-proto")
+      spec.withProjectLibrary("studio-analytics-proto") // This is to avoid this library leaking into project jars
       // :libs
 
       //"resources": [
@@ -316,8 +332,7 @@ object CommunityRepositoryModules {
     }
   }
 
-  @JvmStatic
-  @JvmOverloads
+  @Suppress("SpellCheckingInspection")
   fun androidPlugin(additionalModulesToJars: Map<String, String> = emptyMap(),
                     mainModuleName: String = "intellij.android.plugin",
                     addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
@@ -505,6 +520,7 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("precompiled-adblib.ddmlibcompatibility", "android.sdktools.adblib.ddmlibcompatibility", "sdk-tools.jar")
       spec.withModuleLibrary("precompiled-adblib.tools", "android.sdktools.adblib.tools", "sdk-tools.jar")
       spec.withModuleLibrary("precompiled-ddmlib", "android.sdktools.ddmlib", "sdk-tools.jar")
+      spec.withModuleLibrary("precompiled-device-provisioner", "android.sdktools.device-provisioner", "sdk-tools.jar")
       spec.withModuleLibrary("precompiled-deployer", "android.sdktools.deployer", "sdk-tools.jar")
       spec.withModuleLibrary("precompiled-dvlib", "android.sdktools.dvlib", "sdk-tools.jar")
       spec.withModuleLibrary("precompiled-draw9patch", "android.sdktools.draw9patch", "sdk-tools.jar")
@@ -533,16 +549,12 @@ object CommunityRepositoryModules {
 
 
       // libs:
-      spec.withProjectLibrary("layout_inspector_compose_java_proto") // <= ADDED
-      spec.withProjectLibrary("layout_inspector_snapshot_java_proto") // <= ADDED
-      spec.withProjectLibrary("layout_inspector_view_java_proto") // <= ADDED
       spec.withModuleLibrary("jb-r8", "intellij.android.kotlin.idea", "")
       spec.withModuleLibrary("explainer", "android.sdktools.analyzer", "")
       spec.withModuleLibrary("generator", "android.sdktools.analyzer", "")
       spec.withModuleLibrary("shared", "android.sdktools.analyzer", "")
       spec.withModuleLibrary("okio", "intellij.android.core", "")
       spec.withModuleLibrary("moshi", "intellij.android.core", "")
-      spec.withModuleLibrary("utp-core-proto", "intellij.android.core", "")
       //prebuilts/tools/common/m2:eclipse-layout-kernel <= not recognized
       spec.withModuleLibrary("juniversalchardet", "android.sdktools.db-compiler", "")
       spec.withModuleLibrary("commons-lang", "android.sdktools.db-compiler", "")
@@ -551,6 +563,7 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("jetifier-core", "android.sdktools.db-compilerCommon", "")
       spec.withModuleLibrary("flatbuffers-java", "android.sdktools.mlkit-common", "")
       spec.withModuleLibrary("tensorflow-lite-metadata", "android.sdktools.mlkit-common", "")
+      spec.withModuleLibrary("trace-perfetto-library", "intellij.android.profilersAndroid", "")
       spec.withProjectLibrary("aapt-proto")
       spec.withProjectLibrary("aia-proto")
       spec.withProjectLibrary("android-test-plugin-host-device-info-proto")
@@ -559,13 +572,13 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("dexlib2")
       spec.withProjectLibrary("emulator-proto")
       //tools/adt/idea/.idea/libraries:ffmpeg <= FIXME
-      //spec.withProjectLibrary("firebase_java_proto")
+      //spec.withProjectLibrary("firebase_java_proto") <= REMOVED
       spec.withProjectLibrary("HdrHistogram")
       spec.withProjectLibrary("javax-inject")
       spec.withProjectLibrary("kotlinx-coroutines-guava")
       spec.withProjectLibrary("kxml2")
       spec.withProjectLibrary("layoutinspector-skia-proto")
-      //tools/adt/idea/.idea/libraries:layoutinspector-view-proto <= replaced with 3 x layout_inspector_xxx_java_proto
+      spec.withProjectLibrary("layoutinspector-view-proto")
       spec.withProjectLibrary("libam-instrumentation-data-proto")
       spec.withProjectLibrary("libapp-processes-proto")
       spec.withProjectLibrary("network_inspector_java_proto")
@@ -576,6 +589,7 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("studio-grpc")
       spec.withProjectLibrary("studio-proto")
       spec.withProjectLibrary("transport-proto")
+      spec.withProjectLibrary("utp-core-proto-jarjar")
       spec.withProjectLibrary("zxing-core")
       spec.withModuleLibrary("libandroid-core-proto", "intellij.android.core", "")
       spec.withModuleLibrary("libstudio.android-test-plugin-host-retention-proto", "intellij.android.core", "")
@@ -657,7 +671,6 @@ object CommunityRepositoryModules {
     }
   }
 
-  @JvmStatic
   fun javaFXPlugin(mainModuleName: String): PluginLayout {
     return plugin(mainModuleName) { spec ->
       spec.directoryName = "javaFX"

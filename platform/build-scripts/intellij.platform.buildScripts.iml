@@ -9,8 +9,8 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="17" />
-            <stringArg name="apiVersion" arg="1.7" />
-            <stringArg name="languageVersion" arg="1.7" />
+            <stringArg name="apiVersion" arg="1.8" />
+            <stringArg name="languageVersion" arg="1.8" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
@@ -68,6 +68,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="library" name="okhttp" level="project" />
     <orderEntry type="library" name="zstd-jni" level="project" />
+    <orderEntry type="library" name="zstd-jni-windows-aarch64" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
     <orderEntry type="library" name="kotlinx-collections-immutable-jvm" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />

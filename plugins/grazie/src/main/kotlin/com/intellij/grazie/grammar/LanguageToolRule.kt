@@ -33,7 +33,7 @@ class LanguageToolRule(
         tr {
           td {
             valign = "top"
-            style = "padding-bottom: 5px; padding-right: 5px; color: gray;"
+            style = "padding-bottom: 5px; padding-right: 5px; color: gray; white-space: nowrap;"
             +GrazieBundle.message("grazie.settings.grammar.rule.incorrect")
           }
           td {
@@ -46,7 +46,7 @@ class LanguageToolRule(
           tr {
             td {
               valign = "top"
-              style = "padding-bottom: 10px; padding-right: 5px; color: gray;"
+              style = "padding-bottom: 10px; padding-right: 5px; color: gray; white-space: nowrap;"
               +GrazieBundle.message("grazie.settings.grammar.rule.correct")
             }
             td {

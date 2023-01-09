@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.similarity.clustering;
 
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
@@ -69,7 +70,7 @@ public class ClusteringSearchSession {
   }
 
 
-  public void updateClusters(@NotNull Collection<@NotNull UsageCluster> clusters) {
+  public void updateClusters(@NotNull Collection<? extends @NotNull UsageCluster> clusters) {
     synchronized (myClusters) {
       myClusters.clear();
       myClusters.addAll(clusters);
@@ -105,6 +106,6 @@ public class ClusteringSearchSession {
   }
 
   public static boolean isSimilarUsagesClusteringEnabled() {
-    return Registry.is("similarity.find.usages.enable");
+    return AdvancedSettings.getBoolean("ide.similar.usages.clustering.enable");
   }
 }

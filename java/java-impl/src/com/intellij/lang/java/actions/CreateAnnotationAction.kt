@@ -20,12 +20,11 @@ import com.intellij.psi.util.PsiTreeUtil
 internal class CreateAnnotationAction(target: PsiModifierListOwner, override val request: AnnotationRequest) :
   CreateTargetAction<PsiModifierListOwner>(target, request) {
 
-  override fun getText(): String =
-    AddAnnotationPsiFix.calcText(target, StringUtilRt.getShortName(request.qualifiedName))
+  override fun getText(): String = AddAnnotationPsiFix.calcText(target, StringUtilRt.getShortName(request.qualifiedName))
 
   override fun getFamilyName(): String = QuickFixBundle.message("create.annotation.family")
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, file: PsiFile, target: PsiModifierListOwner) {
     val modifierList = target.modifierList ?: return
     addAnnotationToModifierList(modifierList, request)
   }

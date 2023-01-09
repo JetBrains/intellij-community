@@ -25,6 +25,7 @@
           <package name="javax.swing" withSubpackages="false" static="false" />
         </value>
       </option>
+      <option name="JD_DO_NOT_WRAP_ONE_LINE_COMMENTS" value="true" />
     </JavaCodeStyleSettings>
     <JetCodeStyleSettings>
       <option name="PACKAGES_TO_USE_STAR_IMPORTS">

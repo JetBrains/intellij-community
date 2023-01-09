@@ -16,7 +16,7 @@ fun fqn2(function: KFunction3<EntityStorage, ConnectionId, WorkspaceEntity, Sequ
 fun fqn3(function: KFunction4<EntityStorage, ConnectionId, WorkspaceEntity, WorkspaceEntity?, Unit>): QualifiedName = function.fqn
 fun fqn4(function: KFunction4<EntityStorage, ConnectionId, WorkspaceEntity, List<WorkspaceEntity>, Unit>): QualifiedName = function.fqn
 fun fqn5(function: KFunction4<EntityStorage, ConnectionId, WorkspaceEntity, Sequence<WorkspaceEntity>, Unit>): QualifiedName = function.fqn
-fun fqn6(function: KFunction2<ModifiableWorkspaceEntityBase<*>, MutableEntityStorage, Unit>): QualifiedName = function.fqn
+fun fqn6(function: KFunction2<ModifiableWorkspaceEntityBase<*, *>, MutableEntityStorage, Unit>): QualifiedName = function.fqn
 fun fqn7(function: KFunction1<Collection<*>, Collection<*>>): QualifiedName = function.fqn
 
 private val KProperty<*>.fqn: QualifiedName
@@ -78,6 +78,22 @@ val Class<*>.fqn: QualifiedName
     }
   }
 
+/**
+ * See https://kotlinlang.org/docs/packages.html#default-imports
+ */
+private val packagesImportedByDefault = setOf(
+  "java.lang",
+  "kotlin",
+  "kotlin.annotation",
+  "kotlin.collections",
+  "kotlin.comparisons",
+  "kotlin.io",
+  "kotlin.ranges",
+  "kotlin.sequences",
+  "kotlin.text",
+  "kotlin.jvm",
+)
+
 class Imports(private val scopeFqn: String?) {
   val set = mutableSetOf<String>()
 
@@ -103,7 +119,7 @@ class Imports(private val scopeFqn: String?) {
   }
 
   fun add(packageName: String, name: String) {
-    if (packageName != scopeFqn) {
+    if (packageName != scopeFqn && packageName !in packagesImportedByDefault) {
       set.add("$packageName.$name")
     }
   }

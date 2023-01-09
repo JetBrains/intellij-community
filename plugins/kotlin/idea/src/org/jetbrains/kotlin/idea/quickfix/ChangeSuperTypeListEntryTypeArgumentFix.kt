@@ -35,7 +35,7 @@ class ChangeSuperTypeListEntryTypeArgumentFix(
             if (index == typeArgumentIndex) type else typeProjection.text
         }?.joinToString(prefix = "<", postfix = ">", separator = ", ") { it } ?: return
 
-        val psiFactory = KtPsiFactory(superTypeListEntry)
+        val psiFactory = KtPsiFactory(project)
         val newElement = when (superTypeListEntry) {
             is KtSuperTypeEntry -> {
                 val classReference = superTypeListEntry.typeAsUserType?.referenceExpression?.text ?: return

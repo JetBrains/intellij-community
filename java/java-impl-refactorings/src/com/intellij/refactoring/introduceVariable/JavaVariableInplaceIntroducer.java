@@ -241,7 +241,6 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     if (currentVariableRange == null) return;
 
     final PsiVariable variable = getVariable();
-    if (variable instanceof PsiPatternVariable && !PsiUtil.isLanguageLevel16OrHigher(variable)) return;
     boolean canBeVarType = myCanBeVarType && variable instanceof PsiLocalVariable;
     if (myCantChangeFinalModifier && !canBeVarType) return;
 
@@ -281,7 +280,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   @Override
-  protected void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages) {
+  protected void collectAdditionalElementsToRename(@NotNull List<? super Pair<PsiElement, TextRange>> stringUsages) {
     if (isReplaceAllOccurrences()) {
       for (PsiExpression expression : getOccurrences()) {
         LOG.assertTrue(expression.isValid(), expression.getText());
@@ -295,7 +294,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   @Override
-  protected void addReferenceAtCaret(Collection<PsiReference> refs) {
+  protected void addReferenceAtCaret(Collection<? super PsiReference> refs) {
     if (!isReplaceAllOccurrences()) {
       final PsiExpression expr = getExpr();
       if (expr == null && !myReplaceSelf || expr != null && expr.getParent() == getVariable()) {

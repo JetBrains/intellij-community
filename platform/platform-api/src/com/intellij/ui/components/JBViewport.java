@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.DirtyUI;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
@@ -41,6 +42,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   private static final ViewportLayout ourLayoutManager = new ViewportLayout() {
     @Override
+    @DirtyUI
     public void layoutContainer(Container parent) {
       if (parent instanceof JViewport) {
         JViewport viewport = (JViewport)parent;
@@ -58,6 +60,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     }
 
     @Override
+    @DirtyUI
     public Dimension preferredLayoutSize(Container parent) {
       if (parent instanceof JViewport) {
         JViewport viewport = (JViewport)parent;

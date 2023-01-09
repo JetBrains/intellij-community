@@ -121,7 +121,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
     }
 
     @Override
-    public @NotNull List<AnAction> postProcessVisibleChildren(@NotNull List<AnAction> visibleChildren,
+    public @NotNull List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren,
                                                               @NotNull UpdateSession updateSession) {
       boolean isRootGroup = getClass() == MyGroup.class;
       return ContainerUtil.filter(visibleChildren, o ->

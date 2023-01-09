@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.util
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.kotlin.analyzer.ModuleInfo
@@ -12,7 +13,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtEnumEntry
@@ -94,7 +94,7 @@ private fun MemberDescriptor.isEffectivelyActual(checkConstructor: Boolean = tru
     isActual || isEnumEntryInActual() || isConstructorInActual(checkConstructor)
 
 private fun MemberDescriptor.isConstructorInActual(checkConstructor: Boolean) =
-    checkConstructor && this is ClassConstructorDescriptor && containingDeclaration.isEffectivelyActual(checkConstructor)
+    checkConstructor && this is ClassConstructorDescriptor && containingDeclaration.isEffectivelyActual(checkConstructor = true)
 
 private fun MemberDescriptor.isEnumEntryInActual() =
     (DescriptorUtils.isEnumEntry(this) && (containingDeclaration as? MemberDescriptor)?.isActual == true)

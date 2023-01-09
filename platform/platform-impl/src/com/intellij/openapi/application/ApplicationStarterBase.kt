@@ -66,7 +66,7 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
 
   protected open fun checkArguments(args: List<String>): Boolean {
     @Suppress("DEPRECATION")
-    return Arrays.binarySearch(argsCount, args.size - 1) != -1 && commandName == args[0]
+    return Arrays.binarySearch(argsCount, args.size - 1) >= 0 && commandName == args[0]
   }
 
   protected abstract suspend fun executeCommand(args: List<String>, currentDirectory: String?): CliResult

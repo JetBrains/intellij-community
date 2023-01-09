@@ -30,10 +30,13 @@ class EnumFieldAccessConversion(context: NewJ2kConverterContext) : RecursiveAppl
         return when {
             this is JKMultiverseFieldSymbol && target is PsiEnumConstant ->
                 symbolProvider.provideDirectSymbol(target.containingClass ?: return null) as? JKClassSymbol
+
             this is JKMultiverseKtEnumEntrySymbol ->
                 symbolProvider.provideDirectSymbol(target.containingClass() ?: return null) as? JKClassSymbol
+
             this is JKUniverseFieldSymbol && target is JKEnumConstant ->
                 symbolProvider.provideUniverseSymbol(target.parentOfType<JKClass>() ?: return null)
+
             else -> null
         }
     }

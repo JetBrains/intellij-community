@@ -37,7 +37,7 @@ import java.awt.*;
 import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled;
 import static java.awt.EventQueue.isDispatchThread;
 
-public class ProjectViewPane extends AsyncProjectViewPane {
+public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
   @NonNls public static final String ID = "ProjectPane";
 
   public ProjectViewPane(Project project) {
@@ -166,11 +166,6 @@ public class ProjectViewPane extends AsyncProjectViewPane {
     @Override
     public boolean isShowLibraryContents() {
       return true;
-    }
-
-    @Override
-    public boolean isShowVisibilityIcons() {
-      return ProjectView.getInstance(myProject).isShowVisibilityIcons(ID);
     }
 
     @Override

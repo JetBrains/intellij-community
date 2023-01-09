@@ -33,27 +33,16 @@ import javax.swing.border.Border
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
+
 internal abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
   companion object {
-    private val LOGGER = logger<CustomHeader>()
-
-    val H
+    val H: Int
       get() = 12
-    val V
+    val V: Int
       get() = 5
-
 
     val LABEL_BORDER: JBEmptyBorder
       get() = JBUI.Borders.empty(V, 0)
-
-    fun create(window: Window): CustomHeader {
-      return if (window is JFrame) {
-        DefaultFrameHeader(window)
-      }
-      else {
-        DialogHeader(window)
-      }
-    }
 
     private val windowBorderThicknessInPhysicalPx: Int = run {
       // Windows 10 (tested on 1809) determines the window border size by the main display scaling, rounded down. This value is
@@ -64,16 +53,10 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
   }
 
   private var windowListener: WindowAdapter
-  private val myComponentListener: ComponentListener
-  private val myIconProvider = ScaleContext.Cache { ctx -> getFrameIcon(ctx) }
+  private val componentListener: ComponentListener
+  private val iconProvider = ScaleContext.Cache(::getFrameIcon)
 
   protected var myActive = false
-  protected val windowRootPane: JRootPane? = when (window) {
-      is JWindow -> window.rootPane
-      is JDialog -> window.rootPane
-      is JFrame -> window.rootPane
-    else -> null
-  }
 
   private var customFrameTopBorder: CustomFrameTopBorder? = null
 
@@ -83,7 +66,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
   private fun getFrameIcon(): Icon {
     val scaleContext = ScaleContext.create(window)
     //scaleContext.overrideScale(ScaleType.USR_SCALE.of(UISettings.defFontScale.toDouble()))
-    return myIconProvider.getOrProvide(scaleContext)!!
+    return iconProvider.getOrProvide(scaleContext)!!
   }
 
   protected open fun getFrameIcon(scaleContext: ScaleContext): Icon {
@@ -125,7 +108,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
       }
     }
 
-    myComponentListener = object : ComponentAdapter() {
+    componentListener = object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
         SwingUtilities.invokeLater { updateCustomDecorationHitTestSpots() }
       }
@@ -140,7 +123,6 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     customFrameTopBorder = CustomFrameTopBorder(isTopNeeded, isBottomNeeded)
     border = customFrameTopBorder
   }
-
 
   abstract fun createButtonsPane(): CustomFrameTitleButtons
 
@@ -170,13 +152,13 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
     window.addWindowListener(windowListener)
     window.addWindowStateListener(windowListener)
-    window.addComponentListener(myComponentListener)
+    window.addComponentListener(componentListener)
   }
 
   protected open fun uninstallListeners() {
     window.removeWindowListener(windowListener)
     window.removeWindowStateListener(windowListener)
-    window.removeComponentListener(myComponentListener)
+    window.removeComponentListener(componentListener)
   }
 
   protected fun updateCustomDecorationHitTestSpots() {
@@ -239,9 +221,9 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
       }
     }
     ic.addMouseListener(object : MouseAdapter() {
-        override fun mousePressed(e: MouseEvent?) {
-            JBPopupMenu.showBelow(ic, menu)
-        }
+      override fun mousePressed(e: MouseEvent?) {
+        JBPopupMenu.showBelow(ic, menu)
+      }
     })
 
     menu.isFocusable = false
@@ -257,7 +239,6 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
   }
 
   inner class CustomFrameTopBorder(val isTopNeeded: () -> Boolean = { true }, val isBottomNeeded: () -> Boolean = { false }) : Border {
-
     // Bottom border is a line between a window title/main menu area and the frame content.
     private val bottomBorderWidthLogicalPx = JBUI.scale(1)
 
@@ -283,47 +264,46 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
         return defaultActiveBorder
 
       try {
-        Toolkit.getDefaultToolkit().apply {
-          val colorizationColor = getDesktopProperty("win.dwm.colorizationColor") as Color?
-          if (colorizationColor != null) {
-            // The border color is a result of an alpha blend of colorization color and #D9D9D9 with the alpha value set by the
-            // colorization color balance.
-            var colorizationColorBalance = getDesktopProperty("win.dwm.colorizationColorBalance") as Int?
-            if (colorizationColorBalance != null) {
-              if (colorizationColorBalance > 100) {
-                // May be caused by custom Windows themes installed.
-                colorizationColorBalance = 100
-              }
+        val toolkit = Toolkit.getDefaultToolkit()
+        val colorizationColor = toolkit.getDesktopProperty("win.dwm.colorizationColor") as Color?
+        if (colorizationColor != null) {
+          // The border color is a result of an alpha blend of colorization color and #D9D9D9 with the alpha value set by the
+          // colorization color balance.
+          var colorizationColorBalance = toolkit.getDesktopProperty("win.dwm.colorizationColorBalance") as Int?
+          if (colorizationColorBalance != null) {
+            if (colorizationColorBalance > 100) {
+              // May be caused by custom Windows themes installed.
+              colorizationColorBalance = 100
+            }
 
-              // If the desktop setting "Automatically pick an accent color from my background" is active, then the border
-              // color should be the same as the colorization color read from the registry. To detect that setting, we use the
-              // fact that colorization color balance is set to 0xfffffff3 when the setting is active.
-              if (colorizationColorBalance < 0)
-                colorizationColorBalance = 100
+            // If the desktop setting "Automatically pick an accent color from my background" is active, then the border
+            // color should be the same as the colorization color read from the registry. To detect that setting, we use the
+            // fact that colorization color balance is set to 0xfffffff3 when the setting is active.
+            if (colorizationColorBalance < 0)
+              colorizationColorBalance = 100
 
-              return when (colorizationColorBalance) {
-                  0 -> Color(0xD9D9D9)
-                  100 -> colorizationColor
-                else -> {
-                  val alpha = colorizationColorBalance / 100.0f
-                  val remainder = 1 - alpha
-                  val r = (colorizationColor.red * alpha + 0xD9 * remainder).roundToInt()
-                  val g = (colorizationColor.green * alpha + 0xD9 * remainder).roundToInt()
-                  val b = (colorizationColor.blue * alpha + 0xD9 * remainder).roundToInt()
-                  Color(r, g, b)
-                }
+            return when (colorizationColorBalance) {
+              0 -> Color(0xD9D9D9)
+              100 -> colorizationColor
+              else -> {
+                val alpha = colorizationColorBalance / 100.0f
+                val remainder = 1 - alpha
+                val r = (colorizationColor.red * alpha + 0xD9 * remainder).roundToInt()
+                val g = (colorizationColor.green * alpha + 0xD9 * remainder).roundToInt()
+                val b = (colorizationColor.blue * alpha + 0xD9 * remainder).roundToInt()
+                Color(r, g, b)
               }
             }
           }
-
-          return colorizationColor
-                 ?: getDesktopProperty("win.frame.activeBorderColor") as Color?
-                 ?: menuBarBorderColor
         }
+
+        return colorizationColor
+               ?: toolkit.getDesktopProperty("win.frame.activeBorderColor") as Color?
+               ?: menuBarBorderColor
       }
       catch (t: Throwable) {
         // Should be as fail-safe as possible, since any errors during border coloring could lead to an IDE being broken.
-        LOGGER.error(t)
+        logger<CustomHeader>().error(t)
         return defaultActiveBorder
       }
     }
@@ -399,9 +379,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
       return Insets(top, 0, bottom, 0)
     }
 
-    override fun isBorderOpaque(): Boolean {
-      return true
-    }
+    override fun isBorderOpaque(): Boolean = true
   }
 }
 

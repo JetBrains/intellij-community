@@ -18,9 +18,9 @@ class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : Po
 
   private val myStep = myListPopup.listStep as ActionPopupStep
 
-  override fun hasExtraButtons(element: Any): Boolean = calcExtraButtonsCount(element) > 0
+  override fun hasExtraButtons(element: Any?): Boolean = calcExtraButtonsCount(element) > 0
 
-  override fun calcExtraButtonsCount(element: Any): Int {
+  override fun calcExtraButtonsCount(element: Any?): Int {
     if (!ExperimentalUI.isNewUI() || element !is ActionItem) return 0
 
     var res = 0
@@ -37,25 +37,22 @@ class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : Po
     return calcButtonIndex(myListPopup.list, buttonsCount, point)
   }
 
-  override fun runInlineAction(element: Any, index: Int, event: InputEvent?) : Boolean {
-    val pair = getExtraButtonsActions(element, event)[index]
-    pair.first.run()
-    return pair.second
-  }
+  override fun getInlineAction(element: Any?, index: Int, event: InputEvent?) : InlineActionDescriptor =
+    getExtraButtonsActions(element, event)[index]
 
-  private fun getExtraButtonsActions(element: Any, event: InputEvent?): List<Pair<Runnable, Boolean>> {
+  private fun getExtraButtonsActions(element: Any?, event: InputEvent?): List<InlineActionDescriptor> {
     if (!ExperimentalUI.isNewUI() || element !is ActionItem) return emptyList()
 
-    val res: MutableList<Pair<Runnable, Boolean>> = mutableListOf()
+    val res: MutableList<InlineActionDescriptor> = mutableListOf()
 
     res.addAll(myStep.getInlineActions(element).map {
-      item: InlineActionItem -> Pair(createInlineActionRunnable(item.action, event), true)
+      item: InlineActionItem -> InlineActionDescriptor(createInlineActionRunnable(item.action, event), true)
     })
-    if (hasMoreButton(element)) res.add(Pair(createNextStepRunnable(element), false))
+    if (hasMoreButton(element)) res.add(InlineActionDescriptor(createNextStepRunnable(element), false))
     return res
   }
 
-  override fun getExtraButtons(list: JList<*>, value: Any, isSelected: Boolean): List<JComponent> {
+  override fun getExtraButtons(list: JList<*>, value: Any?, isSelected: Boolean): List<JComponent> {
     if (value !is ActionItem) return emptyList()
     val inlineActions = myStep.getInlineActions(value)
 
@@ -78,7 +75,7 @@ class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : Po
   private fun createActionButton(action: InlineActionItem, active: Boolean, isSelected: Boolean): JComponent =
     createExtraButton(action.getIcon(isSelected), active)
 
-  override fun getActiveExtraButtonToolTipText(list: JList<*>, value: Any): String? {
+  override fun getActiveExtraButtonToolTipText(list: JList<*>, value: Any?): String? {
     if (value !is ActionItem) return null
     val inlineActions = myStep.getInlineActions(value)
     val activeButton = getActiveButtonIndex(list) ?: return null

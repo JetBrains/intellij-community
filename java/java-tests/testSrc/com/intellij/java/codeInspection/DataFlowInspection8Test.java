@@ -380,10 +380,15 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     doTest();
   }
+  public void testCheckerDefaultQualifier() {
+    addCheckerAnnotations(myFixture);
+    doTest();
+  }
   public void testConstructorMethodReferenceNullability() { doTest(); }
   public void testCustomStreamImplementation() { doTest(); }
   public void testEmptyCollection() { doTest(); }
   public void testConsumedStream() { doTest(); }
   public void testConsumedStreamDifferentMethods() { doTest(); }
   public void testConsumedStreamWithoutInline()  { doTest(); }
+  public void testLocalityAndConditionalExpression() { doTest(); }
 }

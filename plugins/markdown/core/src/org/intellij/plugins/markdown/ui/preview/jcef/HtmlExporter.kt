@@ -3,7 +3,6 @@ package org.intellij.plugins.markdown.ui.preview.jcef
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.Base64
 import com.intellij.util.io.HttpRequests
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
@@ -12,6 +11,7 @@ import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 import java.io.File
 import java.io.IOException
+import java.util.*
 
 data class HtmlResourceSavingSettings(val isSaved: Boolean, val resourceDir: String)
 
@@ -84,8 +84,8 @@ class HtmlExporter(htmlSource: String,
   private fun encodeImage(url: String, bytes: ByteArray): String {
     val extension = FileUtil.getExtension(url, "png")
     val contentType = if (extension == "svg") "svg+xml" else extension
-
-    return "data:image/$contentType;base64, ${Base64.encode(bytes)}"
+    val encoder = Base64.getEncoder()
+    return "data:image/$contentType;base64, ${encoder.encode(bytes)}"
   }
 
   private fun saveImages(images: Elements) {

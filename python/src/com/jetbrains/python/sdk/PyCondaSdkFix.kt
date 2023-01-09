@@ -3,7 +3,7 @@ package com.jetbrains.python.sdk
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
-import com.jetbrains.python.FullPathOnTarget
+import com.intellij.execution.target.FullPathOnTarget
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.run.isTargetBased
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData

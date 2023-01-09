@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
 import org.jetbrains.kotlin.idea.util.getRangeBinaryExpressionType
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.load.kotlin.toSourceElement
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -61,8 +62,10 @@ import org.jetbrains.kotlin.resolve.calls.model.ExpressionValueArgument
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VarargValueArgument
 import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor
+import org.jetbrains.kotlin.resolve.constants.TypedCompileTimeConstant
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -141,12 +144,14 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processConstant(expr: KtExpression?): Boolean {
         expr ?: return false
         val context = expr.analyze(BodyResolveMode.PARTIAL)
-        val constant = ConstantExpressionEvaluator.getConstant(expr, context) ?: return false
-        val kotlinType = expr.getKotlinType() ?: return false
-        val value = constant.getValue(kotlinType) ?: return false
+        val constant = ConstantExpressionEvaluator.getConstant(expr, context) as? TypedCompileTimeConstant<*> ?: return false
+        val declaredType = expr.getKotlinType() ?: return false
+        val value = constant.getValue(declaredType) ?: return false
         if (value !is Int && value !is Long && value !is Float && value !is Double && value !is String) return false
-        val dfConstantType = DfTypes.constant(value, kotlinType.toDfType())
+        val actualType = constant.type 
+        val dfConstantType = DfTypes.constant(value, actualType.toDfType())
         addInstruction(PushValueInstruction(dfConstantType, KotlinExpressionAnchor(expr)))
+        addImplicitConversion(expr, actualType, declaredType)
         return true
     }
 
@@ -252,8 +257,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val thisType = bindingContext[BindingContext.EXPRESSION_TYPE_INFO, expr.instanceReference]?.type
         val dfType = thisType.toDfType()
         val descriptor = bindingContext[BindingContext.REFERENCE_TARGET, expr.instanceReference]
-        if (descriptor != null) {
-            val varDesc = KtThisDescriptor(descriptor, dfType)
+        if (descriptor != null && thisType != null) {
+            val function = (descriptor.toSourceElement as? KotlinSourceElement)?.psi as? KtFunctionLiteral
+            val varDesc = if (function != null) {
+                KtLambdaSpecialVariableDescriptor(function, LambdaVariableKind.THIS, thisType)
+            } else {
+                KtThisDescriptor(descriptor, dfType)
+            }
             addInstruction(JvmPushInstruction(factory.varFactory.createVariableValue(varDesc), KotlinExpressionAnchor(expr)))
             addImplicitConversion(expr, thisType, exprType)
         } else {
@@ -424,6 +434,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         processExpression(expr.leftHandSide)
         val type = getTypeCheckDfType(expr.typeReference)
         if (type == DfType.TOP) {
+            addInstruction(PopInstruction())
             pushUnknown()
         } else {
             addInstruction(PushValueInstruction(type))
@@ -600,7 +611,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun inlineKnownLambdaCall(expr: KtCallExpression, lambda: KtLambdaExpression): Boolean {
-        // TODO: this-binding methods (apply, run)
         // TODO: non-qualified methods (run, repeat)
         // TODO: collection methods (forEach, map, etc.)
         val resolvedCall = expr.resolveToCall() ?: return false
@@ -610,15 +620,18 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val receiver = (expr.parent as? KtQualifiedExpression)?.receiverExpression
         if (packageFragment.fqName.asString() == "kotlin" && resolvedCall.valueArguments.size == 1) {
             val name = descriptor.name.asString()
-            if (name == "let" || name == "also" || name == "takeIf" || name == "takeUnless") {
-                val parameter = KtVariableDescriptor.getSingleLambdaParameter(factory, lambda) ?: return false
+            if (name == "let" || name == "also" || name == "takeIf" || name == "takeUnless" || name == "apply" || name == "run") {
+                val parameter = (if (name == "apply" || name == "run")
+                    KtVariableDescriptor.getLambdaReceiver(factory, lambda)
+                else
+                    KtVariableDescriptor.getSingleLambdaParameter(factory, lambda)) ?: return false
                 // qualifier is on stack
                 val receiverType = receiver?.getKotlinType()
                 val argType = if (expr.parent is KtSafeQualifiedExpression) receiverType?.makeNotNullable() else receiverType
                 addImplicitConversion(receiver, argType)
                 addInstruction(JvmAssignmentInstruction(null, parameter))
                 when (name) {
-                    "let" -> {
+                    "let", "run" -> {
                         addInstruction(PopInstruction())
                         val lambdaResultType = lambda.resolveType()?.getReturnTypeFromFunctionType()
                         val result = flow.createTempVariable(lambdaResultType.toDfType())
@@ -631,7 +644,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         addInstruction(JvmPushInstruction(result, null))
                         addImplicitConversion(expr, lambdaResultType, expr.getKotlinType())
                     }
-                    "also" -> {
+                    "also", "apply" -> {
                         inlinedBlock(lambda) {
                             processExpression(bodyExpression)
                             flow.finishElement(lambda.functionLiteral)
@@ -711,6 +724,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     for (parameter in lambda.valueParameters) {
                         flushParameter(parameter)
                     }
+                }
+                val receiver = KtVariableDescriptor.getLambdaReceiver(factory, lambda)
+                if (receiver != null) {
+                    addInstruction(FlushVariableInstruction(receiver))
                 }
             }
             processExpression(bodyExpression)
@@ -1161,8 +1178,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addInstruction(ControlTransferInstruction(trapTracker.transferValue(DfaControlTransferValue.RETURN_TRANSFER)))
         } else {
             val body = if (expr is KtBreakExpression) targetLoop else targetLoop.body!!
-            val transfer = factory.controlTransfer(createTransfer(body, body, factory.unknown), trapTracker.getTrapsInsideElement(body))
-            addInstruction(ControlTransferInstruction(transfer))
+            val transfer = createTransfer(body, body, factory.unknown, expr is KtBreakExpression)
+            val transferValue = factory.controlTransfer(transfer, trapTracker.getTrapsInsideElement(body))
+            addInstruction(ControlTransferInstruction(transferValue))
         }
     }
 
@@ -1198,7 +1216,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             val exprType = realExpr.getKotlinType()
             val declaredType = when (val desc = dfVar.descriptor) {
                 is KtVariableDescriptor -> desc.variable.type()
-                is KtItVariableDescriptor -> desc.type
+                is KtLambdaSpecialVariableDescriptor -> desc.type
                 else -> null
             }
             addImplicitConversion(expr, declaredType, exprType)
@@ -1654,10 +1672,17 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (typeReference == null) return DfType.TOP
         val kotlinType = typeReference.getAbbreviatedTypeOrType(typeReference.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL))
         if (kotlinType == null || kotlinType.constructor.declarationDescriptor is TypeParameterDescriptor) return DfType.TOP
-        if (kotlinType.isMarkedNullable) return kotlinType.toDfType()
-        // makeNullable to convert primitive to boxed
-        val dfType = kotlinType.makeNullable().toDfType().meet(DfTypes.NOT_NULL_OBJECT)
-        return if (dfType is DfReferenceType) dfType.dropSpecialField() else dfType
+        val result = if (kotlinType.isMarkedNullable) kotlinType.toDfType()
+        else {
+            // makeNullable to convert primitive to boxed
+            val dfType = kotlinType.makeNullable().toDfType().meet(DfTypes.NOT_NULL_OBJECT)
+            if (dfType is DfReferenceType) dfType.dropSpecialField() else dfType
+        }
+        return if (result is DfReferenceType)
+            // Convert Java to Kotlin types if necessary
+            result.convert(KtClassDef.typeConstraintFactory(typeReference))
+        else
+            result
     }
 
     private fun processIfExpression(ifExpression: KtIfExpression) {

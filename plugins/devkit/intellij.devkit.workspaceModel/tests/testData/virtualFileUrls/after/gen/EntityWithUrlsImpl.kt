@@ -5,7 +5,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -41,11 +40,15 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
   override val dataClassWithUrl: DataClassWithUrl
     get() = dataSource.dataClassWithUrl
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: EntityWithUrlsData?) : ModifiableWorkspaceEntityBase<EntityWithUrls>(), EntityWithUrls.Builder {
+  class Builder(result: EntityWithUrlsData?) : ModifiableWorkspaceEntityBase<EntityWithUrls, EntityWithUrlsData>(
+    result), EntityWithUrls.Builder {
     constructor() : this(EntityWithUrlsData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -65,11 +68,11 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       index(this, "simpleUrl", this.simpleUrl)
       index(this, "nullableUrl", this.nullableUrl)
-      index(this, "listOfUrls", this.listOfUrls.toHashSet())
+      index(this, "listOfUrls", this.listOfUrls)
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
@@ -110,8 +113,7 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
       if (this.nullableUrl != dataSource?.nullableUrl) this.nullableUrl = dataSource.nullableUrl
       if (this.listOfUrls != dataSource.listOfUrls) this.listOfUrls = dataSource.listOfUrls.toMutableList()
       if (this.dataClassWithUrl != dataSource.dataClassWithUrl) this.dataClassWithUrl = dataSource.dataClassWithUrl
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -119,7 +121,7 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -128,7 +130,7 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
       get() = getEntityData().simpleUrl
       set(value) {
         checkModificationAllowed()
-        getEntityData().simpleUrl = value
+        getEntityData(true).simpleUrl = value
         changedProperty.add("simpleUrl")
         val _diff = diff
         if (_diff != null) index(this, "simpleUrl", value)
@@ -138,7 +140,7 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
       get() = getEntityData().nullableUrl
       set(value) {
         checkModificationAllowed()
-        getEntityData().nullableUrl = value
+        getEntityData(true).nullableUrl = value
         changedProperty.add("nullableUrl")
         val _diff = diff
         if (_diff != null) index(this, "nullableUrl", value)
@@ -146,7 +148,7 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
 
     private val listOfUrlsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
-      if (_diff != null) index(this, "listOfUrls", value.toHashSet())
+      if (_diff != null) index(this, "listOfUrls", value)
       changedProperty.add("listOfUrls")
     }
     override var listOfUrls: MutableList<VirtualFileUrl>
@@ -163,7 +165,7 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().listOfUrls = value
+        getEntityData(true).listOfUrls = value
         listOfUrlsUpdater.invoke(value)
       }
 
@@ -171,12 +173,11 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
       get() = getEntityData().dataClassWithUrl
       set(value) {
         checkModificationAllowed()
-        getEntityData().dataClassWithUrl = value
+        getEntityData(true).dataClassWithUrl = value
         changedProperty.add("dataClassWithUrl")
 
       }
 
-    override fun getEntityData(): EntityWithUrlsData = result ?: super.getEntityData() as EntityWithUrlsData
     override fun getEntityClass(): Class<EntityWithUrls> = EntityWithUrls::class.java
   }
 }
@@ -191,22 +192,17 @@ class EntityWithUrlsData : WorkspaceEntityData<EntityWithUrls>() {
   fun isListOfUrlsInitialized(): Boolean = ::listOfUrls.isInitialized
   fun isDataClassWithUrlInitialized(): Boolean = ::dataClassWithUrl.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<EntityWithUrls> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<EntityWithUrls> {
     val modifiable = EntityWithUrlsImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): EntityWithUrls {
     return getCached(snapshot) {
       val entity = EntityWithUrlsImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

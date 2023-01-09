@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
+import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.findUsages.similarity.MostCommonUsagePatternsComponent;
@@ -25,12 +26,15 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageContextPanel;
@@ -43,10 +47,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.StatusText;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -69,7 +70,8 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private int myLineHeight;
   private List<? extends UsageInfo> myCachedSelectedUsageInfos;
   private Pattern myCachedSearchPattern;
-  private Pattern myCachedReplacePattern;
+  private String myCachedReplaceString;
+  private boolean myCachedCaseSensitive;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private @NotNull Set<GroupNode> myPreviousSelectedGroupNodes = new HashSet<>();
   private @Nullable UsagePreviewToolbarWithSimilarUsagesLink myToolbarWithSimilarUsagesLink;
@@ -157,13 +159,15 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       validate();
     }
 
-    if (!Comparing.equal(infos, myCachedSelectedUsageInfos) // avoid moving viewport
+    if (!Objects.equals(infos, myCachedSelectedUsageInfos) // avoid moving viewport
         || !UsageViewPresentation.arePatternsEqual(myCachedSearchPattern, myPresentation.getSearchPattern())
-        || !UsageViewPresentation.arePatternsEqual(myCachedReplacePattern, myPresentation.getReplacePattern())) {
+        || !Objects.equals(myCachedReplaceString, myPresentation.getReplaceString())
+        || myCachedCaseSensitive != myPresentation.isCaseSensitive()) {
       highlight(infos, myEditor, myProject, true, HighlighterLayer.ADDITIONAL_SYNTAX);
       myCachedSelectedUsageInfos = infos;
       myCachedSearchPattern = myPresentation.getSearchPattern();
-      myCachedReplacePattern = myPresentation.getReplacePattern();
+      myCachedCaseSensitive = myPresentation.isCaseSensitive();
+      myCachedReplaceString = myPresentation.getReplaceString();
     }
   }
 
@@ -216,29 +220,17 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       UsageInfo info = infos.get(i);
       PsiElement psiElement = info.getElement();
       if (psiElement == null || !psiElement.isValid()) continue;
-      int offsetInFile = psiElement.getTextOffset();
 
-      TextRange elementRange = psiElement.getTextRange();
-      TextRange infoRange = info.getRangeInElement();
-      TextRange textRange = infoRange == null
-                            || infoRange.getStartOffset() > elementRange.getLength()
-                            || infoRange.getEndOffset() > elementRange.getLength() ? null
-                                                                                   : elementRange.cutOut(infoRange);
-      if (textRange == null) textRange = elementRange;
-      // hack to determine element range to highlight
+      ProperTextRange infoRange = info.getRangeInElement();
+      TextRange rangeToHighlight = calculateHighlightingRangeForUsage(psiElement, infoRange);
       if (highlightOnlyNameElements && psiElement instanceof PsiNamedElement && !(psiElement instanceof PsiFile)) {
-        PsiFile psiFile = psiElement.getContainingFile();
-        PsiElement nameElement = psiFile.findElementAt(offsetInFile);
-        if (nameElement != null) {
-          textRange = nameElement.getTextRange();
-        }
+        rangeToHighlight = getNameElementTextRange(psiElement);
       }
       // highlight injected element in host document text range
-      textRange = InjectedLanguageManager.getInstance(project).injectedToHost(psiElement, textRange);
-
+      rangeToHighlight = InjectedLanguageManager.getInstance(psiElement.getProject()).injectedToHost(psiElement, rangeToHighlight);
       RangeHighlighter highlighter = markupModel.addRangeHighlighter(EditorColors.SEARCH_RESULT_ATTRIBUTES,
-                                                                     textRange.getStartOffset(),
-                                                                     textRange.getEndOffset(),
+                                                                     rangeToHighlight.getStartOffset(),
+                                                                     rangeToHighlight.getEndOffset(),
                                                                      highlightLayer,
                                                                      HighlighterTargetArea.EXACT_RANGE);
       highlighter.putUserData(IN_PREVIEW_USAGE_FLAG, Boolean.TRUE);
@@ -254,14 +246,42 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
         editor.getCaretModel().moveToOffset(infoRange.getEndOffset());
       }
       else {
-        editor.getCaretModel().moveToOffset(textRange.getEndOffset());
+        editor.getCaretModel().moveToOffset(rangeToHighlight.getEndOffset());
       }
 
-      if (findModel != null && infos.size() == 1 && infoRange != null && infoRange.equals(textRange)) {
+      if (findModel != null && infos.size() == 1 && infoRange != null && infoRange.equals(rangeToHighlight)) {
         showBalloon(project, editor, infoRange, findModel);
       }
     }
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+  }
+
+  /**
+   * Attempts to find the name element of PsiNamedElement and return its range
+   * @param psiElement an element to highlight
+   * @return range to highlight for named element
+   */
+  public static @NotNull TextRange getNameElementTextRange(@NotNull PsiElement psiElement) {
+    PsiFile psiFile = psiElement.getContainingFile();
+    PsiElement nameElement = psiFile.findElementAt(psiElement.getTextOffset());
+    if (nameElement != null) {
+      return nameElement.getTextRange();
+    }
+    return psiElement.getTextRange();
+  }
+
+  /**
+   * Calculates the proper highlighting range for usage in preview. In some cases psiElement text range info is not fine (i.e. Non-code usages)
+   * @param psiElement an element to highlight
+   * @param infoRange the {@link UsageInfo#getRangeInElement()} result in corresponding UsageInfo
+   * @return range to highlight for in usage preview
+   */
+  @ApiStatus.Internal
+  public static @NotNull TextRange calculateHighlightingRangeForUsage(@NotNull PsiElement psiElement, @Nullable ProperTextRange infoRange) {
+    TextRange elementRange = psiElement.getTextRange();
+    return infoRange == null || infoRange.getStartOffset() > elementRange.getLength() || infoRange.getEndOffset() > elementRange.getLength()
+           ? elementRange
+           : elementRange.cutOut(infoRange);
   }
 
   private static final Key<Balloon> REPLACEMENT_BALLOON_KEY = Key.create("REPLACEMENT_BALLOON_KEY");
@@ -272,21 +292,15 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       String replacementPreviewText = FindManager.getInstance(project)
         .getStringToReplace(editor.getDocument().getText(range), findModel, range.getStartOffset(),
                             editor.getDocument().getText());
+      if (replacementPreviewText == null) {
+        return;
+      }
       if (!Registry.is("ide.find.show.replacement.hint.for.simple.regexp")
           && Objects.equals(replacementPreviewText, findModel.getStringToReplace())) {
         return;
       }
-      ReplacementView replacementView = new ReplacementView(replacementPreviewText);
 
-      BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(replacementView);
-      balloonBuilder.setFadeoutTime(0);
-      balloonBuilder.setFillColor(IdeTooltipManager.GRAPHITE_COLOR);
-      balloonBuilder.setAnimationCycle(0);
-      balloonBuilder.setHideOnClickOutside(false);
-      balloonBuilder.setHideOnKeyOutside(false);
-      balloonBuilder.setHideOnAction(false);
-      balloonBuilder.setCloseButtonEnabled(true);
-      Balloon balloon = balloonBuilder.createBalloon();
+      Balloon balloon = buildReplacementPreviewBalloon(replacementPreviewText);
       EditorUtil.disposeWithEditor(editor, balloon);
 
       balloon.show(new ReplacementBalloonPositionTracker(project, editor, range, findModel), Balloon.Position.below);
@@ -301,21 +315,23 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private static FindModel getReplacementModel(@NotNull Editor editor) {
     UsagePreviewPanel panel = editor.getUserData(PREVIEW_EDITOR_FLAG);
     Pattern searchPattern = null;
-    Pattern replacePattern = null;
+    String replaceString = null;
     if (panel != null) {
       searchPattern = panel.myPresentation.getSearchPattern();
-      replacePattern = panel.myPresentation.getReplacePattern();
+      replaceString = panel.myPresentation.getReplaceString();
     }
 
-    if (searchPattern == null || replacePattern == null) {
+    if (searchPattern == null || replaceString == null) {
       return null;
     }
     FindModel stub = new FindModel();
+    stub.setCaseSensitive(panel.myPresentation.isCaseSensitive());
+    stub.setPreserveCase(panel.myPresentation.isPreserveCase());
     stub.setMultiline(true);
     stub.setRegularExpressions(true);
     stub.setReplaceAll(true);
     stub.setStringToFind(searchPattern.pattern());
-    stub.setStringToReplace(replacePattern.pattern());
+    stub.setStringToReplace(replaceString);
     return stub;
   }
 
@@ -374,7 +390,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       myEditor = null;
       myCachedSelectedUsageInfos = null;
       myCachedSearchPattern = null;
-      myCachedReplacePattern = null;
+      myCachedReplaceString = null;
     }
   }
 
@@ -486,19 +502,47 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     }
   }
 
+  public static Balloon buildReplacementPreviewBalloon(@NotNull @NlsSafe String replacement) {
+    ReplacementView replacementView = new ReplacementView(replacement);
+
+    BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(replacementView);
+    balloonBuilder.setFadeoutTime(0);
+    balloonBuilder.setFillColor(IdeTooltipManager.GRAPHITE_COLOR);
+    balloonBuilder.setAnimationCycle(0);
+    balloonBuilder.setHideOnClickOutside(false);
+    balloonBuilder.setHideOnKeyOutside(false);
+    balloonBuilder.setHideOnAction(false);
+    balloonBuilder.setCloseButtonEnabled(true);
+    return balloonBuilder.createBalloon();
+  }
+
+  private static JLabel buildReplacementPreviewLabel(@NotNull @NlsSafe String replacement) {
+    String htmlToShow;
+    if (replacement.isEmpty()) {
+      htmlToShow = new HtmlBuilder()
+        .append("<" + FindBundle.message("live.preview.empty.string") + ">")
+        .wrapWithHtmlBody()
+        .toString();
+    }
+    else {
+      replacement = StringUtil.shortenTextWithEllipsis(replacement, 500, 0, true);
+      htmlToShow = new HtmlBuilder()
+        .append(replacement)
+        .wrapWith("code").wrapWith("pre").wrapWith("body").wrapWith("html")
+        .toString();
+    }
+    JLabel label = new JBLabel(htmlToShow).setAllowAutoWrapping(true);
+    label.setForeground(new JBColor(Gray._240, Gray._200));
+    return label;
+  }
+
   private static class ReplacementView extends JPanel {
     @Override
     protected void paintComponent(@NotNull Graphics graphics) {
     }
 
-    ReplacementView(@Nullable @NlsSafe String replacement) {
-      String textToShow = replacement;
-      if (replacement == null) {
-        textToShow = UsageViewBundle.message("label.malformed.replacement.string");
-      }
-      JLabel jLabel = new JLabel(textToShow);
-      jLabel.setForeground(replacement != null ? new JBColor(Gray._240, Gray._200) : JBColor.RED);
-      add(jLabel);
+    ReplacementView(@NotNull @NlsSafe String replacement) {
+      add(buildReplacementPreviewLabel(replacement));
     }
   }
 

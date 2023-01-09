@@ -17,6 +17,7 @@ import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.openapi.fileTypes.impl.DetectedByContentFileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -187,8 +188,6 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
     }
   }
 
-  data class SuggestedIde(val name: String, val downloadUrl: String)
-
   companion object {
 
     private val LOG = logger<PluginAdvertiserEditorNotificationProvider>()
@@ -223,7 +222,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
       val hasBundledPlugin = getBundledPluginToInstall(dataSet).isNotEmpty()
       val suggestedIdes = if (fileType is PlainTextLikeFileType || fileType is DetectedByContentFileType) {
         getSuggestedIdes(activeProductCode, extensionOrFileName, ideExtensions).ifEmpty {
-          if (hasBundledPlugin && !isIgnoreIdeSuggestion) listOf(ideaUltimate) else emptyList()
+          if (hasBundledPlugin && !isIgnoreIdeSuggestion) listOf(PluginAdvertiserService.ideaUltimate) else emptyList()
         }
       }
       else
@@ -242,15 +241,11 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
         return emptyList()
       }
 
-      val suggestedIde = ides.entries.firstOrNull { it.key in productCodes }
-      val commercialVersionCode = when (activeProductCode) {
-        "IC", "IE" -> "IU"
-        "PC", "PE" -> "PY"
-        else -> null
-      }
+      val suggestedIde = PluginAdvertiserService.ides.entries.firstOrNull { it.key in productCodes }
+      val commercialVersionCode = PluginAdvertiserService.getSuggestedCommercialIdeCode(activeProductCode)
 
       if (commercialVersionCode != null && suggestedIde != null && suggestedIde.key != commercialVersionCode) {
-        return listOf(suggestedIde.value, ides[commercialVersionCode]!!)
+        return listOf(suggestedIde.value, PluginAdvertiserService.ides[commercialVersionCode]!!)
       }
       else if (suggestedIde != null && suggestedIde.key == activeProductCode) {
         return emptyList()
@@ -263,20 +258,5 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
     private fun updateAllNotifications(project: Project) {
       EditorNotifications.getInstance(project).updateAllNotifications()
     }
-
-    val ideaUltimate = SuggestedIde("IntelliJ IDEA Ultimate", "https://www.jetbrains.com/idea/download/")
-    private val pyCharmProfessional = SuggestedIde("PyCharm Professional", "https://www.jetbrains.com/pycharm/download/")
-
-    private val ides = linkedMapOf(
-      "WS" to SuggestedIde("WebStorm", "https://www.jetbrains.com/webstorm/download/"),
-      "RM" to SuggestedIde("RubyMine", "https://www.jetbrains.com/ruby/download/"),
-      "PY" to pyCharmProfessional,
-      "PS" to SuggestedIde("PhpStorm", "https://www.jetbrains.com/phpstorm/download/"),
-      "GO" to SuggestedIde("GoLand", "https://www.jetbrains.com/go/download/"),
-      "CL" to SuggestedIde("CLion", "https://www.jetbrains.com/clion/download/"),
-      "RD" to SuggestedIde("Rider", "https://www.jetbrains.com/rider/download/"),
-      "OC" to SuggestedIde("AppCode", "https://www.jetbrains.com/objc/download/"),
-      "IU" to ideaUltimate
-    )
   }
 }

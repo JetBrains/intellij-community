@@ -21,7 +21,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingMode
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -44,6 +43,8 @@ import java.util.Set;
 import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult.COMPLETE_WITHOUT_TOTAL;
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class UnnecessaryDefaultInspection extends BaseInspection {
 
@@ -56,11 +57,10 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
       "unnecessary.default.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unnecessary.default.expressions.option"),
-                                          this, "onlyReportSwitchExpressions");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyReportSwitchExpressions", InspectionGadgetsBundle.message("unnecessary.default.expressions.option")));
   }
 
   @Nullable
@@ -78,13 +78,13 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent();
-      if (element instanceof PsiSwitchLabelStatementBase) {
-        DeleteSwitchLabelFix.deleteLabel((PsiSwitchLabelStatementBase)element);
+      if (element instanceof PsiSwitchLabelStatementBase label) {
+        DeleteSwitchLabelFix.deleteLabel(label);
       }
-      else if (element instanceof PsiDefaultCaseLabelElement) {
-        DeleteSwitchLabelFix.deleteLabelElement((PsiDefaultCaseLabelElement)element);
+      else if (element instanceof PsiDefaultCaseLabelElement defaultElement) {
+        DeleteSwitchLabelFix.deleteLabelElement(project, defaultElement);
       }
     }
   }

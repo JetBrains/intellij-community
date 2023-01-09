@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 class KotlinEnumEntryWithoutSuperCallUsage(enumEntry: KtEnumEntry) : KotlinUsageInfo<KtEnumEntry>(enumEntry) {
     override fun processUsage(changeInfo: KotlinChangeInfo, element: KtEnumEntry, allUsages: Array<out UsageInfo>): Boolean {
         if (changeInfo.newParameters.isNotEmpty()) {
-            val psiFactory = KtPsiFactory(element)
+            val psiFactory = KtPsiFactory(element.project)
 
             val delegatorToSuperCall = (element.addAfter(
                 psiFactory.createEnumEntryInitializerList(),

@@ -53,12 +53,15 @@ public abstract class SerializableInspectionBase extends BaseInspection {
       InspectionGadgetsBundle.message("choose.class"));
     UiUtils.setComponentSize(chooserList, 7, 25);
 
-    panel.add(chooserList, "growx, wrap");
+    panel.addGrowing(chooserList);
 
     final JComponent[] additionalOptions = createAdditionalOptions();
     for (JComponent additionalOption : additionalOptions) {
-      final String constraints = additionalOption instanceof JPanel ? "grow, wrap" : "growx, wrap";
-      panel.add(additionalOption, constraints);
+      if (additionalOption instanceof JPanel) {
+        panel.addGrowing(additionalOption);
+      } else {
+        panel.addGrowingX(additionalOption);
+      }
     }
 
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.anonymous.inner.classes"), "ignoreAnonymousInnerClasses");

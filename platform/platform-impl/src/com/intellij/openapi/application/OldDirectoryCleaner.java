@@ -117,23 +117,8 @@ public final class OldDirectoryCleaner {
     }
   }
 
-  private static class DirectoryGroup {
-    private final @NlsSafe String name;
-    private final List<Path> directories;
-    private final long lastUpdated;
-    private final long size;
-    private final int entriesToDelete;
-    private final boolean isInstalled;
-
-    private DirectoryGroup(String name, List<Path> directories, long lastUpdated, long size, int entriesToDelete, boolean isInstalled) {
-      this.name = name;
-      this.directories = directories;
-      this.lastUpdated = lastUpdated;
-      this.size = size;
-      this.entriesToDelete = entriesToDelete;
-      this.isInstalled = isInstalled;
-    }
-
+  private record DirectoryGroup(@NlsSafe String name, List<Path> directories, long lastUpdated, long size, int entriesToDelete,
+                                boolean isInstalled) {
     @Override
     public String toString() {
       return "{" + directories + ' ' + lastUpdated + '}';

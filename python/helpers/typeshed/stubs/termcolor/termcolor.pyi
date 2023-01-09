@@ -1,11 +1,12 @@
-from typing import Any, Iterable, Text
+from collections.abc import Iterable
+from typing import Any
 
 ATTRIBUTES: dict[str, int]
 COLORS: dict[str, int]
 HIGHLIGHTS: dict[str, int]
 RESET: str
 
-def colored(text: Text, color: Text | None = ..., on_color: Text | None = ..., attrs: Iterable[Text] | None = ...) -> Text: ...
+def colored(text: str, color: str | None = ..., on_color: str | None = ..., attrs: Iterable[str] | None = ...) -> str: ...
 def cprint(
-    text: Text, color: Text | None = ..., on_color: Text | None = ..., attrs: Iterable[Text] | None = ..., **kwargs: Any
+    text: str, color: str | None = ..., on_color: str | None = ..., attrs: Iterable[str] | None = ..., **kwargs: Any
 ) -> None: ...

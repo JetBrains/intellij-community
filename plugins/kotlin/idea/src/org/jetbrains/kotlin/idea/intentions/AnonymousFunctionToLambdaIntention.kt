@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.LocalSearchScope
@@ -14,7 +15,6 @@ import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParenthesesIfPos
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.contentRange
@@ -60,7 +60,7 @@ class AnonymousFunctionToLambdaIntention : SelfTargetingRangeIntention<KtNamedFu
         val commentSaver = CommentSaver(element)
         val returnSaver = ReturnSaver(element)
         val body = element.bodyExpression!!
-        val newExpression = KtPsiFactory(element).buildExpression {
+        val newExpression = KtPsiFactory(element.project).buildExpression {
             if (!returnSaver.isEmpty) {
                 val returnLabels = element.bodyExpression
                     ?.collectDescendantsOfType<KtExpression>()

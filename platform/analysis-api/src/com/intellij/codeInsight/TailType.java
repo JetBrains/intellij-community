@@ -116,6 +116,8 @@ public abstract class TailType {
   public static final TailType DOT = new CharTailType('.');
 
   public static final TailType CASE_COLON = new CharTailType(':');
+
+  public static final TailType EQUALS = new CharTailType('=');
   public static final TailType COND_EXPR_COLON = new TailType(){
     @Override
     public int processTail(final Editor editor, final int tailOffset) {

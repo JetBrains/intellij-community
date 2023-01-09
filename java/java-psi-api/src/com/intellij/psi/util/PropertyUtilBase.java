@@ -498,11 +498,11 @@ public class PropertyUtilBase {
     return new String[]{IS_PREFIX + str, GET_PREFIX + str};
   }
 
-  public static String suggestGetterName(@NonNls @NotNull String propertyName, @Nullable PsiType propertyType) {
+  public static @NotNull String suggestGetterName(@NonNls @NotNull String propertyName, @Nullable PsiType propertyType) {
     return suggestGetterName(propertyName, propertyType, null);
   }
 
-  public static String suggestGetterName(@NotNull String propertyName, @Nullable PsiType propertyType, @NonNls String existingGetterName) {
+  public static @NotNull String suggestGetterName(@NotNull String propertyName, @Nullable PsiType propertyType, @NonNls String existingGetterName) {
     @NonNls StringBuilder name =
       new StringBuilder(StringUtil.capitalizeWithJavaBeanConvention(StringUtil.sanitizeJavaIdentifier(propertyName)));
     if (isBoolean(propertyType)) {

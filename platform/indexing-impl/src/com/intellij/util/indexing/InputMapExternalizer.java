@@ -16,6 +16,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Default externalizer for forward indexes: serializes Map[Key,Value] by using index extension
+ * both {@link IndexExtension#getKeyDescriptor()} and {@link IndexExtension#getValueExternalizer()},
+ * so that all forward indexes internally are [Key -> ByteArraySequence(serialized Map[Key,Value])]
+ */
 public final class InputMapExternalizer<Key, Value> implements DataExternalizer<Map<Key, Value>> {
   private final DataExternalizer<Value> myValueExternalizer;
   private final DataExternalizer<Collection<Key>> myKeysExternalizer;
@@ -31,28 +36,30 @@ public final class InputMapExternalizer<Key, Value> implements DataExternalizer<
 
   @Override
   public void save(@NotNull DataOutput stream, Map<Key, Value> data) throws IOException {
-    int size = data.size();
+    final int size = data.size();
     DataInputOutputUtil.writeINT(stream, size);
+    if (size == 0) return;
+
     Collection<Key> keysForNullValue = null;
-    Map<Value, Collection<Key>> values = null;
+    Map<Value, Collection<Key>> keysPerValue = null;
 
-    if (size <= 0) return;
-
+    //TODO RC: why store Map<Key,Value> in 'inverted' form, as Map<Value, Collection<Key>> here?
     if (myValuesAreNullAlways) {
       keysForNullValue = data.keySet();
     }
     else {
-      values = new HashMap<>();
+      keysPerValue = new HashMap<>();
       for (Map.Entry<Key, Value> e : data.entrySet()) {
-        Value value = e.getValue();
+        final Value value = e.getValue();
 
-        Collection<Key> keys = value != null ? values.get(value) : keysForNullValue;
+        Collection<Key> keys = value != null ? keysPerValue.get(value) : keysForNullValue;
         if (keys == null) {
+          keys = new SmartList<>();
           if (value != null) {
-            values.put(value, keys = new SmartList<>());
+            keysPerValue.put(value, keys);
           }
           else {
-            keys = keysForNullValue = new SmartList<>();
+            keysForNullValue = keys;
           }
         }
         keys.add(e.getKey());
@@ -64,10 +71,10 @@ public final class InputMapExternalizer<Key, Value> implements DataExternalizer<
       myKeysExternalizer.save(stream, keysForNullValue);
     }
 
-    if (values != null) {
-      for (Value value : values.keySet()) {
+    if (keysPerValue != null) {
+      for (Value value : keysPerValue.keySet()) {
         myValueExternalizer.save(stream, value);
-        myKeysExternalizer.save(stream, values.get(value));
+        myKeysExternalizer.save(stream, keysPerValue.get(value));
       }
     }
   }

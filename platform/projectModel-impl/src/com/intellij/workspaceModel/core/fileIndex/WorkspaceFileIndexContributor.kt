@@ -24,8 +24,8 @@ interface WorkspaceFileIndexContributor<E : WorkspaceEntity> {
    * Implement this function and call functions from [registrar] to specify files and directories which should be included or excluded from
    * the workspace. 
    * 
-   * The implementation may use properties from [entity] or from its parents only and don't use other data which may change.
-   * If properties from a parent entity are used for computation, its class must be registered in [dependenciesOnParentEntities].
+   * The implementation may use properties from [entity] or from its parents or its children only and don't use other data which may change.
+   * If properties from other entities are used for computation, their classes must be registered in [dependenciesOnOtherEntities].
    * This is necessary to ensure that [WorkspaceFileIndex] is properly updated when entities change. 
    * 
    * This function is currently called synchronously under Write Action, so its implementation should run very fast.
@@ -33,18 +33,47 @@ interface WorkspaceFileIndexContributor<E : WorkspaceEntity> {
   fun registerFileSets(entity: E, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage)
 
   /**
-   * Describes parent entities which properties may be used in [registerFileSets].
+   * Describes other entities which properties may be used in [registerFileSets].
    */
-  val dependenciesOnParentEntities: List<DependencyOnParentEntity<E, *>>
-    get() = emptyList() 
+  val dependenciesOnOtherEntities: List<DependencyDescription<E>>
+    get() = emptyList()
+
+  /**
+   * Override this property and return [EntityStorageKind.UNLOADED] from it to indicate that the contributor should work on the entities
+   * from the unloaded storage. This is rarely needed because entities from the unloaded storage should be ignored in most of the cases. 
+   */
+  val storageKind: EntityStorageKind
+    get() = EntityStorageKind.MAIN
 }
 
-data class DependencyOnParentEntity<C : WorkspaceEntity, P : WorkspaceEntity>(
-  /** Type of parent entity */
-  val parentClass: Class<P>,
-  /** Function to compute child entities by the parent */
-  val childrenGetter: (P) -> Sequence<C>
-)
+enum class EntityStorageKind {
+  /** Main storage of entities, accessible via [com.intellij.workspaceModel.ide.WorkspaceModel.entityStorage] */
+  MAIN,
+  /** Storage for unloaded entities, accessible via [com.intellij.workspaceModel.ide.WorkspaceModel.currentSnapshotOfUnloadedEntities] */
+  UNLOADED
+}
+
+sealed interface DependencyDescription<E : WorkspaceEntity> {
+  /**
+   * Indicates that the contributor must be called for child entities when any property in parent entity of type [P] changes. 
+   */
+  data class OnParent<E : WorkspaceEntity, P : WorkspaceEntity>(
+    /** Type of parent entity */
+    val parentClass: Class<P>,
+    /** Computes child entities by the parent */
+    val childrenGetter: (P) -> Sequence<E>
+  ) : DependencyDescription<E>
+
+  /**
+   * Indicates that the contributor must be called for the parent entity when any child of type [C] is added, removed or replaced.
+   */
+  data class OnChild<E : WorkspaceEntity, C : WorkspaceEntity>(
+    /** Type of child entity */
+    val childClass: Class<C>,
+    /** Computes parent entity by the child */
+    val parentGetter: (C) -> E
+  ) : DependencyDescription<E>
+}
 
 /**
  * Describes possible kinds of files and directories in the workspace.

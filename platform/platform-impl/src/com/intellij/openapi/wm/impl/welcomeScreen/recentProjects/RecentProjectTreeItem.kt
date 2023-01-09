@@ -59,6 +59,7 @@ internal data class RecentProjectItem(
 
   companion object {
     fun openProjectAndLogRecent(file: Path, options: OpenProjectTask, projectGroup: ProjectGroup?) {
+      @Suppress("DEPRECATION")
       ApplicationManager.getApplication().coroutineScope.launch {
         RecentProjectsManagerBase.getInstanceEx().openProject(file, options)
         for (extension in ProjectDetector.EXTENSION_POINT_NAME.extensions) {
@@ -107,7 +108,6 @@ internal data class RecentProjectItem(
     openProjectAndLogRecent(file, OpenProjectTask {
       this.forceOpenInNewFrame = forceOpenInNewFrame
       runConfigurators = true
-      showFrameAsap = true
     }, projectGroup)
   }
 
@@ -157,11 +157,11 @@ internal object ProjectCollectors {
 
   @JvmField
   val cloneableProjectsCollector: () -> List<RecentProjectTreeItem> = {
-    CloneableProjectsService.getInstance().collectCloneableProjects()
+    CloneableProjectsService.getInstance().collectCloneableProjects().toList()
   }
 
   @JvmField
-  val all = listOf(cloneableProjectsCollector, recentProjectsCollector)
+  val all: List<() -> List<RecentProjectTreeItem>> = listOf(cloneableProjectsCollector, recentProjectsCollector)
 
   @JvmStatic
   fun createRecentProjectsWithoutCurrentCollector(currentProject: Project): () -> List<RecentProjectTreeItem> {

@@ -61,10 +61,8 @@ internal abstract class BaseRecentFilesAction(private val onlyEditedFiles: Boole
 
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
-    Switcher.SWITCHER_KEY.get(project)?.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected } ?: run {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.files")
-      SwitcherPanel(project, message("title.popup.recent.files"), null, onlyEditedFiles, true)
-    }
+    Switcher.SWITCHER_KEY.get(project)?.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected }
+    ?: SwitcherPanel(project, message("title.popup.recent.files"), null, onlyEditedFiles, true)
   }
 }
 

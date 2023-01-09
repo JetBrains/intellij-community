@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
@@ -17,7 +18,6 @@ import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.*
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -94,13 +94,21 @@ class KotlinBuildScriptManipulator(
                 addMavenCentralIfMissing()
             }
             jvmTarget?.let {
-                changeKotlinTaskParameter("jvmTarget", it, forTests = false)
-                changeKotlinTaskParameter("jvmTarget", it, forTests = true)
+                val useNewJvmSyntax = useNewJvmToolchainSyntax(gradleVersion)
+                if (useNewJvmSyntax) {
+                    val jvmTargetVersionNumber = getJvmTargetVersionNumber(it)
+                    addTopLevelBlock("kotlin")?.addExpressionIfMissing("jvmToolchain($jvmTargetVersionNumber)")
+                } else {
+                    changeKotlinTaskParameter("jvmTarget", it, forTests = false)
+                    changeKotlinTaskParameter("jvmTarget", it, forTests = true)
+                }
             }
         }
 
         return originalText != scriptFile.text
     }
+
+    private fun getJvmTargetVersionNumber(it: String) = it.removePrefix("1.")
 
     override fun changeLanguageFeatureConfiguration(
         feature: LanguageFeature,
@@ -556,7 +564,7 @@ class KotlinBuildScriptManipulator(
         createFile("dummy.kts", text).script?.blockExpression?.firstChild as KtScriptInitializer
 
     private val PsiElement.psiFactory: KtPsiFactory
-        get() = KtPsiFactory(this)
+        get() = KtPsiFactory(project)
 
     private fun getCompileDependencySnippet(
         groupId: String,

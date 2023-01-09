@@ -2,21 +2,26 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.ProjectTopics
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.application.*
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import junit.framework.Assert.*
-import org.junit.*
+import org.junit.Assert
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
+import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertContains
 
 class WorkspaceModelTest {
   companion object {
@@ -115,47 +120,89 @@ class WorkspaceModelTest {
     assertEquals(setOf(firstModuleName, secondModuleName), entities.map { it.name }.toSet())
   }
 
-  @Test(expected = RuntimeException::class)
-  @Ignore
+  @Test
   fun `recursive update`() {
-    ApplicationManager.getApplication().runWriteAction {
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-          println("So much updates")
+    val exception = assertThrows<Throwable> {
+      invokeAndWaitIfNeeded {
+        ApplicationManager.getApplication().runWriteAction {
+          WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+            WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+              println("So much updates")
+            }
+          }
         }
       }
     }
+    assertContains(exception.message!!, "Trying to update project model twice from the same version")
   }
 
-  @Test(expected = RuntimeException::class)
-  @Ignore
+  @Test
   fun `recursive update silent`() {
-    (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent {
-      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent {
-        println("So much updates")
-      }
-    }
-  }
-
-  @Test(expected = RuntimeException::class)
-  @Ignore
-  fun `recursive update mixed 1`() {
-    ApplicationManager.getApplication().runWriteAction {
-      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent {
-        (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModel {
-          println("So much updates")
+    val exception = assertThrows<Throwable> {
+      invokeAndWaitIfNeeded {
+        (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent("Test") {
+          (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent("Test") {
+            println("So much updates")
+          }
         }
       }
     }
+    assertContains(exception.message!!, "Trying to update project model twice from the same version")
   }
 
-  @Test(expected = RuntimeException::class)
-  @Ignore
+  @Test
+  fun `recursive update mixed 1`() {
+    val exception = assertThrows<Throwable> {
+      invokeAndWaitIfNeeded {
+        ApplicationManager.getApplication().runWriteAction {
+          (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent("Test") {
+            (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModel {
+              println("So much updates")
+            }
+          }
+        }
+      }
+    }
+    assertContains(exception.message!!, "Trying to update project model twice from the same version")
+  }
+
+  @Test
   fun `recursive update mixed 2`() {
-    ApplicationManager.getApplication().runWriteAction {
-      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModel {
-        (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent {
-          println("So much updates")
+    val exception = assertThrows<Throwable> {
+      invokeAndWaitIfNeeded {
+        runWriteAction {
+          (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModel {
+            (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent("Test") {
+              println("So much updates")
+            }
+          }
+        }
+      }
+    }
+    assertContains(exception.message!!, "Trying to update project model twice from the same version")
+  }
+
+  @Test
+  fun `recursive update mixed 3`() {
+    runInEdt {
+      runWriteAction {
+        (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModel {
+          // Update
+        }
+      }
+      try {
+        runWriteAction {
+          (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModel {
+            error("happens")
+          }
+        }
+      }
+      catch (e: Exception) {
+        // nothing
+      }
+      runWriteAction {
+        (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModel {
+          // Another update
         }
       }
     }

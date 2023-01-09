@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -15,7 +13,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
-public class ThreadGroupReferenceProxyImpl extends ObjectReferenceProxyImpl implements ThreadGroupReferenceProxy{
+public class ThreadGroupReferenceProxyImpl extends ObjectReferenceProxyImpl implements ThreadGroupReferenceProxy {
   private static final Logger LOG = Logger.getInstance(ThreadGroupReferenceProxyImpl.class);
   //caches
   private ThreadGroupReferenceProxyImpl myParentThreadGroupProxy;

@@ -144,7 +144,7 @@ public abstract class InjectedLanguageBlockBuilder {
                                            Indent indent,
                                            int offset,
                                            TextRange injectedEditableRange,
-                                           List<PsiLanguageInjectionHost.Shred> shreds) {
+                                           List<? extends PsiLanguageInjectionHost.Shred> shreds) {
     addInjectedLanguageBlockWrapper(result, injectedFile.getNode(), indent, offset, injectedEditableRange);
   }
 

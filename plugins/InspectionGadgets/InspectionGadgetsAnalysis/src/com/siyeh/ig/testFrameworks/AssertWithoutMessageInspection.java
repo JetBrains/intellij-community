@@ -74,7 +74,7 @@ public class AssertWithoutMessageInspection extends BaseInspection {
     private AssertWithoutMessageFix(boolean messageIsOnFirstPosition) {myMessageIsOnFirstPosition = messageIsOnFirstPosition;}
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
 
       PsiMethodCallExpression methodCallExpr = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
       if (methodCallExpr == null) return;

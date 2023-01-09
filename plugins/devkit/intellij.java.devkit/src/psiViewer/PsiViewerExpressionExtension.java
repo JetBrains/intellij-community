@@ -12,7 +12,7 @@ import javax.swing.*;
 final class PsiViewerExpressionExtension extends JavaPsiViewerExtension {
   @Override
   public @NotNull String getName() {
-    return "Java Expression";
+    return JavaPsiViewerBundle.message("java.expression");
   }
 
   @Override

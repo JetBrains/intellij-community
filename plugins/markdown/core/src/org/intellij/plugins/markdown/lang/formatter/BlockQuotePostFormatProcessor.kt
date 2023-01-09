@@ -35,7 +35,7 @@ internal class BlockQuotePostFormatProcessor: PostFormatProcessor {
       return rangeToReformat
     }
     commit(source)
-    val firstChild = source.firstChild?.firstChild ?: return rangeToReformat
+    val firstChild = source.firstChild ?: return rangeToReformat
     val quotes = firstChild.siblings(forward = true, withSelf = true).filterIsInstance<MarkdownBlockQuote>()
     for (quote in quotes) {
       if (rangeToReformat.intersects(rangeToReformat)) {

@@ -2,7 +2,7 @@
 package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.WebSymbolsContainer
+import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.patterns.ComplexPatternOptions
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 
@@ -10,7 +10,7 @@ internal interface ComplexPatternConfigProvider {
 
   fun getPatterns(): List<WebSymbolsPattern>
 
-  fun getOptions(params: MatchParameters, contextStack: Stack<WebSymbolsContainer>): ComplexPatternOptions
+  fun getOptions(params: MatchParameters, scopeStack: Stack<WebSymbolsScope>): ComplexPatternOptions
 
   val isStaticAndRequired: Boolean
 

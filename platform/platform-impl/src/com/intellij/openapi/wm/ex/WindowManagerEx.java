@@ -78,6 +78,8 @@ public abstract class WindowManagerEx extends WindowManager {
   @ApiStatus.Internal
   public abstract void releaseFrame(@NotNull ProjectFrameHelper frameHelper);
 
+  public abstract boolean isFrameReused(@NotNull ProjectFrameHelper frameHelper);
+
   @ApiStatus.Internal
   public abstract @NotNull List<ProjectFrameHelper> getProjectFrameHelpers();
 }

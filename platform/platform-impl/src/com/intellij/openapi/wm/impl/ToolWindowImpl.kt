@@ -21,7 +21,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
@@ -43,7 +42,6 @@ import com.intellij.util.Consumer
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.*
-import com.intellij.util.ui.UIUtil.setBackgroundRecursively
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.annotations.ApiStatus
@@ -659,24 +657,20 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
   }
 
-  private inner class ResizeActionGroup : ActionGroup(ActionsBundle.groupText("ResizeToolWindowGroup"), true), DumbAware {
-    private val children by lazy<Array<AnAction>> {
-      // force creation
-      createContentIfNeeded()
-      val component = decorator
-      val toolWindow = this@ToolWindowImpl
-      arrayOf(
-        ResizeToolWindowAction.Left(toolWindow, component),
-        ResizeToolWindowAction.Right(toolWindow, component),
-        ResizeToolWindowAction.Up(toolWindow, component),
-        ResizeToolWindowAction.Down(toolWindow, component),
-        ActionManager.getInstance().getAction("MaximizeToolWindow")
+  private inner class ResizeActionGroup : DefaultActionGroup(
+    ActionsBundle.groupText("ResizeToolWindowGroup"),
+    ActionManager.getInstance().let { actionManager ->
+      listOf(
+        actionManager.getAction("ResizeToolWindowLeft"),
+        actionManager.getAction("ResizeToolWindowRight"),
+        actionManager.getAction("ResizeToolWindowUp"),
+        actionManager.getAction("ResizeToolWindowDown"),
+        actionManager.getAction("MaximizeToolWindow")
       )
+    }) {
+    init {
+      isPopup = true
     }
-
-    override fun getChildren(e: AnActionEvent?) = children
-
-    override fun isDumbAware() = true
   }
 
   private inner class RemoveStripeButtonAction :
@@ -732,13 +726,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   fun requestFocusInToolWindow() {
     focusTask.resetStartTime()
-    val alarm = focusAlarm
-    alarm.cancelAllRequests()
-    if (Registry.`is`("toolwindow.immediate.focus")) {
-      focusTask.run()
-    } else {
-      alarm.request(delay = 0)
-    }
+    focusAlarm.cancelAllRequests()
+    focusTask.run()
   }
 }
 

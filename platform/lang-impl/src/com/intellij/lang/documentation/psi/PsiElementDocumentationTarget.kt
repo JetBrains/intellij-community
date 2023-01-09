@@ -152,7 +152,7 @@ class PsiElementDocumentationTarget private constructor(
     })
 
     val imageResolver: DocumentationImageResolver = DocumentationImageResolver { url ->
-      SlowOperations.allowSlowOperations("old API fallback").use {
+      SlowOperations.allowSlowOperations(SlowOperations.GENERIC).use {  // old API fallback
         dereference()?.targetElement?.let { targetElement ->
           DocumentationManager.getElementImage(targetElement, url)
         }

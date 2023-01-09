@@ -27,12 +27,14 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.TestApplicationManager.Companion.publishHeapDump
+import com.intellij.testFramework.common.LEAKED_PROJECTS
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.containers.UnsafeWeakList
 import com.intellij.util.ref.GCUtil
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -44,6 +46,7 @@ private val LOG_PROJECT_LEAKAGE = System.getProperty("idea.log.leaked.projects.i
 var totalCreatedProjectsCount = 0
 
 @ApiStatus.Internal
+@TestOnly
 open class TestProjectManager : ProjectManagerImpl() {
   companion object {
 
@@ -125,7 +128,7 @@ open class TestProjectManager : ProjectManagerImpl() {
           runInitProjectActivities(project = project)
         }
         if (isRunStartUpActivitiesEnabled(project)) {
-          (StartupManager.getInstance(project) as StartupManagerImpl).runStartupActivities()
+          (StartupManager.getInstance(project) as StartupManagerImpl).runPostStartupActivities()
         }
       }
     }
@@ -271,37 +274,24 @@ open class TestProjectManager : ProjectManagerImpl() {
   }
 }
 
+@TestOnly
 private fun reportLeakedProjects(leakedProjects: Iterable<Project>) {
   val hashCodes = HashSet<Int>()
-  val message = StringBuilder("Too many projects leaked: \n")
+  var message = "Too many projects leaked: \n"
   for (project in leakedProjects) {
     val hashCode = System.identityHashCode(project)
     hashCodes.add(hashCode)
-    appendProjectDetails(message, project, hashCode, null)
+    message += LeakHunter.getLeakedObjectDetails(project, null, false)
   }
-  val dumpPath = publishHeapDump("leakedProjects")
+  val dumpPath = publishHeapDump(LEAKED_PROJECTS)
   LeakHunter.processLeaks(LeakHunter.allRoots(), ProjectImpl::class.java,
                           { hashCodes.contains(System.identityHashCode(it)) },
-                          { leaked: ProjectImpl?, backLink: Any? ->
+                          { leaked, backLink ->
                             val hashCode = System.identityHashCode(leaked)
-                            appendProjectDetails(message, leaked!!, hashCode, backLink)
+                            message += LeakHunter.getLeakedObjectDetails(leaked, backLink, false)
                             hashCodes.remove(hashCode)
                             !hashCodes.isEmpty()
                           })
-  message.append("\nPlease see `").append(dumpPath).append("` for a memory dump")
-  throw AssertionError(message.toString())
-}
-
-private fun appendProjectDetails(message: StringBuilder,
-                                 leaked: Project,
-                                 hashCode: Int,
-                                 backLink: Any?) {
-  message.append("Leaked project ").append(leaked)
-    .append(", hash=").append(hashCode)
-    .append(", creation place=").append(LeakHunter.getCreationPlace(leaked)).append('\n')
-  if (backLink != null) {
-    message.append(" retained by:\n")
-      .append(backLink).append('\n')
-      .append("-----\n")
-  }
+  message += LeakHunter.getLeakedObjectErrorDescription(dumpPath)
+  throw AssertionError(message)
 }

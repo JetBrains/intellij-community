@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.uast;
 
@@ -36,6 +36,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
     @TestMetadata("commentsOnProperties.kt")
     public void testCommentsOnProperties() throws Exception {
         runTest("testData/declaration/commentsOnProperties.kt");
+    }
+
+    @TestMetadata("companionInAnnotation.kt")
+    public void testCompanionInAnnotation() throws Exception {
+        runTest("testData/declaration/companionInAnnotation.kt");
     }
 
     @TestMetadata("constructorProperties.kt")
@@ -106,5 +111,10 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
     @TestMetadata("retention.kt")
     public void testRetention() throws Exception {
         runTest("testData/declaration/retention.kt");
+    }
+
+    @TestMetadata("returns.kt")
+    public void testReturns() throws Exception {
+        runTest("testData/declaration/returns.kt");
     }
 }

@@ -31,6 +31,7 @@ aria.global =
 	&	aria.prop.owns?
 	&	aria.prop.relevant?
 	&	aria.prop.roledescription?
+	&	aria.prop.description?
 	)
 
 common.attrs.other &= aria.global?
@@ -198,6 +199,10 @@ common.attrs.aria.implicit.column-or-row-header |=
 	(	aria.prop.sort?
 	&	aria.prop.readonly?
 	&	aria.prop.required?
+	&	aria.prop.colspan?
+	&	aria.prop.colindex?
+	&	aria.prop.rowspan?
+	&	aria.prop.rowindex?
 	&	aria.state.selected?
 	&	aria.state.expanded?
 	)
@@ -397,6 +402,12 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 			common.data.idrefs #REVISIT add Schematron check
 		}
 
+## description
+	aria.prop.description =
+		attribute aria-description {
+			string
+		}
+
 ## details
 	aria.prop.details =
 		attribute aria-details {
@@ -584,7 +595,9 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 ## setsize
 	aria.prop.setsize =
 		attribute aria-setsize {
-			common.data.integer.non-negative
+			(	common.data.integer.non-negative
+                        |	string "-1"
+                        )
 		}
 
 ## sort
@@ -695,6 +708,7 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	aria.cell =
 		(	aria.role.cell
 		&	aria.prop.colspan?
+		&	aria.prop.colindex?
 		&	aria.prop.rowspan?
 		&	aria.prop.rowindex?
 		)
@@ -873,6 +887,7 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 		&	aria.state.expanded?
 		&	aria.prop.required?
 		&	aria.prop.colspan?
+		&	aria.prop.colindex?
 		&	aria.prop.rowspan?
 		&	aria.prop.rowindex?
 		)
@@ -1086,6 +1101,13 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	common.attrs.aria |= aria.menuitemcheckbox
 	common.attrs.aria.role.menuitemcheckbox |= aria.menuitemcheckbox
 
+## menuitemcheckbox w/o checked required
+	aria.menuitemcheckbox-checked-not-required =
+		(	aria.role.menuitemcheckbox )
+		aria.role.menuitemcheckbox-checked-not-required =
+			attribute role { string "menuitemcheckbox" }
+	common.attrs.aria.role.menuitemcheckbox-checked-not-required |= aria.menuitemcheckbox-checked-not-required
+
 ## menuitemradio
 	aria.menuitemradio =
 		(	aria.role.menuitemradio
@@ -1099,6 +1121,17 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	
 	common.attrs.aria |= aria.menuitemradio
 	common.attrs.aria.role.menuitemradio |= aria.menuitemradio
+
+## menuitemradio w/o checked required
+	aria.menuitemradio-checked-not-required =
+		(	aria.role.menuitemradio
+		&	aria.state.selected?
+		&	aria.prop.posinset?
+		&	aria.prop.setsize?
+		)
+		aria.role.menuitemradio-checked-not-required =
+			attribute role { string "menuitemradio" }
+	common.attrs.aria.role.menuitemradio-checked-not-required |= aria.menuitemradio-checked-not-required
 
 ## navigation
 	aria.navigation =
@@ -1357,11 +1390,20 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	common.attrs.aria |= aria.switch
 	common.attrs.aria.role.switch |= aria.switch
 
+## switch w/o checked required
+	aria.switch-checked-not-required =
+		(	aria.role.switch )
+		aria.role.switch-checked-not-required =
+			attribute role { string "switch" }
+	common.attrs.aria.role.switch-checked-not-required |= aria.switch-checked-not-required
+
 ## tab
 	aria.tab =
 		(	aria.role.tab
 		&	aria.state.selected?
 		&	aria.state.expanded?
+		&	aria.prop.posinset?
+		&	aria.prop.setsize?
 		)
 		aria.role.tab = 
 			attribute role { string "tab" }

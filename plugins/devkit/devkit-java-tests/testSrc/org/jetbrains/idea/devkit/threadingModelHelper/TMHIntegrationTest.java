@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.threadingModelHelper;
 
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.DefaultLogger;
@@ -51,12 +52,9 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
     assertUserMessageContains(exception, EDT_ASSERTION_MESSAGE);
   }
 
-  /**
-   * This test doesn't fail because {@link Application#assertIsNonDispatchThread()} does nothing in the unit test mode.
-   * Still the test assures that the method exists.
-   */
   public void testBackgroundActionOnEdt() {
-    runBackgroundAction();
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertThrows(RuntimeException.class, ()->runBackgroundAction());
   }
 
   public void testBackgroundActionInBackground() {

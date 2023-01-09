@@ -118,7 +118,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
 
   override fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?) {
     try {
-      val bytes: ByteArray
+      val bytes: ByteArray?
       if (pluginDescriptor == null) {
         when (requestor) {
           is TempUIThemeBasedLookAndFeelInfo -> {

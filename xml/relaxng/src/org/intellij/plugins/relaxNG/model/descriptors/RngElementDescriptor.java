@@ -464,6 +464,11 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     }
 
     @Override
+    public boolean isWritable() {
+      return false;
+    }
+
+    @Override
     public boolean equals(Object another) {
       return another instanceof RncLocationPsiElement &&
              ((RncLocationPsiElement)another).myFile == myFile &&

@@ -4,7 +4,6 @@ import com.intellij.openapi.components.SettingsCategory
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil.createBoundedScheduledExecutorService
-import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import org.eclipse.jgit.api.Git
@@ -23,6 +22,7 @@ import java.time.Instant
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import kotlin.io.path.div
+import kotlin.io.path.exists
 import kotlin.io.path.writeText
 
 @RunWith(JUnit4::class)
@@ -41,18 +41,16 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     bridge = controls.bridge
     bridge.initialize(initMode)
   }
-  
+
   @Test fun `existing settings should be copied on initialization`() {
-    val fileName = "options/laf.xml"
-    val initialContent = "LaF Initial"
-    configDir.resolve(fileName).write(initialContent)
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
 
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
-    val pushedSnapshot = remoteCommunicator.getVersionOnServer()
-    assertNotNull("Nothing has been pushed", pushedSnapshot)
-    pushedSnapshot!!.assertSettingsSnapshot {
-      fileState(fileName, initialContent)
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
     }
   }
 
@@ -71,37 +69,37 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
     initSettingsSync()
 
-    val pushedSnapshot = remoteCommunicator.getVersionOnServer()
-    assertNotNull("Nothing has been pushed", pushedSnapshot)
-    pushedSnapshot!!.assertSettingsSnapshot {
+    assertServerSnapshot {
       fileState(fileName, contentBetweenSessions)
     }
   }
 
   @Test fun `delete server data`() {
-    val fileName = "options/laf.xml"
-    val initialContent = "LaF Initial"
-    configDir.resolve(fileName).write(initialContent)
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
 
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
-    val pushedSnapshot = remoteCommunicator.getVersionOnServer()
-    assertNotNull("Nothing has been pushed", pushedSnapshot)
-    pushedSnapshot!!.assertSettingsSnapshot {
-      fileState(fileName, initialContent)
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
     }
 
-    val cdl = CountDownLatch(1)
-    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeleteServerData {
-      cdl.countDown()
-    })
-    cdl.wait()
+    deleteServerDataAndWait()
 
     val versionOnServer = remoteCommunicator.getVersionOnServer()
     assertNotNull("There is no version on the server", versionOnServer)
     assertTrue("The server snapshot is incorrect: $versionOnServer", versionOnServer!!.isDeleted())
     assertTrue("There should be no settings data after deletion: $versionOnServer", versionOnServer.isEmpty())
     assertFalse("Settings sync was not disabled", SettingsSyncSettings.getInstance().syncEnabled)
+  }
+
+  private fun deleteServerDataAndWait() {
+    val cdl = CountDownLatch(1)
+    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeleteServerData {
+      cdl.countDown()
+    })
+    cdl.wait()
   }
 
   @Test fun `disable settings sync if data on server was deleted`() {
@@ -113,9 +111,8 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
     remoteCommunicator.prepareFileOnServer(SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(),
-                                                                                      isDeleted = true), emptySet(), null))
-    SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
-    bridge.waitForAllExecuted()
+                                                                                      isDeleted = true), emptySet(), null, emptySet()))
+    syncSettingsAndWait()
 
     assertFalse("Settings sync was not disabled", SettingsSyncSettings.getInstance().syncEnabled)
   }
@@ -152,16 +149,14 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     })
 
     // prepare local settings
-    val lafXml = "options/laf.xml"
-    val lafContent = "LaF Initial"
-    configDir.resolve(lafXml).write(lafContent)
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
 
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
-    val pushedSnapshot = remoteCommunicator.getVersionOnServer()
-    assertNotNull("Nothing has been pushed", pushedSnapshot)
-    pushedSnapshot!!.assertSettingsSnapshot {
-      fileState(lafXml, lafContent)
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
     }
   }
 
@@ -205,15 +200,21 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     assertEquals("Incorrect content", "Migration Data", (settingsSyncStorage / "options" / "laf.xml").readText())
   }
 
-  @Test fun `enable settings with migration and data on server should prefer server data`() {
-    val migration = migrationFromLafXml()
+  @Test fun `enable settings with migration and data on server should merge but prefer server data in case of conflicts`() {
+    val migration = migration(settingsSnapshot {
+      fileState("options/laf.xml", "Migration Data")
+      fileState("options/editor.xml", "Migration Data")
+    })
     remoteCommunicator.prepareFileOnServer(settingsSnapshot {
       fileState("options/laf.xml", "Server Data")
+      fileState("options/keymap.xml", "Server Data")
     })
 
     initSettingsSync(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration))
 
-    assertEquals("Incorrect content", "Server Data", (settingsSyncStorage / "options" / "laf.xml").readText())
+    assertFileWithContent("Migration Data", (settingsSyncStorage / "options" / "editor.xml"))
+    assertFileWithContent("Server Data", (settingsSyncStorage / "options" / "laf.xml"))
+    assertFileWithContent("Server Data", (settingsSyncStorage / "options" / "keymap.xml"))
   }
 
   //@Test
@@ -301,8 +302,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       fileState("options/editor.xml", "Editor from Server")
     })
 
-    SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
-    bridge.waitForAllExecuted()
+    syncSettingsAndWait()
 
     assertFileWithContent("Editor from Server", (settingsSyncStorage / "options" / "editor.xml"))
     assertFileWithContent("LaF Initial", (settingsSyncStorage / "options" / "laf.xml"))
@@ -328,20 +328,68 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
     assertTrue("Settings Sync has been disabled", SettingsSyncSettings.getInstance().syncEnabled)
 
-    val pushedSnapshot = remoteCommunicator.getVersionOnServer()
-    assertNotNull("Nothing has been pushed", pushedSnapshot)
-    pushedSnapshot!!.assertSettingsSnapshot {
+    assertServerSnapshot {
       fileState("options/laf.xml", "LaF Initial")
     }
   }
 
-  private fun writeToConfig(build: SettingsSnapshotBuilder.() -> Unit) {
-    val builder = SettingsSnapshotBuilder()
-    builder.build()
-    for (file in builder.fileStates) {
-      file as FileState.Modified
-      configDir.resolve(file.file).write(file.content)
+  @Test fun `deletion should be recognized correctly`() {
+    writeToConfig {
+      fileState("options/editor.xml", "Editor Initial")
     }
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+    deleteServerDataAndWait()
+
+    val migration = migrationFromLafXml()
+    initSettingsSync(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration))
+
+    assertEquals("Incorrect content", "Migration Data", (settingsSyncStorage / "options" / "laf.xml").readText())
+  }
+
+  @Test fun `regular sync should push if there is nothing on server`() {
+    writeToConfig {
+      fileState("options/editor.xml", "Editor Initial")
+    }
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+    remoteCommunicator.deleteAllFiles()
+
+    syncSettingsAndWait()
+
+    assertServerSnapshot {
+      fileState("options/editor.xml", "Editor Initial")
+    }
+  }
+
+  @Test fun `unknown additional files should be stored to the history`() {
+    initSettingsSync()
+    remoteCommunicator.prepareFileOnServer(settingsSnapshot {
+      additionalFile("newformat.json", "File with new unknown format")
+    })
+
+    syncSettingsAndWait()
+
+    assertFileWithContent("File with new unknown format", settingsSyncStorage / ".metainfo" / "newformat.json")
+    FileRepositoryBuilder.create(settingsSyncStorage.resolve(".git").toFile()).use { repository ->
+      val git = Git(repository)
+      val latestCommit = git.log().add(repository.findRef("HEAD").objectId).call().toList().first()
+      assertEquals("Unexpected content in commit",
+                   "File with new unknown format",
+                   getContent(repository, latestCommit, ".metainfo/newformat.json"))
+    }
+  }
+
+  @Test fun `unknown additional files should be sent to the server`() {
+    (settingsSyncStorage / ".metainfo" / "newformat.json").write("File with new unknown format")
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    assertServerSnapshot {
+      additionalFile("newformat.json", "File with new unknown format")
+    }
+  }
+
+  private fun syncSettingsAndWait() {
+    SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
+    bridge.waitForAllExecuted()
   }
 
   private fun suppressFailureOnLogError(expectedException: RuntimeException, activity: () -> Unit) {
@@ -354,22 +402,23 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     }
   }
 
-  private fun migrationFromLafXml() = object : SettingsSyncMigration {
+  private fun migrationFromLafXml() = migration(
+    settingsSnapshot {
+      fileState("options/laf.xml", "Migration Data")
+    }
+  )
+
+  private fun migration(snapshotToMigrate: SettingsSnapshot) = object : SettingsSyncMigration {
     override fun isLocalDataAvailable(appConfigDir: Path): Boolean {
-      TODO("Not yet implemented")
+      throw UnsupportedOperationException("Should not have been called")
     }
 
     override fun getLocalDataIfAvailable(appConfigDir: Path): SettingsSnapshot {
-      return settingsSnapshot {
-        fileState("options/laf.xml", "Migration Data")
-      }
+      return snapshotToMigrate
     }
-    override fun migrateCategoriesSyncStatus(appConfigDir: Path, syncSettings: SettingsSyncSettings) {}
-  }
 
-  private fun assertFileWithContent(expectedContent: String, file: Path) {
-    assertTrue("File $file does not exist", file.exists())
-    assertEquals("File $file has unexpected content", expectedContent, file.readText())
+    override fun migrateCategoriesSyncStatus(appConfigDir: Path, syncSettings: SettingsSyncSettings) {
+    }
   }
 
   private fun assertAppliedToIde(fileSpec: String, expectedContent: String) {

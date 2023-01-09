@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.util.ui.InlineIconButton
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -25,11 +24,7 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.HorizontalBox
-import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JButtonAction
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import icons.CollaborationToolsIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -233,7 +228,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
           add(titlePanel, CC().growX())
           add(editor, CC().growX().growY()
             .gap("0", "0", "0", "0"))
-          add(errorPanel, CC().minHeight("${JBUIScale.scale(32)}").growY().growPrioY(0).hideMode(3)
+          add(errorPanel, CC().minHeight("32").growY().growPrioY(0).hideMode(3)
             .gap("0", "0", "0", "0"))
           add(buttonsPanel, CC().alignX("right"))
         }

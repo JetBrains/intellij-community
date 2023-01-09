@@ -32,7 +32,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
@@ -77,8 +76,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 import java.util.function.IntUnaryOperator;
-
-import static com.intellij.diff.util.DiffUtil.getLinesContent;
 
 public class UnifiedDiffViewer extends ListenerDiffViewerBase implements DifferencesLabel.DifferencesCounter {
   @NotNull protected final EditorEx myEditor;
@@ -1070,16 +1067,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
       myIndex++;
 
       LineFragment lineFragment = change.getLineFragment();
-
       Document document = getContent2().getDocument();
-      CharSequence insertedText = getLinesContent(document, lineFragment.getStartLine2(), lineFragment.getEndLine2());
 
-      int lineNumber = lineFragment.getStartLine2();
-
-      LineTokenizer tokenizer = new LineTokenizer(insertedText.toString());
-      for (String line : tokenizer.execute()) {
+      for (int lineNumber = lineFragment.getStartLine2(); lineNumber < lineFragment.getEndLine2(); lineNumber++) {
+        int offset1 = document.getLineStartOffset(lineNumber);
+        int offset2 = document.getLineEndOffset(lineNumber);
+        CharSequence line = document.getImmutableCharSequence().subSequence(offset1, offset2);
         addLine(lineNumber, line);
-        lineNumber++;
       }
     }
   }

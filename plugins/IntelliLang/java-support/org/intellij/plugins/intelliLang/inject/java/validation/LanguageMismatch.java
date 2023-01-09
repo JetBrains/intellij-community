@@ -17,7 +17,7 @@ package org.intellij.plugins.intelliLang.inject.java.validation;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,19 +29,19 @@ import org.intellij.plugins.intelliLang.util.AnnotateFix;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class LanguageMismatch extends LocalInspectionTool {
   public boolean CHECK_NON_ANNOTATED_REFERENCES = true;
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      IntelliLangBundle.message("flag.usages.of.non.annotated.elements"), this, "CHECK_NON_ANNOTATED_REFERENCES");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("CHECK_NON_ANNOTATED_REFERENCES", IntelliLangBundle.message("flag.usages.of.non.annotated.elements")));
   }
 
   @Override

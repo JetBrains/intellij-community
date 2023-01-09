@@ -241,6 +241,9 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
   @Override
   public void addJdk(@NotNull Sdk jdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
+    if (mySdks.contains(jdk)) {
+      throw new IllegalStateException("Sdk " + jdk + " is already registered.");
+    }
     mySdks.add(jdk);
     ApplicationManager.getApplication().getMessageBus().syncPublisher(JDK_TABLE_TOPIC).jdkAdded(jdk);
   }

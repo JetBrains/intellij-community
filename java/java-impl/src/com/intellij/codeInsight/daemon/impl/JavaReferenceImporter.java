@@ -45,6 +45,7 @@ public class JavaReferenceImporter implements ReferenceImporter {
   }
 
   private static ImportClassFix computeImportFix(@NotNull PsiFile file, int startOffset, int endOffset) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffset);
     for (PsiElement element : elements) {
       if (element instanceof PsiJavaCodeReferenceElement) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.widget;
 
 import com.intellij.ide.ui.UISettings;
@@ -7,7 +7,6 @@ import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -55,23 +54,11 @@ final class NotificationWidgetListener implements UISettingsListener, ToolWindow
     }
 
     boolean widgetIsAvailable = NotificationWidgetFactory.isAvailable();
-    NotificationWidgetFactory widgetFactory = StatusBarWidgetFactory.EP_NAME.findExtension(NotificationWidgetFactory.class);
-
     for (Project project : projectManager.getOpenProjects()) {
-      if (widgetIsAvailable) {
-        if (widgetFactory != null) {
-          StatusBarWidgetsManager widgetsManager = project.getService(StatusBarWidgetsManager.class);
-          if (!widgetsManager.wasWidgetCreated(widgetFactory)) {
-            widgetsManager.updateWidget(widgetFactory);
-          }
-        }
-      }
-      else {
+      if (!widgetIsAvailable) {
         updateToolWindowNotificationsIcon(project);
-        if (widgetFactory != null) {
-          project.getService(StatusBarWidgetsManager.class).updateWidget(widgetFactory);
-        }
       }
+      project.getService(StatusBarWidgetsManager.class).updateWidget(NotificationWidgetFactory.class);
     }
   }
 
@@ -79,13 +66,15 @@ final class NotificationWidgetListener implements UISettingsListener, ToolWindow
     if (ActionCenter.isEnabled()) {
       return;
     }
+
     ToolWindow eventLog = EventLog.getEventLog(project);
     if (eventLog != null) {
       List<Notification> notifications = EventLog.getNotifications(project);
       NotificationType type = NotificationType.getDominatingType(notifications);
       int size = notifications.size();
-      ApplicationManager.getApplication()
-        .invokeLater(() -> eventLog.setIcon(IdeNotificationArea.createIconWithNotificationCount(new JBLabel(), type, size, true)));
+      ApplicationManager.getApplication().invokeLater(() -> {
+        eventLog.setIcon(IdeNotificationArea.createIconWithNotificationCount(new JBLabel(), type, size, true));
+      });
     }
   }
 }

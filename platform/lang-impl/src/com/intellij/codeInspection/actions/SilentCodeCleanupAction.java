@@ -7,7 +7,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -41,7 +40,6 @@ public class SilentCodeCleanupAction extends AnAction {
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassist.inspect.batch");
     runInspections(project, analysisScope);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.openapi.application.AccessToken
@@ -24,13 +24,7 @@ abstract class SaveAndSyncHandler {
    * If project is specified - only project settings will be saved.
    * If project is not specified - app and all project settings will be saved.
    */
-  data class SaveTask @JvmOverloads constructor(val project: Project? = null, val forceSavingAllSettings: Boolean = false) {
-    companion object {
-      // for Java clients
-      @JvmStatic
-      fun projectIncludingAllSettings(project: Project) = SaveTask(project = project, forceSavingAllSettings = true)
-    }
-  }
+  data class SaveTask @JvmOverloads constructor(val project: Project? = null, val forceSavingAllSettings: Boolean = false)
 
   @ApiStatus.Internal
   abstract fun scheduleSave(task: SaveTask, forceExecuteImmediately: Boolean)
@@ -67,7 +61,7 @@ abstract class SaveAndSyncHandler {
 
   /**
    * @return a modification tracker incrementing when external commands are likely run.
-   *         Currently it happens on IDE frame deactivation and/or [scheduleRefresh] invocation.
+   *         Currently, it happens on IDE frame deactivation and/or [scheduleRefresh] invocation.
    */
   @ApiStatus.Experimental
   fun getExternalChangesTracker(): ModificationTracker = externalChangesModificationTracker

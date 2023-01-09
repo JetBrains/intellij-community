@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractClass
 
 import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.MethodReferencesSearch
@@ -40,7 +41,6 @@ import org.jetbrains.kotlin.idea.refactoring.pullUp.checkVisibilityInAbstractedM
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens

@@ -6,9 +6,8 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
@@ -22,6 +21,9 @@ import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceLis
 import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -42,13 +44,13 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
 
   }
 
-  override val link: OnePersistentId
+  override val link: OneSymbolicId
     get() = dataSource.link
 
-  override val manyLinks: List<OnePersistentId>
+  override val manyLinks: List<OneSymbolicId>
     get() = dataSource.manyLinks
 
-  override val optionalLink: OnePersistentId?
+  override val optionalLink: OneSymbolicId?
     get() = dataSource.optionalLink
 
   override val inContainer: Container
@@ -84,11 +86,15 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
   override val children: List<SoftLinkReferencedChild>
     get() = snapshot.extractOneToManyChildren<SoftLinkReferencedChild>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: EntityWithSoftLinksData?) : ModifiableWorkspaceEntityBase<EntityWithSoftLinks>(), EntityWithSoftLinks.Builder {
+  class Builder(result: EntityWithSoftLinksData?) : ModifiableWorkspaceEntityBase<EntityWithSoftLinks, EntityWithSoftLinksData>(
+    result), EntityWithSoftLinks.Builder {
     constructor() : this(EntityWithSoftLinksData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -108,7 +114,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -207,8 +213,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       if (this.justNullableProperty != dataSource?.justNullableProperty) this.justNullableProperty = dataSource.justNullableProperty
       if (this.justListProperty != dataSource.justListProperty) this.justListProperty = dataSource.justListProperty.toMutableList()
       if (this.deepSealedClass != dataSource.deepSealedClass) this.deepSealedClass = dataSource.deepSealedClass
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -216,25 +221,25 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
 
-    override var link: OnePersistentId
+    override var link: OneSymbolicId
       get() = getEntityData().link
       set(value) {
         checkModificationAllowed()
-        getEntityData().link = value
+        getEntityData(true).link = value
         changedProperty.add("link")
 
       }
 
-    private val manyLinksUpdater: (value: List<OnePersistentId>) -> Unit = { value ->
+    private val manyLinksUpdater: (value: List<OneSymbolicId>) -> Unit = { value ->
 
       changedProperty.add("manyLinks")
     }
-    override var manyLinks: MutableList<OnePersistentId>
+    override var manyLinks: MutableList<OneSymbolicId>
       get() {
         val collection_manyLinks = getEntityData().manyLinks
         if (collection_manyLinks !is MutableWorkspaceList) return collection_manyLinks
@@ -248,15 +253,15 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().manyLinks = value
+        getEntityData(true).manyLinks = value
         manyLinksUpdater.invoke(value)
       }
 
-    override var optionalLink: OnePersistentId?
+    override var optionalLink: OneSymbolicId?
       get() = getEntityData().optionalLink
       set(value) {
         checkModificationAllowed()
-        getEntityData().optionalLink = value
+        getEntityData(true).optionalLink = value
         changedProperty.add("optionalLink")
 
       }
@@ -265,7 +270,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() = getEntityData().inContainer
       set(value) {
         checkModificationAllowed()
-        getEntityData().inContainer = value
+        getEntityData(true).inContainer = value
         changedProperty.add("inContainer")
 
       }
@@ -274,7 +279,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() = getEntityData().inOptionalContainer
       set(value) {
         checkModificationAllowed()
-        getEntityData().inOptionalContainer = value
+        getEntityData(true).inOptionalContainer = value
         changedProperty.add("inOptionalContainer")
 
       }
@@ -297,7 +302,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().inContainerList = value
+        getEntityData(true).inContainerList = value
         inContainerListUpdater.invoke(value)
       }
 
@@ -319,7 +324,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().deepContainer = value
+        getEntityData(true).deepContainer = value
         deepContainerUpdater.invoke(value)
       }
 
@@ -327,7 +332,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() = getEntityData().sealedContainer
       set(value) {
         checkModificationAllowed()
-        getEntityData().sealedContainer = value
+        getEntityData(true).sealedContainer = value
         changedProperty.add("sealedContainer")
 
       }
@@ -350,7 +355,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().listSealedContainer = value
+        getEntityData(true).listSealedContainer = value
         listSealedContainerUpdater.invoke(value)
       }
 
@@ -358,7 +363,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() = getEntityData().justProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().justProperty = value
+        getEntityData(true).justProperty = value
         changedProperty.add("justProperty")
       }
 
@@ -366,7 +371,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() = getEntityData().justNullableProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().justNullableProperty = value
+        getEntityData(true).justNullableProperty = value
         changedProperty.add("justNullableProperty")
       }
 
@@ -388,7 +393,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().justListProperty = value
+        getEntityData(true).justListProperty = value
         justListPropertyUpdater.invoke(value)
       }
 
@@ -396,7 +401,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() = getEntityData().deepSealedClass
       set(value) {
         checkModificationAllowed()
-        getEntityData().deepSealedClass = value
+        getEntityData(true).deepSealedClass = value
         changedProperty.add("deepSealedClass")
 
       }
@@ -421,9 +426,9 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
@@ -435,7 +440,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
         }
         else {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
@@ -446,15 +451,14 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
         changedProperty.add("children")
       }
 
-    override fun getEntityData(): EntityWithSoftLinksData = result ?: super.getEntityData() as EntityWithSoftLinksData
     override fun getEntityClass(): Class<EntityWithSoftLinks> = EntityWithSoftLinks::class.java
   }
 }
 
 class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), SoftLinkable {
-  lateinit var link: OnePersistentId
-  lateinit var manyLinks: MutableList<OnePersistentId>
-  var optionalLink: OnePersistentId? = null
+  lateinit var link: OneSymbolicId
+  lateinit var manyLinks: MutableList<OneSymbolicId>
+  var optionalLink: OneSymbolicId? = null
   lateinit var inContainer: Container
   var inOptionalContainer: Container? = null
   lateinit var inContainerList: MutableList<Container>
@@ -477,8 +481,8 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
   fun isJustListPropertyInitialized(): Boolean = ::justListProperty.isInitialized
   fun isDeepSealedClassInitialized(): Boolean = ::deepSealedClass.isInitialized
 
-  override fun getLinks(): Set<PersistentEntityId<*>> {
-    val result = HashSet<PersistentEntityId<*>>()
+  override fun getLinks(): Set<SymbolicEntityId<*>> {
+    val result = HashSet<SymbolicEntityId<*>>()
     result.add(link)
     for (item in manyLinks) {
       result.add(item)
@@ -556,7 +560,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
     return result
   }
 
-  override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     index.index(this, link)
     for (item in manyLinks) {
       index.index(this, item)
@@ -633,7 +637,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
     }
   }
 
-  override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     // TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     val removedItem_link = mutablePreviousSet.remove(link)
@@ -757,11 +761,11 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
     }
   }
 
-  override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
+  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
     var changed = false
     val link_data = if (link == oldLink) {
       changed = true
-      newLink as OnePersistentId
+      newLink as OneSymbolicId
     }
     else {
       null
@@ -772,7 +776,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
     val manyLinks_data = manyLinks.map {
       val it_data = if (it == oldLink) {
         changed = true
-        newLink as OnePersistentId
+        newLink as OneSymbolicId
       }
       else {
         null
@@ -790,7 +794,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
     var optionalLink_data_optional = if (optionalLink != null) {
       val optionalLink___data = if (optionalLink!! == oldLink) {
         changed = true
-        newLink as OnePersistentId
+        newLink as OneSymbolicId
       }
       else {
         null
@@ -805,7 +809,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
     }
     val inContainer_id_data = if (inContainer.id == oldLink) {
       changed = true
-      newLink as OnePersistentId
+      newLink as OneSymbolicId
     }
     else {
       null
@@ -820,7 +824,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
     var inOptionalContainer_data_optional = if (inOptionalContainer != null) {
       val inOptionalContainer___id_data = if (inOptionalContainer!!.id == oldLink) {
         changed = true
-        newLink as OnePersistentId
+        newLink as OneSymbolicId
       }
       else {
         null
@@ -840,7 +844,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
     val inContainerList_data = inContainerList.map {
       val it_id_data = if (it.id == oldLink) {
         changed = true
-        newLink as OnePersistentId
+        newLink as OneSymbolicId
       }
       else {
         null
@@ -864,7 +868,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
         val it_goDeep_data = it.goDeep.map {
           val it_id_data = if (it.id == oldLink) {
             changed = true
-            newLink as OnePersistentId
+            newLink as OneSymbolicId
           }
           else {
             null
@@ -883,7 +887,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
         var it_optionalId_data_optional = if (it.optionalId != null) {
           val it_optionalId___data = if (it.optionalId!! == oldLink) {
             changed = true
-            newLink as OnePersistentId
+            newLink as OneSymbolicId
           }
           else {
             null
@@ -926,7 +930,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
       is SealedContainer.BigContainer -> {
         val _sealedContainer_id_data = if (_sealedContainer.id == oldLink) {
           changed = true
-          newLink as OnePersistentId
+          newLink as OneSymbolicId
         }
         else {
           null
@@ -941,7 +945,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
         val _sealedContainer_container_data = _sealedContainer.container.map {
           val it_id_data = if (it.id == oldLink) {
             changed = true
-            newLink as OnePersistentId
+            newLink as OneSymbolicId
           }
           else {
             null
@@ -969,7 +973,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
       is SealedContainer.SmallContainer -> {
         val _sealedContainer_notId_data = if (_sealedContainer.notId == oldLink) {
           changed = true
-          newLink as OnePersistentId
+          newLink as OneSymbolicId
         }
         else {
           null
@@ -990,7 +994,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
         is SealedContainer.BigContainer -> {
           val _it_id_data = if (_it.id == oldLink) {
             changed = true
-            newLink as OnePersistentId
+            newLink as OneSymbolicId
           }
           else {
             null
@@ -1005,7 +1009,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
           val _it_container_data = _it.container.map {
             val it_id_data = if (it.id == oldLink) {
               changed = true
-              newLink as OnePersistentId
+              newLink as OneSymbolicId
             }
             else {
               null
@@ -1033,7 +1037,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
         is SealedContainer.SmallContainer -> {
           val _it_notId_data = if (_it.notId == oldLink) {
             changed = true
-            newLink as OnePersistentId
+            newLink as OneSymbolicId
           }
           else {
             null
@@ -1066,7 +1070,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
               is DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour -> {
                 val ___deepSealedClass_id_data = if (___deepSealedClass.id == oldLink) {
                   changed = true
-                  newLink as OnePersistentId
+                  newLink as OneSymbolicId
                 }
                 else {
                   null
@@ -1090,22 +1094,17 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<EntityWithSoftLinks> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<EntityWithSoftLinks> {
     val modifiable = EntityWithSoftLinksImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): EntityWithSoftLinks {
     return getCached(snapshot) {
       val entity = EntityWithSoftLinksImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
@@ -1229,7 +1228,6 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(OnePersistentId::class.java)
     collector.add(DeepSealedOne::class.java)
     collector.add(DeepSealedOne.DeepSealedTwo.DeepSealedThree::class.java)
     collector.add(DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour::class.java)
@@ -1238,6 +1236,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
     collector.add(Container::class.java)
     collector.add(SealedContainer::class.java)
     collector.add(SealedContainer.BigContainer::class.java)
+    collector.add(OneSymbolicId::class.java)
     collector.add(DeepContainer::class.java)
     collector.add(SealedContainer.EmptyContainer::class.java)
     collector.add(DeepSealedOne.DeepSealedTwo::class.java)

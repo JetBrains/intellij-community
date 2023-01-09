@@ -9,12 +9,14 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Font
 import javax.swing.*
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.LabelUI
 
-open class InteractiveCoursePanel(protected val data: InteractiveCourseData) : JPanel() {
+open class InteractiveCoursePanel(protected val data: InteractiveCourseData, private val contentEnabled: Boolean = true) : JPanel() {
 
   val startLearningButton = JButton()
 
@@ -29,19 +31,21 @@ open class InteractiveCoursePanel(protected val data: InteractiveCourseData) : J
   private val calculateInnerComponentHeight: () -> Int = { preferredSize.height }
 
   init {
-    layout = BorderLayout()
+    layout = BoxLayout(this, BoxLayout.Y_AXIS)
     isOpaque = false
     alignmentY = TOP_ALIGNMENT
 
     val headerPanel = createHeaderPanel()
     headerPanel.border = JBUI.Borders.emptyLeft(leftMargin)
-    this.add(headerPanel, BorderLayout.NORTH)
+    headerPanel.isEnabled = contentEnabled
+    this.add(headerPanel)
 
     interactiveCourseDescription.apply {
       border = JBUI.Borders.empty(5, leftMargin, 14, 0)
+      isEnabled = contentEnabled
     }
-    this.add(interactiveCourseDescription, BorderLayout.CENTER)
-    this.add(this.createSouthPanel(), BorderLayout.SOUTH)
+    this.add(interactiveCourseDescription)
+    this.add(this.createSouthPanel().also { it.alignmentX = LEFT_ALIGNMENT })
   }
 
   override fun getMaximumSize(): Dimension {
@@ -74,9 +78,10 @@ open class InteractiveCoursePanel(protected val data: InteractiveCourseData) : J
 
   protected fun createButtonPanel(action: Action): JPanel {
     startLearningButton.action = action
-    startLearningButton.margin = Insets(0, 0, 0, 0)
+    startLearningButton.margin = JBUI.emptyInsets()
     startLearningButton.isOpaque = false
     startLearningButton.isContentAreaFilled = false
+    startLearningButton.isEnabled = contentEnabled
 
     return BorderLayoutPanel().apply {
       isOpaque = false

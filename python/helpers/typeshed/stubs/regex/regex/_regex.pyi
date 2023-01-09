@@ -1,5 +1,6 @@
 from _typeshed import Self
-from typing import Any, AnyStr, Callable, Generic, Mapping, TypeVar, overload
+from collections.abc import Callable, Mapping
+from typing import Any, AnyStr, Generic, TypeVar, overload
 from typing_extensions import Literal, final
 
 _T = TypeVar("_T")

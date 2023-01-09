@@ -32,6 +32,7 @@ public interface Modifier {
   boolean canInspect();
 
   boolean canSetValue();
+
   /**
    * sets the value to the expression
    */

@@ -15,11 +15,6 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 /**
  * @author Bas Leijdekkers
  */
@@ -72,7 +67,7 @@ public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseI
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement classNameIdentifier = descriptor.getPsiElement();
       final PsiClass aClass = (PsiClass)classNameIdentifier.getParent();
       if (aClass == null) {

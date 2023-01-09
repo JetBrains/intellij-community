@@ -14,6 +14,7 @@ import javax.swing.JPanel
 
 object ReviewUIUtil {
 
+  const val INLAY_PADDING = 10
   private const val EDITOR_INLAY_PANEL_ARC = 10
 
   fun createEditorInlayPanel(component: JComponent): JPanel {

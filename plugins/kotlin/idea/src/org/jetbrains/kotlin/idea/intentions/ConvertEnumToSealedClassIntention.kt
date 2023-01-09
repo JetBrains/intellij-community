@@ -56,7 +56,7 @@ class ConvertEnumToSealedClassIntention : SelfTargetingRangeIntention<KtClass>(
             klass.removeModifier(KtTokens.ENUM_KEYWORD)
             klass.addModifier(KtTokens.SEALED_KEYWORD)
 
-            val psiFactory = KtPsiFactory(klass)
+            val psiFactory = KtPsiFactory(klass.project)
 
             val objects = mutableListOf<KtObjectDeclaration>()
             for (member in klass.declarations) {

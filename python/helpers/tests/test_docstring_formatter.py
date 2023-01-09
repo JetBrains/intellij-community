@@ -2,11 +2,13 @@
 from __future__ import unicode_literals, print_function
 
 import errno
+import json
 import os
 import sys
 import textwrap
 
 import six
+from docstring_formatter import format_fragments
 from sphinxcontrib.napoleon import GoogleDocstring, NumpyDocstring
 from testing import HelpersTestCase, _helpers_root
 
@@ -42,17 +44,44 @@ class DocstringFormatterTest(HelpersTestCase):
     def docstring_format(self):
         return self.test_name.split('_')[0]
 
+    @property
+    def fragments_mode(self):
+        name_split = self.test_name.split('_')
+        return len(name_split) > 1 and name_split[1] == "fragments"
+
     def _test(self):
-        try:
-            docstring_path = os.path.join(self.test_data_root, self.test_name + '.txt')
-            with open(docstring_path, encoding='utf-8') as f:
-                docstring_content = f.read()
-        except IOError as e:
-            if e.errno != errno.ENOENT:
-                raise
-            module_path = os.path.join(self.test_data_dir, self.test_name + '.py')
-            docstring_content = self.read_docstring_from_module(module_path)
         docstring_format = self.docstring_format
+        fragments_mode = self.fragments_mode
+
+        if fragments_mode:
+            try:
+                json_path = os.path.join(self.test_data_root, self.test_name + '.json')
+                with open(json_path, encoding='utf-8') as f:
+                    docstring_content = f.read()
+                input_json = json.loads(docstring_content)
+                input_body = input_json['body']
+                input_fragments = input_json['fragments']
+            except ValueError:
+                raise AssertionError("Incorrect format of JSON input")
+
+            actual_json = json.dumps(format_fragments(input_fragments),
+                                     ensure_ascii=False, separators=(',', ':'),
+                                     sort_keys=True)
+            expected_json_path = os.path.join(self.test_data_root,
+                                              self.test_name + '_out.json')
+            self.assertEqualsToFileContent(actual_json, expected_json_path)
+        else:
+            try:
+                json_path = os.path.join(self.test_data_root, self.test_name + '.txt')
+                with open(json_path, encoding='utf-8') as f:
+                    docstring_content = f.read()
+            except IOError as e:
+                if e.errno != errno.ENOENT:
+                    raise
+                module_path = os.path.join(self.test_data_dir, self.test_name + '.py')
+                docstring_content = self.read_docstring_from_module(module_path)
+            input_body = docstring_content
+
         if docstring_format == 'google':
             from docstring_formatter import format_google as format_to_html
             format_to_rest = lambda x: six.text_type(GoogleDocstring(x))  # noqa
@@ -63,21 +92,23 @@ class DocstringFormatterTest(HelpersTestCase):
             from docstring_formatter import format_rest as format_to_html
             format_to_rest = None
         else:
-            raise AssertionError("Unknown docstring type '{}'".format(self.test_name))
+            raise AssertionError("Unknown docstring type '{}'".format(docstring_format))
 
-        if format_to_rest:
-            actual_rest = format_to_rest(docstring_content)
+        if format_to_rest and not fragments_mode:
+            actual_rest = format_to_rest(input_body)
             expected_rest_path = os.path.join(self.test_data_dir,
                                               self.test_name + '.rest')
             self.assertEqualsToFileContent(actual_rest, expected_rest_path)
 
-        actual_html = format_to_html(docstring_content)
+        actual_html = format_to_html(input_body)
         expected_html_path = os.path.join(self.test_data_dir, self.test_name + '.html')
         self.assertEqualsToFileContent(actual_html, expected_html_path)
 
     def launch_helper(self, stdin):
         helper_path = os.path.join(_helpers_root, 'docstring_formatter.py')
-        args = [sys.executable, helper_path, self.docstring_format]
+        args = [sys.executable, helper_path, '--format', self.docstring_format]
+        if self.fragments_mode:
+            args.append('--fragments')
         result = self.run_process(args,
                                   input=stdin,
                                   env={'PYTHONPATH': docutils_root})
@@ -85,6 +116,15 @@ class DocstringFormatterTest(HelpersTestCase):
             raise AssertionError("Non-empty stderr for docstring_formatter.py:\n"
                                  "{}".format(result.stderr))
         return result.stdout
+
+    def launch_helper_with_fragments(self):
+        json_input_path = os.path.join(self.test_data_root, self.test_name + '.json')
+        with open(json_input_path, encoding='utf-8') as f:
+            input_json = f.read()
+        output = self.launch_helper(input_json)
+        expected_json_path = os.path.join(self.test_data_root,
+                                          self.test_name + '_out.json')
+        self.assertEqualsToFileContent(output, expected_json_path)
 
     @staticmethod
     def read_docstring_from_module(module_path):
@@ -142,3 +182,27 @@ class DocstringFormatterTest(HelpersTestCase):
 
     def test_numpy_no_empty_line_between_text_and_param(self):
         self._test()
+
+    def test_google_fragments_simple(self):
+        self._test()
+
+    def test_google_fragments_only_multiline_return_section(self):
+        self._test()
+
+    def test_rest_fragments_unicode(self):
+        self._test()
+
+    def test_numpy_fragments_params(self):
+        self._test()
+
+    def test_rest_fragments_only_body(self):
+        self._test()
+
+    def test_google_fragments_math(self):
+        self._test()
+
+    def test_numpy_fragments_table(self):
+        self._test()
+
+    def test_rest_fragments_functional(self):
+        self.launch_helper_with_fragments()

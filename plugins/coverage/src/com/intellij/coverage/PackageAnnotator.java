@@ -22,7 +22,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.rt.coverage.data.*;
-import com.intellij.rt.coverage.instrumentation.SaveHook;
+import com.intellij.rt.coverage.instrumentation.UnloadedUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -92,6 +92,13 @@ public final class PackageAnnotator {
 
     public int coveredBranchCount;
     public int totalBranchCount;
+
+    public boolean isFullyCovered() {
+      return totalBranchCount == coveredBranchCount
+        && totalLineCount == getCoveredLineCount()
+        && totalMethodCount == coveredMethodCount
+        && totalClassCount == coveredClassCount;
+    }
   }
 
   public static class ClassCoverageInfo extends SummaryCoverageInfo {
@@ -137,7 +144,7 @@ public final class PackageAnnotator {
   }
 
   public static class DirCoverageInfo extends PackageCoverageInfo {
-    public VirtualFile sourceRoot;
+    final public VirtualFile sourceRoot;
 
     public DirCoverageInfo(VirtualFile sourceRoot) {
       this.sourceRoot = sourceRoot;
@@ -235,6 +242,7 @@ public final class PackageAnnotator {
                          final GlobalSearchScope scope) {
     final Ref<VirtualFile> containingFileRef = new Ref<>();
     final Ref<PsiClass> psiClassRef = new Ref<>();
+    if (myProject.isDisposed()) return;
     final Boolean isInSource = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
       if (myProject.isDisposed()) return null;
       final PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(toplevelClassSrcFQName, scope);
@@ -381,7 +389,7 @@ public final class PackageAnnotator {
     catch (IOException e) {
       return null;
     }
-    SaveHook.appendUnloadedClass(projectData, className, new ClassReader(content), !mySuite.isTracingEnabled(), false, myIgnoreEmptyPrivateConstructors);
+    UnloadedUtil.appendUnloadedClass(projectData, className, new ClassReader(content), mySuite.isTracingEnabled(), false, myIgnoreEmptyPrivateConstructors);
     return projectData.getClassData(className);
   }
 }

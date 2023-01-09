@@ -1,4 +1,4 @@
-// "Replace with toArray" "true-preview"
+// "Replace with 'toArray()'" "true-preview"
 
 import java.util.*;
 

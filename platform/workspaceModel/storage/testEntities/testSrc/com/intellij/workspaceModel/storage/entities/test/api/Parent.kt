@@ -1,12 +1,16 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
@@ -21,7 +25,7 @@ interface XParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : XParentEntity, ModifiableWorkspaceEntity<XParentEntity>, ObjBuilder<XParentEntity> {
+  interface Builder : XParentEntity, WorkspaceEntity.Builder<XParentEntity>, ObjBuilder<XParentEntity> {
     override var entitySource: EntitySource
     override var parentProperty: String
     override var children: List<XChildEntity>
@@ -30,6 +34,9 @@ interface XParentEntity : WorkspaceEntity {
   }
 
   companion object : Type<XParentEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): XParentEntity {
       val builder = builder()
       builder.parentProperty = parentProperty
@@ -59,7 +66,7 @@ interface XChildEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : XChildEntity, ModifiableWorkspaceEntity<XChildEntity>, ObjBuilder<XChildEntity> {
+  interface Builder : XChildEntity, WorkspaceEntity.Builder<XChildEntity>, ObjBuilder<XChildEntity> {
     override var entitySource: EntitySource
     override var childProperty: String
     override var dataClass: DataClassX?
@@ -68,6 +75,9 @@ interface XChildEntity : WorkspaceEntity {
   }
 
   companion object : Type<XChildEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): XChildEntity {
       val builder = builder()
       builder.childProperty = childProperty
@@ -91,13 +101,16 @@ interface XChildWithOptionalParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : XChildWithOptionalParentEntity, ModifiableWorkspaceEntity<XChildWithOptionalParentEntity>, ObjBuilder<XChildWithOptionalParentEntity> {
+  interface Builder : XChildWithOptionalParentEntity, WorkspaceEntity.Builder<XChildWithOptionalParentEntity>, ObjBuilder<XChildWithOptionalParentEntity> {
     override var entitySource: EntitySource
     override var childProperty: String
     override var optionalParent: XParentEntity?
   }
 
   companion object : Type<XChildWithOptionalParentEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(childProperty: String,
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): XChildWithOptionalParentEntity {
@@ -124,13 +137,16 @@ interface XChildChildEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : XChildChildEntity, ModifiableWorkspaceEntity<XChildChildEntity>, ObjBuilder<XChildChildEntity> {
+  interface Builder : XChildChildEntity, WorkspaceEntity.Builder<XChildChildEntity>, ObjBuilder<XChildChildEntity> {
     override var entitySource: EntitySource
     override var parent1: XParentEntity
     override var parent2: XChildEntity
   }
 
   companion object : Type<XChildChildEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): XChildChildEntity {
       val builder = builder()
       builder.entitySource = entitySource

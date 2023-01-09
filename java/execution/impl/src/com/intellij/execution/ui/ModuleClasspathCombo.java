@@ -65,8 +65,8 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
   }
 
   private void buildModel(@NotNull Collection<? extends Module> modules) {
-    List<@NotNull Item> items = ContainerUtil.map(modules, Item::new);
-    items.sort(Comparator.comparing(o -> o.myModule.getName()));
+    List<@NotNull Item> items = ContainerUtil.sorted(ContainerUtil.map(modules, Item::new),
+    Comparator.comparing(o -> o.myModule.getName()));
     CollectionComboBoxModel<Item> model = new ModelWithOptions();
     model.add(items);
     if (myNoModule != null) {

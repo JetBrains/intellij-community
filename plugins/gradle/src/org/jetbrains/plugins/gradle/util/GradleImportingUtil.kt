@@ -142,7 +142,7 @@ private fun getProjectDataLoadPromise(project: Project, expectedProjectPath: Str
       }
     }
 
-    override fun onImportFailed(projectPath: String?) {
+    override fun onImportFailed(projectPath: String?, t: Throwable) {
       if (expectedProjectPath == null || expectedProjectPath == projectPath) {
         Disposer.dispose(parentDisposable)
         promise.setError("Import failed for $projectPath")

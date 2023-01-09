@@ -10,7 +10,7 @@ import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -33,13 +33,15 @@ object JpsProjectEntitiesLoader {
   @TestOnly
   suspend fun loadProject(configLocation: JpsProjectConfigLocation, builder: MutableEntityStorage,
                           externalStoragePath: Path, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager,
+                          unloadedModuleNames: Set<String> = emptySet(),
+                          unloadedEntitiesBuilder: MutableEntityStorage = MutableEntityStorage.create(),
                           fileInDirectorySourceNames: FileInDirectorySourceNames = FileInDirectorySourceNames.empty(),
                           externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null): JpsProjectSerializers {
     val reader = CachingJpsFileContentReader(configLocation)
     val data = createProjectEntitiesSerializers(configLocation, reader, externalStoragePath, virtualFileManager,
                                                 externalStorageConfigurationManager = externalStorageConfigurationManager,
                                                 fileInDirectorySourceNames = fileInDirectorySourceNames)
-    data.loadAll(reader, builder, errorReporter, null)
+    data.loadAll(reader, builder, unloadedEntitiesBuilder, unloadedModuleNames, errorReporter, null)
     return data
   }
 
@@ -76,6 +78,7 @@ object JpsProjectEntitiesLoader {
                                                                                       virtualFileManager,
                                                                                       externalStorageConfigurationManager,
                                                                                       fileInDirectorySourceNames)
+      else -> error("Unexpected state")
     }
   }
 

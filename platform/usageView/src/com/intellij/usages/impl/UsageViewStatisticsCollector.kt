@@ -35,23 +35,25 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("usage.view", 8)
-    val USAGE_VIEW = object : PrimitiveEventField<UsageView>() {
+    val GROUP = EventLogGroup("usage.view", 15)
+    val USAGE_VIEW = object : PrimitiveEventField<UsageView?>() {
       override val name: String = "usage_view"
 
-      override fun addData(fuData: FeatureUsageData, value: UsageView) {
-        fuData.addData(name, value.id)
+      override fun addData(fuData: FeatureUsageData, value: UsageView?) {
+        value?.let { fuData.addData(name, value.id) }
       }
 
       override val validationRule: List<String>
         get() = listOf("{regexp#integer}")
     }
     private val REFERENCE_CLASS = EventFields.Class("reference_class")
-    private val USAGE_SHOWN = GROUP.registerEvent("usage.shown", USAGE_VIEW, REFERENCE_CLASS, EventFields.Language)
-    private val USAGE_NAVIGATE = GROUP.registerEvent("usage.navigate", REFERENCE_CLASS, EventFields.Language)
     private val UI_LOCATION = EventFields.Enum("ui_location", CodeNavigateSource::class.java)
-
-    private val itemChosen = GROUP.registerEvent("item.chosen", USAGE_VIEW, UI_LOCATION, EventFields.Language)
+    private val USAGE_SHOWN = GROUP.registerVarargEvent("usage.shown", USAGE_VIEW, REFERENCE_CLASS, EventFields.Language, UI_LOCATION)
+    private val USAGE_NAVIGATE = GROUP.registerEvent("usage.navigate", REFERENCE_CLASS, EventFields.Language)
+    // fields specific for items in popup
+    private val SELECTED_ROW = EventFields.Int("selected_usage")
+    private val NUMBER_OF_ROWS = EventFields.Int("number_of_usages")
+    private val NUMBER_OF_LETTERS_TYPED = EventFields.Int("number_of_letters_typed")
 
     const val SCOPE_RULE_ID = "scopeRule"
 
@@ -60,20 +62,37 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     private val RESULTS_TOTAL = EventFields.Int("results_total")
     private val FIRST_RESULT_TS = EventFields.Long("duration_first_results_ms")
     private val TOO_MANY_RESULTS = EventFields.Boolean("too_many_result_warning")
+    private val IS_SIMILAR_USAGE = EventFields.Boolean("is_similar_usage")
 
-    private val searchStarted = GROUP.registerVarargEvent("started", USAGE_VIEW)
+    private val searchStarted = GROUP.registerVarargEvent("started", USAGE_VIEW, UI_LOCATION, EventFields.Language)
 
+    private val searchCancelled = GROUP.registerVarargEvent("cancelled",
+                                                            SYMBOL_CLASS,
+                                                            SEARCH_SCOPE,
+                                                            EventFields.Language,
+                                                            RESULTS_TOTAL,
+                                                            FIRST_RESULT_TS,
+                                                            EventFields.DurationMs,
+                                                            TOO_MANY_RESULTS,
+                                                            UI_LOCATION,
+                                                            USAGE_VIEW)
     private val searchFinished = GROUP.registerVarargEvent("finished",
-      SYMBOL_CLASS,
-      SEARCH_SCOPE,
-      EventFields.Language,
-      RESULTS_TOTAL,
-      FIRST_RESULT_TS,
-      EventFields.DurationMs,
-      TOO_MANY_RESULTS,
-      UI_LOCATION,
-    USAGE_VIEW)
-
+                                                           SYMBOL_CLASS,
+                                                           SEARCH_SCOPE,
+                                                           EventFields.Language,
+                                                           RESULTS_TOTAL,
+                                                           FIRST_RESULT_TS,
+                                                           EventFields.DurationMs,
+                                                           TOO_MANY_RESULTS,
+                                                           UI_LOCATION, USAGE_VIEW)
+    private val itemChosen = GROUP.registerVarargEvent("item.chosen",
+                                                       USAGE_VIEW,
+                                                       UI_LOCATION,
+                                                       IS_SIMILAR_USAGE,
+                                                       SELECTED_ROW,
+                                                       NUMBER_OF_ROWS,
+                                                       NUMBER_OF_LETTERS_TYPED,
+                                                       EventFields.Language)
     private val tabSwitched = GROUP.registerEvent("switch.tab", USAGE_VIEW)
 
     private val PREVIOUS_SCOPE = EventFields.StringValidatedByCustomRule("previous", ScopeRuleValidator::class.java)
@@ -91,13 +110,15 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     )
 
     @JvmStatic
-    fun logSearchStarted(project: Project?, usageView: UsageView) {
-      searchStarted.log(project, USAGE_VIEW.with(usageView))
+    fun logSearchStarted(project: Project?, usageView: UsageView, source: CodeNavigateSource, language: Language?) {
+      searchStarted.log(project, USAGE_VIEW.with(usageView), UI_LOCATION.with(source), EventFields.Language.with(language))
     }
 
     @JvmStatic
-    fun logUsageShown(project: Project?, referenceClass: Class<out Any>, language: Language?, usageView:UsageView) {
-      USAGE_SHOWN.log(project, usageView, referenceClass, language)
+    fun logUsageShown(project: Project?, referenceClass: Class<out Any>, language: Language?, usageView: UsageView) {
+      USAGE_SHOWN.log(project, USAGE_VIEW.with(usageView), REFERENCE_CLASS.with(referenceClass), EventFields.Language.with(language),
+                      UI_LOCATION.with(
+                        if (usageView.presentation.isDetachedMode) CodeNavigateSource.ShowUsagesPopup else CodeNavigateSource.FindToolWindow))
     }
 
     @JvmStatic
@@ -123,12 +144,56 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     }
 
     @JvmStatic
-    fun logItemChosen(project: Project?, usageView: UsageView, source: CodeNavigateSource, language: Language) = itemChosen.log(project, usageView, source, language)
+    fun logItemChosen(project: Project?, usageView: UsageView, source: CodeNavigateSource, language: Language, isSimilarUsage: Boolean) {
+      logItemChosen(project, usageView, source, null, null, null, language, isSimilarUsage)
+    }
+
+    @JvmStatic
+    fun logItemChosen(project: Project?,
+                      usageView: UsageView,
+                      source: CodeNavigateSource,
+                      selectedRow: Int?,
+                      numberOfRows: Int?,
+                      numberOfLettersTyped: Int?,
+                      language: Language,
+                      isSimilarUsage: Boolean) {
+      val data = mutableListOf(USAGE_VIEW.with(usageView),
+                               UI_LOCATION.with(source),
+                               IS_SIMILAR_USAGE.with(isSimilarUsage),
+                               EventFields.Language.with(language))
+      selectedRow?.let { data.add(SELECTED_ROW.with(it)) }
+      numberOfRows?.let { data.add(NUMBER_OF_ROWS.with(it)) }
+      numberOfLettersTyped?.let { data.add(NUMBER_OF_LETTERS_TYPED.with(it)) }
+      itemChosen.log(project, data)
+    }
+
+    @JvmStatic
+    fun logSearchCancelled(project: Project?,
+                           targetClass: Class<*>?,
+                           scope: SearchScope?,
+                           language: Language?,
+                           results: Int,
+                           durationFirstResults: Long,
+                           duration: Long,
+                           tooManyResult: Boolean,
+                           source: CodeNavigateSource,
+                           usageView: UsageView?) {
+      searchCancelled.log(project,
+                          SYMBOL_CLASS.with(targetClass),
+                          SEARCH_SCOPE.with(scope?.let { ScopeIdMapper.instance.getScopeSerializationId(it.displayName) }),
+                          EventFields.Language.with(language),
+                          RESULTS_TOTAL.with(results),
+                          FIRST_RESULT_TS.with(durationFirstResults),
+                          EventFields.DurationMs.with(duration),
+                          TOO_MANY_RESULTS.with(tooManyResult),
+                          UI_LOCATION.with(source),
+                          USAGE_VIEW.with(usageView))
+    }
 
     @JvmStatic
     fun logSearchFinished(
       project: Project?,
-      targetClass: Class<*>,
+      targetClass: Class<*>?,
       scope: SearchScope?,
       language: Language?,
       results: Int,
@@ -136,7 +201,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
       duration: Long,
       tooManyResult: Boolean,
       source: CodeNavigateSource,
-      usageView : UsageView
+      usageView : UsageView?
     ) {
       searchFinished.log(project,
                          USAGE_VIEW.with(usageView),

@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -51,12 +52,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public boolean isSnapshot() {
-    for (int value : myComponents) {
-      if (value == SNAPSHOT_VALUE) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.indexOf(myComponents, SNAPSHOT_VALUE) != -1;
   }
 
   @Contract(pure = true)

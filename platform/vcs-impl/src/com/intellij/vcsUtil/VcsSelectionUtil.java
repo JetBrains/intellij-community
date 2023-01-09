@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -25,7 +24,7 @@ public final class VcsSelectionUtil {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor == null) return null;
 
-    VcsSelection atCaret = Utils.getOrCreateUpdateSession(e)
+    VcsSelection atCaret = e.getUpdateSession()
       .compute(action, "getSelection", ActionUpdateThread.EDT, () -> {
         SelectionModel selectionModel = editor.getSelectionModel();
         if (selectionModel.hasSelection() && !EditorUtil.contextMenuInvokedOutsideOfSelection(e)) {

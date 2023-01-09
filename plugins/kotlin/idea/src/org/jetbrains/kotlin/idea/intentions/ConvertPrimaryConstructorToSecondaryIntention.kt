@@ -9,11 +9,11 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.idea.base.psi.mustHaveOnlyPropertiesInPrimaryConstructor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.idea.util.mustHaveOnlyPropertiesInPrimaryConstructor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.lexer.KtTokens.THIS_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.VARARG_KEYWORD
@@ -59,7 +59,7 @@ class ConvertPrimaryConstructorToSecondaryIntention : SelfTargetingRangeIntentio
         val primaryCtor = element.primaryConstructor ?: return
         if (element.isAnnotation()) return
         val context = element.analyze()
-        val factory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         val commentSaver = CommentSaver(primaryCtor)
         val initializerMap = mutableMapOf<KtProperty, String>()
         for (property in element.getProperties()) {
@@ -76,7 +76,7 @@ class ConvertPrimaryConstructorToSecondaryIntention : SelfTargetingRangeIntentio
             initializer.delete()
             property.equalsToken!!.delete()
         }
-        val constructor = factory.createSecondaryConstructor(
+        val constructor = psiFactory.createSecondaryConstructor(
             CallableBuilder(CONSTRUCTOR).apply {
                 primaryCtor.modifierList?.let { modifier(it.text) }
                 typeParams()
@@ -93,7 +93,7 @@ class ConvertPrimaryConstructorToSecondaryIntention : SelfTargetingRangeIntentio
                 for (superTypeEntry in element.superTypeListEntries) {
                     if (superTypeEntry is KtSuperTypeCallEntry) {
                         superDelegation(superTypeEntry.valueArgumentList?.text ?: "")
-                        superTypeEntry.replace(factory.createSuperTypeEntry(superTypeEntry.typeReference!!.text))
+                        superTypeEntry.replace(psiFactory.createSuperTypeEntry(superTypeEntry.typeReference!!.text))
                     }
                 }
                 val valueParameterInitializers =
@@ -130,9 +130,9 @@ class ConvertPrimaryConstructorToSecondaryIntention : SelfTargetingRangeIntentio
             lastEnumEntry?.let { element.addDeclarationAfter(constructor, it) } ?: element.addDeclarationBefore(constructor, null)
         commentSaver.restore(secondaryConstructor)
 
-        convertValueParametersToProperties(primaryCtor, element, factory, lastEnumEntry)
+        convertValueParametersToProperties(primaryCtor, element, psiFactory, lastEnumEntry)
         if (element.isEnum()) {
-            addSemicolonIfNotExist(element, factory, lastEnumEntry)
+            addSemicolonIfNotExist(element, psiFactory, lastEnumEntry)
         }
 
         for (anonymousInitializer in element.getAnonymousInitializers()) {

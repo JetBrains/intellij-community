@@ -27,10 +27,10 @@ import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.OperatorToFunctionIntention
 import org.jetbrains.kotlin.idea.inspections.PublicApiImplicitTypeInspection
 import org.jetbrains.kotlin.idea.inspections.UseExpressionBodyInspection
 import org.jetbrains.kotlin.idea.intentions.InfixCallToOrdinaryIntention
-import org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention
 import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.*
@@ -454,7 +454,7 @@ private var KtReturnExpression.isReturnForLabelRemoval: Boolean
 fun ExtractionGeneratorConfiguration.generateDeclaration(
     declarationToReplace: KtNamedDeclaration? = null
 ): ExtractionResult {
-    val psiFactory = KtPsiFactory(descriptor.extractionData.originalFile)
+    val psiFactory = KtPsiFactory(descriptor.extractionData.project)
 
     fun getReturnsForLabelRemoval() = descriptor.controlFlow.outputValues
         .flatMapTo(arrayListOf()) { it.originalExpressions.filterIsInstance<KtReturnExpression>() }
@@ -680,8 +680,6 @@ fun ExtractionGeneratorConfiguration.generateDeclaration(
     if (shouldInsert) {
         ShortenReferences.DEFAULT.process(declaration)
     }
-
-    if (generatorOptions.inTempFile) return ExtractionResult(this, declaration, emptyMap())
 
     val duplicateReplacers = HashMap<KotlinPsiRange, () -> Unit>().apply {
         if (generatorOptions.delayInitialOccurrenceReplacement) {

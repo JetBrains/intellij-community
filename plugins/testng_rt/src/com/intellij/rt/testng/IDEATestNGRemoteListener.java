@@ -231,7 +231,7 @@ public class IDEATestNGRemoteListener {
     attrs.put("name", methodName);
     final String failureMessage = ex != null ? ex.getMessage() : null;
     if (ex != null) {
-      String expectedPrefix = " expected";
+      String expectedPrefix = " expected [";
       ComparisonFailureData notification;
       try {
         notification = ComparisonFailureData.create(ex);

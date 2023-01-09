@@ -11,7 +11,6 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.wsl.WSLDistribution;
-import com.intellij.execution.wsl.WslPath;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -25,7 +24,6 @@ import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,17 +80,7 @@ final class ShRunConfigurationProfileState implements RunProfileState {
       @NotNull
       @Override
       protected BaseOutputReader.Options readerOptions() {
-        return new BaseOutputReader.Options() {
-          @Override
-          public BaseDataReader.SleepingPolicy policy() {
-            return BaseDataReader.SleepingPolicy.BLOCKING;
-          }
-
-          @Override
-          public boolean splitToLines() {
-            return false;
-          }
-        };
+        return BaseOutputReader.Options.forTerminalPtyProcess();
       }
     };
   }

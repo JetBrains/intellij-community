@@ -2,7 +2,7 @@
 package com.jetbrains.env.conda
 
 import com.jetbrains.env.conda.LocalCondaRule.Companion.CONDA_PATH
-import com.jetbrains.python.FullPathOnTarget
+import com.intellij.execution.target.FullPathOnTarget
 import com.jetbrains.python.sdk.add.target.conda.suggestCondaPath
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import kotlinx.coroutines.runBlocking

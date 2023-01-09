@@ -72,7 +72,7 @@ private class ReplaceWithAssignFunctionCallFix(
         val left = binaryExpression.left ?: return
         val right = binaryExpression.right ?: return
         val replaced = binaryExpression.replace(
-            KtPsiFactory(binaryExpression).createExpressionByPattern("$0.${operationText}Assign($1)", left, right)
+            KtPsiFactory(project).createExpressionByPattern("$0.${operationText}Assign($1)", left, right)
         )
         editor?.caretModel?.moveToOffset(replaced.endOffset)
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -28,6 +28,8 @@ import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.impl.DebuggerAgentDownloader;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -173,20 +175,40 @@ public class RemoteConnectionBuilder {
     }
   }
 
-  private static final String AGENT_ARTIFACT_NAME = "debugger-agent";
+  private static final String AGENT_JAR_NAME = "debugger-agent.jar";
   private static final String DEBUG_KEY_NAME = "idea.xdebug.key";
 
   private static void addDebuggerAgent(JavaParameters parameters, @Nullable Project project) {
     if (AsyncStacksUtils.isAgentEnabled()) {
       String prefix = "-javaagent:";
       ParametersList parametersList = parameters.getVMParametersList();
-      if (!ContainerUtil.exists(parametersList.getParameters(), p -> p.startsWith(prefix) && p.contains(AGENT_ARTIFACT_NAME + ".jar"))) {
+      if (!ContainerUtil.exists(parametersList.getParameters(), p -> p.startsWith(prefix) && p.contains(AGENT_JAR_NAME))) {
         Sdk jdk = parameters.getJdk();
         if (jdk != null) {
           JavaSdkVersion sdkVersion = JavaSdk.getInstance().getVersion(jdk);
           if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7)) {
-            String classesRoot = PathUtil.getJarPathForClass(DebuggerManagerImpl.class);
-            Path agentArtifactPath = PathManager.getJarArtifactPath(classesRoot, AGENT_ARTIFACT_NAME);
+            Path agentArtifactPath;
+            if (PluginManagerCore.isRunningFromSources()) {
+              try {
+                // The agent file must have a fixed name (AGENT_JAR_NAME) which is mentioned in MANIFEST.MF inside
+                Path debuggerAgentDir =
+                  FileUtil.createTempDirectory(new File(PathManager.getTempPath()), "debugger-agent", "", true).toPath();
+                agentArtifactPath = debuggerAgentDir.resolve(AGENT_JAR_NAME);
+
+                BuildDependenciesCommunityRoot communityRoot =
+                  new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
+                Path downloadedAgent = DebuggerAgentDownloader.INSTANCE.downloadDebuggerAgent(communityRoot);
+                Files.copy(downloadedAgent, agentArtifactPath);
+              }
+              catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+            }
+            else {
+              Path classesRoot = Path.of(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
+              agentArtifactPath = classesRoot.resolve("rt").resolve(AGENT_JAR_NAME);
+            }
+
             if (Files.exists(agentArtifactPath)) {
               String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(agentArtifactPath.toAbsolutePath().toString(),
                                                                            "captureAgent", null,

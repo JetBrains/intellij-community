@@ -46,11 +46,13 @@ class ReplaceProtectedToPublishedApiCallFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
+        val psiFactory = KtPsiFactory(project)
+
         if (!isPublishedMemberAlreadyExists) {
             val classOwner = classOwnerPointer.element ?: return
             val newMember: KtDeclaration =
                 if (isProperty) {
-                    KtPsiFactory(classOwner).createProperty(
+                    psiFactory.createProperty(
                         "@kotlin.PublishedApi\n" +
                                 "internal " + newSignature +
                                 "\n" +
@@ -59,7 +61,7 @@ class ReplaceProtectedToPublishedApiCallFix(
                     )
 
                 } else {
-                    KtPsiFactory(classOwner).createFunction(
+                    psiFactory.createFunction(
                         "@kotlin.PublishedApi\n" +
                                 "internal " + newSignature +
                                 " = $originalName(${paramNames.keys.joinToString(", ") { it }})"
@@ -68,7 +70,7 @@ class ReplaceProtectedToPublishedApiCallFix(
 
             ShortenReferences.DEFAULT.process(classOwner.addDeclaration(newMember))
         }
-        element.replace(KtPsiFactory(element).createExpression(originalName.newNameQuoted))
+        element.replace(psiFactory.createExpression(originalName.newNameQuoted))
     }
 
     companion object : KotlinSingleIntentionActionFactory() {

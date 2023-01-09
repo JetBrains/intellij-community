@@ -15,9 +15,8 @@ abstract class ModernApplicationStarter : ApplicationStarter {
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated(message = "use start", level = DeprecationLevel.ERROR)
-  final override fun main(args: List<String>) {
+  final override fun main(args: List<String>): Unit =
     throw UnsupportedOperationException("Use start(args)")
-  }
 
   abstract suspend fun start(args: List<String>)
 }
@@ -62,8 +61,7 @@ interface ApplicationStarter {
    *
    * @param args program arguments (including the command)
    */
-  fun premain(args: List<String>) {
-  }
+  fun premain(args: List<String>) = Unit
 
   /**
    *
@@ -73,8 +71,7 @@ interface ApplicationStarter {
    *
    * @param args program arguments (including the selector)
    */
-  fun main(args: List<String>) {
-  }
+  fun main(args: List<String>) = Unit
 
   /**
    * Applications that are incapable of working in a headless mode should override the method and return `false`.
@@ -90,9 +87,7 @@ interface ApplicationStarter {
    */
   fun canProcessExternalCommandLine(): Boolean = false
 
-  /** @see .canProcessExternalCommandLine
-   */
-  suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?): CliResult {
+  /** @see .canProcessExternalCommandLine */
+  suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?): CliResult =
     throw UnsupportedOperationException("Class ${javaClass.name} must implement `processExternalCommandLineAsync()`")
-  }
 }

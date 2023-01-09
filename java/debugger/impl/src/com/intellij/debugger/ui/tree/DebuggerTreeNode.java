@@ -15,8 +15,8 @@
  */
 package com.intellij.debugger.ui.tree;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.openapi.project.Project;
 
 public interface DebuggerTreeNode {
   DebuggerTreeNode getParent();

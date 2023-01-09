@@ -17,7 +17,6 @@ import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.ui.components.ActionLink;
@@ -38,8 +37,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.function.Supplier;
 
-public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
-
+public final class LightEditModeNotificationWidget implements CustomStatusBarWidget {
   private final PopupState<JPopupMenu> myPopupState = PopupState.forPopupMenu();
 
   public LightEditModeNotificationWidget() {
@@ -48,14 +46,6 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
   @Override
   public @NonNls @NotNull String ID() {
     return "light.edit.mode.notification";
-  }
-
-  @Override
-  public void install(@NotNull StatusBar statusBar) {
-  }
-
-  @Override
-  public void dispose() {
   }
 
   @Override

@@ -2,9 +2,9 @@
 package org.jetbrains.idea.devkit.run
 
 import com.intellij.execution.configurations.ParametersList
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.ProjectRule
@@ -44,6 +44,14 @@ class JUnitDevkitPatcherTest : BareTestFixtureTestCase() {
 
     JUnitDevKitPatcher.appendAddOpensWhenNeeded(projectRule.project, jdk, parametersList)
 
-    assertThat(parametersList.list).hasSize(3)
+    @Suppress("SpellCheckingInspection") val awtPackage = when {
+      SystemInfo.isWindows -> "sun.awt.windows"
+      SystemInfo.isMac -> "sun.lwawt"
+      else -> "sun.awt.X11"
+    }
+    assertThat(parametersList.list).containsExactly(
+      "--add-opens=java.base/java.io=ALL-UNNAMED",
+      "--add-opens=java.base/java.lang=ALL-UNNAMED",
+      "--add-opens=java.desktop/${awtPackage}=ALL-UNNAMED")
   }
 }

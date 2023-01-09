@@ -3,9 +3,15 @@
 package org.jetbrains.kotlin.idea.completion
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
+import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.context.*
 import org.jetbrains.kotlin.idea.completion.contributors.FirCompletionContributorFactory
 import org.jetbrains.kotlin.idea.completion.contributors.complete
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal object Completions {
     fun KtAnalysisSession.complete(
@@ -13,10 +19,13 @@ internal object Completions {
         positionContext: FirRawPositionCompletionContext,
     ) {
         when (positionContext) {
-            is FirExpressionNameReferencePositionContext -> {
+            is FirExpressionNameReferencePositionContext -> if (positionContext.allowsOnlyNamedArguments()) {
+                complete(factory.namedArgumentContributor(0), positionContext)
+            } else {
                 complete(factory.keywordContributor(0), positionContext)
                 complete(factory.callableContributor(0), positionContext)
                 complete(factory.classifierContributor(0), positionContext)
+                complete(factory.namedArgumentContributor(0), positionContext)
                 complete(factory.packageCompletionContributor(1), positionContext)
             }
 
@@ -31,6 +40,8 @@ internal object Completions {
                 // For `val` and `fun` completion. For example, with `val i<caret>`, the fake file contains `val iX.f`. Hence a
                 // FirTypeNameReferencePositionContext is created because `iX` is parsed as a type reference.
                 complete(factory.declarationFromUnresolvedNameContributor(1), positionContext)
+                complete(factory.declarationFromOverridableMembersContributor(1), positionContext)
+                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext)
             }
 
             is FirAnnotationTypeNameReferencePositionContext -> {
@@ -54,6 +65,10 @@ internal object Completions {
 
             is FirTypeConstraintNameInWhereClausePositionContext -> {
                 complete(factory.typeParameterConstraintNameInWhereClauseContributor(0), positionContext)
+            }
+
+            is FirMemberDeclarationExpectedPositionContext -> {
+                complete(factory.keywordContributor(0), positionContext)
             }
 
             is FirUnknownPositionContext -> {
@@ -85,8 +100,31 @@ internal object Completions {
             }
             is FirValueParameterPositionContext -> {
                 complete(factory.declarationFromUnresolvedNameContributor(0), positionContext) // for parameter declaration
+                complete(factory.declarationFromOverridableMembersContributor(0), positionContext)
                 complete(factory.keywordContributor(0), positionContext)
+                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext)
             }
         }
     }
+}
+
+context(KtAnalysisSession)
+private fun FirExpressionNameReferencePositionContext.allowsOnlyNamedArguments(): Boolean {
+    if (explicitReceiver != null) return false
+
+    val valueArgument = findValueArgument(nameExpression) ?: return false
+    val valueArgumentList = valueArgument.parent as? KtValueArgumentList ?: return false
+    val callElement = valueArgumentList.parent as? KtCallElement ?: return false
+
+    if (valueArgument.getArgumentName() != null) return false
+
+    val call = callElement.resolveCall().singleCallOrNull<KtFunctionCall<*>>() ?: return false
+    val firstArgumentInNamedMode = CallParameterInfoProvider.firstArgumentInNamedMode(
+        callElement,
+        call.partiallyAppliedSymbol.signature,
+        call.argumentMapping,
+        callElement.languageVersionSettings
+    ) ?: return false
+
+    return with(valueArgumentList.arguments) { indexOf(valueArgument) >= indexOf(firstArgumentInNamedMode) }
 }

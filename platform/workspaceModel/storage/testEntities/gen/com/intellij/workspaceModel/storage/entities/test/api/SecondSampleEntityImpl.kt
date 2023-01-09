@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -18,6 +17,9 @@ import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceLis
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
 import java.util.UUID
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -36,11 +38,15 @@ open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : Seco
 
   override val intProperty: Int get() = dataSource.intProperty
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: SecondSampleEntityData?) : ModifiableWorkspaceEntityBase<SecondSampleEntity>(), SecondSampleEntity.Builder {
+  class Builder(result: SecondSampleEntityData?) : ModifiableWorkspaceEntityBase<SecondSampleEntity, SecondSampleEntityData>(
+    result), SecondSampleEntity.Builder {
     constructor() : this(SecondSampleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -60,7 +66,7 @@ open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : Seco
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -83,8 +89,7 @@ open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : Seco
       dataSource as SecondSampleEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.intProperty != dataSource.intProperty) this.intProperty = dataSource.intProperty
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -92,7 +97,7 @@ open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : Seco
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -101,11 +106,10 @@ open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : Seco
       get() = getEntityData().intProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().intProperty = value
+        getEntityData(true).intProperty = value
         changedProperty.add("intProperty")
       }
 
-    override fun getEntityData(): SecondSampleEntityData = result ?: super.getEntityData() as SecondSampleEntityData
     override fun getEntityClass(): Class<SecondSampleEntity> = SecondSampleEntity::class.java
   }
 }
@@ -114,22 +118,17 @@ class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>() {
   var intProperty: Int = 0
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SecondSampleEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SecondSampleEntity> {
     val modifiable = SecondSampleEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): SecondSampleEntity {
     return getCached(snapshot) {
       val entity = SecondSampleEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

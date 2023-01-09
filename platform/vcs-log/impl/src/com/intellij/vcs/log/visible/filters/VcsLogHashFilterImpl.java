@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,27 +11,24 @@ import java.util.Collection;
 import java.util.Objects;
 
 class VcsLogHashFilterImpl implements VcsLogHashFilter {
-  @NotNull private final Collection<String> myHashes;
+  private final @NotNull Collection<String> myHashes;
 
   VcsLogHashFilterImpl(@NotNull Collection<String> hashes) {
     myHashes = hashes;
   }
 
-  @NotNull
   @Override
-  public Collection<String> getHashes() {
+  public @NotNull Collection<String> getHashes() {
     return myHashes;
   }
 
-  @NotNull
   @Override
-  public String getDisplayText() {
+  public @NotNull String getDisplayText() {
     return StringUtil.join(getHashes(), it -> VcsLogUtil.getShortHash(it), ", ");
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "hashes:" + myHashes;
   }
 

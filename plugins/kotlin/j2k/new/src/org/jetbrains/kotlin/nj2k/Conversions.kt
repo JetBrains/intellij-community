@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.nj2k
 
 import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
@@ -80,17 +81,19 @@ abstract class RecursiveApplicableConversionBase(context: NewJ2kConverterContext
     fun <T : JKTreeElement> recurse(element: T): T = applyRecursive(element, ::applyToElement)
 }
 
-val RecursiveApplicableConversionBase.moduleApiVersion: ApiVersion
+val RecursiveApplicableConversionBase.languageVersionSettings: LanguageVersionSettings
     get() {
         val converter = context.converter
-        val languageVersionSettings = converter.targetModule?.languageVersionSettings ?: converter.project.languageVersionSettings
-        return languageVersionSettings.apiVersion
+        return converter.targetModule?.languageVersionSettings ?: converter.project.languageVersionSettings
     }
+
+val RecursiveApplicableConversionBase.moduleApiVersion: ApiVersion
+    get() = languageVersionSettings.apiVersion
 
 abstract class RecursiveApplicableConversionWithState<S>(
     context: NewJ2kConverterContext,
     private val initialState: S
-)  : MatchBasedConversion(context) {
+) : MatchBasedConversion(context) {
     override fun onElementChanged(new: JKTreeElement, old: JKTreeElement) {
         somethingChanged = true
     }

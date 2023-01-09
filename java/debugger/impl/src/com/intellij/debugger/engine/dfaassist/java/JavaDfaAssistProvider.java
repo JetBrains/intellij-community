@@ -145,7 +145,7 @@ public class JavaDfaAssistProvider implements DfaAssistProvider {
     }
     if (psi instanceof PsiLocalVariable || psi instanceof PsiParameter) {
       String varName = ((PsiVariable)psi).getName();
-      if (varName == null || PsiResolveHelper.getInstance(psi.getProject()).resolveReferencedVariable(varName, anchor) != psi) {
+      if (PsiResolveHelper.getInstance(psi.getProject()).resolveReferencedVariable(varName, anchor) != psi) {
         // Another variable with the same name could be tracked by DFA in different code branch but not visible at current code location
         return null;
       }

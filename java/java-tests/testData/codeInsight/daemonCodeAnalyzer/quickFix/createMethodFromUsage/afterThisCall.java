@@ -1,4 +1,4 @@
-// "Create method 'f'" "true"
+// "Create method 'f'" "true-preview"
 public class A {
     public A() {
         this(f());

@@ -38,7 +38,7 @@ class InlineModuleDependencyActionTest : JavaModuleTestCase() {
         val classPathPanel = setUpClasspathPanel(modifiableRootModel, newModuleOrderEntry)
 
         val action = InlineModuleDependencyAction(classPathPanel)
-        action.actionPerformed(TestActionEvent())
+        action.actionPerformed(TestActionEvent.createTestEvent())
 
         val orderEntries = modifiableRootModel.moduleLibraryTable.libraries
         TestCase.assertEquals(1, orderEntries.size)
@@ -65,7 +65,7 @@ class InlineModuleDependencyActionTest : JavaModuleTestCase() {
         val classPathPanel = setUpClasspathPanel(modifiableRootModel, newModuleOrderEntry)
 
         val action = InlineModuleDependencyAction(classPathPanel)
-        action.actionPerformed(TestActionEvent())
+        action.actionPerformed(TestActionEvent.createTestEvent())
 
         val orderEntries = modifiableRootModel.orderEntries.filterIsInstance<LibraryOrderEntry>()
         TestCase.assertEquals(1, orderEntries.size)
@@ -90,7 +90,7 @@ class InlineModuleDependencyActionTest : JavaModuleTestCase() {
         val classPathPanel = setUpClasspathPanel(modifiableRootModel, newModuleOrderEntry)
 
         val action = InlineModuleDependencyAction(classPathPanel)
-        action.actionPerformed(TestActionEvent())
+        action.actionPerformed(TestActionEvent.createTestEvent())
 
         val orderEntries = modifiableRootModel.orderEntries.filterIsInstance<LibraryOrderEntry>()
         TestCase.assertEquals(1, orderEntries.size)
@@ -129,7 +129,7 @@ class InlineModuleDependencyActionTest : JavaModuleTestCase() {
       val classPathPanel = setUpClasspathPanel(modifiableRootModel, moduleOrderEntry)
 
       val action = InlineModuleDependencyAction(classPathPanel)
-      action.actionPerformed(TestActionEvent())
+      action.actionPerformed(TestActionEvent.createTestEvent())
 
       val orderEntries = modifiableRootModel.orderEntries
       assertEquals(3, orderEntries.size)

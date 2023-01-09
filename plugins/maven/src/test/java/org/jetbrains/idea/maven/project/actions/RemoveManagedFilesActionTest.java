@@ -28,8 +28,8 @@ public class RemoveManagedFilesActionTest extends MavenMultiVersionImportingTest
     importProject();
 
     var action = new RemoveManagedFilesAction();
-    var parentActionVisible = action.isVisible(new TestActionEvent(createTestDataContext(parentFile), action));
-    var m1ActionVisible = action.isVisible(new TestActionEvent(createTestDataContext(m1File), action));
+    var parentActionVisible = action.isVisible(TestActionEvent.createTestEvent(action, createTestDataContext(parentFile)));
+    var m1ActionVisible = action.isVisible(TestActionEvent.createTestEvent(action, createTestDataContext(m1File)));
 
     assertTrue(parentActionVisible);
     assertFalse(m1ActionVisible);

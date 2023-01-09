@@ -15,21 +15,22 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiElement;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeFieldFinalFix;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class FieldAccessedSynchronizedAndUnsynchronizedInspection extends BaseInspection {
 
@@ -46,12 +47,10 @@ public class FieldAccessedSynchronizedAndUnsynchronizedInspection extends BaseIn
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "field.accessed.synchronized.and.unsynchronized.option"),
-      this, "countGettersAndSetters");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("countGettersAndSetters", InspectionGadgetsBundle.message(
+        "field.accessed.synchronized.and.unsynchronized.option")));
   }
 
   @Override

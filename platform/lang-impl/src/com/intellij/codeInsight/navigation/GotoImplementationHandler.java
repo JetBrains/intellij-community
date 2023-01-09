@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.NavigateAction;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.model.psi.impl.UtilKt;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -16,8 +17,10 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiElement;
@@ -25,20 +28,20 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.awt.event.MouseEvent;
+import java.util.*;
 
 public class GotoImplementationHandler extends GotoTargetHandler {
   @Override
   protected String getFeatureUsedKey() {
-    return "navigation.goto.implementation";
+    return null;
   }
 
   @Override
@@ -168,6 +171,26 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return CodeInsightBundle.message("goto.implementation.notFound");
   }
 
+  public void navigateToImplementations(@NotNull PsiElement baseElement,
+                                        @NotNull MouseEvent e,
+                                        @NlsContexts.PopupContent String dumbModeMessage) {
+    Project project = baseElement.getProject();
+    if (DumbService.isDumb(project)) {
+      DumbService.getInstance(project).showDumbModeNotification(dumbModeMessage);
+      return;
+    }
+    PsiUtilCore.ensureValid(baseElement);
+    PsiFile containingFile = baseElement.getContainingFile();
+    Editor editor = UtilKt.mockEditor(containingFile);
+    GotoData source = createDataForSource(Objects.requireNonNull(editor, "No document for " + containingFile), baseElement.getTextOffset(), baseElement);
+    show(project, editor, containingFile, source, popup -> popup.show(new RelativePoint(e)));
+  }
+
+  @TestOnly
+  public GotoData createDataForSourceForTests(Editor editor, PsiElement element) {
+    return createDataForSource(editor, element.getTextOffset(), element);
+  }
+
   private class ImplementationsUpdaterTask extends BackgroundUpdaterTask {
     private final Editor myEditor;
     private final int myOffset;
@@ -228,7 +251,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return Comparator.comparing((PsiElement element) -> index.isInContent(element.getContainingFile().getVirtualFile())).reversed();
   }
 
-  private static <T> @NotNull Comparator<T> wrapIntoReadAction(@NotNull Comparator<T> base) {
+  public static <T> @NotNull Comparator<T> wrapIntoReadAction(@NotNull Comparator<? super T> base) {
     return (e1, e2) -> ReadAction.compute(() -> base.compare(e1, e2));
   }
 }

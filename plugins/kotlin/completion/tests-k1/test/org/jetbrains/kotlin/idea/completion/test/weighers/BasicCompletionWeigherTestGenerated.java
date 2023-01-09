@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test.weighers;
 
@@ -463,6 +463,16 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @TestMetadata("LocalsPropertiesKeywords.kt")
         public void testLocalsPropertiesKeywords() throws Exception {
             runTest("../testData/weighers/basic/LocalsPropertiesKeywords.kt");
+        }
+
+        @TestMetadata("NamedArgumentNonTypableVariables.kt")
+        public void testNamedArgumentNonTypableVariables() throws Exception {
+            runTest("../testData/weighers/basic/NamedArgumentNonTypableVariables.kt");
+        }
+
+        @TestMetadata("NamedArgumentNotMatches.kt")
+        public void testNamedArgumentNotMatches() throws Exception {
+            runTest("../testData/weighers/basic/NamedArgumentNotMatches.kt");
         }
 
         @TestMetadata("NamedParameters.kt")

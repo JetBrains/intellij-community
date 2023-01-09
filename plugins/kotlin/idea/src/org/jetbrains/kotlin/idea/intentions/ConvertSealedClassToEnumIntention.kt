@@ -126,7 +126,7 @@ class ConvertSealedClassToEnumIntention : SelfTargetingRangeIntention<KtClass>(
             klass.declarations.filter { it in subclassesSet }
         }
 
-        val psiFactory = KtPsiFactory(klass)
+        val psiFactory = KtPsiFactory(project)
 
         val comma = psiFactory.createComma()
         val semicolon = psiFactory.createSemicolon()

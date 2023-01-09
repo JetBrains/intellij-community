@@ -3,6 +3,7 @@ package com.intellij.ide.ui.text
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
@@ -18,6 +19,7 @@ import javax.swing.KeyStroke
 @ApiStatus.Experimental
 @ApiStatus.Internal
 object ShortcutsRenderingUtil {
+  val SHORTCUT_PART_SEPARATOR = NON_BREAK_SPACE.repeat(3)
 
   /**
    * @param actionId
@@ -56,7 +58,7 @@ object ShortcutsRenderingUtil {
     val firstKeyStrokeData = getKeyStrokeData(shortcut.firstKeyStroke)
     val secondKeyStroke = shortcut.secondKeyStroke ?: return firstKeyStrokeData
     val secondKeyStrokeData = getKeyStrokeData(secondKeyStroke)
-    val firstPartString = firstKeyStrokeData.first + "${NON_BREAK_SPACE.repeat(3)},${NON_BREAK_SPACE.repeat(3)}"
+    val firstPartString = firstKeyStrokeData.first + "$SHORTCUT_PART_SEPARATOR,$SHORTCUT_PART_SEPARATOR"
     val firstPartLength = firstPartString.length
 
     val shiftedList = secondKeyStrokeData.second.map { IntRange(it.first + firstPartLength, it.last + firstPartLength) }
@@ -69,7 +71,6 @@ object ShortcutsRenderingUtil {
     val modifiers: List<String> = getModifiersText(keyStroke.modifiers)
     val keyString = getKeyString(keyStroke.keyCode)
 
-    val separator = NON_BREAK_SPACE.repeat(3)
     val intervals = mutableListOf<IntRange>()
     val builder = StringBuilder()
 
@@ -81,7 +82,7 @@ object ShortcutsRenderingUtil {
 
     for (m in modifiers) {
       addPart(m)
-      builder.append(separator)
+      builder.append(SHORTCUT_PART_SEPARATOR)
     }
 
     addPart(keyString)
@@ -94,7 +95,6 @@ object ShortcutsRenderingUtil {
    */
   fun getRawShortcutData(shortcut: String): Pair<@NlsSafe String, List<IntRange>> {
     val parts = shortcut.split(Regex(""" *\+ *""")).map(this::getPresentableModifier)
-    val separator = NON_BREAK_SPACE.repeat(3)
     val builder = StringBuilder()
     val ranges = mutableListOf<IntRange>()
     var curInd = 0
@@ -102,7 +102,7 @@ object ShortcutsRenderingUtil {
       builder.append(part.replaceSpacesWithNonBreakSpaces())
       ranges.add(curInd until builder.length)
       if (ind != parts.lastIndex) {
-        builder.append(separator)
+        builder.append(SHORTCUT_PART_SEPARATOR)
       }
       curInd = builder.length
     }
@@ -110,9 +110,17 @@ object ShortcutsRenderingUtil {
   }
 
   fun getGotoActionData(@NonNls actionId: String): Pair<String, List<IntRange>> {
+    val action = ActionManager.getInstance().getAction(actionId)
+    val actionName = if (action != null) {
+      action.templatePresentation.text.replaceSpacesWithNonBreakSpaces()
+    }
+    else {
+      thisLogger().error("Failed to find action with id: $actionId")
+      actionId
+    }
+
     val gotoActionShortcut = getShortcutByActionId("GotoAction")
     val gotoAction = getKeyboardShortcutData(gotoActionShortcut)
-    val actionName = ActionManager.getInstance().getAction(actionId).templatePresentation.text.replaceSpacesWithNonBreakSpaces()
     val updated = ArrayList<IntRange>(gotoAction.second)
     val start = gotoAction.first.length + 5
     updated.add(IntRange(start, start + actionName.length - 1))

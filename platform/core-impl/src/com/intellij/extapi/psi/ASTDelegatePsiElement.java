@@ -45,6 +45,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,8 +53,6 @@ import java.util.List;
 
 public abstract class ASTDelegatePsiElement extends PsiElementBase {
   private static final Logger LOG = Logger.getInstance(ASTDelegatePsiElement.class);
-
-  private static <T> @NotNull List<T> EMPTY() { return Collections.emptyList(); }
 
   @Override
   public PsiFile getContainingFile() {
@@ -223,13 +222,14 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return ContainerUtil.map2Array(SharedImplUtil.getChildrenOfType(getNode(), elementType), arrayClass, s -> (T)s.getPsi());
   }
 
+  @Unmodifiable
   protected <T extends PsiElement> List<T> findChildrenByType(@NotNull TokenSet elementType) {
-    List<T> result = EMPTY();
+    List<T> result = Collections.emptyList();
     ASTNode child = getNode().getFirstChildNode();
     while (child != null) {
       final IElementType tt = child.getElementType();
       if (elementType.contains(tt)) {
-        if (result == ASTDelegatePsiElement.<T>EMPTY()) {
+        if (result == Collections.<T>emptyList()) {
           result = new ArrayList<>();
         }
         result.add((T)child.getPsi());
@@ -239,12 +239,13 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return result;
   }
 
+  @Unmodifiable
   protected <T extends PsiElement> List<T> findChildrenByType(@NotNull IElementType elementType) {
-    List<T> result = EMPTY();
+    List<T> result = Collections.emptyList();
     ASTNode child = getNode().getFirstChildNode();
     while (child != null) {
       if (elementType == child.getElementType()) {
-        if (result == ASTDelegatePsiElement.<T>EMPTY()) {
+        if (result == Collections.<T>emptyList()) {
           result = new ArrayList<>();
         }
         result.add((T)child.getPsi());

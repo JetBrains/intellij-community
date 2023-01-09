@@ -7,9 +7,11 @@ import com.intellij.find.findUsages.JavaClassFindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -20,6 +22,12 @@ import java.util.List;
  * Test for lombok find usage extension
  */
 public class LombokUsageTest extends AbstractLombokLightCodeInsightTestCase {
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
+  }
 
   public void testFindUsageGetterSetter() {
     final Collection<UsageInfo> usages = loadTestClass();
@@ -36,9 +44,19 @@ public class LombokUsageTest extends AbstractLombokLightCodeInsightTestCase {
     assertUsages(usages, "findUsageWither.withBar", "findUsageWither.getBar");
   }
 
+  public void testFindUsageWitherRecord() {
+    final Collection<UsageInfo> usages = loadTestClass();
+    assertUsages(usages, "findUsageWitherRecord.withBar", "findUsageWitherRecord.bar");
+  }
+
   public void testFindUsageBuilder() {
     final Collection<UsageInfo> usages = loadTestClass();
     assertUsages(usages, "FindUsageBuilder.builder().bar", "findUsageBuilder.getBar");
+  }
+
+  public void testFindUsageBuilderRecord() {
+    final Collection<UsageInfo> usages = loadTestClass();
+    assertUsages(usages, "FindUsageBuilderRecord.builder().bar", "findUsageBuilderRecord.bar");
   }
 
   public void testFindUsageSingularBuilder() {

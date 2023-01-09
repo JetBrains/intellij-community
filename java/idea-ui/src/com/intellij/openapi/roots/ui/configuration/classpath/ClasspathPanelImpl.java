@@ -390,7 +390,6 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
             }
           });
         final RelativePoint point = button.getPreferredPopupPoint();
-        if (point == null) return;
         popup.show(point);
       }
     })

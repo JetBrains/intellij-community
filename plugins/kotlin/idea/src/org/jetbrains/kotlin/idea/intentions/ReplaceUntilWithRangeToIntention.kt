@@ -27,6 +27,7 @@ class ReplaceUntilWithRangeToIntention : SelfTargetingIntention<KtExpression>(
 
     override fun applyTo(element: KtExpression, editor: Editor?) {
         val args = element.getArguments() ?: return
-        element.replace(KtPsiFactory(element).createExpressionByPattern("$0..$1 - 1", args.first ?: return, args.second ?: return))
+        val psiFactory = KtPsiFactory(element.project)
+        element.replace(psiFactory.createExpressionByPattern("$0..$1 - 1", args.first ?: return, args.second ?: return))
     }
 }

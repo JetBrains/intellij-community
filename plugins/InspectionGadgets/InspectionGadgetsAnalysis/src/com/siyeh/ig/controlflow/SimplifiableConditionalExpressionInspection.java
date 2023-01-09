@@ -58,7 +58,7 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiConditionalExpression expression = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiConditionalExpression.class);
       if (expression == null) return;
       ConditionalModel model = ConditionalModel.from(expression);

@@ -13,7 +13,7 @@ public class TestProductivityFeatureProvider extends ProductivityFeaturesProvide
   public FeatureDescriptor[] getFeatureDescriptors() {
     asked = true;
     return new FeatureDescriptor[] {
-      new FeatureDescriptor(tipId, groupId, "TestTip.html", "test", 0, 0, null, 0, this)
+      new FeatureDescriptor(tipId, groupId, "TestTip", "test", 0, 0, null, 0, this)
     };
   }
 

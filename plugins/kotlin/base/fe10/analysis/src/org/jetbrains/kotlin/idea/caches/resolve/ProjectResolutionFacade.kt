@@ -2,10 +2,13 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -20,10 +23,12 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticSink
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
-import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
-import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
+import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
+import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
 import org.jetbrains.kotlin.psi.KtElement
@@ -33,36 +38,49 @@ import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative
 import org.jetbrains.kotlin.storage.CancellableSimpleLock
 import org.jetbrains.kotlin.storage.guarded
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 
 internal class ProjectResolutionFacade(
-  private val debugString: String,
-  private val resolverDebugName: String,
-  val project: Project,
-  val globalContext: GlobalContextImpl,
-  val settings: PlatformAnalysisSettings,
-  val reuseDataFrom: ProjectResolutionFacade?,
-  val moduleFilter: (IdeaModuleInfo) -> Boolean,
-  dependencies: List<Any>,
-  private val invalidateOnOOCB: Boolean,
-  val syntheticFiles: Collection<KtFile> = listOf(),
-  val allModules: Collection<IdeaModuleInfo>? = null // null means create resolvers for modules from idea model
-) {
-    private val cachedValue = CachedValuesManager.getManager(project).createCachedValue(
-        {
-            val resolverProvider = computeModuleResolverProvider()
-            val allDependencies = if (invalidateOnOOCB) {
-                resolverForProjectDependencies + KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
-            } else {
-                resolverForProjectDependencies
-            }
-            CachedValueProvider.Result.create(resolverProvider, allDependencies)
-        },
-        /* trackValue = */ false
-    )
+    private val debugString: String,
+    private val resolverDebugName: String,
+    val project: Project,
+    val globalContext: GlobalContextImpl,
+    val settings: PlatformAnalysisSettings,
+    val reuseDataFrom: ProjectResolutionFacade?,
+    val moduleFilter: (IdeaModuleInfo) -> Boolean,
+    dependencies: List<ModificationTracker>,
+    private val invalidateOnOOCB: Boolean,
+    val syntheticFiles: Collection<KtFile> = listOf(),
+    val allModules: Collection<IdeaModuleInfo>? = null, // null means create resolvers for modules from idea model
+    private val parentDisposable: Disposable? = null
+): Disposable {
+
+    private class DataHolder<T>(val value: T, val dependencies: LongArray)
+
+    @Volatile
+    private var disposed: Boolean = false
+    private var resolverForProjectHolder: DataHolder<ResolverForProject<IdeaModuleInfo>>? = null
 
     private val cachedResolverForProject: ResolverForProject<IdeaModuleInfo>
-        get() = globalContext.storageManager.compute { cachedValue.value }
+        get() = globalContext.storageManager.compute {
+            val dependencies = resolverProviderDependenciesTimestamps
+
+            val holder = resolverForProjectHolder
+            if (holder?.dependencies.contentEquals(dependencies)) return@compute holder!!.value
+
+            if (disposed) throw ProcessCanceledException(InvalidResolverException("${toString()} is invalidated"))
+
+            val resolverProvider: ResolverForProject<IdeaModuleInfo> = computeModuleResolverProvider()
+            if (parentDisposable != null) {
+                (resolverForProjectHolder?.value as? Disposable)?.let(Disposer::dispose)
+                (resolverProvider as? Disposable)?.let {
+                    Disposer.register(this, it)
+                }
+            }
+            resolverForProjectHolder = DataHolder(resolverProvider, dependencies)
+            resolverProvider
+        }
 
     private val analysisResultsLock = ReentrantLock()
     private val analysisResultsSimpleLock = CancellableSimpleLock(analysisResultsLock,
@@ -119,12 +137,34 @@ internal class ProjectResolutionFacade(
 
     private val resolverForProjectDependencies = dependencies + globalContext.exceptionTracker
 
+    private val resolverProviderDependencies = if (invalidateOnOOCB) {
+        resolverForProjectDependencies + KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
+    } else {
+        resolverForProjectDependencies
+    }
+
+    private val resolverProviderDependenciesTimestamps
+        get(): LongArray = LongArray(resolverProviderDependencies.size) {
+            resolverProviderDependencies[it].modificationCount
+        }
+
+    init {
+        parentDisposable?.let {
+            Disposer.register(it, this)
+        }
+    }
+
     private fun computeModuleResolverProvider(): ResolverForProject<IdeaModuleInfo> {
         val delegateResolverForProject: ResolverForProject<IdeaModuleInfo> =
             reuseDataFrom?.cachedResolverForProject ?: EmptyResolverForProject()
 
         val allModuleInfos = (allModules ?: getModuleInfosFromIdeaModel(project, (settings as? PlatformAnalysisSettingsImpl)?.platform))
-            .toMutableSet()
+            .toMutableSet().also {
+                it.checkValidity {
+                    ("allModules".takeIf { allModules != null }
+                        ?: "getModuleInfosFromIdeaModel(${(settings as? PlatformAnalysisSettingsImpl)?.platform})") + toString()
+                }
+            }
 
         val syntheticFilesByModule = syntheticFiles.groupBy { it.moduleInfo }
         val syntheticFilesModules = syntheticFilesByModule.keys
@@ -148,7 +188,7 @@ internal class ProjectResolutionFacade(
     internal fun resolverForModuleInfo(moduleInfo: IdeaModuleInfo) = cachedResolverForProject.resolverForModule(moduleInfo)
 
     internal fun resolverForElement(element: PsiElement): ResolverForModule {
-        val moduleInfos = mutableListOf<IdeaModuleInfo>()
+        val moduleInfos = mutableSetOf<IdeaModuleInfo>()
 
         for (result in ModuleInfoProvider.getInstance(element.project).collect(element)) {
             val moduleInfo = result.getOrNull()
@@ -157,7 +197,7 @@ internal class ProjectResolutionFacade(
                 if (resolver != null) {
                     return resolver
                 } else {
-                    moduleInfos += moduleInfos
+                    moduleInfos += moduleInfo
                 }
             }
 
@@ -167,8 +207,8 @@ internal class ProjectResolutionFacade(
             }
         }
 
-        return cachedResolverForProject.tryGetResolverForModule(NotUnderContentRootModuleInfo)
-            ?: cachedResolverForProject.diagnoseUnknownModuleInfo(moduleInfos)
+        return cachedResolverForProject.tryGetResolverForModule(NotUnderContentRootModuleInfo(project))
+            ?: cachedResolverForProject.diagnoseUnknownModuleInfo(moduleInfos.toList())
     }
 
     internal fun resolverForDescriptor(moduleDescriptor: ModuleDescriptor) =
@@ -215,8 +255,11 @@ internal class ProjectResolutionFacade(
     }
 
     internal fun fetchAnalysisResultsForElement(element: KtElement): AnalysisResult? {
-        val cache = analysisResultsSimpleLock.guarded { analysisResults.value!! }
-        val perFileCache = cache.getIfCached(element.containingKtFile)
+        val cache: SLRUCache<KtFile, PerFileAnalysisCache>? =
+            analysisResultsLock.tryGuarded {
+                analysisResults.upToDateOrNull?.get()
+            }
+        val perFileCache = cache?.getIfCached(element.containingKtFile)
         return perFileCache?.fetchAnalysisResults(element)
     }
 
@@ -243,11 +286,19 @@ internal class ProjectResolutionFacade(
         }
     }
 
+    override fun dispose() {
+        disposed = true
+        globalContext.storageManager.compute {
+            resolverForProjectHolder = null
+        }
+    }
+
     override fun toString(): String {
-        return "$debugString@${Integer.toHexString(hashCode())}"
+        return "$debugString@${Integer.toHexString(hashCode())}${if (disposed) "(disposed)" else ""}"
     }
 
     companion object {
+
         /*
          * Concurrent access to Errors may lead to the class loading dead lock because of non-trivial initialization in Errors.
          * As a work-around, all Error classes are initialized beforehand.
@@ -265,3 +316,15 @@ internal class ProjectResolutionFacade(
         }
     }
 }
+
+const val CHECK_CANCELLATION_PERIOD_MS: Long = 50
+inline fun <T> ReentrantLock.tryGuarded(crossinline computable: () -> T): T? =
+    if (tryLock(CHECK_CANCELLATION_PERIOD_MS, TimeUnit.MILLISECONDS)) {
+        try {
+            computable()
+        } finally {
+            unlock()
+        }
+    } else {
+        null
+    }

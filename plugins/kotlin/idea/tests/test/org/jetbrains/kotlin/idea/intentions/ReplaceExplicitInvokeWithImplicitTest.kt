@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.util.descendantsOfType
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.OperatorToFunctionIntention
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression

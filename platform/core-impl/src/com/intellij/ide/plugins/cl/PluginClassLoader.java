@@ -77,7 +77,9 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       "kotlin.coroutines.AbstractCoroutineContextKey",
       "kotlin.coroutines.jvm.internal.ContinuationImpl", // IDEA-295189
       "kotlin.coroutines.jvm.internal.BaseContinuationImpl", // IDEA-295189
-      "kotlin.coroutines.jvm.internal.CoroutineStackFrame" // IDEA-295189
+      "kotlin.coroutines.jvm.internal.CoroutineStackFrame", // IDEA-295189
+      "kotlin.time.Duration",
+      "kotlin.time.Duration$Companion"
     ));
     String classes = System.getProperty("idea.kotlin.classes.used.in.signatures");
     if (classes != null) {
@@ -388,6 +390,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
             className.startsWith("kotlin.jvm.internal.MutablePropertyReference") ||
             className.startsWith("kotlin.jvm.internal.PropertyReference") ||
             className.startsWith("kotlin.jvm.internal.TypeReference") ||
+            className.equals("kotlin.jvm.internal.Lambda") ||
             className.startsWith("kotlin.jvm.internal.LocalVariableReference") ||
             className.startsWith("kotlin.jvm.internal.MutableLocalVariableReference") ||
             className.equals("kotlin.jvm.internal.ReflectionFactory") ||

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.WriteAction;
@@ -28,8 +28,8 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -135,7 +135,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
   }
 
   public void testIndexingSdk() throws Exception {
-    doTest(this::createSdk, this::removeSdk, IndexableEntityProviderMethods.INSTANCE::createIterators);
+    doTest(this::createSdk, this::removeSdk, sdk -> IndexableEntityProviderMethods.INSTANCE.createIterators(sdk));
   }
 
   @NotNull

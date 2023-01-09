@@ -46,7 +46,7 @@ class ToRawStringLiteralIntention : SelfTargetingOffsetIndependentIntention<KtSt
         val currentOffset = editor?.caretModel?.currentCaret?.offset ?: startOffset
 
         val text = convertContent(element)
-        val replaced = element.replaced(KtPsiFactory(element).createExpression("\"\"\"" + text + "\"\"\""))
+        val replaced = element.replaced(KtPsiFactory(element.project).createExpression("\"\"\"" + text + "\"\"\""))
 
         val offset = when {
             startOffset == currentOffset -> startOffset

@@ -49,7 +49,7 @@ public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
     }
   }
 
-  protected boolean handleBackspace(Editor editor, Caret caret, DataContext dataContext, boolean toWordStart) {
+  boolean handleBackspace(@NotNull Editor editor, @NotNull Caret caret, @NotNull DataContext dataContext, boolean toWordStart) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
 
@@ -141,7 +141,7 @@ public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
     return true;
   }
 
-  private static void deleteCustomFoldRegionIfNeeded(Caret caret) {
+  private static void deleteCustomFoldRegionIfNeeded(@NotNull Caret caret) {
     int caretOffset = caret.getOffset();
     Editor editor = caret.getEditor();
     FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(caretOffset - 1);

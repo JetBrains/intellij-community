@@ -64,6 +64,9 @@
     <applicationService serviceImplementation="org.jetbrains.java.generate.GenerateToStringContext"/>
     <applicationService serviceInterface="org.jetbrains.java.generate.GenerateToStringActionHandler"
                         serviceImplementation="org.jetbrains.java.generate.GenerateToStringActionHandlerImpl"/>
+    <applicationService serviceInterface="com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService"
+                        serviceImplementation="com.intellij.openapi.roots.impl.InternalPersistentJavaLanguageLevelReaderServiceImpl"
+                        overrides="true"/>
     <filePropertyPusher implementation="com.intellij.openapi.roots.impl.JavaLanguageLevelPusher"/>
     <fileBasedIndex implementation="com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisIndex"/>
     <projectService serviceInterface="com.intellij.psi.impl.file.impl.JavaFileManager"
@@ -243,7 +246,7 @@
                       implementationClass="com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationInspection"
                       editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                       key="inspection.redundant.throws.display.name" bundle="messages.JavaAnalysisBundle"/>
-    <globalInspection groupPath="Java" language="JAVA" shortName="SameReturnValue" bundle="messages.JavaAnalysisBundle" key="inspection.same.return.value.display.name"
+    <globalInspection groupPath="Java" language="UAST" shortName="SameReturnValue" bundle="messages.JavaAnalysisBundle" key="inspection.same.return.value.display.name"
                       groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.sameReturnValue.SameReturnValueInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="CanBeFinal" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"

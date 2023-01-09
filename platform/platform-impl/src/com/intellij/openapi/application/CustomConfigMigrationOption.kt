@@ -3,12 +3,12 @@ package com.intellij.openapi.application
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 private val log = logger<CustomConfigMigrationOption>()
 

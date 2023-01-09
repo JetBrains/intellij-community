@@ -2,13 +2,13 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.KtElement
@@ -156,13 +156,13 @@ internal inline fun <reified E : PsiElement, I : SelfTargetingRangeIntention<E>>
     override val writeActionNeeded = writeActionNeeded
 }
 
-
 internal inline fun <reified E : PsiElement, I : AbstractApplicabilityBasedInspection<E>> inspectionBasedProcessing(
     inspection: I,
-    writeActionNeeded: Boolean = true
+    writeActionNeeded: Boolean = true,
+    noinline additionalChecker: (E) -> Boolean = { true }
 ) = object : InspectionLikeProcessingForElement<E>(E::class.java) {
     override fun isApplicableTo(element: E, settings: ConverterSettings?): Boolean =
-        inspection.isApplicable(element)
+        inspection.isApplicable(element) && additionalChecker(element)
 
     override fun apply(element: E) {
         inspection.applyTo(element)

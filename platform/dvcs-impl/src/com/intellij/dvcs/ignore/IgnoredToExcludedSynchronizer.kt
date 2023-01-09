@@ -48,8 +48,8 @@ import com.intellij.util.ui.update.Update
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import java.util.*
 import java.util.function.Function
 import javax.swing.JComponent
@@ -164,11 +164,12 @@ class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(proje
 }
 
 private fun markIgnoredAsExcluded(project: Project, files: Collection<VirtualFile>) {
-  val ignoredDirsByModule =
+  val ignoredDirsByModule = runReadAction {  
     files
       .groupBy { ModuleUtil.findModuleForFile(it, project) }
       //if the directory already excluded then ModuleUtil.findModuleForFile return null and this will filter out such directories from processing.
       .filterKeys(Objects::nonNull)
+  }
 
   for ((module, ignoredDirs) in ignoredDirsByModule) {
     excludeAction.exclude(module!!, ignoredDirs)

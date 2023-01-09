@@ -15,10 +15,10 @@ public final class PsiPrimitiveType extends PsiType {
     assert this == second;
     assert second != this;
 
-    assert <warning descr="'PsiPrimitiveType' instances should be compared by 'equals()', not '=='">first == second</warning>;
-    assert <warning descr="'PsiPrimitiveType' instances should be compared by 'equals()', not '=='">first != second</warning>;
+    assert <warning descr="'PsiPrimitiveType' instances should be compared for equality, not identity">first == second</warning>;
+    assert <warning descr="'PsiPrimitiveType' instances should be compared for equality, not identity">first != second</warning>;
 
-    assert <warning descr="'PsiPrimitiveType' instances should be compared by 'equals()', not '=='">second == first</warning>;
-    assert <warning descr="'PsiPrimitiveType' instances should be compared by 'equals()', not '=='">second != first</warning>;
+    assert <warning descr="'PsiPrimitiveType' instances should be compared for equality, not identity">second == first</warning>;
+    assert <warning descr="'PsiPrimitiveType' instances should be compared for equality, not identity">second != first</warning>;
   }
 }

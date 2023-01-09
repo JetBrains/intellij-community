@@ -50,6 +50,7 @@ public class MethodSignatureComponent extends EditorTextField {
     editor.getSettings().setWhitespacesShown(false);
     editor.setHorizontalScrollbarVisible(true);
     editor.setVerticalScrollbarVisible(true);
+    setupBorder(editor);
     return editor;
   }
 
