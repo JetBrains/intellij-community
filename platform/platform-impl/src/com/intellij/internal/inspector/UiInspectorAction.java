@@ -12,7 +12,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ExpandedItemListCellRendererWrapper;
 import com.intellij.ui.popup.PopupFactoryImpl;
@@ -31,7 +31,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ContainerEvent;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,29 +63,17 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    InputEvent event = e.getInputEvent();
-    if (event != null) event.consume();
-    Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-
-    Project project = e.getProject();
+  protected void handleClick(@NotNull Component component, @Nullable MouseEvent event) {
+    IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, component);
+    Project project = frame != null ? frame.getProject() : null;
     closeAllInspectorWindows();
 
-    if (event instanceof MouseEvent && event.getComponent() != null) {
-      new UiInspector(project).processMouseEvent(project, (MouseEvent)event);
-      return;
+    if (event != null) {
+      new UiInspector(project).processMouseEvent(project, event);
     }
-    if (component == null) {
-      component = IdeFocusManager.getInstance(project).getFocusOwner();
+    else {
+      new UiInspector(project).showInspector(project, component);
     }
-
-    assert component != null;
-    new UiInspector(project).showInspector(project, component);
   }
 
   @Override
