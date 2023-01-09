@@ -35,8 +35,7 @@ internal class SampleCustomModuleRootsSerializer : CustomModuleRootsSerializer {
     return SampleDummyParentCustomModuleEntitySource(internalEntitySource)
   }
 
-  override fun loadRoots(builder: MutableEntityStorage,
-                         moduleEntity: ModuleEntity,
+  override fun loadRoots(moduleEntity: ModuleEntity,
                          reader: JpsFileContentReader,
                          customDir: String?,
                          imlFileUrl: VirtualFileUrl,

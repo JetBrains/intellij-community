@@ -154,13 +154,11 @@ fun MutableEntityStorage.addFacetEntity(name: @NlsSafe String,
                                         module: ModuleEntity,
                                         underlyingFacet: FacetEntity?,
                                         source: EntitySource): FacetEntity {
-  val entity = FacetEntity(name, facetType, module.symbolicId, source) {
+  return this addEntity FacetEntity(name, facetType, module.symbolicId, source) {
     this.configurationXmlTag = configurationXmlTag
     this.module = module
     this.underlyingFacet = underlyingFacet
   }
-  this.addEntity(entity)
-  return entity
 }
 
 fun MutableEntityStorage.addArtifactEntity(name: @NlsSafe String,
