@@ -3,12 +3,8 @@ package com.intellij.util.ui
 
 import org.jetbrains.annotations.ApiStatus.Internal
 
-object IterablesConcat {
+@Internal
+internal object IterablesConcat {
   @JvmStatic
-  @Internal
-  fun<T> concat(left: Iterable<T>, right: Iterable<T>): Iterable<T> {
-    var sequence = left.asSequence()
-    sequence += right.asSequence()
-    return sequence.asIterable()
-  }
+  fun<T> concat(left: Iterable<T>, right: Iterable<T>): Iterable<T> = left + right
 }
