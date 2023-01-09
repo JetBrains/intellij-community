@@ -38,9 +38,6 @@ class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
     override fun hasType(element: KtExpression): Boolean =
         org.jetbrains.kotlin.idea.search.usagesSearch.hasType(element)
 
-    override fun isSamInterface(psiClass: PsiClass): Boolean =
-        org.jetbrains.kotlin.idea.search.usagesSearch.isSamInterface(psiClass)
-
     override fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean =
         reference.isCallableOverrideUsage(declaration)
 

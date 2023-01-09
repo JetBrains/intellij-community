@@ -30,9 +30,6 @@ interface KotlinSearchUsagesSupport {
         val KtExpression.hasType: Boolean
             get() = getInstance(project).hasType(this)
 
-        val PsiClass.isSamInterface: Boolean
-            get() = getInstance(project).isSamInterface(this)
-
         fun <T : PsiNamedElement> List<T>.filterDataClassComponentsIfDisabled(kotlinOptions: KotlinReferencesSearchOptions): List<T> {
             fun PsiNamedElement.isComponentElement(): Boolean {
                 if (this !is PsiMethod) return false
@@ -123,8 +120,6 @@ interface KotlinSearchUsagesSupport {
     fun dataClassComponentMethodName(element: KtParameter): String?
 
     fun hasType(element: KtExpression): Boolean
-
-    fun isSamInterface(psiClass: PsiClass): Boolean
 
     fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean
 

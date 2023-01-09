@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.hasType
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isInProjectSource
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isSamInterface
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -788,7 +787,7 @@ class ExpressionsOfTypeProcessor(
             if (psiClass != null) {
                 testLog { "Resolved java class to descriptor: ${psiClass.qualifiedName}" }
 
-                if (psiClass.isSamInterface) {
+                if (LambdaUtil.isFunctionalClass(psiClass)) {
                     addSamInterfaceToProcess(psiClass)
                     return true
                 }

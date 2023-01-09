@@ -92,10 +92,6 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         }
     }
 
-    override fun isSamInterface(psiClass: PsiClass): Boolean {
-        return false
-    }
-
     override fun isCallableOverride(subDeclaration: KtDeclaration, superDeclaration: PsiNamedElement): Boolean {
         return analyze(subDeclaration) {
             val subSymbol = subDeclaration.getSymbol() as? KtCallableSymbol ?: return false
