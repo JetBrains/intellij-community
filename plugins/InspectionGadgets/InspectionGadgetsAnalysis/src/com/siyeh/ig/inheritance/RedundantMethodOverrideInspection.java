@@ -1,17 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -20,9 +22,11 @@ import com.siyeh.ig.migration.TryWithIdenticalCatchesInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TrackingEquivalenceChecker;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,6 +36,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 public class RedundantMethodOverrideInspection extends BaseInspection {
 
   public boolean checkLibraryMethods = false;
+  public boolean ignoreDelegates = true;
 
   @Override
   @NotNull
@@ -45,13 +50,88 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox("checkLibraryMethods", InspectionGadgetsBundle.message("redundant.method.override.option.check.library.methods")));
+      checkbox("checkLibraryMethods", InspectionGadgetsBundle.message("redundant.method.override.option.check.library.methods")),
+      checkbox("ignoreDelegates", InspectionGadgetsBundle.message("redundant.method.override.option.ignore.delegates"))
+    );
   }
 
   @Override
-  @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RedundantMethodOverrideFix();
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+    return new InspectionGadgetsFix[] { new RedundantMethodOverrideFix(), new ReplaceWithSuperDelegateFix() };
+  }
+
+  private static class ReplaceWithSuperDelegateFix extends InspectionGadgetsFix {
+
+    private static @Nullable PsiClassType findRequiredSuperQualifier(@Nullable PsiClass contextClass, PsiMethod methodToCall) {
+      if (contextClass == null) return null;
+      PsiClass superClass = methodToCall.getContainingClass();
+      if (superClass == null || !superClass.isInterface()) return null;
+      if (contextClass instanceof PsiAnonymousClass anonymousClass) {
+        PsiClass baseClass = anonymousClass.getBaseClassType().resolve();
+        return baseClass != null && baseClass.isInterface() ? anonymousClass.getBaseClassType() : null;
+      }
+      PsiClassType superType = PsiTypesUtil.getClassType(superClass);
+      if (!contextClass.isInterface() &&
+          ContainerUtil.exists(contextClass.getExtendsListTypes(), type -> TypeConversionUtil.isAssignable(superType, type))) {
+        return null;
+      }
+      PsiClassType[] types = contextClass.isInterface() ? contextClass.getExtendsListTypes() : contextClass.getImplementsListTypes();
+      return ContainerUtil.findLast(Arrays.asList(types), type -> TypeConversionUtil.isAssignable(superType, type));
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return InspectionGadgetsBundle.message("redundant.method.override.delegate.quickfix");
+    }
+
+    @Override
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement methodNameIdentifier = descriptor.getPsiElement();
+      if (!(methodNameIdentifier.getParent() instanceof PsiMethod method)) return;
+      PsiMethod superMethod = findSuperMethod(method);
+      if (superMethod == null) return;
+      PsiClassType requiredQualifier = findRequiredSuperQualifier(method.getContainingClass(), superMethod);
+      String qualifier = requiredQualifier != null ? requiredQualifier.rawType().getCanonicalText() + ".super." : "super.";
+      String parameters = StringUtil.join(superMethod.getParameterList().getParameters(), PsiParameter::getName, ",");
+      String call = qualifier + method.getName() + "(" + parameters + ");";
+      if (!PsiType.VOID.equals(method.getReturnType())) {
+        call = "return " + call;
+      }
+      PsiSubstitutor substitutor = getSuperSubstitutor(method, superMethod);
+      if (substitutor == null) return;
+      PsiParameterList parameterList = (PsiParameterList) superMethod.getParameterList().copy();
+      for (PsiParameter parameter: parameterList.getParameters()) {
+        PsiTypeElement newType = PsiElementFactory.getInstance(project).createTypeElement(substitutor.substitute(parameter.getType()));
+        PsiTypeElement oldType = parameter.getTypeElement();
+        assert oldType != null;
+        oldType.replace(newType);
+      }
+      for (PsiParameter parameter: method.getParameterList().getParameters()) {
+        PsiTypeElement newType = PsiElementFactory.getInstance(project).createTypeElement(substitutor.substitute(parameter.getType()));
+        PsiTypeElement oldType = parameter.getTypeElement();
+        assert oldType != null;
+        oldType.replace(newType);
+      }
+      method.getParameterList().replace(parameterList);
+      PsiCodeBlock methodBody = method.getBody();
+      if (methodBody != null) {
+        for (PsiStatement element : methodBody.getStatements()) {
+          element.delete();
+        }
+        PsiStatement statement = PsiElementFactory.getInstance(project).createStatementFromText(call, methodBody);
+        methodBody.add(statement);
+      }
+    }
+
+    private static @Nullable PsiSubstitutor getSuperSubstitutor(PsiMethod method, PsiMethod superMethod) {
+      PsiClass contextClass = method.getContainingClass();
+      PsiClass superClass = superMethod.getContainingClass();
+      if (contextClass == null || superClass == null) return null;
+      PsiSubstitutor classSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, contextClass, PsiSubstitutor.EMPTY);
+      MethodSignature contextSignature = method.getSignature(PsiSubstitutor.EMPTY);
+      MethodSignature superSignature = superMethod.getSignature(classSubstitutor);
+      return MethodSignatureUtil.getSuperMethodSignatureSubstitutor(contextSignature, superSignature);
+    }
   }
 
   private static class RedundantMethodOverrideFix extends InspectionGadgetsFix {
@@ -76,6 +156,20 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
     return new RedundantMethodOverrideVisitor();
   }
 
+  private static @Nullable PsiMethod findSuperMethod(@NotNull PsiMethod method) {
+    final PsiMethod[] superMethods = method.findSuperMethods();
+    if (superMethods.length == 1) {
+      return superMethods[0];
+    }
+    else {
+      return StreamEx.of(superMethods).findFirst(candidate -> isNotInterface(candidate.getContainingClass())).orElse(null);
+    }
+  }
+
+  private static boolean isNotInterface(@Nullable PsiClass psiClass) {
+    return psiClass != null && !psiClass.isInterface();
+  }
+
   private class RedundantMethodOverrideVisitor extends BaseInspectionVisitor {
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -87,23 +181,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       if (body == null || method.getNameIdentifier() == null) {
         return;
       }
-      final PsiMethod[] superMethods = method.findSuperMethods();
-      if (superMethods.length == 0) {
-        return;
-      }
-      PsiMethod superMethod = null;
-      if (superMethods.length > 1) {
-        for (PsiMethod candidate : superMethods) {
-          final PsiClass aClass = candidate.getContainingClass();
-          if (aClass != null && !aClass.isInterface()) {
-            superMethod = candidate;
-            break;
-          }
-        }
-      }
-      else {
-        superMethod = superMethods[0];
-      }
+      PsiMethod superMethod = findSuperMethod(method);
       if (superMethod == null ||
           !AbstractMethodOverridesAbstractMethodInspection.methodsHaveSameAnnotationsAndModifiers(method, superMethod) ||
           !AbstractMethodOverridesAbstractMethodInspection.methodsHaveSameReturnTypes(method, superMethod) ||
@@ -113,6 +191,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
         return;
       }
       if (isSuperCallWithSameArguments(body, method, superMethod)) {
+        if (ignoreDelegates) return;
         registerMethodError(method, Boolean.TRUE);
         return;
       }
@@ -122,6 +201,9 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
           return;
         }
         superMethod = (PsiMethod)navigationElement;
+      }
+      if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) && !HighlightingFeature.EXTENSION_METHODS.isAvailable(method)) {
+        return;
       }
       final PsiCodeBlock superBody = superMethod.getBody();
       final PsiMethod finalSuperMethod = superMethod;
@@ -166,7 +248,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       }
       checker.markDeclarationsAsEquivalent(method, superMethod);
       if (checker.codeBlocksAreEquivalent(body, superBody) && haveTheSameComments(method, superMethod)) {
-        registerMethodError(method, Boolean.FALSE);
+          registerMethodError(method, Boolean.FALSE);
       }
     }
 
