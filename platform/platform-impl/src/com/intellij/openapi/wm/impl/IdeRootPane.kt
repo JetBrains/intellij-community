@@ -91,7 +91,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     val selectedEditorFilePath: SelectedEditorFilePath?,
   ) : Helper {
     override val toolbarHolder: ToolbarHolder? = (customFrameTitlePane as? ToolbarHolder)
-      ?.takeIf { ExperimentalUI.isNewUI() && isToolbarInHeader }
+      ?.takeIf { ExperimentalUI.isNewUI() && isToolbarInHeader() }
   }
 
   private val helper: Helper
@@ -166,7 +166,8 @@ open class IdeRootPane internal constructor(frame: JFrame,
     if (helper.toolbarHolder == null) {
       toolbar = createToolbar(initActions = true)
       northPanel.add(toolbar, 0)
-      val visible = !isToolbarInHeader && !UISettings.shadowInstance.presentationMode
+      val uiSettings = UISettings.shadowInstance
+      val visible = !isToolbarInHeader(uiSettings) && !uiSettings.presentationMode
       toolbar!!.isVisible = visible
     }
 
@@ -265,7 +266,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
       if (toolbar != null) {
         val uiSettings = UISettings.shadowInstance
         val isNewToolbar = ExperimentalUI.isNewUI()
-        toolbar!!.isVisible = !fullScreen && ((isNewToolbar && !isToolbarInHeader) || (!isNewToolbar && uiSettings.showMainToolbar))
+        toolbar!!.isVisible = !fullScreen && ((isNewToolbar && !isToolbarInHeader(uiSettings)) || (!isNewToolbar && uiSettings.showMainToolbar))
       }
     }
   }
@@ -340,7 +341,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
     val uiSettings = UISettings.shadowInstance
     val isNewToolbar = ExperimentalUI.isNewUI()
-    val visible = ((isNewToolbar && !isToolbarInHeader) || (!isNewToolbar && uiSettings.showMainToolbar)) && !uiSettings.presentationMode
+    val visible = ((isNewToolbar && !isToolbarInHeader(uiSettings)) || (!isNewToolbar && uiSettings.showMainToolbar)) && !uiSettings.presentationMode
     toolbar!!.isVisible = visible
 
     contentPane!!.revalidate()
@@ -401,7 +402,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
     val uiSettings = UISettings.shadowInstance
     val isNewToolbar = ExperimentalUI.isNewUI()
-    val visible = ((isNewToolbar && !isToolbarInHeader || !isNewToolbar && uiSettings.showMainToolbar) && !uiSettings.presentationMode)
+    val visible = (isNewToolbar && !isToolbarInHeader(uiSettings) || !isNewToolbar && uiSettings.showMainToolbar) && !uiSettings.presentationMode
     toolbar!!.isVisible = visible
   }
 
@@ -567,12 +568,10 @@ open class IdeRootPane internal constructor(frame: JFrame,
   }
 }
 
-private val isToolbarInHeader by lazy { isToolbarInHeader(UISettings.shadowInstance) }
-
 private val isDecoratedMenu: Boolean
   get() {
     val osSupported = SystemInfoRt.isWindows || (SystemInfoRt.isMac && ExperimentalUI.isNewUI())
-    return osSupported && (isToolbarInHeader || IdeFrameDecorator.isCustomDecorationActive())
+    return osSupported && (isToolbarInHeader() || IdeFrameDecorator.isCustomDecorationActive())
   }
 
 private fun createToolbar(initActions: Boolean = true): JComponent {
