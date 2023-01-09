@@ -32,14 +32,14 @@ class UsagesOfObsoleteApiInspectionTest : LightJavaCodeInsightFixtureTestCase() 
     myFixture.configureByText("b.java",
                                         "class B {" +
                                         "  void f(A a) {" +
-                                        "    a.<text_attr descr=\"Obsolete api is used\">f</text_attr>();" +
+                                        "    a.<text_attr descr=\"Obsolete API is used\">f</text_attr>();" +
                                         "  }" +
                                         "}" +
                                         "class C extends A {" +
-                                        "   void <text_attr descr=\"Obsolete api is used\">f</text_attr>() {}" +
+                                        "   void <text_attr descr=\"Obsolete API is used\">f</text_attr>() {}" +
                                         "}" +
                                         "@org.jetbrains.annotations.ApiStatus.Obsolete class D extends A {" +
-                                        "   void <text_attr descr=\"Obsolete api is used\">f</text_attr>() {}" +
+                                        "   void <text_attr descr=\"Obsolete API is used\">f</text_attr>() {}" +
                                         "}")
     myFixture.checkHighlighting(true, true, true)
   }
