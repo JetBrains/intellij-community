@@ -126,6 +126,55 @@ class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
+  fun `test typing to single character width cell`() {
+    doTest(
+      """
+      |     |
+      |-----|
+      | 123<caret> |
+      """.trimIndent(),
+      """
+      | |
+      |-|
+      |<caret> |
+      """.trimIndent(),
+      count = 4
+    )
+  }
+
+  @Test
+  fun `test typing to empty cell`() {
+    doTest(
+      """
+      | |
+      |-|
+      | <caret>|
+      """.trimIndent(),
+      """
+      | |
+      |-|
+      |<caret>|
+      """.trimIndent()
+    )
+  }
+
+  @Test
+  fun `test typing to empty cell with non empty header`() {
+    doTest(
+      """
+      |a|
+      |-|
+      | <caret>|
+      """.trimIndent(),
+      """
+      |a|
+      |-|
+      |<caret>|
+      """.trimIndent()
+    )
+  }
+
   private fun doTest(content: String, expected: String, count: Int = 1) {
     configureFromFileText("some.md", content)
     repeat(count) {

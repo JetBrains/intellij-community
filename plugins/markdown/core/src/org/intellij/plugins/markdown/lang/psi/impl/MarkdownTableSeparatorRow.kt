@@ -123,7 +123,8 @@ class MarkdownTableSeparatorRow(text: CharSequence): MarkdownLeafPsiElement(Mark
   }
 
   fun getCellAlignment(index: Int): CellAlignment {
-    val range = getCellRange(index, local = true)!!
+    val range = getCellRange(index, local = true)
+    checkNotNull(range) { "Failed to obtain cell range for cell with $index index" }
     return getCellAlignment(range)
   }
 }

@@ -213,6 +213,40 @@ class MarkdownTableColumnExpandTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, string = "ssome ")
   }
 
+  @Test
+  fun `test typing in empty cell`() {
+    // language=Markdown
+    val before = """
+    ||
+    |-|
+    |<caret>|
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    |      |
+    |------|
+    | some<caret> |
+    """.trimIndent()
+    doTest(before, after, string = "some")
+  }
+
+  @Test
+  fun `test typing space in cell with two spaces`() {
+    // language=Markdown
+    val before = """
+    |  |
+    |--|
+    | <caret> |
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    |   |
+    |---|
+    |  <caret> |
+    """.trimIndent()
+    doTest(before, after, string = " ")
+  }
+
   private fun doTest(content: String, expected: String, count: Int = 1, string: String = " ") {
     configureFromFileText("some.md", content)
     type(string.repeat(count))

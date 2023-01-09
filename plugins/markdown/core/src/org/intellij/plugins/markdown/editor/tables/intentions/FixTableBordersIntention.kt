@@ -77,7 +77,7 @@ internal class FixTableBordersIntention: PsiElementBaseIntentionAction() {
     }
     val columnsDiff = columnsCount - row.columnsCount
     repeat(columnsDiff) {
-      val (cell, separator) = MarkdownPsiElementFactory.createTableCell(project, " ".repeat(TableProps.MIN_CELL_WIDTH))
+      val (cell, separator) = MarkdownPsiElementFactory.createTableCell(project, " ".repeat(5))
       row.addRange(cell, separator)
     }
   }
