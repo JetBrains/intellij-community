@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -30,7 +30,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
@@ -39,7 +38,7 @@ import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.toolWindow.computeToolWindowBeans
-import com.intellij.ui.*
+import com.intellij.ui.ScreenUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
@@ -48,7 +47,7 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
-import javax.swing.*
+import javax.swing.JFrame
 import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 
@@ -284,7 +283,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, private val
 
       if (frameHelper != null) {
         // projectLoaded was called, but then due to some error, say cancellation, still projectNotLoaded is called
-        Disposer.dispose(frameHelper)
+        (WindowManager.getInstance() as WindowManagerImpl).releaseFrame(frameHelper)
       }
     }
   }
