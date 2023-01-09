@@ -127,6 +127,7 @@ class UnindexedFilesIndexer extends DumbModeTask {
       return;
     }
     ProjectIndexingHistoryImpl projectIndexingHistory = new ProjectIndexingHistoryImpl(myProject, "Async indexing", ScanningType.REFRESH);
+    IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
     ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
     if (suspender != null) {
       ApplicationManager.getApplication().getMessageBus().connect(this)
