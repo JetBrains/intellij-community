@@ -46,6 +46,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
     component as SimpleColoredComponent
     component.clear()
+    component.isOpaque = false
 
     val window = SwingUtilities.windowForComponent(component)
     val project = ProjectFrameHelper.getFrameHelper(window)?.project
