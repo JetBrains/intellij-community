@@ -55,6 +55,7 @@ fun main(args: Array<String>) {
 
         descriptorStorage.readAll {
           val descCount = stats.descriptorCount.incrementAndGet()
+          if (!it.result.hasValue) stats.exceptionResultCount.incrementAndGet()
           stats.tagsCount.compute(it.tag, ::incStat)
           when (it) {
             is VfsOperation.AttributesOperation.WriteAttribute -> {
@@ -67,10 +68,18 @@ fun main(args: Array<String>) {
               else {
                 stats.payloadSizeHist.add(data.size)
               }
-              if (!it.result.hasValue) stats.exceptionResultCount.incrementAndGet()
+            }
+            is VfsOperation.ContentsOperation.WriteBytes -> {
+              val data = payloadStorage.readAt(it.dataPayloadRef)
+              if (data == null) {
+                stats.nullPayloads.incrementAndGet()
+              } else {
+                stats.payloadSizeHist.add(data.size)
+              }
             }
             else -> {
-              // TODO
+              // TODO other content-writing ops, at the moment they don't seem to happen at fresh-start
+              // no-op
             }
           }
           true
@@ -80,7 +89,7 @@ fun main(args: Array<String>) {
   }
   print("\r")
   println(stats)
-  println("Calculated in ${stats.elapsedTime.toDouble(DurationUnit.SECONDS).format("%.2f")} seconds")
-  println("avg read speed: ${(stats.avgReadSpeedBPS / 1024.0 / 1024.0).format("%.3f")} MiB/s")
-  println("avg descriptor read speed: ${(stats.avgDescPS / 1000.0).format("%.3f")} KDesc/s")
+  println("Calculated in ${stats.elapsedTime.toDouble(DurationUnit.SECONDS).format("%.1f")} seconds")
+  println("avg read speed: ${(stats.avgReadSpeedBPS / 1024.0 / 1024.0).format("%.1f")} MiB/s")
+  println("avg descriptor read speed: ${(stats.avgDescPS / 1000.0).format("%.1f")} KDesc/s")
 }
