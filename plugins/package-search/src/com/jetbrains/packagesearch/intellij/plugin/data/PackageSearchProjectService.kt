@@ -81,11 +81,12 @@ internal class PackageSearchProjectService(private val project: Project) : Dispo
     ) { modules, fileChanges ->
         modules.filter { it.buildFile in fileChanges }
     }
+        .filter { it.isNotEmpty() }
         .debounceBatch(1.seconds)
         .map { it.flatten().distinct() }
         .catchAndLog()
 
-    private val repositoryChangesFlow = combine(
+    private val repositoryChangesFlow    = combine(
         moduleChangesFlow,
         allKnownRepositoriesFlow
     ) { changes, knownRepositories ->
