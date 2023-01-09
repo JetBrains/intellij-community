@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindPropert
 import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.dataClassComponentMethodName
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.filterDataClassComponentsIfDisabled
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isOverridable
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
@@ -276,7 +277,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                 if (element is KtElement && !isOnlyKotlinSearch(options.searchScope)) {
                     // TODO: very bad code!! ReferencesSearch does not work correctly for constructors and annotation parameters
                     val psiMethodScopeSearch = when {
-                        element is KtParameter && KotlinSearchUsagesSupport.getInstance(project).dataClassComponentMethodName(element) != null ->
+                        element is KtParameter && element.dataClassComponentMethodName != null ->
                             options.searchScope.excludeKotlinSources(project)
                         else -> options.searchScope
                     }

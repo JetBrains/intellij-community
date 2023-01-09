@@ -29,10 +29,8 @@ import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.match
@@ -74,16 +72,6 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
 
     override fun isExpectDeclaration(declaration: KtDeclaration): Boolean {
         return false
-    }
-
-    override fun dataClassComponentMethodName(element: KtParameter): String? {
-        if (!element.hasValOrVar() || element.containingClassOrObject?.hasModifier(KtTokens.DATA_KEYWORD) != true) return null
-        analyze(element) {
-            val paramSymbol = element.getSymbol() as? KtValueParameterSymbol ?: return null
-            val constructorSymbol = paramSymbol.getContainingSymbol() as? KtConstructorSymbol ?: return null
-            val index = constructorSymbol.valueParameters.indexOf(paramSymbol)
-            return DataClassResolver.createComponentName(index + 1).asString()
-        }
     }
 
     override fun hasType(element: KtExpression): Boolean {

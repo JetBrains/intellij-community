@@ -10,8 +10,11 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.ImportPath
 
@@ -25,7 +28,10 @@ interface KotlinSearchUsagesSupport {
         fun getInstance(project: Project): KotlinSearchUsagesSupport = project.service()
 
         val KtParameter.dataClassComponentMethodName: String?
-            get() = getInstance(project).dataClassComponentMethodName(this)
+            get() {
+                if (!hasValOrVar() || containingClassOrObject?.hasModifier(KtTokens.DATA_KEYWORD) != true) return null
+                return DataClassResolver.createComponentName(parameterIndex() + 1).asString()
+            }
 
         val KtExpression.hasType: Boolean
             get() = getInstance(project).hasType(this)
@@ -116,8 +122,6 @@ interface KotlinSearchUsagesSupport {
     fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean
 
     fun actualsForExpected(declaration: KtDeclaration, module: Module? = null): Set<KtDeclaration>
-
-    fun dataClassComponentMethodName(element: KtParameter): String?
 
     fun hasType(element: KtExpression): Boolean
 
