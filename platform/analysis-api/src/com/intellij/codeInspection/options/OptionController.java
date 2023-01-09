@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.options;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import kotlin.reflect.KMutableProperty0;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
@@ -49,6 +50,18 @@ public interface OptionController {
     return onValue(bindId, getter, (value) -> {
       throw new UnsupportedOperationException("Setting value is not supported");
     });
+  }
+
+  /**
+   * @param bindId bindId of the option value to process especially
+   * @param property a Kotlin property to bind to
+   * @return a new controller that binds the specified bindId to a specified Kotlin property,
+   * and delegates to this controller for any other bindId.
+   */
+  default @NotNull OptionController onValue(@NotNull String bindId, @NotNull KMutableProperty0<?> property) {
+    @SuppressWarnings("unchecked") 
+    KMutableProperty0<Object> unchecked = (KMutableProperty0<Object>)property;
+    return onValue(bindId, property::get, unchecked::set);
   }
 
   /**
