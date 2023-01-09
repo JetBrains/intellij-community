@@ -25,7 +25,6 @@ import git4idea.ui.branch.GitBranchPopup
 import git4idea.ui.branch.GitBranchPopupActions
 import git4idea.ui.branch.popup.GitBranchesTreePopup
 import icons.DvcsImplIcons
-import java.util.function.Function
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -41,16 +40,14 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     val project = event.project ?: return null
     val repository = GitBranchUtil.guessWidgetRepository(project, event.dataContext)
 
-    val popup: JBPopup
-    if (repository != null) {
-      popup =
-        if (GitBranchesTreePopup.isEnabled()) GitBranchesTreePopup.create(project)
-        else GitBranchPopup.getInstance(project, repository, event.dataContext).asListPopup()
+    val popup: JBPopup = if (repository != null) {
+      if (GitBranchesTreePopup.isEnabled()) GitBranchesTreePopup.create(project)
+      else GitBranchPopup.getInstance(project, repository, event.dataContext).asListPopup()
     }
     else {
       val group = ActionManager.getInstance().getAction("Vcs.ToolbarWidget.CreateRepository") as ActionGroup
       val place = ActionPlaces.getPopupPlace(ActionPlaces.VCS_TOOLBAR_WIDGET)
-      popup = JBPopupFactory.getInstance()
+      JBPopupFactory.getInstance()
         .createActionGroupPopup(null, group, event.dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, place)
     }
     val widget = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarComboWidget
@@ -66,8 +63,8 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     widget.leftIcons = listOfNotNull(presentation.icon)
     widget.rightIcons = presentation.getClientProperty(changesKey)?.let { changes ->
       val res = mutableListOf<Icon>()
-      if (changes.incoming) res.add(INCOMING_CHANGES_ICON)
-      if (changes.outgoing) res.add(OUTGOING_CHANGES_ICON)
+      if (changes.incoming) res.add(DvcsImplIcons.Incoming)
+      if (changes.outgoing) res.add(DvcsImplIcons.Outgoing)
       res
     } ?: emptyList()
   }
@@ -85,7 +82,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     val changes = repository?.currentBranchName?.let { branch ->
       val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
       MyRepoChanges(incomingOutgoingManager.hasIncomingFor(repository, branch), incomingOutgoingManager.hasOutgoingFor(repository, branch))
-    } ?: MyRepoChanges(false, false)
+    } ?: MyRepoChanges(incoming = false, outgoing = false)
     e.presentation.putClientProperty(changesKey, changes)
   }
 
@@ -94,9 +91,9 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     project ?: return  GitBundle.message("git.toolbar.widget.no.repo")
     repository ?: return  GitBundle.message("git.toolbar.widget.no.repo")
 
-    return StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(repository, Function { branchName ->
+    return StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(repository) { branchName ->
       GitBranchPopupActions.truncateBranchName(branchName, project)
-    }))
+    })
   }
 
   private fun GitRepository?.calcIcon(): Icon {
@@ -123,8 +120,5 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     return message
   }
 }
-
-private val INCOMING_CHANGES_ICON = DvcsImplIcons.Incoming
-private val OUTGOING_CHANGES_ICON = DvcsImplIcons.Outgoing
 
 private data class MyRepoChanges(val incoming: Boolean, val outgoing: Boolean)
