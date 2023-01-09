@@ -150,7 +150,7 @@ fun adjustWithAllExtensions(element: PsiElement?): PsiElement? {
     result = result?.let { ext.adjustElement(it) }
     ensurePsiFromExtensionIsValid("Invalid psi returned from ${ext::class.java} while adjusting", result, ext)
   }
-  return null
+  return result
 }
 
 private fun additionalRoots(project: Project): Iterable<VirtualFile> {
