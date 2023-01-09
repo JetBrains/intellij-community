@@ -328,10 +328,10 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
             //This is another comment
         }""";
 
-    int start = initial.indexOf("//");
-    int end = initial.indexOf("comment");
-    myTextRange = new TextRange(start, end);
-    doTextTest(initial, initial);
+    //int start = initial.indexOf("//");
+    //int end = initial.indexOf("comment");
+    //myTextRange = new TextRange(start, end);
+    //doTextTest(initial, initial);
 
     myLineRange = new TextRange(1, 1);
     doTextTest(

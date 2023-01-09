@@ -2,7 +2,6 @@
 
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.*;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
@@ -13,7 +12,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ex.util.EditorFacade;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
@@ -46,9 +44,7 @@ public class CodeFormatterFacade {
 
   private final CodeStyleSettings mySettings;
   private final FormatterTagHandler myTagHandler;
-  private final int myRightMargin;
   private final boolean myCanChangeWhitespaceOnly;
-  private final EditorFacade myEditorFacade;
 
   public CodeFormatterFacade(CodeStyleSettings settings, @Nullable Language language) {
     this(settings, language, false);
@@ -59,9 +55,7 @@ public class CodeFormatterFacade {
                              boolean canChangeWhitespaceOnly) {
     mySettings = settings;
     myTagHandler = new FormatterTagHandler(settings);
-    myRightMargin = mySettings.getRightMargin(language);
     myCanChangeWhitespaceOnly = canChangeWhitespaceOnly;
-    myEditorFacade = EditorFacade.getInstance();
   }
 
   public ASTNode processElement(ASTNode element) {
@@ -119,8 +113,6 @@ public class CodeFormatterFacade {
           FormatterEx.getInstanceEx().format(
             model, mySettings, getIndentOptions(mySettings, file.getProject(), file, document, range), ranges
           );
-
-          wrapLongLinesIfNecessary(file, document, startOffset, endOffset, myRightMargin);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -196,10 +188,6 @@ public class CodeFormatterFacade {
             getIndentOptions(mySettings, project, file, document, textRanges.size() == 1 ? textRanges.get(0).getTextRange() : null);
           setDisabledRanges(file, ranges);
           formatter.format(model, mySettings, indentOptions, ranges);
-          for (FormatTextRange range : textRanges) {
-            TextRange textRange = range.getTextRange();
-            wrapLongLinesIfNecessary(file, document, textRange.getStartOffset(), textRange.getEndOffset(), myRightMargin);
-          }
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -420,49 +408,6 @@ public class CodeFormatterFacade {
       }
     }
     return result == null ? Collections.emptySet() : result;
-  }
-
-
-  /**
-   * Inspects all lines of the given document and wraps all of them that exceed {@link CodeStyleSettings#getRightMargin(Language)}
-   * right margin}.
-   * <p/>
-   * I.e. the algorithm is to do the following for every line:
-   * <p/>
-   * <pre>
-   * <ol>
-   *   <li>
-   *      Check if the line exceeds {@link CodeStyleSettings#getRightMargin(Language)}  right margin}. Go to the next line in the case of
-   *      negative answer;
-   *   </li>
-   *   <li>Determine line wrap position; </li>
-   *   <li>
-   *      Perform 'smart wrap', i.e. not only wrap the line but insert additional characters over than line feed if necessary.
-   *      For example consider that we wrap a single-line comment - we need to insert comment symbols on a start of the wrapped
-   *      part as well. Generally, we get the same behavior as during pressing 'Enter' at wrap position during editing document;
-   *   </li>
-   * </ol>
-   </pre>
-   *
-   * @param file        file that holds parsed document tree
-   * @param document    target document
-   * @param startOffset start offset of the first line to check for wrapping (inclusive)
-   * @param endOffset   end offset of the first line to check for wrapping (exclusive)
-   */
-  private void wrapLongLinesIfNecessary(@NotNull final PsiFile file, @Nullable final Document document, final int startOffset,
-                                        final int endOffset, final int rightMargin)
-  {
-    if (!mySettings.getCommonSettings(file.getLanguage()).WRAP_LONG_LINES ||
-        PostprocessReformattingAspect.getInstance(file.getProject()).isViewProviderLocked(file.getViewProvider()) ||
-        document == null ||
-        myCanChangeWhitespaceOnly) {
-      return;
-    }
-
-    FormatterTagHandler formatterTagHandler = new FormatterTagHandler(CodeStyle.getSettings(file));
-    List<TextRange> enabledRanges = formatterTagHandler.getEnabledRanges(file.getNode(), new TextRange(startOffset, endOffset));
-
-    myEditorFacade.wrapLongLinesIfNecessary(file, document, startOffset, endOffset, enabledRanges, rightMargin);
   }
 
   private static boolean shouldDelegateToTopLevel(@NotNull PsiFile file) {
