@@ -772,7 +772,11 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       paneSizeRunnable.run();
 
       content.doLayout();
-      layoutData.doLayout.run();
+
+      Runnable doLayout = layoutData.doLayout;
+      if (doLayout != null) {
+        doLayout.run();
+      }
 
       Container parent = content.getParent();
       if (parent == null) {
