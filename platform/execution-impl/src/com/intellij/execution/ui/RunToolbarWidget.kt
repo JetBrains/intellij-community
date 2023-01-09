@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
@@ -920,9 +919,7 @@ private fun isPersistedTask(env: ExecutionEnvironment): Boolean {
 
 private fun getPersistedConfiguration(configuration: RunnerAndConfigurationSettings?): RunnerAndConfigurationSettings? {
   var conf: RunProfile = (configuration ?: return null).configuration
-  if (conf is UserDataHolder) {
-    conf = conf.getUserData(ExecutionManagerImpl.DELEGATED_RUN_PROFILE_KEY) ?: conf
-  }
+  conf = ExecutionManagerImpl.getDelegatedRunProfile(conf) ?: conf
   return RunManager.getInstance(configuration.configuration.project).allSettings.find { it.configuration == conf }
 }
 

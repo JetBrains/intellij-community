@@ -6,6 +6,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.dashboard.tree.RunConfigurationNode;
 import com.intellij.execution.dashboard.tree.RunDashboardStatusFilter;
 import com.intellij.execution.impl.ExecutionManagerImpl;
@@ -30,7 +31,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.content.*;
 import com.intellij.util.SmartList;
@@ -268,10 +268,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   private static @Nullable RunConfiguration getBaseConfiguration(@NotNull RunConfiguration runConfiguration) {
-    if (runConfiguration instanceof UserDataHolder dataHolder) {
-      return dataHolder.getUserData(RunDashboardManager.BASE_CONFIGURATION_KEY);
-    }
-    return null;
+    RunProfile runProfile = ExecutionManagerImpl.getDelegatedRunProfile(runConfiguration);
+    return runProfile instanceof RunConfiguration ? (RunConfiguration)runProfile : null;
   }
 
   @Override

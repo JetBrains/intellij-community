@@ -15,6 +15,7 @@ import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.*;
@@ -27,7 +28,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -452,8 +452,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
     RunProfile runProfile = environment != null ? environment.getRunProfile() : null;
     return runProfile instanceof RunConfiguration configuration &&
            RunDashboardManager.getInstance(myProject).isShowInDashboard(configuration) &&
-           configuration instanceof UserDataHolder dataHolder &&
-           dataHolder.getUserData(RunDashboardManager.BASE_CONFIGURATION_KEY) != null;
+           ExecutionManagerImpl.getDelegatedRunProfile(configuration) instanceof RunConfiguration;
   }
 
   private static @NotNull ExecutionConsole wrapWithToolbar(@NotNull ConsoleView executionConsole) {
