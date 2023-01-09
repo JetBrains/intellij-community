@@ -1963,6 +1963,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
+  @Override
+  public void visitPatternVariable(@NotNull PsiPatternVariable variable) {
+    super.visitPatternVariable(variable);
+    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_20_PREVIEW) && variable.getPattern() instanceof PsiDeconstructionPattern) {
+      String message = JavaErrorBundle.message("identifier.is.not.allowed.here");
+      add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(variable).descriptionAndTooltip(message));
+    }
+  }
+
   @Nullable
   private static HighlightInfo.Builder checkGuardingExpressionHasBooleanType(@Nullable PsiExpression guardingExpression) {
     if (guardingExpression != null && !TypeConversionUtil.isBooleanType(guardingExpression.getType())) {

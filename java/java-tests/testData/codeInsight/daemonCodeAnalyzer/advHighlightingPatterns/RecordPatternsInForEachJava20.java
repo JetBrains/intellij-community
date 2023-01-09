@@ -70,4 +70,17 @@ class Main {
       System.out.println(s);
     }
   }
+
+  void testNamedRecordPattern(Object obj, List<Rect> rectangles) {
+    if (obj instanceof Point(int x, int y) <error descr="Identifier is not allowed here">point</error>) {
+    }
+    switch (obj) {
+      case Point(int x, int y) <error descr="Identifier is not allowed here">point</error> -> System.out.println("point");
+      case Rect(Point point1, Point(int x2, int y2) <error descr="Identifier is not allowed here">point2</error>) <error descr="Identifier is not allowed here">rect</error> -> System.out.println("rectangle");
+    }
+
+    for (Rect(Point(int x1, int y1) <error descr="Identifier is not allowed here">point1</error>, Point(int x2, int y2) <error descr="Identifier is not allowed here">point2</error>) : rectangles) {
+      System.out.println("blah blah blah");
+    }
+  }
 }
