@@ -5,11 +5,14 @@ import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.tree.MavenProjectTreeLegacyImporter
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporter
 import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.statistics.MavenImportCollector
 import org.jetbrains.idea.maven.utils.MavenLog
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 @ApiStatus.Internal
@@ -35,7 +38,13 @@ interface MavenProjectImporter {
           val startTime = System.currentTimeMillis()
           try {
             importingInProgress.incrementAndGet()
-            return importer.importProject()
+
+            val postImportTasks = importer.importProject()
+
+            val statsMarker = PostImportingTaskMarker(importingActivity)
+            return ContainerUtil.concat(listOf(statsMarker.createStartedTask()),
+                                        postImportTasks,
+                                        listOf(statsMarker.createFinishedTask()))
           }
           finally {
             importingInProgress.decrementAndGet()
@@ -48,6 +57,27 @@ interface MavenProjectImporter {
 
         override fun createdModules(): List<Module> {
           return importer.createdModules()
+        }
+      }
+    }
+
+    class PostImportingTaskMarker(private val importingActivity: StructuredIdeActivity) {
+      private val activityId = MavenImportCollector.ACTIVITY_ID.with(importingActivity)
+      private var startedNano = 0L
+
+      fun createStartedTask(): MavenProjectsProcessorTask {
+        return MavenProjectsProcessorTask { _, _, _, _ -> startedNano = System.nanoTime() }
+      }
+
+      fun createFinishedTask(): MavenProjectsProcessorTask {
+        return MavenProjectsProcessorTask { project, _, _, _ ->
+          if (startedNano == 0L) {
+            MavenLog.LOG.error("'Finished' post import task called before 'started' task")
+          }
+          else {
+            val totalNano = System.nanoTime() - startedNano
+            MavenImportCollector.POST_IMPORT_TASKS_RUN.log(project, activityId.data, TimeUnit.NANOSECONDS.toMillis(totalNano))
+          }
         }
       }
     }
