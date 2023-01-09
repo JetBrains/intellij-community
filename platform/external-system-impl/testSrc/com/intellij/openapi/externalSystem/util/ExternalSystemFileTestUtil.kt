@@ -6,16 +6,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.file.VirtualFileUtil
+import com.intellij.openapi.file.readText
 import com.intellij.util.ThrowableRunnable
 import com.intellij.testFramework.runInEdtAndGet as runInEdtAndGetImpl
 import com.intellij.testFramework.runInEdtAndWait as runInEdtAndWaitImpl
 import com.intellij.util.ui.UIUtil
-
-val VirtualFile.textContent: String
-  get() = VirtualFileUtil.getTextContent(this)
-
-val VirtualFile.binaryContent: ByteArray
-  get() = VirtualFileUtil.getBinaryContent(this)
 
 fun VirtualFile.refreshAndWait() {
   runWriteActionAndWait {

@@ -10,11 +10,15 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
 import com.intellij.openapi.file.NioPathUtil
 import com.intellij.openapi.file.VirtualFileUtil
+import com.intellij.openapi.file.writeBytes
+import com.intellij.openapi.file.writeText
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.io.path.writeBytes
+import kotlin.io.path.writeText
 
 @ApiStatus.Experimental
 interface AssetsProcessor {
@@ -88,11 +92,11 @@ class AssetsProcessorImpl : AbstractAssetsProcessor() {
   private val LOG: Logger = logger<AssetsProcessor>()
 
   override fun setTextContent(file: Path, content: String) {
-    NioPathUtil.setTextContent(file, content)
+    file.writeText(content)
   }
 
   override fun setBinaryContent(file: Path, content: ByteArray) {
-    NioPathUtil.setBinaryContent(file, content)
+    file.writeBytes(content)
   }
 
   override fun findOrCreateFile(outputDirectory: Path, relativePath: String): Path {
@@ -132,17 +136,17 @@ class TestFileSystemLocation(
 class TestAssetsProcessorImpl : AbstractAssetsProcessor() {
   override fun setTextContent(file: Path, content: String) {
     if (file is TestFileSystemLocation) {
-      VirtualFileUtil.setTextContent(file.virtualFile, content)
+      file.virtualFile.writeText(content)
     } else {
-      NioPathUtil.setTextContent(file, content)
+      file.writeText(content)
     }
   }
 
   override fun setBinaryContent(file: Path, content: ByteArray) {
     if (file is TestFileSystemLocation) {
-      VirtualFileUtil.setBinaryContent(file.virtualFile, content)
+      file.virtualFile.writeBytes(content)
     } else {
-      NioPathUtil.setBinaryContent(file, content)
+      file.writeBytes(content)
     }
   }
 

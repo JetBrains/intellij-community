@@ -10,50 +10,12 @@ import com.intellij.openapi.file.CanonicalPathUtil.getRelativePath
 import com.intellij.openapi.file.CanonicalPathUtil.isAncestor
 import com.intellij.openapi.file.system.NioPathSystemUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
-import kotlin.io.path.exists
-import kotlin.io.path.writeText
 
 @ApiStatus.Experimental
 object NioPathUtil {
-
-  @JvmStatic
-  fun exists(path: Path): Boolean {
-    return path.exists()
-  }
-
-  @JvmStatic
-  fun isFile(path: Path): Boolean {
-    return path.isFile()
-  }
-
-  @JvmStatic
-  fun isDirectory(path: Path): Boolean {
-    return path.isDirectory()
-  }
-
-  @JvmStatic
-  fun getTextContent(path: Path): String {
-    return path.readText()
-  }
-
-  @JvmStatic
-  fun setTextContent(path: Path, text: String) {
-    path.writeText(text)
-  }
-
-  @JvmStatic
-  fun getBinaryContent(path: Path): ByteArray {
-    return path.inputStream().use { it.readBytes() }
-  }
-
-  @JvmStatic
-  fun setBinaryContent(path: Path, bytes: ByteArray) {
-    path.outputStream().use { it.write(bytes) }
-  }
 
   @JvmStatic
   fun findFileOrDirectory(path: Path, relativePath: String): Path? {

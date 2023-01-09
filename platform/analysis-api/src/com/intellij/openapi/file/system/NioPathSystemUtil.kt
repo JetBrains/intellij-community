@@ -2,19 +2,21 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "unused")
 package com.intellij.openapi.file.system
 
-import com.intellij.openapi.file.NioPathUtil
 import com.intellij.util.io.*
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 
 @ApiStatus.Experimental
 object NioPathSystemUtil {
 
   @JvmStatic
   fun findFileOrDirectory(path: Path): Path? {
-    if (!NioPathUtil.exists(path)) {
+    if (!path.exists()) {
       return null
     }
     return path
@@ -28,7 +30,7 @@ object NioPathSystemUtil {
   @JvmStatic
   fun findFile(path: Path): Path? {
     val filePath = findFileOrDirectory(path) ?: return null
-    require(NioPathUtil.isFile(filePath)) { "Expected file instead directory: $filePath" }
+    require(filePath.isRegularFile()) { "Expected file instead directory: $filePath" }
     return path
   }
 
@@ -40,7 +42,7 @@ object NioPathSystemUtil {
   @JvmStatic
   fun findDirectory(path: Path): Path? {
     val filePath = findFileOrDirectory(path) ?: return null
-    require(NioPathUtil.isDirectory(filePath)) { "Expected directory instead file: $filePath" }
+    require(filePath.isDirectory()) { "Expected directory instead file: $filePath" }
     return filePath
   }
 

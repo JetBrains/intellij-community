@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.openapi.externalSystem.util.runReadAction
-import com.intellij.openapi.externalSystem.util.textContent
+import com.intellij.openapi.file.readText
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.assertInstanceOf
 import org.gradle.util.GradleVersion
@@ -40,7 +40,7 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
       val file = getFile("build.gradle")
       runReadAction {
         val psiFile = fixture.psiManager.findFile(file)!!
-        val offset = file.textContent.indexOf("transitive") + 1
+        val offset = file.readText().indexOf("transitive") + 1
         val reference = psiFile.findReferenceAt(offset)!!
         val method = assertInstanceOf<PsiMethod>(reference.resolve())
         assertEquals("setTransitive", method.name)

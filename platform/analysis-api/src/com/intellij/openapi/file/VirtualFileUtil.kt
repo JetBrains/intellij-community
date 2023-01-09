@@ -18,43 +18,27 @@ import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+val VirtualFile.isFile: Boolean
+  get() = isValid && !isDirectory
+
+fun VirtualFile.readText(): String {
+  return VfsUtil.loadText(this)
+}
+
+fun VirtualFile.writeText(content: String) {
+  VfsUtil.saveText(this, content)
+}
+
+fun VirtualFile.readBytes(): ByteArray {
+  return inputStream.use { it.readBytes() }
+}
+
+fun VirtualFile.writeBytes(content: ByteArray) {
+  setBinaryContent(content)
+}
+
 @ApiStatus.Experimental
 object VirtualFileUtil {
-
-  @JvmStatic
-  fun exists(file: VirtualFile): Boolean {
-    return file.exists()
-  }
-
-  @JvmStatic
-  fun isFile(file: VirtualFile): Boolean {
-    return file.isValid && !file.isDirectory
-  }
-
-  @JvmStatic
-  fun isDirectory(file: VirtualFile): Boolean {
-    return file.isValid && file.isDirectory
-  }
-
-  @JvmStatic
-  fun getTextContent(file: VirtualFile): String {
-    return VfsUtil.loadText(file)
-  }
-
-  @JvmStatic
-  fun setTextContent(file: VirtualFile, content: String) {
-    VfsUtil.saveText(file, content)
-  }
-
-  @JvmStatic
-  fun getBinaryContent(file: VirtualFile): ByteArray {
-    return file.inputStream.use { it.readBytes() }
-  }
-
-  @JvmStatic
-  fun setBinaryContent(file: VirtualFile, content: ByteArray) {
-    file.setBinaryContent(content)
-  }
 
   @JvmStatic
   fun findFileOrDirectory(file: VirtualFile, relativePath: String): VirtualFile? {

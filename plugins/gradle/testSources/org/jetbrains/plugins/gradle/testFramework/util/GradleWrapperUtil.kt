@@ -8,6 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.file.VirtualFileUtil
+import com.intellij.openapi.file.writeText
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.WrapperConfiguration
 import org.gradle.wrapper.WrapperExecutor.*
@@ -25,7 +26,7 @@ fun generateWrapper(root: VirtualFile, configuration: WrapperConfiguration) {
     val propertiesLocation = StandardAssetsProvider().gradleWrapperPropertiesLocation
     val propertiesFile = VirtualFileUtil.createFile(root, propertiesLocation)
     val propertiesContent = getWrapperPropertiesContent(configuration)
-    VirtualFileUtil.setTextContent(propertiesFile, propertiesContent)
+    propertiesFile.writeText(propertiesContent)
     val assets = StandardAssetsProvider().getGradlewAssets()
 
     AssetsProcessor.getInstance().generateSources(TestFileSystemLocation(root, Path.of(root.name)), assets, emptyMap())

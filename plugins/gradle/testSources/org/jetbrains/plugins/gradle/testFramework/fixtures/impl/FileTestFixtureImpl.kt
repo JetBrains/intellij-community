@@ -14,8 +14,10 @@ import com.intellij.openapi.file.CanonicalPathUtil.getRelativePath
 import com.intellij.openapi.file.NioPathUtil.toCanonicalPath
 import com.intellij.openapi.file.VirtualFileUtil
 import com.intellij.openapi.file.VirtualFileUtil.getAbsoluteNioPath
+import com.intellij.openapi.file.readText
 import com.intellij.openapi.file.system.LocalFileSystemUtil
 import com.intellij.openapi.file.system.VirtualFileSystemUtil
+import com.intellij.openapi.file.writeText
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.common.runAll
@@ -212,7 +214,7 @@ internal class FileTestFixtureImpl(
       if (text != null) {
         val file = VirtualFileSystemUtil.findOrCreateFile(root.fileSystem, path)
         VirtualFileUtil.reloadDocument(file)
-        VirtualFileUtil.setTextContent(file, text)
+        file.writeText(text)
       }
       else {
         VirtualFileSystemUtil.deleteFileOrDirectory(root.fileSystem, path)
@@ -227,7 +229,7 @@ internal class FileTestFixtureImpl(
 
   private fun getTextContent(path: Path): String? {
     val file = VirtualFileSystemUtil.findFile(root.fileSystem, path) ?: return null
-    return VirtualFileUtil.getTextContent(file)
+    return file.readText()
   }
 
   override fun suppressErrors(isSuppressedErrors: Boolean) {

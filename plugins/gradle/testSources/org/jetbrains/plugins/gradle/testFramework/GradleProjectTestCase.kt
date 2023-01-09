@@ -5,6 +5,7 @@ import com.intellij.openapi.externalSystem.util.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.file.VirtualFileUtil
+import com.intellij.openapi.file.writeText
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleOlderThan
@@ -25,7 +26,7 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
     return runWriteActionAndGet {
       val file = VirtualFileUtil.findOrCreateFile(projectRoot, relativePath)
       VirtualFileUtil.reloadDocument(file)
-      VirtualFileUtil.setTextContent(file, text)
+      file.writeText(text)
       VirtualFileUtil.commitDocument(project, file)
       file
     }
