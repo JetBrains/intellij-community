@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
@@ -341,7 +342,9 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     if (!path.contains(SETTINGS_GROUP_SEPARATOR)) return null;
 
     @NotNull List<String> split = ContainerUtil.map(StringUtil.split(path, SETTINGS_GROUP_SEPARATOR), String::trim);
-    List<@NlsSafe String> prefixes = Arrays.asList("Settings",
+    List<@NlsSafe String> prefixes = Arrays.asList("IntelliJ IDEA",
+                                                   ApplicationNamesInfo.getInstance().getFullProductName(),
+                                                   "Settings",
                                                    "Preferences",
                                                    "File | Settings",
                                                    CommonBundle.message("action.settings.path"),
