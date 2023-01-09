@@ -169,10 +169,10 @@ internal class PhmVcsLogStore(
 
   override fun getMessage(commitId: Int): String? = messages.get(commitId)
 
-  override fun getCommitterOrAuthor(commitId: Int, commitToCommitter: IntFunction<VcsUser>, getAuthorForCommit: IntFunction<VcsUser>): VcsUser? {
+  override fun getCommitterOrAuthor(commitId: Int, getUserById: IntFunction<VcsUser>, getAuthorForCommit: IntFunction<VcsUser>): VcsUser? {
     val committer = committers.get(commitId)
     if (committer != null) {
-      return commitToCommitter.apply(committer)
+      return getUserById.apply(committer)
     }
     else {
       return if (messages.containsMapping(commitId)) getAuthorForCommit.apply(commitId) else null
@@ -185,7 +185,7 @@ internal class PhmVcsLogStore(
 
   @Throws(IOException::class)
   override fun processMessages(processor: (Int, String) -> Boolean) {
-    messages.processKeysWithExistingMapping(Processor { commit -> processor(commit, messages.get(commit)) })
+    messages.processKeysWithExistingMapping(Processor { commit -> processor(commit, messages.get(commit) ?: return@Processor true) })
   }
 
   override fun putRename(parent: Int, child: Int, renames: IntArray) {
