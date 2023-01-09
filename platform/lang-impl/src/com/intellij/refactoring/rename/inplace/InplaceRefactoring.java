@@ -144,7 +144,7 @@ public abstract class InplaceRefactoring {
         throw new IllegalArgumentException("elementToRename must be from the editor's document, " +
                                            "but got: elementToRename='" + myElementToRename + "'" +
                                            " (from " + (InjectedLanguageManager.getInstance(project).isInjectedFragment(containingFile) ? "injected ":"") +
-                                           "file " + containingFile + ")" +
+                                           "file " + containingFile + " in " + viewProvider.getVirtualFile()+ ")" +
                                            "; editor document=" + (editor instanceof EditorWindow ? "injected " : "") + editor.getDocument());
       }
       if (!notSameFile(getTopLevelVirtualFile(viewProvider), containingFile)
