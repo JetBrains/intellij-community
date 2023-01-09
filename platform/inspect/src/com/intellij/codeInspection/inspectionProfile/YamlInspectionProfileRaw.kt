@@ -32,8 +32,8 @@ class YamlInspectionConfigRaw(
 )
 
 
-fun readConfig(project: Project, reader: Reader, rootPath: String): YamlInspectionProfileRaw {
-  val merged = readRaw(project, reader, rootPath)
+fun readConfig(reader: Reader, includeReaders: (String) -> Reader): YamlInspectionProfileRaw {
+  val merged = readRaw(reader, includeReaders)
   val representer = Representer()
   representer.propertyUtils.isSkipMissingProperties = true
   val constr = CustomClassLoaderConstructor(YamlInspectionProfileRaw::class.java, YamlInspectionProfileRaw::class.java.classLoader)
@@ -61,16 +61,9 @@ private fun merge(first: Map<String, *>, second: Map<String, *>): Map<String, *>
   }
 }
 
-private fun readRaw(project: Project, reader: Reader, rootPath: String): Map<String, *> {
+private fun readRaw(reader: Reader, includeReaders: (String) -> Reader): Map<String, *> {
   val yamlReader = Yaml()
   val rawConfig: Map<String, *> = yamlReader.load(reader)
   val includedConfigs = (rawConfig["include"] as? List<*>)?.filterIsInstance(String::class.java).orEmpty()
-  val includedPaths = includedConfigs.map { filename -> "${rootPath}/$filename" }
-  return includedPaths.fold(rawConfig) { accumulator, file -> merge(accumulator, readRawFile(project, file)) }
-}
-
-private fun readRawFile(project: Project, filePath: String): Map<String, *> {
-  val configFile = File(filePath).absoluteFile
-  require(configFile.exists()) { "File does not exist: ${configFile.canonicalPath}" }
-  return readRaw(project, configFile.reader(), configFile.parent)
+  return includedConfigs.fold(rawConfig) { accumulator, path -> merge(accumulator, readRaw(includeReaders.invoke(path), includeReaders)) }
 }

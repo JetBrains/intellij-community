@@ -7,6 +7,8 @@ import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 import com.intellij.codeInspection.ex.InspectionToolsSupplier
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.io.toNioPath
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.PROFILE_DIR
@@ -18,6 +20,8 @@ import org.jdom.Element
 import java.io.File
 import java.io.Reader
 import java.lang.IllegalArgumentException
+import kotlin.io.path.exists
+import kotlin.io.path.reader
 
 class YamlInspectionConfigImpl(override val inspection: String,
                                override val enabled: Boolean?,
@@ -40,7 +44,7 @@ class YamlCompositeGroupImpl(override val groupId: String,
                              private val groupProvider: InspectionGroupProvider,
                              private val groupRules: List<String>) : YamlInspectionGroup {
   override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
-    for (groupRule in groupRules.asReversed()) {
+    for (groupRule in groupRules.asReversed().filter { it.isNotEmpty() }) {
       val groupId = groupRule.removePrefix("!")
       if (groupProvider.findGroup(groupId).includesInspection(tool)) {
         return groupId == groupRule
@@ -58,13 +62,8 @@ class CompositeGroupProvider : InspectionGroupProvider {
     providers.add(groupProvider)
   }
 
-  override fun findGroup(groupId: String): YamlInspectionGroup {
-    return object: YamlInspectionGroup {
-      override val groupId: String = groupId
-      override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
-        return providers.any { it.findGroup(groupId)?.includesInspection(tool) == true }
-      }
-    }
+  override fun findGroup(groupId: String): YamlInspectionGroup? {
+    return providers.firstNotNullOfOrNull { it.findGroup(groupId) }
   }
 }
 
@@ -78,13 +77,12 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
 
   companion object {
     @JvmStatic
-    fun loadFrom(project: Project,
-                 reader: Reader,
-                 rootPath: String,
-                 toolsSupplier: InspectionToolsSupplier = InspectionToolRegistrar.getInstance(),
-                 profileManager: BaseInspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
+    fun loadFrom(reader: Reader,
+                 includeReaders: (String) -> Reader,
+                 toolsSupplier: InspectionToolsSupplier,
+                 profileManager: BaseInspectionProfileManager
     ): YamlInspectionProfileImpl {
-      val profile = readConfig(project, reader, rootPath)
+      val profile = readConfig(reader, includeReaders)
       val baseProfile = findBaseProfile(profileManager, profile.baseProfile)
       val configurations = profile.inspections.map(::createInspectionConfig)
       val groupProvider = CompositeGroupProvider()
@@ -108,7 +106,14 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
     ): YamlInspectionProfileImpl {
       val configFile = File(filePath).absoluteFile
       require(configFile.exists()) { "File does not exist: ${configFile.canonicalPath}" }
-      return loadFrom(project, configFile.reader(), configFile.parent, toolsSupplier, profileManager)
+
+      val includeProvider: (String) -> Reader = {
+        val includePath = configFile.parent.toNioPath().resolve(it)
+        require(includePath.exists()) { "File does not exist: ${includePath.toCanonicalPath()}" }
+        includePath.reader()
+      }
+
+      return loadFrom(configFile.reader(), includeProvider, toolsSupplier, profileManager)
     }
 
     private fun findBaseProfile(profileManager: InspectionProfileManager, profileName: String?): InspectionProfileImpl {
@@ -155,7 +160,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
         profile.initInspectionTools()
         profile.copyFrom(baseProfile)
         profile.name = profileName ?: "Default"
-    }
+      }
     configurations.forEach { configuration ->
       val tools = findTools(configuration)
       val scopes = configuration.ignore.map { pattern ->
