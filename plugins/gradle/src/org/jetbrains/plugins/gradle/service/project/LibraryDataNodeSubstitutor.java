@@ -22,6 +22,7 @@ import java.io.File;
 import java.util.*;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.find;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findAll;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.attachGradleSdkSources;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.attachSourcesAndJavadocFromGradleCacheIfNeeded;
 
@@ -69,8 +70,6 @@ public class LibraryDataNodeSubstitutor {
       }
       return;
     }
-
-    boolean shouldKeepTransitiveDependencies = libraryPaths.size() > 0 && !libraryDependencyDataNode.getChildren().isEmpty();
 
     final LinkedList<String> unprocessedPaths = new LinkedList<>(libraryPaths);
     while (!unprocessedPaths.isEmpty()) {
@@ -147,6 +146,15 @@ public class LibraryDataNodeSubstitutor {
           }
           return result;
         });
+
+      // Add module dependencies as transitive dependencies
+      findAll(pair.first, ProjectKeys.MODULE_DEPENDENCY).forEach(childModuleDependencyData -> {
+        // Copy the module dependency data but change the owner
+        final ModuleDependencyData transferredData = new ModuleDependencyData(ownerModule, childModuleDependencyData.getData().getTarget());
+        libraryDependencyDataNode.createChild(ProjectKeys.MODULE_DEPENDENCY, transferredData);
+      });
+
+      boolean shouldKeepTransitiveDependencies = libraryPaths.size() > 0 && !libraryDependencyDataNode.getChildren().isEmpty();
 
       if (targetModuleOutputPaths != null) {
         if (found == null) {
