@@ -36,7 +36,7 @@ class MacCustomDecorationPath(val frame: JFrame): JPanel() {
   }
 
   override fun removeNotify() {
-    frame.removePropertyChangeListener(frameTitleListener)
+    frame.removePropertyChangeListener("title", frameTitleListener)
     super.removeNotify()
   }
 
