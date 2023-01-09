@@ -2,11 +2,15 @@
 package com.intellij.util.ui
 
 import com.intellij.ide.HelpTooltip
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import java.awt.*
@@ -15,6 +19,7 @@ import java.beans.PropertyChangeListener
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.plaf.ComponentUI
+import kotlin.math.max
 import kotlin.properties.Delegates.observable
 
 class InlineIconButton @JvmOverloads constructor(icon: Icon,
@@ -39,6 +44,9 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
   var tooltip by observable(tooltip) { _, old, new ->
     firePropertyChange(TOOL_TIP_TEXT_KEY, old, new)
   }
+  var withBackgroundHover: Boolean by observable(false) { _, old, new ->
+    firePropertyChange(WITH_BACKGROUND_PROPERTY, old, new)
+  }
 
   init {
     setUI(InlineIconButtonUI())
@@ -52,18 +60,32 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
     private var propertyListener: PropertyChangeListener? = null
 
     override fun paint(g: Graphics, c: JComponent) {
+      val behaviour = buttonBehavior ?: return
+
       c as InlineIconButton
       val icon = getCurrentIcon(c)
 
       val g2 = g.create() as Graphics2D
       try {
-        val r = Rectangle(c.getSize())
-        JBInsets.removeFrom(r, c.insets)
+        val look = if (c.withBackgroundHover) ActionButtonLook.SYSTEM_LOOK else ActionButtonLook.INPLACE_LOOK
+        val buttonState = ActionButtonLook.getButtonState(c.isEnabled,
+                                                          behaviour.isHovered,
+                                                          behaviour.isFocused,
+                                                          behaviour.isPressedByMouse,
+                                                          behaviour.isPressedByKeyboard)
+        if (c.isEnabled || !StartupUiUtil.isUnderDarcula() || ExperimentalUI.isNewUI()) {
+          look.paintBackground(g2, c, buttonState)
+        }
+        if (behaviour.isFocused) {
+          val rect = Rectangle(c.getSize())
+          DarculaUIUtil.paintFocusBorder(g2, rect.width, rect.height, 0f, true)
+        }
+        else {
+          look.paintBorder(g2, c, buttonState)
+        }
 
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
-        g2.translate(r.x, r.y)
-        icon.paintIcon(c, g2, 0, 0)
+        val iconPoint = getIconPosition(c, icon)
+        icon.paintIcon(c, g2, iconPoint.x, iconPoint.y)
       }
       finally {
         g2.dispose()
@@ -75,8 +97,13 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
     }
 
     override fun getPreferredSize(c: JComponent): Dimension {
-      val icon = (c as InlineIconButton).icon
-      val size = Dimension(icon.iconWidth, icon.iconHeight)
+      c as InlineIconButton
+      val icon = getCurrentIcon(c)
+      val size = if (c.withBackgroundHover)
+        calculateComponentSizeWithBackground(icon)
+      else
+        Dimension(icon.iconWidth, icon.iconHeight)
+
       JBInsets.addTo(size, c.insets)
       return size
     }
@@ -158,12 +185,39 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
       buttonBehavior = null
       HelpTooltip.dispose(c)
     }
+
+    private fun getIconPosition(component: JComponent, icon: Icon): Point {
+      val rect = Rectangle(component.width, component.height)
+      val i = component.insets
+      JBInsets.removeFrom(rect, i)
+
+      val x = i.left + (rect.width - icon.iconWidth) / 2
+      val y = i.top + (rect.height - icon.iconHeight) / 2
+
+      return Point(x, y)
+    }
+
+    private fun calculateComponentSizeWithBackground(icon: Icon): Dimension {
+      return if (
+        icon.iconWidth < ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width &&
+        icon.iconHeight < ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height
+      ) {
+        ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
+      }
+      else {
+        Dimension(
+          max(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width, icon.iconWidth),
+          max(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height, icon.iconHeight)
+        )
+      }
+    }
   }
 
   companion object {
-    const val ACTION_LISTENER_PROPERTY = "action_listener"
-    const val ICON_PROPERTY = "icon"
-    const val HOVERED_ICON_PROPERTY = "hovered_icon"
-    const val DISABLED_ICON_PROPERTY = "disabled_icon"
+    private const val ACTION_LISTENER_PROPERTY = "action_listener"
+    private const val ICON_PROPERTY = "icon"
+    private const val HOVERED_ICON_PROPERTY = "hovered_icon"
+    private const val DISABLED_ICON_PROPERTY = "disabled_icon"
+    private const val WITH_BACKGROUND_PROPERTY = "with_background"
   }
 }

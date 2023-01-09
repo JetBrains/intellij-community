@@ -65,7 +65,7 @@ internal object GHPRDetailsBranchesComponentFactory {
       border = JBUI.Borders.empty()
       background = UIUtil.getListBackground()
       addHoverAndPressStateListener(comp = this, hoveredStateCallback = { component, isHovered ->
-        component.background = if (isHovered) UIUtil.getLabelBackground() else UIUtil.getListBackground()
+        component.background = if (isHovered) JBUI.CurrentTheme.ActionButton.hoverBackground() else UIUtil.getListBackground()
       })
       add(from, BorderLayout.CENTER)
     }

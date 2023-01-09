@@ -164,6 +164,30 @@ public abstract class ActionButtonLook {
     arrowIcon.paintIcon(actionButton instanceof Component ? (Component)actionButton : null, g, arrowIconX, arrowIconY);
   }
 
+  @ActionButtonComponent.ButtonState
+  public static int getButtonState(
+    boolean isEnabled,
+    boolean isHovered,
+    boolean isFocused,
+    boolean isPressedByMouse,
+    boolean isPressedByKeyboard
+  ) {
+    if (!isEnabled) return ActionButtonComponent.NORMAL;
+
+    if (isPressedByMouse || isPressedByKeyboard) {
+      return ActionButtonComponent.PUSHED;
+    }
+    else if (isHovered) {
+      return ActionButtonComponent.POPPED;
+    }
+    else if (isFocused) {
+      return ActionButtonComponent.SELECTED;
+    }
+    else {
+      return ActionButtonComponent.NORMAL;
+    }
+  }
+
   private static Point getIconPosition(ActionButtonComponent actionButton, Icon icon) {
     Rectangle rect = new Rectangle(actionButton.getWidth(), actionButton.getHeight());
     Insets i = actionButton.getInsets();

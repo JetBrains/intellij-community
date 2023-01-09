@@ -2,7 +2,10 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.util.*
+import com.intellij.collaboration.ui.util.bindText
+import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.emptyBorders
+import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -14,6 +17,7 @@ import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.childScope
+import com.intellij.util.ui.InlineIconButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
@@ -114,14 +118,15 @@ internal class GHPRStatePanel(
     }
 
     protected fun createMoreButton(actionGroup: ActionGroup): JComponent {
-      val action = ActionListener { event ->
-        val parentComponent = event.source as JComponent
-        val popupMenu = ActionManager.getInstance().createActionPopupMenu("github.review.details", actionGroup)
-        val point = RelativePoint.getSouthWestOf(parentComponent).originalPoint
-        popupMenu.component.show(parentComponent, point.x, point.y + JBUIScale.scale(8))
+      return InlineIconButton(AllIcons.Actions.More).apply {
+        withBackgroundHover = true
+        actionListener = ActionListener { event ->
+          val parentComponent = event.source as JComponent
+          val popupMenu = ActionManager.getInstance().createActionPopupMenu("github.review.details", actionGroup)
+          val point = RelativePoint.getSouthWestOf(parentComponent).originalPoint
+          popupMenu.component.show(parentComponent, point.x, point.y + JBUIScale.scale(8))
+        }
       }
-
-      return createHoveredRoundedIconButton(AllIcons.Actions.More, action)
     }
 
     protected fun createMergeReviewButton(scope: CoroutineScope, reviewFlowVm: GHPRReviewFlowViewModel): JComponent {

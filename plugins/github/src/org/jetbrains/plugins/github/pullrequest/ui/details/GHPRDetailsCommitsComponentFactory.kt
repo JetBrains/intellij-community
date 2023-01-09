@@ -5,7 +5,6 @@ import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.util.bindDisabled
 import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindVisibility
-import com.intellij.collaboration.ui.util.createHoveredRoundedIconButton
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.ui.awt.RelativePoint
@@ -14,6 +13,7 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBFont
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
@@ -37,15 +37,17 @@ internal object GHPRDetailsCommitsComponentFactory {
       })
     }
     val commitsPopup = createCommitChooserActionLink(scope, commitsVm, diffBridge)
-    val nextCommitAction = ActionListener { commitsVm.selectNextCommit() }
-    val nextCommitIcon = createHoveredRoundedIconButton(AllIcons.Chooser.Bottom, nextCommitAction).apply {
+    val nextCommitIcon = InlineIconButton(AllIcons.Chooser.Bottom).apply {
+      withBackgroundHover = true
+      actionListener = ActionListener { commitsVm.selectNextCommit() }
       bindVisibility(scope, commitsVm.selectedCommit.map { it != null })
       bindDisabled(scope, combine(commitsVm.selectedCommitIndex, commitsVm.reviewCommits) { selectedCommitIndex, commits ->
         selectedCommitIndex == commits.size - 1
       })
     }
-    val previousCommitAction = ActionListener { commitsVm.selectPreviousCommit() }
-    val previousCommitIcon = createHoveredRoundedIconButton(AllIcons.Chooser.Top, previousCommitAction).apply {
+    val previousCommitIcon = InlineIconButton(AllIcons.Chooser.Top).apply {
+      withBackgroundHover = true
+      actionListener = ActionListener { commitsVm.selectPreviousCommit() }
       bindVisibility(scope, commitsVm.selectedCommit.map { it != null })
       bindDisabled(scope, commitsVm.selectedCommitIndex.map { it == 0 })
     }
