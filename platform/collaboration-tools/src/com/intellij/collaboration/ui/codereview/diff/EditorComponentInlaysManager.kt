@@ -2,9 +2,11 @@
 package com.intellij.collaboration.ui.codereview.diff
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
+import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager.Properties.RendererFactory
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.util.Disposer
@@ -40,7 +42,7 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
    * @param priority impacts the visual order in which inlays are displayed. Components with higher priority will be shown higher
    */
   @RequiresEdt
-  fun insertAfter(lineIndex: Int, component: JComponent, priority: Int = 0): Disposable? {
+  fun insertAfter(lineIndex: Int, component: JComponent, priority: Int = 0, rendererFactory: RendererFactory? = null): Inlay<*>? {
     if (Disposer.isDisposed(this)) return null
 
     // TODO: rework diff mode with aligned changes.
@@ -51,7 +53,7 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
     return EditorEmbeddedComponentManager.getInstance()
       .addComponent(editor, wrappedComponent,
                     EditorEmbeddedComponentManager.Properties(EditorEmbeddedComponentManager.ResizePolicy.none(),
-                                                              null,
+                                                              rendererFactory,
                                                               false,
                                                               false,
                                                               priority,
