@@ -8,6 +8,7 @@ import com.intellij.openapi.util.ScalableIcon
 import com.intellij.ui.LayeredIcon
 import com.intellij.util.ui.ColorsIcon
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.name.ClassId
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.name.FqName
 import javax.swing.Icon
 import kotlin.math.absoluteValue
 
+@ApiStatus.Internal
 object DslStyleUtils {
     private const val STYLE_COUNT = 4
 

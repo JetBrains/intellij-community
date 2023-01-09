@@ -6,7 +6,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.annotations
+import org.jetbrains.kotlin.analysis.api.annotations.annotationClassIds
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
@@ -53,19 +53,18 @@ internal class DslHighlighter(
     }
 }
 
-
 /**
- * Returns a dsl style ID for the given [KtClass]. This class muse be an annotation and be annotated with [DslMarker].
+ * Returns a dsl style ID for the given annotation [KtClass]. This class must be annotated with [DslMarker].
  */
 fun KtClass.getDslStyleId(): Int? {
-    if (!isAnnotation()) {
+    if (!isAnnotation() || annotations.isEmpty()) {
         return null
     }
     analyze(this) {
-        val classSymbol = getNamedClassOrObjectSymbol() ?: return null
-        if (classSymbol.classKind != KtClassKind.ANNOTATION_CLASS) return null
-        if (!classSymbol.isDslHighlightingMarker()) return null
-        val className = fqName?: return null
+        val classSymbol = getNamedClassOrObjectSymbol()?.takeIf {
+            it.classKind == KtClassKind.ANNOTATION_CLASS && it.isDslHighlightingMarker()
+        } ?: return null
+        val className = classSymbol.classIdIfNonLocal?.asSingleFqName() ?: return null
         return DslStyleUtils.styleIdByFQName(className)
     }
 }
@@ -75,23 +74,22 @@ fun KtClass.getDslStyleId(): Int? {
  * A Dsl annotation is an annotation that is itself marked by [DslMarker] annotation.
  */
 context(KtAnalysisSession)
-fun getDslAnnotation(type: KtType): ClassId? {
+private fun getDslAnnotation(type: KtType): ClassId? {
     val allAnnotationsWithSuperTypes = sequence {
-        yieldAll(type.annotations)
+        yieldAll(type.annotationClassIds)
         val symbol = type.expandedClassSymbol ?: return@sequence
-        yieldAll(symbol.annotations)
+        yieldAll(symbol.annotationClassIds)
         for (superType in type.getAllSuperTypes()) {
-            superType.expandedClassSymbol?.let { yieldAll(it.annotations) }
+            superType.expandedClassSymbol?.let { yieldAll(it.annotationClassIds) }
         }
     }
-    val dslAnnotation = allAnnotationsWithSuperTypes.find { annotationApplication ->
-        val annotationClassId = annotationApplication.classId ?: return@find false
+    val dslAnnotation = allAnnotationsWithSuperTypes.find { annotationClassId ->
         val symbol = getClassOrObjectSymbolByClassId(annotationClassId) ?: return@find false
         symbol.isDslHighlightingMarker()
     }
-    return dslAnnotation?.classId
+    return dslAnnotation
 }
 
-fun KtClassOrObjectSymbol.isDslHighlightingMarker(): Boolean {
+private fun KtClassOrObjectSymbol.isDslHighlightingMarker(): Boolean {
     return hasAnnotation(DslStyleUtils.DSL_MARKER_CLASS_ID)
 }
