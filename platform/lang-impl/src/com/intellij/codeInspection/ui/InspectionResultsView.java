@@ -747,6 +747,10 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   public @NlsContexts.TabTitle String getViewTitle() {
+    if (ExperimentalUI.isNewUI()) {
+      return InspectionsBundle.message("inspection.results.toolwindow.title", myScope.getShortenName());
+    }
+
     return InspectionsBundle.message(isSingleInspectionRun() ?
                               "inspection.results.for.inspection.toolwindow.title" :
                               "inspection.results.for.profile.toolwindow.title",
