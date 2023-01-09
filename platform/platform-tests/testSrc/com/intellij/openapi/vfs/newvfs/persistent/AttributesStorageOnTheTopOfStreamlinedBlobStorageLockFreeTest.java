@@ -27,7 +27,7 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageLockFreeTest
   }
 
   @Override
-  protected AttributesStorageOnTheTopOfBlobStorage openAttributesStorage(final Path storagePath) throws IOException {
+  protected AttributesStorageOverBlobStorage openAttributesStorage(final Path storagePath) throws IOException {
     final PagedFileStorageLockFree pagedStorage = new PagedFileStorageLockFree(
       this.storagePath,
       LOCK_CONTEXT,
@@ -38,6 +38,6 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageLockFreeTest
       pagedStorage,
       new DataLengthPlusFixedPercentStrategy(256, 64, 30)
     );
-    return new AttributesStorageOnTheTopOfBlobStorage(storage);
+    return new AttributesStorageOverBlobStorage(storage);
   }
 }

@@ -54,7 +54,7 @@ public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase 
   protected Path storagePath;
   protected StreamlinedBlobStorage storage;
 
-  protected AttributesStorageOnTheTopOfBlobStorage attributesStorage;
+  protected AttributesStorageOverBlobStorage attributesStorage;
 
   protected Attributes attributes;
 
@@ -381,7 +381,7 @@ public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase 
 
   // ======================== infrastructure: ============================================================== //
 
-  protected abstract AttributesStorageOnTheTopOfBlobStorage openAttributesStorage(final Path storagePath) throws IOException;
+  protected abstract AttributesStorageOverBlobStorage openAttributesStorage(final Path storagePath) throws IOException;
 
   protected void reopenAttributesStorage() throws IOException {
     closeStorage();
@@ -510,7 +510,7 @@ public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase 
       return attributeBytesLength;
     }
 
-    public boolean existsInStorage(final AttributesStorageOnTheTopOfBlobStorage attributesStorage) throws IOException {
+    public boolean existsInStorage(final AttributesStorageOverBlobStorage attributesStorage) throws IOException {
       return attributesStorage.hasAttribute(
         attributesRecordId,
         fileId,
@@ -518,7 +518,7 @@ public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase 
       );
     }
 
-    public byte[] readValueFromStorage(final AttributesStorageOnTheTopOfBlobStorage attributesStorage) throws IOException {
+    public byte[] readValueFromStorage(final AttributesStorageOverBlobStorage attributesStorage) throws IOException {
       return attributesStorage.readAttributeValue(attributesRecordId, fileId, attributeId);
     }
 
@@ -545,7 +545,7 @@ public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase 
     private final Int2IntMap fileIdToAttributeRecordId = new Int2IntOpenHashMap();
 
     public AttributeRecord insertOrUpdateRecord(final AttributeRecord record,
-                                                final AttributesStorageOnTheTopOfBlobStorage attributesStorage) throws IOException {
+                                                final AttributesStorageOverBlobStorage attributesStorage) throws IOException {
       final int attributeRecordId = fileIdToAttributeRecordId.get(record.fileId);
       final int newAttributeRecordId = attributesStorage.updateAttribute(
         attributeRecordId,
@@ -559,7 +559,7 @@ public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase 
     }
 
     public AttributeRecord[] insertOrUpdateAll(final AttributeRecord[] records,
-                                               final AttributesStorageOnTheTopOfBlobStorage attributesStorage) throws IOException {
+                                               final AttributesStorageOverBlobStorage attributesStorage) throws IOException {
       final AttributeRecord[] updatedRecords = new AttributeRecord[records.length];
       for (int i = 0; i < records.length; i++) {
         updatedRecords[i] = insertOrUpdateRecord(records[i], attributesStorage);
@@ -568,7 +568,7 @@ public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase 
     }
 
     public boolean deleteRecord(final AttributeRecord record,
-                                final AttributesStorageOnTheTopOfBlobStorage attributesStorage) throws IOException {
+                                final AttributesStorageOverBlobStorage attributesStorage) throws IOException {
       final int attributeRecordId = fileIdToAttributeRecordId.getOrDefault(record.fileId, NON_EXISTENT_ATTR_RECORD_ID);
       if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
         return false; //already deleted, do nothing

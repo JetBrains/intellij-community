@@ -26,7 +26,9 @@ import java.util.concurrent.atomic.AtomicLong;
  * Implements {@link StreamlinedBlobStorage} blobs over {@link PagedFileStorageLockFree} storage.
  * Implementation is thread-safe, and mostly relies on page-level locks to protect data access.
  * <br/>
+ * @deprecated  StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage is a replacement with larger records
  */
+@Deprecated
 public class StreamlinedBlobStorageOverLockFreePagesStorage implements StreamlinedBlobStorage {
   private static final Logger LOG = Logger.getInstance(StreamlinedBlobStorageOverLockFreePagesStorage.class);
 
@@ -707,7 +709,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
 
   @Override
   public String toString() {
-    return "StreamlinedBlobStorage{" + pagedStorage + "}{nextRecordId: " + nextRecordId + '}';
+    return "StreamlinedBlobStorageOverLockFree{" + pagedStorage + "}{nextRecordId: " + nextRecordId + '}';
   }
 
 
@@ -719,6 +721,50 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
     }
   }
 
+  // === storage header accessors: ===
+
+  private int readHeaderInt(final int offset) throws IOException {
+    assert (0 <= offset && offset <= HEADER_SIZE - Integer.BYTES)
+      : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Integer.BYTES) + "]";
+    return pagedStorage.getInt(offset);
+  }
+
+  private void putHeaderInt(final int offset,
+                            final int value) throws IOException {
+    assert (0 <= offset && offset <= HEADER_SIZE - Integer.BYTES)
+      : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Integer.BYTES) + "]";
+    pagedStorage.putInt(offset, value);
+  }
+
+  private long readHeaderLong(final int offset) throws IOException {
+    assert (0 <= offset && offset <= HEADER_SIZE - Long.BYTES)
+      : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Long.BYTES) + "]";
+    return pagedStorage.getLong(offset);
+  }
+
+  private void putHeaderLong(final int offset,
+                             final long value) throws IOException {
+    assert (0 <= offset && offset <= HEADER_SIZE - Long.BYTES)
+      : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Long.BYTES) + "]";
+    pagedStorage.putLong(offset, value);
+  }
+
+  private long headerSize() {
+    return HEADER_SIZE;
+  }
+
+
+  // === storage records accessors: ===
+
+  private long recordsStartOffset() {
+    final long headerSize = headerSize();
+    if (headerSize % OFFSET_BUCKET > 0) {
+      return (headerSize / OFFSET_BUCKET + 1) * OFFSET_BUCKET;
+    }
+    else {
+      return (headerSize / OFFSET_BUCKET) * OFFSET_BUCKET;
+    }
+  }
 
   /**
    * content buffer is passed in 'ready for write' state: position=0, limit=[#last byte of payload]
@@ -732,7 +778,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
         "record size(header:" + RECORD_HEADER_SIZE + " +capacity:" + newRecordCapacity + ") should be <= pageSize(=" + pageSize + ")");
     }
 
-    final IntRef actualRecordSizeRef = new IntRef();//may be >= totalRecordSize requested
+    final IntRef actualRecordSizeRef = new IntRef();//actual record size may be >= requested totalRecordSize 
     final int newRecordId = allocateSlotForRecord(pageSize, totalRecordSize, actualRecordSizeRef);
     final long newRecordOffset = idToOffset(newRecordId);
     final int actualRecordSize = actualRecordSizeRef.get();
@@ -847,47 +893,6 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
   }
 
 
-  private int readHeaderInt(final int offset) throws IOException {
-    assert (0 <= offset && offset <= HEADER_SIZE - Integer.BYTES)
-      : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Integer.BYTES) + "]";
-    return pagedStorage.getInt(offset);
-  }
-
-  private void putHeaderInt(final int offset,
-                            final int value) throws IOException {
-    assert (0 <= offset && offset <= HEADER_SIZE - Integer.BYTES)
-      : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Integer.BYTES) + "]";
-    pagedStorage.putInt(offset, value);
-  }
-
-  private long readHeaderLong(final int offset) throws IOException {
-    assert (0 <= offset && offset <= HEADER_SIZE - Long.BYTES)
-      : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Long.BYTES) + "]";
-    return pagedStorage.getLong(offset);
-  }
-
-  private void putHeaderLong(final int offset,
-                             final long value) throws IOException {
-    assert (0 <= offset && offset <= HEADER_SIZE - Long.BYTES)
-      : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Long.BYTES) + "]";
-    pagedStorage.putLong(offset, value);
-  }
-
-  private long headerSize() {
-    return HEADER_SIZE;
-  }
-
-
-  private long recordsStartOffset() {
-    final long headerSize = headerSize();
-    if (headerSize % OFFSET_BUCKET > 0) {
-      return (headerSize / OFFSET_BUCKET + 1) * OFFSET_BUCKET;
-    }
-    else {
-      return (headerSize / OFFSET_BUCKET) * OFFSET_BUCKET;
-    }
-  }
-
   @NotNull
   private ByteBuffer acquireTemporaryBuffer(final int expectedRecordSizeHint) {
     final ByteBuffer temp = threadLocalBuffer.get();
@@ -916,46 +921,44 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
   }
 
 
-  private static int readRecordCapacity(final ByteBuffer pageBuffer,
+  private static int readRecordCapacity(final @NotNull ByteBuffer pageBuffer,
                                         final int offsetOnPage) {
     return Short.toUnsignedInt(pageBuffer.getShort(offsetOnPage + RECORD_OFFSET_CAPACITY));
   }
 
-  private static int readRecordRedirectToId(final ByteBuffer pageBuffer,
+  private static int readRecordRedirectToId(final @NotNull ByteBuffer pageBuffer,
                                             final int offsetOnPage) {
     return pageBuffer.getInt(offsetOnPage + RECORD_OFFSET_REDIRECT_TO);
   }
 
-  private static int readRecordLength(final ByteBuffer pageBuffer,
+  private static int readRecordLength(final @NotNull ByteBuffer pageBuffer,
                                       final int offsetOnPage) {
     return Short.toUnsignedInt(pageBuffer.getShort(offsetOnPage + RECORD_OFFSET_ACTUAL_LENGTH));
   }
 
-  private static void putRecordPayload(final ByteBuffer pageBuffer,
+  private static void putRecordPayload(final @NotNull ByteBuffer pageBuffer,
                                        final int offsetOnPage,
-                                       final ByteBuffer recordData,
+                                       final @NotNull ByteBuffer recordData,
                                        final int newRecordLength) {
     pageBuffer.put(offsetOnPage + RECORD_HEADER_SIZE, recordData, 0, newRecordLength);
   }
 
-  @NotNull
-  private static ByteBuffer putRecordCapacity(final ByteBuffer pageBuffer,
+
+  private static ByteBuffer putRecordCapacity(final @NotNull ByteBuffer pageBuffer,
                                               final int offsetOnPage,
                                               final int recordCapacity) {
     checkCapacity(recordCapacity);
     return pageBuffer.putShort(offsetOnPage + RECORD_OFFSET_CAPACITY, (short)recordCapacity);
   }
 
-  @NotNull
-  private static ByteBuffer putRecordLength(final ByteBuffer pageBuffer,
+  private static ByteBuffer putRecordLength(final @NotNull ByteBuffer pageBuffer,
                                             final int offsetOnPage,
                                             final int recordLength) {
     checkLength(recordLength);
     return pageBuffer.putShort(offsetOnPage + RECORD_OFFSET_ACTUAL_LENGTH, (short)recordLength);
   }
 
-  @NotNull
-  private static ByteBuffer putRecordLengthMark(final ByteBuffer pageBuffer,
+  private static ByteBuffer putRecordLengthMark(final @NotNull ByteBuffer pageBuffer,
                                                 final int offsetOnPage,
                                                 final int mark) {
     if (mark < DELETED_RECORD_MARK) {
@@ -973,28 +976,10 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
     return pageBuffer.putShort(offsetOnPage + RECORD_OFFSET_ACTUAL_LENGTH, (short)mark);
   }
 
-  @NotNull
-  private static ByteBuffer putRecordRedirectTo(final ByteBuffer pageBuffer,
+  private static ByteBuffer putRecordRedirectTo(final @NotNull ByteBuffer pageBuffer,
                                                 final int offsetOnPage,
                                                 final int redirectToId) {
     return pageBuffer.putInt(offsetOnPage + RECORD_OFFSET_REDIRECT_TO, redirectToId);
-  }
-
-  private static int roundCapacityUpToBucket(final int offset,
-                                             final int pageSize,
-                                             final int rawCapacity) {
-    int capacityRoundedUp = rawCapacity;
-    if (capacityRoundedUp % OFFSET_BUCKET != 0) {
-      capacityRoundedUp = ((capacityRoundedUp / OFFSET_BUCKET + 1) * OFFSET_BUCKET);
-    }
-    final int occupiedOnPage = offset + RECORD_HEADER_SIZE + capacityRoundedUp;
-    final int remainedOnPage = pageSize - occupiedOnPage;
-    if (0 < remainedOnPage && remainedOnPage < RECORD_HEADER_SIZE) {
-      //we can't squeeze even the smallest record into remaining space, so just merge it into current record
-      capacityRoundedUp += remainedOnPage;
-    }
-    assert capacityRoundedUp >= rawCapacity : capacityRoundedUp + "<=" + rawCapacity;
-    return capacityRoundedUp;
   }
 
   private static int roundSizeUpToBucket(final int offset,

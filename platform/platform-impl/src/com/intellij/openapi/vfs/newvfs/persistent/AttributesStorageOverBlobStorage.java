@@ -24,7 +24,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  *
  */
-public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesStorage {
+public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage {
   //Persistent format (see AttributesRecord/AttributeEntry):
   //  Storage := (AttributeDirectoryRecord | AttributeDedicatedRecord)*
   //
@@ -50,7 +50,7 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
 
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
-  public AttributesStorageOnTheTopOfBlobStorage(final @NotNull StreamlinedBlobStorage storage) { this.storage = storage; }
+  public AttributesStorageOverBlobStorage(final @NotNull StreamlinedBlobStorage storage) { this.storage = storage; }
 
   @Override
   public int getVersion() throws IOException {
@@ -228,7 +228,7 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
   }
 
   /**
-   * 'get' methods are all use absolute buffer access methods, hence don't move buffer position/limit,
+   * 'get' methods all use absolute buffer access methods, hence don't move buffer position/limit,
    * but 'put' methods use relative buffer access, and move buffer position (because this is that expected
    * by calling code)
    */

@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.PagedFileStorageLockFree;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.experimental.theories.Theories;
 import org.junit.runner.RunWith;

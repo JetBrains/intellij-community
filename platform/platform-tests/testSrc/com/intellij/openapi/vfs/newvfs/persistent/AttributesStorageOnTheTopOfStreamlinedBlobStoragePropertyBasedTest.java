@@ -39,7 +39,7 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStoragePropertyBasedTest 
   @Rule
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  protected AttributesStorageOnTheTopOfBlobStorage createStorage(final Path storagePath) throws Exception {
+  protected AttributesStorageOverBlobStorage createStorage(final Path storagePath) throws Exception {
     final PagedFileStorage pagedStorage = new PagedFileStorage(
       storagePath,
       LOCK_CONTEXT,
@@ -51,7 +51,7 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStoragePropertyBasedTest 
       pagedStorage,
       new DataLengthPlusFixedPercentStrategy(256, 64, 30)
     );
-    return new AttributesStorageOnTheTopOfBlobStorage(storage);
+    return new AttributesStorageOverBlobStorage(storage);
   }
 
   @Test
@@ -64,7 +64,7 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStoragePropertyBasedTest 
       .checkScenarios(() -> {
         return env -> {
           final Attributes attributes = new Attributes();
-          try (AttributesStorageOnTheTopOfBlobStorage storage = createStorage(temporaryFolder.newFile().toPath())) {
+          try (AttributesStorageOverBlobStorage storage = createStorage(temporaryFolder.newFile().toPath())) {
             final List<AttributeRecord> records = new ArrayList<>();
             //updates count 10x of inserts/deletes
             final Generator<ImperativeCommand> commandsGenerator = Generator.frequency(
@@ -86,11 +86,11 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStoragePropertyBasedTest 
 
   public static class InsertAttribute implements ImperativeCommand {
     private final Attributes attributes;
-    private final AttributesStorageOnTheTopOfBlobStorage storage;
+    private final AttributesStorageOverBlobStorage storage;
     private final List<AttributeRecord> records;
 
     public InsertAttribute(@NotNull final Attributes attributes,
-                           @NotNull final AttributesStorageOnTheTopOfBlobStorage storage,
+                           @NotNull final AttributesStorageOverBlobStorage storage,
                            @NotNull final List<AttributeRecord> records) {
       this.attributes = attributes;
       this.storage = storage;
@@ -127,11 +127,11 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStoragePropertyBasedTest 
 
   public static class UpdateAttribute implements ImperativeCommand {
     private final Attributes attributes;
-    private final AttributesStorageOnTheTopOfBlobStorage storage;
+    private final AttributesStorageOverBlobStorage storage;
     private final List<AttributeRecord> records;
 
     public UpdateAttribute(@NotNull final Attributes attributes,
-                           @NotNull final AttributesStorageOnTheTopOfBlobStorage storage,
+                           @NotNull final AttributesStorageOverBlobStorage storage,
                            @NotNull final List<AttributeRecord> records) {
       this.attributes = attributes;
       this.storage = storage;
@@ -182,11 +182,11 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStoragePropertyBasedTest 
 
   public static class DeleteAttribute implements ImperativeCommand {
     private final Attributes attributes;
-    private final AttributesStorageOnTheTopOfBlobStorage storage;
+    private final AttributesStorageOverBlobStorage storage;
     private final List<AttributeRecord> records;
 
     public DeleteAttribute(@NotNull final Attributes attributes,
-                           @NotNull final AttributesStorageOnTheTopOfBlobStorage storage,
+                           @NotNull final AttributesStorageOverBlobStorage storage,
                            @NotNull final List<AttributeRecord> records) {
       this.attributes = attributes;
       this.storage = storage;
