@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
@@ -50,8 +50,8 @@ abstract class ClientSessionImpl(
     this.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
                          activityPrefix = "client ",
                          syncScope = syncScope + exceptionHandler,
-                         onlyIfAwait = false
-    )
+                         onlyIfAwait = false,
+                         asyncScope = getCoroutineScope())
     assert(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
   }
 

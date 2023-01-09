@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.testFramework.common
@@ -169,6 +169,7 @@ private suspend fun preloadServicesAndCallAppInitializedListeners(app: Applicati
         modules = pluginSet.getEnabledModules(),
         activityPrefix = "",
         syncScope = this,
+        asyncScope = app.coroutineScope,
       )
     }
 

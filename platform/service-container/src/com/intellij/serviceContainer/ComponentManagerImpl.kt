@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment", "OVERRIDE_DEPRECATION")
 package com.intellij.serviceContainer
 
@@ -1104,8 +1104,8 @@ abstract class ComponentManagerImpl(
   fun preloadServices(modules: List<IdeaPluginDescriptorImpl>,
                       activityPrefix: String,
                       syncScope: CoroutineScope,
-                      onlyIfAwait: Boolean = false) {
-    val asyncScope = coroutineScope!!
+                      onlyIfAwait: Boolean = false,
+                      asyncScope: CoroutineScope) {
     for (plugin in modules) {
       for (service in getContainerDescriptor(plugin).services) {
         if (!isServiceSuitable(service) || (service.os != null && !isSuitableForOs(service.os))) {
@@ -1226,7 +1226,7 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  fun stopServicePreloading() {
+  open fun stopServicePreloading() {
     isServicePreloadingCancelled = true
   }
 

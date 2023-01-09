@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ApplicationLoader")
 @file:Internal
 @file:Suppress("ReplacePutWithAssignment", "RAW_RUN_BLOCKING")
@@ -152,7 +152,7 @@ private suspend fun initApplicationImpl(args: List<String>,
   val appInitializedListeners = coroutineScope {
     preloadCriticalServices(app)
 
-    app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this)
+    app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this, asyncScope = app.coroutineScope)
 
     launch {
       initAppActivity.runChild("old component init task creating", app::createInitOldComponentsTask)?.let { loadComponentInEdtTask ->
