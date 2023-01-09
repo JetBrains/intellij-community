@@ -453,7 +453,12 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
             System.err.println("Got null External project after import");
             return;
           }
-          ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, myProject);
+          try {
+            ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, myProject);
+          } catch (Throwable ex) {
+            ex.printStackTrace(System.err);
+            error.set(Couple.of("Exception occurred in `ProjectDataManager.importData` (see output for the details)", null));
+          }
           System.out.println("External project was successfully imported");
         }
 
