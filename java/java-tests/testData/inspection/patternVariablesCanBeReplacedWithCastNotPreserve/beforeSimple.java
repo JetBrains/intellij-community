@@ -1,5 +1,6 @@
-// "Fix all 'Using InstanceOf with patterns' problems in file" "true"
+// "Fix all 'Using 'instanceOf' with patterns' problems in file" "true"
 import java.util.Map;
+import javax.annotation.processing.Generated;
 
 public class Simple{
     private static void testIfElseIfFalseIf(Object object) {
@@ -212,5 +213,25 @@ public class Simple{
     public Object remove(Object o) {
         if (!(o instanceof Map.Entry<?, ?> e) || !(e.getKey() instanceof Integer key)) return false;
         return e.getValue();
+    }
+
+    private static boolean assign(Object o){
+        return obj instanceof String s && !(s = s.trim()).isEmpty() && s.contains("foo");
+    }
+
+    private static void withAnnotation(Object obj){
+        if (obj instanceof @Generated("")String s) {
+            System.out.println(s);
+        }
+    }
+
+    private Object getObject() {
+        return new Object();
+    }
+
+    private void testWithMethods() {
+        if (getObject() instanceof String s) {
+            System.out.println(s);
+        }
     }
 }

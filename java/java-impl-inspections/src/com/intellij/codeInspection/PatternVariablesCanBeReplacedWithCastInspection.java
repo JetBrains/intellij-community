@@ -1,21 +1,22 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -41,9 +42,6 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!HighlightingFeature.PATTERNS.isAvailable(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
     return new JavaElementVisitor() {
       @Override
       public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
@@ -52,19 +50,13 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
           return;
         }
 
-        if (pattern instanceof PsiDeconstructionPattern &&
-            !(HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(holder.getFile()))) {
+        //without support deconstruction
+        if (assignedVariablesInCondition(expression) ||
+            !(pattern instanceof PsiTypeTestPattern typeTestPattern) ||
+            typeTestPattern.getPatternVariable() == null) {
           return;
         }
-
-        LocalQuickFix quickFix = null;
-
-        //without support deconstruction
-        if (!assignedVariablesInCondition(expression) &&
-            pattern instanceof PsiTypeTestPattern typeTestPattern &&
-            typeTestPattern.getPatternVariable()!=null) {
-          quickFix = new ConvertInstanceOfPatternToCastFix(pattern, tryToPreserveUnusedVariables);
-        }
+        LocalQuickFix quickFix = new ConvertInstanceOfPatternToCastFix(pattern, tryToPreserveUnusedVariables);
 
         if (InspectionProjectProfileManager.isInformationLevel(getShortName(), pattern)) {
           holder.registerProblem(expression, TextRange.create(expression.getOperand().getStartOffsetInParent(),
@@ -80,29 +72,17 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
 
       private static boolean assignedVariablesInCondition(PsiInstanceOfExpression psiInstanceOfExpression) {
         List<PsiPatternVariable> variables = JavaPsiPatternUtil.getExposedPatternVariables(psiInstanceOfExpression);
-        PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(psiInstanceOfExpression, PsiIfStatement.class);
-        if (ifStatement != null) {
-          PsiExpression condition = ifStatement.getCondition();
-          if (PsiTreeUtil.isAncestor(condition, psiInstanceOfExpression, false)) {
-            for (PsiPatternVariable variable : variables) {
-              if (VariableAccessUtils.variableIsAssigned(variable, condition)) {
-                return true;
-              }
-            }
+
+        PsiElement upperLevel = getUpperLevelOfCondition(psiInstanceOfExpression);
+        for (PsiPatternVariable variable : variables) {
+          if (VariableAccessUtils.variableIsAssigned(variable, upperLevel)) {
+            return true;
           }
         }
 
         PsiConditionalLoopStatement conditionalLoopStatement =
           PsiTreeUtil.getParentOfType(psiInstanceOfExpression, PsiConditionalLoopStatement.class);
         if (conditionalLoopStatement != null) {
-          PsiExpression condition = conditionalLoopStatement.getCondition();
-          if (PsiTreeUtil.isAncestor(condition, psiInstanceOfExpression, false)) {
-            for (PsiPatternVariable variable : variables) {
-              if (VariableAccessUtils.variableIsAssigned(variable, condition)) {
-                return true;
-              }
-            }
-          }
           if (conditionalLoopStatement instanceof PsiForStatement forStatement) {
             PsiStatement update = forStatement.getUpdate();
             for (PsiPatternVariable variable : variables) {
@@ -114,23 +94,19 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
         }
         return false;
       }
+
+      private static PsiElement getUpperLevelOfCondition(PsiExpression expression) {
+        PsiElement current = expression;
+        PsiElement parent = current.getParent();
+        while (parent instanceof PsiParenthesizedExpression ||
+               parent instanceof PsiPolyadicExpression ||
+               parent instanceof PsiPrefixExpression) {
+          current = parent;
+          parent = current.getParent();
+        }
+        return current;
+      }
     };
-  }
-
-  private static boolean canCompleteNormally(@NotNull PsiStatement parent, @Nullable PsiStatement statement) {
-    ControlFlow flow;
-    try {
-      flow = ControlFlowFactory.getControlFlow(parent, new LocalsControlFlowPolicy(parent),
-                                               ControlFlowOptions.NO_CONST_EVALUATE);
-    }
-    catch (AnalysisCanceledException e) {
-      return true;
-    }
-
-    if (statement == null) return true;
-    int startOffset = flow.getStartOffset(statement);
-    int endOffset = flow.getEndOffset(statement);
-    return startOffset != -1 && endOffset != -1 && ControlFlowUtil.canCompleteNormally(flow, startOffset, endOffset);
   }
 
   private enum ConditionState {
@@ -184,16 +160,14 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
                                    @NotNull PsiPatternVariable variable,
                                    @NotNull PsiInstanceOfExpression psiInstanceOfExpression) {
       PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(psiInstanceOfExpression, PsiIfStatement.class);
-      if (ifStatement != null &&
-          isPartOfCondition(psiInstanceOfExpression, ifStatement.getCondition())) {
+      if (ifStatement != null && PsiTreeUtil.isAncestor(ifStatement.getCondition(), psiInstanceOfExpression, false)) {
         processReferencesForIfStatement(ifStatement, variable, psiInstanceOfExpression, references);
         return;
       }
 
       PsiConditionalLoopStatement conditionalLoopStatement =
         PsiTreeUtil.getParentOfType(psiInstanceOfExpression, PsiConditionalLoopStatement.class);
-      if (conditionalLoopStatement != null &&
-          isPartOfCondition(psiInstanceOfExpression, conditionalLoopStatement.getCondition())) {
+      if (conditionalLoopStatement != null && PsiTreeUtil.isAncestor(conditionalLoopStatement.getCondition(), psiInstanceOfExpression, false)) {
         processReferencesForLoopStatement(conditionalLoopStatement, variable, psiInstanceOfExpression, references);
         return;
       }
@@ -221,7 +195,7 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
           addDeclarationInsideBlock(thenBranch, variable);
         }
 
-        if (conditionState.equals(ConditionState.FALSE) && !canCompleteNormally(ifStatement, thenBranch) &&
+        if (conditionState.equals(ConditionState.FALSE) && !ControlFlowUtils.statementMayCompleteNormally(thenBranch) &&
             ifStatement.getElseBranch() == null &&
             !(ifStatement.getParent() instanceof PsiIfStatement parentIf && parentIf.getElseBranch() == ifStatement)) {
 
@@ -302,13 +276,9 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
       replaceWithCast(variable, unusedReferences);
     }
 
-    private static boolean isPartOfCondition(PsiInstanceOfExpression expression, @Nullable PsiExpression condition) {
-      return condition!=null && PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class, PsiPrefixExpression.class,
-                                           PsiPolyadicExpression.class) == condition.getParent();
-    }
-
     private static ConditionState getConditionIfInstanceOfTrue(PsiInstanceOfExpression expression, PsiExpression condition) {
-      if (!isPartOfCondition(expression, condition)) {
+      if (!(condition != null && PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class, PsiPrefixExpression.class,
+                                                               PsiPolyadicExpression.class) == condition.getParent())) {
         return ConditionState.UNKNOWN;
       }
       PsiElement current = expression.getParent();
@@ -372,30 +342,9 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
         return;
       }
       Project project = statement.getProject();
-      if (statement instanceof PsiBlockStatement blockStatement) {
-        PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-        PsiElement firstChild = codeBlock.getFirstBodyElement();
-        PsiElement context = firstChild;
-        if (context == null) {
-          context = codeBlock;
-        }
-        PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        PsiStatement declarationStatement = factory.createStatementFromText(text, context);
-        PsiElement newDeclarationStatement;
-        if (firstChild == null) {
-          newDeclarationStatement = codeBlock.add(declarationStatement);
-        }
-        else {
-          newDeclarationStatement = codeBlock.addBefore(declarationStatement, firstChild);
-        }
-        CodeStyleManager.getInstance(project).reformat(newDeclarationStatement);
-      }else{
-        text = "{\n" + text + "\n" + statement.getText() + "\n" + "}";
-        CommentTracker tracker = new CommentTracker();
-        tracker.markUnchanged(statement);
-        PsiElement codeBlock = tracker.replaceAndRestoreComments(statement, text);
-        CodeStyleManager.getInstance(project).reformat(codeBlock);
-      }
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      PsiStatement declarationStatement = factory.createStatementFromText(text, statement);
+      BlockUtils.addBefore(statement, declarationStatement);
     }
 
     @Nullable
@@ -405,8 +354,9 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
         return null;
       }
       text = variable.getTypeElement().getText() + " " + variable.getName() + " = " + text + ";";
-      if(variable.hasModifierProperty(PsiModifier.FINAL)){
-        text = "final " + text;
+      PsiModifierList modifierList = variable.getModifierList();
+      if (modifierList != null && StringUtil.isNotEmpty(modifierList.getText())) {
+        text =modifierList.getText() + " " + text;
       }
       return text;
     }
