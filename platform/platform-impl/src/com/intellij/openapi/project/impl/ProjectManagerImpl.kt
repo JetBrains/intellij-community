@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.project.impl
@@ -111,7 +111,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   private val openProjectByHash = ConcurrentHashMap<String, Project>()
   private val lock = Any()
 
-  // we cannot use the same approach to migrate to message bus as CompilerManagerImpl because of method canCloseProject
+  // we cannot use the same approach to migrate to message bus as CompilerManagerImpl because of the method canCloseProject
   private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<ProjectManagerListener>()
   private val defaultProject = DefaultProject()
   private val excludeRootsCache: ExcludeRootsCache
@@ -205,6 +205,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     val project = ProjectImpl(filePath = path, projectName = null)
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
+    @Suppress("RAW_RUN_BLOCKING")
     runBlocking(modalityState.asContextElement()) {
       initProject(
         file = path,
@@ -295,7 +296,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     if (save) {
       // HeadlessSaveAndSyncHandler doesn't save, but if `save` is requested,
-      // it means that we must save in any case (for example, see GradleSourceSetsTest)
+      // it means that we must save it in any case (for example, see GradleSourceSetsTest)
       saveSettings(project, forceSavingAllSettings = true)
     }
     return withContext(Dispatchers.EDT) {
@@ -329,7 +330,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     app.assertWriteIntentLockAcquired()
     @Suppress("TestOnlyProblems")
     if (isLight(project)) {
-      // if we close project at the end of the test, just mark it closed;
+      // if we close the project at the end of the test, just mark it closed;
       // if we are shutting down the entire test framework, proceed to full dispose
       val projectImpl = project as ProjectImpl
       if (!projectImpl.isTemporarilyDisposed) {
@@ -381,8 +382,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     fireProjectClosing(project)
     app.runWriteAction {
       removeFromOpened(project)
+      @Suppress("GrazieInspection")
       if (project is ProjectImpl) {
-        // ignore dispose flag (dispose is passed only via deprecated API that used only by some 3d-party plugins)
+        // ignore a dispose flag (dispose is passed only via deprecated API that used only by some 3d-party plugins)
         project.disposeEarlyDisposable()
         if (dispose) {
           project.startDispose()
@@ -424,7 +426,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   override fun addProjectManagerListener(project: Project, listener: ProjectManagerListener) {
     if (project.isDefault) {
-      // nothing happens with default project
+      // nothing happens with a default project
       return
     }
 
@@ -436,7 +438,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   override fun removeProjectManagerListener(project: Project, listener: ProjectManagerListener) {
     if (project.isDefault) {
-      // nothing happens with default project
+      // nothing happens with a default project
       return
     }
 
@@ -500,6 +502,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       runConfigurators = false
       projectName = name
     }
+    @Suppress("DEPRECATION")
     val project = runBlockingModalWithRawProgressReporter(
       owner = ModalTaskOwner.guess(),
       title = IdeUICustomization.getInstance().projectMessage("progress.title.project.creating.name", name ?: PathUtilRt.getFileName(path)),
@@ -562,7 +565,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
     }
 
-    // if we are opening project in current process (not yet PER_PROJECT), lock per-project directory
+    // if we are opening project in the current process (not yet PER_PROJECT), lock per-project directory
     if (IS_PER_PROJECT_INSTANCE_READY) {
       lockPerProjectDirForProject(PerProjectInstancePaths(projectStoreBaseDir).getSystemDir())
     }
@@ -1136,7 +1139,7 @@ private fun removeProjectConfigurationAndCaches(projectFile: Path) {
  * Checks if the project was trusted using the previous API.
  * Migrates the setting to the new API, shows the Trust Project dialog if needed.
  *
- * @return true if we should proceed with project opening, false if the process of project opening should be canceled.
+ * @return true, if we should proceed with project opening, false if the process of project opening should be canceled.
  */
 private suspend fun checkOldTrustedStateAndMigrate(project: Project, projectStoreBaseDir: Path): Boolean {
   // The trusted state will be migrated inside TrustedProjects.isTrustedProject, because now we have project instance.
@@ -1163,9 +1166,9 @@ private suspend fun initProject(file: Path,
   try {
     coroutineContext.ensureActive()
 
-    val registerComponentsActivity = createActivity(project) { "project ${StartUpMeasurer.Activities.REGISTER_COMPONENTS_SUFFIX}" }
+    val registerComponentActivity = createActivity(project) { "project ${StartUpMeasurer.Activities.REGISTER_COMPONENTS_SUFFIX}" }
     project.registerComponents()
-    registerComponentsActivity?.end()
+    registerComponentActivity?.end()
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
       @Suppress("TestOnlyProblems")
@@ -1308,7 +1311,7 @@ interface ProjectServiceContainerCustomizer {
   }
 
   /**
-   * Invoked after implementation classes for project's components were determined (and loaded),
+   * Invoked after implementation classes for the project's components were determined (and loaded),
    * but before components are instantiated.
    */
   fun serviceRegistered(project: Project)
@@ -1357,7 +1360,7 @@ private fun clearPerProjectDirsForProject(
 /**
  * Checks if the project path is trusted, and shows the Trust Project dialog if needed.
  *
- * @return true if we should proceed with project opening, false if the process of project opening should be canceled.
+ * @return true, if we should proceed with project opening, false if the process of project opening should be canceled.
  */
 private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
   val locatedProject = LocatedProject.locateProject(projectStoreBaseDir, project = null)
