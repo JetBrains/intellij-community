@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.psi.xml.XmlTokenType.*;
 
-public abstract class BaseHtmlLexer extends DelegateLexer {
+public abstract class BaseHtmlLexer extends DelegateLexer implements RestartableLexer {
   protected static final int BASE_STATE_MASK = 0x3F;
   private static final int CONTENT_PROVIDER_HAS_STATE = 0x40;
   private static final int IS_WITHIN_TAG_STATE = 0x80;
@@ -75,6 +75,21 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     myHtmlEmbedmentInfo = null;
     myEmbeddedContentProviders.forEach(provider -> provider.restoreState(null));
     broadcastToken();
+  }
+
+  @Override
+  public boolean isRestartableState(int state) {
+    return (state & CONTENT_PROVIDER_HAS_STATE) == 0;
+  }
+
+  @Override
+  public int getStartState() {
+    return 0;
+  }
+
+  @Override
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState, TokenIterator tokenIterator) {
+    start(buffer, startOffset, endOffset, initialState);
   }
 
   @Override
