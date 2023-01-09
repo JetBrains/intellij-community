@@ -24,6 +24,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.UIUtil
 import java.awt.Color
+import java.awt.Cursor
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
@@ -47,6 +48,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
 
   override fun createCustomComponent(presentation: Presentation, place: String) = SimpleColoredComponent().apply {
     isOpaque = false
+    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     object : ClickListener() {
       override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
         if (clickCount == 1) {
