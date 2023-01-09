@@ -55,9 +55,19 @@ internal class DefaultNavBarItemDataRule : GetDataRule {
   }
 
   private fun fromDataContext(ctx: DataContext): PsiElement? {
-    val element = PSI_FILE.getData(ctx)
-                  ?: PsiUtilCore.findFileSystemItem(PROJECT.getData(ctx), VIRTUAL_FILE.getData(ctx))
-    return adjustWithAllExtensions(element)
+    val psiFile = PSI_FILE.getData(ctx)
+    if (psiFile != null) {
+      ensurePsiFromExtensionIsValid(psiFile, "Context PSI_FILE is invalid", psiFile.javaClass)
+      return adjustWithAllExtensions(psiFile)
+    }
+
+    val fileSystemItem = PsiUtilCore.findFileSystemItem(PROJECT.getData(ctx), VIRTUAL_FILE.getData(ctx))
+    if (fileSystemItem != null) {
+      ensurePsiFromExtensionIsValid(fileSystemItem, "Context fileSystemItem is invalid", fileSystemItem.javaClass)
+      return adjustWithAllExtensions(fileSystemItem)
+    }
+
+    return null
   }
 
 }

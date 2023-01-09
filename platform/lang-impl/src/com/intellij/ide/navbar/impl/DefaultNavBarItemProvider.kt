@@ -73,7 +73,7 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
   private fun originalParent(parent: PsiElement): PsiElement {
     val originalElement = parent.originalElement
     if (originalElement !is PsiCompiledElement || parent is PsiCompiledElement) {
-      ensurePsiFromExtensionIsValid("Original parent is invalid", originalElement)
+      ensurePsiFromExtensionIsValid(originalElement, "Original parent is invalid", parent.javaClass)
       return originalElement
     }
     else {
@@ -84,9 +84,12 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
   private fun adjustedParent(parent: PsiElement, ownerExtension: NavBarModelExtension?): PsiElement? {
     val originalParent = originalParent(parent)
     val adjustedByOwner = ownerExtension?.adjustElement(originalParent)
-    ensurePsiFromExtensionIsValid("Owner extension returned invalid psi after adjustment", adjustedByOwner, ownerExtension)
-    val adjustedWithAll = adjustedByOwner ?: adjustWithAllExtensions(originalParent)
-    return adjustedWithAll
+    if (adjustedByOwner != null) {
+      ensurePsiFromExtensionIsValid(adjustedByOwner, "Owner extension returned invalid psi after adjustment", ownerExtension.javaClass)
+      return adjustedByOwner
+    } else {
+      return adjustWithAllExtensions(originalParent)
+    }
   }
 
   @RequiresReadLock
@@ -110,9 +113,13 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
           is Project -> ProjectNavBarItem(child)
           is Module -> ModuleNavBarItem(child)
           is PsiElement -> {
-            child
-              .let { if (ext.normalizeChildren()) adjustWithAllExtensions(it) else it }
-              ?.let { PsiNavBarItem(it, ownerExtension = null) }
+            if (ext.normalizeChildren()) {
+              val adjusted = adjustWithAllExtensions(child)
+              adjusted?.let { PsiNavBarItem(it, ownerExtension = null) }
+            }
+            else {
+              PsiNavBarItem(child, ownerExtension = null)
+            }
           }
           is OrderEntry -> OrderEntryNavBarItem(child)
           else -> DefaultNavBarItem(child)
@@ -143,12 +150,11 @@ fun <T> fromOldExtensions(selector: (ext: NavBarModelExtension) -> T?, predicate
   return null
 }
 
-fun adjustWithAllExtensions(element: PsiElement?): PsiElement? {
-  ensurePsiFromExtensionIsValid("Invalid psi passed to be adjusted", element)
+fun adjustWithAllExtensions(element: PsiElement): PsiElement? {
   var result = element
   for (ext in NavBarModelExtension.EP_NAME.extensionList) {
-    result = result?.let { ext.adjustElement(it) }
-    ensurePsiFromExtensionIsValid("Invalid psi returned from ${ext::class.java} while adjusting", result, ext)
+    result = ext.adjustElement(result) ?: return null
+    ensurePsiFromExtensionIsValid(result, "Invalid psi returned from ${ext.javaClass} while adjusting", ext.javaClass)
   }
   return result
 }
@@ -161,19 +167,16 @@ private fun additionalRoots(project: Project): Iterable<VirtualFile> {
   return resultRoots
 }
 
-private fun ensurePsiFromExtensionIsValid(message: String, psi: PsiElement?, ext: NavBarModelExtension? = null) {
-  if (psi == null) {
-    return
-  }
+internal fun ensurePsiFromExtensionIsValid(psi: PsiElement, message: String, clazz: Class<*>? = null) {
   try {
     PsiUtilCore.ensureValid(psi)
   }
   catch (t: Throwable) {
-    if (ext != null) {
-      throw PluginException.createByClass(message, t, ext::class.java)
+    if (clazz != null) {
+      throw PluginException.createByClass(message, t, clazz)
     }
     else {
-      throw t
+      throw IllegalStateException(message, t)
     }
   }
 }
