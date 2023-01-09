@@ -10,6 +10,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
@@ -637,7 +638,16 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
     // if this is the main UISettings instance (and not on first call to getInstance) push event to bus and to all current components
     if (this === cachedInstance) {
-      treeDispatcher.multicaster.uiSettingsChanged(this)
+      try {
+        treeDispatcher.multicaster.uiSettingsChanged(this)
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Exception) {
+        LOG.error(e)
+      }
+
       ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this)
     }
   }
