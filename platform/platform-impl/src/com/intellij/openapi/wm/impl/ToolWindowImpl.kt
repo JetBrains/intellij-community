@@ -1,10 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.*
+import com.intellij.ide.actions.ContextHelpAction
+import com.intellij.ide.actions.ToggleToolbarAction
+import com.intellij.ide.actions.ToolWindowMoveAction
+import com.intellij.ide.actions.ToolwindowFusEventFields
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -52,7 +55,6 @@ import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
-import java.util.*
 import javax.swing.*
 import kotlin.math.abs
 
@@ -404,7 +406,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   fun getComponentIfInitialized(): JComponent? {
-    return if (contentManager.isInitialized()) contentManager.value.component else null
+    return if (contentManager.isInitialized()) contentManager.value.takeIf { !it.isDisposed }?.component else null
   }
 
   override fun getContentManagerIfCreated(): ContentManager? {
