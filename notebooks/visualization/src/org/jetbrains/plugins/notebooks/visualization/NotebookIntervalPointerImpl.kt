@@ -6,26 +6,24 @@ import com.intellij.openapi.command.undo.DocumentReference
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointersEvent.*
 
 class NotebookIntervalPointerFactoryImplProvider : NotebookIntervalPointerFactoryProvider {
-  override fun create(editor: Editor): NotebookIntervalPointerFactory {
-    val notebookCellLines = NotebookCellLines.get(editor)
-    val project = editor.project
+  override fun create(project: Project, document: Document): NotebookIntervalPointerFactory {
+    val notebookCellLines = NotebookCellLines.get(document)
     val factory = NotebookIntervalPointerFactoryImpl(notebookCellLines,
-                                                     DocumentReferenceManager.getInstance().create(editor.document),
-                                                     project?.let(UndoManager::getInstance))
+                                                     DocumentReferenceManager.getInstance().create(document),
+                                                     UndoManager.getInstance(project))
 
     notebookCellLines.intervalListeners.addListener(factory)
-    project?.let {
-      Disposer.register(project) {
-        notebookCellLines.intervalListeners.removeListener(factory)
-        NotebookIntervalPointerFactory.key.set(editor.document, null)
-      }
+    Disposer.register(project) {
+      notebookCellLines.intervalListeners.removeListener(factory)
+      NotebookIntervalPointerFactory.key.set(document, null)
     }
 
     return factory

@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.notebooks.visualization
 
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
 import java.util.*
@@ -40,14 +42,23 @@ interface NotebookIntervalPointerFactory {
     fun get(editor: Editor): NotebookIntervalPointerFactory =
       getOrNull(editor)!!
 
-    fun getOrNull(editor: Editor): NotebookIntervalPointerFactory? =
-      key.get(editor.document) ?: tryInstall(editor)
+    fun get(project: Project, document: Document): NotebookIntervalPointerFactory =
+      getOrNull(project, document)!!
 
-    private fun tryInstall(editor: Editor): NotebookIntervalPointerFactory? =
-      getLanguage(editor)
+    fun getOrNull(editor: Editor): NotebookIntervalPointerFactory? {
+      val project = editor.project ?: return null
+      return key.get(editor.document) ?: tryInstall(project, editor.document)
+    }
+
+    fun getOrNull(project: Project, document: Document): NotebookIntervalPointerFactory? {
+      return key.get(document) ?: tryInstall(project, document)
+    }
+
+    private fun tryInstall(project: Project, document: Document): NotebookIntervalPointerFactory? =
+      getLanguage(project, document)
         ?.let { NotebookIntervalPointerFactoryProvider.forLanguage(it) }
-        ?.create(editor)
-        ?.also { key.set(editor.document, it) }
+        ?.create(project, document)
+        ?.also { key.set(document, it) }
   }
 
   sealed interface Change
