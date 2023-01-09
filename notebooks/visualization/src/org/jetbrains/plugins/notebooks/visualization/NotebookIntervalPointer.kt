@@ -47,7 +47,7 @@ interface NotebookIntervalPointerFactory {
 
     fun getOrNull(editor: Editor): NotebookIntervalPointerFactory? {
       val project = editor.project ?: return null
-      return key.get(editor.document) ?: tryInstall(project, editor.document)
+      return getOrNull(project, editor.document)
     }
 
     fun getOrNull(project: Project, document: Document): NotebookIntervalPointerFactory? {
