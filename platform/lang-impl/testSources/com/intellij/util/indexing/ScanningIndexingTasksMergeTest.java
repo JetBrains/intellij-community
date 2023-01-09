@@ -43,11 +43,11 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
     iterShared = new FakeIndexableFilesIterator();
     iter2 = new FakeIndexableFilesIterator();
 
-    Map<IndexableFilesIterator, List<VirtualFile>> map1 = new HashMap<>();
+    Map<IndexableFilesIterator, Collection<VirtualFile>> map1 = new HashMap<>();
     map1.put(iter1, f1);
     map1.put(iterShared, fShared.subList(0, 2));
 
-    Map<IndexableFilesIterator, List<VirtualFile>> map2 = new HashMap<>();
+    Map<IndexableFilesIterator, Collection<VirtualFile>> map2 = new HashMap<>();
     map2.put(iter2, f2);
     map2.put(iterShared, fShared.subList(1, 3));
 
@@ -121,7 +121,7 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
   }
 
   private void assertMergedStateInvariants(UnindexedFilesIndexer mergedTask) {
-    Map<IndexableFilesIterator, List<VirtualFile>> merged = mergedTask.getProviderToFiles();
+    Map<IndexableFilesIterator, Collection<VirtualFile>> merged = mergedTask.getProviderToFiles();
 
     assertEquals(3, merged.keySet().size());
     assertTrue(merged.containsKey(iter1));

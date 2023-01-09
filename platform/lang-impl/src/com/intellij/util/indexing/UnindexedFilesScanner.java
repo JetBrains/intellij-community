@@ -159,7 +159,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     this(project, false, false, null, null, indexingReason, ScanningType.FULL);
   }
 
-  private @NotNull Map<IndexableFilesIterator, List<VirtualFile>> scan(@NotNull PerformanceWatcher.Snapshot snapshot,
+  private @NotNull Map<IndexableFilesIterator, Collection<VirtualFile>> scan(@NotNull PerformanceWatcher.Snapshot snapshot,
                                                                        @NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
                                                                        @NotNull ProgressIndicator indicator,
                                                                        @NotNull Ref<? super StatusMark> markRef) {
@@ -181,7 +181,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     }
 
     List<IndexableFilesIterator> orderedProviders;
-    Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles;
+    Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles;
     projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.CreatingIterators);
     try {
       if (myPredefinedIndexableFilesIterators == null) {
@@ -240,7 +240,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
 
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
     Disposable scanningLifetime = Disposer.newDisposable();
-    Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles;
+    Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles;
     try {
       if (!shouldScanInSmartMode()) {
         DumbModeProgressTitle.getInstance(myProject)
@@ -259,7 +259,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
       scheduleInitialVfsRefresh();
     }
 
-    int totalFiles = providerToFiles.values().stream().mapToInt(List::size).sum();
+    int totalFiles = providerToFiles.values().stream().mapToInt(Collection::size).sum();
     if (totalFiles > 0) {
       UnindexedFilesIndexer indexer = new UnindexedFilesIndexer(myProject, providerToFiles);
       if (shouldScanInSmartMode()) {
@@ -334,7 +334,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     return null;
   }
 
-  private @NotNull Map<IndexableFilesIterator, List<VirtualFile>> collectIndexableFilesConcurrently(
+  private @NotNull Map<IndexableFilesIterator, Collection<VirtualFile>> collectIndexableFilesConcurrently(
     @NotNull Project project,
     @NotNull ProgressIndicator indicator,
     @NotNull List<? extends IndexableFilesIterator> providers,
@@ -347,7 +347,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
       ContainerUtil.map(IndexableFileScanner.EP_NAME.getExtensionList(), scanner -> scanner.startSession(project));
     UnindexedFilesFinder unindexedFileFinder = new UnindexedFilesFinder(project, myIndex, getForceReindexingTrigger());
 
-    Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles = new IdentityHashMap<>();
+    Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles = new IdentityHashMap<>();
     IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
 
     indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
