@@ -4,31 +4,24 @@ package com.intellij.codeInspection.blockingCallsDetection;
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.*;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.ui.components.panels.VerticalLayout;
-import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UCallExpression;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
 import static java.util.Collections.emptyList;
 
 public final class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUastLocalInspectionTool {
@@ -57,8 +50,16 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
   public boolean myConsiderUnknownContextBlocking;
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new OptionsPanel();
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myConsiderUnknownContextBlocking", JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.blocking")),
+      stringSet("myBlockingAnnotations", JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.blocking"),
+                new JavaClassValidator().withTitle(JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.add.blocking.title"))
+                  .annotationsOnly()),
+      stringSet("myNonBlockingAnnotations", JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.non-blocking"),
+                new JavaClassValidator().withTitle(JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.add.non-blocking.title"))
+                  .annotationsOnly())
+    );
   }
 
   @NotNull
@@ -104,55 +105,6 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
     Set<String> result = new HashSet<>(defaultAnnotations);
     result.addAll(annotations != null ? annotations : emptyList());
     return result;
-  }
-
-  private final class OptionsPanel extends JPanel {
-    private OptionsPanel() {
-      super(new BorderLayout());
-      JPanel mainPanel = new JPanel(new VerticalLayout(UIUtil.DEFAULT_VGAP));
-
-      Project project = getCurrentProjectOrDefault(this);
-      BlockingAnnotationsPanel blockingAnnotationsPanel =
-        new BlockingAnnotationsPanel(
-          project,
-          JvmAnalysisBundle
-            .message("jvm.inspections.blocking.method.annotation.blocking"),
-          myBlockingAnnotations,
-          DEFAULT_BLOCKING_ANNOTATIONS,
-          JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.empty.text"),
-          JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.add.blocking.title"));
-
-      BlockingAnnotationsPanel nonBlockingAnnotationsPanel =
-        new BlockingAnnotationsPanel(
-          project,
-          JvmAnalysisBundle.message(
-            "jvm.inspections.blocking.method.annotation.non-blocking"),
-          myNonBlockingAnnotations,
-          DEFAULT_NONBLOCKING_ANNOTATIONS,
-          JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.empty.text"),
-          JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.add.non-blocking.title"));
-
-      JCheckBox unknownContextCheckBox = new JCheckBox(
-        JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.blocking"),
-        myConsiderUnknownContextBlocking);
-      unknownContextCheckBox.addActionListener(e -> myConsiderUnknownContextBlocking = unknownContextCheckBox.isSelected());
-      mainPanel.add(unknownContextCheckBox);
-      mainPanel.add(blockingAnnotationsPanel.getComponent());
-      mainPanel.add(nonBlockingAnnotationsPanel.getComponent());
-
-      add(mainPanel, BorderLayout.CENTER);
-    }
-  }
-
-  @NotNull
-  private static Project getCurrentProjectOrDefault(Component context) {
-    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(context));
-    if (project == null) {
-      IdeFrame lastFocusedFrame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
-      if (lastFocusedFrame != null) project = lastFocusedFrame.getProject();
-      if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-    }
-    return project;
   }
 
   private class BlockingMethodInNonBlockingContextVisitor extends PsiElementVisitor {
