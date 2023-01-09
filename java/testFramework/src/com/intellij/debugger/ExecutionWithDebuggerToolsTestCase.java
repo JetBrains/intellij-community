@@ -120,7 +120,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   private @NotNull BreakpointProvider getBreakpointProvider() {
     if (myBreakpointProvider == null) {
-      final DebugProcessImpl debugProcess = getDebugProcess();
+      DebugProcessImpl debugProcess = getDebugProcess();
       assertNotNull("Debug process was not started", debugProcess);
 
       myBreakpointProvider = new BreakpointProvider(myDebugProcess);
@@ -138,7 +138,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     getBreakpointProvider().onBreakpoints(runnable);
   }
 
-  protected void onStop(final SuspendContextRunnable runnable, final SuspendContextRunnable then) {
+  protected void onStop(SuspendContextRunnable runnable, SuspendContextRunnable then) {
     onBreakpoint(new SuspendContextRunnable() {
       @Override
       public void run(SuspendContextImpl suspendContext) throws Exception {
@@ -152,7 +152,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     });
   }
 
-  protected void doWhenPausedThenResume(final SuspendContextRunnable runnable) {
+  protected void doWhenPausedThenResume(SuspendContextRunnable runnable) {
     onStop(runnable, this::resume);
   }
 
@@ -171,7 +171,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     return sourcePosition.getFile().getVirtualFile().getName() + ":" + line;
   }
 
-  protected void printContext(final StackFrameContext context) {
+  protected void printContext(StackFrameContext context) {
     ApplicationManager.getApplication().runReadAction(() -> {
       if (context.getFrameProxy() != null) {
         systemPrintln(toDisplayableString(Objects.requireNonNull(PositionUtil.getSourcePosition(context))));
@@ -182,7 +182,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     });
   }
 
-  protected void printContextWithText(final StackFrameContext context) {
+  protected void printContextWithText(StackFrameContext context) {
     ApplicationManager.getApplication().runReadAction(() -> {
       if (context.getFrameProxy() != null) {
         SourcePosition sourcePosition = PositionUtil.getSourcePosition(context);
@@ -204,7 +204,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     });
   }
 
-  protected void invokeRatherLater(SuspendContextImpl context, final Runnable runnable) {
+  protected void invokeRatherLater(SuspendContextImpl context, Runnable runnable) {
     invokeRatherLater(new SuspendContextCommandImpl(context) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
@@ -216,7 +216,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   protected void pumpSwingThread() {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
 
-    final InvokeRatherLaterRequest request = myRatherLaterRequests.get(0);
+    InvokeRatherLaterRequest request = myRatherLaterRequests.get(0);
     request.invokesN++;
 
     if (request.invokesN == RATHER_LATER_INVOKES_N) {
@@ -253,7 +253,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
   }
 
-  private void pumpDebuggerThread(final InvokeRatherLaterRequest request) {
+  private void pumpDebuggerThread(InvokeRatherLaterRequest request) {
     if (request.invokesN == RATHER_LATER_INVOKES_N) {
       request.myDebugProcess.getManagerThread().schedule(request.myDebuggerCommand);
     }
@@ -267,7 +267,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
   }
 
-  protected void invokeRatherLater(final DebuggerCommandImpl command) {
+  protected void invokeRatherLater(DebuggerCommandImpl command) {
     invokeRatherLater(getDebugProcess(), command);
   }
 
@@ -318,7 +318,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
    * <li>Catch class filters(-ExceptionTest,-com.intellij.rt.*)
    * </ul>
    */
-  public void createBreakpoints(final PsiFile file) {
+  public void createBreakpoints(PsiFile file) {
     Runnable runnable = () -> {
       BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
@@ -450,24 +450,24 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
 
     @Override
-    public void paused(@NotNull final SuspendContext suspendContext) {
+    public void paused(@NotNull SuspendContext suspendContext) {
       pauseExecution();
       myTarget.paused(suspendContext);
     }
 
     @Override
-    public void resumed(final SuspendContext suspendContext) {
+    public void resumed(SuspendContext suspendContext) {
       pauseExecution();
       myTarget.resumed(suspendContext);
     }
 
     @Override
-    public void processDetached(@NotNull final DebugProcess process, final boolean closedByUser) {
+    public void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
       myTarget.processDetached(process, closedByUser);
     }
 
     @Override
-    public void processAttached(@NotNull final DebugProcess process) {
+    public void processAttached(@NotNull DebugProcess process) {
       myTarget.processAttached(process);
     }
 
@@ -477,7 +477,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
 
     @Override
-    public void attachException(final RunProfileState state, final ExecutionException exception, final RemoteConnection remoteConnection) {
+    public void attachException(RunProfileState state, ExecutionException exception, RemoteConnection remoteConnection) {
       myTarget.attachException(state, exception, remoteConnection);
     }
 
@@ -533,7 +533,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     //executed in manager thread
     @Override
     public void resumed(SuspendContextImpl suspendContext) {
-      final SuspendContextImpl pausedContext = myDebugProcess.getSuspendManager().getPausedContext();
+      SuspendContextImpl pausedContext = myDebugProcess.getSuspendManager().getPausedContext();
       if (pausedContext != null) {
         myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(pausedContext) {
           @Override
