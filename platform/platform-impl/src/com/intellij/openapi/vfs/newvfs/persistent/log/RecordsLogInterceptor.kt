@@ -72,23 +72,23 @@ class RecordsLogInterceptor(
       }
     }
 
-  override fun onPutLength(underlying: (fileId: Int, length: Long) -> Boolean): (fileId: Int, length: Long) -> Boolean =
+  override fun onSetLength(underlying: (fileId: Int, length: Long) -> Boolean): (fileId: Int, length: Long) -> Boolean =
     { fileId, length ->
       { underlying(fileId, length) } catchResult { result ->
         processor.enqueue {
-          descriptorStorage.writeDescriptor(VfsOperationTag.REC_PUT_LENGTH) {
-            VfsOperation.RecordsOperation.PutLength(fileId, length, result)
+          descriptorStorage.writeDescriptor(VfsOperationTag.REC_SET_LENGTH) {
+            VfsOperation.RecordsOperation.SetLength(fileId, length, result)
           }
         }
       }
     }
 
-  override fun onPutTimestamp(underlying: (fileId: Int, timestamp: Long) -> Boolean): (fileId: Int, timestamp: Long) -> Boolean =
+  override fun onSetTimestamp(underlying: (fileId: Int, timestamp: Long) -> Boolean): (fileId: Int, timestamp: Long) -> Boolean =
     { fileId, timestamp ->
       { underlying(fileId, timestamp) } catchResult { result ->
         processor.enqueue {
-          descriptorStorage.writeDescriptor(VfsOperationTag.REC_PUT_TIMESTAMP) {
-            VfsOperation.RecordsOperation.PutTimestamp(fileId, timestamp, result)
+          descriptorStorage.writeDescriptor(VfsOperationTag.REC_SET_TIMESTAMP) {
+            VfsOperation.RecordsOperation.SetTimestamp(fileId, timestamp, result)
           }
         }
       }

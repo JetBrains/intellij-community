@@ -45,8 +45,8 @@ class DescriptorStorageImpl(
       VfsOperationTag.REC_SET_PARENT -> VfsOperation.RecordsOperation.SetParent.VALUE_SIZE_BYTES
       VfsOperationTag.REC_SET_NAME_ID -> VfsOperation.RecordsOperation.SetNameId.VALUE_SIZE_BYTES
       VfsOperationTag.REC_SET_FLAGS -> VfsOperation.RecordsOperation.SetFlags.VALUE_SIZE_BYTES
-      VfsOperationTag.REC_PUT_LENGTH -> VfsOperation.RecordsOperation.PutLength.VALUE_SIZE_BYTES
-      VfsOperationTag.REC_PUT_TIMESTAMP -> VfsOperation.RecordsOperation.PutTimestamp.VALUE_SIZE_BYTES
+      VfsOperationTag.REC_SET_LENGTH -> VfsOperation.RecordsOperation.SetLength.VALUE_SIZE_BYTES
+      VfsOperationTag.REC_SET_TIMESTAMP -> VfsOperation.RecordsOperation.SetTimestamp.VALUE_SIZE_BYTES
       VfsOperationTag.REC_MARK_RECORD_AS_MODIFIED -> VfsOperation.RecordsOperation.MarkRecordAsModified.VALUE_SIZE_BYTES
       VfsOperationTag.REC_FILL_RECORD -> VfsOperation.RecordsOperation.FillRecord.VALUE_SIZE_BYTES
       VfsOperationTag.REC_CLEAN_RECORD -> VfsOperation.RecordsOperation.CleanRecord.VALUE_SIZE_BYTES

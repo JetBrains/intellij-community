@@ -161,8 +161,8 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         }
     }
 
-    class PutLength(val fileId: Int, val length: Long, result: OperationResult<Boolean>)
-      : RecordsOperation<Boolean>(VfsOperationTag.REC_PUT_LENGTH, result) {
+    class SetLength(val fileId: Int, val length: Long, result: OperationResult<Boolean>)
+      : RecordsOperation<Boolean>(VfsOperationTag.REC_SET_LENGTH, result) {
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + Long.SIZE_BYTES + OperationResult.SIZE_BYTES
 
@@ -171,7 +171,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             val fileId = readInt()
             val length = readLong()
             val result = readResult<Boolean>(enumerator)
-            PutLength(fileId, length, result)
+            SetLength(fileId, length, result)
           }
       }
 
@@ -186,8 +186,8 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         }
     }
 
-    class PutTimestamp(val fileId: Int, val timestamp: Long, result: OperationResult<Boolean>)
-      : RecordsOperation<Boolean>(VfsOperationTag.REC_PUT_TIMESTAMP, result) {
+    class SetTimestamp(val fileId: Int, val timestamp: Long, result: OperationResult<Boolean>)
+      : RecordsOperation<Boolean>(VfsOperationTag.REC_SET_TIMESTAMP, result) {
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + Long.SIZE_BYTES + OperationResult.SIZE_BYTES
 
@@ -196,7 +196,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             val fileId = readInt()
             val timestamp = readLong()
             val result = readResult<Boolean>(enumerator)
-            PutTimestamp(fileId, timestamp, result)
+            SetTimestamp(fileId, timestamp, result)
           }
       }
 
@@ -621,8 +621,8 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         VfsOperationTag.REC_SET_PARENT -> RecordsOperation.SetParent.deserializeValue(data, enumerator) as T
         VfsOperationTag.REC_SET_NAME_ID -> RecordsOperation.SetNameId.deserializeValue(data, enumerator) as T
         VfsOperationTag.REC_SET_FLAGS -> RecordsOperation.SetFlags.deserializeValue(data, enumerator) as T
-        VfsOperationTag.REC_PUT_LENGTH -> RecordsOperation.PutLength.deserializeValue(data, enumerator) as T
-        VfsOperationTag.REC_PUT_TIMESTAMP -> RecordsOperation.PutTimestamp.deserializeValue(data, enumerator) as T
+        VfsOperationTag.REC_SET_LENGTH -> RecordsOperation.SetLength.deserializeValue(data, enumerator) as T
+        VfsOperationTag.REC_SET_TIMESTAMP -> RecordsOperation.SetTimestamp.deserializeValue(data, enumerator) as T
         VfsOperationTag.REC_MARK_RECORD_AS_MODIFIED -> RecordsOperation.MarkRecordAsModified.deserializeValue(data, enumerator) as T
         VfsOperationTag.REC_FILL_RECORD -> RecordsOperation.FillRecord.deserializeValue(data, enumerator) as T
         VfsOperationTag.REC_CLEAN_RECORD -> RecordsOperation.CleanRecord.deserializeValue(data, enumerator) as T
