@@ -1884,6 +1884,16 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
                 runTest("testData/editor/enterHandler/FunctionBlock.after.kt");
             }
 
+            @TestMetadata("FunctionCallWithArgumentsAlign.after.kt")
+            public void testFunctionCallWithArgumentsAlign() throws Exception {
+                runTest("testData/editor/enterHandler/FunctionCallWithArgumentsAlign.after.kt");
+            }
+
+            @TestMetadata("FunctionCallWithArgumentsAlign2.after.kt")
+            public void testFunctionCallWithArgumentsAlign2() throws Exception {
+                runTest("testData/editor/enterHandler/FunctionCallWithArgumentsAlign2.after.kt");
+            }
+
             @TestMetadata("HigherOrderFunction.after.kt")
             public void testHigherOrderFunction() throws Exception {
                 runTest("testData/editor/enterHandler/HigherOrderFunction.after.kt");

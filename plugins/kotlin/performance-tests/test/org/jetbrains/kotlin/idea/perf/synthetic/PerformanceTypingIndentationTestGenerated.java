@@ -1884,6 +1884,16 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/editor/enterHandler/FunctionBlock.after.kt");
             }
 
+            @TestMetadata("FunctionCallWithArgumentsAlign.after.kt")
+            public void testFunctionCallWithArgumentsAlign() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/FunctionCallWithArgumentsAlign.after.kt");
+            }
+
+            @TestMetadata("FunctionCallWithArgumentsAlign2.after.kt")
+            public void testFunctionCallWithArgumentsAlign2() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/FunctionCallWithArgumentsAlign2.after.kt");
+            }
+
             @TestMetadata("HigherOrderFunction.after.kt")
             public void testHigherOrderFunction() throws Exception {
                 runTest("../idea/tests/testData/editor/enterHandler/HigherOrderFunction.after.kt");
