@@ -27,6 +27,7 @@ sealed class SuperDeclaration {
     class Function(override val declaration: SmartPsiElementPointer<KtNamedFunction>): SuperDeclaration()
     class JavaMethod(override val declaration: SmartPsiElementPointer<PsiMethod>): SuperDeclaration()
     class Property(override val declaration: SmartPsiElementPointer<KtProperty>): SuperDeclaration()
+    class Parameter(override val declaration: SmartPsiElementPointer<KtParameter>): SuperDeclaration()
 
     abstract val declaration: SmartPsiElementPointer<out PsiElement>
 
@@ -64,6 +65,7 @@ object SuperDeclarationProvider {
                             is KtProperty -> add(SuperDeclaration.Property(psi.createSmartPointer()))
                             is PsiMethod -> add(SuperDeclaration.JavaMethod(psi.createSmartPointer()))
                             is PsiClass -> add(SuperDeclaration.JavaClass(psi.createSmartPointer()))
+                            is KtParameter -> add(SuperDeclaration.Parameter(psi.createSmartPointer()))
                         }
                     }
                 }
