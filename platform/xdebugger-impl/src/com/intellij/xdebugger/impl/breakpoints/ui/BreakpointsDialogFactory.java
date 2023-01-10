@@ -44,23 +44,11 @@ public class BreakpointsDialogFactory {
     if (myBalloonToHide != null && !myBalloonToHide.isDisposed()) {
       return true;
     }
-    if (myDialogShowing != null) {
-      myDialogShowing.selectBreakpoint(breakpoint, true);
-      myDialogShowing.toFront();
-      return true;
-    }
-    return false;
+    return selectInDialogShowing(breakpoint);
   }
 
   public void showDialog(@Nullable Object initialBreakpoint) {
-    if (myDialogShowing != null) {
-      Window window = myDialogShowing.getWindow();
-      if (window != null && window.isDisplayable()) { // workaround for IDEA-197804
-        myDialogShowing.selectBreakpoint(initialBreakpoint, true);
-        myDialogShowing.toFront();
-        return;
-      }
-    }
+    if (selectInDialogShowing(initialBreakpoint)) return;
 
     final BreakpointsDialog dialog = new BreakpointsDialog(myProject, initialBreakpoint != null ? initialBreakpoint : myBreakpoint, XBreakpointUtil.collectPanelProviders()) {
       @Override
@@ -84,5 +72,17 @@ public class BreakpointsDialogFactory {
     myDialogShowing = dialog;
 
     dialog.show();
+  }
+
+  private boolean selectInDialogShowing(@Nullable Object initialBreakpoint) {
+    if (myDialogShowing != null) {
+      Window window = myDialogShowing.getWindow();
+      if (window != null && window.isDisplayable()) { // workaround for IDEA-197804
+        myDialogShowing.selectBreakpoint(initialBreakpoint, true);
+        myDialogShowing.toFront();
+        return true;
+      }
+    }
+    return false;
   }
 }
