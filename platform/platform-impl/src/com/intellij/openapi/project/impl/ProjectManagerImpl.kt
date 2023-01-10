@@ -37,6 +37,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
@@ -875,8 +876,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     if (options.runConversionBeforeOpen) {
       val conversionService = ConversionService.getInstance()
       if (conversionService != null) {
-        conversionResult = runActivity("project conversion") {
-          conversionService.convert(projectStoreBaseDir)
+        conversionResult = blockingContext {
+          runActivity("project conversion") {
+            conversionService.convert(projectStoreBaseDir)
+          }
         }
         if (conversionResult.openingIsCanceled()) {
           throw CancellationException("ConversionResult.openingIsCanceled() returned true")
