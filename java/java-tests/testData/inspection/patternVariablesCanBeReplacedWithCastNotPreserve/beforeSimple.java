@@ -1,4 +1,4 @@
-// "Fix all 'Using 'instanceOf' with patterns' problems in file" "true"
+// "Fix all 'Using 'instanceof' with patterns' problems in file" "true"
 import java.util.Map;
 import javax.annotation.processing.Generated;
 

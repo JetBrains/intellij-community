@@ -82,13 +82,11 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
 
         PsiConditionalLoopStatement conditionalLoopStatement =
           PsiTreeUtil.getParentOfType(psiInstanceOfExpression, PsiConditionalLoopStatement.class);
-        if (conditionalLoopStatement != null) {
-          if (conditionalLoopStatement instanceof PsiForStatement forStatement) {
-            PsiStatement update = forStatement.getUpdate();
-            for (PsiPatternVariable variable : variables) {
-              if (VariableAccessUtils.variableIsAssigned(variable, update)) {
-                return true;
-              }
+        if (conditionalLoopStatement instanceof PsiForStatement forStatement) {
+          PsiStatement update = forStatement.getUpdate();
+          for (PsiPatternVariable variable : variables) {
+            if (VariableAccessUtils.variableIsAssigned(variable, update)) {
+              return true;
             }
           }
         }
