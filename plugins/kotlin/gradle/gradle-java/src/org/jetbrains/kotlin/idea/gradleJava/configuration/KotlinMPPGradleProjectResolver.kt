@@ -60,6 +60,7 @@ import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import org.jetbrains.kotlin.tooling.core.Extras
+import org.jetbrains.kotlin.tooling.core.closure
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -414,11 +415,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 
                     }
 
-                    val kotlinSourceSet = createSourceSetInfo(
-                        compilation,
-                        gradleModule,
-                        resolverCtx
-                    ) ?: continue
+                    val kotlinSourceSet = createSourceSetInfo(mppModel, compilation, gradleModule, resolverCtx) ?: continue
 
                     /*if (compilation.platform == KotlinPlatform.JVM || compilation.platform == KotlinPlatform.ANDROID) {
                         compilationData.targetCompatibility = (kotlinSourceSet.compilerArguments as? K2JVMCompilerArguments)?.jvmTarget
@@ -946,6 +943,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         // TODO: Unite with other createSourceSetInfo
         // This method is used in Android side of import and it's signature could not be changed
         fun createSourceSetInfo(
+            model: KotlinMPPGradleModel,
             compilation: KotlinCompilation,
             gradleModule: IdeaModule,
             resolverCtx: ProjectResolverContext
@@ -953,6 +951,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             if (compilation.platform.isNotSupported()) return null
             if (Proxy.isProxyClass(compilation.javaClass)) {
                 return createSourceSetInfo(
+                    model,
                     KotlinCompilationImpl(compilation, HashMap<Any, Any>()),
                     gradleModule,
                     resolverCtx
@@ -966,13 +965,12 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 sourceSetInfo.gradleModuleId = getModuleId(resolverCtx, gradleModule)
                 sourceSetInfo.actualPlatforms.pushPlatforms(compilation.platform)
                 sourceSetInfo.isTestModule = compilation.isTestComponent
-                sourceSetInfo.dependsOn = compilation.declaredSourceSets.flatMap { it.allDependsOnSourceSets }.map {
-                    getGradleModuleQualifiedName(resolverCtx, gradleModule, it)
-                }.distinct().toSet()
+                sourceSetInfo.dependsOn = model.resolveAllDependsOnSourceSets(compilation.declaredSourceSets)
+                    .map { dependsOnSourceSet -> getGradleModuleQualifiedName(resolverCtx, gradleModule, dependsOnSourceSet.name) }.toSet()
 
                 sourceSetInfo.additionalVisible = sourceSetInfo.additionalVisible.map {
-                    getGradleModuleQualifiedName(resolverCtx, gradleModule, it)
-                }.toSet()
+                getGradleModuleQualifiedName(resolverCtx, gradleModule, it)
+            }.toSet()
 
                 when (val cachedArgsInfo = compilation.cachedArgsInfo) {
                     is CachedExtractedArgsInfo -> {
