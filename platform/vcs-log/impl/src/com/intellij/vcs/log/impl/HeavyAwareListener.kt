@@ -88,12 +88,12 @@ abstract class HeavyAwareListener(private val project: Project,
      * @param delayMs delay in milliseconds to wait after a heavy activity is finished
      */
     @JvmStatic
-    fun executeOutOfHeavyProcessLater(command: Runnable, delayMs: Int) {
+    fun executeOutOfHeavyProcessLater(delayMs: Int, command: Runnable) {
       HeavyProcessLatch.INSTANCE.queueExecuteOutOfHeavyProcess {
         JobScheduler.getScheduler().schedule(
           {
             if (HeavyProcessLatch.INSTANCE.isRunning) {
-              executeOutOfHeavyProcessLater(command, delayMs)
+              executeOutOfHeavyProcessLater(delayMs, command)
             }
             else {
               command.run()
