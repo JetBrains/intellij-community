@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.Win10ActionButtonLook;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -137,6 +138,10 @@ public abstract class ActionButtonLook {
   protected int getState(ActionButtonComponent button) {
     // DO NOT inline this method! Because of compiler bug up-cast from ButtonType to ActionButtonComponent is important!
     return button.getPopState();
+  }
+
+  public @NotNull Icon getDisabledIcon(@NotNull Icon icon) {
+    return IconLoader.getDisabledIcon(icon);
   }
 
   public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon) {

@@ -6,7 +6,6 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.laf.darcula.ui.MainToolbarComboBoxButtonUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -25,10 +24,7 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
-import com.intellij.util.ui.UIUtil
 import java.awt.*
-import java.awt.image.RGBImageFilter
-import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -110,10 +106,6 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   }
 }
 
-private val lightThemeDarkHeaderDisableFilter: Supplier<RGBImageFilter> = Supplier {
-  if (isDarkHeader()) UIUtil.GrayFilter(-70, -70, 100) else UIUtil.getGrayFilter()
-}
-
 private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
     super.calculateBounds(size2Fit, bounds)
@@ -148,11 +140,6 @@ private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(Action
       if (childCombo != null) return childCombo
     }
     return null
-  }
-
-  override fun applyToolbarLook(look: ActionButtonLook?, presentation: Presentation, component: JComponent) {
-    presentation.putClientProperty(Presentation.DISABLE_ICON_FILTER, lightThemeDarkHeaderDisableFilter)
-    super.applyToolbarLook(look, presentation, component)
   }
 }
 
