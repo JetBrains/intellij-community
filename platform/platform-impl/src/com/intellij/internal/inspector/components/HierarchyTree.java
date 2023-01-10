@@ -116,7 +116,6 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
     TreeUtil.expandAll(this);
     int count = getRowCount();
     ComponentNode node = ComponentNode.createComponentNode(myComponent, isAccessibleTree);
-
     for (int i = 0; i < count; i++) {
       TreePath row = getPathForRow(i);
       if (row.getLastPathComponent().equals(node)) {
@@ -172,51 +171,58 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
 
     String myText;
 
-    public static ComponentNode createAccessibleNode(@NotNull Accessible accessible) {
+    public static ComponentNode createAccessibleNode(@NotNull Accessible accessible, @Nullable ComponentNode parent) {
       String name = accessible.getClass().getName();
       JComponent component = ObjectUtils.tryCast(accessible, JComponent.class);
-      ComponentNode node = new ComponentNode(component, accessible, name, true);
-      node.children = prepareAccessibleChildren(accessible);
-      return node;
+      return new ComponentNode(component, accessible, name, true, parent);
     }
 
     public static ComponentNode createComponentNode(@NotNull Component component) {
-      return createComponentNode(component, false);
+      return createComponentNode(component, false, null);
     }
 
     public static ComponentNode createComponentNode(@NotNull Component component, boolean isAccessibleComponent) {
+      return createComponentNode(component, isAccessibleComponent, null);
+    }
+
+    public static ComponentNode createComponentNode(@NotNull Component component, @Nullable ComponentNode parent) {
+      return createComponentNode(component, false, parent);
+    }
+
+    public static ComponentNode createComponentNode(@NotNull Component component, boolean isAccessibleComponent, @Nullable ComponentNode parent) {
       String name = component.getClass().getName();
       Accessible accessible = ObjectUtils.tryCast(component, Accessible.class);
-      ComponentNode node = new ComponentNode(component, accessible, name, isAccessibleComponent);
-      if (isAccessibleComponent) {
-        node.children = prepareAccessibleChildren(accessible);
-      }
-      else {
-        node.children = prepareComponentChildren(component);
-      }
-      return node;
+      return new ComponentNode(component, accessible, name, isAccessibleComponent, parent);
     }
 
     public static ComponentNode createNamedNode(@NotNull String name, @Nullable Component component) {
       Accessible accessible = ObjectUtils.tryCast(component, Accessible.class);
-      ComponentNode node = new ComponentNode(component, accessible, name, false);
-      node.children = prepareComponentChildren(component);
-      return node;
+      return new ComponentNode(component, accessible, name, false, null);
     }
 
-    private ComponentNode(@Nullable Component component,
-                          @Nullable Accessible accessible,
-                          @NotNull String name,
-                          boolean isAccessibleComponent) {
+    private ComponentNode(
+      @Nullable Component component,
+      @Nullable Accessible accessible,
+      @NotNull String name,
+      boolean isAccessibleComponent,
+      @Nullable ComponentNode parent
+    ) {
       super(component);
       myComponent = component;
       myAccessible = accessible;
       myName = name;
       isAccessibleNode = isAccessibleComponent;
+      if (isAccessibleComponent) {
+        children = prepareAccessibleChildren(accessible);
+      }
+      else {
+        children = prepareComponentChildren(component);
+      }
+      this.parent = parent;
     }
 
     @SuppressWarnings("UseOfObsoleteCollectionType")
-    private static Vector<TreeNode> prepareAccessibleChildren(@Nullable Accessible a) {
+    private Vector<TreeNode> prepareAccessibleChildren(@Nullable Accessible a) {
       Vector<TreeNode> result = new Vector<>();
       if (a != null) {
         AccessibleContext ac = a.getAccessibleContext();
@@ -224,7 +230,7 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
           int count = ac.getAccessibleChildrenCount();
           for (int i = 0; i < count; i++) {
             Accessible axComponent = a.getAccessibleContext().getAccessibleChild(i);
-            result.add(createAccessibleNode(axComponent));
+            result.add(createAccessibleNode(axComponent, this));
           }
         }
       }
@@ -255,25 +261,26 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
     }
 
     @SuppressWarnings("UseOfObsoleteCollectionType")
-    private static Vector<TreeNode> prepareComponentChildren(Component parent) {
+    private Vector<TreeNode> prepareComponentChildren(Component parent) {
       Vector<TreeNode> result = new Vector<>();
 
       if (parent instanceof JComponent) {
         DefaultMutableTreeNode node = ClientProperty.get(parent, UiInspectorAction.CLICK_INFO);
         if (node != null) {
+          node.setParent(this);
           result.add(node);
         }
       }
       if (parent instanceof Container) {
         for (Component component : ((Container)parent).getComponents()) {
-          result.add(createComponentNode(component));
+          result.add(createComponentNode(component, this));
         }
       }
       if (parent instanceof Window) {
         Window[] children = ((Window)parent).getOwnedWindows();
         for (Window child : children) {
           if (child instanceof InspectorWindow) continue;
-          result.add(createComponentNode(child));
+          result.add(createComponentNode(child, this));
         }
       }
 
