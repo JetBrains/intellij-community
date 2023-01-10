@@ -40,9 +40,16 @@ interface JpsFileEntitiesSerializer<E : WorkspaceEntity> {
   val internalEntitySource: JpsFileEntitySource
   val fileUrl: VirtualFileUrl
   val mainEntityClass: Class<E>
+
+  /**
+   * This method reads configuration files and creates entities that are not added to any builder.
+   *
+   * These entities can be just added to builder, but it's suggested to do it using [checkAndAddToBuilder] because this method
+   *   implements additional actions on adding (e.g. reports error when trying to add a library that already exists).
+   */
   fun loadEntities(reader: JpsFileContentReader,
                    errorReporter: ErrorReporter,
-                   virtualFileManager: VirtualFileUrlManager): Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>
+                   virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>>
   fun checkAndAddToBuilder(builder: MutableEntityStorage, newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>)
 
   fun saveEntities(mainEntities: Collection<E>,

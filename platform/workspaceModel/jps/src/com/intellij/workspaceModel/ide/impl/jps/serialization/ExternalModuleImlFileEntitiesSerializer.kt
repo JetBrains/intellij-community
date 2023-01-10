@@ -34,8 +34,8 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
 
   override fun loadEntities(reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager): Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>> {
-    return emptyMap()
+                            virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> {
+    return LoadingResult(emptyMap(), null)
   }
 
   override fun acceptsSource(entitySource: EntitySource): Boolean {

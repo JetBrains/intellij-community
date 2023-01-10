@@ -275,15 +275,13 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       errorReporter.reportError(ProjectModelBundle.message("module.cannot.load.error", url.presentableUrl, e.localizedMessage), url)
     }
 
-    try {
-      val newEntities = serializer.loadEntities(reader, errorReporter, virtualFileManager)
-      serializer.checkAndAddToBuilder(builder, newEntities)
-    }
-    catch (e: JDOMException) {
-      reportError(e, serializer.fileUrl)
-    }
-    catch (e: IOException) {
-      reportError(e, serializer.fileUrl)
+    val newEntities = serializer.loadEntities(reader, errorReporter, virtualFileManager)
+    serializer.checkAndAddToBuilder(builder, newEntities.data)
+
+    when (newEntities.exception) {
+      is JDOMException -> reportError(newEntities.exception, serializer.fileUrl)
+      is IOException -> reportError(newEntities.exception, serializer.fileUrl)
+      else -> newEntities.exception?.let { throw it }
     }
   }
 

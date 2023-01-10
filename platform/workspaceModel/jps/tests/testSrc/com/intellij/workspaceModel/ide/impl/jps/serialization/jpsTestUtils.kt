@@ -312,6 +312,14 @@ internal object SilentErrorReporter : ErrorReporter {
   }
 }
 
+internal class CollectingErrorReporter : ErrorReporter {
+  val messages = ArrayList<String>()
+  override fun reportError(message: String, file: VirtualFileUrl) {
+    RuntimeException(message).printStackTrace()
+    messages += message
+  }
+}
+
 internal fun checkSaveProjectAfterChange(originalProjectFile: File,
                                          changedFilesDirectoryName: String?,
                                          change: (MutableEntityStorage, MutableEntityStorage, JpsProjectConfigLocation) -> Unit,

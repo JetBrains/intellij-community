@@ -129,14 +129,24 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
 
   override fun loadEntities(reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager): Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>> {
-    val libraryTableTag = reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) ?: return emptyMap()
-    val libs = libraryTableTag.getChildren(LIBRARY_TAG).mapNotNull { libraryTag ->
-      val source = createEntitySource(libraryTag) ?: return@mapNotNull null
-      val name = libraryTag.getAttributeValueStrict(JpsModuleRootModelSerializer.NAME_ATTRIBUTE)
-      loadLibrary(name, libraryTag, libraryTableId, source, virtualFileManager)
-    }
-    return mapOf(LibraryEntity::class.java to libs)
+                            virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> {
+    val libraryTableTag = runCatchingXmlIssues { reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) }
+      .onFailure { return LoadingResult(emptyMap(), null) }
+      .getOrThrow() ?: return LoadingResult(emptyMap(), null)
+    val libs = runCatchingXmlIssues { libraryTableTag.getChildren(LIBRARY_TAG) }
+      .onFailure { return LoadingResult(emptyMap(), null) }
+      .getOrThrow()
+      .mapNotNull { libraryTag ->
+        runCatchingXmlIssues {
+          val source = createEntitySource(libraryTag) ?: return@mapNotNull null
+          val name = libraryTag.getAttributeValueStrict(JpsModuleRootModelSerializer.NAME_ATTRIBUTE)
+          loadLibrary(name, libraryTag, libraryTableId, source, virtualFileManager)
+        }
+      }
+    return LoadingResult(
+      mapOf(LibraryEntity::class.java to libs.mapNotNull { it.getOrNull() }),
+      libs.firstOrNull { it.isFailure }?.exceptionOrNull(),
+    )
   }
 
   @Suppress("UNCHECKED_CAST")

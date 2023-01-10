@@ -26,6 +26,7 @@ import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
 import org.jetbrains.jps.util.JpsPathUtil
+import java.io.Serializable
 import java.io.StringReader
 import java.nio.file.Path
 import java.util.*
@@ -67,39 +68,54 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
   override fun loadEntities(reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager): Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>> {
+                            virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> {
     val externalStorageEnabled = externalStorageConfigurationManager?.isEnabled ?: false
     val moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity> = HashMap()
     val newModuleEntity: ModuleEntity?
+    var error: Throwable? = null
     if (!externalStorageEnabled) {
       val moduleLoadedInfo = loadModuleEntity(reader, errorReporter, virtualFileManager, moduleLibrariesCollector)
       if (moduleLoadedInfo != null) {
-        createFacetSerializer().loadFacetEntities(moduleLoadedInfo.moduleEntity, reader)
-        newModuleEntity = moduleLoadedInfo.moduleEntity
+        val exception = runCatchingXmlIssues { createFacetSerializer().loadFacetEntities(moduleLoadedInfo.data.moduleEntity, reader) }
+          .exceptionOrNull()
+        newModuleEntity = moduleLoadedInfo.data.moduleEntity
+        error = moduleLoadedInfo.exception ?: exception
       } else newModuleEntity = null
     }
     else {
       val externalSerializer = externalModuleListSerializer?.createSerializer(internalEntitySource, fileUrl, modulePath.group) as ModuleImlFileEntitiesSerializer?
       val moduleLoadedInfo = externalSerializer?.loadModuleEntity(reader, errorReporter, virtualFileManager, moduleLibrariesCollector)
-      var moduleEntity = moduleLoadedInfo?.moduleEntity
+      val moduleEntity: ModuleEntity?
       if (moduleLoadedInfo != null) {
+        moduleEntity = moduleLoadedInfo.data.moduleEntity
         val entitySource = getOtherEntitiesEntitySource(reader)
-        loadContentRoots(moduleLoadedInfo.customRootsSerializer, moduleLoadedInfo.moduleEntity, reader,
-                         moduleLoadedInfo.customDir, errorReporter, virtualFileManager, entitySource,
-                         true, moduleLibrariesCollector)
+        val exception = runCatchingXmlIssues {
+          loadContentRoots(moduleLoadedInfo.data.customRootsSerializer, moduleLoadedInfo.data.moduleEntity, reader,
+                           moduleLoadedInfo.data.customDir, errorReporter, virtualFileManager, entitySource,
+                           true, moduleLibrariesCollector)
+        }.exceptionOrNull()
+        error = moduleLoadedInfo.exception ?: exception
       } else {
-        moduleEntity = loadModuleEntity(reader, errorReporter, virtualFileManager, moduleLibrariesCollector)?.moduleEntity
+        val localModule = loadModuleEntity(reader, errorReporter, virtualFileManager, moduleLibrariesCollector)
+        moduleEntity = localModule?.data?.moduleEntity
+        error = localModule?.exception
       }
       if (moduleEntity != null) {
-        createFacetSerializer().loadFacetEntities(moduleEntity, reader)
-        externalSerializer?.createFacetSerializer()?.loadFacetEntities(moduleEntity, reader)
+        val exception = runCatchingXmlIssues {
+          createFacetSerializer().loadFacetEntities(moduleEntity, reader)
+          externalSerializer?.createFacetSerializer()?.loadFacetEntities(moduleEntity, reader)
+        }.exceptionOrNull()
+        if (error != null) error = exception
         newModuleEntity = moduleEntity
       } else newModuleEntity = null
     }
 
-    return mapOf(
-      ModuleEntity::class.java to listOfNotNull(newModuleEntity),
-      LibraryEntity::class.java to moduleLibrariesCollector.values,
+    return LoadingResult(
+      mapOf(
+        ModuleEntity::class.java to listOfNotNull(newModuleEntity),
+        LibraryEntity::class.java to moduleLibrariesCollector.values,
+      ),
+      error,
     )
   }
 
@@ -116,7 +132,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   private fun loadModuleEntity(reader: JpsFileContentReader,
                                errorReporter: ErrorReporter,
                                virtualFileManager: VirtualFileUrlManager,
-                               moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>): ModuleLoadedInfo? {
+                               moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>): LoadingResult<ModuleLoadedInfo>? {
     if (skipLoadingIfFileDoesNotExist && !fileUrl.toPath().exists()) {
       return null
     }
@@ -126,7 +142,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     val customDir: String?
     val externalSystemOptions: Map<String?, String?>
     val externalSystemId: String?
-    val entitySourceForModuleAndOtherEntities = try {
+    val entitySourceForModuleAndOtherEntities = runCatchingXmlIssues {
       moduleOptions = readModuleOptions(reader)
       val pair = readExternalSystemOptions(reader, moduleOptions)
       externalSystemOptions = pair.first
@@ -152,11 +168,14 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
         Pair(moduleEntitySource, moduleEntitySource)
       }
     }
-    catch (e: JDOMException) {
-      // TODO: Handle loading with exceptions
-      //builder.addModuleEntity(modulePath.moduleName, listOf(ModuleDependencyItem.ModuleSourceDependency), internalEntitySource)
-      throw e
-    }
+      .onFailure {
+        return LoadingResult(
+          ModuleLoadedInfo(ModuleEntity(modulePath.moduleName, listOf(ModuleDependencyItem.ModuleSourceDependency), internalEntitySource),
+                           null, null),
+          it
+        )
+      }
+      .getOrThrow()
 
     val moduleEntity = ModuleEntity(modulePath.moduleName, listOf(ModuleDependencyItem.ModuleSourceDependency),
                                     entitySourceForModuleAndOtherEntities.first)
@@ -186,15 +205,17 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     CUSTOM_MODULE_COMPONENT_SERIALIZER_EP.extensionList.forEach {
       it.loadComponent(moduleEntity, reader, fileUrl, errorReporter, virtualFileManager)
     }
-    // Don't forget to load external system options even if custom root serializer exist
-    loadExternalSystemOptions(moduleEntity, reader, externalSystemOptions, externalSystemId, entitySource)
 
+    val exception = runCatchingXmlIssues {
+      // Don't forget to load external system options even if custom root serializer exist
+      loadExternalSystemOptions(moduleEntity, reader, externalSystemOptions, externalSystemId, entitySource)
 
-    loadContentRoots(customRootsSerializer, moduleEntity, reader, customDir, errorReporter, virtualFileManager, moduleEntity.entitySource,
-                     false, moduleLibrariesCollector)
-    loadTestModuleProperty(moduleEntity, reader, entitySource)
+      loadContentRoots(customRootsSerializer, moduleEntity, reader, customDir, errorReporter, virtualFileManager, moduleEntity.entitySource,
+                       false, moduleLibrariesCollector)
+      loadTestModuleProperty(moduleEntity, reader, entitySource)
+    }.exceptionOrNull()
 
-    return ModuleLoadedInfo(moduleEntity, customRootsSerializer, customDir)
+    return LoadingResult(ModuleLoadedInfo(moduleEntity, customRootsSerializer, customDir), exception)
   }
 
   /**
@@ -285,7 +306,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     val dependencyItems = loadModuleDependencies(rootManagerElement, contentRootEntitySource, virtualFileManager, moduleEntity.symbolicId,
                                                  moduleLibrariesCollector)
     if (!loadingAdditionalRoots) {
-      moduleEntity.dependencies = dependencyItems
+      moduleEntity.dependencies = dependencyItems.mapNotNullTo(mutableListOf()) { it.getOrNull() }
     }
 
     if (!loadingAdditionalRoots) {
@@ -306,13 +327,17 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
         (customImlData as ModuleCustomImlDataEntity.Builder).rootManagerTagCustomData = JDOMUtil.write(rootManagerElement)
       }
     }
+
+    // Load other elements and throw exception
+    // Maybe it makes sense to pass this exception to the code above.
+    dependencyItems.firstOrNull { it.isFailure }?.let { throw it.exceptionOrNull()!! }
   }
 
   private fun loadModuleDependencies(rootManagerElement: Element,
                                      contentRootEntitySource: EntitySource,
                                      virtualFileManager: VirtualFileUrlManager,
                                      moduleId: ModuleId,
-                                     moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>): ArrayList<ModuleDependencyItem> {
+                                     moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>): List<Result<ModuleDependencyItem>> {
     fun Element.readScope(): ModuleDependencyItem.DependencyScope {
       val attributeValue = getAttributeValue(SCOPE_ATTRIBUTE) ?: return ModuleDependencyItem.DependencyScope.COMPILE
       return try {
@@ -326,43 +351,48 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     fun Element.isExported() = getAttributeValue(EXPORTED_ATTRIBUTE) != null
     val moduleLibraryNames = mutableSetOf<String>()
     var nextUnnamedLibraryIndex = 1
-    val dependencyItems = rootManagerElement.getChildrenAndDetach(ORDER_ENTRY_TAG).mapTo(ArrayList()) { dependencyElement ->
-      when (val orderEntryType = dependencyElement.getAttributeValue(TYPE_ATTRIBUTE)) {
-        SOURCE_FOLDER_TYPE -> ModuleDependencyItem.ModuleSourceDependency
-        JDK_TYPE -> ModuleDependencyItem.SdkDependency(dependencyElement.getAttributeValueStrict(JDK_NAME_ATTRIBUTE),
-                                                       dependencyElement.getAttributeValue(JDK_TYPE_ATTRIBUTE))
-        INHERITED_JDK_TYPE -> ModuleDependencyItem.InheritedSdkDependency
-        LIBRARY_TYPE -> {
-          val level = dependencyElement.getAttributeValueStrict(LEVEL_ATTRIBUTE)
-          val parentId = LibraryNameGenerator.getLibraryTableId(level)
-          val libraryId = LibraryId(dependencyElement.getAttributeValueStrict(NAME_ATTRIBUTE), parentId)
-          ModuleDependencyItem.Exportable.LibraryDependency(libraryId, dependencyElement.isExported(), dependencyElement.readScope())
+    val dependencyItems = runCatchingXmlIssues { rootManagerElement.getChildrenAndDetach(ORDER_ENTRY_TAG) }
+      .onFailure { return listOf(Result.success(ModuleDependencyItem.ModuleSourceDependency))  }
+      .getOrThrow()
+      .mapTo(ArrayList()) { dependencyElement ->
+        runCatchingXmlIssues {
+          when (val orderEntryType = dependencyElement.getAttributeValue(TYPE_ATTRIBUTE)) {
+            SOURCE_FOLDER_TYPE -> ModuleDependencyItem.ModuleSourceDependency
+            JDK_TYPE -> ModuleDependencyItem.SdkDependency(dependencyElement.getAttributeValueStrict(JDK_NAME_ATTRIBUTE),
+                                                           dependencyElement.getAttributeValue(JDK_TYPE_ATTRIBUTE))
+            INHERITED_JDK_TYPE -> ModuleDependencyItem.InheritedSdkDependency
+            LIBRARY_TYPE -> {
+              val level = dependencyElement.getAttributeValueStrict(LEVEL_ATTRIBUTE)
+              val parentId = LibraryNameGenerator.getLibraryTableId(level)
+              val libraryId = LibraryId(dependencyElement.getAttributeValueStrict(NAME_ATTRIBUTE), parentId)
+              ModuleDependencyItem.Exportable.LibraryDependency(libraryId, dependencyElement.isExported(), dependencyElement.readScope())
+            }
+            MODULE_LIBRARY_TYPE -> {
+              val libraryElement = dependencyElement.getChildTagStrict(LIBRARY_TAG)
+              // TODO. Probably we want a fixed name based on hashed library roots
+              val nameAttributeValue = libraryElement.getAttributeValue(NAME_ATTRIBUTE)
+              val originalName = nameAttributeValue ?: "${LibraryNameGenerator.UNNAMED_LIBRARY_NAME_PREFIX}${nextUnnamedLibraryIndex++}"
+              val name = LibraryNameGenerator.generateUniqueLibraryName(originalName) { it in moduleLibraryNames }
+              moduleLibraryNames.add(name)
+              val tableId = LibraryTableId.ModuleLibraryTableId(moduleId)
+              val library = loadLibrary(name, libraryElement, tableId, contentRootEntitySource, virtualFileManager)
+              val libraryId = LibraryId(name, tableId)
+              moduleLibrariesCollector[libraryId] = library
+              ModuleDependencyItem.Exportable.LibraryDependency(libraryId, dependencyElement.isExported(), dependencyElement.readScope())
+            }
+            MODULE_TYPE -> {
+              val depModuleName = dependencyElement.getAttributeValueStrict(MODULE_NAME_ATTRIBUTE)
+              ModuleDependencyItem.Exportable.ModuleDependency(ModuleId(depModuleName), dependencyElement.isExported(),
+                                                               dependencyElement.readScope(),
+                                                               dependencyElement.getAttributeValue("production-on-test") != null)
+            }
+            else -> throw JDOMException("Unexpected '$TYPE_ATTRIBUTE' attribute in '$ORDER_ENTRY_TAG' tag: $orderEntryType")
+          }
         }
-        MODULE_LIBRARY_TYPE -> {
-          val libraryElement = dependencyElement.getChildTagStrict(LIBRARY_TAG)
-          // TODO. Probably we want a fixed name based on hashed library roots
-          val nameAttributeValue = libraryElement.getAttributeValue(NAME_ATTRIBUTE)
-          val originalName = nameAttributeValue ?: "${LibraryNameGenerator.UNNAMED_LIBRARY_NAME_PREFIX}${nextUnnamedLibraryIndex++}"
-          val name = LibraryNameGenerator.generateUniqueLibraryName(originalName) { it in moduleLibraryNames }
-          moduleLibraryNames.add(name)
-          val tableId = LibraryTableId.ModuleLibraryTableId(moduleId)
-          val library = loadLibrary(name, libraryElement, tableId, contentRootEntitySource, virtualFileManager)
-          val libraryId = LibraryId(name, tableId)
-          moduleLibrariesCollector[libraryId] = library
-          ModuleDependencyItem.Exportable.LibraryDependency(libraryId, dependencyElement.isExported(), dependencyElement.readScope())
-        }
-        MODULE_TYPE -> {
-          val depModuleName = dependencyElement.getAttributeValueStrict(MODULE_NAME_ATTRIBUTE)
-          ModuleDependencyItem.Exportable.ModuleDependency(ModuleId(depModuleName), dependencyElement.isExported(),
-                                                           dependencyElement.readScope(),
-                                                           dependencyElement.getAttributeValue("production-on-test") != null)
-        }
-        else -> throw JDOMException("Unexpected '$TYPE_ATTRIBUTE' attribute in '$ORDER_ENTRY_TAG' tag: $orderEntryType")
       }
-    }
 
-    if (dependencyItems.none { it is ModuleDependencyItem.ModuleSourceDependency }) {
-      dependencyItems.add(ModuleDependencyItem.ModuleSourceDependency)
+    if (dependencyItems.none { it.getOrNull() is ModuleDependencyItem.ModuleSourceDependency }) {
+      dependencyItems.add(Result.success(ModuleDependencyItem.ModuleSourceDependency))
     }
 
     return dependencyItems

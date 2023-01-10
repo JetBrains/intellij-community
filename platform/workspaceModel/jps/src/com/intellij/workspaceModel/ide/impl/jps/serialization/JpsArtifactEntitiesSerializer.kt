@@ -147,33 +147,42 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
 
   override fun loadEntities(reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager): Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>> {
-    val artifactListElement = reader.loadComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME)
-    if (artifactListElement == null) return emptyMap()
+                            virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> {
+    val artifactListElement = runCatchingXmlIssues { reader.loadComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME) }
+      .onFailure { return LoadingResult(emptyMap(), it) }
+      .getOrThrow()
+    if (artifactListElement == null) return LoadingResult(emptyMap(), null)
 
     val orderOfItems = ArrayList<String>()
-    val artifactEntities = artifactListElement.getChildren("artifact").mapNotNull { artifactElement ->
-      val entitySource = createEntitySource(artifactElement) ?: return@mapNotNull null
-      val state = XmlSerializer.deserialize(artifactElement, ArtifactState::class.java)
-      val outputUrl = state.outputPath?.let { path -> if (path.isNotEmpty()) virtualFileManager.fromPath(path) else null }
-      val rootElement = loadPackagingElement(state.rootElement, entitySource)
-      val artifactEntity = ArtifactEntity(state.name, state.artifactType, state.isBuildOnMake, entitySource) {
-        this.outputUrl = outputUrl
-        this.rootElement = rootElement as CompositePackagingElementEntity
-      }
-      for (propertiesState in state.propertiesList) {
-        ArtifactPropertiesEntity(propertiesState.id, entitySource) {
-          this.artifact = artifactEntity
-          this.propertiesXmlTag = JDOMUtil.write(propertiesState.options)
+    val artifactEntities = runCatchingXmlIssues { artifactListElement.getChildren("artifact") }
+      .onFailure { return LoadingResult(emptyMap(), it) }
+      .getOrThrow()
+      .mapNotNull { artifactElement ->
+        runCatchingXmlIssues {
+          val entitySource = createEntitySource(artifactElement) ?: return@mapNotNull null
+          val state = XmlSerializer.deserialize(artifactElement, ArtifactState::class.java)
+          val outputUrl = state.outputPath?.let { path -> if (path.isNotEmpty()) virtualFileManager.fromPath(path) else null }
+          val rootElement = loadPackagingElement(state.rootElement, entitySource)
+          val artifactEntity = ArtifactEntity(state.name, state.artifactType, state.isBuildOnMake, entitySource) {
+            this.outputUrl = outputUrl
+            this.rootElement = rootElement as CompositePackagingElementEntity
+          }
+          for (propertiesState in state.propertiesList) {
+            ArtifactPropertiesEntity(propertiesState.id, entitySource) {
+              this.artifact = artifactEntity
+              this.propertiesXmlTag = JDOMUtil.write(propertiesState.options)
+            }
+          }
+          orderOfItems += state.name
+          artifactEntity
         }
       }
-      orderOfItems += state.name
-      artifactEntity
-    }
-    return mapOf(
-      ArtifactsOrderEntity::class.java to listOf(ArtifactsOrderEntity(orderOfItems, internalEntitySource)),
-      ArtifactEntity::class.java to artifactEntities,
-    )
+    return LoadingResult(
+      mapOf(
+        ArtifactsOrderEntity::class.java to listOf(ArtifactsOrderEntity(orderOfItems, internalEntitySource)),
+        ArtifactEntity::class.java to artifactEntities.mapNotNull { it.getOrNull() },
+      ),
+      artifactEntities.firstOrNull { it.isFailure }?.exceptionOrNull())
   }
 
   override fun checkAndAddToBuilder(builder: MutableEntityStorage, newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
