@@ -238,7 +238,7 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
 
   class ByFileKind(@MagicConstant(flagsFromClass = WorkspaceFileKindMask::class) val mask: Int,
                    override val entityReference: EntityReference<WorkspaceEntity>,
-                   override val entityStorageKind: EntityStorageKind) : ExcludedFileSet {
+                   override val entityStorageKind: EntityStorageKind = EntityStorageKind.MAIN) : ExcludedFileSet {
     override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
       val withExclusion = if (honorExclusion) currentMasks.unsetAcceptedKinds(mask) else currentMasks
       return withExclusion or StoredFileSetKindMask.IRRELEVANT_FILE_SET
