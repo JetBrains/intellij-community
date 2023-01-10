@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots
 
+import com.intellij.configurationStore.runInAllowSaveMode
 import com.intellij.facet.FacetManager
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
@@ -120,6 +121,23 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     }
     assertEmpty(moduleManager.unloadedModuleDescriptions)
     assertEmpty(unloadedModuleEntities)
+  }
+  
+  fun `test rename iml file of unloaded module`() {
+    val a = createModule("a")
+    runInAllowSaveMode { project.save() }
+    val imlFile = a.moduleFile!!
+    val moduleManager = ModuleManager.getInstance(project)
+    runUnderModalProgressIfIsEdt {
+      moduleManager.setUnloadedModules(listOf("a"))
+    }
+
+    assertEquals("a", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
+
+    runWriteAction {
+      imlFile.rename(this, "b.iml")
+    }
+    assertEquals("b", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
   }
 
   fun `test rename module to unloaded module`() {

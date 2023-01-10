@@ -257,10 +257,20 @@ private class RootsChangeWatcher(private val project: Project) {
     val newModuleName = getModuleNameByFilePath(newUrl)
     if (oldModuleName == newModuleName) return
 
+    val oldModuleId = ModuleId(oldModuleName)
     val workspaceModel = WorkspaceModel.getInstance(project)
-    val moduleEntity = workspaceModel.entityStorage.current.resolve(ModuleId(oldModuleName)) ?: return
-    workspaceModel.updateProjectModel("Update module name") { diff ->
-      diff.modifyEntity(moduleEntity) { this.name = newModuleName }
+    val moduleEntity = workspaceModel.entityStorage.current.resolve(oldModuleId)
+    val description = "Update module name when iml file is renamed"
+    if (moduleEntity != null) {
+      workspaceModel.updateProjectModel(description) { diff ->
+        diff.modifyEntity(moduleEntity) { this.name = newModuleName }
+      }
+    }
+    val unloadedModule = workspaceModel.currentSnapshotOfUnloadedEntities.resolve(oldModuleId)
+    if (unloadedModule != null) {
+      workspaceModel.updateUnloadedEntities(description) { diff ->
+        diff.modifyEntity(unloadedModule) { this.name = newModuleName }
+      }
     }
   }
 
