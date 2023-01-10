@@ -32,7 +32,7 @@ class ScriptWorkspaceModelRepresentationTest : HeavyPlatformTestCase() {
 
     init {
         val testRoot = getTestRoot(this::class.java) ?: error("@TestRoot annotation is missing")
-        scriptDefinitionSourcePath = File(testRoot, "testData/script/wsmodel/").absolutePath
+        scriptDefinitionSourcePath = File(testRoot, "test/org/jetbrains/kotlin/idea/script/definition").absolutePath
     }
 
     // ON FIRST IMPORT
