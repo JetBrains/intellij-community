@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -30,5 +30,15 @@ interface ProjectBuildWarmupSupport {
    *
    * @return build status message
    */
+  @Deprecated("Return type is not descriptive enough")
   suspend fun buildProject(rebuild: Boolean = false): String
+
+  /**
+   * Start custom build process and return a future which is completed only when a custom build is finished
+   * @param rebuild indicates if rebuild should be done instead of ordinary build
+   *
+   * @return build status message
+   */
+  suspend fun buildProjectWithStatus(rebuild: Boolean = false): WarmupBuildStatus.InvocationStatus =
+    buildProject(rebuild).let(WarmupBuildStatus::Success)
 }

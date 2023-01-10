@@ -14,6 +14,8 @@ import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryListener
 import com.intellij.warmup.util.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.asDeferred
 import kotlin.math.max
 import kotlin.system.exitProcess
@@ -161,33 +163,41 @@ private suspend fun waitForBuilders(project: Project, rebuild: BuildMode, builde
   }
   ConsoleLog.info("Starting additional project builders[${projectBuildWarmupSupports.size}] (rebuild=$rebuild)...")
   try {
-    withLoggingProgresses {
-      coroutineScope {
+    val statusFlow = withLoggingProgresses {
+      flow {
         for (builder in projectBuildWarmupSupports) {
-          launch {
-            try {
-              ConsoleLog.info("Starting builder $builder for id ${builder.getBuilderId()}")
-              val status = builder.buildProject(rebuild == BuildMode.REBUILD)
-              ConsoleLog.info("Builder $builder finished with status: $status")
-            }
-            catch (e: CancellationException) {
-              throw e
-            }
-            catch (e: Throwable) {
-              ConsoleLog.error("Failed to call builder $builder", e)
-            }
+          try {
+            ConsoleLog.info("Starting builder $builder for id ${builder.getBuilderId()}")
+            val status = builder.buildProjectWithStatus(rebuild == BuildMode.REBUILD)
+            ConsoleLog.info("Builder $builder finished with status: ${status.message}")
+            emit(status)
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: Throwable) {
+            ConsoleLog.error("Failed to call builder $builder", e)
+            emit(WarmupBuildStatus.Failure(e.stackTraceToString()))
           }
         }
       }
+    }
+    val statuses = statusFlow.toList()
+    val commonStatus =
+      statuses.find { it is WarmupBuildStatus.Failure }
+      ?: statuses.firstOrNull()
+    ConsoleLog.info("All warmup builders completed")
+    if (commonStatus != null) {
+      WarmupBuildStatus.statusChanged(commonStatus)
     }
   }
   catch (e: CancellationException) {
     throw e
   }
   catch (t: Throwable) {
+    WarmupBuildStatus.statusChanged(WarmupBuildStatus.Failure(t.stackTraceToString()))
     ConsoleLog.error("An exception occurred while awaiting builders", t)
   }
-  ConsoleLog.info("All warmup builders completed")
 }
 
 private suspend fun waitForRefreshQueue() {
