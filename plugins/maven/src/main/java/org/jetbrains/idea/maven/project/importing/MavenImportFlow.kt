@@ -36,6 +36,7 @@ import org.jetbrains.idea.maven.utils.FileFinder
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
 @IntellijInternalApi
 @ApiStatus.Internal
@@ -187,8 +188,8 @@ class MavenImportFlow {
     val resolveContext = ResolveContext(context.projectsTree)
     val d = Disposer.newDisposable("MavenImportFlow:resolveDependencies:treeListener")
     Disposer.register(context.initialContext.importDisposable, d)
-    val projectsToImport = ArrayList(context.toResolve)
-    val nativeProjectStorage = ArrayList<kotlin.Pair<MavenProject, NativeMavenProjectHolder>>()
+    val projectsToImport = ConcurrentLinkedQueue(context.toResolve)
+    val nativeProjectStorage = ConcurrentLinkedQueue<kotlin.Pair<MavenProject, NativeMavenProjectHolder>>()
     context.projectsTree.addListener(object : MavenProjectsTree.Listener {
       override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
                                    nativeMavenProject: NativeMavenProjectHolder?) {
@@ -204,7 +205,7 @@ class MavenImportFlow {
                      resolveContext, context.initialContext.indicator)
     Disposer.dispose(d)
     return MavenResolvedContext(context.project, resolveContext.getUserData(MavenProjectResolver.UNRESOLVED_ARTIFACTS) ?: emptySet(),
-                                projectsToImport, nativeProjectStorage, context)
+                                projectsToImport.toList(), nativeProjectStorage.toList(), context)
   }
 
   fun resolvePlugins(context: MavenResolvedContext): MavenPluginResolvedContext {
