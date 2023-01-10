@@ -1,6 +1,7 @@
 {
   "expui": {
     "actions": {
+      "buildAutoReloadChanges.svg": "actions/buildAutoReloadChanges.svg",
       "deploy.svg": "nodes/deploy.svg",
       "filterdups.svg": "toolbar/filterdups.svg",
       "generated.svg": "actions/generatedFolder.svg",
