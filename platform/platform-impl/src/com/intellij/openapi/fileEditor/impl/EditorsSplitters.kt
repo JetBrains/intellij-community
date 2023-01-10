@@ -608,7 +608,9 @@ open class EditorsSplitters internal constructor(
 
     val nextFile = findNextFile(file)
     for (window in windows) {
-      window.closeFile(file = file, disposeIfNeeded = false, transferFocus = moveFocus)
+      val composite = window.getComposite(file)
+      window.closeFile(file = file, composite = composite,
+                       disposeIfNeeded = FileEditorManagerImpl.isSingletonFileEditor(composite?.selectedEditor))
       if (window.tabCount == 0 && nextFile != null && isProjectOpen && !FileEditorManagerImpl.forbidSplitFor(nextFile)) {
         manager.newEditorComposite(nextFile)?.let {
           window.setComposite(it, moveFocus)

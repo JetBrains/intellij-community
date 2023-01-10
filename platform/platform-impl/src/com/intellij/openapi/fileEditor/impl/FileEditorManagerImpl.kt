@@ -314,8 +314,11 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     val OPEN_IN_PREVIEW_TAB = Key.create<Boolean>("OPEN_IN_PREVIEW_TAB")
 
     /**
-     * Works on FileEditor objects, allows forcing opening other editor tabs in the main window.
-     * If the currently selected file editor has this key is set to TRUE, new editors will be opened in the main splitters.
+     * Works on [FileEditor] objects, allows forcing opening other editor tabs in the main window.
+     * When determining a proper place to open a new editor tab, the currently selected file editor is checked
+     * whether is has this key set to TRUE. If that's the case, and the selected editor is a singleton in a split view,
+     * the new editor tab is opened in the sibling of that split window. If the singleton editor is not in a split view,
+     * but in a separate detached window, then the new editors will be opened in the main window splitters.
      */
     @JvmField
     val SINGLETON_EDITOR_IN_WINDOW = Key.create<Boolean>("OPEN_OTHER_TABS_IN_MAIN_WINDOW")
@@ -364,6 +367,9 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
     @JvmStatic
     fun forbidSplitFor(file: VirtualFile): Boolean = file.getUserData(SplitAction.FORBID_TAB_SPLIT) == true
+
+    @JvmStatic
+    internal fun isSingletonFileEditor(fileEditor: FileEditor?): Boolean = SINGLETON_EDITOR_IN_WINDOW.get(fileEditor, false)
 
     internal fun getOriginalFile(file: VirtualFile): VirtualFile {
       return BackedVirtualFile.getOriginFileIfBacked(if (file is VirtualFileWindow) file.delegate else file)
@@ -805,7 +811,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
   private fun getOrCreateCurrentWindow(file: VirtualFile): EditorWindow {
     val currentEditor = selectedEditor
-    val isSingletonEditor = SINGLETON_EDITOR_IN_WINDOW.get(currentEditor, false)
+    val isSingletonEditor = isSingletonFileEditor(currentEditor)
     val currentWindow = splitters.currentWindow
 
     // If the selected editor is a singleton in a split window, prefer the sibling of that split window.
