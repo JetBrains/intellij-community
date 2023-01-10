@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.project.impl
@@ -72,7 +72,10 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.File
 import java.io.IOException
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.InvalidPathException
+import java.nio.file.LinkOption
+import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
@@ -1226,8 +1229,11 @@ private suspend fun initProject(file: Path,
   }
   catch (initThrowable: Throwable) {
     try {
-      withContext(Dispatchers.EDT + NonCancellable) {
-        ApplicationManager.getApplication().runWriteAction { Disposer.dispose(project) }
+      withContext(NonCancellable) {
+        project.coroutineScope.coroutineContext.job.cancelAndJoin()
+        writeAction {
+          Disposer.dispose(project)
+        }
       }
     }
     catch (disposeThrowable: Throwable) {
