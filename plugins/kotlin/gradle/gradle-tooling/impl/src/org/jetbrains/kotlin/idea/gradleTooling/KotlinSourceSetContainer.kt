@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
+import org.jetbrains.kotlin.tooling.core.closure
 
 interface KotlinSourceSetContainer {
     val sourceSetsByName: Map<String, KotlinSourceSet>
@@ -11,31 +12,21 @@ interface KotlinSourceSetContainer {
 val KotlinSourceSetContainer.sourceSets: List<KotlinSourceSet> get() = sourceSetsByName.values.toList()
 
 fun KotlinSourceSetContainer.resolveDeclaredDependsOnSourceSets(sourceSet: KotlinSourceSet): Set<KotlinSourceSet> {
-    return sourceSet.declaredDependsOnSourceSets.mapNotNull { name -> sourceSetsByName[name] }.toSet()
+    return sourceSet.declaredDependsOnSourceSets.mapNotNull { name -> sourceSetsByName[name] }.toSet() - sourceSet
 }
 
 fun KotlinSourceSetContainer.resolveAllDependsOnSourceSets(sourceSet: KotlinSourceSet): Set<KotlinSourceSet> {
-    /* Fast path */
-    if (sourceSet.declaredDependsOnSourceSets.isEmpty()) return emptySet()
-
-    /* Aggregating set containing all currently resolved source sets */
-    val resolvedSourceSets = mutableSetOf<KotlinSourceSet>()
-
-    /* Queue of source set names that shall be resolved */
-    val declaredDependsOnSourceSetsQueue = ArrayDeque<String>()
-
-    declaredDependsOnSourceSetsQueue.addAll(sourceSet.declaredDependsOnSourceSets)
-    while (declaredDependsOnSourceSetsQueue.isNotEmpty()) {
-        val sourceSetName = declaredDependsOnSourceSetsQueue.removeFirst()
-        val resolvedSourceSet = sourceSetsByName[sourceSetName]
-        if (resolvedSourceSet != null) {
-            if (resolvedSourceSets.add(resolvedSourceSet)) {
-                declaredDependsOnSourceSetsQueue.addAll(resolvedSourceSet.declaredDependsOnSourceSets)
-            }
+    return sourceSet.closure { currentSourceSet ->
+        currentSourceSet.declaredDependsOnSourceSets.mapNotNull { dependsOnSourceSet ->
+            sourceSetsByName[dependsOnSourceSet]
         }
     }
+}
 
-    return resolvedSourceSets
+fun KotlinSourceSetContainer.resolveAllDependsOnSourceSets(sourceSets: Iterable<KotlinSourceSet>): Set<KotlinSourceSet> {
+    return sourceSets.closure<KotlinSourceSet> { sourceSet ->
+        sourceSet.declaredDependsOnSourceSets.mapNotNull { dependsOnSourceSet -> sourceSetsByName[dependsOnSourceSet] }
+    }
 }
 
 fun KotlinSourceSetContainer.isDependsOn(from: KotlinSourceSet, to: KotlinSourceSet): Boolean {
