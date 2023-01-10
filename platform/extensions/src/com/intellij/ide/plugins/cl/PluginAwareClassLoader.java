@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.cl;
 
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import kotlinx.coroutines.CoroutineScope;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus.NonExtendable;
 import org.jetbrains.annotations.NotNull;
@@ -40,4 +41,6 @@ public interface PluginAwareClassLoader {
     throws ClassNotFoundException;
 
   @Nullable String getPackagePrefix();
+
+  @NotNull CoroutineScope getPluginCoroutineScope();
 }
