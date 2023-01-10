@@ -133,6 +133,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/TwoOverrides.kt"));
         }
 
+        @TestMetadata("unresolvedQuialifierInAnnotation.kt")
+        public void testUnresolvedQuialifierInAnnotation() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/unresolvedQuialifierInAnnotation.kt"));
+        }
+
         @TestMetadata("WrongAnnotations.kt")
         public void testWrongAnnotations() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/WrongAnnotations.kt"));
