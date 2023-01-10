@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ConcurrentFactoryMap
@@ -127,26 +128,33 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
     get() = LibraryEntity::class.java
 
   override fun loadEntities(reader: JpsFileContentReader,
-                            errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager): List<WorkspaceEntity> {
-    val libraryTableTag = reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) ?: return emptyList()
-    return libraryTableTag.getChildren(LIBRARY_TAG).mapNotNull { libraryTag ->
+                            errorReporter: ErrorReporter,
+                            virtualFileManager: VirtualFileUrlManager): Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>> {
+    val libraryTableTag = reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) ?: return emptyMap()
+    val libs = libraryTableTag.getChildren(LIBRARY_TAG).mapNotNull { libraryTag ->
       val source = createEntitySource(libraryTag) ?: return@mapNotNull null
       val name = libraryTag.getAttributeValueStrict(JpsModuleRootModelSerializer.NAME_ATTRIBUTE)
-
-      //val libraryId = LibraryId(name, libraryTableId)
-      //val existingLibraryEntity = builder.resolve(libraryId)
-      //if (existingLibraryEntity != null) {
-      //  logger<JpsLibraryEntitiesSerializer>().error("""Error during entities loading
-      //    |Entity with this library id already exists.
-      //    |Library id: $libraryId
-      //    |fileUrl: ${fileUrl.presentableUrl}
-      //    |library table id: $libraryTableId
-      //    |internal entity source: $internalEntitySource
-      //  """.trimMargin())
-      //}
-
       loadLibrary(name, libraryTag, libraryTableId, source, virtualFileManager)
     }
+    return mapOf(LibraryEntity::class.java to libs)
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  override fun checkAndAddToBuilder(builder: MutableEntityStorage, newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
+    val libraries = (newEntities[LibraryEntity::class.java] as? List<LibraryEntity>) ?: emptyList()
+    libraries.forEach {
+      if (it.symbolicId in builder) {
+        thisLogger().error("""Error during entities loading
+            |Entity with this library id already exists.
+            |Library id: ${it.symbolicId}
+            |fileUrl: ${fileUrl.presentableUrl}
+            |library table id: ${it.tableId}
+            |internal entity source: ${internalEntitySource}
+          """.trimMargin())
+      }
+    }
+
+    newEntities.values.forEach { lists -> lists.forEach { builder addEntity it } }
   }
 
   protected open fun createEntitySource(libraryTag: Element): EntitySource? {

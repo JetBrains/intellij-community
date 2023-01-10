@@ -147,9 +147,9 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
 
   override fun loadEntities(reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager): List<WorkspaceEntity> {
+                            virtualFileManager: VirtualFileUrlManager): Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>> {
     val artifactListElement = reader.loadComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME)
-    if (artifactListElement == null) return emptyList()
+    if (artifactListElement == null) return emptyMap()
 
     val orderOfItems = ArrayList<String>()
     val artifactEntities = artifactListElement.getChildren("artifact").mapNotNull { artifactElement ->
@@ -170,19 +170,32 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
       orderOfItems += state.name
       artifactEntity
     }
-    return listOf(ArtifactsOrderEntity(orderOfItems, internalEntitySource)) + artifactEntities
-    //if (preserveOrder) {
-    //  val entity = builder.entities(ArtifactsOrderEntity::class.java).firstOrNull()
-    //  if (entity != null) {
-    //    builder.modifyEntity(entity) {
-    //      orderOfArtifacts = orderOfItems
-    //    }
-    //  }
-    //  else {
-    //    builder.addEntity(ArtifactsOrderEntity(orderOfItems, internalEntitySource))
-    //  }
-    //}
-    //
+    return mapOf(
+      ArtifactsOrderEntity::class.java to listOf(ArtifactsOrderEntity(orderOfItems, internalEntitySource)),
+      ArtifactEntity::class.java to artifactEntities,
+    )
+  }
+
+  override fun checkAndAddToBuilder(builder: MutableEntityStorage, newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
+    if (preserveOrder) {
+      val order = newEntities[ArtifactsOrderEntity::class.java]?.singleOrNull() as? ArtifactsOrderEntity
+      if (order != null) {
+        val entity = builder.entities(ArtifactsOrderEntity::class.java).firstOrNull()
+        if (entity != null) {
+          builder.modifyEntity(entity) {
+            orderOfArtifacts.addAll(order.orderOfArtifacts)
+          }
+        }
+        else {
+          builder addEntity order
+        }
+      }
+    }
+    newEntities.forEach { (key, value) ->
+      if (key == ArtifactsOrderEntity::class.java) return@forEach
+
+      value.forEach { builder addEntity it }
+    }
   }
 
   protected open fun createEntitySource(artifactTag: Element): EntitySource? {

@@ -67,7 +67,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
   override fun loadEntities(reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager): List<WorkspaceEntity> {
+                            virtualFileManager: VirtualFileUrlManager): Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>> {
     val externalStorageEnabled = externalStorageConfigurationManager?.isEnabled ?: false
     val moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity> = HashMap()
     val newModuleEntity: ModuleEntity?
@@ -97,7 +97,14 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       } else newModuleEntity = null
     }
 
-    return listOfNotNull(newModuleEntity) + moduleLibrariesCollector.values
+    return mapOf(
+      ModuleEntity::class.java to listOfNotNull(newModuleEntity),
+      LibraryEntity::class.java to moduleLibrariesCollector.values,
+    )
+  }
+
+  override fun checkAndAddToBuilder(builder: MutableEntityStorage, newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
+    newEntities.values.forEach { lists -> lists.forEach { builder addEntity it } }
   }
 
   private class ModuleLoadedInfo(

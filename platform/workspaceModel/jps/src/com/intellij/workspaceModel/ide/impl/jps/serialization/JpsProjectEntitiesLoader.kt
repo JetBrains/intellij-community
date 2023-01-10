@@ -61,7 +61,7 @@ object JpsProjectEntitiesLoader {
     val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(virtualFileManager), null, source,
                                                                              virtualFileManager)
     val newEntities = serializer.loadEntities(reader, errorReporter, virtualFileManager)
-    newEntities.forEach { builder addEntity it }
+    serializer.checkAndAddToBuilder(builder, newEntities)
   }
 
   private fun createProjectEntitiesSerializers(configLocation: JpsProjectConfigLocation,
