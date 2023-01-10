@@ -236,7 +236,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   @Override
   public List<TerminalAction> getActions() {
     List<TerminalAction> actions = new ArrayList<>(super.getActions());
-    if (TerminalView.isInTerminalToolWindow(this)) {
+    if (TerminalToolWindowManager.isInTerminalToolWindow(this)) {
       ContainerUtil.addIfNotNull(actions, TerminalActionUtil.createTerminalAction(this, RenameTerminalSessionActionKt.ACTION_ID, true));
     }
     JBTerminalWidgetListener listener = getListener();

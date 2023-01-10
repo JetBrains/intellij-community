@@ -191,7 +191,7 @@ public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
         };
         TerminalTabState tabState = new TerminalTabState();
         tabState.myTabName = myPresentableName.get();
-        TerminalView.getInstance(project).createNewSession(runner, tabState);
+        TerminalToolWindowManager.getInstance(project).createNewSession(runner, tabState);
       }
     }
   }

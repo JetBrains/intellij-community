@@ -24,7 +24,7 @@ class TerminalTabCloseListener(val content: Content,
     if (content.getUserData(SILENT) == true) {
       return true
     }
-    val widget = TerminalView.getWidgetByContent(content)
+    val widget = TerminalToolWindowManager.getWidgetByContent(content)
     if (widget == null || !widget.isSessionRunning) {
       return true
     }
