@@ -2162,6 +2162,16 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/field/varWithoutInit.java");
         }
 
+        @TestMetadata("volatileCommon.java")
+        public void testVolatileCommon() throws Exception {
+            runTest("testData/newJ2k/field/volatileCommon.java");
+        }
+
+        @TestMetadata("volatileJvm.java")
+        public void testVolatileJvm() throws Exception {
+            runTest("testData/newJ2k/field/volatileJvm.java");
+        }
+
         @TestMetadata("volatileTransientAndStrictFp.java")
         public void testVolatileTransientAndStrictFp() throws Exception {
             runTest("testData/newJ2k/field/volatileTransientAndStrictFp.java");

@@ -2,10 +2,8 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
-import org.jetbrains.kotlin.nj2k.annotationByFqName
-import org.jetbrains.kotlin.nj2k.jvmAnnotation
+import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_9
+import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.*
 
@@ -21,8 +19,9 @@ class JavaModifiersConversion(context: NewJ2kConverterContext) : RecursiveApplic
         if (element is JKOtherModifiersOwner && element is JKAnnotationListOwner) {
             element.elementByModifier(VOLATILE)?.let { modifierElement ->
                 element.otherModifierElements -= modifierElement
+                val annotationFqName = if (moduleApiVersion >= KOTLIN_1_9) "kotlin.concurrent.Volatile" else "kotlin.jvm.Volatile"
                 element.annotationList.annotations +=
-                    jvmAnnotation("Volatile", symbolProvider).withFormattingFrom(modifierElement)
+                    JKAnnotation(symbolProvider.provideClassSymbol(annotationFqName)).withFormattingFrom(modifierElement)
             }
 
             element.elementByModifier(TRANSIENT)?.let { modifierElement ->
