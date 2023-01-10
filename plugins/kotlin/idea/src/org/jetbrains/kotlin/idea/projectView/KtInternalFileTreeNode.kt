@@ -14,8 +14,7 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.fileClasses.isJvmMultifileClassFile
-import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
-import org.jetbrains.kotlin.idea.base.projectStructure.collectLibraryBinariesModuleInfos
+import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinJvmNameAnnotationIndex
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
@@ -32,12 +31,9 @@ class KtInternalFileTreeNode(project: Project?, lightClass: KtLightClass, viewSe
         val virtualFile = ktClsFile?.containingFile?.virtualFile ?: return@lazy null
         val prj = getProject()
         val baseName = virtualFile.nameWithoutExtension
-        val smartPointerManager = SmartPointerManager.getInstance(project)
-        val scope = GlobalSearchScope.union(
-            ModuleInfoProvider.getInstance(prj)
-                .collectLibraryBinariesModuleInfos(virtualFile)
-                .mapNotNull { it.sourcesModuleInfo?.sourceScope() }.toList()
-        )
+        val smartPointerManager = SmartPointerManager.getInstance(prj)
+        val scope = GlobalSearchScope.union(SourceNavigationHelper.targetClassFilesToSourcesScopes(virtualFile, prj))
+
         val jvmNameAnnotations = KotlinJvmNameAnnotationIndex[baseName.substringBefore(JvmNames.MULTIFILE_PART_NAME_DELIMITER), prj, scope]
         val partShortName = baseName.substringAfter(JvmNames.MULTIFILE_PART_NAME_DELIMITER)
         if (baseName.contains(JvmNames.MULTIFILE_PART_NAME_DELIMITER)) {
@@ -53,11 +49,12 @@ class KtInternalFileTreeNode(project: Project?, lightClass: KtLightClass, viewSe
         val file = jvmNameAnnotations.singleOrNull()?.containingKtFile ?: run {
             // top level functions and properties are located in files like `SomeClassKt.class`
             val fqName = ktClsFile.packageFqName.child(Name.identifier(baseName))
-            KotlinFileFacadeFqNameIndex[fqName.asString(), prj, scope].singleOrNull()
+            KotlinFileFacadeFqNameIndex[fqName.asString(), prj, scope].singleOrNull() ?: run {
+                null
+            }
         }
         file?.let(smartPointerManager::createSmartPsiElementPointer)
     }
-
 
     override fun extractPsiFromValue(): PsiElement? = navigatablePsiElement?.element ?: value
 

@@ -5,10 +5,11 @@ package org.jetbrains.kotlin.idea.decompiler.navigation
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.stubs.StringStubIndexExtension
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -51,31 +52,31 @@ object SourceNavigationHelper {
         SourceNavigationHelper.forceResolve = forceResolve
     }
 
+    fun targetClassFilesToSourcesScopes(virtualFile: VirtualFile, project: Project): List<GlobalSearchScope> {
+        val binaryModuleInfos = ModuleInfoProvider.getInstance(project)
+            .collectLibraryBinariesModuleInfos(virtualFile)
+            .toList()
+
+        val primaryScope = binaryModuleInfos.mapNotNull { it.sourcesModuleInfo?.sourceScope() }.union()
+        val additionalScope = binaryModuleInfos.flatMap {
+            it.associatedCommonLibraries()
+        }.mapNotNull { it.sourcesModuleInfo?.sourceScope() }.union()
+
+        return if (binaryModuleInfos.any { it is ScriptDependenciesInfo }) {
+            // NOTE: this is a workaround for https://github.com/gradle/gradle/issues/13783:
+            // script configuration for *.gradle.kts files doesn't include sources for included plugins
+            primaryScope + additionalScope + ProjectScope.getContentScope(project)
+        } else {
+            primaryScope + additionalScope
+        }
+    }
+
     private fun targetScopes(declaration: KtElement, navigationKind: NavigationKind): List<GlobalSearchScope> {
         val containingFile = declaration.containingKtFile
         val vFile = containingFile.virtualFile ?: return emptyList()
-
         val project = declaration.project
         return when (navigationKind) {
-            NavigationKind.CLASS_FILES_TO_SOURCES -> {
-                val binaryModuleInfos = ModuleInfoProvider.getInstance(project)
-                    .collectLibraryBinariesModuleInfos(vFile)
-                    .toList()
-
-                val primaryScope = binaryModuleInfos.mapNotNull { it.sourcesModuleInfo?.sourceScope() }.union()
-                val additionalScope = binaryModuleInfos.flatMap {
-                    it.associatedCommonLibraries()
-                }.mapNotNull { it.sourcesModuleInfo?.sourceScope() }.union()
-
-                if (binaryModuleInfos.any { it is ScriptDependenciesInfo }) {
-                    // NOTE: this is a workaround for https://github.com/gradle/gradle/issues/13783:
-                    // script configuration for *.gradle.kts files doesn't include sources for included plugins
-                    primaryScope + additionalScope + ProjectScope.getContentScope(containingFile.project)
-                } else {
-                    primaryScope + additionalScope
-                }
-            }
-
+            NavigationKind.CLASS_FILES_TO_SOURCES -> targetClassFilesToSourcesScopes(vFile, project)
             NavigationKind.SOURCES_TO_CLASS_FILES -> {
                 if (containingFile.fileClassInfo is JvmMultifileClassPartInfo) {
                     // if the asked element is multifile classs, it might be compiled into .kotlin_metadata and .class
@@ -123,7 +124,7 @@ object SourceNavigationHelper {
 
         // enum entries
         if (containingClass.hasModifier(KtTokens.ENUM_KEYWORD)) {
-            for (enumEntry in ContainerUtil.findAll(containingClass.declarations, KtEnumEntry::class.java)) {
+            for (enumEntry in containingClass.declarations.filterIsInstance<KtEnumEntry>()) {
                 if (memberName == enumEntry.nameAsName) {
                     return enumEntry
                 }
