@@ -72,7 +72,7 @@ public class EqualsWithItselfInspection extends BaseInspection {
   private static final CallMatcher POSSIBLE_TO_SKIP_TEST_ASSERTIONS = CallMatcher.anyOf(ASSERT_ARGUMENT_COMPARISON, ASSERTJ_COMPARISON);
 
   @SuppressWarnings("PublicField")
-  public boolean ignoreNonFinalClassesInTest = true;
+  public boolean ignoreNonFinalClassesInTest = false;
 
   @Override
   public @NotNull OptPane getOptionsPane() {
