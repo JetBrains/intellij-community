@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsUsageCollector;
@@ -159,10 +158,10 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     this(project, false, false, null, null, indexingReason, ScanningType.FULL);
   }
 
-  private @NotNull Map<IndexableFilesIterator, Collection<VirtualFile>> scan(@NotNull PerformanceWatcher.Snapshot snapshot,
-                                                                       @NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
-                                                                       @NotNull ProgressIndicator indicator,
-                                                                       @NotNull Ref<? super StatusMark> markRef) {
+  private void scan(@NotNull PerformanceWatcher.Snapshot snapshot,
+                    @NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
+                    @NotNull ProgressIndicator indicator,
+                    @NotNull Ref<? super StatusMark> markRef) {
     projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.PushProperties);
     try {
       if (myPusher instanceof PushedFilePropertiesUpdaterImpl) {
@@ -181,7 +180,6 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     }
 
     List<IndexableFilesIterator> orderedProviders;
-    Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles;
     projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.CreatingIterators);
     try {
       if (myPredefinedIndexableFilesIterators == null) {
@@ -199,7 +197,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
 
     projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Scanning);
     try {
-      providerToFiles = collectIndexableFilesConcurrently(myProject, indicator, orderedProviders, projectIndexingHistory);
+      collectIndexableFilesConcurrently(myProject, indicator, orderedProviders, projectIndexingHistory);
       if (isFullIndexUpdate()) {
         myProject.putUserData(CONTENT_SCANNED, true);
       }
@@ -209,7 +207,6 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     }
     String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage));
-    return providerToFiles;
   }
 
   private void scanAndUpdateUnindexedFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
@@ -240,13 +237,12 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
 
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
     Disposable scanningLifetime = Disposer.newDisposable();
-    Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles;
     try {
       if (!shouldScanInSmartMode()) {
         DumbModeProgressTitle.getInstance(myProject)
           .attachProgressTitleText(IndexingBundle.message("progress.indexing.scanning.title"), scanningLifetime);
       }
-      providerToFiles = scan(snapshot, projectIndexingHistory, indicator, markRef);
+      scan(snapshot, projectIndexingHistory, indicator, markRef);
     }
     finally {
       Disposer.dispose(scanningLifetime);
@@ -259,19 +255,13 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
       scheduleInitialVfsRefresh();
     }
 
-    int totalFiles = providerToFiles.values().stream().mapToInt(Collection::size).sum();
-    if (totalFiles > 0) {
-      UnindexedFilesIndexer indexer = new UnindexedFilesIndexer(myProject, providerToFiles);
-      if (shouldScanInSmartMode()) {
-        // Switch to dumb mode and index
-        indexer.queue(myProject);
-      }
-      else {
-        // Already in dumb mode. Just invoke indexer
-        indexer.indexFiles(projectIndexingHistory, indicator);
-      }
-    } else {
-      LOG.info("Finished for " + myProject.getName() + ". No files to index with loading content.");
+    if (shouldScanInSmartMode()) {
+      // Switch to dumb mode and index
+      myProject.getService(PerProjectIndexingQueue.class).flushNow();
+    }
+    else {
+      // Already in dumb mode. Just invoke indexer
+      myProject.getService(PerProjectIndexingQueue.class).flushNowSync(projectIndexingHistory, indicator);
     }
   }
 
@@ -334,20 +324,19 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     return null;
   }
 
-  private @NotNull Map<IndexableFilesIterator, Collection<VirtualFile>> collectIndexableFilesConcurrently(
+  private void collectIndexableFilesConcurrently(
     @NotNull Project project,
     @NotNull ProgressIndicator indicator,
     @NotNull List<? extends IndexableFilesIterator> providers,
     @NotNull ProjectIndexingHistoryImpl projectIndexingHistory
   ) {
     if (providers.isEmpty()) {
-      return Collections.emptyMap();
+      return;
     }
     List<IndexableFileScanner.ScanSession> sessions =
       ContainerUtil.map(IndexableFileScanner.EP_NAME.getExtensionList(), scanner -> scanner.startSession(project));
     UnindexedFilesFinder unindexedFileFinder = new UnindexedFilesFinder(project, myIndex, getForceReindexingTrigger());
 
-    Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles = new IdentityHashMap<>();
     IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
 
     indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
@@ -363,10 +352,8 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     Ref<Boolean> allTasksFinished = Ref.create(false);
     List<Runnable> tasks = ContainerUtil.map(providers, provider -> {
       SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(1);
-      List<VirtualFile> files = new ArrayList<>();
       ScanningStatistics scanningStatistics = new ScanningStatistics(provider.getDebugName());
       scanningStatistics.setProviderRoots(provider, project);
-      providerToFiles.put(provider, files);
       IndexableSetOrigin origin = provider.getOrigin();
       List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors =
         ContainerUtil.mapNotNull(sessions, s -> s.createVisitor(origin));
@@ -401,6 +388,8 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
       }
 
       ProgressManager.checkCanceled(); // give a chance to suspend indexing
+
+      PerProjectIndexingQueue.PerProviderSink perProviderSink = project.getService(PerProjectIndexingQueue.class).getSink(provider);
       ContentIterator collectingIterator = fileOrDir -> {
 
         ProgressManager.checkCanceled(); // give a chance to suspend indexing
@@ -426,7 +415,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
         }
         if (status != null) {
           if (status.getShouldIndex() && ourTestMode == null) {
-            files.add(fileOrDir);
+            perProviderSink.addFile(fileOrDir);
           }
           scanningStatistics.addStatus(fileOrDir, status, statusTime, project);
         }
@@ -438,6 +427,9 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
         try {
           provider.iterateFiles(project, collectingIterator, thisProviderDeduplicateFilter);
         }
+        catch (Exception e) {
+          perProviderSink.clear();
+        }
         finally {
           scanningStatistics.setNumberOfSkippedFiles(thisProviderDeduplicateFilter.getNumberOfSkippedFiles());
           synchronized (allTasksFinished) {
@@ -445,6 +437,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
               projectIndexingHistory.addScanningStatistics(scanningStatistics);
             }
           }
+          perProviderSink.commit();
           subTaskIndicator.finished();
         }
       };
@@ -458,7 +451,6 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
         allTasksFinished.set(true);
       }
     }
-    return providerToFiles;
   }
 
   private void scheduleInitialVfsRefresh() {
