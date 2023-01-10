@@ -16,10 +16,11 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.fileClasses.isJvmMultifileClassFile
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.collectLibraryBinariesModuleInfos
+import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinJvmNameAnnotationIndex
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
 import org.jetbrains.kotlin.name.JvmNames
-import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFileAnnotationList
 
@@ -27,7 +28,8 @@ class KtInternalFileTreeNode(project: Project?, lightClass: KtLightClass, viewSe
     AbstractPsiBasedNode<KtLightClass>(project, lightClass, viewSettings) {
 
     private val navigatablePsiElement: SmartPsiElementPointer<KtElement>? by lazy {
-        val virtualFile = (value?.navigationElement as? KtClsFile)?.containingFile?.virtualFile ?: return@lazy null
+        val ktClsFile = value?.navigationElement as? KtClsFile
+        val virtualFile = ktClsFile?.containingFile?.virtualFile ?: return@lazy null
         val prj = getProject()
         val baseName = virtualFile.nameWithoutExtension
         val smartPointerManager = SmartPointerManager.getInstance(project)
@@ -48,11 +50,14 @@ class KtInternalFileTreeNode(project: Project?, lightClass: KtLightClass, viewSe
             }
         }
         // do not navigate to source if it is a facade file
-        jvmNameAnnotations.singleOrNull()?.containingKtFile?.let(smartPointerManager::createSmartPsiElementPointer)
+        val file = jvmNameAnnotations.singleOrNull()?.containingKtFile ?: run {
+            // top level functions and properties are located in files like `SomeClassKt.class`
+            val fqName = ktClsFile.packageFqName.child(Name.identifier(baseName))
+            KotlinFileFacadeFqNameIndex[fqName.asString(), prj, scope].singleOrNull()
+        }
+        file?.let(smartPointerManager::createSmartPsiElementPointer)
     }
 
-    private fun filterJvmMultifileClassAnnotation(psiElement: PsiElement) =
-        psiElement is KtAnnotationEntry && psiElement.shortName?.asString() == JvmNames.JVM_MULTIFILE_CLASS_SHORT
 
     override fun extractPsiFromValue(): PsiElement? = navigatablePsiElement?.element ?: value
 
