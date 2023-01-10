@@ -8,10 +8,13 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.options.JavaClassValidator
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.codeInspection.options.OptPane.stringSet
 import com.intellij.codeInspection.test.junit.references.MethodSourceReference
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil
 import com.intellij.lang.Language
 import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifier
@@ -37,16 +40,16 @@ import com.siyeh.ig.psiutils.TestUtils
 import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
-import javax.swing.JComponent
 import kotlin.streams.asSequence
 
 class JUnitMalformedDeclarationInspection : AbstractBaseUastLocalInspectionTool() {
   @JvmField
   val ignorableAnnotations = mutableListOf("mockit.Mocked", "org.junit.jupiter.api.io.TempDir")
 
-  override fun createOptionsPanel(): JComponent = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-    ignorableAnnotations, JvmAnalysisBundle.message("jvm.inspections.junit.malformed.option.ignore.test.parameter.if.annotated.by")
-  )
+  override fun getOptionsPane(): OptPane = pane(
+    stringSet("ignorableAnnotations",
+              JvmAnalysisBundle.message("jvm.inspections.junit.malformed.option.ignore.test.parameter.if.annotated.by"),
+              JavaClassValidator().annotationsOnly()))
 
   private fun shouldInspect(file: PsiFile) = isJUnit3InScope(file) || isJUnit4InScope(file) || isJUnit5InScope(file)
 

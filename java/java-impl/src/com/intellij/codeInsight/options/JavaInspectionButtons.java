@@ -4,6 +4,7 @@ package com.intellij.codeInsight.options;
 import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.codeInspection.ui.CustomComponentExtensionWithSwingRenderer;
+import com.intellij.packageDependencies.ui.DependencyConfigurable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ public class JavaInspectionButtons extends CustomComponentExtensionWithSwingRend
       case NULLABILITY_ANNOTATIONS -> NullableNotNullDialog.createConfigureAnnotationsButton(parent);
       case ENTRY_POINT_CODE_PATTERNS -> EntryPointsManagerImpl.createConfigureClassPatternsButton();
       case ENTRY_POINT_ANNOTATIONS -> EntryPointsManagerImpl.createConfigureAnnotationsButton();
+      case DEPENDENCY_CONFIGURATION -> DependencyConfigurable.getConfigureButton();
     };
   }
 
@@ -37,6 +39,7 @@ public class JavaInspectionButtons extends CustomComponentExtensionWithSwingRend
   public enum ButtonKind {
     NULLABILITY_ANNOTATIONS,
     ENTRY_POINT_CODE_PATTERNS,
-    ENTRY_POINT_ANNOTATIONS
+    ENTRY_POINT_ANNOTATIONS,
+    DEPENDENCY_CONFIGURATION
   }
 }
