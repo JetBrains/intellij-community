@@ -2,8 +2,10 @@
 package com.intellij.debugger;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -11,8 +13,36 @@ import java.util.Map;
 
 /**
  * The properties of a breakpoint from a test source file, specified by a 'Breakpoint!' comment.
+ * <p>
+ * The general syntax of a breakpoint comment is:
+ * <blockquote>
+ * [<i>kind</i>[(<i>kindValue</i>)]] Breakpoint! [<i>name</i>(<i>value</i>)...]
+ * </blockquote>
+ * <p>
+ * The <i>kind</i> and <i>name</i> may consist of several words.
+ * <p>
+ * Examples:
+ * <ul>
+ * <li>{@code Breakpoint!}
+ *     &mdash; a line breakpoint
+ * <li>{@code Method Breakpoint!}
+ *     &mdash; a method breakpoint
+ * <li>{@code Field(myName) Breakpoint! LogExpression(myName.substring(1)) Pass count(3)}
+ *     &mdash; a breakpoint on the field <i>myName</i>
+ *     that when reached logs the given expression
+ *     and only hits every 3rd time it is reached
+ * </ul>
+ * <p>
+ * This parser only parses the general syntax.
+ * Which breakpoint kinds are allowed and what their properties are
+ * is up to the code that uses this parser.
+ * <p>
+ * After parsing the breakpoint properties
+ * using {@link #readKind()}, {@link #readKindValue()} and {@link #readValue(String)},
+ * calling {@link #done()} checks that all properties of the breakpoint
+ * have been read.
  */
-class BreakpointComment {
+public final class BreakpointComment {
 
   private String kind;
   private String kindValue;
@@ -20,7 +50,7 @@ class BreakpointComment {
   private final String fileName;
   private final int lineNumber;
 
-  static @NotNull BreakpointComment parse(String text, String fileName, int lineNumber) {
+  public static @NotNull BreakpointComment parse(@NotNull String text, @NotNull String fileName, int lineNumber) {
     return new Parser(text, fileName, lineNumber).parse();
   }
 
@@ -29,21 +59,39 @@ class BreakpointComment {
     this.lineNumber = lineNumber;
   }
 
-  String readKind() {
+  /**
+   * Reads the optional kind of the breakpoint.
+   * <p>
+   * Typical values are "Method" or "Exception".
+   *
+   * @see #readKindValue()
+   */
+  public @Nullable String readKind() {
     String kind = this.kind;
     this.kind = null;
     return kind;
   }
 
-  String readKindValue() {
+  /**
+   * Reads the optional further parameter of the breakpoint kind,
+   * for example {@code myName} in {@code Field(myName) Breakpoint!}.
+   */
+  public @Nullable String readKindValue() {
     String value = kindValue;
     kindValue = null;
     return value;
   }
 
-  String readValue(String name) { return values.remove(name); }
+  /**
+   * Reads a named property of the breakpoint, which has the form <i>name(value)</i>.
+   * Any parentheses in the value must be balanced.
+   */
+  public @Nullable String readValue(@NotNull String name) { return values.remove(name); }
 
-  Boolean readBooleanValue(String name) {
+  /**
+   * Reads a named boolean property of the breakpoint.
+   */
+  public @Nullable Boolean readBooleanValue(@NotNull String name) {
     String value = readValue(name);
     if (value == null) return null;
     if (value.equals("true")) return true;
@@ -51,7 +99,11 @@ class BreakpointComment {
     throw error("Invalid boolean value '" + value + "' for '" + name + "'");
   }
 
-  static @NotNull Pair<ClassFilter[], ClassFilter[]> parseClassFilters(String value) {
+  /**
+   * Parses a string like {@code "Included,-ExceptionTest,-com.intellij.rt.*"} into
+   * two lists of included and excluded class filters.
+   */
+  public static @NotNull Pair<ClassFilter[], ClassFilter[]> parseClassFilters(@NotNull String value) {
     ArrayList<ClassFilter> include = new ArrayList<>();
     ArrayList<ClassFilter> exclude = new ArrayList<>();
     for (String pattern : value.split(",")) {
@@ -65,7 +117,8 @@ class BreakpointComment {
     return Pair.create(include.toArray(ClassFilter.EMPTY_ARRAY), exclude.toArray(ClassFilter.EMPTY_ARRAY));
   }
 
-  void done() {
+  /** Checks that all properties have been read. */
+  public void done() {
     if (kind != null) throw error("Unprocessed kind '" + kind + "'");
     if (kindValue != null) throw error("Unprocessed kind value '" + kindValue + "'");
     if (values.size() > 1) throw error("Unprocessed values '" + String.join(", ", values.keySet()) + "'");
@@ -84,14 +137,12 @@ class BreakpointComment {
     private final BreakpointComment comment;
 
     private Parser(String text, String fileName, int lineNumber) {
-      s = text.codePoints().toArray();
+      s = StringUtil.substringAfter(text, "//").codePoints().toArray();
       len = s.length;
       comment = new BreakpointComment(fileName, lineNumber);
     }
 
     @NotNull BreakpointComment parse() {
-      skipWhitespace();
-      while (i < len && s[i] == '/') i++;
       skipWhitespace();
 
       String kind = parseName();
