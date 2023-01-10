@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.sun.jna.platform.win32.COM.COMException;
 import com.sun.jna.platform.win32.COM.WbemcliUtil;
 import com.sun.jna.platform.win32.Ole32;
 import org.jetbrains.annotations.NotNull;
@@ -98,6 +99,9 @@ public class WindowsDefenderChecker {
       return Boolean.TRUE.equals(rtProtection);
     }
     catch (Exception e) {
+      if (e instanceof COMException ce && ce.matchesErrorCode(0x8004100e)) {  // WBEM_E_INVALID_NAMESPACE
+        return false;
+      }
       LOG.warn("WMI Windows Defender check failed", e);
       return null;
     }
