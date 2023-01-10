@@ -223,7 +223,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   }
 
   private fun batchUpdateModels(project: Project, modules: Collection<Module>, modifier: (ModifiableRootModel) -> Unit) {
-    val diffBuilder = WorkspaceModel.getInstance(project).entityStorage.current.toBuilder()
+    val diffBuilder = WorkspaceModel.getInstance(project).currentSnapshot.toBuilder()
     val modifiableRootModels = modules.asSequence().filter { !it.isDisposed }.map { module ->
       val moduleRootComponentBridge = ModuleRootManager.getInstance(module) as ModuleRootComponentBridge
       val modifiableRootModel = moduleRootComponentBridge.getModifiableModelForMultiCommit(ExternalSystemRootConfigurationAccessor(diffBuilder),

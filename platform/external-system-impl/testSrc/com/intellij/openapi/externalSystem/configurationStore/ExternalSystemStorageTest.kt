@@ -227,7 +227,7 @@ class ExternalSystemStorageTest {
   fun `check mavenized will be applied to the single diff`() {
     loadProjectAndCheckResults("twoRegularModules") { project ->
       val moduleManager = ModuleManager.getInstance(project)
-      val initialStorage = getInstance(project).entityStorage.current
+      val initialStorage = getInstance(project).currentSnapshot
       val storageBuilder = from(initialStorage)
       for (module in moduleManager.modules) {
         val modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module)

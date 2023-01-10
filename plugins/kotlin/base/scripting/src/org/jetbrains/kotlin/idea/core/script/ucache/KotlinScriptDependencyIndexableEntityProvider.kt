@@ -44,7 +44,7 @@ private fun MutableList<IndexableIteratorBuilder>.fillWithLibsDiff(
     newEntity: KotlinScriptEntity,
     oldEntity: KotlinScriptEntity? = null
 ) {
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
 
     val notYetIndexed = if (oldEntity == null) {
         newEntity.dependencies.toSet()

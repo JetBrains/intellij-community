@@ -70,7 +70,7 @@ object IndexableEntityProviderMethods {
     for (customLibraryTable in registrar.customLibraryTables) {
       getLibIteratorsByName(customLibraryTable, name)?.also { return@runReadAction it }
     }
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
     return@runReadAction storage.entities(LibraryEntity::class.java).firstOrNull { it.name == name }?.let {
       storage.libraryMap.getDataByEntity(it)
     }?.run {

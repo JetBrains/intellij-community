@@ -113,7 +113,7 @@ class RescannedRootsUtil {
       return result;
     }
 
-    EntityStorage current = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+    EntityStorage current = WorkspaceModel.getInstance(project).getCurrentSnapshot();
     for (CustomEntityProjectModelInfoProvider<?> provider : CustomEntityProjectModelInfoProvider.EP.getExtensionList()) {
       for (LibraryRoots<? extends WorkspaceEntity> roots : getRoots(provider, current)) {
         Iterator<VirtualFile> rootsIterator = excludedRoots.iterator();

@@ -318,7 +318,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val externalStoragePath = project.getExternalConfigurationDir()
     //TODO:: Get rid of dependency on ExternalStorageConfigurationManager in order to use in build process
     val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(project)
-    val fileInDirectorySourceNames = FileInDirectorySourceNames.from(WorkspaceModel.getInstance(project).entityStorage.current)
+    val fileInDirectorySourceNames = FileInDirectorySourceNames.from(WorkspaceModel.getInstance(project).currentSnapshot)
     return JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath,
                                                              virtualFileManager,
                                                              externalStorageConfigurationManager, fileInDirectorySourceNames)
@@ -331,7 +331,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       LOG.debug("Skipping save because initial loading wasn't performed")
       return
     }
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val unloadedEntitiesStorage = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities
     val affectedSources = synchronized(sourcesToSave) {
       val copy = HashSet(sourcesToSave)
@@ -347,7 +347,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     WorkspaceModel.getInstance(project).updateProjectModel("Convert to directory based format") {
       newSerializers.changeEntitySourcesToDirectoryBasedFormat(it)
     }
-    val moduleSources = WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java).map { it.entitySource }
+    val moduleSources = WorkspaceModel.getInstance(project).currentSnapshot.entities(ModuleEntity::class.java).map { it.entitySource }
     val unloadedModuleSources = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.entities(ModuleEntity::class.java).map { it.entitySource }
     synchronized(sourcesToSave) {
       //to trigger save for modules.xml
@@ -359,7 +359,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
   @TestOnly
   fun markAllEntitiesAsDirty() {
-    val allSources = WorkspaceModel.getInstance(project).entityStorage.current.entitiesBySource { true }.keys +
+    val allSources = WorkspaceModel.getInstance(project).currentSnapshot.entitiesBySource { true }.keys +
                      WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.entitiesBySource { true }.keys
     synchronized(sourcesToSave) {
       sourcesToSave.addAll(allSources)

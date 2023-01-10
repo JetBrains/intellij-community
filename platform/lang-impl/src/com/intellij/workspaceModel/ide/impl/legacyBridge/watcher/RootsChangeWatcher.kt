@@ -111,7 +111,7 @@ private class RootsChangeWatcher(private val project: Project) {
     changedUrlsList.clear()
     changedModuleStorePaths.clear()
 
-    val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+    val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
     for (event in events) {
       when (event) {
         is VFileDeleteEvent ->
@@ -227,7 +227,7 @@ private class RootsChangeWatcher(private val project: Project) {
     }
     // Keep old behaviour for global libraries
     if (GlobalLibraryTableBridge.isEnabled() && affectedEntities.isNotEmpty()) {
-      val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+      val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
       val globalLibraryTableBridge = GlobalLibraryTableBridge.getInstance() as GlobalLibraryTableBridgeImpl
 
       affectedEntities.forEach { entityRef ->
@@ -259,7 +259,7 @@ private class RootsChangeWatcher(private val project: Project) {
 
     val oldModuleId = ModuleId(oldModuleName)
     val workspaceModel = WorkspaceModel.getInstance(project)
-    val moduleEntity = workspaceModel.entityStorage.current.resolve(oldModuleId)
+    val moduleEntity = workspaceModel.currentSnapshot.resolve(oldModuleId)
     val description = "Update module name when iml file is renamed"
     if (moduleEntity != null) {
       workspaceModel.updateProjectModel(description) { diff ->

@@ -71,7 +71,7 @@ class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
 }
 
 private fun VirtualFile?.findUsedInScripts(project: Project): List<KotlinScriptEntity>? {
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val index = storage.getVirtualFileUrlIndex()
     val fileUrlManager = VirtualFileUrlManager.getInstance(project)
 

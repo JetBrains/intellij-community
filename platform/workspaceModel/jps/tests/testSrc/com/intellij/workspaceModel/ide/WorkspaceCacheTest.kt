@@ -111,7 +111,7 @@ class WorkspaceCacheTest {
 
     val project2 = loadProject(projectData.projectDir)
 
-    val modules = WorkspaceModel.getInstance(project2).entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val modules = WorkspaceModel.getInstance(project2).currentSnapshot.entities(ModuleEntity::class.java).toList()
     assertTrue(modules.any { it.name == "MyTestModule" })
   }
 
@@ -139,7 +139,7 @@ class WorkspaceCacheTest {
     ExtensionTestUtil.maskExtensions(WORKSPACE_MODEL_CACHE_VERSION_EP, listOf(VersionTwo), anotherPointDisposable)
     val project2 = loadProject(projectData.projectDir)
 
-    val modules = WorkspaceModel.getInstance(project2).entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val modules = WorkspaceModel.getInstance(project2).currentSnapshot.entities(ModuleEntity::class.java).toList()
     assertFalse(modules.any { it.name == "MyTestModule" })
   }
 

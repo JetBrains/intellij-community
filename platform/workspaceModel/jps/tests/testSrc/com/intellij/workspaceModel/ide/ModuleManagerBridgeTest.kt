@@ -33,5 +33,5 @@ class ModuleManagerBridgeTest {
   }
 
   private val storage
-    get() = WorkspaceModel.getInstance(projectModel.project).entityStorage.current
+    get() = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
 }

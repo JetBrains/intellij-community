@@ -21,7 +21,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.roots.IndexableEntityInducedChangesProvider.OriginChange;
 import com.intellij.util.indexing.roots.kind.IndexableSetIterableOrigin;
-import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.indexing.roots.origin.ModuleRootIterableOriginImpl;
 import com.intellij.util.indexing.roots.origin.SdkIterableOriginImpl;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
@@ -51,7 +50,7 @@ record WorkspaceModelSnapshot(@NotNull ActualEntitiesSnapshot actualEntities,
   private static volatile Generators GENERATORS;
 
   static WorkspaceModelSnapshot create(@NotNull Project project) {
-    EntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+    EntityStorage entityStorage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
     ModifiableLibrariesSnapshot snapshot = new ModifiableLibrariesSnapshot(MultiMap.createSet(), new HashMap<>());
     Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
     SdkId sdkId = (sdk == null) ? null : SdkId.create(sdk);
@@ -196,7 +195,7 @@ record WorkspaceModelSnapshot(@NotNull ActualEntitiesSnapshot actualEntities,
     if (references.isEmpty()) return null;
 
     Generators generators = GENERATORS;
-    EntityStorage storage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+    EntityStorage storage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
     List<WorkspaceEntity> entities = ContainerUtil.mapNotNull(references, (ref) -> ref.resolve(storage));
     ActualEntitiesSnapshot result = actualEntities.createWithRefreshedEntitiesIfNeeded(entities, generators, project, storage);
     if (result == null) return null;

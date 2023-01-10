@@ -47,7 +47,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
 
   private fun registerAllEntities(storageKind: EntityStorageKind) {
     val (storage, contributors) = when (storageKind) {
-      EntityStorageKind.MAIN -> WorkspaceModel.getInstance(project).entityStorage.current to contributors
+      EntityStorageKind.MAIN -> WorkspaceModel.getInstance(project).currentSnapshot to contributors
       EntityStorageKind.UNLOADED -> WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities to contributorsForUnloaded 
     }
     val registrar = StoreFileSetsRegistrarImpl(storageKind)
@@ -217,7 +217,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
     for (file in dirtyFiles) {
       fileSets.remove(file)
     }
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val removeRegistrar = RemoveFileSetsRegistrarImpl(EntityStorageKind.MAIN)
     val storeRegistrar = StoreFileSetsRegistrarImpl(EntityStorageKind.MAIN)
     for (reference in dirtyEntities) {

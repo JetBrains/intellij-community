@@ -30,7 +30,7 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
     val providers: List<IndexableFilesIterator>
     if (shouldIndexProjectBasedOnIndexableEntityProviders()) {
       val builders: MutableList<IndexableEntityProvider.IndexableIteratorBuilder> = mutableListOf()
-      val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+      val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
       for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
         if (provider is IndexableEntityProvider.Existing) {
           addIteratorBuildersFromProvider(provider, entityStorage, project, builders)

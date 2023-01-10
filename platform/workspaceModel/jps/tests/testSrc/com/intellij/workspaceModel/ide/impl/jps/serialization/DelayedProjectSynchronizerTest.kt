@@ -90,7 +90,7 @@ class DelayedProjectSynchronizerTest {
   }
 
   private fun checkSerializersConsistency(project: Project) {
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val serializers = JpsProjectModelSynchronizer.getInstance(project).getSerializers()
     val unloadedEntitiesStorage = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities
     serializers.checkConsistency(getJpsProjectConfigLocation(project)!!, storage, unloadedEntitiesStorage, VirtualFileUrlManager.getInstance(project))
@@ -134,7 +134,7 @@ class DelayedProjectSynchronizerTest {
           LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary("foo")
         }
       }
-      val storage = WorkspaceModel.getInstance(project).entityStorage.current
+      val storage = WorkspaceModel.getInstance(project).currentSnapshot
       JpsProjectModelSynchronizer.getInstance(project).getSerializers().saveAllEntities(storage, projectData.configLocation)
     }
     val librariesFolder = projectData.projectDir.toPath().resolve(".idea/libraries/")

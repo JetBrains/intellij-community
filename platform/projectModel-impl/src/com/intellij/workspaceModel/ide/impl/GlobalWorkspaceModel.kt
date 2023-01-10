@@ -160,7 +160,7 @@ class GlobalWorkspaceModel: Disposable {
     filteredProject = sourceProject
     LOG.info("Apply changes from project: ${sourceProject.name}")
     updateModel("Sync entities with global storage") { builder ->
-      builder.replaceBySource(globalEntitiesFilter, WorkspaceModel.getInstance(sourceProject).entityStorage.current)
+      builder.replaceBySource(globalEntitiesFilter, WorkspaceModel.getInstance(sourceProject).currentSnapshot)
     }
     filteredProject = null
   }

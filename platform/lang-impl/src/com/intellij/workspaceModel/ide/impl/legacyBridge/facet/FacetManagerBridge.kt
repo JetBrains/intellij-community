@@ -47,7 +47,7 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
   override fun facetConfigurationChanged(facet: Facet<*>) {
     if (facet is FacetBridge<*>) {
       runWriteAction {
-        val mutableEntityStorage = module.diff ?: WorkspaceModel.getInstance(module.project).entityStorage.current.toBuilder()
+        val mutableEntityStorage = module.diff ?: WorkspaceModel.getInstance(module.project).currentSnapshot.toBuilder()
         facet.applyChangesToStorage(mutableEntityStorage, module)
         if (module.diff == null) {
           WorkspaceModel.getInstance(module.project).updateProjectModel("Update facet configuration") { it.addDiff(mutableEntityStorage) }

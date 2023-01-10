@@ -80,7 +80,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
       dependenciesStatusMark = dependencyBuildersPair.getSecond();
     }
 
-    EntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+    EntityStorage entityStorage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
     for (RootsChangeRescanningInfo change : changes) {
       if (change == RootsChangeRescanningInfo.NO_RESCAN_NEEDED || change == RootsChangeRescanningInfo.RESCAN_DEPENDENCIES_IF_NEEDED) {
         continue;
@@ -148,7 +148,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   @NotNull
   static List<IndexableFilesIterator> getIterators(@NotNull Project project,
                                                    @NotNull Collection<? extends EntityChange<?>> events) {
-    EntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+    EntityStorage entityStorage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
     List<IndexableIteratorBuilder> result = getBuildersOnWorkspaceChange(project, events);
     return IndexableIteratorBuilders.INSTANCE.instantiateBuilders(result, project, entityStorage);
   }

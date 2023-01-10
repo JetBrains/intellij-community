@@ -114,7 +114,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
   override fun prepareForCommit() {
     assertModelIsLive()
     modelIsCommittedOrDisposed = true
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
     myAddedLibraries.forEach { library ->
       if (library.libraryId in storage) {
         // it may happen that actual library table already has a library with such name (e.g. when multiple projects are imported in parallel)

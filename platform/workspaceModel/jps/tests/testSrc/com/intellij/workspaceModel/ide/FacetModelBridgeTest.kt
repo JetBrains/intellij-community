@@ -76,8 +76,7 @@ class FacetModelBridgeTest {
     assertNotNull(facetByType)
     assertEquals(facetData, facetByType!!.configuration.data)
 
-    val entityStorage = WorkspaceModel.getInstance(projectModel.project).entityStorage
-    val facetEntity = entityStorage.current.entities(FacetEntity::class.java).first()
+    val facetEntity = WorkspaceModel.getInstance(projectModel.project).currentSnapshot.entities(FacetEntity::class.java).first()
     assertEquals(facetConfigXml, facetEntity.configurationXmlTag)
 
     facetManager.createModifiableModel().let { modifiableModel ->
@@ -174,7 +173,7 @@ class FacetModelBridgeTest {
     val module = projectModel.createModule()
     val facet = projectModel.addFacet(module, MockFacetType.getInstance(), MockFacetConfiguration("foo"))
 
-    val diff = WorkspaceModel.getInstance(projectModel.project).entityStorage.current.toBuilder()
+    val diff = WorkspaceModel.getInstance(projectModel.project).currentSnapshot.toBuilder()
     val modifiableModuleModel = (ModuleManager.getInstance(projectModel.project) as ModuleManagerBridgeImpl).getModifiableModel(diff)
     val modifiableFacetModel = (FacetManager.getInstance(module) as FacetManagerBridge).createModifiableModel(diff)
 

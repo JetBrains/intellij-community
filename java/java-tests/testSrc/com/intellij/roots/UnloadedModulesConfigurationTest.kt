@@ -167,7 +167,7 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
       moduleManager.setUnloadedModules(listOf("a"))
     }
     
-    val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+    val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
     assertEquals(project.name, entityStorage.entities(ModuleEntity::class.java).single().name)
     assertEmpty(entityStorage.entities(LibraryEntity::class.java).toList())
 
@@ -180,6 +180,6 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     }
     assertEmpty(unloadedModuleEntities)
     assertEmpty(WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.entities(LibraryEntity::class.java).toList())
-    assertEquals("lib", WorkspaceModel.getInstance(project).entityStorage.current.entities(LibraryEntity::class.java).single().name)
+    assertEquals("lib", WorkspaceModel.getInstance(project).currentSnapshot.entities(LibraryEntity::class.java).single().name)
   }
 }

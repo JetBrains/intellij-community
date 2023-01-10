@@ -29,7 +29,7 @@ import kotlin.io.path.relativeTo
  */
 
 fun KotlinScriptEntity.listDependencies(project: Project, rootTypeId: KotlinScriptLibraryRootTypeId? = null): List<VirtualFile> {
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
     return dependencies.asSequence()
         .mapNotNull { storage.resolve(it) }
         .flatMap { it.roots }
@@ -56,7 +56,7 @@ internal fun Project.syncScriptEntities(scriptFilesToAddOrUpdate: List<VirtualFi
 @Suppress("unused")
 // Use this method troubleshooting to see scripts-to-libraries relations
 private fun Project.scriptsDebugInfo(): String {
-    val storage = WorkspaceModel.getInstance(this).entityStorage.current
+    val storage = WorkspaceModel.getInstance(this).currentSnapshot
     val scriptEntities = storage.entities(KotlinScriptEntity::class.java).toList()
 
     return buildString {
@@ -72,7 +72,7 @@ private fun Project.scriptsDebugInfo(): String {
 @Suppress("unused")
 // Use this method troubleshooting to see libraries-to-scripts relations
 private fun Project.scriptLibrariesDebugInfo(): String {
-    val storage = WorkspaceModel.getInstance(this).entityStorage.current
+    val storage = WorkspaceModel.getInstance(this).currentSnapshot
     val scriptLibraries = storage.entities(KotlinScriptLibraryEntity::class.java).toList()
 
     return buildString {
