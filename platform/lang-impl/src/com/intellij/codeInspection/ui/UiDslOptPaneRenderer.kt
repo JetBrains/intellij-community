@@ -1,9 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui
 
+import com.intellij.codeInsight.hint.HintManager
+import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.options.*
 import com.intellij.ide.DataManager
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -12,7 +15,10 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.HyperlinkLabel
+import com.intellij.ui.SimpleColoredText
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.*
@@ -214,7 +220,13 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
               ) { conf -> component.controlLabel?.let { label -> conf.focusOn(label) } }
             }
             else {
-              val configurable = settings.find(component.configurableID) ?: return@addHyperlinkListener
+              val configurable = settings.find(component.configurableID)
+              if (configurable == null) {
+                val hint = HintUtil.createInformationLabel(
+                  SimpleColoredText(LangBundle.message("label.settings.page.not.found"), SimpleTextAttributes.ERROR_ATTRIBUTES))
+                HintManager.getInstance().showHint(hint, RelativePoint.getNorthEastOf(label), HintManager.HIDE_BY_ANY_KEY, 5_000)
+                return@addHyperlinkListener
+              }
               settings.select(configurable)
               component.controlLabel?.let { configurable.focusOn(it) }
             }
