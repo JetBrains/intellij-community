@@ -69,7 +69,7 @@ public class EqualsWithItselfInspection extends BaseInspection {
   private static final CallMatcher ASSERTJ_ASSERT_THAT =
     CallMatcher.staticCall("org.assertj.core.api.Assertions", "assertThat").parameterCount(1);
 
-  private static final CallMatcher TEST_ASSERTIONS = CallMatcher.anyOf(ASSERT_ARGUMENT_COMPARISON, ASSERTJ_COMPARISON);
+  private static final CallMatcher POSSIBLE_TO_SKIP_TEST_ASSERTIONS = CallMatcher.anyOf(ASSERT_ARGUMENT_COMPARISON, ASSERTJ_COMPARISON);
 
   @SuppressWarnings("PublicField")
   public boolean ignoreNonFinalClassesInTest = true;
@@ -107,13 +107,13 @@ public class EqualsWithItselfInspection extends BaseInspection {
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (ignoreNonFinalClassesInTest &&
-          TEST_ASSERTIONS.test(expression) &&
+          POSSIBLE_TO_SKIP_TEST_ASSERTIONS.test(expression) &&
           !isFinalLibraryClassOrPrimitives(expression)) {
         return;
       }
       if (isEqualsWithItself(expression)) {
         registerMethodCallError(expression, !ignoreNonFinalClassesInTest &&
-                                            TEST_ASSERTIONS.test(expression) &&
+                                            POSSIBLE_TO_SKIP_TEST_ASSERTIONS.test(expression) &&
                                             !isFinalLibraryClassOrPrimitives(expression));
       }
     }
