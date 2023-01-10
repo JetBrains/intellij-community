@@ -41,6 +41,7 @@ import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.StringPattern;
@@ -790,14 +791,16 @@ public final class FindManagerImpl extends FindManager {
   @Override
   public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model,
                                    int startOffset, @NotNull CharSequence documentText) throws MalformedReplacementStringException {
-    String toReplace = model.getStringToReplace();
+    String replacement = model.getStringToReplace();
     if (model.isRegularExpressions()) {
-      toReplace = getStringToReplaceByRegexp(model, documentText, startOffset);
+      replacement = getStringToReplaceByRegexp(model, documentText, startOffset);
     }
     if (model.isPreserveCase()) {
-      toReplace = PreserveCaseUtil.replaceWithCaseRespect(toReplace, foundString);
+      replacement = Registry.is("ide.find.word.based.preserve.case")
+                  ? PreserveCaseUtil.applyCase(foundString, replacement)
+                  : PreserveCaseUtil.replaceWithCaseRespect(replacement, foundString);
     }
-    return toReplace;
+    return replacement;
   }
 
   private static String getStringToReplaceByRegexp(@NotNull final FindModel model, @NotNull CharSequence text, int startOffset) throws MalformedReplacementStringException {

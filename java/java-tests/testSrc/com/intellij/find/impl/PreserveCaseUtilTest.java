@@ -38,4 +38,48 @@ public class PreserveCaseUtilTest {
     assertEquals("myTest", replaceWithCaseRespect("MyTest", "userCode"));
   }
 
+  @Test
+  public void testApplyCase() {
+    // the same tests as above
+    assertEquals("Foo", applyCase("Bar", "foo"));
+    assertEquals("foo", applyCase("bar", "foo"));
+    assertEquals("FOO", applyCase("BAR", "foo"));
+    assertEquals("Foo", applyCase("Bar", "Foo"));
+    assertEquals("foo", applyCase("bar", "Foo"));
+    assertEquals("FOO", applyCase("BAR", "Foo"));
+    assertEquals("Foo", applyCase("Bar", "FOO"));
+    assertEquals("foo", applyCase("bar", "FOO"));
+    assertEquals("FOO", applyCase("BAR", "FOO"));
+    assertEquals("FooBar", applyCase("Bar", "fooBar"));
+    assertEquals("fooBar", applyCase("bar", "fooBar"));
+    assertEquals("def1", applyCase("abc1", "DEF1"));
+    assertEquals("Def1", applyCase("Abc1", "DEF1"));
+    assertEquals("DEF1", applyCase("ABC1", "DEF1"));
+    assertEquals("abc", applyCase("a1", "abc"));
+    assertEquals("ABC", applyCase("A1", "abc"));
+    assertEquals("report", applyCase("display preferences", "Report"));
+    assertEquals("REPORT", applyCase("DISPLAY PREFERENCES", "Report"));
+    assertEquals("report", applyCase("display Preferences", "Report"));
+    assertEquals("Report", applyCase("Display preferences", "Report"));
+    assertEquals("MYTEST", applyCase("USERCODE", "MyTest"));
+    assertEquals("MyTest", applyCase("UserCode", "MyTest"));
+    assertEquals("myTest", applyCase("userCode", "MyTest"));
+
+    // cases not supported by replaceWithCaseRespect()
+    assertEquals("display preferences", applyCase("report", "display preferences"));
+    assertEquals("DISPLAY PREFERENCES", applyCase("REPORT", "display preferences"));
+    assertEquals("Display Preferences", applyCase("Report", "display preferences"));
+    assertEquals("Program_Lead_Id", applyCase("Project_Lead_Id", "PROGRAM_LEAD_ID"));
+    assertEquals("sun_shine", applyCase("niceWeather", "SUN_SHINE"));
+    assertEquals("sun_shine", applyCase("niceweather", "SUN_SHINE"));
+    assertEquals("do nothing", applyCase("111", "do nothing"));
+    assertEquals("Do Nothing", applyCase("111", "Do Nothing"));
+    assertEquals("DO NOTHING", applyCase("111", "DO NOTHING"));
+    assertEquals("222", applyCase("111", "222"));
+    assertEquals("String_Test", applyCase("Test_String", "string_test"));
+    assertEquals("_Case", applyCase("Case", "_case"));
+    assertEquals("control.searchControl", applyCase("control.search", "control.SearchControl"));
+    assertEquals("control.SearchControl", applyCase("control.Search", "control.SearchControl"));
+  }
+
 }
