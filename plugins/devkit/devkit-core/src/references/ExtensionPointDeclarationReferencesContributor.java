@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
@@ -30,6 +30,7 @@ import java.util.List;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
+import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.patterns.uast.UastPatterns.*;
 import static com.intellij.psi.UastReferenceRegistrar.registerUastReferenceProvider;
 
@@ -49,7 +50,9 @@ public class ExtensionPointDeclarationReferencesContributor extends PsiReference
 
           uExpression().methodCallParameter(0,
                                             psiMethod().withName("create").withParameterCount(1)
-                                              .definedInClass(ExtensionPointName.class.getName())),
+                                              .definedInClass(psiClass().withQualifiedName(
+                                                string().oneOf(ExtensionPointName.class.getName(),
+                                                               ExtensionPointName.Companion.getClass().getCanonicalName())))),
 
           uExpression().callParameter(0,
                                       callExpression().constructor(keyedExtensionCollectorInheritor)),
