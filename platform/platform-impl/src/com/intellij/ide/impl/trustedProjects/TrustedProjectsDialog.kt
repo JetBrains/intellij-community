@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.ThreeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
@@ -41,8 +42,11 @@ object TrustedProjectsDialog {
     @NlsContexts.Button cancelButtonText: String
   ): Boolean {
     val locatedProject = LocatedProject.locateProject(projectRoot, project)
-    if (TrustedProjects.isProjectTrusted(locatedProject)) {
+    val projectTrustedState = TrustedProjects.getProjectTrustedState(locatedProject)
+    if (projectTrustedState == ThreeState.YES) {
       TrustedProjects.setProjectTrusted(locatedProject, true)
+    }
+    if (projectTrustedState != ThreeState.UNSURE) {
       return true
     }
 
@@ -137,8 +141,11 @@ object TrustedProjectsDialog {
     @NlsContexts.Button cancelButtonText: String
   ): Boolean {
     val locatedProject = LocatedProject.locateProject(projectRoot, project)
-    if (TrustedProjects.isProjectTrusted(locatedProject)) {
+    val projectTrustedState = TrustedProjects.getProjectTrustedState(locatedProject)
+    if (projectTrustedState == ThreeState.YES) {
       TrustedProjects.setProjectTrusted(locatedProject, true)
+    }
+    if (projectTrustedState != ThreeState.UNSURE) {
       return true
     }
 
