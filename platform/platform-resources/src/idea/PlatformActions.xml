@@ -1508,7 +1508,7 @@
       <action id="ActivateFindToolWindow" class="com.intellij.find.actions.ActivateFindToolWindowAction"/>
     </group>
 
-    <action class="com.intellij.diagnostic.ResetWindowsDefenderNotification" id="ResetWindowsDefenderNotification"/>
+    <action class="com.intellij.diagnostic.CheckWindowsDefenderStatusAction" id="CheckWindowsDefenderStatus"/>
     <action class="com.intellij.diagnostic.FixWSLFirewallAction" id="FixWSLFirewall"/>
 
     <group id="SettingsEntryPointGroup">

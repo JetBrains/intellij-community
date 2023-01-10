@@ -881,8 +881,6 @@
 
     <postStartupActivity implementation="com.intellij.openapi.fileEditor.impl.EditorHistoryManager$EditorHistoryManagerStartUpActivity"/>
 
-    <backgroundPostStartupActivity implementation="com.intellij.diagnostic.WindowsDefenderCheckerActivity" os="windows"/>
-
     <preloadingActivity implementation="com.intellij.codeInsight.editorActions.TypedHandler$TypedHandlerDelegatePreloader"/>
     <actionConfigurationCustomizer implementation="com.intellij.execution.ExecutorRegistryImpl$ExecutorRegistryActionConfigurationTuner"/>
 
@@ -1308,6 +1306,7 @@
     <notificationGroup id="Test Results" displayType="TOOL_WINDOW" toolWindowId="Run" isLogByDefault="false" hideFromSettings="true"/>
     <notificationGroup id="feedback.form" displayType="BALLOON" bundle="messages.ApplicationBundle" key="feedback.form.notification.group"/>
     <notificationGroup id="PerformanceWatcher" displayType="STICKY_BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.performance.watcher"/>
+    <notificationGroup id="WindowsDefender" displayType="BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.defender.config"/>
 
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
     <registryKey key="html.editor.timeout" defaultValue="15000" description="HTML editor content loading timeout, ms"/>
