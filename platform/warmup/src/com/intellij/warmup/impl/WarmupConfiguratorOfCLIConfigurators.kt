@@ -72,7 +72,7 @@ internal class WarmupConfiguratorOfCLIConfigurator(val delegate: CommandLineInsp
 
         override fun setIndeterminate(indeterminate: Boolean) {
           if (indeterminate) {
-            reporter?.fraction(-1.0)
+            reporter?.fraction(null)
           }
           else {
             reporter?.fraction(0.0)
