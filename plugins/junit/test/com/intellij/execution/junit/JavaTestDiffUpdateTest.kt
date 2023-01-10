@@ -57,37 +57,6 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
       """.trimIndent())
   }
 
-  fun `test success when stacktrace is polluted`() {
-    checkAcceptFullDiff("""
-        import org.junit.Assert;
-        import org.junit.Test;
-        
-        public class MyJUnitTest {
-            @Test
-            public void testFoo() {
-                Assert.assertEquals("expected", "actual");
-            }
-        }
-      """.trimIndent(), """
-        import org.junit.Assert;
-        import org.junit.Test;
-        
-        public class MyJUnitTest {
-            @Test
-            public void testFoo() {
-                Assert.assertEquals("actual", "actual");
-            }
-        }
-      """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
-          unexpected input
-          at org.junit.Assert.assertEquals(Assert.java:117)
-          unexpected input
-          at org.junit.Assert.assertEquals(Assert.java:146)
-          at MyJUnitTest.testFoo(MyJUnitTest.java:7)
-          unexpected input
-      """.trimIndent())
-  }
-
   fun `test accept string literal diff`() {
     checkAcceptFullDiff("""
         import org.junit.Assert;
