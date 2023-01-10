@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
@@ -78,6 +78,10 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.containers.WeakList
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.ref.GCWatcher
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import net.sf.cglib.core.ClassNameReader
 import java.awt.KeyboardFocusManager
 import java.awt.Window
@@ -552,6 +556,18 @@ object DynamicPlugins {
     }
     finally {
       IdeEventQueue.getInstance().flushQueue()
+      if (Registry.`is`("ide.await.scope.completion")) {
+        @OptIn(DelicateCoroutinesApi::class)
+        val waitForCompletion = GlobalScope.launch {
+          for (classLoader in classLoaders) {
+            classLoader.pluginCoroutineScope.coroutineContext.job.join()
+          }
+        }
+        while (waitForCompletion.isActive) {
+          ProgressManager.checkCanceled()
+          IdeEventQueue.getInstance().flushQueue()
+        }
+      }
 
       // do it after IdeEventQueue.flushQueue() to ensure that Disposer.isDisposed(...) works as expected in flushed tasks.
       Disposer.clearDisposalTraces()   // ensure we don't have references to plugin classes in disposal backtraces
