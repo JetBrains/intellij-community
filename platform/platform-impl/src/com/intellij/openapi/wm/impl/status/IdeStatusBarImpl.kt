@@ -518,7 +518,7 @@ open class IdeStatusBarImpl internal constructor(
     }
 
     val point = SwingUtilities.convertPoint(component, e.point, rightPanel)
-    val widget = rightPanel.getComponentAt(point) as? JComponent
+    val widget = getVisibleChildAt(rightPanel, point)
     if (e.clickCount == 0 || e.id == MouseEvent.MOUSE_RELEASED) {
       applyWidgetEffect(if (widget !== rightPanel) widget else null, WidgetEffect.HOVER)
     }
@@ -545,6 +545,19 @@ open class IdeStatusBarImpl internal constructor(
       }
     }
     return false
+  }
+
+  /**
+   * Unlike [Container.getComponentAt] will not return invisible child.
+   * Unlike [Container.findComponentAt] or [SwingUtilities.getDeepestComponentAt] will not search deeper.
+   */
+  private fun getVisibleChildAt(component: JComponent, point: Point): JComponent? {
+    if (component.isVisible && component.contains(point)) {
+      return component.components.find { child ->
+        child.isVisible && child.contains(point.x - child.x, point.y - child.y)
+      } as? JComponent
+    }
+    return null
   }
 
   override fun getUIClassID(): String = UI_CLASS_ID
@@ -797,7 +810,7 @@ private fun wrapCustomStatusBarWidget(widget: CustomStatusBarWidget): JComponent
 }
 
 private fun createDefaultEditorProvider(frameHelper: ProjectFrameHelper): () -> FileEditor? {
-  return p@ {
+  return p@{
     (frameHelper.project ?: return@p null).service<StatusBarWidgetsManager>().dataContext.currentFileEditor.value
   }
 }
