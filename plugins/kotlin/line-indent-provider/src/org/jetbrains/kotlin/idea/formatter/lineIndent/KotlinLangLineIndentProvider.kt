@@ -50,6 +50,10 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             before.isAt(BlockOpeningBrace) ->
                 return factory.createIndentCalculatorForBrace(before, after, BlockOpeningBrace, BlockClosingBrace, Indent.getNormalIndent())
 
+            before.isAt(Arrow) -> {
+                return factory.createIndentCalculatorForArrow(before, after)
+            }
+
             after.isAt(ArrayClosingBracket) && !currentPosition.hasLineBreaksAfter(offset) ->
                 return factory.createIndentCalculatorForBrace(
                     before,
@@ -246,6 +250,26 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             BlockOpeningBrace to BlockClosingBrace,
             ArrayOpeningBracket to ArrayClosingBracket,
         )
+
+        private fun IndentCalculatorFactory.createIndentCalculatorForArrow(
+            arrowPosition: SemanticEditorPosition,
+            after: SemanticEditorPosition,
+        ): IndentCalculator? {
+            val leftBrace = arrowPosition.copyAnd {
+                it.moveToLeftParenthesisBackwardsSkippingNested(BlockOpeningBrace, BlockClosingBrace)
+            }
+
+            if (leftBrace.isAtEnd) {
+                return null
+            }
+
+            val normalIndent = Indent.getNormalIndent()
+            return if (leftBrace.controlFlowStatementBefore() != null) {
+                createIndentCalculator(normalIndent, arrowPosition.startOffset)
+            } else {
+                createIndentCalculatorForBrace(leftBrace, after, BlockOpeningBrace, BlockClosingBrace, normalIndent)
+            }
+        }
 
         private fun IndentCalculatorFactory.createIndentCalculatorForBrace(
             before: SemanticEditorPosition,

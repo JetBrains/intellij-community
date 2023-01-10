@@ -1,5 +1,5 @@
 fun test() {
-    when (2) {
+    when {
         is Int -><caret>
     }
 }
