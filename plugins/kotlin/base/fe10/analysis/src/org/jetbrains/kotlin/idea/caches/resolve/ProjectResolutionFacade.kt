@@ -75,6 +75,7 @@ internal class ProjectResolutionFacade(
             if (parentDisposable != null) {
                 (resolverForProjectHolder?.value as? Disposable)?.let(Disposer::dispose)
                 (resolverProvider as? Disposable)?.let {
+                    (it as? IdeaResolverForProject)?.checkIsValid()
                     Disposer.register(this, it)
                 }
             }

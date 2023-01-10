@@ -253,6 +253,12 @@ class IdeaResolverForProject(
 
     override fun dispose() = Unit
 
+    fun checkIsValid() {
+        if (disposed) {
+            reportInvalidResolver()
+        }
+    }
+
     override fun reportInvalidResolver() {
         throw ProcessCanceledException(InvalidResolverException("$name is invalidated"))
     }
