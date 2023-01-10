@@ -6,7 +6,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.*;
+import com.intellij.vcs.console.VcsConsoleTabService;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -375,10 +379,9 @@ public class VcsNotifier {
   }
 
   public static void addShowDetailsAction(@NotNull Project project, @NotNull Notification notification) {
-    if (ProjectLevelVcsManager.getInstance(project).isConsoleVisible()) {
+    if (!VcsConsoleTabService.getInstance(project).isConsoleEmpty()) {
       notification.addAction(NotificationAction.createSimple(VcsBundle.message("notification.showDetailsInConsole"), () -> {
-        ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-        vcsManager.showConsole(vcsManager::scrollConsoleToTheEnd);
+        VcsConsoleTabService.getInstance(project).showConsoleTabAndScrollToTheEnd();
       }));
     }
   }
