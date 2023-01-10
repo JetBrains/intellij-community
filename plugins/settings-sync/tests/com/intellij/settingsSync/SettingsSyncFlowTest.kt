@@ -87,11 +87,15 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
     deleteServerDataAndWait()
 
+    assertVersionOnServerIsDeleted()
+    assertFalse("Settings sync was not disabled", SettingsSyncSettings.getInstance().syncEnabled)
+  }
+
+  private fun assertVersionOnServerIsDeleted() {
     val versionOnServer = remoteCommunicator.getVersionOnServer()
     assertNotNull("There is no version on the server", versionOnServer)
     assertTrue("The server snapshot is incorrect: $versionOnServer", versionOnServer!!.isDeleted())
     assertTrue("There should be no settings data after deletion: $versionOnServer", versionOnServer.isEmpty())
-    assertFalse("Settings sync was not disabled", SettingsSyncSettings.getInstance().syncEnabled)
   }
 
   private fun deleteServerDataAndWait() {
@@ -336,17 +340,16 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     }
   }
 
-  @Test fun `deletion should be recognized correctly`() {
-    writeToConfig {
-      fileState("options/editor.xml", "Editor Initial")
-    }
-    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
-    deleteServerDataAndWait()
+  @Test fun `migration should respect deletion on server`() {
+    val deletionSnapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true),
+                                            emptySet(), null, emptySet())
+    remoteCommunicator.prepareFileOnServer(deletionSnapshot)
 
     val migration = migrationFromLafXml()
     initSettingsSync(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration))
 
-    assertEquals("Incorrect content", "Migration Data", (settingsSyncStorage / "options" / "laf.xml").readText())
+    assertFalse("Settings Sync should be disabled", SettingsSyncSettings.getInstance().syncEnabled)
+    assertVersionOnServerIsDeleted()
   }
 
   @Test fun `regular sync should push if there is nothing on server`() {

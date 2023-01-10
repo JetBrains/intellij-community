@@ -119,23 +119,38 @@ class SettingsSyncBridge(parentDisposable: Disposable,
       LOG.info("Migration from old storage applied.")
       var masterPosition = settingsLog.advanceMaster() // merge (preserve) 'ide' changes made by logging existing settings & by migration
 
-      // if there is already a version on the server, then it should be preferred over migration
       val updateResult = remoteCommunicator.receiveUpdates()
-      if (updateResult is UpdateResult.Success) {
-        val snapshot = updateResult.settingsSnapshot
-        masterPosition = settingsLog.forceWriteToMaster(snapshot, "Remote changes to overwrite migration data by settings from cloud")
-        SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = updateResult.serverVersionId
-        pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
-      }
-      else {
-        // otherwise we place our migrated data to the cloud
-        forcePushToCloud(masterPosition)
+      when (updateResult) {
+        is UpdateResult.Success -> {
+          LOG.info("There is a snapshot on the server => prefer server version over local migration data")
+          val snapshot = updateResult.settingsSnapshot
+          masterPosition = settingsLog.forceWriteToMaster(snapshot, "Remote changes to overwrite migration data by settings from cloud")
+          settingsLog.setCloudPosition(masterPosition)
 
-        pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
-        migration.migrateCategoriesSyncStatus(appConfigPath, SettingsSyncSettings.getInstance())
-        saveIdeSettings()
+          SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = updateResult.serverVersionId
+          SettingsSyncSettings.getInstance().syncEnabled = true
+          pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
+        }
+        is UpdateResult.FileDeletedFromServer -> {
+          SettingsSyncSettings.getInstance().syncEnabled = false
+          LOG.info("Snapshot on the server has been deleted => not enabling settings sync after migration")
+        }
+        is UpdateResult.Error -> {
+          LOG.info("Error prevented checking server state: ${updateResult.message}")
+          SettingsSyncSettings.getInstance().syncEnabled = false
+          SettingsSyncStatusTracker.getInstance().updateOnError(updateResult.message)
+        }
+        UpdateResult.NoFileOnServer -> {
+          LOG.info("No snapshot file on the server yet => pushing the migrated data to the cloud")
+          forcePushToCloud(masterPosition)
+          settingsLog.setCloudPosition(masterPosition)
+
+          SettingsSyncSettings.getInstance().syncEnabled = true
+          pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
+          migration.migrateCategoriesSyncStatus(appConfigPath, SettingsSyncSettings.getInstance())
+          saveIdeSettings()
+        }
       }
-      settingsLog.setCloudPosition(masterPosition)
     }
     else {
       LOG.warn("Migration from old storage didn't happen, although it was identified as possible: no data to migrate")
