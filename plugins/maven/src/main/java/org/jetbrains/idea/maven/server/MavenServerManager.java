@@ -86,7 +86,7 @@ public final class MavenServerManager implements Disposable {
     synchronized (myMultimoduleDirToConnectorMap) {
       getAllConnectors().forEach(it -> {
         if (project.equals(it.getProject()) && condition.test(it)) {
-          connectorsToShutDown.add(it);
+          connectorsToShutDown.add(removeConnector(it));
         }
       });
     }
@@ -95,7 +95,7 @@ public final class MavenServerManager implements Disposable {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         connectorsToShutDown.forEach(it -> {
-          shutdownConnector(it, wait);
+          it.stop(wait);
         });
       }
     });
