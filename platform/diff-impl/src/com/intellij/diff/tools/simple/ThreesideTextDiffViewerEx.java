@@ -75,14 +75,6 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
 
   @Override
   @RequiresEdt
-  protected void onDispose() {
-    destroyChangedBlocks();
-    myFoldingModel.destroy();
-    super.onDispose();
-  }
-
-  @Override
-  @RequiresEdt
   protected void processContextHints() {
     super.processContextHints();
     myInitialScrollHelper.processContext(myRequest);
