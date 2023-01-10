@@ -237,6 +237,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     return ReloadingResult(builder, unloadedEntityBuilder, changedSources)
   }
 
+  private data class BuilderWithLoadedState(val builder: MutableEntityStorage, val unloaded: Boolean)
+  
   override suspend fun loadAll(reader: JpsFileContentReader,
                                builder: MutableEntityStorage,
                                unloadedEntityBuilder: MutableEntityStorage,
@@ -244,21 +246,21 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                                errorReporter: ErrorReporter,
                                project: Project?): List<EntitySource> {
     val serializers = synchronized(lock) { fileSerializersByUrl.values.toList() }
-    val builders = coroutineScope {
+    val buildersWithLoadedState = coroutineScope {
       serializers.map { serializer ->
         async {
           val result = MutableEntityStorage.create()
           loadEntitiesAndReportExceptions(serializer, result, reader, errorReporter)
           val unloaded = (serializer as? ModuleImlFileEntitiesSerializer)?.modulePath?.moduleName in unloadedModuleNames
-          result to unloaded
+          BuilderWithLoadedState(result, unloaded)
         }
       }
     }.awaitAll()
 
-    val sourcesToUpdate = removeDuplicatingEntities(builders, serializers, project)
-    val loadedBuilders = builders.mapNotNull { if (!it.second) it.first else null }
+    val sourcesToUpdate = removeDuplicatingEntities(buildersWithLoadedState, serializers, project)
+    val loadedBuilders = buildersWithLoadedState.mapNotNull { if (!it.unloaded) it.builder else null }
     builder.addDiff(squash(loadedBuilders))
-    val unloadedBuilders = builders.mapNotNull { if (it.second) it.first else null }
+    val unloadedBuilders = buildersWithLoadedState.mapNotNull { if (it.unloaded) it.builder else null }
     if (unloadedBuilders.isNotEmpty()) {
       unloadedEntityBuilder.addDiff(squash(unloadedBuilders))
     }
@@ -287,7 +289,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   // Check if the same module is loaded from different source. This may happen in case of two `modules.xml` with the same module.
   // See IDEA-257175
   // This code may be removed if we'll get rid of storing modules.xml and friends in external storage (cache/external_build_system)
-  private fun removeDuplicatingEntities(builders: List<Pair<MutableEntityStorage, Boolean>>, serializers: List<JpsFileEntitiesSerializer<*>>, project: Project?): List<EntitySource> {
+  private fun removeDuplicatingEntities(builders: List<BuilderWithLoadedState>, serializers: List<JpsFileEntitiesSerializer<*>>, project: Project?): List<EntitySource> {
     if (project == null) return emptyList()
 
     val modules = mutableMapOf<String, MutableList<Triple<ModuleId, MutableEntityStorage, JpsFileEntitiesSerializer<*>>>>()
@@ -581,6 +583,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       }
       val loadedEntitiesToSave = storage.entitiesBySource(entitySourceFilter)
       val unloadedEntitiesToSave = unloadedEntityStorage.entitiesBySource(entitySourceFilter)
+      //don't copy the map in the most common case (when there are no unloaded entities)
       val entitiesToSave = if (unloadedEntitiesToSave.isNotEmpty()) loadedEntitiesToSave + unloadedEntitiesToSave
                            else loadedEntitiesToSave
       if (LOG.isTraceEnabled) {

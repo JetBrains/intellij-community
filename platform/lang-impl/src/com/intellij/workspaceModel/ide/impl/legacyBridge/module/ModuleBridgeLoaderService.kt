@@ -50,8 +50,8 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
     componentManager.getServiceAsync(WorkspaceModel::class.java).await()
 
     val moduleManager = componentManager.getServiceAsync(ModuleManager::class.java).await() as ModuleManagerComponentBridge
-    if (targetBuilder != null) {
-      moduleManager.unloadNewlyAddedModulesIfPossible(targetBuilder, targetUnloadedEntitiesBuilder!!)
+    if (targetBuilder != null && targetUnloadedEntitiesBuilder != null) {
+      moduleManager.unloadNewlyAddedModulesIfPossible(targetBuilder, targetUnloadedEntitiesBuilder)
     }
     val entities = (targetBuilder ?: moduleManager.entityStore.current).entities(ModuleEntity::class.java).toList()
     val unloadedEntities = (targetUnloadedEntitiesBuilder ?: WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities).entities(ModuleEntity::class.java).toList()
