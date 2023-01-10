@@ -908,7 +908,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       """
         public class Test {
 
-            public void testSuperDuperFuckerMother() { System.out.println("AAA"); }
+            public void testSuperDuperLongName() { System.out.println("AAA"); }
 
             public void testCounterMounter() { System.out.println("XXXX"); }
 
@@ -916,9 +916,9 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       """
         public class Test {
 
-            public void testSuperDuperFuckerMother() { System.out.println("AAA"); }
+            public void testSuperDuperLongName() { System.out.println("AAA"); }
 
-            public void testCounterMounter()         { System.out.println("XXXX"); }
+            public void testCounterMounter()     { System.out.println("XXXX"); }
 
         }"""
     );
