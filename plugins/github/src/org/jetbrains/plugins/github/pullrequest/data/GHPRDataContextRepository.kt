@@ -10,8 +10,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.util.IconUtil
+import com.intellij.util.childScope
 import com.intellij.util.ui.ImageUtil
 import git4idea.remote.GitRemoteUrlCoordinates
 import icons.CollaborationToolsIcons
@@ -51,8 +51,9 @@ internal class GHPRDataContextRepository(private val project: Project) : Disposa
         val existing = cache[repository]
         if (existing != null) return@withLock existing
         try {
-          val context = withContext(Dispatchers.IO) {
-            loadContext(account, requestExecutor, repository, remote)
+          val contextScope = cs.childScope()
+          val context = withContext(contextScope.coroutineContext) {
+            loadContext(contextScope, account, requestExecutor, repository, remote)
           }
           cache[repository] = context
           context
@@ -65,17 +66,16 @@ internal class GHPRDataContextRepository(private val project: Project) : Disposa
     }
 
   suspend fun clearContext(repository: GHRepositoryCoordinates) {
-    cacheGuard.withLock {
-      withContext(cs.coroutineContext) {
-        cache.remove(repository)?.let {
-          Disposer.dispose(it)
-        }
+    withContext(cs.coroutineContext) {
+      cacheGuard.withLock {
+        cache.remove(repository)?.scope?.coroutineContext?.get(Job)?.cancelAndJoin()
       }
     }
   }
 
   @Throws(IOException::class)
-  private suspend fun loadContext(account: GithubAccount,
+  private suspend fun loadContext(contextScope: CoroutineScope,
+                                  account: GithubAccount,
                                   requestExecutor: GithubApiRequestExecutor,
                                   parsedRepositoryCoordinates: GHRepositoryCoordinates,
                                   remoteCoordinates: GitRemoteUrlCoordinates): GHPRDataContext {
@@ -147,17 +147,15 @@ internal class GHPRDataContextRepository(private val project: Project) : Disposa
                                                         repoOwner,
                                                         repositoryInfo.id, repositoryInfo.defaultBranch, repositoryInfo.isFork)
 
-    val iconsScope = MainScope()
+    val iconsScope = contextScope.childScope(Dispatchers.Main)
     val avatarIconsProvider = CachingIconsProvider(AsyncImageIconsProvider(iconsScope, ImageLoader(requestExecutor)))
 
     val filesManager = GHPRFilesManagerImpl(project, parsedRepositoryCoordinates)
 
     val creationService = GHPRCreationServiceImpl(ProgressManager.getInstance(), requestExecutor, repoDataService)
-    return GHPRDataContext(listLoader, listUpdatesChecker, dataProviderRepository,
+    return GHPRDataContext(contextScope, listLoader, listUpdatesChecker, dataProviderRepository,
                            securityService, repoDataService, creationService, detailsService, avatarIconsProvider, filesManager,
-                           GHPRDiffRequestModelImpl()).also {
-      Disposer.register(it, Disposable { iconsScope.cancel() })
-    }
+                           GHPRDiffRequestModelImpl())
   }
 
   private class ImageLoader(private val requestExecutor: GithubApiRequestExecutor)
@@ -178,19 +176,7 @@ internal class GHPRDataContextRepository(private val project: Project) : Disposa
   // dangerous to do this without lock, but making it suspendable is too much work
   fun findContext(repositoryCoordinates: GHRepositoryCoordinates): GHPRDataContext? = cache[repositoryCoordinates]
 
-  override fun dispose() {
-    runBlocking { cacheGuard.lock() }
-    try {
-      val toDispose = cache.values.toList()
-      cache.clear()
-      toDispose.forEach {
-        Disposer.dispose(it)
-      }
-    }
-    finally {
-      runBlocking { cacheGuard.unlock() }
-    }
-  }
+  override fun dispose() = Unit
 
   companion object {
     private val LOG = logger<GHPRDataContextRepository>()
