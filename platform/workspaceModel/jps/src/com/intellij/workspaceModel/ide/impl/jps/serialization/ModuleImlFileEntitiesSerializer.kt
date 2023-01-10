@@ -65,10 +65,9 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
   override fun hashCode() = modulePath.hashCode()
 
-  override fun loadEntities(builder: MutableEntityStorage,
-                            reader: JpsFileContentReader,
+  override fun loadEntities(reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager) {
+                            virtualFileManager: VirtualFileUrlManager): List<WorkspaceEntity> {
     val externalStorageEnabled = externalStorageConfigurationManager?.isEnabled ?: false
     val moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity> = HashMap()
     val newModuleEntity: ModuleEntity?
@@ -98,15 +97,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       } else newModuleEntity = null
     }
 
-    // Add entities to builder
-    moduleLibrariesCollector.values.forEach { lib ->
-      if ((lib as LibraryEntityImpl.Builder).diff == null) {
-        builder addEntity lib
-      }
-    }
-    if (newModuleEntity != null) {
-      builder addEntity newModuleEntity
-    }
+    return listOfNotNull(newModuleEntity) + moduleLibrariesCollector.values
   }
 
   private class ModuleLoadedInfo(
@@ -501,10 +492,11 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     return result
   }
 
+@Suppress("UNCHECKED_CAST")
 override fun saveEntities(mainEntities: Collection<ModuleEntity>,
-                            entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
-                            storage: EntityStorage,
-                            writer: JpsFileContentWriter) {
+                          entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
+                          storage: EntityStorage,
+                          writer: JpsFileContentWriter) {
     val module = mainEntities.singleOrNull()
     if (module != null && acceptsSource(module.entitySource)) {
       saveModuleEntities(module, entities, storage, writer)
@@ -874,12 +866,12 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
 
   override fun saveEntitiesList(entities: Sequence<ModuleEntity>, writer: JpsFileContentWriter) {
     val entitiesToSave = entities
-      .filter {
-        entitySourceFilter(it.entitySource)
-        || it.contentRoots.any { cr -> entitySourceFilter(cr.entitySource) }
-        || it.sourceRoots.any { sr -> entitySourceFilter(sr.entitySource) }
-        || it.contentRoots.any { cr -> cr.excludedUrls.any { ex -> entitySourceFilter(ex.entitySource) } }
-        || it.facets.any { entitySourceFilter(it.entitySource) }
+      .filter { moduleEntity ->
+        entitySourceFilter(moduleEntity.entitySource)
+        || moduleEntity.contentRoots.any { cr -> entitySourceFilter(cr.entitySource) }
+        || moduleEntity.sourceRoots.any { sr -> entitySourceFilter(sr.entitySource) }
+        || moduleEntity.contentRoots.any { cr -> cr.excludedUrls.any { ex -> entitySourceFilter(ex.entitySource) } }
+        || moduleEntity.facets.any { entitySourceFilter(it.entitySource) }
       }
       .mapNotNullTo(ArrayList()) { module -> getSourceToSave(module)?.let { Pair(it, module) } }
       .sortedBy { it.second.name }

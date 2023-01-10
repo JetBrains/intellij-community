@@ -126,27 +126,26 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
   override val mainEntityClass: Class<LibraryEntity>
     get() = LibraryEntity::class.java
 
-  override fun loadEntities(builder: MutableEntityStorage,
-                            reader: JpsFileContentReader, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager) {
-    val libraryTableTag = reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) ?: return
-    for (libraryTag in libraryTableTag.getChildren(LIBRARY_TAG)) {
-      val source = createEntitySource(libraryTag) ?: continue
+  override fun loadEntities(reader: JpsFileContentReader,
+                            errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager): List<WorkspaceEntity> {
+    val libraryTableTag = reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) ?: return emptyList()
+    return libraryTableTag.getChildren(LIBRARY_TAG).mapNotNull { libraryTag ->
+      val source = createEntitySource(libraryTag) ?: return@mapNotNull null
       val name = libraryTag.getAttributeValueStrict(JpsModuleRootModelSerializer.NAME_ATTRIBUTE)
 
-      val libraryId = LibraryId(name, libraryTableId)
-      val existingLibraryEntity = builder.resolve(libraryId)
-      if (existingLibraryEntity != null) {
-        logger<JpsLibraryEntitiesSerializer>().error("""Error during entities loading
-          |Entity with this library id already exists.
-          |Library id: $libraryId
-          |fileUrl: ${fileUrl.presentableUrl}
-          |library table id: $libraryTableId
-          |internal entity source: $internalEntitySource
-        """.trimMargin())
-      }
+      //val libraryId = LibraryId(name, libraryTableId)
+      //val existingLibraryEntity = builder.resolve(libraryId)
+      //if (existingLibraryEntity != null) {
+      //  logger<JpsLibraryEntitiesSerializer>().error("""Error during entities loading
+      //    |Entity with this library id already exists.
+      //    |Library id: $libraryId
+      //    |fileUrl: ${fileUrl.presentableUrl}
+      //    |library table id: $libraryTableId
+      //    |internal entity source: $internalEntitySource
+      //  """.trimMargin())
+      //}
 
-      val library = loadLibrary(name, libraryTag, libraryTableId, source, virtualFileManager)
-      builder addEntity  library
+      loadLibrary(name, libraryTag, libraryTableId, source, virtualFileManager)
     }
   }
 

@@ -75,7 +75,8 @@ class JpsGlobalModelSynchronizerImpl: JpsGlobalModelSynchronizer {
     }
     if (serializer != null) {
       LOG.info("Loading global entities from files")
-      serializer.loadEntities(mutableStorage, contentReader, errorReporter, VirtualFileUrlManager.getGlobalInstance())
+      val newEntities = serializer.loadEntities(contentReader, errorReporter, VirtualFileUrlManager.getGlobalInstance())
+      newEntities.forEach { mutableStorage addEntity it }
     }
     val callback = GlobalLibraryTableBridge.getInstance().initializeLibraryBridgesAfterLoading(mutableStorage, initialEntityStorage)
     loadedFromDisk = true

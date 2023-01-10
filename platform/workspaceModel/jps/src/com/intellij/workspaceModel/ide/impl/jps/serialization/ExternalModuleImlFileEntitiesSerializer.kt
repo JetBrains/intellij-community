@@ -8,7 +8,7 @@ import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
@@ -32,10 +32,10 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
   override val skipLoadingIfFileDoesNotExist: Boolean
     get() = true
 
-  override fun loadEntities(builder: MutableEntityStorage,
-                            reader: JpsFileContentReader,
+  override fun loadEntities(reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager) {
+                            virtualFileManager: VirtualFileUrlManager): List<WorkspaceEntity> {
+    return emptyList()
   }
 
   override fun acceptsSource(entitySource: EntitySource): Boolean {

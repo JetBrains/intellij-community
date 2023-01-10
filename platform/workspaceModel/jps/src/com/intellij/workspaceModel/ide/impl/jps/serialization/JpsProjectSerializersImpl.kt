@@ -276,7 +276,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
 
     try {
-      serializer.loadEntities(builder, reader, errorReporter, virtualFileManager)
+      val newEntities = serializer.loadEntities(reader, errorReporter, virtualFileManager)
+      newEntities.forEach { builder addEntity it }
     }
     catch (e: JDOMException) {
       reportError(e, serializer.fileUrl)

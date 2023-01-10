@@ -40,10 +40,10 @@ interface JpsFileEntitiesSerializer<E : WorkspaceEntity> {
   val internalEntitySource: JpsFileEntitySource
   val fileUrl: VirtualFileUrl
   val mainEntityClass: Class<E>
-  fun loadEntities(builder: MutableEntityStorage,
-                   reader: JpsFileContentReader,
+  fun loadEntities(reader: JpsFileContentReader,
                    errorReporter: ErrorReporter,
-                   virtualFileManager: VirtualFileUrlManager)
+                   virtualFileManager: VirtualFileUrlManager): List<WorkspaceEntity>
+
   fun saveEntities(mainEntities: Collection<E>,
                    entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
                    storage: EntityStorage,
