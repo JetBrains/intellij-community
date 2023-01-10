@@ -6,7 +6,7 @@ import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.starters.local.generator.TestFileSystemLocation
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.file.VirtualFileUtil
+import com.intellij.openapi.file.createVirtualFile
 import com.intellij.openapi.file.writeText
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.WrapperConfiguration
@@ -23,7 +23,7 @@ fun generateWrapper(root: VirtualFile, gradleVersion: GradleVersion) {
 fun generateWrapper(root: VirtualFile, configuration: WrapperConfiguration) {
   runWriteActionAndWait {
     val propertiesLocation = StandardAssetsProvider().gradleWrapperPropertiesLocation
-    val propertiesFile = VirtualFileUtil.createFile(root, propertiesLocation)
+    val propertiesFile = root.createVirtualFile(propertiesLocation)
     val propertiesContent = getWrapperPropertiesContent(configuration)
     propertiesFile.writeText(propertiesContent)
     val assets = StandardAssetsProvider().getGradlewAssets()

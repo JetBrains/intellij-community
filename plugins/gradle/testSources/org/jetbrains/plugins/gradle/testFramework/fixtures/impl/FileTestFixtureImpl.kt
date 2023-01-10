@@ -6,18 +6,14 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installBulkVirtualFileListener
 import com.intellij.openapi.externalSystem.util.*
+import com.intellij.openapi.file.*
+import com.intellij.openapi.file.CanonicalPathUtil.getAbsoluteNioPath
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.file.CanonicalPathUtil.getRelativePath
 import com.intellij.openapi.file.NioPathUtil.toCanonicalPath
-import com.intellij.openapi.file.VirtualFileUtil
-import com.intellij.openapi.file.VirtualFileUtil.getAbsoluteNioPath
-import com.intellij.openapi.file.readText
-import com.intellij.openapi.file.system.LocalFileSystemUtil
-import com.intellij.openapi.file.system.VirtualFileSystemUtil
-import com.intellij.openapi.file.writeText
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.common.runAll
@@ -65,7 +61,7 @@ internal class FileTestFixtureImpl(
     val configuration = createFixtureConfiguration()
 
     excludedFiles = configuration.excludedFiles
-      .map { root.getAbsoluteNioPath(it) }
+      .map { root.path.getAbsoluteNioPath(it) }
       .toSet()
 
     withSuppressedErrors {
@@ -91,17 +87,17 @@ internal class FileTestFixtureImpl(
 
   private fun createFixtureRoot(relativePath: String): VirtualFile {
     val systemPath = Path.of(PathManager.getSystemPath())
-    val systemDirectory = LocalFileSystemUtil.findOrCreateDirectory(systemPath)
+    val systemDirectory = systemPath.findOrCreateVirtualDirectory()
     val fixtureRoot = "FileTestFixture/$relativePath"
     VfsRootAccess.allowRootAccess(testRootDisposable, systemDirectory.path + "/$fixtureRoot")
     return runWriteActionAndGet {
-      VirtualFileUtil.findOrCreateDirectory(systemDirectory, fixtureRoot)
+      systemDirectory.findOrCreateVirtualDirectory(fixtureRoot)
     }
   }
 
   private fun createFixtureStateFile(): VirtualFile {
     return runWriteActionAndGet {
-      VirtualFileUtil.findOrCreateFile(root, "_FileTestFixture.xml")
+      root.findOrCreateVirtualFile("_FileTestFixture.xml")
     }
   }
 
@@ -122,7 +118,7 @@ internal class FileTestFixtureImpl(
 
   private fun invalidateFixtureCaches() {
     runWriteActionAndWait {
-      VirtualFileUtil.deleteChildren(root) { it != fixtureStateFile }
+      root.deleteVirtualChildren { it != fixtureStateFile }
     }
   }
 
@@ -178,7 +174,7 @@ internal class FileTestFixtureImpl(
   }
 
   override fun snapshot(relativePath: String) {
-    snapshot(root.getAbsoluteNioPath(relativePath))
+    snapshot(root.path.getAbsoluteNioPath(relativePath))
   }
 
   private fun snapshot(path: Path) {
@@ -195,7 +191,7 @@ internal class FileTestFixtureImpl(
   }
 
   override fun rollback(relativePath: String) {
-    rollback(root.getAbsoluteNioPath(relativePath))
+    rollback(root.path.getAbsoluteNioPath(relativePath))
   }
 
   private fun rollback(path: Path) {
@@ -206,18 +202,18 @@ internal class FileTestFixtureImpl(
   }
 
   private fun revertFile(relativePath: String, text: String?) {
-    revertFile(root.getAbsoluteNioPath(relativePath), text)
+    revertFile(root.path.getAbsoluteNioPath(relativePath), text)
   }
 
   private fun revertFile(path: Path, text: String?) {
     runWriteActionAndWait {
       if (text != null) {
-        val file = VirtualFileSystemUtil.findOrCreateFile(root.fileSystem, path)
-        VirtualFileUtil.reloadDocument(file)
+        val file = path.findOrCreateVirtualFile()
+        file.reloadDocument()
         file.writeText(text)
       }
       else {
-        VirtualFileSystemUtil.deleteFileOrDirectory(root.fileSystem, path)
+        path.deleteVirtualFileOrDirectory()
       }
     }
   }
@@ -228,7 +224,7 @@ internal class FileTestFixtureImpl(
   }
 
   private fun getTextContent(path: Path): String? {
-    val file = VirtualFileSystemUtil.findFile(root.fileSystem, path) ?: return null
+    val file = path.findVirtualFile() ?: return null
     return file.readText()
   }
 

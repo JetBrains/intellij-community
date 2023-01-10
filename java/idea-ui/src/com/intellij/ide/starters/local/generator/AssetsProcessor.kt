@@ -7,11 +7,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
-import com.intellij.openapi.file.NioPathUtil
-import com.intellij.openapi.file.VirtualFileUtil
-import com.intellij.openapi.file.writeBytes
-import com.intellij.openapi.file.writeText
+import com.intellij.openapi.file.*
+import com.intellij.openapi.file.NioPathUtil.getAbsoluteNioPath
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -134,6 +131,7 @@ class TestFileSystemLocation(
 
 @TestOnly
 class TestAssetsProcessorImpl : AbstractAssetsProcessor() {
+
   override fun setTextContent(file: Path, content: String) {
     if (file is TestFileSystemLocation) {
       file.virtualFile.writeText(content)
@@ -152,8 +150,9 @@ class TestAssetsProcessorImpl : AbstractAssetsProcessor() {
 
   override fun findOrCreateFile(outputDirectory: Path, relativePath: String): Path {
     if (outputDirectory is TestFileSystemLocation) {
-      val vFile = VirtualFileUtil.findOrCreateFile(outputDirectory.virtualFile, relativePath)
-      return TestFileSystemLocation(vFile, outputDirectory.debugPath.resolve(relativePath.toNioPath()))
+      val vFile = outputDirectory.virtualFile.findOrCreateVirtualFile(relativePath)
+      val debugPath = outputDirectory.debugPath.getAbsoluteNioPath(relativePath)
+      return TestFileSystemLocation(vFile, debugPath)
     } else {
       return NioPathUtil.findOrCreateFile(outputDirectory, relativePath)
     }
@@ -161,9 +160,9 @@ class TestAssetsProcessorImpl : AbstractAssetsProcessor() {
 
   override fun findOrCreateDirectory(outputDirectory: Path, relativePath: String): Path {
     if (outputDirectory is TestFileSystemLocation) {
-      val vFile = VirtualFileUtil.findOrCreateDirectory(outputDirectory.virtualFile, relativePath)
-
-      return TestFileSystemLocation(vFile, outputDirectory.debugPath.resolve(relativePath.toNioPath()))
+      val vFile = outputDirectory.virtualFile.findOrCreateVirtualDirectory(relativePath)
+      val debugPath = outputDirectory.debugPath.getAbsoluteNioPath(relativePath)
+      return TestFileSystemLocation(vFile, debugPath)
     } else {
       return NioPathUtil.findOrCreateDirectory(outputDirectory, relativePath)
     }

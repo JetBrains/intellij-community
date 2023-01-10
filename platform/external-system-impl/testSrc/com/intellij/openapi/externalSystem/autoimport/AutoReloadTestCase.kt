@@ -15,7 +15,8 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrack
 import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy
 import com.intellij.openapi.externalSystem.service.project.autoimport.ProjectAware
-import com.intellij.openapi.externalSystem.util.*
+import com.intellij.openapi.file.*
+import com.intellij.openapi.file.CanonicalPathUtil.getAbsoluteNioPath
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
@@ -25,9 +26,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.*
-import com.intellij.openapi.file.VirtualFileUtil
-import com.intellij.openapi.file.VirtualFileUtil.getAbsoluteNioPath
-import com.intellij.openapi.file.system.LocalFileSystemUtil
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
 import com.intellij.platform.externalSystem.testFramework.TestExternalSystemManager
@@ -64,19 +62,19 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     "$projectPath/$relativePath"
 
   private fun getAbsoluteNioPath(relativePath: String) =
-    projectRoot.getAbsoluteNioPath(relativePath)
+    projectRoot.path.getAbsoluteNioPath(relativePath)
 
   protected fun createFile(relativePath: String) =
-    runWriteAction { VirtualFileUtil.createFile(projectRoot, relativePath) }
+    runWriteAction { projectRoot.createVirtualFile(relativePath) }
 
   protected fun findOrCreateFile(relativePath: String) =
-    runWriteAction { VirtualFileUtil.findOrCreateFile(projectRoot, relativePath) }
+    runWriteAction { projectRoot.findOrCreateVirtualFile(relativePath) }
 
   protected fun findOrCreateDirectory(relativePath: String) =
-    runWriteAction { VirtualFileUtil.findOrCreateDirectory(projectRoot, relativePath) }
+    runWriteAction { projectRoot.findOrCreateVirtualDirectory(relativePath) }
 
   protected fun getFile(relativePath: String) =
-    runWriteAction { VirtualFileUtil.getFile(projectRoot, relativePath) }
+    runWriteAction { projectRoot.getVirtualFile(relativePath) }
 
   protected fun createIoFileUnsafe(relativePath: String) =
     createIoFileUnsafe(getAbsoluteNioPath(relativePath))
@@ -93,15 +91,14 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
 
   protected fun createIoFile(relativePath: String): VirtualFile {
     val path = getAbsoluteNioPath(relativePath)
-    LocalFileSystemUtil.refreshFiles(path) // ensure that file is removed from VFS
+    refreshVirtualFiles(path) // ensure that file is removed from VFS
     createIoFileUnsafe(path)
     return getFile(relativePath)
   }
 
   private fun VirtualFile.updateIoFile(action: File.() -> Unit) {
-    val file = toNioPath().toFile()
-    file.action()
-    LocalFileSystemUtil.refreshFiles(file)
+    toNioPath().toFile().action()
+    refreshVirtualFiles(this) // ensure that file is updated in VFS
   }
 
   protected fun VirtualFile.appendLineInIoFile(line: String) =
@@ -124,7 +121,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
 
   protected fun VirtualFile.copy(name: String, parentRelativePath: String = ".") =
     runWriteAction {
-      val parent = VirtualFileUtil.findOrCreateDirectory(projectRoot, parentRelativePath)
+      val parent = projectRoot.findOrCreateVirtualDirectory(parentRelativePath)
       copy(null, parent, name)
     }
 

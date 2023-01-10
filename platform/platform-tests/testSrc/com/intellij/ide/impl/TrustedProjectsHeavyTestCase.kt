@@ -5,10 +5,12 @@ import com.intellij.ide.impl.trustedProjects.LocatedProject
 import com.intellij.ide.impl.trustedProjects.ProjectLocator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.file.VirtualFileUtil
-import com.intellij.openapi.file.VirtualFileUtil.getAbsoluteNioPath
+import com.intellij.openapi.file.CanonicalPathUtil.getAbsoluteNioPath
+import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
 import com.intellij.openapi.file.converter.NioPathPrefixTreeFactory
-import com.intellij.openapi.file.system.LocalFileSystemUtil
+import com.intellij.openapi.file.createVirtualDirectory
+import com.intellij.openapi.file.findOrCreateVirtualDirectory
+import com.intellij.openapi.file.getVirtualDirectory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.modules
@@ -46,7 +48,8 @@ abstract class TrustedProjectsHeavyTestCase {
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory()
       .createTempDirTestFixture()
     fileFixture.setUp()
-    testRoot = LocalFileSystemUtil.getDirectory(fileFixture.tempDirPath)
+    testRoot = fileFixture.tempDirPath.toNioPath()
+      .getVirtualDirectory()
   }
 
   @AfterEach
@@ -58,7 +61,7 @@ abstract class TrustedProjectsHeavyTestCase {
     relativeProjectRoot: String
   ): Project {
     val projectRoot = writeAction {
-      VirtualFileUtil.createDirectory(testRoot, relativeProjectRoot)
+      testRoot.createVirtualDirectory(relativeProjectRoot)
     }
     val projectManager = ProjectManagerEx.getInstanceEx()
     return closeOpenedProjectsIfFailAsync {
@@ -78,7 +81,7 @@ abstract class TrustedProjectsHeavyTestCase {
     writeAction {
       val entityStorage = MutableEntityStorage.create()
       val contentRoots = relativeContentRoots.map {
-        VirtualFileUtil.findOrCreateDirectory(testRoot, it)
+        testRoot.findOrCreateVirtualDirectory(it)
       }
       addModuleEntity(project, entityStorage, moduleName, contentRoots)
       WorkspaceModel.getInstance(project).updateProjectModel("Create module $moduleName") {
@@ -114,10 +117,10 @@ abstract class TrustedProjectsHeavyTestCase {
     numModules: Int,
     numContentRoots: Int
   ) {
-    val projectRoot = VirtualFileUtil.findOrCreateDirectory(testRoot, relativeProjectRoot)
+    val projectRoot = testRoot.findOrCreateVirtualDirectory(relativeProjectRoot)
     generateModuleAsync(project, entityStorage, projectRoot, numContentRoots)
     repeat(numModules - 1) {
-      val moduleRoot = VirtualFileUtil.createDirectory(projectRoot, projectRoot.name + "-module-$it")
+      val moduleRoot = projectRoot.createVirtualDirectory(projectRoot.name + "-module-$it")
       generateModuleAsync(project, entityStorage, moduleRoot, numContentRoots)
     }
   }
@@ -131,7 +134,7 @@ abstract class TrustedProjectsHeavyTestCase {
     val contentRoots = ArrayList<VirtualFile>()
     contentRoots.add(moduleRoot)
     repeat(numContentRoots - 1) {
-      contentRoots.add(VirtualFileUtil.createDirectory(moduleRoot, "contentRoot-$it"))
+      contentRoots.add(moduleRoot.createVirtualDirectory("contentRoot-$it"))
     }
     addModuleEntity(project, entityStorage, moduleRoot.name, contentRoots)
   }
@@ -157,7 +160,7 @@ abstract class TrustedProjectsHeavyTestCase {
   ) {
     val locatedProject = LocatedProject.locateProject(project)
     Assertions.assertEquals(
-      relativeRoots.map { testRoot.getAbsoluteNioPath(it) }.toSet(),
+      relativeRoots.map { testRoot.path.getAbsoluteNioPath(it) }.toSet(),
       locatedProject.projectRoots.toSet()
     )
   }

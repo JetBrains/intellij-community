@@ -7,16 +7,18 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.*
-import com.intellij.openapi.file.CanonicalPathUtil.getAbsoluteNioPath
 import com.intellij.openapi.file.CanonicalPathUtil.getAbsolutePath
-import com.intellij.openapi.file.CanonicalPathUtil.getRelativeNioPath
-import com.intellij.openapi.file.CanonicalPathUtil.getRelativePath
-import com.intellij.openapi.file.system.VirtualFileSystemUtil
+import com.intellij.openapi.file.CanonicalPathUtil.getFileName
+import com.intellij.openapi.file.CanonicalPathUtil.getParentPath
+import com.intellij.openapi.file.NioPathUtil.toCanonicalPath
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.SystemIndependent
+import java.nio.file.FileSystems
 import java.nio.file.Path
+
 
 val VirtualFile.isFile: Boolean
   get() = isValid && !isDirectory
@@ -37,128 +39,229 @@ fun VirtualFile.writeBytes(content: ByteArray) {
   setBinaryContent(content)
 }
 
-@ApiStatus.Experimental
-object VirtualFileUtil {
+fun VirtualFile.toNioPathOrNull(): Path? {
+  return runCatching { toNioPath() }.getOrNull()
+}
 
-  @JvmStatic
-  fun findFileOrDirectory(file: VirtualFile, relativePath: String): VirtualFile? {
-    return VirtualFileSystemUtil.findFileOrDirectory(file.fileSystem, file.getAbsolutePath(relativePath))
-  }
+fun VirtualFile.findDocument(): Document? {
+  return FileDocumentManager.getInstance().getDocument(this)
+}
 
-  @JvmStatic
-  fun getFileOrDirectory(file: VirtualFile, relativePath: String): VirtualFile {
-    return VirtualFileSystemUtil.getFileOrDirectory(file.fileSystem, file.getAbsolutePath(relativePath))
-  }
+fun VirtualFile.getDocument(): Document {
+  return requireNotNull(findDocument()) { "Cannot find Document for $path" }
+}
 
-  @JvmStatic
-  fun findFile(file: VirtualFile, relativePath: String): VirtualFile? {
-    return VirtualFileSystemUtil.findFile(file.fileSystem, file.getAbsolutePath(relativePath))
+fun VirtualFile.reloadDocument() {
+  val fileDocumentManager = FileDocumentManager.getInstance()
+  val document = fileDocumentManager.getDocument(this)
+  if (document != null) {
+    fileDocumentManager.reloadFromDisk(document)
   }
+}
 
-  @JvmStatic
-  fun getFile(file: VirtualFile, relativePath: String): VirtualFile {
-    return VirtualFileSystemUtil.getFile(file.fileSystem, file.getAbsolutePath(relativePath))
+fun VirtualFile.commitDocument(project: Project) {
+  val psiDocumentManager = PsiDocumentManager.getInstance(project)
+  val document = findDocument()
+  if (document != null) {
+    psiDocumentManager.commitDocument(document)
   }
+}
 
-  @JvmStatic
-  fun findDirectory(file: VirtualFile, relativePath: String): VirtualFile? {
-    return VirtualFileSystemUtil.findDirectory(file.fileSystem, file.getAbsolutePath(relativePath))
-  }
+fun VirtualFile.findPsiFile(project: Project): PsiFile? {
+  return PsiManager.getInstance(project).findFile(this)
+}
 
-  @JvmStatic
-  fun getDirectory(file: VirtualFile, relativePath: String): VirtualFile {
-    return VirtualFileSystemUtil.getDirectory(file.fileSystem, file.getAbsolutePath(relativePath))
-  }
+fun VirtualFile.getPsiFile(project: Project): PsiFile {
+  return requireNotNull(findPsiFile(project)) { "Cannot find PSI file for $path" }
+}
 
-  @JvmStatic
-  fun findOrCreateFile(file: VirtualFile, relativePath: String): VirtualFile {
-    return VirtualFileSystemUtil.findOrCreateFile(file.fileSystem, file.getAbsolutePath(relativePath))
-  }
+fun refreshVirtualFiles(vararg paths: Path, async: Boolean = false, recursive: Boolean = true, callback: () -> Unit = {}) {
+  RefreshQueue.getInstance().refresh(async, recursive, callback, paths.mapNotNull { it.findVirtualFileOrDirectory() })
+}
 
-  @JvmStatic
-  fun findOrCreateDirectory(file: VirtualFile, relativePath: String): VirtualFile {
-    return VirtualFileSystemUtil.findOrCreateDirectory(file.fileSystem, file.getAbsolutePath(relativePath))
-  }
+fun refreshVirtualFiles(vararg files: VirtualFile, async: Boolean = false, recursive: Boolean = true, callback: () -> Unit = {}) {
+  RefreshQueue.getInstance().refresh(async, recursive, callback, files.toList())
+}
 
-  @JvmStatic
-  fun createFile(file: VirtualFile, relativePath: String): VirtualFile {
-    return VirtualFileSystemUtil.createFile(file.fileSystem, file.getAbsolutePath(relativePath))
-  }
+fun VirtualFile.findVirtualFileOrDirectory(relativePath: @SystemIndependent String): VirtualFile? {
+  return fileSystem.findVirtualFileOrDirectory(path.getAbsolutePath(relativePath))
+}
 
-  @JvmStatic
-  fun createDirectory(file: VirtualFile, relativePath: String): VirtualFile {
-    return VirtualFileSystemUtil.createDirectory(file.fileSystem, file.getAbsolutePath(relativePath))
-  }
+fun VirtualFile.getVirtualFileOrDirectory(relativePath: @SystemIndependent String): VirtualFile {
+  return fileSystem.getVirtualFileOrDirectory(path.getAbsolutePath(relativePath))
+}
 
-  @JvmStatic
-  fun deleteFileOrDirectory(file: VirtualFile, relativePath: String = ".") {
-    VirtualFileSystemUtil.deleteFileOrDirectory(file.fileSystem, file.getAbsolutePath(relativePath))
-  }
+fun VirtualFile.findVirtualFile(relativePath: @SystemIndependent String): VirtualFile? {
+  return fileSystem.findVirtualFile(path.getAbsolutePath(relativePath))
+}
 
-  @JvmStatic
-  fun deleteChildren(file: VirtualFile, relativePath: String = ".", predicate: (VirtualFile) -> Boolean = { true }) {
-    VirtualFileSystemUtil.deleteChildren(file.fileSystem, file.getAbsolutePath(relativePath), predicate)
-  }
+fun VirtualFile.getVirtualFile(relativePath: @SystemIndependent String): VirtualFile {
+  return fileSystem.getVirtualFile(path.getAbsolutePath(relativePath))
+}
 
-  @JvmStatic
-  fun findDocument(file: VirtualFile): Document? {
-    return FileDocumentManager.getInstance().getDocument(file)
-  }
+fun VirtualFile.findVirtualDirectory(relativePath: @SystemIndependent String): VirtualFile? {
+  return fileSystem.findVirtualDirectory(path.getAbsolutePath(relativePath))
+}
 
-  @JvmStatic
-  fun getDocument(file: VirtualFile): Document {
-    return requireNotNull(findDocument(file)) { "Cannot find Document for ${file.path}" }
-  }
+fun VirtualFile.getVirtualDirectory(relativePath: @SystemIndependent String): VirtualFile {
+  return fileSystem.getVirtualDirectory(path.getAbsolutePath(relativePath))
+}
 
-  @JvmStatic
-  fun findPsiFile(project: Project, file: VirtualFile): PsiFile? {
-    return PsiManager.getInstance(project).findFile(file)
-  }
+fun VirtualFile.findOrCreateVirtualFile(relativePath: @SystemIndependent String): VirtualFile {
+  return fileSystem.findOrCreateVirtualFile(path.getAbsolutePath(relativePath))
+}
 
-  @JvmStatic
-  fun getPsiFile(project: Project, file: VirtualFile): PsiFile {
-    return requireNotNull(findPsiFile(project, file)) { "Cannot find PSI file for ${file.path}" }
-  }
+fun VirtualFile.findOrCreateVirtualDirectory(relativePath: @SystemIndependent String): VirtualFile {
+  return fileSystem.findOrCreateVirtualDirectory(path.getAbsolutePath(relativePath))
+}
 
-  @JvmStatic
-  fun reloadDocument(file: VirtualFile) {
-    val document = findDocument(file) ?: return
-    FileDocumentManager.getInstance().reloadFromDisk(document)
-  }
+fun VirtualFile.createVirtualFile(relativePath: @SystemIndependent String): VirtualFile {
+  return fileSystem.createVirtualFile(path.getAbsolutePath(relativePath))
+}
 
-  @JvmStatic
-  fun commitDocument(project: Project, file: VirtualFile) {
-    val document = findDocument(file) ?: return
-    PsiDocumentManager.getInstance(project).commitDocument(document)
-  }
+fun VirtualFile.createVirtualDirectory(relativePath: @SystemIndependent String): VirtualFile {
+  return fileSystem.createVirtualDirectory(path.getAbsolutePath(relativePath))
+}
 
-  @JvmStatic
-  fun VirtualFile.toCanonicalPath(): String {
-    return path
-  }
+fun VirtualFile.deleteVirtualFileOrDirectory(relativePath: @SystemIndependent String = ".") {
+  fileSystem.deleteVirtualFileOrDirectory(path.getAbsolutePath(relativePath))
+}
 
-  @JvmStatic
-  fun VirtualFile.toNioPathOrNull(): Path? {
-    return runCatching { toNioPath() }.getOrNull()
-  }
+fun VirtualFile.deleteVirtualChildren(relativePath: @SystemIndependent String = ".", predicate: (VirtualFile) -> Boolean = { true }) {
+  fileSystem.deleteVirtualChildren(path.getAbsolutePath(relativePath), predicate)
+}
 
-  @JvmStatic
-  fun VirtualFile.getAbsolutePath(relativePath: String): String {
-    return path.getAbsolutePath(relativePath)
-  }
+fun Path.findVirtualFileOrDirectory(): VirtualFile? {
+  return getVirtualFileSystem().findVirtualFileOrDirectory(toCanonicalPath())
+}
 
-  @JvmStatic
-  fun VirtualFile.getAbsoluteNioPath(relativePath: String): Path {
-    return path.getAbsoluteNioPath(relativePath)
-  }
+fun Path.getVirtualFileOrDirectory(): VirtualFile {
+  return getVirtualFileSystem().getVirtualFileOrDirectory(toCanonicalPath())
+}
 
-  @JvmStatic
-  fun VirtualFile.getRelativePath(file: VirtualFile): String? {
-    return path.getRelativePath(file.path)
-  }
+fun Path.findVirtualFile(): VirtualFile? {
+  return getVirtualFileSystem().findVirtualFile(toCanonicalPath())
+}
 
-  @JvmStatic
-  fun VirtualFile.getRelativeNioPath(file: VirtualFile): Path? {
-    return path.getRelativeNioPath(file.path)
+fun Path.getVirtualFile(): VirtualFile {
+  return getVirtualFileSystem().getVirtualFile(toCanonicalPath())
+}
+
+fun Path.findVirtualDirectory(): VirtualFile? {
+  return getVirtualFileSystem().findVirtualDirectory(toCanonicalPath())
+}
+
+fun Path.getVirtualDirectory(): VirtualFile {
+  return getVirtualFileSystem().getVirtualDirectory(toCanonicalPath())
+}
+
+fun Path.findOrCreateVirtualFile(): VirtualFile {
+  return getVirtualFileSystem().findOrCreateVirtualFile(toCanonicalPath())
+}
+
+fun Path.findOrCreateVirtualDirectory(): VirtualFile {
+  return getVirtualFileSystem().findOrCreateVirtualDirectory(toCanonicalPath())
+}
+
+fun Path.createVirtualFile(): VirtualFile {
+  return getVirtualFileSystem().createVirtualFile(toCanonicalPath())
+}
+
+fun Path.createVirtualDirectory(): VirtualFile {
+  return getVirtualFileSystem().createVirtualDirectory(toCanonicalPath())
+}
+
+fun Path.deleteVirtualFileOrDirectory() {
+  getVirtualFileSystem().deleteVirtualFileOrDirectory(toCanonicalPath())
+}
+
+fun Path.deleteVirtualChildren(predicate: (VirtualFile) -> Boolean = { true }) {
+  getVirtualFileSystem().deleteVirtualChildren(toCanonicalPath(), predicate)
+}
+
+private fun Path.getVirtualFileSystem(): VirtualFileSystem {
+  check(FileSystems.getDefault() == fileSystem) {
+    "Unsupported non default file system: $fileSystem"
   }
+  val fileSystemManager = VirtualFileManager.getInstance()
+  val fileSystem = fileSystemManager.getFileSystem(StandardFileSystems.FILE_PROTOCOL)
+  return checkNotNull(fileSystem) {
+    "Cannot find standard file system"
+  }
+}
+
+fun VirtualFileSystem.findVirtualFileOrDirectory(path: @SystemIndependent String): VirtualFile? {
+  return refreshAndFindFileByPath(path)
+}
+
+fun VirtualFileSystem.getVirtualFileOrDirectory(path: @SystemIndependent String): VirtualFile {
+  return checkNotNull(findVirtualFileOrDirectory(path)) {
+    "File or directory doesn't exist: $path"
+  }
+}
+
+fun VirtualFileSystem.findVirtualFile(path: @SystemIndependent String): VirtualFile? {
+  val file = findVirtualFileOrDirectory(path) ?: return null
+  check(file.isFile) {
+    "Expected file instead directory: $path"
+  }
+  return file
+}
+
+fun VirtualFileSystem.getVirtualFile(path: @SystemIndependent String): VirtualFile {
+  return requireNotNull(findVirtualFile(path)) { "File doesn't exist: $path" }
+}
+
+fun VirtualFileSystem.findVirtualDirectory(path: @SystemIndependent String): VirtualFile? {
+  val file = findVirtualFileOrDirectory(path) ?: return null
+  check(file.isDirectory) {
+    "Expected directory instead file: $path"
+  }
+  return file
+}
+
+fun VirtualFileSystem.getVirtualDirectory(path: @SystemIndependent String): VirtualFile {
+  return checkNotNull(findVirtualDirectory(path)) {
+    "Directory doesn't exist: $path"
+  }
+}
+
+fun VirtualFileSystem.findOrCreateVirtualFile(path: @SystemIndependent String): VirtualFile {
+  return findVirtualFile(path) ?: createVirtualFile(path)
+}
+
+fun VirtualFileSystem.findOrCreateVirtualDirectory(path: @SystemIndependent String): VirtualFile {
+  return findVirtualDirectory(path) ?: createVirtualDirectory(path)
+}
+
+fun VirtualFileSystem.createVirtualFile(path: @SystemIndependent String): VirtualFile {
+  val parentFile = findOrCreateParentDirectory(path)
+  return parentFile.createChildData(null, path.getFileName())
+}
+
+fun VirtualFileSystem.createVirtualDirectory(path: @SystemIndependent String): VirtualFile {
+  val parentFile = findOrCreateParentDirectory(path)
+  return parentFile.createChildDirectory(null, path.getFileName())
+}
+
+fun VirtualFileSystem.deleteVirtualFileOrDirectory(path: @SystemIndependent String) {
+  val file = findVirtualFileOrDirectory(path) ?: return
+  file.delete(this)
+}
+
+fun VirtualFileSystem.deleteVirtualChildren(path: @SystemIndependent String, predicate: (VirtualFile) -> Boolean = { true }) {
+  val directory = getVirtualDirectory(path)
+  for (child in directory.children) {
+    if (predicate(child)) {
+      child.delete(this)
+    }
+  }
+}
+
+private fun VirtualFileSystem.findOrCreateParentDirectory(path: @SystemIndependent String): VirtualFile {
+  val parentPath = path.getParentPath()
+  if (parentPath == null) {
+    return getVirtualDirectory("/")
+  }
+  return findOrCreateVirtualDirectory(parentPath)
 }

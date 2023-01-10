@@ -3,7 +3,8 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.externalSystem.util.runReadAction
-import com.intellij.openapi.file.VirtualFileUtil
+import com.intellij.openapi.file.findOrCreateVirtualFile
+import com.intellij.openapi.file.getPsiFile
 import com.intellij.testFramework.findReferenceByText
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
@@ -24,9 +25,9 @@ class GradleBuildNavigationTest: GradleCodeInsightTestCase() {
                 |    jvm()
                 |}""".trimMargin())
         }) {
-            val file = VirtualFileUtil.findOrCreateFile(projectRoot, "build.gradle")
+            val file = projectRoot.findOrCreateVirtualFile("build.gradle")
             runReadAction {
-                val buildGradle = VirtualFileUtil.getPsiFile(project, file)
+                val buildGradle = file.getPsiFile(project)
                 val jvmElement = buildGradle.findReferenceByText("jvm").element
                 val documentationProvider = DocumentationManager.getProviderFromElement(jvmElement)
                 val doc = documentationProvider.generateDoc(jvmElement, jvmElement)
