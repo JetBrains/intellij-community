@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.ex.util;
+package com.intellij.formatting;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-public class EditorFormatterLineWrapper implements PostFormatProcessor {
+public class LineWrappingPostFormatProcessor implements PostFormatProcessor {
   @Override
   public @NotNull PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings) {
     processText(source.getContainingFile(), source.getTextRange(), settings);
@@ -24,24 +24,21 @@ public class EditorFormatterLineWrapper implements PostFormatProcessor {
   @Override
   public @NotNull TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
     Document document = PsiDocumentManager.getInstance(source.getProject()).getDocument(source);
-    if (document != null && settings.getCommonSettings(source.getLanguage()).WRAP_LONG_LINES) {
+    if (document != null && settings.getCommonSettings(source.getLanguage()).WRAP_LONG_LINES &&
+        !PostprocessReformattingAspect.getInstance(source.getProject()).isViewProviderLocked(source.getViewProvider())) {
       RangeMarker rangeMarker = document.createRangeMarker(rangeToReformat.getStartOffset(), rangeToReformat.getEndOffset());
-      wrapLongLinesIfNecessary(source, settings, document, rangeToReformat.getStartOffset(), rangeToReformat.getEndOffset());
-      TextRange result = rangeMarker.getTextRange();
-      rangeMarker.dispose();
-      return result;
+      final int startOffset = rangeToReformat.getStartOffset();
+      final int endOffset = rangeToReformat.getEndOffset();
+      try {
+        LineWrappingUtil.wrapLongLinesIfNecessary(source, document, startOffset, endOffset,
+                                                  Collections.singletonList(new TextRange(startOffset, endOffset)),
+                                                  settings.getRightMargin(source.getLanguage()));
+        return rangeMarker.getTextRange();
+      }
+      finally {
+        rangeMarker.dispose();
+      }
     }
     return rangeToReformat;
-  }
-
-  private void wrapLongLinesIfNecessary(@NotNull final PsiFile file, @NotNull CodeStyleSettings settings, @NotNull final Document document,
-                                        final int startOffset,
-                                        final int endOffset) {
-    if (PostprocessReformattingAspect.getInstance(file.getProject()).isViewProviderLocked(file.getViewProvider())) {
-      return;
-    }
-    EditorFacade.getInstance().wrapLongLinesIfNecessary(file, document, startOffset, endOffset,
-                                                        Collections.singletonList(new TextRange(startOffset, endOffset)),
-                                                        settings.getRightMargin(file.getLanguage()));
   }
 }

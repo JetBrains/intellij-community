@@ -20,11 +20,6 @@ import java.util.List;
 @Deprecated(forRemoval = true)
 @ApiStatus.Internal
 public abstract class EditorFacade {
-  /**
-   * This key is used as a flag that indicates if {@code 'wrap long line during formatting'} activity is performed now.
-   */
-  public static final Key<Boolean> WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY
-    = new Key<>("WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY");
 
   public static EditorFacade getInstance() {
     return ApplicationManager.getApplication().getService(EditorFacade.class);
@@ -34,13 +29,10 @@ public abstract class EditorFacade {
 
   public abstract void undo(@NotNull Project project, @NotNull FileEditor editor, @NotNull Document document, long modificationStamp);
 
-  public abstract void wrapLongLinesIfNecessary(@NotNull PsiFile file,
-                                                @NotNull Document document,
-                                                int startOffset,
-                                                int endOffset,
-                                                List<? extends TextRange> enabledRanges,
-                                                int rightMargin);
-
+  /**
+   * @deprecated Use LineWrappingUtil.doWrapLongLinesIfNecessary()
+   */
+  @Deprecated
   public abstract void doWrapLongLinesIfNecessary(@NotNull final Editor editor,
                                                   @NotNull final Project project,
                                                   @NotNull Document document,

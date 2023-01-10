@@ -1,19 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.editor.ex.util;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.formatting;
 
-import com.intellij.formatting.FormatConstants;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataContextWrapper;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -32,24 +31,16 @@ import java.util.List;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 
 @ApiStatus.Internal
-public class EditorFacadeImpl extends EditorFacade {
+public class LineWrappingUtil {
   private static final String WRAP_LINE_COMMAND_NAME = "AutoWrapLongLine";
 
-  @Override
-  public void runWithAnimationDisabled(@NotNull Editor editor, @NotNull Runnable taskWithScrolling) {
-    EditorUtil.runWithAnimationDisabled(editor, taskWithScrolling);
-  }
+  /**
+   * This key is used as a flag that indicates if {@code 'wrap long line during formatting'} activity is performed now.
+   */
+  public static final Key<Boolean> WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY
+    = new Key<>("WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY");
 
-  @Override
-  public void undo(@NotNull Project project, @NotNull FileEditor editor, @NotNull Document document, long modificationStamp) {
-    UndoManager manager = UndoManager.getInstance(project);
-    while (manager.isUndoAvailable(editor) && document.getModificationStamp() != modificationStamp) {
-      manager.undo(editor);
-    }
-  }
-
-  @Override
-  public void wrapLongLinesIfNecessary(@NotNull PsiFile file,
+  public static void wrapLongLinesIfNecessary(@NotNull PsiFile file,
                                        @NotNull Document document,
                                        int startOffset,
                                        int endOffset,
@@ -93,9 +84,8 @@ public class EditorFacadeImpl extends EditorFacade {
     }
   }
 
-  @Override
-  public void doWrapLongLinesIfNecessary(@NotNull final Editor editor, @NotNull final Project project, @NotNull Document document,
-                                         int startOffset, int endOffset, List<? extends TextRange> enabledRanges, int rightMargin) {
+  public static void doWrapLongLinesIfNecessary(@NotNull final Editor editor, @NotNull final Project project, @NotNull Document document,
+                                                int startOffset, int endOffset, List<? extends TextRange> enabledRanges, int rightMargin) {
     // Normalization.
     int startOffsetToUse = MathUtil.clamp(startOffset, 0, document.getTextLength());
     int endOffsetToUse = MathUtil.clamp(endOffset, 0, document.getTextLength());

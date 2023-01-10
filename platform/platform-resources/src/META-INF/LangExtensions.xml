@@ -92,7 +92,7 @@
     <applicationService serviceInterface="com.intellij.psi.codeStyle.CodeStyleSettingsService"
                         serviceImplementation="com.intellij.psi.codeStyle.CodeStyleSettingsServiceImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.ex.util.EditorFacade"
-                        serviceImplementation="com.intellij.openapi.editor.ex.util.EditorFacadeImpl"/>
+                        serviceImplementation="com.intellij.formatting.EditorFacadeImpl"/>
 
     <applicationService serviceInterface="com.intellij.concurrency.JobLauncher"
                         serviceImplementation="com.intellij.concurrency.JobLauncherImpl"/>
@@ -263,7 +263,7 @@
 
     <formattingService implementation="com.intellij.formatting.service.ExternalFormatProcessorAdapter" order="first"/>
     <postFormatProcessor implementation="com.intellij.formatting.LineCommentAddSpacePostFormatProcessor"/>
-    <postFormatProcessor implementation="com.intellij.openapi.editor.ex.util.EditorFormatterLineWrapper" order="first"/>
+    <postFormatProcessor implementation="com.intellij.formatting.LineWrappingPostFormatProcessor" order="first"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.editorActions.TabOutScopesTracker"
                         serviceImplementation="com.intellij.codeInsight.editorActions.TabOutScopesTrackerImpl"/>
