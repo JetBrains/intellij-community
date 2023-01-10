@@ -131,7 +131,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   }
 
   @NotNull
-  static HtmlBuilder describeTarget(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
+  static HtmlChunk describeTarget(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
     final HtmlBuilder result = new HtmlBuilder();
     result.append(StringUtil.notNullize(target.getName()));
     result.appendRaw(": ");
@@ -149,7 +149,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
         result.append(initializerText.substring(0, index)).appendRaw("...");
       }
     }
-    return result;
+    return result.toFragment();
   }
 
   @NotNull

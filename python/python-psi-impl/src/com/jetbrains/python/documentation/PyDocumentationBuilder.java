@@ -209,12 +209,24 @@ public class PyDocumentationBuilder {
       if (docString != null) {
         final StructuredDocString structuredDocString = DocStringUtil.parse(docString.getStringValue());
         final String description = structuredDocString.getParamDescription(parameter.getName());
-        if (StringUtil.isNotEmpty(description)) {
-          myContent.append(description);
-        }
+        appendFormattedDescriptionToContent(description);
       }
     }
     myBody.append(PythonDocumentationProvider.describeParameter(parameter, myContext));
+  }
+
+  private void appendFormattedDescriptionToContent(@NlsSafe @Nullable String description) {
+    if (StringUtil.isNotEmpty(description)) {
+      final DocstringFormatterRequest output =
+        PyStructuredDocstringFormatter.formatDocstring(myElement, new DocstringFormatterRequest(description, Collections.emptyList()),
+                                                       List.of(PyStructuredDocstringFormatter.FORMATTER_FRAGMENTS_FLAG));
+      if (output != null) {
+        myContent.appendRaw(output.getBody());
+      }
+      else {
+        myContent.append(description);
+      }
+    }
   }
 
   @Nullable
@@ -443,9 +455,7 @@ public class PyDocumentationBuilder {
         if (docString != null) {
           final StructuredDocString structuredDocString = DocStringUtil.parse(docString.getStringValue());
           final String description = structuredDocString.getAttributeDescription(targetName);
-          if (StringUtil.isNotEmpty(description)) {
-            myContent.append(description);
-          }
+          appendFormattedDescriptionToContent(description);
         }
       }
     }
