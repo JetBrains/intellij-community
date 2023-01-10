@@ -172,7 +172,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
    */
   public static @NotNull OptString string(@Language("jvm-field-name") @NotNull String bindId,
                                           @NotNull @NlsContexts.Label String splitLabel) {
-    return new OptString(bindId, new PlainMessage(splitLabel), null, -1);
+    return new OptString(bindId, new PlainMessage(splitLabel), null, -1, null);
   }
 
   /**
@@ -184,7 +184,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
   public static @NotNull OptString string(@Language("jvm-field-name") @NotNull String bindId,
                                           @NotNull @NlsContexts.Label String splitLabel,
                                           int width) {
-    return new OptString(bindId, new PlainMessage(splitLabel), null, width);
+    return new OptString(bindId, new PlainMessage(splitLabel), null, width, null);
   }
 
   /**
@@ -197,7 +197,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
   public static @NotNull OptString string(@Language("jvm-field-name") @NotNull String bindId,
                                           @NotNull @NlsContexts.Label String splitLabel,
                                           @NotNull StringValidator validator) {
-    return new OptString(bindId, new PlainMessage(splitLabel), validator, -1);
+    return new OptString(bindId, new PlainMessage(splitLabel), validator, -1, null);
   }
 
   /**
@@ -212,7 +212,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
                                           @NotNull @NlsContexts.Label String splitLabel,
                                           int width,
                                           @NotNull StringValidator validator) {
-    return new OptString(bindId, new PlainMessage(splitLabel), validator, width);
+    return new OptString(bindId, new PlainMessage(splitLabel), validator, width, null);
   }
 
   /**

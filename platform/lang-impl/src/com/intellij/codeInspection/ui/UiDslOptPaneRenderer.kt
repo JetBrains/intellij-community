@@ -169,7 +169,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           textField()
             .applyToComponent {
               if (component.width > 0) columns = component.width
-              text = tool.getOption(component.bindId) as String
+              text = tool.getOption(component.bindId) as String? ?: ""
             }
             .validationOnInput { textField ->
               component.validator?.getErrorMessage(project, textField.text)?.let { error(it) }
@@ -177,6 +177,10 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
             .onChanged {
               tool.setOption(component.bindId, it.text)
             }
+            .apply { component.description?.let {
+              gap(RightGap.SMALL)
+              this@renderOptCell.contextHelp (HtmlBuilder().append(it).toString())
+            } }
         }
 
         is OptNumber -> {
