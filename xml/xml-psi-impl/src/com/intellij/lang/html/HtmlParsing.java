@@ -558,7 +558,7 @@ public class HtmlParsing {
     attValue.done(XmlElementType.XML_ATTRIBUTE_VALUE);
   }
 
-  private void parseProlog() {
+  protected void parseProlog() {
     while (true) {
       final IElementType tt = token();
       if (tt == XmlTokenType.XML_COMMENT_START) {
