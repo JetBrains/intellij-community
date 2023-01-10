@@ -21,9 +21,7 @@ import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
-import java.awt.Component
-import java.awt.MouseInfo
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.*
 import java.io.File
 import javax.swing.*
@@ -31,6 +29,7 @@ import javax.swing.text.JTextComponent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
+
 
 val PREFERRED_FOCUSED_COMPONENT = Key.create<JComponent>("JComponent.preferredFocusedComponent")
 
@@ -177,10 +176,6 @@ fun getPresentablePath(path: @NonNls String): @NlsSafe String {
 @JvmOverloads
 fun getCanonicalPath(path: @NlsSafe String, removeLastSlash: Boolean = true): @NonNls String {
   return FileUtil.toCanonicalPath(FileUtil.expandUserHome(path.trim()), File.separatorChar, removeLastSlash)
-}
-
-fun JComponent.getTextWidth(text: @NlsSafe String): Int {
-  return getFontMetrics(font).stringWidth(text)
 }
 
 /**

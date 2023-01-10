@@ -17,7 +17,6 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
-import com.intellij.openapi.ui.getTextWidth
 import com.intellij.openapi.ui.shortenTextWithEllipsis
 import com.intellij.openapi.ui.validation.*
 import com.intellij.openapi.util.io.FileUtil
@@ -25,6 +24,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.util.getTextWidth
 import com.intellij.util.applyIf
 import java.io.File
 import java.nio.file.Path

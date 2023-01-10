@@ -9,7 +9,6 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.ide.wizard.setMinimumWidth
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
@@ -35,6 +34,7 @@ import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.ui.validation.WHEN_GRAPH_PROPAGATION_FINISHED
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.*
+import com.intellij.ui.util.minimumWidth
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.ui.JBUI
 import icons.GradleIcons
@@ -115,7 +115,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     builder.panel {
       row {
         label(GradleBundle.message("gradle.project.settings.distribution.npw"))
-          .applyToComponent { setMinimumWidth(MINIMUM_LABEL_WIDTH) }
+          .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
         comboBox(listOf(WRAPPER, LOCAL)) { it.text }
           .columns(COLUMNS_SHORT)
           .bindItem(distributionTypeProperty)
@@ -124,7 +124,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
         component(WRAPPER) {
           row {
             label(GradleBundle.message("gradle.project.settings.distribution.wrapper.version.npw"))
-              .applyToComponent { setMinimumWidth(MINIMUM_LABEL_WIDTH) }
+              .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
             cell(TextCompletionComboBox(context.project, TextCompletionComboBoxConverter.Default()))
               .columns(8)
               .applyToComponent { bindSelectedItem(gradleVersionProperty) }
@@ -141,7 +141,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
         component(LOCAL) {
           row {
             label(GradleBundle.message("gradle.project.settings.distribution.local.location.npw"))
-              .applyToComponent { setMinimumWidth(MINIMUM_LABEL_WIDTH) }
+              .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
             val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
               .withPathToTextConvertor(::getPresentablePath)
               .withTextToPathConvertor(::getCanonicalPath)
@@ -158,7 +158,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       }.bindSelectedComponent(distributionTypeProperty)
       row {
         label("")
-          .applyToComponent { setMinimumWidth(MINIMUM_LABEL_WIDTH) }
+          .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
         checkBox(GradleBundle.message("gradle.project.settings.distribution.store.settings"))
           .bindSelected(updateDefaultProjectSettingsProperty)
           .onApply {
