@@ -186,6 +186,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     myList.getSelectionModel().addListSelectionListener(selectionListener);
 
     final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
+    myChangesOnlyCheckBox.setBorder(JBUI.Borders.emptyBottom(UIUtil.DEFAULT_VGAP));
     myChangesOnlyCheckBox.setSelected(configuration.SHOW_ONLY_CHANGED_IN_SELECTION_DIFF);
     myChangesOnlyCheckBox.addActionListener(new ActionListener() {
       @Override
@@ -442,6 +443,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     separatorPanel.add(statusPanel, BorderLayout.EAST);
 
     tablePanel.add(separatorPanel, BorderLayout.NORTH);
+    tablePanel.setBorder(JBUI.Borders.empty(0, 16, UIUtil.DEFAULT_VGAP, 16));
 
     splitter.setFirstComponent(tablePanel);
     splitter.setSecondComponent(createComments());
@@ -451,6 +453,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
 
   private JComponent createComments() {
     JPanel panel = new JPanel(new BorderLayout(4, 4));
+    panel.setBorder(JBUI.Borders.empty(0, 16, 16, 16));
     panel.add(new JLabel(VcsBundle.message("selection.history.commit.message.label")), BorderLayout.NORTH);
     panel.add(ScrollPaneFactory.createScrollPane(myComments), BorderLayout.CENTER);
 
