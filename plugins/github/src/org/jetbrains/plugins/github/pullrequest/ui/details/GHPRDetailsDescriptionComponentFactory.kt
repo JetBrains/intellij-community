@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.ui.util.bindText
+import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -32,12 +33,7 @@ internal object GHPRDetailsDescriptionComponentFactory {
       border = JBUI.Borders.emptyTop(4)
     }
 
-    val layout = MigLayout(
-      LC()
-        .gridGap("0", "0")
-        .insets("0", "0", "0", "0")
-        .flowY()
-    )
+    val layout = MigLayout(LC().emptyBorders().flowY())
     return JPanel(layout).apply {
       isOpaque = false
 

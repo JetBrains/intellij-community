@@ -2,10 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.util.bindText
-import com.intellij.collaboration.ui.util.bindVisibility
-import com.intellij.collaboration.ui.util.createHoveredRoundedIconButton
-import com.intellij.collaboration.ui.util.toAnAction
+import com.intellij.collaboration.ui.util.*
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -90,8 +87,7 @@ internal class GHPRStatePanel(
   ) {
     protected val horizontalLayout = MigLayout(
       LC()
-        .insets("0", "0", "0", "0")
-        .gridGap("0", "0")
+        .emptyBorders()
         .fill()
         .flowX()
         .hideMode(3)

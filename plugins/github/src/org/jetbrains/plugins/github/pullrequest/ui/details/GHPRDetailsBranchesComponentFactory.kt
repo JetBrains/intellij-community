@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
+import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
@@ -70,10 +71,7 @@ internal object GHPRDetailsBranchesComponentFactory {
     }
 
     return NonOpaquePanel().apply {
-      layout = MigLayout(LC()
-                           .fillX()
-                           .gridGap("0", "0")
-                           .insets("0", "0", "0", "0"))
+      layout = MigLayout(LC().emptyBorders().fillX())
 
       add(to, CC().minWidth("$BRANCH_MIN_WIDTH"))
       add(arrowLabel, CC().gapX("$BRANCHES_GAP", "$BRANCHES_GAP"))

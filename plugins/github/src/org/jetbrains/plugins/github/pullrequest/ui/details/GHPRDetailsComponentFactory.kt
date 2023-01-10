@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.util.emptyBorders
+import com.intellij.collaboration.ui.util.gap
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
@@ -60,21 +62,28 @@ internal object GHPRDetailsComponentFactory {
 
     return JPanel(MigLayout(
       LC()
-        .insets("$indentTop", "$indentLeft", "$indentBottom", "$indentRight")
-        .gridGap("0", "0")
+        .emptyBorders()
         .fill()
         .flowY()
         .hideMode(3)
     )).apply {
       isOpaque = false
 
-      add(title, CC().growX().gapBottom("$gapBetweenTitleAndDescription"))
-      add(description, CC().growX().gapBottom("$gapBetweenDescriptionAndCommits"))
-      add(commitsAndBranches, CC().growX().gapBottom("$gapBetweenCommitsAndCommitInfo"))
-      add(commitInfo, CC().growX().maxHeight("$commitInfoMaxHeight").gapBottom("$gapBetweenCommitInfoAndCommitsBrowser"))
+      add(title, CC().growX().gap(left = indentLeft, right = indentRight, top = indentTop, bottom = gapBetweenTitleAndDescription))
+      add(description, CC().growX().gap(left = indentLeft, right = indentRight, bottom = gapBetweenDescriptionAndCommits))
+      add(commitsAndBranches, CC().growX().gap(left = indentLeft, right = indentRight, bottom = gapBetweenCommitsAndCommitInfo))
+      add(commitInfo, CC()
+        .growX()
+        .maxHeight("$commitInfoMaxHeight")
+        .gap(left = indentLeft, right = indentRight, bottom = gapBetweenCommitInfoAndCommitsBrowser)
+      )
       add(commitFilesBrowserComponent, CC().grow().push())
-      add(statusChecks, CC().growX().gapBottom("$gapBetweenCheckAndActions").maxHeight("$statusChecksMaxHeight"))
-      add(state, CC().growX().pushX().minHeight("pref"))
+      add(statusChecks, CC()
+        .growX()
+        .maxHeight("$statusChecksMaxHeight")
+        .gap(left = indentLeft, right = indentRight, top = 4, bottom = gapBetweenCheckAndActions)
+      )
+      add(state, CC().growX().pushX().minHeight("pref").gap(left = indentLeft - 2, right = indentRight, bottom = indentBottom))
 
       PopupHandler.installPopupMenu(this, DefaultActionGroup(GHPRReloadDetailsAction()), "GHPRDetailsPopup")
     }
