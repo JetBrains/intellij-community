@@ -11,6 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.usages.TextChunk
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
+import com.intellij.usages.impl.UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
@@ -49,7 +50,9 @@ internal class SearchEverywhereItem(
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    return presentableText == ((other as SearchEverywhereItem).presentableText)
+    if (USAGE_COMPARATOR_BY_FILE_AND_OFFSET.compare(usage, (other as SearchEverywhereItem).usage) != 0) return false
+
+    return presentableText == other.presentableText
   }
 
   override fun hashCode(): Int = presentableText.hashCode()
