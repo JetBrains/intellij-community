@@ -3,14 +3,12 @@
 
 package com.intellij.vcs.log.data.index
 
-import com.intellij.mvstore.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
-import com.intellij.ui.svg.*
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.childScope
 import com.intellij.vcs.log.Hash
@@ -21,69 +19,51 @@ import com.intellij.vcs.log.impl.VcsLogIndexer
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntSet
 import kotlinx.coroutines.*
-import org.h2.mvstore.*
-import org.jetbrains.sqlite.SQLiteConfig
+import org.intellij.lang.annotations.Language
+import org.jetbrains.sqlite.StatementCollection
 import org.jetbrains.sqlite.core.SqliteConnection
 import org.jetbrains.sqlite.core.SqlitePreparedStatement
 import java.nio.file.Files
-import java.sql.Types
 import java.util.*
 import java.util.function.IntConsumer
 import java.util.function.IntFunction
 import java.util.function.ToIntFunction
 
-private const val DB_VERSION = 1
+private const val DB_VERSION = 2
 
-// don't forget to change DB_VERSION if you change database scheme
-private fun createTables(connection: SqliteConnection) {
-  val statement = connection.createStatement()
-  statement.executeUpdate("drop table if exists data")
-  //language=SQLite
-  statement.executeUpdate("""
-      create table if not exists log (
-        commitId integer primary key,
-        message text,
-        authorTime integer,
-        commitTime integer,
-        committerId integer
-      ) strict
-    """)
-
-  statement.executeUpdate("""
-    create virtual table if not exists fts_message_index using fts5(message, content='log', content_rowid='commitId', tokenize='trigram')
-  """.trimIndent())
-  //language=SQLite
-  statement.executeUpdate("""
-    CREATE TRIGGER if not exists log_ai AFTER INSERT ON log BEGIN
-      INSERT INTO fts_message_index(rowid, message) VALUES (new.commitId, new.message);
-    END
-  """.trimIndent())
-  //language=SQLite
-  statement.executeUpdate("""
-    CREATE TRIGGER if not exists log_ad AFTER DELETE ON log BEGIN
-      INSERT INTO fts_message_index(fts_message_index, rowid, message) VALUES('delete', old.commitId, old.message);
-    END
-  """.trimIndent())
-  //language=SQLite
-  statement.executeUpdate("""
-    CREATE TRIGGER if not exists log_au AFTER UPDATE ON log BEGIN
-      INSERT INTO fts_message_index(fts_message_index, rowid, message) VALUES('delete', old.commitId, old.message);
-      INSERT INTO fts_message_index(rowid, message) VALUES (new.commitId, new.message);
-    END
-  """.trimIndent())
-
-  //language=SQLite
-  statement.executeUpdate("create table if not exists parent (commitId integer, parent integer) strict")
-  //language=SQLite
-  statement.executeUpdate("create index if not exists parent_index on parent (commitId)")
-
-  //language=SQLite
-  statement.executeUpdate("create table if not exists rename (parent integer, child integer, rename integer) strict")
-  //language=SQLite
-  statement.executeUpdate("create index if not exists rename_index on rename (parent, child)")
-
-  statement.close()
-}
+@Language("SQLite")
+private const val TABLE_SCHEMA = """
+  begin transaction;
+  
+  create table log (
+    commitId integer primary key,
+    message text not null,
+    authorTime integer not null,
+    commitTime integer not null,
+    committerId integer null
+  ) strict;
+  create virtual table fts_message_index using fts5(message, content='log', content_rowid='commitId', tokenize='trigram');
+  
+  create trigger log_ai after insert on log begin
+    insert into fts_message_index(rowid, message) values (new.commitId, new.message);
+  end;
+  create trigger log_ad after delete on log begin 
+    insert into fts_message_index(fts_message_index, rowid, message) values ('delete', old.commitId, old.message);
+  end;
+  create trigger log_au after update on log begin
+    insert into fts_message_index(fts_message_index, rowid, message) values ('delete', old.commitId, old.message);
+    insert into fts_message_index(rowid, message) values (new.commitId, new.message);
+  end;
+  
+  -- one to many relation, so, commitId is not a primary key
+  create table parent (commitId integer not null, parent integer not null) strict;
+  create index parent_index on parent (commitId);
+  
+  create table rename (parent integer not null, child integer not null, rename integer not null) strict;
+  create index rename_index on rename (parent, child);
+  
+  commit transaction;
+"""
 
 @Service(Service.Level.PROJECT)
 private class ProjectLevelStoreManager(project: Project) : Disposable {
@@ -97,42 +77,17 @@ private class ProjectLevelStoreManager(project: Project) : Disposable {
   var isFresh = false
 
   init {
-    val dbFile = project.getProjectDataPath("vcs-log-v${VcsLogStorageImpl.VERSION}-${VcsLogPersistentIndex.VERSION}-${DB_VERSION}.db")
-    Files.createDirectories(dbFile.parent)
-
+    val dbFile = project.getProjectDataPath("vcs-log-v${DB_VERSION}-${VcsLogStorageImpl.VERSION}-${VcsLogPersistentIndex.VERSION}.db")
     isFresh = !Files.exists(dbFile)
+    connection = SqliteConnection(dbFile)
 
-    val dbPath = dbFile.toString()
-
-    val config = SQLiteConfig()
-    config.setJournalMode(SQLiteConfig.JournalMode.WAL)
-    config.setSynchronous(SQLiteConfig.SynchronousMode.NORMAL)
-
-    connection = SqliteConnection("jdbc:sqlite:$dbPath", dbPath, config)
-
-    var success = false
-    try {
-      createTables(connection)
-      success = true
+    if (isFresh) {
+      connection.execute(TABLE_SCHEMA)
     }
-    finally {
-      if (success) {
-        connection.commit()
-      }
-      else {
-        connection.rollback()
-      }
-    }
-
-    //coroutineScope.launch(CoroutineName("auto-save VCS log")) {
-    //  delay(1.minutes)
-    //  store.commit()
-    //}
   }
 
   override fun dispose() {
     try {
-      connection.commit()
       connection.close()
     }
     finally {
@@ -140,6 +95,9 @@ private class ProjectLevelStoreManager(project: Project) : Disposable {
     }
   }
 }
+
+private const val RENAME_SQL = "insert into rename(parent, child, rename) values(?, ?, ?)"
+private const val RENAME_DELETE_SQL = "delete from rename where parent = ? and child = ?"
 
 internal class SqliteVcsLogStore(project: Project) : VcsLogStore {
   private val connectionManager = project.service<ProjectLevelStoreManager>()
@@ -155,31 +113,17 @@ internal class SqliteVcsLogStore(project: Project) : VcsLogStore {
   override fun createWriter(): VcsLogWriter = SqliteVcsLogWriter(connection)
 
   override val isEmpty: Boolean
-    get() {
-      connection.createStatement().use { statement ->
-        //language=SQLite
-        val resultSet = statement.executeQuery("select not exists (select 1 from log)")
-        return resultSet.next() && resultSet.getBoolean(1)
-      }
-    }
+    get() = connection.selectBoolean("select not exists (select 1 from log)")
 
   override fun containsCommit(commitId: Int): Boolean {
-    //language=SQLite
-    val statement = connection.prepareStatement("select exists(select 1 from log where commitId = ?)")
-    statement.setInt(1, commitId)
-    val resultSet = statement.executeQuery()
-    val result = resultSet.next() && resultSet.getBoolean(1)
-    statement.close()
-    return result
+    return connection.selectBoolean("select exists(select 1 from log where commitId = ?)", commitId)
   }
 
   override fun collectMissingCommits(commitIds: IntSet, missing: IntSet) {
-    //language=SQLite
     connection.prepareStatement("select exists (select commitId from log where commitId = ?)").use { statement ->
       commitIds.forEach(IntConsumer {
         statement.setInt(1, it)
-        val resultSet = statement.executeQuery()
-        if (!resultSet.next() || !resultSet.getBoolean(1)) {
+        if (!statement.selectBoolean()) {
           missing.add(it)
         }
       })
@@ -187,100 +131,89 @@ internal class SqliteVcsLogStore(project: Project) : VcsLogStore {
   }
 
   override fun getMessage(commitId: Int): String? {
-    //language=SQLite
-    val statement = connection.prepareStatement("select message from log where commitId = ?")
-    statement.setInt(1, commitId)
-    val resultSet = statement.executeQuery()
-    if (!resultSet.next()) {
-      return null
-    }
-
-    val result = resultSet.getString(1)
-    statement.close()
-    return result
+    return connection.selectString("select message from log where commitId = ?", commitId)
   }
 
   override fun getCommitterOrAuthor(commitId: Int, getUserById: IntFunction<VcsUser>, getAuthorForCommit: IntFunction<VcsUser>): VcsUser? {
-    //language=SQLite
-    val statement = connection.prepareStatement("select committerId from log where commitId = ?")
-    statement.setInt(1, commitId)
-    val resultSet = statement.executeQuery()
-    if (!resultSet.next()) {
-      return null
-    }
+    connection.prepareStatement("select committerId from log where commitId = ?").use { statement ->
+      statement.setInt(1, commitId)
+      val resultSet = statement.executeQuery()
+      if (!resultSet.next()) {
+        return null
+      }
 
-    val result = resultSet.getInt(1)
-    if (resultSet.wasNull()) {
-      return getAuthorForCommit.apply(commitId)
+      val result = resultSet.getInt(1)
+      return if (resultSet.wasNull()) getAuthorForCommit.apply(commitId) else getUserById.apply(result)
     }
-
-    statement.close()
-    return getUserById.apply(result)
   }
 
   override fun getTimestamp(commitId: Int): LongArray? {
-    //language=SQLite
-    val statement = connection.prepareStatement("select authorTime, commitTime from log where commitId = ?")
-    statement.setInt(1, commitId)
-    val resultSet = statement.executeQuery()
-    if (!resultSet.next()) {
-      return null
+    connection.prepareStatement("select authorTime, commitTime from log where commitId = ?").use { statement ->
+      statement.setInt(1, commitId)
+      val resultSet = statement.executeQuery()
+      if (!resultSet.next()) {
+        return null
+      }
+      return longArrayOf(resultSet.getLong(1), resultSet.getLong(2))
     }
-
-    val result = longArrayOf(resultSet.getLong(1), resultSet.getLong(2))
-    statement.close()
-    return result
   }
 
   override fun getParent(commitId: Int): IntArray {
-    //language=SQLite
-    val statement = connection.prepareStatement("select parent from parent where commitId = ?")
-    statement.setInt(1, commitId)
-    return readIntArray(statement)
+    connection.prepareStatement("select parent from parent where commitId = ?").use { statement ->
+      statement.setInt(1, commitId)
+      return readIntArray(statement)
+    }
   }
 
   override fun processMessages(processor: (Int, String) -> Boolean) {
-    //language=SQLite
-    val statement = connection.prepareStatement("select commitId, message from log")
-    val resultSet = statement.executeQuery()
-    while (resultSet.next()) {
-      if (!processor(resultSet.getInt(1), resultSet.getString(2))) {
-        break
+    connection.prepareStatement("select commitId, message from log").use { statement ->
+      val resultSet = statement.executeQuery()
+      while (resultSet.next()) {
+        if (!processor(resultSet.getInt(1), resultSet.getString(2)!!)) {
+          break
+        }
       }
     }
-    statement.close()
   }
 
   override fun putRename(parent: Int, child: Int, renames: IntArray) {
-    // clear old if any
-    var statement = connection.prepareStatement("delete from rename where parent = ? and child = ?")
-    statement.setInt(1, parent)
-    statement.setInt(2, child)
-    statement.executeUpdate(false)
-    statement.close()
+    var success = false
+    try {
+      connection.beginTransaction()
+      connection.execute(RENAME_DELETE_SQL, arrayOf(parent, child))
 
-    //language=SQLite
-    statement = connection.prepareStatement("insert into rename(parent, child, rename) values(?, ?, ?)")
-    for (rename in renames) {
-      statement.setInt(1, parent)
-      statement.setInt(2, child)
-      statement.setInt(3, rename)
-      statement.addBatch()
+      connection.prepareStatement(RENAME_SQL).use { statement ->
+        for (rename in renames) {
+          statement.setInt(1, parent)
+          statement.setInt(2, child)
+          statement.setInt(3, rename)
+          statement.addBatch()
+        }
+
+        statement.executeBatch()
+      }
+
+      success = true
     }
-    statement.executeBatch(false)
-    statement.close()
+    finally {
+      if (success) {
+        connection.commit()
+      }
+      else {
+        connection.rollback()
+      }
+    }
   }
 
   override fun forceRenameMap() {
-    connection.commit()
   }
 
   override fun getRename(parent: Int, child: Int): IntArray {
-    //language=SQLite
-    val statement = connection.prepareStatement("select rename from rename where parent = ? and child = ?")
-    statement.setInt(1, parent)
-    statement.setInt(2, child)
-    return readIntArray(statement)
+    connection.prepareStatement("select rename from rename where parent = ? and child = ?").use { statement ->
+      statement.setInt(1, parent)
+      statement.setInt(2, child)
+      return readIntArray(statement)
+    }
   }
 
   override fun getCommitsForSubstring(string: String,
@@ -295,19 +228,18 @@ internal class SqliteVcsLogStore(project: Project) : VcsLogStore {
     //
     // So, we use `like` instead of a full-text query if the string is fewer than 3 chars.
 
-    var stringParam = string
+    val stringParam: String
     val statement = if (string.length >= 3) {
-      //language=SQLite
+      stringParam = '"' + string.replace("\"", "\"\"") + '"'
       connection.prepareStatement("select rowid, message from fts_message_index(?)")
     }
     else {
-      stringParam = "%" + stringParam
+      stringParam = "%" + string
         .replace("!", "!!")
         .replace("%", "!%")
         .replace("_", "!_")
         .replace("[", "![") + "%"
 
-      //language=SQLite
       connection.prepareStatement("select rowid, message from fts_message_index where message like ? escape '!'")
     }
     statement.use {
@@ -321,7 +253,7 @@ internal class SqliteVcsLogStore(project: Project) : VcsLogStore {
 
       do {
         val commitId = resultSet.getInt(1)
-        if ((candidates == null || candidates.contains(commitId)) && filter.matches(resultSet.getString(2))) {
+        if ((candidates == null || candidates.contains(commitId)) && filter.matches(resultSet.getString(2)!!)) {
           consumer.accept(commitId)
         }
       }
@@ -332,16 +264,24 @@ internal class SqliteVcsLogStore(project: Project) : VcsLogStore {
 
 @Suppress("SqlResolve")
 private class SqliteVcsLogWriter(private val connection: SqliteConnection) : VcsLogWriter {
-  //language=SQLite
-  private val logStatement = connection.prepareStatement("""
+  init {
+    connection.beginTransaction()
+  }
+
+  private val statementCollection = StatementCollection(connection)
+
+  private val logStatement = statementCollection.prepareStatement("""
     insert into log(commitId, message, authorTime, commitTime, committerId) 
     values(?, ?, ?, ?, ?) 
     on conflict(commitId) do update set message=excluded.message
     """)
 
-  //language=SQLite
-  private val parentStatement = connection.prepareStatement("insert into parent(commitId, parent) values(?, ?)")
-  private val parentDeleteStatement = connection.prepareStatement("delete from parent where commitId = ?")
+  // first `delete`, then `insert` - `delete` statement must be added to the statement collection first
+  private val parentDeleteStatement = statementCollection.prepareIntStatement("delete from parent where commitId = ?")
+  private val parentStatement = statementCollection.prepareIntStatement("insert into parent(commitId, parent) values(?, ?)")
+
+  private val renameDeleteStatement = statementCollection.prepareIntStatement(RENAME_DELETE_SQL)
+  private val renameStatement = statementCollection.prepareIntStatement(RENAME_SQL)
 
   override fun putCommit(commitId: Int, details: VcsLogIndexer.CompressedDetails, userToId: ToIntFunction<VcsUser>) {
     logStatement.setInt(1, commitId)
@@ -350,7 +290,7 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection) : Vcs
     logStatement.setLong(4, details.commitTime)
 
     if (details.author == details.committer) {
-      logStatement.setNull(5, Types.INTEGER)
+      logStatement.setNull(5)
     }
     else {
       logStatement.setInt(5, userToId.applyAsInt(details.committer))
@@ -371,25 +311,37 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection) : Vcs
     }
   }
 
-  override fun flush() {
-    logStatement.executeBatch(false)
+  override fun putRename(parent: Int, child: Int, renames: IntArray) {
+    renameDeleteStatement.setInt(1, parent)
+    renameDeleteStatement.setInt(2, child)
+    renameDeleteStatement.addBatch()
 
-    parentDeleteStatement.executeBatch(false)
-    parentStatement.executeBatch(false)
+    for (rename in renames) {
+      renameStatement.setInt(1, parent)
+      renameStatement.setInt(2, child)
+      renameStatement.setInt(3, rename)
+      renameStatement.addBatch()
+    }
   }
 
-  override fun close(success: Boolean) {
-    if (success) {
-      flush()
-      connection.commit()
-    }
-    else {
-      connection.rollback()
-    }
+  override fun flush() {
+    statementCollection.executeBatch()
+    connection.commit()
+    connection.beginTransaction()
+  }
 
-    parentDeleteStatement.close()
-    parentStatement.close()
-    logStatement.close()
+  override fun close(performCommit: Boolean) {
+    try {
+      statementCollection.close(performCommit = performCommit)
+    }
+    finally {
+      if (performCommit) {
+        connection.commit()
+      }
+      else {
+        connection.rollback()
+      }
+    }
   }
 }
 
@@ -411,6 +363,5 @@ private fun readIntArray(statement: SqlitePreparedStatement): IntArray {
     result.add(resultSet.getInt(1))
   }
   while (resultSet.next())
-  statement.close()
   return result.toIntArray()
 }

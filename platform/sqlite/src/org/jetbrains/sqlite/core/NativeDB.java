@@ -16,11 +16,14 @@
 
 package org.jetbrains.sqlite.core;
 
-import org.jetbrains.sqlite.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.sqlite.BusyHandler;
+import org.jetbrains.sqlite.Collation;
+import org.jetbrains.sqlite.Function;
+import org.jetbrains.sqlite.ProgressHandler;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
 /** This class provides a thin JNI layer over the SQLite3 C API. */
@@ -28,13 +31,6 @@ public final class NativeDB extends DB {
   private static final int DEFAULT_BACKUP_BUSY_SLEEP_TIME_MILLIS = 100;
   private static final int DEFAULT_BACKUP_NUM_BUSY_BEFORE_FAIL = 3;
   private static final int DEFAULT_PAGES_PER_BACKUP_STEP = 100;
-  private static boolean isLoaded;
-  private static boolean loadSucceeded;
-
-  static {
-    isLoaded = false;
-    loadSucceeded = false;
-  }
 
   /** SQLite connection handle. */
   private final long pointer = 0;
@@ -49,8 +45,8 @@ public final class NativeDB extends DB {
   /** handler pointer to JNI global progressHandler reference. */
   private long progressHandler;
 
-  public NativeDB(String url, String fileName, SQLiteConfig config) throws SQLException {
-    super(url, fileName, config);
+  public NativeDB() {
+    super();
   }
 
   /** @see DB#_open(String, int) */
@@ -68,8 +64,6 @@ public final class NativeDB extends DB {
   /** @see DB#_exec(String) */
   @Override
   public synchronized int _exec(String sql) throws SQLException {
-    DriverManager.println(
-      "DriverManager [" + Thread.currentThread().getName() + "] [SQLite EXEC] " + sql);
     return _exec_utf8(stringToUtf8ByteArray(sql));
   }
 
@@ -97,13 +91,12 @@ public final class NativeDB extends DB {
 
   /** @see DB#prepare(String) */
   @Override
-  protected synchronized SafeStmtPtr prepare(String sql) throws SQLException {
-    DriverManager.println(
-      "DriverManager [" + Thread.currentThread().getName() + "] [SQLite PREP] " + sql);
-    return new SafeStmtPtr(this, prepare_utf8(stringToUtf8ByteArray(sql)));
+  protected synchronized SafeStatementPointer prepare(@NotNull String sql) throws SQLException {
+    return new SafeStatementPointer(this, prepare_utf8(stringToUtf8ByteArray(sql)));
   }
 
-  synchronized native long prepare_utf8(byte[] sqlUtf8) throws SQLException;
+  // byte[] instead of string is actually more performant
+  public synchronized native long prepare_utf8(byte[] sqlUtf8) throws SQLException;
 
   /** @see DB#errmsg() */
   @Override
@@ -131,13 +124,12 @@ public final class NativeDB extends DB {
 
   /** @see DB#finalize(long) */
   @Override
-  protected synchronized native int finalize(long stmt);
+  public synchronized native int finalize(long stmt);
 
   /** @see DB#step(long) */
   @Override
   public synchronized native int step(long stmt);
 
-  /** @see DB#reset(long) */
   @Override
   public synchronized native int reset(long stmt);
 
@@ -499,38 +491,17 @@ public final class NativeDB extends DB {
   }
 
   /**
-   * Loads the SQLite interface backend.
-   *
-   * @return True if the SQLite JDBC driver is successfully loaded; false otherwise.
-   */
-  public static boolean load() throws Exception {
-    if (isLoaded) {
-      return loadSucceeded;
-    }
-
-    try {
-      loadSucceeded = SqliteLibLoaderKt.initializeSqliteNativeLibrary();
-    }
-    finally {
-      isLoaded = true;
-    }
-    return loadSucceeded;
-  }
-
-  /**
    * Throws an SQLException. Called from native code
    *
    * @param msg Message for the SQLException.
    * @throws SQLException the generated SQLException
    */
+  @SuppressWarnings("unused")
   static void throwex(String msg) throws SQLException {
     throw new SQLException(msg);
   }
 
   static byte[] stringToUtf8ByteArray(String str) {
-    if (str == null) {
-      return null;
-    }
     return str.getBytes(StandardCharsets.UTF_8);
   }
 

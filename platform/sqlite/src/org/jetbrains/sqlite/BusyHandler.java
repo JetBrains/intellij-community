@@ -32,7 +32,7 @@ public abstract class BusyHandler {
       throw new SQLException("connection closed");
     }
 
-    conn.getDatabase().busy_handler(busyHandler);
+    conn.db.busy_handler(busyHandler);
   }
 
   /**

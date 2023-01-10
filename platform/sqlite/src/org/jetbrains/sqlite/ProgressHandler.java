@@ -22,7 +22,7 @@ public abstract class ProgressHandler {
     if (conn.isClosed()) {
       throw new SQLException("connection closed");
     }
-    conn.getDatabase().register_progress_handler(vmCalls, progressHandler);
+    conn.db.register_progress_handler(vmCalls, progressHandler);
   }
 
   /**
@@ -31,6 +31,6 @@ public abstract class ProgressHandler {
    * @param conn the SQLite connection
    */
   public static void clearHandler(SqliteConnection conn) throws SQLException {
-    conn.getDatabase().clear_progress_handler();
+    conn.db.clear_progress_handler();
   }
 }

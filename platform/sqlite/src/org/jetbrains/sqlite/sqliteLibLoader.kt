@@ -16,27 +16,31 @@ private var extracted = false
 // The version of the SQLite JDBC driver.
 private const val VERSION: String = "3.40.0.0"
 
+/**
+ * Loads the SQLite interface backend.
+ *
+ * @return True if the SQLite JDBC driver is successfully loaded; false otherwise.
+ */
 @Synchronized
-fun initializeSqliteNativeLibrary(): Boolean {
-  loadSQLiteNativeLibrary()
-  return extracted
+internal fun loadNativeDb() {
+  if (extracted) {
+    return
+  }
+
+  loadSqliteNativeLibrary()
+  extracted = true
 }
 
 /**
  * Loads SQLite native library using given a path and name of the library.
  */
-private fun loadSQLiteNativeLibrary() {
-  if (extracted) {
-    return
-  }
-
+private fun loadSqliteNativeLibrary() {
   @Suppress("SpellCheckingInspection")
   var nativeLibraryName = System.mapLibraryName("sqlitejdbc")?.replace(".dylib", ".jnilib")!!
   val relativeDirName = "${osNameToDirName()}/${if (CpuArch.isArm64()) "aarch64" else "x86_64"}"
   val nativeLibFile = Path.of(PathManager.getLibPath(), "native", relativeDirName, nativeLibraryName).toAbsolutePath().normalize()
   if (Files.exists(nativeLibFile)) {
     System.load(nativeLibFile.toString())
-    extracted = true
     return
   }
 
@@ -57,10 +61,8 @@ private fun loadSQLiteNativeLibrary() {
   if (hasNativeLib) {
     // try extracting the library from jar
     extractAndLoadLibraryFile(libFolderForCurrentOS = nativeLibraryPath, libraryFileName = nativeLibraryName)
-    extracted = true
   }
   else {
-    extracted = false
     throw Exception("No native library found for os.name=${SystemInfoRt.OS_NAME}, os.arch=${CpuArch.CURRENT}")
   }
 }

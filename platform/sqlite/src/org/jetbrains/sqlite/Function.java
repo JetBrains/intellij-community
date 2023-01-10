@@ -190,7 +190,7 @@ public abstract class Function {
 
   /** */
   private void checkContext() throws SQLException {
-    if (conn == null || conn.getDatabase() == null || context == 0) {
+    if (conn == null || conn.db == null || context == 0) {
       throw new SQLException("no context, not allowed to read value");
     }
   }
@@ -198,7 +198,7 @@ public abstract class Function {
   /**
    */
   private void checkValue(int arg) throws SQLException {
-    if (conn == null || conn.getDatabase() == null || value == 0) {
+    if (conn == null || conn.db == null || value == 0) {
       throw new SQLException("not in value access state");
     }
     if (arg >= args) {
@@ -246,7 +246,7 @@ public abstract class Function {
     }
 
     f.conn = conn;
-    f.db = f.conn.getDatabase();
+    f.db = f.conn.db;
 
     if (nArgs < -1 || nArgs > 127) {
       throw new SQLException("invalid args provided: " + nArgs);
@@ -265,7 +265,7 @@ public abstract class Function {
    * @param nArgs Ignored.
    */
   public static void destroy(SqliteConnection conn, String name, int nArgs) throws SQLException {
-    conn.getDatabase().destroy_function(name);
+    conn.db.destroy_function(name);
   }
 
   /**

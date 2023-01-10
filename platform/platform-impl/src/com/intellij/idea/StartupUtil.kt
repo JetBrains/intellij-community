@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplacePutWithAssignment", "KDocUnresolvedReference")
 
@@ -294,7 +294,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
 
     // with the main dispatcher for non-technical reasons
-    appStarter.start(InitAppContext(context = coroutineContext,
+    appStarter.start(InitAppContext(context = mainScope.coroutineContext,
                                     args = args,
                                     appDeferred = appDeferred,
                                     initLafJob = initLafJob,

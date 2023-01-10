@@ -15,12 +15,11 @@
  */
 package org.jetbrains.sqlite.core;
 
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.sqlite.*;
 
-import java.sql.BatchUpdateException;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
@@ -40,30 +39,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * The subclass, NativeDB, provides the actual access to SQLite functions.
  */
 public abstract class DB implements Codes {
-  private final String url;
-  private final String fileName;
-  private final SQLiteConfig config;
   private final AtomicBoolean closed = new AtomicBoolean(true);
-  /** Tracer for statements to avoid unfinalized statements on db close. */
-  private final Set<SafeStmtPtr> stmts = ConcurrentHashMap.newKeySet();
+  // tracer for statements to avoid unfinalized statements on db close
+  private final Set<SafeStatementPointer> statements = ConcurrentHashMap.newKeySet();
   private final Set<SQLiteUpdateListener> updateListeners = new HashSet<>();
   private final Set<SQLiteCommitListener> commitListeners = new HashSet<>();
-  /** The "begin;"and "commit;" statement handles. */
-  volatile SafeStmtPtr begin;
-  volatile SafeStmtPtr commit;
 
-  public DB(String url, String fileName, SQLiteConfig config) {
-    this.url = url;
-    this.fileName = fileName;
-    this.config = config;
+  public DB() {
   }
 
   public boolean isClosed() {
     return closed.get();
-  }
-
-  public SQLiteConfig getConfig() {
-    return config;
   }
 
   // WRAPPER FUNCTIONS ////////////////////////////////////////////
@@ -131,16 +117,6 @@ public abstract class DB implements Codes {
    */
   public abstract long total_changes();
 
-  /**
-   * Enables or disables the sharing of the database cache and schema data structures between
-   * connections to the same database.
-   *
-   * @param enable True to enable; false otherwise.
-   * @return <a href="http://www.sqlite.org/c3ref/c_abort.html">Result Codes</a>
-   * @see <a
-   * href="http://www.sqlite.org/c3ref/enable_shared_cache.html">http://www.sqlite.org/c3ref/enable_shared_cache.html</a>
-   * @see SQLiteErrorCode
-   */
   public abstract int shared_cache(boolean enable);
 
   /**
@@ -159,16 +135,10 @@ public abstract class DB implements Codes {
    * @param sql SQL statement to be executed.
    * @see <a href="http://www.sqlite.org/c3ref/exec.html">http://www.sqlite.org/c3ref/exec.html</a>
    */
-  public final synchronized void exec(String sql) throws SQLException {
-    SafeStmtPtr pointer = prepare(sql);
-    try {
-      int rc = pointer.safeRunInt(DB::step);
-      if (rc != SQLITE_DONE && rc != SQLITE_ROW) {
-        throwex(rc);
-      }
-    }
-    finally {
-      pointer.close();
+  public final synchronized void exec(@NotNull String sql) throws SQLException {
+    int status = _exec(sql);
+    if (status != SQLITE_OK) {
+      throw newSQLException(status, errmsg(), sql);
     }
   }
 
@@ -181,16 +151,9 @@ public abstract class DB implements Codes {
    * @see <a
    * href="http://www.sqlite.org/c3ref/open.html">http://www.sqlite.org/c3ref/open.html</a>
    */
-  public final synchronized void open(String file, int openFlags) throws SQLException {
+  final synchronized void open(String file, int openFlags) throws SQLException {
     _open(file, openFlags);
     closed.set(false);
-
-    if (fileName.startsWith("file:") && !fileName.contains("cache=")) {
-      // URI cache overrides flags
-      shared_cache(config.isEnabledSharedCache());
-    }
-    enable_load_extension(config.isEnabledLoadExtension());
-    busy_timeout(config.getBusyTimeout());
   }
 
   /**
@@ -202,16 +165,13 @@ public abstract class DB implements Codes {
    */
   public final synchronized void close() throws SQLException {
     // finalize any remaining statements before closing db
-    for (SafeStmtPtr element : stmts) {
-      element.close();
-    }
-
-    // clean-up commit object
-    if (begin != null) {
-      begin.close();
-    }
-    if (commit != null) {
-      commit.close();
+    for (SafeStatementPointer element : statements) {
+      try {
+        element.internalClose$intellij_platform_sqlite();
+      }
+      catch (Throwable e) {
+        Logger.getInstance(DB.class).error(e);
+      }
     }
 
     closed.set(true);
@@ -220,20 +180,14 @@ public abstract class DB implements Codes {
 
   /**
    * Complies an SQL statement.
-   *
-   * @param stmt The SQL statement to compile.
-   * @see <a
-   * href="http://www.sqlite.org/c3ref/prepare.html">http://www.sqlite.org/c3ref/prepare.html</a>
+   * @see <a href="http://www.sqlite.org/c3ref/prepare.html">http://www.sqlite.org/c3ref/prepare.html</a>
    */
-  final synchronized void prepare(SqliteStatement stmt, @NotNull String sql) throws SQLException {
-    if (stmt.pointer != null) {
-      stmt.pointer.close();
-    }
-    stmt.pointer = prepare(sql);
-    final boolean added = stmts.add(stmt.pointer);
-    if (!added) {
+  final synchronized @NotNull SafeStatementPointer prepareForStatement(@NotNull String sql) throws SQLException {
+    SafeStatementPointer pointer = prepare(sql);
+    if (!statements.add(pointer)) {
       throw new IllegalStateException("Already added pointer to statements set");
     }
+    return pointer;
   }
 
   /**
@@ -242,16 +196,15 @@ public abstract class DB implements Codes {
    * @param safePtr the pointer wrapper to remove from internal structures
    * @param ptr     the raw pointer to free
    * @return <a href="http://www.sqlite.org/c3ref/c_abort.html">Result Codes</a>
-   * @throws SQLException if finalization fails
    * @see <a
    * href="http://www.sqlite.org/c3ref/finalize.html">http://www.sqlite.org/c3ref/finalize.html</a>
    */
-  public synchronized int finalize(SafeStmtPtr safePtr, long ptr) throws SQLException {
+  public synchronized int finalize(SafeStatementPointer safePtr, long ptr) {
     try {
       return finalize(ptr);
     }
     finally {
-      stmts.remove(safePtr);
+      statements.remove(safePtr);
     }
   }
 
@@ -292,7 +245,7 @@ public abstract class DB implements Codes {
    * @see <a
    * href="http://www.sqlite.org/c3ref/prepare.html">http://www.sqlite.org/c3ref/prepare.html</a>
    */
-  protected abstract SafeStmtPtr prepare(String sql) throws SQLException;
+  protected abstract SafeStatementPointer prepare(String sql) throws SQLException;
 
   /**
    * Destroys a prepared statement.
@@ -302,7 +255,7 @@ public abstract class DB implements Codes {
    * @see <a
    * href="http://www.sqlite.org/c3ref/finalize.html">http://www.sqlite.org/c3ref/finalize.html</a>
    */
-  protected abstract int finalize(long stmt);
+  public abstract int finalize(long stmt);
 
   /**
    * Evaluates a statement.
@@ -766,206 +719,7 @@ public abstract class DB implements Codes {
    */
   public abstract boolean[][] column_metadata(long stmt);
 
-  /**
-   * Returns an array of column names in the result set of the SELECT statement.
-   *
-   * @param stmt Stmt object.
-   * @return String array of column names.
-   */
-  public final synchronized String[] column_names(long stmt) {
-    String[] names = new String[column_count(stmt)];
-    for (int i = 0; i < names.length; i++) {
-      names[i] = column_name(stmt, i);
-    }
-    return names;
-  }
-
   // COMPOUND FUNCTIONS ////////////////////////////////////////////
-
-  /**
-   * Bind values to prepared statements
-   *
-   * @param stmt Pointer to the statement.
-   * @param pos  Index of the SQL parameter to be set to NULL.
-   * @param v    Value to bind to the parameter.
-   * @return <a href="http://www.sqlite.org/c3ref/c_abort.html">Result Codes</a>
-   * @see <a
-   * href="http://www.sqlite.org/c3ref/bind_blob.html">http://www.sqlite.org/c3ref/bind_blob.html</a>
-   */
-  final synchronized int sqlbind(long stmt, int pos, Object v) throws SQLException {
-    pos++;
-    if (v == null) {
-      return bind_null(stmt, pos);
-    }
-    else if (v instanceof Integer) {
-      return bind_int(stmt, pos, (Integer)v);
-    }
-    else if (v instanceof Short) {
-      return bind_int(stmt, pos, ((Short)v).intValue());
-    }
-    else if (v instanceof Long) {
-      return bind_long(stmt, pos, (Long)v);
-    }
-    else if (v instanceof Float) {
-      return bind_double(stmt, pos, ((Float)v).doubleValue());
-    }
-    else if (v instanceof Double) {
-      return bind_double(stmt, pos, (Double)v);
-    }
-    else if (v instanceof String) {
-      return bind_text(stmt, pos, (String)v);
-    }
-    else if (v instanceof byte[]) {
-      return bind_blob(stmt, pos, (byte[])v);
-    }
-    else {
-      throw new SQLException("unexpected param type: " + v.getClass());
-    }
-  }
-
-  /**
-   * Submits a batch of commands to the database for execution.
-   *
-   * @param stmt  Pointer of Stmt object.
-   * @param count Number of SQL statements.
-   * @param vals  Array of parameter values.
-   * @return Array of the number of rows changed or inserted or deleted for each command if all
-   * commands execute successfully;
-   * @throws SQLException if the statement is not open or is being used elsewhere
-   * @see java.sql.Statement#executeBatch()
-   */
-  synchronized long[] executeBatch(long stmt, int count, Object[] vals, boolean collectChanges) throws SQLException {
-    if (count < 1) {
-      throw new SQLException("count (" + count + ") < 1");
-    }
-
-    final int params = bind_parameter_count(stmt);
-
-    int rc;
-    long[] changes = collectChanges ? new long[count] : ArrayUtilRt.EMPTY_LONG_ARRAY;
-
-    for (int i = 0; i < count; i++) {
-      reset(stmt);
-      for (int j = 0; j < params; j++) {
-        rc = sqlbind(stmt, j, vals[(i * params) + j]);
-        if (rc != SQLITE_OK) {
-          throwex(rc);
-        }
-      }
-
-      rc = step(stmt);
-      if (rc != SQLITE_DONE) {
-        reset(stmt);
-        if (rc == SQLITE_ROW) {
-          throw new BatchUpdateException(
-            "batch entry " + i + ": query returns results",
-            null,
-            0,
-            changes,
-            null);
-        }
-        throwex(rc);
-      }
-
-      if (collectChanges) {
-        changes[i] = changes();
-      }
-    }
-
-    reset(stmt);
-    return changes;
-  }
-
-  /**
-   * @param statement Stmt object.
-   * @param vals      Array of parameter values.
-   * @param sql Only for error reporting.
-   * @return True if a row of ResultSet is ready; false otherwise.
-   * @see <a href="http://www.sqlite.org/c_interface.html#sqlite_exec">http://www.sqlite.org/c_interface.html#sqlite_exec</a>
-   */
-  public final synchronized boolean execute(SqliteStatement statement, Object[] vals, String sql) throws SQLException {
-    int statusCode = statement.pointer.safeRunInt((db, ptr) -> execute(ptr, vals));
-    switch (statusCode & 0xFF) {
-      case SQLITE_DONE -> {
-        return false;
-      }
-      case SQLITE_ROW -> {
-        return true;
-      }
-      case SQLITE_BUSY, SQLITE_LOCKED, SQLITE_MISUSE, SQLITE_CONSTRAINT -> throw newSQLException(statusCode);
-      default -> {
-        statement.pointer.close();
-        throw newSQLException(statusCode, errmsg(), sql);
-      }
-    }
-  }
-
-  private synchronized int execute(long ptr, Object[] vals) throws SQLException {
-    if (vals != null) {
-      final int params = bind_parameter_count(ptr);
-      if (params > vals.length) {
-        throw new SQLException("assertion failure: param count (" + params + ") > value count (" + vals.length + ")");
-      }
-
-      for (int i = 0; i < params; i++) {
-        int rc = sqlbind(ptr, i, vals[i]);
-        if (rc != SQLITE_OK) {
-          throwex(rc);
-        }
-      }
-    }
-
-    int statusCode = step(ptr);
-    if ((statusCode & 0xFF) == SQLITE_DONE) {
-      reset(ptr);
-    }
-    return statusCode;
-  }
-
-  /**
-   * Executes the given SQL statement using the one-step query execution interface.
-   *
-   * @param sql SQL statement to be executed.
-   * @return True if a row of ResultSet is ready; false otherwise.
-   * @see <a
-   * href="http://www.sqlite.org/c3ref/exec.html">http://www.sqlite.org/c3ref/exec.html</a>
-   */
-  public final synchronized boolean execute(String sql) throws SQLException {
-    int statusCode = _exec(sql);
-    switch (statusCode) {
-      case SQLITE_OK, SQLITE_DONE -> {
-        return false;
-      }
-      case SQLITE_ROW -> {
-        return true;
-      }
-      default -> throw newSQLException(statusCode);
-    }
-  }
-
-  /**
-   * Execute an SQL INSERT, UPDATE or DELETE statement with the Stmt object and an array of
-   * parameter values of the SQL statement..
-   *
-   * @param stmt Stmt object.
-   * @param vals Array of parameter values.
-   * @return Number of database rows that were changed or inserted or deleted by the most recently
-   * completed SQL.
-   */
-  final synchronized long executeUpdate(SqliteStatement stmt, Object[] vals, boolean collectChanges)
-    throws SQLException {
-    try {
-      if (execute(stmt, vals, null)) {
-        throw new SQLException("query returns results");
-      }
-    }
-    finally {
-      if (!stmt.pointer.isClosed()) {
-        stmt.pointer.safeRunInt(DB::reset);
-      }
-    }
-    return collectChanges ? changes() : -1;
-  }
 
   abstract void set_commit_listener(boolean enabled);
 
@@ -1039,13 +793,7 @@ public abstract class DB implements Codes {
     throw new SQLException(errmsg());
   }
 
-  /**
-   * Throws SQLException with error code.
-   *
-   * @param errorCode Error code to be passed.
-   * @throws SQLException Formatted SQLException with error code.
-   */
-  @SuppressWarnings("SpellCheckingInspection")
+  @SuppressWarnings({"SpellCheckingInspection", "unused"})
   public final void throwex(int errorCode) throws SQLException {
     throw newSQLException(errorCode);
   }
@@ -1056,7 +804,7 @@ public abstract class DB implements Codes {
    * @param errorCode Error code to be passed.
    * @return SQLException with error code and message.
    */
-  private SQLiteException newSQLException(int errorCode) {
+  final SQLiteException newSQLException(int errorCode) {
     return newSQLException(errorCode, errmsg(), null);
   }
 

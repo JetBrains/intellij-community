@@ -21,7 +21,6 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.StorageLockContext;
 import com.intellij.vcs.log.VcsLogProperties;
@@ -223,22 +222,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       mutator.putCommit(commitId, detail, user -> myIndexStorage.users.getUserId(user));
     }
     catch (IOException | UncheckedIOException e) {
-      myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
-    }
-  }
-
-  private void flush() {
-    try {
-      if (myIndexStorage != null) {
-        myIndexStorage.users.flush();
-        myIndexStorage.paths.flush();
-        // todo actually, it is not required for PHM also, and should be not required (transaction is used to apply changes)
-        if (myIndexStorage.store instanceof PhmVcsLogStore) {
-          ((PhmVcsLogStore)myIndexStorage.store).force();
-        }
-      }
-    }
-    catch (StorageException e) {
       myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
     }
   }
@@ -520,39 +503,47 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
       LOG.info("Indexing " + (myFull ? "full repository" : myCommits.size() + " commits") + " in " + myRoot.getName());
 
+      IndexStorage indexStorage = Objects.requireNonNull(myIndexStorage);
+      final var mutator = indexStorage.store.createWriter();
+      boolean performCommit = false;
       try {
-        final var mutator = Objects.requireNonNull(myIndexStorage).store.createWriter();
-        boolean success = false;
-        try {
-          if (myFull) {
-            indexAll(indicator, mutator);
-          }
-          else {
-            IntStream commits = myCommits.intStream().filter(c -> {
-              if (isIndexed(c)) {
-                myOldCommits.incrementAndGet();
-                return false;
-              }
-              return true;
-            });
+        indexStorage.paths.setMutator(mutator);
+        if (myFull) {
+          indexAll(indicator, mutator);
+        }
+        else {
+          IntStream commits = myCommits.intStream().filter(c -> {
+            if (isIndexed(c)) {
+              myOldCommits.incrementAndGet();
+              return false;
+            }
+            return true;
+          });
 
-            indexOneByOne(commits, indicator, mutator);
-          }
-          success = true;
+          indexOneByOne(commits, indicator, mutator);
         }
-        catch (ProcessCanceledException e) {
-          scheduleReindex();
-          throw e;
-        }
-        catch (VcsException e) {
-          processException(e);
-          scheduleReindex();
-        }
-        finally {
-          mutator.close(success);
-        }
+        performCommit = true;
+      }
+      catch (ProcessCanceledException e) {
+        performCommit = true;
+        scheduleReindex();
+        throw e;
+      }
+      catch (VcsException e) {
+        processException(e);
+        scheduleReindex();
       }
       finally {
+        indexStorage.paths.setMutator(null);
+        try {
+          myIndexStorage.users.flush();
+          myIndexStorage.paths.flush();
+          mutator.close(performCommit);
+        }
+        catch (Exception e) {
+          myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
+        }
+
         myNumberOfTasks.get(myRoot).decrementAndGet();
 
         myIndexingTime.get(myRoot).updateAndGet(t -> t + (getCurrentTimeMillis() - myStartTime));
@@ -563,8 +554,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         }
 
         report();
-
-        flush();
       }
     }
 

@@ -128,8 +128,12 @@ internal class PhmVcsLogStore(
         force()
       }
 
-      override fun close(success: Boolean) {
+      override fun close(performCommit: Boolean) {
         force()
+      }
+
+      override fun putRename(parent: Int, child: Int, renames: IntArray) {
+        this@PhmVcsLogStore.putRename(parent, child, renames)
       }
     }
   }

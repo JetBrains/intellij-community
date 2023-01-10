@@ -68,7 +68,7 @@ public abstract class Collation {
     }
 
     f.conn = conn;
-    f.db = f.conn.getDatabase();
+    f.db = f.conn.db;
 
     if (f.db.create_collation(name, f) != Codes.SQLITE_OK) {
       throw new SQLException("error creating collation");
@@ -82,6 +82,6 @@ public abstract class Collation {
    * @param name The name of the collation.
    */
   public static void destroy(SqliteConnection conn, String name) throws SQLException {
-    conn.getDatabase().destroy_collation(name);
+    conn.db.destroy_collation(name);
   }
 }

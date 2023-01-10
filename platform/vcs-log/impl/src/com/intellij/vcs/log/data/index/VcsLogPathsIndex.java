@@ -64,6 +64,10 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     myPathsIndexer.setFatalErrorConsumer(e -> errorHandler.handleError(VcsLogErrorHandler.Source.Index, e));
   }
 
+  void setMutator(@Nullable VcsLogWriter mutator) {
+    myPathsIndexer.mutator = mutator;
+  }
+
   private static @NotNull PersistentEnumerator<LightFilePath> createPathsEnumerator(@NotNull Collection<VirtualFile> roots,
                                                                                     @NotNull StorageId storageId,
                                                                                     @Nullable StorageLockContext storageLockContext) throws IOException {
@@ -153,6 +157,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     private final @NotNull VcsLogStorage myStorage;
     private final @NotNull PersistentEnumerator<LightFilePath> myPathsEnumerator;
     private final VcsLogStore store;
+    @Nullable VcsLogWriter mutator;
     private @NotNull Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
 
     private PathIndexer(@NotNull VcsLogStorage storage,
@@ -188,7 +193,12 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
             int commit = myStorage.getCommitIndex(inputData.getId(), inputData.getRoot());
             int parent = myStorage.getCommitIndex(inputData.getParents().get(parentIndex), inputData.getRoot());
-            store.putRename(parent, commit, renames);
+            if (mutator == null) {
+              store.putRename(parent, commit, renames);
+            }
+            else {
+              mutator.putRename(parent, commit, renames);
+            }
           }
 
           for (Int2ObjectMap.Entry<Change.Type> entry : inputData.getModifiedPaths(parentIndex).int2ObjectEntrySet()) {

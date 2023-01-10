@@ -64,5 +64,7 @@ interface VcsLogWriter {
 
   fun flush()
 
-  fun close(success: Boolean)
+  fun close(performCommit: Boolean)
+
+  fun putRename(parent: Int, child: Int, renames: IntArray)
 }
