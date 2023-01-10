@@ -12,8 +12,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.content.Content
+import com.intellij.util.childScope
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
@@ -29,12 +31,14 @@ import java.awt.event.ActionEvent
 import javax.swing.*
 
 internal class GitLabToolWindowTabController(private val project: Project,
-                                             scope: CoroutineScope,
+                                             parentCs: CoroutineScope,
                                              tabVm: GitLabToolWindowTabViewModel,
                                              private val content: Content) {
 
+  private val cs = parentCs.childScope(Dispatchers.Main)
+
   init {
-    scope.launch {
+    cs.launch {
       tabVm.nestedViewModelState.collectScoped { scope, vm ->
         content.displayName = GitLabBundle.message("title.merge.requests")
 

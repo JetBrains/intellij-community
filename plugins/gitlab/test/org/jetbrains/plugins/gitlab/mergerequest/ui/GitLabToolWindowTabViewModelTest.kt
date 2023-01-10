@@ -54,7 +54,7 @@ internal class GitLabToolWindowTabViewModelTest {
       accountSelectionState.value = acc
       submitSelection()
     }
-    verify(connectionManager, times(1)).connect(scope, repo, acc)
+    verify(connectionManager, times(1)).openConnection(repo, acc)
 
     scope.cancel()
   }

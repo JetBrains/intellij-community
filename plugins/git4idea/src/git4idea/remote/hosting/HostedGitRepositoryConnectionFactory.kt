@@ -13,11 +13,14 @@ import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-interface HostedGitRepositoryConnectionManager<M : HostedGitRepositoryMapping, A : ServerAccount, C : HostedGitRepositoryConnection<M, A>> {
+interface HostedGitRepositoryConnectionFactory<M : HostedGitRepositoryMapping, A : ServerAccount, C : HostedGitRepositoryConnection<M, A>> {
   suspend fun connect(parentScope: CoroutineScope, repo: M, account: A): C
 }
 
-class ValidatingHostedGitRepositoryConnectionManager<
+/**
+ * Creates a self-validating connection which is automatically closed when repo, account ort credentials are missing
+ */
+class ValidatingHostedGitRepositoryConnectionFactory<
   M : HostedGitRepositoryMapping,
   A : ServerAccount,
   C : HostedGitRepositoryConnection<M, A>,
@@ -26,11 +29,11 @@ class ValidatingHostedGitRepositoryConnectionManager<
   private val repositoriesManager: HostedGitRepositoriesManager<M>,
   private val accountManager: AccountManager<A, Cred>,
   private val createConnection: suspend CoroutineScope.(M, A, StateFlow<Cred>) -> C)
-  : HostedGitRepositoryConnectionManager<M, A, C> {
+  : HostedGitRepositoryConnectionFactory<M, A, C> {
 
   override suspend fun connect(parentScope: CoroutineScope, repo: M, account: A): C {
     val loggingExceptionHandler = CoroutineExceptionHandler { _, e ->
-      logger<ValidatingHostedGitRepositoryConnectionManager<*, *, *, *>>().info(e.localizedMessage)
+      logger<ValidatingHostedGitRepositoryConnectionFactory<*, *, *, *>>().info(e.localizedMessage)
     }
 
     // not a supervisor so that if any of the listeners or loaders fail the scope is cancelled
