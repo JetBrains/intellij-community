@@ -828,37 +828,20 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
     @Override
     protected int getPopupHeightForRowCount(int maxRowCount) {
-      int minRowCount = Math.min(maxRowCount, comboBox.getItemCount());
-      int height = 0;
-      ListCellRenderer<Object> renderer = list.getCellRenderer();
+      int result = super.getPopupHeightForRowCount(maxRowCount);
 
-      for (int i = 0; i < minRowCount; i++) {
+      // Recalculate the minimum row height of a list cell, which is calculated in WideSelectionListUI.updateLayoutState
+      int rowCount = Math.min(maxRowCount, comboBox.getItemCount());
+      ListCellRenderer<Object> renderer = list.getCellRenderer();
+      for (int i = 0; i < rowCount; i++) {
         Object value = list.getModel().getElementAt(i);
         Component c = renderer.getListCellRendererComponent(list, value, i, false, false);
-
-        // The whole method is copied from the parent class except for the following line
-        // that adjusts the minimum row height of a list cell.
-        // See WideSelectionListUI.updateLayoutState
-        height += UIUtil.updateListRowHeight(c.getPreferredSize()).height;
+        Dimension preferredSize = c.getPreferredSize();
+        result -= preferredSize.height;
+        result += UIUtil.updateListRowHeight(preferredSize).height;
       }
 
-      if (height == 0) {
-        height = comboBox.getHeight();
-      }
-
-      Border border = scroller.getViewportBorder();
-      if (border != null) {
-        Insets insets = border.getBorderInsets(null);
-        height += insets.top + insets.bottom;
-      }
-
-      border = scroller.getBorder();
-      if (border != null) {
-        Insets insets = border.getBorderInsets(null);
-        height += insets.top + insets.bottom;
-      }
-
-      return height;
+      return result;
     }
 
     private class MyDelegateRenderer implements ListCellRenderer {
