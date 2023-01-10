@@ -15,6 +15,21 @@ public class ExtensionPointReference {
 
   ProjectExtensionPointName<String> INVALID_PROJECT_EPN_CTOR = new ProjectExtensionPointName("<error descr="Cannot resolve extension point 'INVALID_VALUE'">INVALID_VALUE</error>");
 
+  // -----------
+
   KeyedExtensionCollector<String,String> INVALID_KEC_CTOR = new KeyedExtensionCollector("<error descr="Cannot resolve extension point 'INVALID_VALUE'">INVALID_VALUE</error>");
 
+  public class KeyedExtensionCollectorSubClass extends KeyedExtensionCollector {
+
+    public KeyedExtensionCollectorSubClass() {
+      super("plugin.id.ep.name");
+    }
+  }
+
+  public class KeyedExtensionCollectorSubClassInvalid extends KeyedExtensionCollector {
+
+    public KeyedExtensionCollectorSubClassInvalid() {
+      super("<error descr="Cannot resolve extension point 'INVALID_VALUE'">INVALID_VALUE</error>");
+    }
+  }
 }
