@@ -152,7 +152,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
   }
 
   /**
-   * @param bindId     identifier of binding variable used by inspection; the corresponding variable is expected to be int
+   * @param bindId     identifier of binding variable used by inspection; the corresponding variable is expected to be int or double
    * @param splitLabel label to display around the control
    * @param minValue   minimal allowed value of the variable
    * @param maxValue   maximal allowed value of the variable

@@ -14,14 +14,13 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.ui.HyperlinkLabel
-import com.intellij.ui.SimpleColoredText
-import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.layout.selected
 import com.intellij.util.applyIf
 import javax.swing.*
@@ -181,17 +180,29 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         }
 
         is OptNumber -> {
-          intTextField(component.minValue..component.maxValue)
-            .applyToComponent {
-              columns = max(component.maxValue.toString().length, component.minValue.toString().length)
-            }
-            .text(tool.getOption(component.bindId).toString())
-            .onChanged {
-              try {
-                val number = it.text.toInt()
-                tool.setOption(component.bindId, number)
-              } catch (_: NumberFormatException) {}
-            }
+          val value = tool.getOption(component.bindId)
+          if (value is Double) {
+            doubleTextField(component.minValue.toDouble(), component.maxValue.toDouble())
+              .text(value.toString())
+              .onChanged {
+                try {
+                  val number = it.text.toDouble()
+                  tool.setOption(component.bindId, number)
+                } catch (_: NumberFormatException) {}
+              }
+          } else {
+            intTextField(component.minValue..component.maxValue)
+              .applyToComponent {
+                columns = max(component.maxValue.toString().length, component.minValue.toString().length)
+              }
+              .text(value.toString())
+              .onChanged {
+                try {
+                  val number = it.text.toInt()
+                  tool.setOption(component.bindId, number)
+                } catch (_: NumberFormatException) {}
+              }
+          }
         }
 
         is OptDropdown -> {
@@ -332,5 +343,19 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         text = value?.label?.label()
       }
     }
+  }
+
+  private fun Row.doubleTextField(min: Double, max: Double): Cell<JBTextField> {
+    val result = cell(JBTextField())
+      .validationOnInput {
+        val value = it.text.toDoubleOrNull()
+        when {
+          value == null -> error(UIBundle.message("please.enter.a.number"))
+          value < min || value > max -> error(UIBundle.message("please.enter.a.number.from.0.to.1", min, max))
+          else -> null
+        }
+      }
+    result.columns(10)
+    return result
   }
 }

@@ -14,12 +14,14 @@ import static org.junit.jupiter.api.Assertions.*;
 public class OptControlTest {
   private static class MyInspection extends LocalInspectionTool {
     public int x = 2;
+    public double d = 3.0;
     @SuppressWarnings("unused") public boolean y = true;
 
     @Override
     public @NotNull OptPane getOptionsPane() {
       return pane(
         number("x", "X value", 0, 10),
+        number("d", "D value", -1, 4),
         checkbox("y", "Y value")
       );
     }
@@ -79,9 +81,12 @@ public class OptControlTest {
     MyInspection inspection = new MyInspection();
     OptPane pane = inspection.getOptionsPane();
     assertEquals(2, pane.findControl("x").getValue(inspection));
+    assertEquals(3.0, pane.findControl("d").getValue(inspection));
     assertEquals(true, pane.findControl("y").getValue(inspection));
     pane.findControl("x").setValue(inspection, 5);
     assertEquals(5, inspection.x);
+    pane.findControl("d").setValue(inspection, 2.5);
+    assertEquals(2.5, inspection.d);
   }
   
   @Test
