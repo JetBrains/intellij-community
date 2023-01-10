@@ -407,6 +407,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return null;
   }
 
+  public int getFragmentCount() {
+    synchronized (myFragments) {
+      return myFragments.size();
+    }
+  }
+
   @NotNull
   public final Dimension computePreferredSize(final boolean mainTextOnly) {
     synchronized (myFragments) {

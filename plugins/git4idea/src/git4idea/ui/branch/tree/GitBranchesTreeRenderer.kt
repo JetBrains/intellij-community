@@ -15,6 +15,7 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.ui.tree.ui.Control
 import com.intellij.ui.tree.ui.DefaultControl
+import com.intellij.ui.util.getAvailTextLength
 import com.intellij.util.PlatformIcons
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
@@ -30,6 +31,8 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchPopupActions
+import git4idea.ui.branch.GitBranchesClippedNamesCache
+import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchUnderRepository
 import icons.DvcsImplIcons
 import org.jetbrains.annotations.Nls
 import java.awt.Component
@@ -49,6 +52,20 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
 
   abstract fun hasRightArrow(nodeUserObject: Any?): Boolean
 
+  private val clippedBranchNamesCache = project.service<GitBranchesClippedNamesCache>()
+
+  fun getBranchNameClipper(textComponent: SimpleColoredComponent, treeNode: Any?) =
+    SimpleColoredComponent.FragmentTextClipper { _, _, text, availTextWidth ->
+      with(clippedBranchNamesCache) {
+        when {
+          textComponent.fragmentCount > 1 -> text
+          treeNode is BranchUnderRepository -> getOrCache(treeNode.branch.name, text, textComponent.getAvailTextLength(text, availTextWidth))
+          treeNode is GitBranch -> getOrCache(treeNode.name, text, textComponent.getAvailTextLength(text, availTextWidth))
+          else -> text
+        }
+      }
+    }
+
   fun getLeftTreeIconRenderer(path: TreePath): Control? {
     val lastComponent = path.lastPathComponent
     val defaultIcon = getNodeIcon(lastComponent, false) ?: return null
@@ -61,7 +78,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
     val value = treeNode ?: return null
     return when (value) {
       is GitBranchesTreeModel.BranchesPrefixGroup -> PlatformIcons.FOLDER_ICON
-      is GitBranchesTreeModel.BranchUnderRepository -> getBranchIcon(value.branch, listOf(value.repository), isSelected)
+      is BranchUnderRepository -> getBranchIcon(value.branch, listOf(value.repository), isSelected)
       is GitBranch -> getBranchIcon(value, repositories, isSelected)
       else -> null
     }
@@ -233,7 +250,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
       foreground = JBUI.CurrentTheme.Tree.foreground(selected, true)
 
       clear()
-      append(getText(userObject, treeModel, repositories).orEmpty())
+      appendWithClipping(getText(userObject, treeModel, repositories).orEmpty(), getBranchNameClipper(this, userObject))
     }
 
     val (inOutIcon, inOutTooltip) = getIncomingOutgoingIconWithTooltip(userObject)
@@ -290,7 +307,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
             GitBranchType.REMOTE -> GitBundle.message("group.Git.Remote.Branch.title")
           }
         }
-        is GitBranchesTreeModel.BranchUnderRepository -> getText(value.branch, treeModel, repositories)
+        is BranchUnderRepository -> getText(value.branch, treeModel, repositories)
         is GitBranch -> if (treeModel.isPrefixGrouping) value.name.split('/').last() else value.name
         is PopupFactoryImpl.ActionItem -> value.text
         else -> null
