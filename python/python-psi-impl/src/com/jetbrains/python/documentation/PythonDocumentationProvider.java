@@ -80,7 +80,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
 
       final String docStringSummary = getDocStringSummary(function);
       if (docStringSummary != null) {
-        result.appendRaw("\n").appendRaw(escaped(docStringSummary));
+        result.appendRaw("\n").append(docStringSummary);
       }
 
       return result.toString();
@@ -95,13 +95,13 @@ public class PythonDocumentationProvider implements DocumentationProvider {
 
       final String docStringSummary = getDocStringSummary(cls);
       if (docStringSummary != null) {
-        result.appendRaw("\n").appendRaw(escaped(docStringSummary));
+        result.appendRaw("\n").append(docStringSummary);
       }
       else {
         Optional
           .ofNullable(cls.findInitOrNew(false, context))
           .map(PythonDocumentationProvider::getDocStringSummary)
-          .ifPresent((@NlsSafe var summary) -> result.appendRaw("\n").appendRaw(escaped(summary)));
+          .ifPresent((@NlsSafe var summary) -> result.appendRaw("\n").append(summary));
       }
 
       return result.toString();
@@ -133,7 +133,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   @NotNull
   static HtmlBuilder describeTarget(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
     final HtmlBuilder result = new HtmlBuilder();
-    result.appendRaw(StringUtil.escapeXmlEntities(StringUtil.notNullize(target.getName())));
+    result.append(StringUtil.notNullize(target.getName()));
     result.appendRaw(": ");
     describeTypeWithLinks(context.getType(target), target, context, target, result);
     // Can return not physical elements such as foo()[0] for assignments like x, _ = foo()
@@ -143,23 +143,23 @@ public class PythonDocumentationProvider implements DocumentationProvider {
       final String initializerText = value.getText();
       final int index = initializerText.indexOf("\n");
       if (index < 0) {
-        result.appendRaw(StringUtil.escapeXmlEntities(initializerText));
+        result.append(initializerText);
       }
       else {
-        result.appendRaw(StringUtil.escapeXmlEntities(initializerText.substring(0, index))).appendRaw("...");
+        result.append(initializerText.substring(0, index)).appendRaw("...");
       }
     }
     return result;
   }
 
   @NotNull
-  static HtmlBuilder describeParameter(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
+  static HtmlChunk describeParameter(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
     final HtmlBuilder result = new HtmlBuilder();
     result
-      .appendRaw(StringUtil.escapeXmlEntities(StringUtil.notNullize(parameter.getName())))
+      .append(StringUtil.notNullize(parameter.getName()))
       .appendRaw(": ");
     describeTypeWithLinks(context.getType(parameter), parameter, context, parameter, result);
-    return result;
+    return result.toFragment();
   }
 
   @NlsSafe
@@ -327,7 +327,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     if (typeOwner instanceof PyTargetExpression && type == null) {
       PyAssignmentStatement assignment = as(typeOwner.getParent(), PyAssignmentStatement.class);
       if (assignment != null && PyTypingTypeProvider.isExplicitTypeAlias(assignment, context)) {
-        body.appendRaw("TypeAlias");
+        body.append("TypeAlias");
         return;
       }
     }
@@ -351,7 +351,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   }
 
   @NotNull
-  static HtmlBuilder describeDecorators(@NotNull PyDecoratable decoratable,
+  static HtmlChunk describeDecorators(@NotNull PyDecoratable decoratable,
                                         @NotNull Function<String, String> escapedCalleeMapper,
                                         @NotNull Function<@NotNull String, @NotNull String> escaper,
                                         @NotNull @NlsSafe String separator,
@@ -375,11 +375,11 @@ public class PythonDocumentationProvider implements DocumentationProvider {
       result.appendRaw(suffix);
     }
 
-    return result;
+    return result.toFragment();
   }
 
   @NotNull
-  static HtmlBuilder describeClass(@NotNull PyClass cls,
+  static HtmlChunk describeClass(@NotNull PyClass cls,
                                    @NotNull Function<? super String, String> escapedNameMapper,
                                    @NotNull Function<? super @NotNull String, @NlsSafe @NotNull String> escaper,
                                    boolean linkAncestors,
@@ -409,7 +409,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
       result.appendRaw(escaper.apply(")"));
     }
 
-    return result;
+    return result.toFragment();
   }
 
   @NlsSafe
@@ -471,7 +471,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   }
 
   @NotNull
-  private static HtmlBuilder describeDecorator(@NotNull PyDecorator decorator,
+  private static HtmlChunk describeDecorator(@NotNull PyDecorator decorator,
                                                @NotNull Function<String, @NlsSafe String> escapedCalleeMapper,
                                                @NotNull Function<@NotNull String, @NotNull @NlsSafe String> escaper) {
     final HtmlBuilder result = new HtmlBuilder();
@@ -483,7 +483,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
       result.appendRaw(escaper.apply(PyUtil.getReadableRepr(argumentList, false)));
     }
 
-    return result;
+    return result.toFragment();
   }
 
   // provides ctrl+Q doc
