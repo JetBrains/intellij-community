@@ -243,6 +243,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     throws ExecutionException {
     final ConsoleView consoleView = createConsoleBuilder(project).getConsole();
     consoleView.addMessageFilter(createUrlFilter(processHandler));
+    consoleView.addMessageFilter(new PythonImportErrorFilter(project));
 
     addTracebackFilter(project, consoleView, processHandler);
 
