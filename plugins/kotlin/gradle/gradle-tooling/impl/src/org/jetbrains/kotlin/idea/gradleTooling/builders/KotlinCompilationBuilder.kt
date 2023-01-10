@@ -58,7 +58,7 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
         return KotlinCompilationImpl(
             name = compilationName,
             allSourceSets = allSourceSets,
-            declaredSourceSets = if (platform == KotlinPlatform.ANDROID) allSourceSets else kotlinSourceSets,
+            declaredSourceSets = kotlinSourceSets,
             dependencies = dependencies.map { importingContext.dependencyMapper.getId(it) }.distinct().toTypedArray(),
             output = output,
             arguments = KotlinCompilationArgumentsImpl(emptyArray(), emptyArray()),
