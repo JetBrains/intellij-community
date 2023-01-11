@@ -55,7 +55,7 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
 
   private boolean processConfigFileChange(PsiFile psiFile) {
     String languageId = psiFile == null ? null : psiFile.getLanguage().getID();
-    if ("properties".equals(languageId)) {
+    if ("Properties".equals(languageId)) {
       incModificationCount();
       return true;
     }
