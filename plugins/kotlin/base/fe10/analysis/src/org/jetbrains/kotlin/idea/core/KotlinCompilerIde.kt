@@ -113,11 +113,7 @@ class KotlinCompilerIde(
         // The binding context needs to be built from all files with reachable inline functions, as such files may contain classes whose
         // descriptors must be available in the binding context for the IR backend. Note that the full bytecode is only generated for
         // `file` because of filtering in `generateClassFilter`, regardless of classes defined in other files.
-        val toProcess = analyzeInlinedFunctions(
-            resolutionFacade,
-            file,
-            configuration.getBoolean(CommonConfigurationKeys.DISABLE_INLINE)
-        ).second
+        val toProcess = analyzeInlinedFunctions(resolutionFacade, file, configuration.getBoolean(CommonConfigurationKeys.DISABLE_INLINE))
         val bindingContext = resolutionFacade.analyzeWithAllCompilerChecks(toProcess).bindingContext
 
         val generateClassFilter = object : GenerationState.GenerateClassFilter() {

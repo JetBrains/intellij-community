@@ -7,40 +7,27 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.CompositeBindingContext
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedSimpleFunctionDescriptor
-import org.jetbrains.kotlin.utils.addIfNotNull
-import java.util.ArrayList
-import java.util.HashSet
-import java.util.LinkedHashSet
 
+/**
+ * Analyzes all inline function calls in [file] and returns the list of files (including [file]) that contain all reachable inline
+ * functions.
+ */
 fun analyzeInlinedFunctions(
     resolutionFacadeForFile: ResolutionFacade,
     file: KtFile,
     analyzeOnlyReifiedInlineFunctions: Boolean,
-    bindingContext: BindingContext? = null
-): Pair<BindingContext, List<KtFile>> {
+): List<KtFile> {
     val analyzedElements = HashSet<KtElement>()
-    val context = analyzeElementWithInline(
+    analyzeElementWithInline(
         resolutionFacadeForFile,
         file,
         analyzedElements,
-        !analyzeOnlyReifiedInlineFunctions, bindingContext
+        !analyzeOnlyReifiedInlineFunctions,
     )
-
-    // We process another files just to annotate anonymous classes within their inline functions
-    // Bytecode not produced for them cause of filtering via generateClassFilter
-    val toProcess = LinkedHashSet<KtFile>()
-    toProcess.add(file)
-
-    for (collectedElement in analyzedElements) {
-        val containingFile = collectedElement.containingKtFile
-        toProcess.add(containingFile)
-    }
-
-    return Pair<BindingContext, List<KtFile>>(context, ArrayList(toProcess))
+    return analyzedElements.mapTo(mutableSetOf(file)) { it.containingKtFile }.toList()
 }
 
 private fun analyzeElementWithInline(
@@ -48,23 +35,16 @@ private fun analyzeElementWithInline(
     element: KtElement,
     analyzedElements: MutableSet<KtElement>,
     analyzeInlineFunctions: Boolean,
-    fullResolveContext: BindingContext? = null
-): BindingContext {
+) {
     val project = element.project
     val declarationsWithBody = HashSet<KtDeclarationWithBody>()
-
-    val innerContexts = ArrayList<BindingContext>()
-    innerContexts.addIfNotNull(fullResolveContext)
 
     element.accept(object : KtTreeVisitorVoid() {
         override fun visitExpression(expression: KtExpression) {
             super.visitExpression(expression)
 
             val bindingContext = resolutionFacade.analyze(expression)
-            innerContexts.add(bindingContext)
-
             val call = bindingContext.get(BindingContext.CALL, expression) ?: return
-
             val resolvedCall = bindingContext.get(BindingContext.RESOLVED_CALL, call)
             checkResolveCall(resolvedCall)
         }
@@ -73,7 +53,6 @@ private fun analyzeElementWithInline(
             super.visitDestructuringDeclaration(destructuringDeclaration)
 
             val bindingContext = resolutionFacade.analyze(destructuringDeclaration)
-            innerContexts.add(bindingContext)
 
             for (entry in destructuringDeclaration.entries) {
                 val resolvedCall = bindingContext.get(BindingContext.COMPONENT_RESOLVED_CALL, entry)
@@ -85,7 +64,6 @@ private fun analyzeElementWithInline(
             super.visitForExpression(expression)
 
             val bindingContext = resolutionFacade.analyze(expression)
-            innerContexts.add(bindingContext)
 
             checkResolveCall(bindingContext.get(BindingContext.LOOP_RANGE_ITERATOR_RESOLVED_CALL, expression.loopRange))
             checkResolveCall(bindingContext.get(BindingContext.LOOP_RANGE_HAS_NEXT_RESOLVED_CALL, expression.loopRange))
@@ -126,21 +104,17 @@ private fun analyzeElementWithInline(
         for (inlineFunction in declarationsWithBody) {
             val body = inlineFunction.bodyExpression
             if (body != null) {
-                innerContexts.add(
-                    analyzeElementWithInline(
-                        resolutionFacade,
-                        inlineFunction,
-                        analyzedElements,
-                        analyzeInlineFunctions
-                    )
+                analyzeElementWithInline(
+                    resolutionFacade,
+                    inlineFunction,
+                    analyzedElements,
+                    analyzeInlineFunctions
                 )
             }
         }
 
         analyzedElements.addAll(declarationsWithBody)
     }
-
-    return CompositeBindingContext.create(innerContexts)
 }
 
 private fun hasReifiedTypeParameters(descriptor: CallableDescriptor): Boolean {
