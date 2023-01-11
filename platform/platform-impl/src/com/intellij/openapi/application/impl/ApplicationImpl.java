@@ -1433,7 +1433,11 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       runnable.run();
       return;
     }
+    runWithDisabledImplicitRead(runnable);
+  }
 
+  private void runWithDisabledImplicitRead(@NotNull Runnable runnable) {
+    // This method is used to allow easily find stack traces which violate disabled ImplicitRead
     boolean oldVal = myLock.isImplicitReadAllowed();
     try {
       myLock.setImplicitReadAllowance(false);
