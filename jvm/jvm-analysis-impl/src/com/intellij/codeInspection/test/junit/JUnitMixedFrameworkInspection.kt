@@ -8,7 +8,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.RenameQuickFix
+import com.intellij.codeInspection.fix.RenameQuickFix
 import com.intellij.lang.jvm.DefaultJvmElementVisitor
 import com.intellij.lang.jvm.JvmAnnotation
 import com.intellij.lang.jvm.JvmElementVisitor
