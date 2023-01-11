@@ -18,11 +18,12 @@ abstract class JvmTestDiffProvider : TestDiffProvider {
     var enclosingMethod: UMethod? = null
     val lineParser = ExceptionLineParserFactory.getInstance().create(ExceptionInfoCache(project, GlobalSearchScope.allScope(project)))
     stackTrace.lineSequence().forEach { line ->
-      lineParser.execute(line, line.length) ?: return@findExpected null
+      lineParser.execute(line, line.length) ?: return@forEach
+      if (isTestFramework(lineParser.uClass)) return@forEach
       val file = lineParser.file ?: return@findExpected null
       val diffProvider = TestDiffProvider.TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION.forLanguage(file.language).asSafely<JvmTestDiffProvider>()
       if (diffProvider == null) return@findExpected null
-      if (diffProvider.isCompiled(file)) return@forEach
+      if (diffProvider.isCompiled(file)) return@findExpected null
       val virtualFile = file.virtualFile ?: return@findExpected null
       val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: return@findExpected null
       val lineNumber = lineParser.info.lineNumber
@@ -36,6 +37,10 @@ abstract class JvmTestDiffProvider : TestDiffProvider {
       if (expectedParam == null) return expected
     }
     return null
+  }
+
+  private fun isTestFramework(clazz: UClass?): Boolean {
+    return clazz?.qualifiedName?.startsWith("org.junit") == true || clazz?.qualifiedName?.startsWith("org.testng") == true
   }
 
   abstract fun isCompiled(file: PsiFile): Boolean
