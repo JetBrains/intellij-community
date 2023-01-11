@@ -44,7 +44,6 @@ MODULES
         Gradle: io.ktor:ktor-events:commonMain:2.2.1 (TEST)
         Gradle: io.ktor:ktor-websocket-serialization:commonMain:2.2.1 (TEST)
         Gradle: io.ktor:ktor-http:commonMain:2.2.1 (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:1.8.0 (TEST)
         Gradle: io.ktor:ktor-utils:commonMain:2.2.1 (TEST)
         Gradle: io.ktor:ktor-serialization:commonMain:2.2.1 (TEST)
         Gradle: io.ktor:ktor-io:commonMain:2.2.1 (TEST)
