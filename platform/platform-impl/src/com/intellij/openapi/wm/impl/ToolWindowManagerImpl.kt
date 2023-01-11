@@ -1290,6 +1290,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         if (item.old.weight != item.new.weight) {
           getToolWindowPane(item.entry.toolWindow).setWeight(item.entry.toolWindow, item.new.weight)
         }
+        if (item.old.sideWeight != item.new.sideWeight) {
+          getToolWindowPane(item.entry.toolWindow).setSideWeight(item.entry.toolWindow, item.new.sideWeight)
+        }
       }
     }
 
