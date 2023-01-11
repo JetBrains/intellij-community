@@ -34,7 +34,7 @@ fun @SystemIndependent String.getParentNioPath(): Path? {
 
 fun @SystemIndependent String.getResolvedPath(relativePath: @SystemIndependent String): @SystemIndependent String {
   val path = "$this/$relativePath"
-  return FileUtil.toCanonicalPath(path) // resolve simple symlinks . and ..
+  return FileUtil.toCanonicalPath(path, '/') // resolve simple symlinks . and ..
 }
 
 fun @SystemIndependent String.getResolvedNioPath(relativePath: @SystemIndependent String): Path {
