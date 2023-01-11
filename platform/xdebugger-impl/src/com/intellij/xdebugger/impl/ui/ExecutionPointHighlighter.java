@@ -150,7 +150,7 @@ public class ExecutionPointHighlighter {
           myEditor = ((TextEditor)editor).getEditor();
         }
       }
-      if (myEditor == null) {
+      else {
         myEditor = XDebuggerUtilImpl.createEditor(myOpenFileDescriptor);
       }
     }
