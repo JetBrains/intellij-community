@@ -121,8 +121,10 @@ import java.util.Collection;
  * @see ShowSettingsUtil
  */
 public interface Configurable extends UnnamedConfigurable {
-  ExtensionPointName<ConfigurableEP<Configurable>> APPLICATION_CONFIGURABLE = new ExtensionPointName<>("com.intellij.applicationConfigurable");
-  ProjectExtensionPointName<ConfigurableEP<Configurable>> PROJECT_CONFIGURABLE = new ProjectExtensionPointName<>("com.intellij.projectConfigurable");
+  ExtensionPointName<ConfigurableEP<Configurable>> APPLICATION_CONFIGURABLE =
+    new ExtensionPointName<>("com.intellij.applicationConfigurable");
+  ProjectExtensionPointName<ConfigurableEP<Configurable>> PROJECT_CONFIGURABLE =
+    new ProjectExtensionPointName<>("com.intellij.projectConfigurable");
 
   /**
    * Returns the visible name of the configurable component.
@@ -189,7 +191,7 @@ public interface Configurable extends UnnamedConfigurable {
   interface VariableProjectAppLevel {
     /**
      * @return True if current settings apply to the current project (enable "For current project" indicator), false for application-level
-     *         (IDE) settings.
+     * (IDE) settings.
      */
     boolean isProjectLevel();
   }
@@ -197,13 +199,12 @@ public interface Configurable extends UnnamedConfigurable {
   /**
    * The interface is used for configurable that depends on some dynamic extension points.
    * If a configurable implements the interface by default the configurable will re-created after adding / removing extensions for the EP.
-   *
+   * <p>
    * Examples: postfix template configurable. If we have added a plugin with new postfix templates we have to re-create the configurable
    * (but only if the content of the configurable was loaded)
    *
    * @apiNote if the configurable is not marked as dynamic=true it must not initialize EP-depend resources in the constructor.
    * This interface also can be used with {@link ConfigurableProvider}.
-   *
    */
   interface WithEpDependencies {
     /**
@@ -256,52 +257,52 @@ public interface Configurable extends UnnamedConfigurable {
    * @deprecated Prefer using {@link #isFieldModified(JTextField, String)}
    */
   @Deprecated(forRemoval = true)
-  default boolean isModified(@NotNull JTextField textField, @NotNull String value) {
-    return isFieldModified(textField, value);
+  default boolean isModified(@NotNull JTextField textField, @NotNull String initialValue) {
+    return isFieldModified(textField, initialValue);
   }
 
   /**
    * @deprecated Prefer using {@link #isFieldModified(JTextField, int, UINumericRange)}
    */
   @Deprecated(forRemoval = true)
-  default boolean isModified(@NotNull JTextField textField, int value, @NotNull UINumericRange range) {
-    return isFieldModified(textField, value, range);
+  default boolean isModified(@NotNull JTextField textField, int initialValue, @NotNull UINumericRange range) {
+    return isFieldModified(textField, initialValue, range);
   }
 
   /**
    * @deprecated Prefer using {@link #isCheckboxModified(JCheckBox, boolean)}
    */
   @Deprecated(forRemoval = true)
-  default boolean isModified(@NotNull JToggleButton toggleButton, boolean value) {
-    return toggleButton.isSelected() != value;
+  default boolean isModified(@NotNull JToggleButton toggleButton, boolean initialValue) {
+    return toggleButton.isSelected() != initialValue;
   }
 
 
-  static boolean isFieldModified(@NotNull JTextField textField, @NotNull String value) {
-    return !StringUtil.equals(textField.getText().trim(), value);
+  static boolean isFieldModified(@NotNull JTextField textField, @NotNull String initialValue) {
+    return !StringUtil.equals(textField.getText().trim(), initialValue);
   }
 
-  static boolean isFieldModified(@NotNull JTextField textField, int value, @NotNull UINumericRange range) {
+  static boolean isFieldModified(@NotNull JTextField textField, int initialValue, @NotNull UINumericRange range) {
     try {
       int currentValue = Integer.parseInt(textField.getText().trim());
-      return range.fit(currentValue) == currentValue && currentValue != value;
+      return range.fit(currentValue) == currentValue && currentValue != initialValue;
     }
     catch (NumberFormatException e) {
       return false;
     }
   }
 
-  static boolean isFieldModified(@NotNull JTextField textField, int value) {
+  static boolean isFieldModified(@NotNull JTextField textField, int initialValue) {
     try {
       int fieldValue = Integer.parseInt(textField.getText().trim());
-      return fieldValue != value;
+      return fieldValue != initialValue;
     }
     catch (NumberFormatException e) {
       return false;
     }
   }
 
-  static boolean isCheckboxModified(@NotNull JCheckBox checkbox, boolean value) {
-    return checkbox.isSelected() != value;
+  static boolean isCheckboxModified(@NotNull JCheckBox checkbox, boolean initialValue) {
+    return checkbox.isSelected() != initialValue;
   }
 }
