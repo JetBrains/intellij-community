@@ -1480,6 +1480,11 @@ public abstract class K2IrKotlinSteppingTestGenerated extends AbstractK2IrKotlin
             runTest("../testData/stepping/custom/smartStepWithInlineClass.kt");
         }
 
+        @TestMetadata("stepIntoAnonymousObjectInsideLambdaWithDestructuring.kt")
+        public void testStepIntoAnonymousObjectInsideLambdaWithDestructuring() throws Exception {
+            runTest("../testData/stepping/custom/stepIntoAnonymousObjectInsideLambdaWithDestructuring.kt");
+        }
+
         @TestMetadata("stepIntoLibWithSources.kt")
         public void testStepIntoLibWithSources() throws Exception {
             runTest("../testData/stepping/custom/stepIntoLibWithSources.kt");

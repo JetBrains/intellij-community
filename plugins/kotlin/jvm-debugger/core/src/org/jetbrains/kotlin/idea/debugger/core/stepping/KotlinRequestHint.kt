@@ -25,8 +25,11 @@ import org.jetbrains.kotlin.idea.debugger.core.isOnSuspensionPoint
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.resolve.calls.util.isSingleUnderscore
 import org.jetbrains.org.objectweb.asm.Type
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parents
 
 open class KotlinRequestHint(
     stepThread: ThreadReferenceProxyImpl,
@@ -235,7 +238,7 @@ private fun shouldStepOverParameterDestructuring(context: SuspendContextImpl, fr
 }
 
 private fun collectDestructuredParametersNames(sourcePosition: SourcePosition): List<String> {
-    val lambda = sourcePosition.elementAt?.parentOfType<KtFunctionLiteral>() ?: return emptyList()
+    val lambda = sourcePosition.elementAt?.getFunctionLiteralParent() ?: return emptyList()
     val destructuredParametersNames = mutableListOf<String>()
     for (parameter in lambda.valueParameters) {
         val destructuringDeclaration = parameter.destructuringDeclaration ?: continue
@@ -247,4 +250,16 @@ private fun collectDestructuredParametersNames(sourcePosition: SourcePosition): 
     }
 
     return destructuredParametersNames
+}
+
+private fun PsiElement.getFunctionLiteralParent(): KtFunctionLiteral? {
+    for (parent in parents(withSelf = false)) {
+        if (parent is KtFunctionLiteral) {
+            return parent
+        } else if (parent is KtFunction) {
+            return null
+        }
+    }
+
+    return null
 }
