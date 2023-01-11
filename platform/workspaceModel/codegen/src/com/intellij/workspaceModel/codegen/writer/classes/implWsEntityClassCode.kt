@@ -30,7 +30,7 @@ ${getLinksOfConnectionIds(this)}
     }"""
   }
         
-    ${allFields.filter { it.name !in listOf("entitySource", "persistentId") }.lines("    ") { implWsEntityFieldCode }.trimEnd()}
+    ${allFields.filter { it.name !in listOf("entitySource", "symbolicId") }.lines("    ") { implWsEntityFieldCode }.trimEnd()}
     
     override fun connectionIdList(): List<${ConnectionId::class.fqn}> {
         return connections

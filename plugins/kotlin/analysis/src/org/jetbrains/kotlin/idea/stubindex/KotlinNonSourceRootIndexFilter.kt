@@ -12,7 +12,7 @@ import com.intellij.util.indexing.IndexId
 import org.jetbrains.kotlin.idea.KotlinFileType
 
 class KotlinNonSourceRootIndexFilter: GlobalIndexFilter {
-    private val enabled = !System.getProperty("kotlin.index.non.source.roots", "true").toBoolean()
+    private val enabled = !System.getProperty("kotlin.index.non.source.roots", "false").toBoolean()
 
     override fun isExcludedFromIndex(virtualFile: VirtualFile, indexId: IndexId<*, *>): Boolean = false
 

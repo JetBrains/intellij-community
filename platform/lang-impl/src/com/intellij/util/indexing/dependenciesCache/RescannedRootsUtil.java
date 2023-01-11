@@ -18,7 +18,7 @@ import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.util.indexing.roots.builders.SyntheticLibraryIteratorBuilder;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryEntityUtils;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import org.jetbrains.annotations.ApiStatus;

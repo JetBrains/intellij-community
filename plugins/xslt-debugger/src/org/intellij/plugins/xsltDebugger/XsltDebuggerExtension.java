@@ -255,7 +255,6 @@ public final class XsltDebuggerExtension extends XsltRunnerExtension {
     if (!Files.isDirectory(xsltDebuggerClassesRoot)) {
       Path rtDir = xsltDebuggerClassesRoot.getParent().resolve("rt");
       addPathToClasspath(parameters, rtDir.resolve("xalan-2.7.2.jar"));
-      addPathToClasspath(parameters, rtDir.resolve("serializer-2.7.2.jar"));
     }
     else {
       //running from sources

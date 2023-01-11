@@ -6,9 +6,8 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -128,24 +127,24 @@ open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedLi
   }
 }
 
-class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<LinkedListEntity>(), SoftLinkable {
+class LinkedListEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LinkedListEntity>(), SoftLinkable {
   lateinit var myName: String
   lateinit var next: LinkedListEntityId
 
   fun isMyNameInitialized(): Boolean = ::myName.isInitialized
   fun isNextInitialized(): Boolean = ::next.isInitialized
 
-  override fun getLinks(): Set<PersistentEntityId<*>> {
-    val result = HashSet<PersistentEntityId<*>>()
+  override fun getLinks(): Set<SymbolicEntityId<*>> {
+    val result = HashSet<SymbolicEntityId<*>>()
     result.add(next)
     return result
   }
 
-  override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     index.index(this, next)
   }
 
-  override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     // TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     val removedItem_next = mutablePreviousSet.remove(next)
@@ -157,7 +156,7 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<Link
     }
   }
 
-  override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
+  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
     var changed = false
     val next_data = if (next == oldLink) {
       changed = true
@@ -172,7 +171,7 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<Link
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<LinkedListEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<LinkedListEntity> {
     val modifiable = LinkedListEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff
@@ -194,7 +193,7 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<Link
     }
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
+  override fun symbolicId(): SymbolicEntityId<*> {
     return LinkedListEntityId(myName)
   }
 

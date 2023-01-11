@@ -23,7 +23,7 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.jetbrains.kotlin.idea.base.analysis.libraries.LibraryDependencyCandidate
 import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
 import org.jetbrains.kotlin.idea.base.projectStructure.*

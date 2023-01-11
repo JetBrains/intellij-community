@@ -21,7 +21,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments

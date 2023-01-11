@@ -5,7 +5,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -157,7 +156,7 @@ class ParentNullableEntityData : WorkspaceEntityData<ParentNullableEntity>() {
 
   fun isParentDataInitialized(): Boolean = ::parentData.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ParentNullableEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ParentNullableEntity> {
     val modifiable = ParentNullableEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

@@ -5,7 +5,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -179,7 +178,7 @@ class MainEntityParentListData : WorkspaceEntityData<MainEntityParentList>() {
 
   fun isXInitialized(): Boolean = ::x.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<MainEntityParentList> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<MainEntityParentList> {
     val modifiable = MainEntityParentListImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

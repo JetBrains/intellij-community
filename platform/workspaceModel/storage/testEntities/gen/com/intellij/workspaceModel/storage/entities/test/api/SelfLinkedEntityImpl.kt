@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -149,7 +148,7 @@ open class SelfLinkedEntityImpl(val dataSource: SelfLinkedEntityData) : SelfLink
 class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SelfLinkedEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SelfLinkedEntity> {
     val modifiable = SelfLinkedEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

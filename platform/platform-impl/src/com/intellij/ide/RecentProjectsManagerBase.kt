@@ -13,10 +13,7 @@ import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.ui.UISettings
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.appSystemDir
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
@@ -551,7 +548,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
         projectManager.openProjectAsync(entry.first, entry.second)
       }
       catch (e: Exception) {
-        withContext(NonCancellable) {
+        withContext(NonCancellable + Dispatchers.EDT + ModalityState.any().asContextElement()) {
           @Suppress("SSBasedInspection")
           (entry.second.frameManager as MyProjectUiFrameManager?)?.dispose()
           while (iterator.hasNext()) {

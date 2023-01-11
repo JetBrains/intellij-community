@@ -19,7 +19,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorageSerializer
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.apache.commons.lang.RandomStringUtils

@@ -4,7 +4,6 @@ package com.intellij.json.psi;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.ContributedReferenceHost;
 import com.intellij.psi.PsiNamedElement;
 
 public class JsonElementVisitor extends PsiElementVisitor {
@@ -48,7 +47,6 @@ public class JsonElementVisitor extends PsiElementVisitor {
 
   public void visitReferenceExpression(@NotNull JsonReferenceExpression o) {
     visitValue(o);
-    // visitContributedReferenceHost(o);
   }
 
   public void visitStringLiteral(@NotNull JsonStringLiteral o) {

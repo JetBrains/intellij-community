@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -174,7 +173,7 @@ class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
   fun isVersionsInitialized(): Boolean = ::versions.isInitialized
   fun isNamesInitialized(): Boolean = ::names.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<CollectionFieldEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<CollectionFieldEntity> {
     val modifiable = CollectionFieldEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -162,7 +161,7 @@ open class SoftLinkReferencedChildImpl(val dataSource: SoftLinkReferencedChildDa
 class SoftLinkReferencedChildData : WorkspaceEntityData<SoftLinkReferencedChild>() {
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SoftLinkReferencedChild> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SoftLinkReferencedChild> {
     val modifiable = SoftLinkReferencedChildImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

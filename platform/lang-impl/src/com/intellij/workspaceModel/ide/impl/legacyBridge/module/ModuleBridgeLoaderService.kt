@@ -23,7 +23,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSyn
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

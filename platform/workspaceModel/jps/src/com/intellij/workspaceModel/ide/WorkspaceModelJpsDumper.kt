@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 @Suppress("unused")
 object WorkspaceModelJpsDumper {

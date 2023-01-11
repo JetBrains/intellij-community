@@ -9,7 +9,7 @@ import com.intellij.packaging.elements.PackagingElementFactory
 import com.intellij.packaging.impl.artifacts.InvalidArtifact
 import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactId
+import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactId
 import org.jetbrains.annotations.Nls
 
 class InvalidArtifactBridge(

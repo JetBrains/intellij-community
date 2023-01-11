@@ -4,8 +4,8 @@ package com.intellij.util.indexing.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.roots.IndexableEntityProvider.ParentEntityDependent;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleCustomImlDataEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,14 +21,14 @@ public class ModuleCustomImlDataFilesIndexableEntityProvider implements ParentEn
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull ModuleCustomImlDataEntity entity,
                                                                                                 @NotNull Project project) {
-    return IndexableIteratorBuilders.INSTANCE.forModuleContent(entity.getModule().getPersistentId());
+    return IndexableIteratorBuilders.INSTANCE.forModuleContent(entity.getModule().getSymbolicId());
   }
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ModuleCustomImlDataEntity oldEntity,
                                                                                                    @NotNull ModuleCustomImlDataEntity newEntity) {
     if (shouldBeRescanned(oldEntity, newEntity)) {
-      return IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.getModule().getPersistentId());
+      return IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.getModule().getSymbolicId());
     }
     return Collections.emptyList();
   }
@@ -58,8 +58,8 @@ public class ModuleCustomImlDataFilesIndexableEntityProvider implements ParentEn
                                                                                                         @NotNull ModuleEntity newEntity,
                                                                                                         @NotNull Project project) {
     List<IndexableIteratorBuilder> result = new ArrayList<>();
-    result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(oldEntity.getPersistentId()));
-    result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.getPersistentId()));
+    result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(oldEntity.getSymbolicId()));
+    result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.getSymbolicId()));
     return result;
   }
 }

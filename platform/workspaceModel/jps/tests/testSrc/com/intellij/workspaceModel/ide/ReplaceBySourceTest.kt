@@ -5,7 +5,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity

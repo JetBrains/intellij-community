@@ -6,9 +6,8 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -151,28 +150,28 @@ open class WithListSoftLinksEntityImpl(val dataSource: WithListSoftLinksEntityDa
   }
 }
 
-class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistentId<WithListSoftLinksEntity>(), SoftLinkable {
+class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculableSymbolicId<WithListSoftLinksEntity>(), SoftLinkable {
   lateinit var myName: String
   lateinit var links: MutableList<NameId>
 
   fun isMyNameInitialized(): Boolean = ::myName.isInitialized
   fun isLinksInitialized(): Boolean = ::links.isInitialized
 
-  override fun getLinks(): Set<PersistentEntityId<*>> {
-    val result = HashSet<PersistentEntityId<*>>()
+  override fun getLinks(): Set<SymbolicEntityId<*>> {
+    val result = HashSet<SymbolicEntityId<*>>()
     for (item in links) {
       result.add(item)
     }
     return result
   }
 
-  override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     for (item in links) {
       index.index(this, item)
     }
   }
 
-  override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     // TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     for (item in links) {
@@ -186,7 +185,7 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
     }
   }
 
-  override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
+  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
     var changed = false
     val links_data = links.map {
       val it_data = if (it == oldLink) {
@@ -209,7 +208,7 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<WithListSoftLinksEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<WithListSoftLinksEntity> {
     val modifiable = WithListSoftLinksEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff
@@ -238,7 +237,7 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
     return clonedEntity
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
+  override fun symbolicId(): SymbolicEntityId<*> {
     return AnotherNameId(myName)
   }
 

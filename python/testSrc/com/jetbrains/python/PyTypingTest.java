@@ -18,7 +18,9 @@ package com.jetbrains.python;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -2011,6 +2013,98 @@ public class PyTypingTest extends PyTestCase {
              class A:
                  x = 1  # type: ClassVar[int]
              expr = A.x""");
+  }
+
+  // PY-53104
+  public void testMethodReturnSelf() {
+    doTest("B",
+           "from typing import Self\n" +
+           "\n" +
+           "class A:\n" +
+           "    def foo(self) -> Self:\n" +
+           "        ...\n" +
+           "class B(A):\n" +
+           "    pass\n" +
+           "expr = B().foo()");
+  }
+
+  // PY-53104
+  public void testMethodReturnListSelf() {
+    doTest("list[B]",
+           "from typing import Self\n" +
+           "\n" +
+           "class A:\n" +
+           "    def foo(self) -> list[Self]:\n" +
+           "        ...\n" +
+           "class B(A):\n" +
+           "    pass:\n" +
+           "        ...\n" +
+           "expr = B().foo()");
+  }
+
+  // PY-53104
+  public void testClassMethodReturnSelf() {
+    doTest("Circle",
+           "from typing import Self\n" +
+           "\n" +
+           "\n" +
+           "class Shape:\n" +
+           "    @classmethod\n" +
+           "    def from_config(cls, config: dict[str, float]) -> Self:\n" +
+           "        return cls(config[\"scale\"])\n" +
+           "\n" +
+           "\n" +
+           "class Circle(Shape):\n" +
+           "    pass\n" +
+           "\n" +
+           "\n" +
+           "expr = Circle.from_config({})\n");
+  }
+
+  // PY-53104
+  public void testClassMethodReturnSelfNestedClass() {
+    doTest("Circle",
+           "from typing import Self\n" +
+           "\n" +
+           "\n" +
+           "class OuterClass:\n" +
+           "    class Shape:\n" +
+           "        @classmethod\n" +
+           "        def from_config(cls, config: dict[str, float]) -> Self:\n" +
+           "            return cls(config[\"scale\"])\n" +
+           "\n" +
+           "    class Circle(Shape):\n" +
+           "        pass\n" +
+           "\n" +
+           "\n" +
+           "expr = OuterClass.Circle.from_config({})\n");
+  }
+
+  // PY-53104
+  public void testNoUnstubInCalculateSelfTypeInFunctionDefinedInImportedFile() {
+    doMultiFileStubAwareTest("Clazz",
+                    "from other import Clazz\n" +
+                    "clz = Clazz()\n" +
+                    "expr = clz.foo()\n");
+  }
+
+  // PY-53104
+  public void testMatchSelfUnionType() {
+    doTest("C",
+           "from typing import Self\n" +
+           "\n" +
+           "\n" +
+           "class C:\n" +
+           "    def method(self) -> Self:\n" +
+           "        return self\n" +
+           "\n" +
+           "\n" +
+           "if bool():\n" +
+           "    x = 42\n" +
+           "else:\n" +
+           "    x = C()\n" +
+           "\n" +
+           "expr = x.method()");
   }
 
   private void doTestNoInjectedText(@NotNull String text) {

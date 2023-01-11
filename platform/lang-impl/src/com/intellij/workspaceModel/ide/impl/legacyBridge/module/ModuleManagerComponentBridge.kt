@@ -39,10 +39,10 @@ import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.Dispatchers
@@ -200,7 +200,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     if (change is EntityChange.Added) {
       val tableId = change.entity.tableId as LibraryTableId.ModuleLibraryTableId
       val moduleEntity = builder.resolve(tableId.moduleId)
-                         ?: error("Could not find module for module library: ${change.entity.persistentId}")
+                         ?: error("Could not find module for module library: ${change.entity.symbolicId}")
       if (moduleEntity.name !in unloadedModules) {
 
         val library = builder.libraryMap.getDataByEntity(change.entity)
@@ -260,8 +260,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       }
 
       is EntityChange.Replaced -> {
-        val oldId = change.oldEntity.persistentId
-        val newId = change.newEntity.persistentId
+        val oldId = change.oldEntity.symbolicId
+        val newId = change.newEntity.symbolicId
 
         if (oldId != newId) {
           unloadedModules.remove(change.newEntity.name)
@@ -291,8 +291,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
         }
       }
       is EntityChange.Replaced -> {
-        val idBefore = change.oldEntity.persistentId
-        val idAfter = change.newEntity.persistentId
+        val idBefore = change.oldEntity.symbolicId
+        val idAfter = change.newEntity.symbolicId
 
         val newLibrary = event.storageAfter.libraryMap.getDataByEntity(change.newEntity) as LibraryBridgeImpl?
         if (newLibrary != null) {
@@ -305,7 +305,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       is EntityChange.Added -> {
         val tableId = change.entity.tableId as LibraryTableId.ModuleLibraryTableId
         val moduleEntity = entityStore.current.resolve(tableId.moduleId)
-                           ?: error("Could not find module for module library: ${change.entity.persistentId}")
+                           ?: error("Could not find module for module library: ${change.entity.symbolicId}")
         if (moduleEntity.name !in unloadedModules) {
 
           val library = event.storageAfter.libraryMap.getDataByEntity(change.entity)
@@ -368,9 +368,9 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     return moduleEntity
   }
 
-  override fun createModule(persistentId: ModuleId, name: String, virtualFileUrl: VirtualFileUrl?, entityStorage: VersionedEntityStorage,
+  override fun createModule(symbolicId: ModuleId, name: String, virtualFileUrl: VirtualFileUrl?, entityStorage: VersionedEntityStorage,
                             diff: MutableEntityStorage?): ModuleBridge {
-    return ModuleBridgeImpl(persistentId, name, project, virtualFileUrl, entityStorage, diff)
+    return ModuleBridgeImpl(symbolicId, name, project, virtualFileUrl, entityStorage, diff)
   }
 
   companion object {

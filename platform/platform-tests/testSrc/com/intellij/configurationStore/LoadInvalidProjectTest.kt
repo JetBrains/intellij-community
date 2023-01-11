@@ -17,7 +17,7 @@ import com.intellij.testFramework.*
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before

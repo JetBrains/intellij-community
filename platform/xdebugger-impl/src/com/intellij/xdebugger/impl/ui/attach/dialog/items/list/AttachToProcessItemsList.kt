@@ -4,19 +4,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.speedSearch.FilteringTableModel
-import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.table.JBTable
-import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.attach.XAttachPresentationGroup
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.*
-import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachTableCellRenderer
-import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElementsFilters
-import com.intellij.xdebugger.impl.ui.attach.dialog.items.getValueAt
-import com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.AttachGroupFirstColumnRenderer
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.AttachGroupColumnRenderer
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.AttachGroupFirstColumnRenderer
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.AttachGroupLastColumnRenderer
 import kotlinx.coroutines.ensureActive
 import java.awt.Dimension
@@ -34,11 +29,7 @@ internal class AttachToProcessItemsList(itemNodes: List<AttachToProcessElement>,
   JBTable(FilteringTableModel(AttachToProcessTableModel(itemNodes, state), Any::class.java),
           AttachToProcessListColumnModel()), AttachToProcessItemsListBase {
 
-  private val speedSearch = SpeedSearch().apply {
-    updatePattern("")
-  }
-
-  private val filters = AttachToProcessElementsFilters(speedSearch, state.selectedDebuggersFilter)
+  private val filters = AttachToProcessElementsFilters(state.selectedDebuggersFilter)
 
   init {
     for (index in 0 until columnCount) {
@@ -101,7 +92,7 @@ internal class AttachToProcessItemsList(itemNodes: List<AttachToProcessElement>,
   }
 
   override fun updateFilter(searchFilterValue: String) {
-    speedSearch.updatePattern(searchFilterValue)
+    filters.updatePattern(searchFilterValue)
     refilterSaveSelection()
   }
 

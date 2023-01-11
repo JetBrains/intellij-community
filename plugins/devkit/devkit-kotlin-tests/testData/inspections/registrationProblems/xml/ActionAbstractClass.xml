@@ -1,0 +1,6 @@
+<idea-plugin>
+  <actions>
+    <action id="invalid"
+            class="<error descr="Plugin component class must not be abstract">MyAbstractAction</error>"/>
+  </actions>
+</idea-plugin>

@@ -9,10 +9,9 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -330,7 +329,7 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
 
   fun isSrcPlaceInitialized(): Boolean = ::srcPlace.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<EclipseProjectPropertiesEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<EclipseProjectPropertiesEntity> {
     val modifiable = EclipseProjectPropertiesEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

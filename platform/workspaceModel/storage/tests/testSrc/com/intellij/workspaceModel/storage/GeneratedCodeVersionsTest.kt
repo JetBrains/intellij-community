@@ -82,7 +82,7 @@ interface SuperSimpleEntity : WorkspaceEntity {
   //region generated code
   //@formatter:off
   @GeneratedCodeApiVersion(1000000)
-  interface Builder: SuperSimpleEntity, ModifiableWorkspaceEntity<SuperSimpleEntity>, ObjBuilder<SuperSimpleEntity> {
+  interface Builder: SuperSimpleEntity, WorkspaceEntity.Builder<SuperSimpleEntity>, ObjBuilder<SuperSimpleEntity> {
   }
 
   companion object: Type<SuperSimpleEntity, Builder>() {
@@ -204,7 +204,7 @@ open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
 class SuperSimpleEntityData : WorkspaceEntityData<SuperSimpleEntity>() {
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SuperSimpleEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SuperSimpleEntity> {
     val modifiable = SuperSimpleEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

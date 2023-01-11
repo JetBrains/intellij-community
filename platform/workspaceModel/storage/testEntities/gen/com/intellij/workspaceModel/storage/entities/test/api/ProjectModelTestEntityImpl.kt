@@ -7,7 +7,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -133,7 +132,7 @@ class ProjectModelTestEntityData : WorkspaceEntityData<ProjectModelTestEntity>()
   fun isInfoInitialized(): Boolean = ::info.isInitialized
   fun isDescriptorInitialized(): Boolean = ::descriptor.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ProjectModelTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ProjectModelTestEntity> {
     val modifiable = ProjectModelTestEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

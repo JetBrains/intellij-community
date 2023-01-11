@@ -128,8 +128,7 @@ public final class XmlUtil {
   @NonNls public static final String FACELETS_URI = "http://java.sun.com/jsf/facelets";
   @NonNls public static final String FACELETS_URI_JAVAEE_7 = "http://xmlns.jcp.org/jsf/facelets";
 
-  @NonNls public static final String FACELETS_URI_JAKARTA_10 = "jakarta.faces.facelets";
-  @NonNls public static final String[] FACELETS_URIS = {FACELETS_URI, FACELETS_URI_JAVAEE_7, FACELETS_URI_JAKARTA_10};
+  @NonNls public static final String[] FACELETS_URIS = {FACELETS_URI, FACELETS_URI_JAVAEE_7, JSF_JAKARTA_FACELETS_10};
   @NonNls public static final String JSTL_FUNCTIONS_URI = "http://java.sun.com/jsp/jstl/functions";
   @NonNls public static final String JSTL_FUNCTIONS_URI2 = "http://java.sun.com/jstl/functions";
   @NonNls public static final String JSTL_FUNCTIONS_JAVAEE_7 = "http://xmlns.jcp.org/jsp/jstl/functions";

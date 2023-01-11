@@ -51,6 +51,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -338,7 +339,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
             SpinningProgressIcon spinningIcon = presentation.getClientProperty(spinningIconKey);
             if (spinningIcon == null) {
               spinningIcon = new SpinningProgressIcon();
-              spinningIcon.setIconColor(Color.WHITE);
+              spinningIcon.setIconColor(JBUI.CurrentTheme.RunWidget.FOREGROUND);
               presentation.putClientProperty(spinningIconKey, spinningIcon);
             }
             presentation.setDisabledIcon(spinningIcon);
@@ -367,7 +368,12 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
         if (ExperimentalUI.isNewUI() &&
             needRerunPresentation(selectedSettings.getConfiguration(), getRunningDescriptors(project, selectedSettings))) {
-          text = ExecutionBundle.message("run.toolbar.widget.restart.text", myExecutor.getActionName(), configuration.getName());
+          if (myExecutor.getId().equals(DefaultRunExecutor.EXECUTOR_ID)) {
+            text = ExecutionBundle.message("run.toolbar.widget.rerun.text", configuration);
+          }
+          else {
+            text = ExecutionBundle.message("run.toolbar.widget.restart.text", myExecutor.getActionName(), configuration.getName());
+          }
         }
         else {
           text = myExecutor.getStartActionText(configuration.getName());

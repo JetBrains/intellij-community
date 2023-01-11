@@ -41,7 +41,9 @@ public class CloseAction extends AnAction implements DumbAware, LightEditCompati
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    e.getData(CloseTarget.KEY).close();
+    CloseTarget closeTarget = e.getData(CloseTarget.KEY);
+    if (closeTarget == null) return;
+    closeTarget.close();
   }
 
   public interface CloseTarget {

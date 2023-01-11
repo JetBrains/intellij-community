@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -158,7 +157,7 @@ class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPropertiesE
   fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
   fun isSecondFilePropertyInitialized(): Boolean = ::secondFileProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<VFUWithTwoPropertiesEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<VFUWithTwoPropertiesEntity> {
     val modifiable = VFUWithTwoPropertiesEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

@@ -1,166 +1,77 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration
-import com.intellij.internal.statistic.local.ActionSummary
-import com.intellij.internal.statistic.local.ActionsLocalSummary
-import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.featureStatistics.FeatureUsageTracker
+import com.intellij.featureStatistics.ProductivityFeaturesRegistry
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
-import com.intellij.util.PlatformUtils
-import com.intellij.util.io.HttpRequests
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.util.*
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.time.Duration.Companion.hours
-
-private val LOG = logger<TipsOrderUtil>()
-private const val EXPERIMENT_RANDOM_SEED = 0L
-private const val USED_BUCKETS_COUNT = 128
-private const val RANDOM_SHUFFLE_ALGORITHM = "default_shuffle"
-private const val TIPS_SERVER_URL = "https://feature-recommendation.analytics.aws.intellij.net/tips/v1"
-
-internal data class RecommendationDescription(val algorithm: String, val tips: List<TipAndTrickBean>, val version: String?)
-
-private fun getUtilityExperiment(): TipsUtilityExperiment? {
-  if (!ApplicationManager.getApplication().isEAP) return null
-  val shuffledBuckets = (0 until USED_BUCKETS_COUNT).shuffled(Random(EXPERIMENT_RANDOM_SEED))
-  return when (shuffledBuckets[EventLogConfiguration.getInstance().bucket % USED_BUCKETS_COUNT]) {
-    in 0..31 -> TipsUtilityExperiment.BY_TIP_UTILITY
-    in 32..63 -> TipsUtilityExperiment.BY_TIP_UTILITY_IGNORE_USED
-    in 64..95 -> TipsUtilityExperiment.RANDOM_IGNORE_USED
-    else -> null
-  }
-}
-
-private fun randomShuffle(tips: List<TipAndTrickBean>): RecommendationDescription {
-  return RecommendationDescription(RANDOM_SHUFFLE_ALGORITHM, tips.shuffled(), null)
-}
 
 @Service
 internal class TipsOrderUtil {
-  internal class RecommendationsStartupActivity : ProjectPostStartupActivity {
-    private val isScheduled = AtomicBoolean()
-
-    override suspend fun execute(project: Project) {
-      if (LocalDate.now().isAfter(LocalDate.of(2022, 12, 1))) {
-        // Update the date if the experiment is still needed after the date
-        return
-      }
-
-      if (!isScheduled.compareAndSet(false, true)) {
-        return
-      }
-
-      val app = ApplicationManager.getApplication()
-      if (!app.isEAP || app.isHeadlessEnvironment || !StatisticsUploadAssistant.isSendAllowed()) {
-        return
-      }
-
-      ApplicationManager.getApplication().coroutineScope.launch(Dispatchers.IO) {
-        sync()
-        while (isActive) {
-          delay(3.hours)
-          sync()
-        }
-      }
-    }
-  }
-
-  companion object {
-    private fun sync() {
-      ApplicationManager.getApplication().assertIsNonDispatchThread();
-      LOG.debug { "Fetching tips order from the server: $TIPS_SERVER_URL" }
-      val allTips = TipAndTrickBean.EP_NAME.iterable.map { it.fileName }
-      val actionsSummary = service<ActionsLocalSummary>().getActionsStats()
-      val startTimestamp = System.currentTimeMillis()
-      HttpRequests.post(TIPS_SERVER_URL, HttpRequests.JSON_CONTENT_TYPE)
-        .connect(HttpRequests.RequestProcessor { request ->
-          val bucket = EventLogConfiguration.getInstance().bucket
-          val tipsRequest = TipsRequest(allTips, actionsSummary, PlatformUtils.getPlatformPrefix(), bucket)
-          val objectMapper = ObjectMapper()
-          request.write(objectMapper.writeValueAsBytes(tipsRequest))
-          val recommendation = objectMapper.readValue(request.readString(), ServerRecommendation::class.java)
-
-          LOG.debug {
-            val duration = System.currentTimeMillis() - startTimestamp
-            val algorithmInfo = "${recommendation.usedAlgorithm}:${recommendation.version}"
-            "Server recommendation made. Algorithm: $algorithmInfo. Duration: ${duration}"
-          }
-
-          service<TipsOrderUtil>().serverRecommendation = recommendation
-        }, null, LOG)
-    }
-  }
-
-  @Volatile
-  private var serverRecommendation: ServerRecommendation? = null
-
   /**
    * Reorders tips to show the most useful ones in the beginning
    *
    * @return object that contains sorted tips and describes approach of how the tips are sorted
    */
-  fun sort(tips: List<TipAndTrickBean>): RecommendationDescription {
-    getUtilityExperiment()?.let {
-      return service<TipsUsageManager>().sortTips(tips, it)
+  fun sort(tips: List<TipAndTrickBean>, project: Project): RecommendationDescription {
+    val registry = ProductivityFeaturesRegistry.getInstance();
+    if (registry == null) {
+      thisLogger().warn("ProductivityFeaturesRegistry is not created")
+      return RecommendationDescription(SHUFFLE_ALGORITHM, tips.shuffled(), "1")
     }
 
-    serverRecommendation?.let { return it.reorder(tips) }
-
-    return randomShuffle(tips)
-  }
-}
-
-enum class TipsUtilityExperiment {
-  BY_TIP_UTILITY {
-    override fun toString(): String = "tip_utility"
-  },
-  BY_TIP_UTILITY_IGNORE_USED {
-    override fun toString(): String = "tip_utility_and_ignore_used"
-  },
-  RANDOM_IGNORE_USED {
-    override fun toString(): String = "random_ignore_used"
-  }
-}
-
-private data class TipsRequest(
-  val tips: List<String>,
-  val usageInfo: Map<String, ActionSummary>,
-  val ideName: String, // product code
-  val bucket: Int
-)
-
-private class ServerRecommendation {
-  @JvmField
-  var showingOrder = emptyList<String>()
-
-  @JvmField
-  var usedAlgorithm = "unknown"
-
-  @JvmField
-  var version: String? = null
-
-  fun reorder(tips: List<TipAndTrickBean>): RecommendationDescription {
-    val tipToIndex = Object2IntOpenHashMap<String>(showingOrder.size)
-    showingOrder.forEachIndexed { index, tipFile -> tipToIndex.put(tipFile, index) }
-    for (tip in tips) {
-      if (!tipToIndex.containsKey(tip.fileName)) {
-        LOG.error("Unknown tips file: ${tip.fileName}")
-        return randomShuffle(tips)
+    FeatureUsageTracker.getInstance()  // instantiate just to load statistics of feature usage
+    val tipsUsageManager = TipsUsageManager.getInstance()
+    val allFeatures = registry.featureIds.map { registry.getFeatureDescriptor(it) }
+    val tipInfoList = tips.map { tip ->
+      val features = allFeatures.filter { it.tipId == tip.id }
+      val lastTimeShown = tipsUsageManager.getLastTimeShown(tip.id)
+      if (features.isNotEmpty()) {
+        val isApplicable = features.any { feature ->
+          val filters = registry.getMatchingFilters(feature.id)
+          if (filters.isNotEmpty()) {
+            filters.any { filter -> filter.isApplicable(feature.id, project) }
+          }
+          else true
+        }
+        val unusedScore = features.count { it.isUnused } * 1.0 / features.size
+        TipInfo(tip, true, isApplicable, unusedScore, lastTimeShown)
       }
+      else TipInfo(tip, false, true, 0.0, lastTimeShown)
     }
-    return RecommendationDescription(usedAlgorithm, tips.sortedBy { tipToIndex.getInt(it.fileName) }, version)
+
+    val sortedTips = tipInfoList.sortedWith(getComparator()).map { it.tip }
+    val adjustedSortedTips = tipsUsageManager.makeLastShownTipFirst(sortedTips)
+    return RecommendationDescription(SORTING_ALGORITHM, adjustedSortedTips, SORTING_ALGORITHM_VERSION)
+  }
+
+  private fun getComparator(): Comparator<TipInfo> {
+    return compareBy<TipInfo> { info -> info.featureFound && info.isApplicable && info.unusedScore > 0.1 }
+      .then(compareBy { info -> !info.featureFound })
+      .thenComparingDouble { info -> info.unusedScore }.reversed()
+      .then(compareByDescending { info -> info.isApplicable })
+      .thenComparingLong { info -> info.lastTimeShown }
+  }
+
+  private data class TipInfo(
+    val tip: TipAndTrickBean,
+    val featureFound: Boolean,
+    val isApplicable: Boolean,
+    val unusedScore: Double,
+    val lastTimeShown: Long
+  )
+
+  companion object {
+    const val SHUFFLE_ALGORITHM = "shuffle"
+    const val SORTING_ALGORITHM = "usage_and_applicability"
+    private const val SORTING_ALGORITHM_VERSION = "1"
+
+    @JvmStatic
+    fun getInstance(): TipsOrderUtil = service()
   }
 }
+
+internal data class RecommendationDescription(val algorithm: String, val tips: List<TipAndTrickBean>, val version: String?)
+

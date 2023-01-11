@@ -24,7 +24,7 @@ import kotlin.reflect.KProperty1
  * * String;
  * * enum;
  * * [VirtualFileUrl];
- * * [WorkspaceEntity] or [PersistentEntityId];
+ * * [WorkspaceEntity] or [SymbolicEntityId];
  * * [List] of another allowed type;
  * * [Map] of another allowed types where key is NOT a WorkspaceEntity;
  * * another data class with properties of the allowed types (references to entities must be wrapped into [EntityReference]);
@@ -92,6 +92,17 @@ interface WorkspaceEntity : Obj {
       return WorkspaceEntityExtensionDelegate()
     }
   }
+
+  /**
+   * Base interface for modifiable variant of [Unmodifiable] entity. The implementation can be used to [create a new entity][MutableEntityStorage.addEntity]
+   * or [modify an existing value][MutableEntityStorage.modifyEntity].
+   *
+   * Currently, the class must inherit from ModifiableWorkspaceEntityBase.
+   */
+  @Abstract
+  interface Builder<Unmodifiable : WorkspaceEntity> : WorkspaceEntity {
+    override var entitySource: EntitySource
+  }
 }
 
 /**
@@ -100,17 +111,6 @@ interface WorkspaceEntity : Obj {
  */
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.TYPE)
 annotation class EqualsBy
-
-/**
- * Base interface for modifiable variant of [Unmodifiable] entity. The implementation can be used to [create a new entity][MutableEntityStorage.addEntity]
- * or [modify an existing value][MutableEntityStorage.modifyEntity].
- *
- * Currently, the class must inherit from ModifiableWorkspaceEntityBase.
- */
-@Abstract
-interface ModifiableWorkspaceEntity<Unmodifiable : WorkspaceEntity> : WorkspaceEntity {
-  override var entitySource: EntitySource
-}
 
 /**
  * Declares a place from which an entity came.
@@ -162,7 +162,7 @@ abstract class EntityReference<out E : WorkspaceEntity> {
  * * another data class with properties of the allowed types;
  * * sealed abstract class where all implementations satisfy these requirements.
  */
-interface PersistentEntityId<out E : WorkspaceEntityWithPersistentId> {
+interface SymbolicEntityId<out E : WorkspaceEntityWithSymbolicId> {
   /** Text which can be shown in an error message if id cannot be resolved */
   val presentableName: String
 
@@ -171,17 +171,17 @@ interface PersistentEntityId<out E : WorkspaceEntityWithPersistentId> {
 }
 
 @Abstract
-interface WorkspaceEntityWithPersistentId : WorkspaceEntity {
-  val persistentId: PersistentEntityId<WorkspaceEntityWithPersistentId>
+interface WorkspaceEntityWithSymbolicId : WorkspaceEntity {
+  val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>
 }
 
 interface EntityStorage {
   fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E>
   fun <E : WorkspaceEntity> entitiesAmount(entityClass: Class<E>): Int
   fun <E : WorkspaceEntity, R : WorkspaceEntity> referrers(e: E, entityClass: KClass<R>, property: KProperty1<R, EntityReference<E>>): Sequence<R>
-  fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R>
-  fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E?
-  operator fun <E : WorkspaceEntityWithPersistentId> contains(id: PersistentEntityId<E>): Boolean
+  fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> referrers(id: SymbolicEntityId<E>, entityClass: Class<R>): Sequence<R>
+  fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E?
+  operator fun <E : WorkspaceEntityWithSymbolicId> contains(id: SymbolicEntityId<E>): Boolean
 
   /**
    * Please select a name for your mapping in a form `<product_id>.<mapping_name>`.
@@ -222,7 +222,7 @@ interface MutableEntityStorage : EntityStorage {
   
   infix fun <T : WorkspaceEntity> addEntity(entity: T): T
 
-  fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
+  fun <M : WorkspaceEntity.Builder<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
 
   /**
    * Remove the entity from the builder.

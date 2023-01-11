@@ -584,7 +584,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     for (PluginDetailsPageComponent panel : myDetailPanels) {
       if (panel.isShowingPlugin(descriptor)) {
         panel.setPlugin(installedDescriptor);
-        panel.hideProgress(success);
+        panel.hideProgress(success, restartRequired);
       }
     }
 
@@ -1031,7 +1031,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
     for (PluginDetailsPageComponent panel : myDetailPanels) {
       if (panel.getDescriptorForActions() == descriptor) {
-        panel.updateButtons();
+        panel.updateAfterUninstall(needRestartForUninstall);
       }
     }
   }

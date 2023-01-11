@@ -100,12 +100,10 @@ public final class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
     return pane;
   }
 
-  public void addAll(@NotNull Collection<? extends PluginDownloader> orderEntries, @Nullable PluginDownloader selectedPlugin) {
-    if (selectedPlugin != null) {
-      for (PluginDownloader entry : orderEntries) {
-        if (entry != selectedPlugin) {
-          mySkippedPlugins.add(entry.getId());
-        }
+  public void addAll(@NotNull Collection<PluginDownloader> orderEntries, Collection<PluginDownloader> selectedPlugins) {
+    for (PluginDownloader entry : orderEntries) {
+      if (!selectedPlugins.contains(entry)) {
+        mySkippedPlugins.add(entry.getId());
       }
     }
     super.addAll(orderEntries);
@@ -126,5 +124,10 @@ public final class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
     else {
       mySkippedPlugins.add(pluginId);
     }
+  }
+
+  @Override
+  public void requestFocus() {
+    getEntryTable().requestFocus();
   }
 }

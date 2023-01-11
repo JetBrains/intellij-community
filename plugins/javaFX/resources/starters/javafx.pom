@@ -20,8 +20,9 @@
     <fx15.version>17.0.2</fx15.version>
     <fx16.version>17.0.2</fx16.version>
     <fx17.version>17.0.2</fx17.version>
-    <fx18.version>18.0.1</fx18.version>
-    <fx19.version>19-ea+7</fx19.version>
+    <fx18.version>18.0.2</fx18.version>
+    <fx19.version>19</fx19.version>
+    <fx20.version>20-ea+4</fx20.version>
 
     <fxgl11.version>11.17</fxgl11.version>
     <fxgl17.version>17.1</fxgl17.version>

@@ -6,8 +6,8 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ExcludeUrlEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.library
+import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.library
 
 class ExcludedRootFileIndexContributor : WorkspaceFileIndexContributor<ExcludeUrlEntity> {
   override val entityClass: Class<ExcludeUrlEntity>

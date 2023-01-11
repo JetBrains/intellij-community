@@ -2036,7 +2036,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Override
   public boolean isFileIndexedInCurrentSession(@NotNull VirtualFile file, @NotNull ID<?, ?> indexId) {
-    if (VfsData.isIsIndexedFlagDisabled) {
+    if (VfsData.isIsIndexedFlagDisabled()) {
       return false;
     }
     if (!file.isValid() ||

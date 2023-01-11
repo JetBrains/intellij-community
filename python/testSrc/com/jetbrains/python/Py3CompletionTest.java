@@ -658,6 +658,39 @@ public class Py3CompletionTest extends PyTestCase {
     doTabTest();
   }
 
+  // PY-53104
+  public void testOnSelf() {
+    doTestVariants("foo", "bar");
+  }
+
+  // PY-53104
+  public void testOnListSelf() {
+    doTestVariants("foo", "bar");
+  }
+
+  // PY-53104
+  public void testOnListSelfInNestedClass() {
+    doTestVariants("foo", "bar");
+  }
+
+  // PY-53104
+  public void testOnSelfInsideClassFunction() {
+    doTestVariants("x", "foo");
+  }
+
+  // PY-53104
+  public void testOnSelfInsideClassFunctionNestedFunction() {
+    doTestVariants("x", "foo");
+  }
+
+  private void doTestVariants(String @NotNull ... expected) {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    List<String> variants = myFixture.getLookupElementStrings();
+    assertContainsElements(variants, expected);
+  }
+
   private @NotNull PyCodeStyleSettings getPythonCodeStyleSettings() {
     return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
   }

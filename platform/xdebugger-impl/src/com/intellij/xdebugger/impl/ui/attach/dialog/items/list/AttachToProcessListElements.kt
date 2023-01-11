@@ -2,19 +2,17 @@ package com.intellij.xdebugger.impl.ui.attach.dialog.items.list
 
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.attach.XAttachPresentationGroup
+import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachSelectionIgnoredNode
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElement
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElementsFilters
-import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
 
 
 internal class AttachToProcessListItem(
   val item: AttachDialogProcessItem) : AttachToProcessElement {
 
   override fun visit(filters: AttachToProcessElementsFilters): Boolean {
-    return filters.selectedFilter.get().canBeAppliedTo(item.getGroups()) && (
-      filters.speedSearch.shouldBeShowing(item.processInfo.pid.toString()) ||
-      filters.speedSearch.shouldBeShowing(item.processInfo.commandLine))
+    return filters.accept(item)
   }
 
   override fun getProcessItem(): AttachDialogProcessItem = item
@@ -47,7 +45,7 @@ internal abstract class AttachToProcessListGroupBase(val groupName: String) : At
 internal class AttachToProcessListGroup(private val presentationGroup: XAttachPresentationGroup<*>) : AttachToProcessListGroupBase(presentationGroup.groupName) {
 
   override fun isAcceptedByFilters(filters: AttachToProcessElementsFilters): Boolean {
-    return filters.selectedFilter.get().canBeAppliedTo(setOf(presentationGroup))
+    return filters.accept(setOf(presentationGroup))
   }
 
   override fun getOrder(): Int = presentationGroup.order

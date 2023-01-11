@@ -17,7 +17,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -223,7 +223,7 @@ private val libraryRootTypes = ConcurrentFactoryMap.createMap<String, LibraryRoo
 
 internal fun saveLibrary(library: LibraryEntity, externalSystemId: String?, isExternalStorage: Boolean): Element {
   val libraryTag = Element(LIBRARY_TAG)
-  val legacyName = LibraryNameGenerator.getLegacyLibraryName(library.persistentId)
+  val legacyName = LibraryNameGenerator.getLegacyLibraryName(library.symbolicId)
   if (legacyName != null) {
     libraryTag.setAttribute(NAME_ATTRIBUTE, legacyName)
   }

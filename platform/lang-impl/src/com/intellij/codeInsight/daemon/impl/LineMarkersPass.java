@@ -87,6 +87,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
     }
     List<LineMarkerInfo<?>> lineMarkers = new ArrayList<>();
     FileViewProvider viewProvider = myFile.getViewProvider();
+    int passId = getId();
     for (Language language : viewProvider.getLanguages()) {
       PsiFile root = viewProvider.getPsi(language);
       if (root == null) {
@@ -102,6 +103,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
 
              queryProviders(
                elements.inside, root, providersList, (__, info) -> {
+                 info.updatePass = passId;
                  lineMarkers.add(info);
                  ApplicationManager.getApplication().invokeLater(() -> {
                    if (isValid()) {
@@ -109,13 +111,13 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
                    }
                  }, myProject.getDisposed());
                });
-             queryProviders(elements.outside, root, providersList, (__, info) -> lineMarkers.add(info));
+             queryProviders(elements.outside, root, providersList,
+                            (__, info) -> {
+                              info.updatePass = passId;
+                              lineMarkers.add(info);
+                            });
              return true;
            });
-    }
-
-    for (LineMarkerInfo<?> info : lineMarkers) {
-      info.updatePass = getId();
     }
 
     myMarkers = mergeLineMarkers(lineMarkers, getDocument());

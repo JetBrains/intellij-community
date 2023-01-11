@@ -14,7 +14,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createIterators
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.junit.Test
 import java.util.function.Consumer
 

@@ -41,4 +41,7 @@ internal object TipUiSettings {
   @JvmStatic
   val imageBorderColor: Color
     get() = JBColor.namedColor("TipOfTheDay.Image.borderColor", JBColor.border())
+  @JvmStatic
+  val panelBackground: Color
+    get() = JBColor.namedColor("TextField.background", 0xFFFFFF, 0x2B2D30)
 }

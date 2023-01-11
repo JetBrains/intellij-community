@@ -5,7 +5,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -161,7 +160,7 @@ open class ParentAbEntityImpl(val dataSource: ParentAbEntityData) : ParentAbEnti
 class ParentAbEntityData : WorkspaceEntityData<ParentAbEntity>() {
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ParentAbEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ParentAbEntity> {
     val modifiable = ParentAbEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

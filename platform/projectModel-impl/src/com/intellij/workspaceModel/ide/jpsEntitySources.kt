@@ -9,12 +9,8 @@ import com.esotericsoftware.kryo.kryo5.io.Output
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelExternalSource
-import com.intellij.project.isDirectoryBased
-import com.intellij.project.stateStore
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
@@ -148,26 +144,6 @@ object NonPersistentEntitySource : EntitySource
  */
 interface CustomModuleEntitySource : EntitySource {
   val internalSource: JpsFileEntitySource
-}
-
-/**
- * Returns `null` for the default project
- */
-fun getJpsProjectConfigLocation(project: Project): JpsProjectConfigLocation? {
-  return if (project.isDirectoryBased) {
-    project.basePath?.let {
-      val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
-      val ideaFolder = project.stateStore.directoryStorePath!!.toVirtualFileUrl(virtualFileUrlManager)
-      JpsProjectConfigLocation.DirectoryBased(virtualFileUrlManager.fromPath(it), ideaFolder)
-    }
-  }
-  else {
-    project.projectFilePath?.let {
-      val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
-      val iprFile = virtualFileUrlManager.fromPath(it)
-      JpsProjectConfigLocation.FileBased(iprFile, virtualFileUrlManager.getParentVirtualUrl(iprFile)!!)
-    }
-  }
 }
 
 internal class FileInDirectorySerializer : Serializer<JpsFileEntitySource.FileInDirectory>(false, true) {

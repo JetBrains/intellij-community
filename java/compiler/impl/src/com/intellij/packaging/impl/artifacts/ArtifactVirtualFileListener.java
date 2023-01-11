@@ -21,7 +21,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.CachedValue;
 import com.intellij.workspaceModel.storage.ExternalEntityMapping;
 import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

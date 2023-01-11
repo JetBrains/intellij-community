@@ -36,7 +36,7 @@ import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

@@ -457,6 +457,9 @@ public final class UpdateHighlightersUtil {
   }
 
   private static int getLayer(@NotNull HighlightInfo info, @NotNull SeverityRegistrar severityRegistrar) {
+    if (info instanceof InternalLayerSupplier) {
+      return ((InternalLayerSupplier)info).getLayer();
+    }
     HighlightSeverity severity = info.getSeverity();
     int layer;
     if (severityRegistrar.compare(severity, HighlightSeverity.ERROR) >= 0) {

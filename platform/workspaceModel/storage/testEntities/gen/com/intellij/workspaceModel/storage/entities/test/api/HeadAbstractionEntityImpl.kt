@@ -6,9 +6,8 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
@@ -155,12 +154,12 @@ open class HeadAbstractionEntityImpl(val dataSource: HeadAbstractionEntityData) 
   }
 }
 
-class HeadAbstractionEntityData : WorkspaceEntityData.WithCalculablePersistentId<HeadAbstractionEntity>() {
+class HeadAbstractionEntityData : WorkspaceEntityData.WithCalculableSymbolicId<HeadAbstractionEntity>() {
   lateinit var data: String
 
   fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<HeadAbstractionEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<HeadAbstractionEntity> {
     val modifiable = HeadAbstractionEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff
@@ -182,8 +181,8 @@ class HeadAbstractionEntityData : WorkspaceEntityData.WithCalculablePersistentId
     }
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
-    return HeadAbstractionPersistentId(data)
+  override fun symbolicId(): SymbolicEntityId<*> {
+    return HeadAbstractionSymbolicId(data)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

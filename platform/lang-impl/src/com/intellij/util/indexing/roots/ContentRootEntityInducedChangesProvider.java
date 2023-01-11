@@ -2,7 +2,7 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

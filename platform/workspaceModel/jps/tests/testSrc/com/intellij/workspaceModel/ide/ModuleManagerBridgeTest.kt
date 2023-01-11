@@ -3,8 +3,8 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule

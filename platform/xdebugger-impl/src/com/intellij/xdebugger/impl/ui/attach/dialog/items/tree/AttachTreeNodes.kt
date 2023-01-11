@@ -7,13 +7,13 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachSelectionIgnoredNode
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElement
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElementsFilters
-import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
-import com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.AttachTreeGroupFirstColumnRenderer
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.AttachTreeGroupColumnRenderer
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.AttachTreeGroupFirstColumnRenderer
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.AttachTreeGroupLastColumnRenderer
 import java.awt.Component
 import javax.swing.JComponent
@@ -134,9 +134,7 @@ internal open class AttachTreeProcessNode(val item: AttachDialogProcessItem,
   }
 
   override fun visit(filters: AttachToProcessElementsFilters): Boolean {
-    if (!filters.selectedFilter.get().canBeAppliedTo(item.getGroups())) return false
-    return filters.speedSearch.shouldBeShowing(item.processInfo.pid.toString()) ||
-           filters.speedSearch.shouldBeShowing(item.processInfo.commandLine)
+    return filters.accept(item)
   }
 
   override fun getProcessItem(): AttachDialogProcessItem = item

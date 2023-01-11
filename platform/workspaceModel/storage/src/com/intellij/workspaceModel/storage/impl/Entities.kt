@@ -19,18 +19,18 @@ import kotlin.reflect.KClass
  * - Create [WorkspaceEntity] representation:
  *   - The entity should inherit [WorkspaceEntityBase]
  *   - Properties (not references to other entities) should be listed in a primary constructor as val's
- *   - If the entity has PersistentId, the entity should extend [WorkspaceEntityWithPersistentId]
+ *   - If the entity has SymbolicId, the entity should extend [WorkspaceEntityWithSymbolicId]
  *   - If the entity has references to other entities, they should be implement using property delegation objects listed in [com.intellij.workspaceModel.storage.impl.references] package.
  *       E.g. [OneToMany] or [ManyToOne.NotNull]
  *
  *   Example:
  *
  *   ```kotlin
- *   class MyModuleEntity(val name: String) : WorkspaceEntityBase(), WorkspaceEntityWithPersistentId {
+ *   class MyModuleEntity(val name: String) : WorkspaceEntityBase(), WorkspaceEntityWithSymbolicId {
  *
  *      val childModule: MyModuleEntity? by OneToOneParent.Nullable(MyModuleEntity::class.java, true)
  *
- *      fun persistentId = NameId(name)
+ *      fun symbolicId = NameId(name)
  *   }
  *   ```
  *
@@ -44,7 +44,7 @@ import kotlin.reflect.KClass
  *   - Entity data should have the name ${entityName}Data. E.g. MyModuleEntityData.
  *   - Entity data should inherit [WorkspaceEntityData]
  *   - Properties (not references to other entities) should be listed in the body as lateinit var's or with default value (null, 0, false).
- *   - If the entity has PersistentId, the Entity data should extend [WorkspaceEntityData.WithCalculablePersistentId]
+ *   - If the entity has SymbolicId, the Entity data should extend [WorkspaceEntityData.WithCalculableSymbolicId]
  *   - References to other entities should not be listed in entity data.
  *
  *   - If the entity contains soft references to other entities (persistent id to other entities), entity data should extend SoftLinkable
@@ -61,10 +61,10 @@ import kotlin.reflect.KClass
  *   Example:
  *
  *   ```kotlin
- *   class MyModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<MyModuleEntity>() {
+ *   class MyModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<MyModuleEntity>() {
  *       lateinit var name: String
  *
- *       override fun persistentId(): NameId = NameId(name)
+ *       override fun symbolicId(): NameId = NameId(name)
  *
  *        override fun createEntity(snapshot: WorkspaceEntityStorage): MyModuleEntity = MyModuleEntity(name).also {
  *            addMetaData(it, snapshot)
@@ -76,7 +76,7 @@ import kotlin.reflect.KClass
  *
  *   -------------------------------------------------------------------------------------------------------------------------------
  *
- *  - Create [ModifiableWorkspaceEntity] representation:
+ *  - Create [Builder] representation:
  *   - The name should be: Modifiable${entityName}. E.g. ModifiableMyModuleEntity
  *   - This should be inherited from [ModifiableWorkspaceEntityBase]
  *   - Properties (not references to other entities) should be listed in the body as delegation to [EntityDataDelegation()]
@@ -183,7 +183,7 @@ data class EntityLink(
 val EntityLink.remote: EntityLink
   get() = EntityLink(!this.isThisFieldChild, connectionId)
 
-abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEntityBase(), ModifiableWorkspaceEntity<T> {
+abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEntityBase(), WorkspaceEntity.Builder<T> {
   /**
    * In case any of two referred entities is not added to diff, the reference between entities will be stored in this field
    */
@@ -522,10 +522,10 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
 }
 
 interface SoftLinkable {
-  fun getLinks(): Set<PersistentEntityId<*>>
-  fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>)
-  fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>)
-  fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean
+  fun getLinks(): Set<SymbolicEntityId<*>>
+  fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>)
+  fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>)
+  fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean
 }
 
 abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, SerializableEntityData {
@@ -538,7 +538,7 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
 
   abstract fun createEntity(snapshot: EntityStorage): E
 
-  abstract fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<E>
+  abstract fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<E>
 
   abstract fun getEntityInterface(): Class<out WorkspaceEntity>
 
@@ -609,11 +609,11 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
 
   /**
    * Temporally solution.
-   * Get persistent Id without creating of TypedEntity. Should be in sync with TypedEntityWithPersistentId.
-   * But it doesn't everywhere. E.g. FacetEntity where we should resolve module before creating persistent id.
+   * Get symbolic Id without creating of TypedEntity. Should be in sync with TypedEntityWithSymbolicId.
+   * But it doesn't everywhere. E.g. FacetEntity where we should resolve module before creating symbolic id.
    */
-  abstract class WithCalculablePersistentId<E : WorkspaceEntity> : WorkspaceEntityData<E>() {
-    abstract fun persistentId(): PersistentEntityId<*>
+  abstract class WithCalculableSymbolicId<E : WorkspaceEntity> : WorkspaceEntityData<E>() {
+    abstract fun symbolicId(): SymbolicEntityId<*>
   }
 
   protected fun <T: WorkspaceEntity> getCached(storage: EntityStorage, init: () -> T): T {
@@ -626,8 +626,8 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
   }
 }
 
-fun WorkspaceEntityData<*>.persistentId(): PersistentEntityId<*>? = when (this) {
-  is WorkspaceEntityData.WithCalculablePersistentId -> this.persistentId()
+fun WorkspaceEntityData<*>.symbolicId(): SymbolicEntityId<*>? = when (this) {
+  is WorkspaceEntityData.WithCalculableSymbolicId -> this.symbolicId()
   else -> null
 }
 

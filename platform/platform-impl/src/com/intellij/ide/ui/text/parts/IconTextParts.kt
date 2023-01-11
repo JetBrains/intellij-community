@@ -23,7 +23,8 @@ open class IconTextPart(icon: Icon) : TextPart("") {
   }
 
   override fun insertToTextPane(textPane: JTextPane, startOffset: Int): Int {
-    val height = textPane.getFontMetrics(textPane.font).ascent  // fake height to place icon little lower
+    val fontMetrics = textPane.getFontMetrics(fontGetter())
+    val height = icon.iconHeight - fontMetrics.descent + 1  // fake height to place icon little lower
     textPane.insertIconWithFixedHeight(icon, height)
     return startOffset + 1
   }

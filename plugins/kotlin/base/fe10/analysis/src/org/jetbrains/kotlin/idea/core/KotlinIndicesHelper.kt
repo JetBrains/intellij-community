@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
 import org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
@@ -93,13 +92,19 @@ class KotlinIndicesHelper(
         name: String
     ) {
         index.get(name, project, scope)
-            .filterTo(this) { it.parent is KtFile && it is KtCallableDeclaration && it.receiverTypeReference == null }
+            .filterTo(this) {
+                ProgressManager.checkCanceled()
+                it.parent is KtFile && it is KtCallableDeclaration && it.receiverTypeReference == null
+            }
     }
 
     fun getTopLevelExtensionOperatorsByName(name: String): Collection<FunctionDescriptor> {
         return KotlinFunctionShortNameIndex.get(name, project, scope)
             .filter { it.parent is KtFile && it.receiverTypeReference != null && it.hasModifier(KtTokens.OPERATOR_KEYWORD) }
-            .flatMap { it.resolveToDescriptors<FunctionDescriptor>() }
+            .flatMap {
+                ProgressManager.checkCanceled()
+                it.resolveToDescriptors<FunctionDescriptor>()
+            }
             .filter { descriptorFilter(it) && it.extensionReceiverParameter != null }
             .distinct()
     }
@@ -107,7 +112,10 @@ class KotlinIndicesHelper(
     fun getMemberOperatorsByName(name: String): Collection<FunctionDescriptor> {
         return KotlinFunctionShortNameIndex.get(name, project, scope)
             .filter { it.parent is KtClassBody && it.receiverTypeReference == null && it.hasModifier(KtTokens.OPERATOR_KEYWORD) }
-            .flatMap { it.resolveToDescriptors<FunctionDescriptor>() }
+            .flatMap {
+                ProgressManager.checkCanceled()
+                it.resolveToDescriptors<FunctionDescriptor>()
+            }
             .filter { descriptorFilter(it) && it.extensionReceiverParameter == null }
             .distinct()
     }
@@ -483,6 +491,7 @@ class KotlinIndicesHelper(
         processor: (ClassDescriptor) -> Unit
     ) {
         val classOrObjectProcessor = Processor<KtClassOrObject> { classOrObject ->
+            ProgressManager.checkCanceled()
             classOrObject.resolveToDescriptorsWithHack(psiFilter).forEach {
                 val descriptor = it as? ClassDescriptor ?: return@forEach
                 ProgressManager.checkCanceled()

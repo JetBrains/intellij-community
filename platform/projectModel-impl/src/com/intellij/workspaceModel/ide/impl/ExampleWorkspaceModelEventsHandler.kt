@@ -11,7 +11,7 @@ import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 /**
@@ -123,7 +123,7 @@ class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposab
   }
 
   private fun handleJavaSourceRootChanged(event: VersionedStorageChange) {
-    event.getChanges(JavaSourceRootEntity::class.java).forEach { change ->
+    event.getChanges(JavaSourceRootPropertiesEntity::class.java).forEach { change ->
       if (isInUnloadedModule(event, change){ sourceRoot.contentRoot.module }) return@forEach
       updateCache()
     }
@@ -131,10 +131,10 @@ class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposab
 
   /**
    * If cache invalidation depends on specific properties e.g. [org.jetbrains.jps.model.java.JavaResourceRootProperties.getRelativeOutputPath]
-   * changes from [JavaResourceRootEntity] should be handled
+   * changes from [JavaResourceRootPropertiesEntity] should be handled
    */
   private fun handleJavaResourceRootChanged(event: VersionedStorageChange) {
-    event.getChanges(JavaResourceRootEntity::class.java).forEach { change ->
+    event.getChanges(JavaResourceRootPropertiesEntity::class.java).forEach { change ->
       if (isInUnloadedModule(event, change) { sourceRoot.contentRoot.module }) return@forEach
       updateCache()
     }
@@ -209,7 +209,7 @@ class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposab
   }
 
   private fun libraryIsDependency(library: LibraryEntity, project: Project): Boolean {
-    return ModuleDependencyIndex.getInstance(project).hasDependencyOn(library.persistentId)
+    return ModuleDependencyIndex.getInstance(project).hasDependencyOn(library.symbolicId)
   }
 
   private fun updateCache() { }

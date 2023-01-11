@@ -562,7 +562,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private static assertIsIndexed(VirtualFile vFile) {
-    assertTrue(((VirtualFileSystemEntry)vFile).isFileIndexed() || VfsData.isIsIndexedFlagDisabled)
+    assertTrue(((VirtualFileSystemEntry)vFile).isFileIndexed() || VfsData.isIsIndexedFlagDisabled())
   }
 
   void "test no index stamp update when no change 2"() throws IOException {

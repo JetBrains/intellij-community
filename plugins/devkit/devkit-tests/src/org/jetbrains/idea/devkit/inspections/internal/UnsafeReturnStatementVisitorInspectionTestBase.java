@@ -9,7 +9,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("unused")
 public abstract class UnsafeReturnStatementVisitorInspectionTestBase extends JavaCodeInsightFixtureTestCase {
 
   @Override

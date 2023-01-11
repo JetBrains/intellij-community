@@ -8,10 +8,12 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.HintAction
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.packageDependencies.DependencyValidationManager
@@ -89,20 +91,23 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
     expression: T,
     factory: Factory
 ) : KotlinQuickFixAction<T>(expression), HintAction, HighPriorityAction {
+
     private val project = expression.project
 
     private val modificationCountOnCreate = PsiModificationTracker.getInstance(project).modificationCount
 
-    private val suggestionDescriptors = lazy(::collectSuggestionDescriptors)
+    protected lateinit var suggestions: Collection<FqName>
 
-    protected val suggestions = lazy(::collectSuggestions)
+    @IntentionName
+    private lateinit var text: String
 
-    private val text = lazy(::calculateText)
-    fun computeSuggestions() {
-        suggestions.value
+    internal fun computeSuggestions() {
+        val suggestionDescriptors = collectSuggestionDescriptors()
+        suggestions = collectSuggestions(suggestionDescriptors)
+        text = calculateText(suggestionDescriptors)
     }
 
-    protected fun suggestions() = suggestions.value
+    internal fun suggestions() = suggestions
 
     protected open val supportedErrors = factory.supportedErrors.toSet()
 
@@ -119,14 +124,15 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
             !DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled ||
             HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) return false
 
-        if (!suggestions.isInitialized() || suggestions().isEmpty()) return false
+        if (suggestions.isEmpty()) return false
 
         return createAction(project, editor, element).showHint()
     }
 
-    private fun calculateText(): String {
+    @IntentionName
+    private fun calculateText(suggestionDescriptors: Collection<DeclarationDescriptor>): String {
         val descriptors  =
-            suggestionDescriptors.value.mapTo(hashSetOf()) { it.original }
+            suggestionDescriptors.mapTo(hashSetOf()) { it.original }
 
         val ktFile = element?.containingKtFile ?: return KotlinBundle.message("fix.import")
         val languageVersionSettings = ktFile.languageVersionSettings
@@ -171,7 +177,7 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
             val sortedNames = TreeSet<ImportName>(compareBy({ it.priority }, { it.kind }, { it.name }))
             sortedNames.addAll(names)
             val firstName = sortedNames.first().name
-            val singlePackage = suggestions.value.groupBy { it.parentOrNull() ?: FqName.ROOT }.size == 1
+            val singlePackage = suggestions.groupBy { it.parentOrNull() ?: FqName.ROOT }.size == 1
 
             if (singlePackage) {
                 val size = sortedNames.size
@@ -201,12 +207,12 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
         fun toText(number: Int) = KotlinBundle.message(key, if (number == 1) 1 else 2)
     }
 
-    override fun getText(): String = text.value
+    override fun getText(): String = text
 
     override fun getFamilyName() = KotlinBundle.message("fix.import")
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
-        return element != null && suggestions().isNotEmpty()
+        return element != null && suggestions.isNotEmpty()
     }
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
@@ -221,12 +227,12 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
     private fun isOutdated() = modificationCountOnCreate != PsiModificationTracker.getInstance(project).modificationCount
 
     open fun createAction(project: Project, editor: Editor, element: KtExpression): KotlinAddImportAction {
-        return createSingleImportAction(project, editor, element, suggestions())
+        return createSingleImportAction(project, editor, element, suggestions)
     }
 
     private fun createActionWithAutoImportsFilter(project: Project, editor: Editor, element: KtExpression): KotlinAddImportAction {
         val filteredSuggestions =
-            KotlinAutoImportsFilter.filterSuggestionsIfApplicable(element.containingKtFile, suggestions())
+            KotlinAutoImportsFilter.filterSuggestionsIfApplicable(element.containingKtFile, suggestions)
 
         return createSingleImportAction(project, editor, element, filteredSuggestions)
     }
@@ -237,16 +243,12 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
         val callTypeAndReceiver = getCallTypeAndReceiver() ?: return emptyList()
         if (callTypeAndReceiver is CallTypeAndReceiver.UNKNOWN) return emptyList()
 
-        if (importNames.isEmpty()) return emptyList()
-
-        return importNames
-            .flatMap { collectSuggestionsForName(it, callTypeAndReceiver) }
+        return importNames.flatMap { collectSuggestionsForName(it, callTypeAndReceiver) }
     }
 
-    fun collectSuggestions(): Collection<FqName> =
-        suggestionDescriptors.value
+    private fun collectSuggestions(suggestionDescriptors: Collection<DeclarationDescriptor>): Collection<FqName> =
+        suggestionDescriptors
             .asSequence()
-            .distinct()
             .map { it.fqNameSafe }
             .distinct()
             .toList()
@@ -333,7 +335,7 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 
         final override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             return try {
-                createImportAction(diagnostic)
+                createImportAction(diagnostic)?.also { it.computeSuggestions() }
             } catch (ex: KotlinExceptionWithAttachments) {
                 // Sometimes fails with
                 // <production sources for module light_idea_test_case> is a module[ModuleDescriptorImpl@508c55a2] is not contained in resolver...
@@ -365,6 +367,7 @@ internal abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, f
 
         if (expression is KtSimpleNameExpression) {
             if (!expression.isImportDirectiveExpression() && !isSelectorInQualified(expression)) {
+                ProgressManager.checkCanceled()
                 val filterByCallType = callTypeAndReceiver.toFilter()
 
                 indicesHelper.getClassesByName(expression, name).filterTo(result, filterByCallType)
@@ -384,6 +387,7 @@ internal abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, f
                 }
             }
         }
+        ProgressManager.checkCanceled()
 
         result.addAll(
             indicesHelper.getCallableTopLevelExtensions(
@@ -438,6 +442,7 @@ internal abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, f
 // This is required to be abstract to reduce bunch file size
 internal abstract class AbstractImportFix(expression: KtSimpleNameExpression, factory: Factory) :
     OrdinaryImportFixBase<KtSimpleNameExpression>(expression, factory) {
+
     override fun getCallTypeAndReceiver() = element?.let { CallTypeAndReceiver.detect(it) }
 
     private fun importNamesForMembers(): Collection<Name> {
@@ -471,6 +476,8 @@ internal abstract class AbstractImportFix(expression: KtSimpleNameExpression, fa
 
         indicesHelper.getKotlinEnumsByName(name).filterTo(result, filterByCallType)
 
+        ProgressManager.checkCanceled()
+
         val actualReceivers = getReceiversForExpression(element, callTypeAndReceiver, bindingContext)
 
         if (isSelectorInQualified(element) && actualReceivers.explicitReceivers.isEmpty()) {
@@ -489,6 +496,7 @@ internal abstract class AbstractImportFix(expression: KtSimpleNameExpression, fa
         }
 
         val processor = { descriptor: CallableDescriptor ->
+            ProgressManager.checkCanceled()
             if (descriptor.canBeReferencedViaImport() && filterByCallType(descriptor)) {
                 if (descriptor.extensionReceiverParameter != null) {
                     result.addAll(
@@ -612,7 +620,7 @@ internal class ImportConstructorReferenceFix(expression: KtSimpleNameExpression)
     }
 
     override fun createAction(project: Project, editor: Editor, element: KtExpression): KotlinAddImportAction {
-        return createSingleImportActionForConstructor(project, editor, element, suggestions())
+        return createSingleImportActionForConstructor(project, editor, element, suggestions)
     }
 
     override val importNames = element?.mainReference?.resolvesByNames ?: emptyList()
@@ -695,7 +703,7 @@ internal class DelegateAccessorsImportFix(
             return createGroupedImportsAction(
                 project, editor, element,
                 KotlinBundle.message("fix.import.kind.delegate.accessors"),
-                suggestions()
+                suggestions
             )
         }
 
@@ -751,7 +759,7 @@ internal class ComponentsImportFix(
             return createGroupedImportsAction(
                 project, editor, element,
                 KotlinBundle.message("fix.import.kind.component.functions"),
-                suggestions()
+                suggestions
             )
         }
 

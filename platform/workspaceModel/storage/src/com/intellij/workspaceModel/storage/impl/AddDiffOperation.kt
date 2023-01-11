@@ -41,7 +41,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
         is ChangeEntry.AddEntity -> {
           LOG.trace { "addDiff: newEntity" }
 
-          checkPersistentId(change.entityData, null)
+          checkSymbolicId(change.entityData, null)
 
           val sourceEntityId = change.entityData.createEntityId().notThis()
 
@@ -201,7 +201,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     val newTargetEntityData = change.newData.clone()
     newTargetEntityData.id = targetEntityId.id.arrayId
 
-    checkPersistentId(change.newData, newTargetEntityData.createEntityId())
+    checkSymbolicId(change.newData, newTargetEntityData.createEntityId())
 
     // We don't modify entity that doesn't exist in target version of storage
     val existingTargetEntityData = target.entityDataById(targetEntityId.id) ?: return
@@ -214,13 +214,13 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     target.indexes.updateIndices(sourceEntityId.id, newTargetEntityData, diff)
 
     val newEntityId = newTargetEntityData.createEntityId()
-    val oldPersistentId = target.entityDataById(newEntityId)?.persistentId()
+    val oldSymbolicId = target.entityDataById(newEntityId)?.symbolicId()
 
     /// Replace entity data. id should not be changed
     target.entitiesByType.replaceById(newTargetEntityData, sourceEntityId.id.clazz)
 
     // Restore soft references
-    target.indexes.updatePersistentIdIndexes(target, newTargetEntityData.createEntity(target), oldPersistentId, newTargetEntityData)
+    target.indexes.updateSymbolicIdIndexes(target, newTargetEntityData.createEntity(target), oldSymbolicId, newTargetEntityData)
 
 
     val addedChildrenMap = HashMultimap.create<ConnectionId, ChildEntityId>()
@@ -367,21 +367,21 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     }
   }
 
-  private fun checkPersistentId(entityData: WorkspaceEntityData<out WorkspaceEntity>, newEntityId: EntityId?) {
-    val newPersistentId = entityData.persistentId()
-    if (newPersistentId != null) {
-      val existingIds = target.indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
+  private fun checkSymbolicId(entityData: WorkspaceEntityData<out WorkspaceEntity>, newEntityId: EntityId?) {
+    val newSymbolicId = entityData.symbolicId()
+    if (newSymbolicId != null) {
+      val existingIds = target.indexes.symbolicIdIndex.getIdsByEntry(newSymbolicId)
       if (existingIds != null) {
         val existingIdCheck = if (newEntityId != null) existingIds != newEntityId else true
         if (existingIdCheck) {
-          // target persistent id exists already.
+          // target symbolic id exists already.
           val existingEntityData = target.entityDataByIdOrDie(existingIds)
           LOG.debug("Removing existing entity... $existingIds")
           target.removeEntity(existingEntityData.createEntity(target))
           target.addDiffAndReport(
             """
-                        Persistent ID already exists. Removing old entity
-                        Persistent ID: $newPersistentId
+                        Symbolic ID already exists. Removing old entity
+                        Symbolic ID: $newSymbolicId
                         Existing entity data: $existingEntityData
                         New entity data: $entityData
                         """.trimIndent(), initialStorage, diff)

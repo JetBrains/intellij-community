@@ -211,7 +211,7 @@ public final class Utils {
       if (elapsed > 1000) {
         LOG.warn(elapsed + " ms to expandActionGroup@" + place);
       }
-      ActionsCollectorImpl.recordActionGroupExpanded(group, context, place, elapsed, result);
+      ActionsCollectorImpl.recordActionGroupExpanded(group, context, place, false, elapsed, result);
     }
   }
 
@@ -360,8 +360,8 @@ public final class Utils {
       if (elapsed > 1000) {
         LOG.warn(elapsed + " ms to fillMenu@" + place);
       }
-      boolean submenu = component instanceof ActionMenu;
-      ActionsCollectorImpl.recordActionGroupExpanded(group, context, !submenu ? place : place + " (submenu)", elapsed, result);
+      boolean submenu = component instanceof ActionMenu && component.getParent() != null;
+      ActionsCollectorImpl.recordActionGroupExpanded(group, context, place, submenu, elapsed, result);
     }
   }
 

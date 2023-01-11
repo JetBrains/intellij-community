@@ -5,10 +5,9 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -168,7 +167,7 @@ class ReferredEntityData : WorkspaceEntityData<ReferredEntity>() {
 
   fun isNameInitialized(): Boolean = ::name.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ReferredEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ReferredEntity> {
     val modifiable = ReferredEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

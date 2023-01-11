@@ -11,9 +11,9 @@ import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ExcludeUrlEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.contentRoot
+import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.contentRoot
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue

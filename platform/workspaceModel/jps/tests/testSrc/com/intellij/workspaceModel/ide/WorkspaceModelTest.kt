@@ -14,7 +14,7 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import junit.framework.Assert.*
 import org.junit.*
 

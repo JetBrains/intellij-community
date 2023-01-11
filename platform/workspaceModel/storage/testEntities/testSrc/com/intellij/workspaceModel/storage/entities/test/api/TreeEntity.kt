@@ -5,7 +5,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -19,7 +19,7 @@ interface TreeEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : TreeEntity, ModifiableWorkspaceEntity<TreeEntity>, ObjBuilder<TreeEntity> {
+  interface Builder : TreeEntity, WorkspaceEntity.Builder<TreeEntity>, ObjBuilder<TreeEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var children: List<TreeEntity>

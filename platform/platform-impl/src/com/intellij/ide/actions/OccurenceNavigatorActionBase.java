@@ -1,14 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.Navigatable;
@@ -24,6 +27,8 @@ import java.awt.*;
 import java.util.LinkedList;
 
 abstract class OccurenceNavigatorActionBase extends DumbAwareAction {
+
+  private static final Logger LOG = Logger.getInstance(OccurenceNavigatorActionBase.class);
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -82,7 +87,13 @@ abstract class OccurenceNavigatorActionBase extends DumbAwareAction {
       boolean enabled = Boolean.TRUE.equals(session.compute(
         navigator, "hasOccurenceToGo", navigator.getActionUpdateThread(), () -> hasOccurenceToGo(navigator)));
       presentation.setEnabled(enabled);
-      presentation.setText(getDescription(navigator));
+      String description = getDescription(navigator);
+      if (StringUtil.isEmpty(description)) {
+        LOG.error(PluginException.createByClass("Empty description provided by " + navigator.getClass().getName(), null, navigator.getClass()));
+      }
+      else {
+        presentation.setText(description);
+      }
     }
     catch (IndexNotReadyException e) {
       presentation.setEnabled(false);

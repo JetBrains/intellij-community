@@ -1211,11 +1211,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     }
 
     @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-
-    @Override
     protected Boolean hideEmptyMiddlePackages(@NotNull DataContext dataContext) {
       Project project = dataContext.getData(CommonDataKeys.PROJECT);
       return project != null && ProjectView.getInstance(project).isHideEmptyMiddlePackages(AbstractProjectViewPane.this.getId());

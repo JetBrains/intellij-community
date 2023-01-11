@@ -25,7 +25,7 @@ internal class ToolWindowIcon(private val icon: Icon,
 
   override fun getMenuBarIcon(isDark: Boolean) = ToolWindowIcon(IconLoader.getMenuBarIcon(icon, isDark), toolWindowId)
 
-  override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     icon.paintIcon(c, g, x, y)
   }
 

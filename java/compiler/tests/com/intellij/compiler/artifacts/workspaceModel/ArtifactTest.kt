@@ -36,10 +36,10 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactRootElementEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addCustomPackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactRootElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactPropertiesEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactRootElementEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase
 import org.junit.runner.RunWith

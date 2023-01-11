@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("unused")
 abstract public class UnspecifiedActionsPlaceInspectionTestBase extends JavaCodeInsightFixtureTestCase {
 
   @Override

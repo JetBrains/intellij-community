@@ -39,7 +39,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonIdeLanguageCustomization;
 import com.jetbrains.python.psi.LanguageLevel;

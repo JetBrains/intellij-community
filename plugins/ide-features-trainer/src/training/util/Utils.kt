@@ -28,6 +28,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -136,6 +137,9 @@ fun getFeedbackLink(langSupport: LangSupport, ownRegistry: Boolean): String? {
 
 val switchOnExperimentalLessons: Boolean
   get() = Registry.`is`("ift.experimental.lessons", false)
+
+val enableLessonsAndPromoters: Boolean
+  get() = !ExperimentalUI.isNewUI() || Registry.`is`("ift.enable.in.new.ui", false)
 
 fun invokeActionForFocusContext(action: AnAction) {
   DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->

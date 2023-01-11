@@ -52,26 +52,26 @@ suspend inline fun <T> SpanBuilder.useWithScope2(crossinline operation: suspend 
   }
 }
 
-inline fun <T> computeWithSpan(tracer: Tracer, scopeName: String, operation: (Span) -> T): T {
-  return tracer.spanBuilder(scopeName).useWithScope(operation)
+inline fun <T> computeWithSpan(tracer: Tracer, spanName: String, operation: (Span) -> T): T {
+  return tracer.spanBuilder(spanName).useWithScope(operation)
 }
 
-inline fun runWithSpan(tracer: Tracer, scopeName: String, operation: (Span) -> Unit) {
-  tracer.spanBuilder(scopeName).useWithScope(operation)
+inline fun runWithSpan(tracer: Tracer, spanName: String, operation: (Span) -> Unit) {
+  tracer.spanBuilder(spanName).useWithScope(operation)
 }
 
 internal fun <T> computeWithSpanIgnoreThrows(tracer: Tracer,
-                                             scopeName: String,
+                                             spanName: String,
                                              operation: ThrowableNotNullFunction<Span, T, out Throwable>): T {
-  return tracer.spanBuilder(scopeName).useWithScope(operation::`fun`)
+  return tracer.spanBuilder(spanName).useWithScope(operation::`fun`)
 }
 
-internal fun runWithSpanIgnoreThrows(tracer: Tracer, scopeName: String, operation: ThrowableConsumer<Span, out Throwable>) {
-  tracer.spanBuilder(scopeName).useWithScope(operation::consume)
+internal fun runWithSpanIgnoreThrows(tracer: Tracer, spanName: String, operation: ThrowableConsumer<Span, out Throwable>) {
+  tracer.spanBuilder(spanName).useWithScope(operation::consume)
 }
 
-fun runWithSpan(tracer: Tracer, scopeName: String, operation: Consumer<Span>) {
-  tracer.spanBuilder(scopeName).useWithScope(operation::accept)
+fun runWithSpan(tracer: Tracer, spanName: String, operation: Consumer<Span>) {
+  tracer.spanBuilder(spanName).useWithScope(operation::accept)
 }
 
 inline fun <T> SpanBuilder.use(operation: (Span) -> T): T {

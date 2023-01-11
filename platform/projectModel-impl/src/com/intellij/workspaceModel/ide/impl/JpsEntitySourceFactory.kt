@@ -6,8 +6,8 @@ import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 object JpsEntitySourceFactory {

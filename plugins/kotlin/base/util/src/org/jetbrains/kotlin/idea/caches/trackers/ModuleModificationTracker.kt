@@ -8,7 +8,7 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 class ModuleModificationTracker(project: Project) :
     SimpleModificationTracker(), WorkspaceModelChangeListener, Disposable {

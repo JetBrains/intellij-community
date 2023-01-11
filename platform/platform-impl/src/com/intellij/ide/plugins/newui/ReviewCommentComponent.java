@@ -15,8 +15,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.io.URLUtil;
@@ -44,7 +42,7 @@ public class ReviewCommentComponent extends JPanel {
     myCommendId = comment.getId();
     setLayout(new BorderLayout());
     setOpaque(true);
-    setBorder(JBUI.Borders.empty(12, 16));
+    setBorder(JBUI.Borders.empty(6, 16));
 
     JPanel topWrapper = new NonOpaquePanel(new BorderLayout());
     topWrapper.setBorder(JBUI.Borders.emptyBottom(7));
@@ -131,7 +129,7 @@ public class ReviewCommentComponent extends JPanel {
       setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
     }
     else if (state == EventHandler.SelectionType.HOVER) {
-      setBackground(new JBColor(Gray.xF8, JBUI.CurrentTheme.Table.Hover.background(true)));
+      setBackground(ListPluginComponent.HOVER_COLOR);
     }
     //myMoreButton.setVisible(state == EventHandler.SelectionType.HOVER || myShowPopup); // TODO: rollback after adding a few more actions
     myState = state;

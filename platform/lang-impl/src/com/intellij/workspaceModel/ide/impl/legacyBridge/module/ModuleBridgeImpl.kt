@@ -27,9 +27,9 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
@@ -48,7 +48,7 @@ internal class ModuleBridgeImpl(
       project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
         override fun beforeChanged(event: VersionedStorageChange) {
           event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
-            if (it.entity.persistentId != moduleEntityId) return@forEach
+            if (it.entity.symbolicId != moduleEntityId) return@forEach
 
             if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
 

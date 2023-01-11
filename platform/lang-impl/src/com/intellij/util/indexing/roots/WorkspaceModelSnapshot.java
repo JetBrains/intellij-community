@@ -23,7 +23,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryEntityUtils;
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge;
 import com.intellij.workspaceModel.storage.*;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*;
+import com.intellij.workspaceModel.storage.bridgeEntities.*;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -259,7 +259,7 @@ class WorkspaceModelSnapshot {
                                  ((EntityChange.Replaced<LibraryEntity>)change).getNewEntity(), storage);
         }
         else if (change instanceof EntityChange.Removed<LibraryEntity>) {
-          snapshot.removeLibrary(((EntityChange.Removed<LibraryEntity>)change).getEntity().getPersistentId());
+          snapshot.removeLibrary(((EntityChange.Removed<LibraryEntity>)change).getEntity().getSymbolicId());
         }
         else {
           throw new IllegalStateException("Unexpected change " + change.getClass());
@@ -364,8 +364,8 @@ class WorkspaceModelSnapshot {
     private void updateLibrary(@NotNull LibraryEntity oldEntity,
                                @NotNull LibraryEntity newEntity,
                                @NotNull EntityStorage storage) {
-      //LibraryId oldId = oldEntity.getPersistentId();
-      LibraryId newId = newEntity.getPersistentId();
+      //LibraryId oldId = oldEntity.getSymbolicId();
+      LibraryId newId = newEntity.getSymbolicId();
       //if (!oldId.equals(newId)) {
       //  todo[lene] test rename of a lib
       //}

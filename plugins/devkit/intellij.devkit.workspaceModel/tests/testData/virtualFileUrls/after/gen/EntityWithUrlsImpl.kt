@@ -5,7 +5,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -191,7 +190,7 @@ class EntityWithUrlsData : WorkspaceEntityData<EntityWithUrls>() {
   fun isListOfUrlsInitialized(): Boolean = ::listOfUrls.isInitialized
   fun isDataClassWithUrlInitialized(): Boolean = ::dataClassWithUrl.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<EntityWithUrls> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<EntityWithUrls> {
     val modifiable = EntityWithUrlsImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

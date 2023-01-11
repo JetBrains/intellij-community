@@ -7,6 +7,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessItemsListBase
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.list.AttachListColumnSettingsState
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.tree.AttachTreeColumnSettingsState
+import com.intellij.xdebugger.impl.ui.attach.dialog.statistics.AttachDialogStatisticsCollector
 
 internal class AttachDialogState(val dialogDisposable: Disposable) {
 
@@ -37,6 +38,9 @@ internal class AttachDialogState(val dialogDisposable: Disposable) {
 
   init {
     selectedViewType.afterChange {
+      if (getDefaultView() != it) {
+        AttachDialogStatisticsCollector.viewSwitched(it)
+      }
       PropertiesComponent.getInstance().setValue(IS_ATTACH_VIEW_TREE_ENABLED, it == AttachViewType.TREE)
     }
   }

@@ -3,11 +3,12 @@ package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.deft.api.annotations.Default
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 interface FinalFieldsEntity: WorkspaceEntity {
@@ -32,7 +33,7 @@ interface FinalFieldsEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : FinalFieldsEntity, ModifiableWorkspaceEntity<FinalFieldsEntity>, ObjBuilder<FinalFieldsEntity> {
+  interface Builder : FinalFieldsEntity, WorkspaceEntity.Builder<FinalFieldsEntity>, ObjBuilder<FinalFieldsEntity> {
     override var entitySource: EntitySource
     override var descriptor: AnotherDataClass
     override var description: String

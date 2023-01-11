@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.*

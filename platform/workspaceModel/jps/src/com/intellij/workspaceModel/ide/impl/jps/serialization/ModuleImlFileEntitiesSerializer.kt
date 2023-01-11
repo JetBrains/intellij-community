@@ -16,7 +16,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGene
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -302,7 +301,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           val originalName = nameAttributeValue ?: "${LibraryNameGenerator.UNNAMED_LIBRARY_NAME_PREFIX}${nextUnnamedLibraryIndex++}"
           val name = LibraryNameGenerator.generateUniqueLibraryName(originalName) { it in moduleLibraryNames }
           moduleLibraryNames.add(name)
-          val tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId)
+          val tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.symbolicId)
           loadLibrary(name, libraryElement, tableId, builder, contentRotEntitySource, virtualFileManager, false)
           val libraryId = LibraryId(name, tableId)
           ModuleDependencyItem.Exportable.LibraryDependency(libraryId, dependencyElement.isExported(), dependencyElement.readScope())

@@ -606,6 +606,14 @@
       },
       "PackageTagSelected.background": "Blue10",
       "PackageTagSelected.foreground": "Grey13"
+    },
+    "RunWidget" : {
+      "foreground": "Grey13",
+      "background": "Blue5",
+      "runningBackground": "Green5",
+      "hoverBackground": "#00000019",
+      "pressedBackground": "#00000028",
+      "separatorColor": "#FFFFFF40"
     }
   },
 

@@ -63,7 +63,7 @@ class StorageIndexiesTest {
     val builder = MutableEntityStorage.create()
     builder as MutableEntityStorageImpl
     builder.addEntity(entity)
-    val entityIds = builder.indexes.persistentIdIndex.getIdsByEntry(entity.persistentId)
+    val entityIds = builder.indexes.symbolicIdIndex.getIdsByEntry(entity.symbolicId)
     assertNotNull(entityIds)
   }
 

@@ -11,8 +11,8 @@ import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.workspaceModel.ide.impl.virtualFile
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRootTypeId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.ucache.relativeName

@@ -167,6 +167,51 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
+    override fun visitPyAnnotation(node: PyAnnotation) {
+      fun PyAnnotation.findSelvesInAnnotation(context: TypeEvalContext): List<PyReferenceExpression> =
+        PsiTreeUtil.findChildrenOfAnyType(this.value, false, PyReferenceExpression::class.java).filter { refExpr ->
+          PyTypingTypeProvider.resolveToQualifiedNames(refExpr, context).any {
+            PyTypingTypeProvider.SELF == it || PyTypingTypeProvider.SELF_EXT == it
+          }
+        }
+
+      val selves = node.findSelvesInAnnotation(myTypeEvalContext)
+      if (selves.isEmpty()) {
+        return
+      }
+
+      fun registerProblemForSelves(message: String) {
+        selves.forEach {
+          registerProblem(it, message)
+        }
+      }
+
+      val classParent = PsiTreeUtil.getParentOfType(node, PyClass::class.java)
+      if (classParent == null) {
+        registerProblemForSelves(PyPsiBundle.message("INSP.type.hints.self.use.outside.class"))
+      }
+
+      val functionParent = PsiTreeUtil.getParentOfType(node, PyFunction::class.java)
+      if (functionParent != null) {
+        if (PyFunction.Modifier.STATICMETHOD == functionParent.modifier) {
+          registerProblemForSelves(PyPsiBundle.message("INSP.type.hints.self.use.in.staticmethod"))
+        }
+
+        val parameters = functionParent.parameterList.parameters
+        if (parameters.isNotEmpty()) {
+          val firstParameter = parameters[0]
+          val annotation = (firstParameter as? PyNamedParameter)?.annotation
+          if (annotation != null && firstParameter.isSelf && annotation.findSelvesInAnnotation(myTypeEvalContext).isEmpty()) {
+            val message = if (PyFunction.Modifier.CLASSMETHOD == functionParent.modifier)
+              PyPsiBundle.message("INSP.type.hints.self.use.for.cls.parameter.with.self.annotation")
+            else
+              PyPsiBundle.message("INSP.type.hints.self.use.for.self.parameter.with.self.annotation")
+            registerProblemForSelves(message)
+          }
+        }
+      }
+    }
+
     override fun visitPyFunction(node: PyFunction) {
       super.visitPyFunction(node)
 
@@ -365,7 +410,9 @@ class PyTypeHintsInspection : PyInspection() {
               PyTypingTypeProvider.ANNOTATED,
               PyTypingTypeProvider.ANNOTATED_EXT,
               PyTypingTypeProvider.TYPE_ALIAS,
-              PyTypingTypeProvider.TYPE_ALIAS_EXT -> {
+              PyTypingTypeProvider.TYPE_ALIAS_EXT,
+              PyTypingTypeProvider.SELF,
+              PyTypingTypeProvider.SELF_EXT -> {
                 val shortName = it.substringAfterLast('.')
                 registerProblem(base, PyPsiBundle.message("INSP.type.hints.type.cannot.be.used.with.instance.class.checks", shortName),
                                 ProblemHighlightType.GENERIC_ERROR)
@@ -593,6 +640,8 @@ class PyTypeHintsInspection : PyInspection() {
       val annotatedExtQName = QualifiedName.fromDottedString(PyTypingTypeProvider.ANNOTATED_EXT)
       val typeAliasQName = QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_ALIAS)
       val typeAliasExtQName = QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_ALIAS_EXT)
+      val typingSelf = QualifiedName.fromDottedString(PyTypingTypeProvider.SELF)
+      val typingExtSelf = QualifiedName.fromDottedString(PyTypingTypeProvider.SELF_EXT)
       val qNames = PyResolveUtil.resolveImportedElementQNameLocally(operand)
 
       var typingOnly = true
@@ -604,6 +653,7 @@ class PyTypeHintsInspection : PyInspection() {
           literalQName, literalExtQName -> checkLiteralParameter(index)
           annotatedQName, annotatedExtQName -> checkAnnotatedParameter(index)
           typeAliasQName, typeAliasExtQName -> reportParameterizedTypeAlias(index)
+          typingSelf, typingExtSelf -> reportParameterizedSelf(index)
           callableQName -> {
             callableExists = true
             checkCallableParameters(index)
@@ -624,6 +674,11 @@ class PyTypeHintsInspection : PyInspection() {
         registerProblem(index, PyPsiBundle.message("INSP.type.hints.type.alias.cannot.be.parameterized"),
                         ProblemHighlightType.GENERIC_ERROR)
       }
+    }
+
+    private fun reportParameterizedSelf(index: PyExpression) {
+      registerProblem(index, PyPsiBundle.message("INSP.type.hints.typing.self.cannot.be.parameterized"),
+                      ProblemHighlightType.GENERIC_ERROR)
     }
 
     private fun checkLiteralParameter(index: PyExpression) {

@@ -20,8 +20,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import static javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT;
 
 public final class TipDialog extends DialogWrapper {
   private final TipPanel myTipPanel;
@@ -70,7 +75,13 @@ public final class TipDialog extends DialogWrapper {
   protected JComponent createSouthPanel() {
     JComponent component = super.createSouthPanel();
     component.setBorder(JBUI.Borders.empty(13, 24, 15, 24));
-    UIUtil.setBackgroundRecursively(component, UIUtil.getTextFieldBackground());
+    UIUtil.setBackgroundRecursively(component, TipUiSettings.getPanelBackground());
+
+    String previousTipKey = "PreviousTip";
+    component.getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+      .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), previousTipKey);
+    component.getActionMap().put(previousTipKey, myTipPanel.myPreviousTipAction);
+
     return component;
   }
 
@@ -78,6 +89,17 @@ public final class TipDialog extends DialogWrapper {
   public void doCancelAction() {
     super.doCancelAction();
     TipsOfTheDayUsagesCollector.triggerDialogClosed(myShowingOnStartup);
+
+    Map<String, Boolean> tipIdToLikenessState = myTipPanel.getTipIdToLikenessStateMap();
+    for (Map.Entry<String, Boolean> pair : tipIdToLikenessState.entrySet()) {
+      String tipId = pair.getKey();
+      Boolean likenessState = pair.getValue();
+      TipsFeedback feedback = TipsFeedback.getInstance();
+      feedback.setLikenessState(tipId, likenessState);
+      if (likenessState != null) {
+        feedback.scheduleFeedbackSending(tipId, likenessState);
+      }
+    }
   }
 
   @Override

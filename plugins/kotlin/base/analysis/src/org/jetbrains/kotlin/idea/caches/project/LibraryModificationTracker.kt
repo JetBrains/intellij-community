@@ -19,7 +19,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 

@@ -32,6 +32,7 @@ public abstract class ConvertToGrayQuickFixTestBase extends JavaCodeInsightFixtu
                              public Color(int rgb) {}
                          }
                          """);
+    // adding it via 'PsiTestUtil.addLibrary()' causes issues in Kotlin tests (it can't link JBColor/Gray with Color added with addClass()
     myFixture.addClass("""
                          package com.intellij.ui;
                          import java.awt.Color;

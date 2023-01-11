@@ -9,12 +9,12 @@ import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.facet.FacetManagerState
 import org.jetbrains.jps.model.serialization.facet.FacetState
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 
 internal class FacetsSerializer(private val imlFileUrl: VirtualFileUrl, private val internalSource: JpsFileEntitySource,
                                 private val componentName: String, private val baseModuleDirPath: String?, private val externalStorage: Boolean) {

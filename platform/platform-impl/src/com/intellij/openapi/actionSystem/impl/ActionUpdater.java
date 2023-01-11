@@ -253,14 +253,15 @@ final class ActionUpdater {
         LOG.warn(myCurEDTWaitMillis + " ms to grab EDT for " + operationName);
       }
       if (myCurEDTPerformMillis > 200) {
-        Throwable throwable = new Throwable(elapsedReport(myCurEDTPerformMillis, true, operationName) + OLD_EDT_MSG_SUFFIX);
+        Throwable throwable = PluginException.createByClass(
+          elapsedReport(myCurEDTPerformMillis, true, operationName) + OLD_EDT_MSG_SUFFIX, null, action.getClass());
         FList<Throwable> edtTraces = edtTracesRef.get();
         // do not report pauses without EDT traces (e.g. due to debugging)
         if (edtTraces != null && edtTraces.size() > 0) {
           for (Throwable trace : edtTraces) {
             throwable.addSuppressed(trace);
           }
-          LOG.error(PluginException.createByClass(throwable, action.getClass()));
+          LOG.error(throwable);
         }
         else {
           LOG.warn(throwable);

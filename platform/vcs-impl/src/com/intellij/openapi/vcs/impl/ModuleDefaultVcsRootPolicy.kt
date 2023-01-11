@@ -9,7 +9,7 @@ import com.intellij.project.stateStore
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.virtualFile
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 
 open class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPolicy(project) {
   init {

@@ -13,7 +13,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 internal class GlobalChangedRepositoryLibrarySynchronizer(private val queue: LibrarySynchronizationQueue,
                                                           private val disposable: Disposable)
@@ -61,7 +61,7 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
   override fun beforeChanged(event: VersionedStorageChange) {
     for (change in event.getChanges(LibraryEntity::class.java)) {
       val removed = change as? EntityChange.Removed ?: continue
-      val library = findLibrary(removed.entity.persistentId, event.storageBefore)
+      val library = findLibrary(removed.entity.symbolicId, event.storageBefore)
       if (library != null) {
         queue.revokeSynchronization(library)
       }
@@ -90,7 +90,7 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
                      is EntityChange.Replaced -> change.newEntity
                      is EntityChange.Removed -> null
                    } ?: continue
-      val library = findLibrary(entity.persistentId, event.storageAfter)
+      val library = findLibrary(entity.symbolicId, event.storageAfter)
       if (library != null) {
         queue.requestSynchronization(library)
         libraryReloadRequested = true

@@ -16,7 +16,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModuleOptionsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.getOrCreateExternalSystemModuleOptions
 
 class ExternalSystemModulePropertyManagerBridge(private val module: Module) : ExternalSystemModulePropertyManager() {

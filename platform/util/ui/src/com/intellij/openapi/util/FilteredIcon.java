@@ -38,7 +38,7 @@ class FilteredIcon implements Icon {
       toPaint = IconLoader.renderFilteredIcon(baseIcon, filterSupplier, c);
       iconToPaint = toPaint;
     }
-    toPaint.paintIcon(c, g, x, y);
+    toPaint.paintIcon(c != null ? c : IconLoader.fakeComponent, g, x, y);
   }
 
   private long calculateModificationCount() {

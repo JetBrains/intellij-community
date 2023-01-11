@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRootTypeId;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId;
 import kotlin.Pair;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;

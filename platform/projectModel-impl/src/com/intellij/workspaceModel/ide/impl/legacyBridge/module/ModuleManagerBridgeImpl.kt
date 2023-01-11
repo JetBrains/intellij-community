@@ -32,7 +32,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibr
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import kotlinx.coroutines.*
 import org.jdom.Element
@@ -364,7 +364,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     val moduleFileUrl = getModuleVirtualFileUrl(moduleEntity)
 
     val module = createModule(
-      persistentId = moduleEntity.persistentId,
+      symbolicId = moduleEntity.symbolicId,
       name = moduleEntity.name,
       virtualFileUrl = moduleFileUrl,
       entityStorage = versionedStorage,
@@ -414,7 +414,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
   abstract fun loadModuleToBuilder(moduleName: String, filePath: String, diff: MutableEntityStorage): ModuleEntity
 
   abstract fun createModule(
-    persistentId: ModuleId,
+    symbolicId: ModuleId,
     name: String,
     virtualFileUrl: VirtualFileUrl?,
     entityStorage: VersionedEntityStorage,
@@ -483,7 +483,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
         val entitiesMap = storage.entitiesBySource { it == oldEntitySource }
         entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatten() }.forEach {
           if (it !is FacetEntity) {
-            diffBuilder.modifyEntity(ModifiableWorkspaceEntity::class.java, it) {
+            diffBuilder.modifyEntity(WorkspaceEntity.Builder::class.java, it) {
               this.entitySource = newSource
             }
           }

@@ -77,9 +77,7 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Devk
   }
 
   private static boolean isExtensionPointNameDeclarationField(UField uField) {
-    // *do* allow non-public
-    if (!uField.isFinal() ||
-        !uField.isStatic()) {
+    if (!uField.isFinal()) {
       return false;
     }
 

@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.storage.entities.test.api
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -17,7 +17,7 @@ interface BooleanEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : BooleanEntity, ModifiableWorkspaceEntity<BooleanEntity>, ObjBuilder<BooleanEntity> {
+  interface Builder : BooleanEntity, WorkspaceEntity.Builder<BooleanEntity>, ObjBuilder<BooleanEntity> {
     override var entitySource: EntitySource
     override var data: Boolean
   }
@@ -45,7 +45,7 @@ interface IntEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : IntEntity, ModifiableWorkspaceEntity<IntEntity>, ObjBuilder<IntEntity> {
+  interface Builder : IntEntity, WorkspaceEntity.Builder<IntEntity>, ObjBuilder<IntEntity> {
     override var entitySource: EntitySource
     override var data: Int
   }
@@ -73,7 +73,7 @@ interface StringEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : StringEntity, ModifiableWorkspaceEntity<StringEntity>, ObjBuilder<StringEntity> {
+  interface Builder : StringEntity, WorkspaceEntity.Builder<StringEntity>, ObjBuilder<StringEntity> {
     override var entitySource: EntitySource
     override var data: String
   }
@@ -101,7 +101,7 @@ interface ListEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ListEntity, ModifiableWorkspaceEntity<ListEntity>, ObjBuilder<ListEntity> {
+  interface Builder : ListEntity, WorkspaceEntity.Builder<ListEntity>, ObjBuilder<ListEntity> {
     override var entitySource: EntitySource
     override var data: MutableList<String>
   }
@@ -130,7 +130,7 @@ interface OptionalIntEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OptionalIntEntity, ModifiableWorkspaceEntity<OptionalIntEntity>, ObjBuilder<OptionalIntEntity> {
+  interface Builder : OptionalIntEntity, WorkspaceEntity.Builder<OptionalIntEntity>, ObjBuilder<OptionalIntEntity> {
     override var entitySource: EntitySource
     override var data: Int?
   }
@@ -158,7 +158,7 @@ interface OptionalStringEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OptionalStringEntity, ModifiableWorkspaceEntity<OptionalStringEntity>, ObjBuilder<OptionalStringEntity> {
+  interface Builder : OptionalStringEntity, WorkspaceEntity.Builder<OptionalStringEntity>, ObjBuilder<OptionalStringEntity> {
     override var entitySource: EntitySource
     override var data: String?
   }

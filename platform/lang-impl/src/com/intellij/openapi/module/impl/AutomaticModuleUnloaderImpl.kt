@@ -15,8 +15,8 @@ import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.launch
 

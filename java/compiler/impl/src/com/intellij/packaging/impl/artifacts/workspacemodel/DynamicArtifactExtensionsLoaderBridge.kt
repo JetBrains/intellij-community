@@ -10,8 +10,8 @@ import com.intellij.packaging.artifacts.ArtifactType
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.elements.PackagingElementType
 import com.intellij.packaging.impl.artifacts.InvalidArtifactType
-import com.intellij.workspaceModel.storage.bridgeEntities.api.CompositePackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.PackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity
 
 internal class DynamicArtifactExtensionsLoaderBridge(private val artifactManager: ArtifactManagerBridge) {
   fun installListeners(disposable: Disposable) {
