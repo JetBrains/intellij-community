@@ -22,16 +22,17 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
         val friendModules: Collection<ModuleInfo> = module.sourceModuleInfos.singleOrNull()
             ?.modulesWhoseInternalsAreVisible()
             .orEmpty()
+            .toSet()
 
         val orderEntriesRendered = buildList {
             for (entry in filteredEntries) {
-                val moduleInfo: IdeaModuleInfo? = getModuleInfo(entry)
+                val moduleInfos: Set<IdeaModuleInfo> = getModuleInfos(entry)
                 val orderEntryModule = (entry as? ModuleOrderEntry)?.module
                 add(
                     render(
                         orderEntry = entry,
                         isDependsOn = orderEntryModule in dependsOnModules,
-                        isFriend = friendModules.contains<ModuleInfo?>(moduleInfo)
+                        isFriend = moduleInfos.isNotEmpty() && friendModules.containsAll(moduleInfos)
                     )
                 )
             }
@@ -102,28 +103,19 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
     private fun PrinterContext.presentableNameWithoutVersion(orderEntry: OrderEntry): String =
         orderEntry.presentableName.replace(kotlinGradlePluginVersion.toString(), "{{KGP_VERSION}}")
 
-    private fun PrinterContext.getModuleInfo(orderEntry: OrderEntry): IdeaModuleInfo? {
+    private fun PrinterContext.getModuleInfos(orderEntry: OrderEntry): Set<IdeaModuleInfo> {
         when (orderEntry) {
-            is ModuleOrderEntry -> return orderEntry.module?.toModuleInfo()
+            is ModuleOrderEntry -> return setOfNotNull(orderEntry.module?.toModuleInfo())
 
             is LibraryOrderEntry -> {
-                val library = orderEntry.library ?: return null
-                val libraryInfos = runReadAction { LibraryInfoCache.getInstance(project)[library] }
-
-                if (libraryInfos.size > 1)
-                    error(
-                        "Unexpectedly got several LibraryInfos for one LibraryOrderEntry\n" +
-                                "LibraryOrderEntry = ${library.presentableName}\n" +
-                                "LibraryInfos = ${libraryInfos.joinToString { it.displayedName }}"
-                    )
-
-                return libraryInfos.firstOrNull()
+                val library = orderEntry.library ?: return emptySet()
+                return runReadAction { LibraryInfoCache.getInstance(project)[library] }.toSet()
             }
 
 
-            is JdkOrderEntry -> return SdkInfo(project, orderEntry.jdk ?: return null)
+            is JdkOrderEntry -> return setOf(SdkInfo(project, orderEntry.jdk ?: return emptySet()))
 
-            else -> return null
+            else -> return emptySet()
         }
     }
 
