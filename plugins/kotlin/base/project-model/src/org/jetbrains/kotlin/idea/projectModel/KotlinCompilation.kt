@@ -2,6 +2,11 @@
 package org.jetbrains.kotlin.idea.projectModel
 
 interface KotlinCompilation : KotlinComponent {
+
+    @Deprecated("This property is removed in master, but still used in the KotlinAndroidMPPGradleModuleDataService", level = DeprecationLevel.ERROR)
+    val sourceSets: Collection<KotlinSourceSet>
+        get() = declaredSourceSets
+
     /**
      * All source sets participated in this compilation, including those available
      * via dependsOn.
