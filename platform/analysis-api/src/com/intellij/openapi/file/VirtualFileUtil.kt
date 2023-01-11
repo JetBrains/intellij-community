@@ -123,12 +123,12 @@ fun VirtualFile.findOrCreateVirtualDirectory(relativePath: @SystemIndependent St
   return fileSystem.findOrCreateVirtualDirectory(path.getResolvedPath(relativePath))
 }
 
-fun VirtualFile.deleteVirtualFileOrDirectory(relativePath: @SystemIndependent String = ".") {
-  fileSystem.deleteVirtualFileOrDirectory(path.getResolvedPath(relativePath))
+fun VirtualFile.deleteVirtualFileOrDirectory() {
+  fileSystem.deleteVirtualFileOrDirectory(path)
 }
 
-fun VirtualFile.deleteVirtualChildren(relativePath: @SystemIndependent String = ".", predicate: (VirtualFile) -> Boolean = { true }) {
-  fileSystem.deleteVirtualChildren(path.getResolvedPath(relativePath), predicate)
+fun VirtualFile.deleteVirtualChildren(predicate: (VirtualFile) -> Boolean = { true }) {
+  fileSystem.deleteVirtualChildren(path, predicate)
 }
 
 fun Path.findVirtualFileOrDirectory(): VirtualFile? {
