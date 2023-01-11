@@ -29,7 +29,7 @@ class EvaluateInConsoleFromTreeAction extends XAddToWatchesTreeAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
+    return super.getActionUpdateThread();
   }
   @Nullable
   private static ConsoleExecuteAction getConsoleExecuteAction(@NotNull AnActionEvent e) {

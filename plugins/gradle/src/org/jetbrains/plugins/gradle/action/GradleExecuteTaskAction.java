@@ -56,7 +56,7 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return super.getActionUpdateThread();
   }
 
   @Override

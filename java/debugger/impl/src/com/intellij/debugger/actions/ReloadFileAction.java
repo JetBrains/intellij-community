@@ -40,6 +40,6 @@ public class ReloadFileAction extends CompileAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return super.getActionUpdateThread();
   }
 }

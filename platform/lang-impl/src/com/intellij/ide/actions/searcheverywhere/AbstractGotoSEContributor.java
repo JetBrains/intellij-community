@@ -303,7 +303,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
   @Override
   public @NotNull List<SearchEverywhereCommandInfo> getSupportedCommands() {
-    return Collections.emptyList();
+    return WeightedSearchEverywhereContributor.super.getSupportedCommands();
   }
 
   @NotNull

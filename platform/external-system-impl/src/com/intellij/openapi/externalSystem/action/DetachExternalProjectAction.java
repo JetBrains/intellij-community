@@ -48,7 +48,7 @@ public class DetachExternalProjectAction extends ExternalSystemNodeAction<Projec
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return super.getActionUpdateThread();
   }
 
   @Override

@@ -71,7 +71,7 @@ public class MockArrayType extends MockReferenceType implements ArrayType {
 
   @Override
   public boolean isVerified() {
-    return true;
+    return super.isVerified();
   }
 
   @Override

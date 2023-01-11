@@ -25,7 +25,7 @@ class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryE
 
   @Override
   public @NotNull Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
-    return Collections.emptyList();
+    return IndexableEntityProvider.super.getDependencies();
   }
 
   @Override

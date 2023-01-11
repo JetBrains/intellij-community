@@ -202,7 +202,7 @@ public class MockPsiLambda extends MockMirror implements Method {
 
   @Override
   public MockVirtualMachine virtualMachine() {
-    return myVirtualMachine;
+    return super.virtualMachine();
   }
 
   @Override

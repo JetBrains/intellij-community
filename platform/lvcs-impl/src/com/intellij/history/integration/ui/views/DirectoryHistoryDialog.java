@@ -217,7 +217,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+      return super.getActionUpdateThread();
     }
 
     @Override

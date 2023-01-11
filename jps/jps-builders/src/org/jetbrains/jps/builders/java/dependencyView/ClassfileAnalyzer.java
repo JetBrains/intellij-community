@@ -770,37 +770,37 @@ final class ClassfileAnalyzer {
 
       @Override
       public SignatureVisitor visitClassBound() {
-        return this;
+        return super.visitClassBound();
       }
 
       @Override
       public SignatureVisitor visitInterfaceBound() {
-        return this;
+        return super.visitInterfaceBound();
       }
 
       @Override
       public SignatureVisitor visitSuperclass() {
-        return this;
+        return super.visitSuperclass();
       }
 
       @Override
       public SignatureVisitor visitInterface() {
-        return this;
+        return super.visitInterface();
       }
 
       @Override
       public SignatureVisitor visitParameterType() {
-        return this;
+        return super.visitParameterType();
       }
 
       @Override
       public SignatureVisitor visitReturnType() {
-        return this;
+        return super.visitReturnType();
       }
 
       @Override
       public SignatureVisitor visitExceptionType() {
-        return this;
+        return super.visitExceptionType();
       }
 
       @Override
@@ -811,14 +811,14 @@ final class ClassfileAnalyzer {
 
       @Override
       public SignatureVisitor visitArrayType() {
-        return this;
+        return super.visitArrayType();
       }
 
       @Override
       public void visitInnerClassType(String name) { }
 
       @Override
-      public void visitTypeArgument() { }
+      public void visitTypeArgument() { super.visitTypeArgument(); }
 
       @Override
       public SignatureVisitor visitTypeArgument(char wildcard) {
@@ -826,7 +826,7 @@ final class ClassfileAnalyzer {
       }
 
       @Override
-      public void visitEnd() { }
+      public void visitEnd() { super.visitEnd(); }
 
       @Override
       public void visitClassType(String name) {
