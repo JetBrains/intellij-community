@@ -505,15 +505,16 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
 
     private fun hasBuiltInEnumFunctionReference(reference: PsiReference): Boolean {
         val parent = reference.element.getParentOfTypes(
-            true,
+            strict = true,
             KtTypeReference::class.java,
             KtQualifiedExpression::class.java,
             KtCallableReferenceExpression::class.java,
-            KtImportDirective::class.java,
-        )?.let {
-            it.getStrictParentOfType<KtImportDirective>() ?: it
-        } ?: return false
-        return parent.isReferenceToBuiltInEnumFunction()
+            KtImportDirective::class.java
+        )
+
+        return parent?.getStrictParentOfType<KtImportDirective>()?.isReferenceToBuiltInEnumFunction()
+            ?: parent?.isReferenceToBuiltInEnumFunction()
+            ?: false
     }
 
     private fun checkPrivateDeclaration(declaration: KtNamedDeclaration, descriptor: DeclarationDescriptor?): Boolean {
