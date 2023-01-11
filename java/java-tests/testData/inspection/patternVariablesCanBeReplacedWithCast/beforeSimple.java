@@ -234,4 +234,9 @@ public class Simple{
             System.out.println(s);
         }
     }
+
+  public static void ternary(Object object) {
+    String result = object instanceof String text ? text : "1";
+    String result2 = object instanceof String text ? text = "2" : "1";
+  }
 }

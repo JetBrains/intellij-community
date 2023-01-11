@@ -98,7 +98,8 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
         PsiElement parent = current.getParent();
         while (parent instanceof PsiParenthesizedExpression ||
                parent instanceof PsiPolyadicExpression ||
-               parent instanceof PsiPrefixExpression) {
+               parent instanceof PsiPrefixExpression ||
+               parent instanceof PsiConditionalExpression) {
           current = parent;
           parent = current.getParent();
         }
