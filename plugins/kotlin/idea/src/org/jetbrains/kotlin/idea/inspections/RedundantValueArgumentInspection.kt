@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-class RedundantOptionalArgumentInspection : AbstractKotlinInspection() {
+class RedundantValueArgumentInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = valueArgumentVisitor(fun(argument: KtValueArgument) {
         val argumentExpression = argument.getArgumentExpression() ?: return
 
@@ -40,7 +40,7 @@ class RedundantOptionalArgumentInspection : AbstractKotlinInspection() {
                 val defaultConstantValue = defaultValueExpression.evaluate(CONSTANT_EXPRESSION_EVALUATION) ?: return
 
                 if (argumentConstantValue.value == defaultConstantValue.value) {
-                    val description = KotlinBundle.message("inspection.redundant.optional.argument.annotation", parameterName)
+                    val description = KotlinBundle.message("inspection.redundant.value.argument.annotation", parameterName)
                     holder.registerProblem(argument, description, ProblemHighlightType.LIKE_UNUSED_SYMBOL, RemoveArgumentFix())
                 }
             }

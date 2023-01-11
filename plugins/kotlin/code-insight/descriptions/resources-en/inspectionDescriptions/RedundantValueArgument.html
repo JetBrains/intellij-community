@@ -1,12 +1,12 @@
 <html>
 <body>
-Reports redundant arguments that match the default values for the corresponding parameters.
+Reports arguments that are equal to the default values of the corresponding parameters.
 <p><b>Example:</b></p>
 <pre><code>
 fun foo(x: Int, y: Int = 2) {}
 
 fun bar() {
-    foo(1, 2) // Argument '2' is redundant
+    foo(1, 2)
 }
 </code></pre>
 <p>After the quick-fix is applied:</p>

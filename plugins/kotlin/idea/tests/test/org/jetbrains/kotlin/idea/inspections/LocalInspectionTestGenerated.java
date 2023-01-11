@@ -9793,54 +9793,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inspectionsLocal/redundantOptionalArgument")
-    public static class RedundantOptionalArgument extends AbstractLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("constant.kt")
-        public void testConstant() throws Exception {
-            runTest("testData/inspectionsLocal/redundantOptionalArgument/constant.kt");
-        }
-
-        @TestMetadata("constructorCall.kt")
-        public void testConstructorCall() throws Exception {
-            runTest("testData/inspectionsLocal/redundantOptionalArgument/constructorCall.kt");
-        }
-
-        @TestMetadata("namedArgument.kt")
-        public void testNamedArgument() throws Exception {
-            runTest("testData/inspectionsLocal/redundantOptionalArgument/namedArgument.kt");
-        }
-
-        @TestMetadata("notEqual.kt")
-        public void testNotEqual() throws Exception {
-            runTest("testData/inspectionsLocal/redundantOptionalArgument/notEqual.kt");
-        }
-
-        @TestMetadata("notLastArgument.kt")
-        public void testNotLastArgument() throws Exception {
-            runTest("testData/inspectionsLocal/redundantOptionalArgument/notLastArgument.kt");
-        }
-
-        @TestMetadata("notLastNamedArgument.kt")
-        public void testNotLastNamedArgument() throws Exception {
-            runTest("testData/inspectionsLocal/redundantOptionalArgument/notLastNamedArgument.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/inspectionsLocal/redundantOptionalArgument/simple.kt");
-        }
-
-        @TestMetadata("variable.kt")
-        public void testVariable() throws Exception {
-            runTest("testData/inspectionsLocal/redundantOptionalArgument/variable.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantOverride")
     public static class RedundantOverride extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -10437,6 +10389,54 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("unitReturnType5.kt")
         public void testUnitReturnType5() throws Exception {
             runTest("testData/inspectionsLocal/redundantUnitExpression/unitReturnType5.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/redundantValueArgument")
+    public static class RedundantValueArgument extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("constant.kt")
+        public void testConstant() throws Exception {
+            runTest("testData/inspectionsLocal/redundantValueArgument/constant.kt");
+        }
+
+        @TestMetadata("constructorCall.kt")
+        public void testConstructorCall() throws Exception {
+            runTest("testData/inspectionsLocal/redundantValueArgument/constructorCall.kt");
+        }
+
+        @TestMetadata("namedArgument.kt")
+        public void testNamedArgument() throws Exception {
+            runTest("testData/inspectionsLocal/redundantValueArgument/namedArgument.kt");
+        }
+
+        @TestMetadata("notEqual.kt")
+        public void testNotEqual() throws Exception {
+            runTest("testData/inspectionsLocal/redundantValueArgument/notEqual.kt");
+        }
+
+        @TestMetadata("notLastArgument.kt")
+        public void testNotLastArgument() throws Exception {
+            runTest("testData/inspectionsLocal/redundantValueArgument/notLastArgument.kt");
+        }
+
+        @TestMetadata("notLastNamedArgument.kt")
+        public void testNotLastNamedArgument() throws Exception {
+            runTest("testData/inspectionsLocal/redundantValueArgument/notLastNamedArgument.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/inspectionsLocal/redundantValueArgument/simple.kt");
+        }
+
+        @TestMetadata("variable.kt")
+        public void testVariable() throws Exception {
+            runTest("testData/inspectionsLocal/redundantValueArgument/variable.kt");
         }
     }
 
