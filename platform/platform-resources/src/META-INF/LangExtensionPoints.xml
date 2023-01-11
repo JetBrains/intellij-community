@@ -208,7 +208,6 @@
     <!-- File-Based Index-->
     <extensionPoint name="include.provider" interface="com.intellij.psi.impl.include.FileIncludeProvider" dynamic="true"/>
     <extensionPoint name="globalIndexFilter" interface="com.intellij.util.indexing.GlobalIndexFilter" dynamic="true"/>
-    <extensionPoint name="indexableFilesFilter" interface="com.intellij.util.indexing.IndexableFilesFilter"/>
 
     <extensionPoint name="indexableEntityProvider" interface="com.intellij.util.indexing.roots.IndexableEntityProvider" dynamic="true"/>
     <extensionPoint name="indexableIteratorBuilderHandler" interface="com.intellij.util.indexing.roots.builders.IndexableIteratorBuilderHandler" dynamic="true"/>

@@ -27,7 +27,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.PingProgress;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -1887,9 +1886,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean contentChange) {
-    final List<IndexableFilesFilter> filters = IndexableFilesFilter.EP_NAME.getExtensionList();
-    if (!filters.isEmpty() && !ContainerUtil.exists(filters, e -> e.shouldIndex(file))) return;
-
     if (ensureFileBelongsToIndexableFilter(fileId, file) == FileAddStatus.SKIPPED) {
       doInvalidateIndicesForFile(fileId, file);
       return;
