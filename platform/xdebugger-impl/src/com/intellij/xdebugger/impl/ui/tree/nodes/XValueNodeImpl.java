@@ -259,7 +259,8 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         public void onClick(MouseEvent event) {
           if (myFullValueEvaluator.isShowValuePopup()) {
             DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, myTree.getProject(), null);
-          } else {
+          }
+          else {
             new HeadlessValueEvaluationCallback(XValueNodeImpl.this).startFetchingValue(myFullValueEvaluator);
           }
           event.consume();
