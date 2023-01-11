@@ -44,47 +44,6 @@ fun Path.isAncestor(path: Path, strict: Boolean): Boolean {
   return FileUtil.isAncestor(this, path, strict)
 }
 
-fun Path.findNioFileOrDirectory(): Path? {
-  if (!exists()) {
-    return null
-  }
-  return this
-}
-
-fun Path.getNioFileOrDirectory(): Path {
-  return checkNotNull(findNioFileOrDirectory()) {
-    "File or directory doesn't exist: $this"
-  }
-}
-
-fun Path.findNioFile(): Path? {
-  val filePath = findNioFileOrDirectory() ?: return null
-  check(filePath.isRegularFile()) {
-    "Expected file instead directory: $filePath"
-  }
-  return this
-}
-
-fun Path.getNioFile(): Path {
-  return checkNotNull(findNioFile()) {
-    "File doesn't exist: $this"
-  }
-}
-
-fun Path.findNioDirectory(): Path? {
-  val filePath = findNioFileOrDirectory() ?: return null
-  check(filePath.isDirectory()) {
-    "Expected directory instead file: $filePath"
-  }
-  return filePath
-}
-
-fun Path.getNioDirectory(): Path {
-  return checkNotNull(findNioDirectory()) {
-    "Directory doesn't exist: $this"
-  }
-}
-
 fun Path.createNioFile(): Path {
   return createFile()
 }
@@ -94,11 +53,23 @@ fun Path.createNioDirectory(): Path {
 }
 
 fun Path.findOrCreateNioFile(): Path {
-  return findNioFile() ?: createNioFile()
+  if (exists()) {
+    check(isRegularFile()) {
+      "Expected file instead of directory: $this"
+    }
+    return this
+  }
+  return createNioFile()
 }
 
 fun Path.findOrCreateNioDirectory(): Path {
-  return findNioDirectory() ?: createNioDirectory()
+  if (exists()) {
+    check(isDirectory()) {
+      "Expected directory instead of file: $this"
+    }
+    return this
+  }
+  return createNioDirectory()
 }
 
 fun Path.deleteNioFileOrDirectory() {

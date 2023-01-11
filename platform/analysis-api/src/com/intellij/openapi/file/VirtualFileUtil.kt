@@ -203,7 +203,7 @@ fun VirtualFileSystem.getVirtualFileOrDirectory(path: @SystemIndependent String)
 fun VirtualFileSystem.findVirtualFile(path: @SystemIndependent String): VirtualFile? {
   val file = findVirtualFileOrDirectory(path) ?: return null
   check(file.isFile) {
-    "Expected file instead directory: $path"
+    "Expected file instead of directory: $path"
   }
   return file
 }
@@ -217,7 +217,7 @@ fun VirtualFileSystem.getVirtualFile(path: @SystemIndependent String): VirtualFi
 fun VirtualFileSystem.findVirtualDirectory(path: @SystemIndependent String): VirtualFile? {
   val file = findVirtualFileOrDirectory(path) ?: return null
   check(file.isDirectory) {
-    "Expected directory instead file: $path"
+    "Expected directory instead of file: $path"
   }
   return file
 }
