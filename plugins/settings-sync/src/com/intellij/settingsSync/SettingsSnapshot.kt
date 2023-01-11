@@ -1,10 +1,10 @@
 package com.intellij.settingsSync
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.service
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.ApiStatus
-import java.net.InetAddress
 import java.time.Instant
 import java.util.*
 
@@ -45,6 +45,6 @@ data class SettingsSnapshot(val metaInfo: MetaInfo,
 fun getLocalApplicationInfo(): SettingsSnapshot.AppInfo {
   return SettingsSnapshot.AppInfo(SettingsSyncLocalSettings.getInstance().applicationId,
                                   SystemProperties.getUserName(),
-                                  InetAddress.getLocalHost().hostName,
+                                  service<LocalHostNameProvider>().getHostName(),
                                   PathManager.getConfigPath())
 }
