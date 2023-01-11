@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.fix.RemoveAnnotationQuickFix
 import com.intellij.codeInspection.fix.RenameQuickFix
 import com.intellij.lang.jvm.DefaultJvmElementVisitor
 import com.intellij.lang.jvm.JvmAnnotation
@@ -58,10 +59,14 @@ private class JUnitMixedAnnotationVisitor(private val sink: JvmLocalInspection.H
       3 -> {
         prefixAnnotationHighlight(method, ORG_JUNIT_TEST, "test", true)
         prefixAnnotationHighlight(method, ORG_JUNIT_IGNORE, "_")
-        annotationHighlight(method, *junit4RemoveAnnotations, version = preferedTestFramework) { _ -> listOf(JUnit4ConverterQuickfix()) }
+        annotationHighlight(method, *junit4RemoveAnnotations, version = preferedTestFramework) { ann ->
+          listOf(RemoveAnnotationQuickFix(ann), JUnit4ConverterQuickfix())
+        }
         prefixAnnotationHighlight(method, ORG_JUNIT_JUPITER_API_TEST, "test", true)
         prefixAnnotationHighlight(method, ORG_JUNIT_JUPITER_API_DISABLED, "_")
-        annotationHighlight(method, *junit5RemoveAnnotations, version = preferedTestFramework) { _ -> emptyList() } // TODO quickfix
+        annotationHighlight(method, *junit5RemoveAnnotations, version = preferedTestFramework) { ann ->
+          listOf(RemoveAnnotationQuickFix(ann))
+        }
       }
       4 -> {
         annotationHighlight(method, *junit5AllAnnotations, version = preferedTestFramework) { _ -> emptyList() } // TODO quickfix
@@ -136,7 +141,7 @@ private class RemoveAnnotationAndPrefixQuickFix(
   val annotationPointer = SmartPointerManager.createPointer(annotation as PsiAnnotation)
 
   override fun getFamilyName(): String = JvmAnalysisBundle.message(
-    "jvm.inspections.remove.annotation.quickfix",
+    "jvm.inspections.remove.annotation.quickfix.text",
     annotationPointer.element.asSafely<JvmAnnotation>()?.qualifiedName?.substringAfterLast(".")
   )
 
