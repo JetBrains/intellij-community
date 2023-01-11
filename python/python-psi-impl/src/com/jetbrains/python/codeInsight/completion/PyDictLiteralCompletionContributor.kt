@@ -31,7 +31,10 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
     val originalElement = parameters.originalPosition?.parent ?: return
 
-    val possibleSequenceExpr = if (originalElement is PyStringLiteralExpression) originalElement.parent else originalElement
+    var possibleSequenceExpr = if (originalElement is PyStringLiteralExpression) originalElement.parent else originalElement
+    if (possibleSequenceExpr is PyKeyValueExpression) {
+      possibleSequenceExpr = possibleSequenceExpr.parent
+    }
     if (possibleSequenceExpr is PyDictLiteralExpression || possibleSequenceExpr is PySetLiteralExpression) { // it's set literal when user is typing the first key
       addCompletionToCallExpression(originalElement, possibleSequenceExpr as PySequenceExpression, result)
       addCompletionToAssignment(originalElement, possibleSequenceExpr, result)
