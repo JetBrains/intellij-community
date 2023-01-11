@@ -485,13 +485,11 @@ public final class PushController implements Disposable {
   @NotNull
   private List<PushInfo> preparePushDetails() {
     List<PushInfo> allDetails = new ArrayList<>();
-    Collection<MyRepoModel<Repository, PushSource, PushTarget>> repoModels = getSelectedRepoNode();
 
-    for (MyRepoModel<?, ?, ?> model : repoModels) {
+    for (MyRepoModel<Repository, PushSource, PushTarget> model : getSelectedRepoNode()) {
       PushTarget target = model.getTarget();
-      if (target == null) {
-        continue;
-      }
+      if (target == null) continue;
+
       PushSpec<PushSource, PushTarget> pushSpec = new PushSpec<>(model.getSource(), target);
 
       List<VcsFullCommitDetails> loadedCommits = new ArrayList<>(model.getLoadedCommits());
@@ -499,10 +497,11 @@ public final class PushController implements Disposable {
         //Note: loadCommits is cancellable - it tracks current thread's progress indicator under the hood!
         loadedCommits.addAll(loadCommits(model));
       }
-
       //sort commits in the time-ascending order
       Collections.reverse(loadedCommits);
-      allDetails.add(new PushInfoImpl(model.getRepository(), pushSpec, loadedCommits));
+
+      PushInfoImpl pushInfo = new PushInfoImpl(model.getRepository(), pushSpec, loadedCommits);
+      allDetails.add(pushInfo);
     }
     return Collections.unmodifiableList(allDetails);
   }
@@ -510,18 +509,16 @@ public final class PushController implements Disposable {
   @NotNull
   public Map<PushSupport<Repository, PushSource, PushTarget>, Collection<PushInfo>> getSelectedPushSpecs() {
     Map<PushSupport<Repository, PushSource, PushTarget>, Collection<PushInfo>> result = new HashMap<>();
-    for (MyRepoModel<Repository, PushSource, PushTarget> repoModel : getSelectedRepoNode()) {
-      PushTarget target = repoModel.getTarget();
-      if (target != null) {
-        PushSpec<PushSource, PushTarget> spec = new PushSpec<>(repoModel.getSource(), target);
-        PushInfoImpl pushInfo = new PushInfoImpl(repoModel.getRepository(), spec, ContainerUtil.emptyList());
-        Collection<PushInfo> list = result.get(repoModel.mySupport);
-        if (list == null) {
-          list = new ArrayList<>();
-          result.put(repoModel.mySupport, list);
-        }
-        list.add(pushInfo);
-      }
+
+    for (MyRepoModel<Repository, PushSource, PushTarget> model : getSelectedRepoNode()) {
+      PushTarget target = model.getTarget();
+      if (target == null) continue;
+
+      PushSpec<PushSource, PushTarget> pushSpec = new PushSpec<>(model.getSource(), target);
+
+      PushInfoImpl pushInfo = new PushInfoImpl(model.getRepository(), pushSpec, ContainerUtil.emptyList());
+      Collection<PushInfo> vcsDetails = result.computeIfAbsent(model.mySupport, key -> new ArrayList<>());
+      vcsDetails.add(pushInfo);
     }
     return result;
   }
