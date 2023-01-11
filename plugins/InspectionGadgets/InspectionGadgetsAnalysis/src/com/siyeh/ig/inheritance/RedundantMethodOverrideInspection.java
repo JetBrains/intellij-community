@@ -57,6 +57,9 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+    if (infos.length > 0 && infos[0] instanceof Boolean isDelegate && isDelegate) {
+      return new InspectionGadgetsFix[] { new RedundantMethodOverrideFix() };
+    }
     return new InspectionGadgetsFix[] { new RedundantMethodOverrideFix(), new ReplaceWithSuperDelegateFix() };
   }
 
