@@ -543,7 +543,8 @@
         "borderInsets": "3,12,3,6",
         "background": "Grey2",
         "hoverBackground": "Grey3",
-        "pressedBackground": "Grey3"
+        "pressedBackground": "Grey3",
+        "maxWidth": 350
       },
       "Button": {
         "buttonInsets": "0,0,0,0"

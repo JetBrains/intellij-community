@@ -4,6 +4,7 @@ package git4idea.ui.toolbar
 import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -54,6 +55,12 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     PopupImplUtil.setPopupToggleButton(popup, widget)
 
     return popup
+  }
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    val comp = super.createCustomComponent(presentation, place)
+    (comp.ui as? ToolbarComboWidgetUI)?.setMaxWidth(Int.MAX_VALUE)
+    return comp
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {

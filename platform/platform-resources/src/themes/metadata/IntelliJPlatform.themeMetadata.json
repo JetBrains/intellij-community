@@ -1878,6 +1878,11 @@
       "since": "2022.3"
     },
     {
+      "key": "MainToolbar.Dropdown.maxWidth",
+      "description": "Max width for Combo Widgets",
+      "since": "2023.1"
+    },
+    {
       "key": "RunWidget.foreground",
       "description": "Foreground for run widget components and stroke icons",
       "since": "2022.3"
