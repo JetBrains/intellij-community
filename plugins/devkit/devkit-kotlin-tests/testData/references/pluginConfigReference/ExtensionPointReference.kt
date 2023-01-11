@@ -8,7 +8,7 @@ import com.intellij.openapi.util.KeyedExtensionCollector
 class ExtensionPointReference {
 
   var EP_NAME_CREATE = ExtensionPointName.create<String>("plugin.id.ep.name")
-  var INVALID_EP_NAME_CREATE = ExtensionPointName.create<String>("<error descr="Cannot resolve extension point 'INVALID_VALUE'">INVALID_VALUE</error>") // todo must fail
+  var INVALID_EP_NAME_CREATE = ExtensionPointName.create<String>("<error descr="Cannot resolve extension point 'INVALID_VALUE'">INVALID_VALUE</error>")
 
   val EPN_CTOR= ExtensionPointName<String>("plugin.id.ep.name")
   val INVALID_EPN_CTOR = ExtensionPointName<String>("<error descr="Cannot resolve extension point 'INVALID_VALUE'">INVALID_VALUE</error>")
