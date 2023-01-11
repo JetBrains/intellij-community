@@ -65,6 +65,8 @@ private const val TABLE_SCHEMA = """
   commit transaction;
 """
 
+internal const val SQLITE_VCS_LOG_DB_FILENAME_PREFIX = "vcs-log-v"
+
 @Service(Service.Level.PROJECT)
 private class ProjectLevelStoreManager(project: Project) : Disposable {
   @JvmField
@@ -77,7 +79,7 @@ private class ProjectLevelStoreManager(project: Project) : Disposable {
   var isFresh = false
 
   init {
-    val dbFile = project.getProjectDataPath("vcs-log-v${DB_VERSION}-${VcsLogStorageImpl.VERSION}-${VcsLogPersistentIndex.VERSION}.db")
+    val dbFile = project.getProjectDataPath("$SQLITE_VCS_LOG_DB_FILENAME_PREFIX${DB_VERSION}-${VcsLogStorageImpl.VERSION}-${VcsLogPersistentIndex.VERSION}.db")
     isFresh = !Files.exists(dbFile)
     connection = SqliteConnection(dbFile)
 

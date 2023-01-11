@@ -3,7 +3,9 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.io.PathKt;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.util.PersistentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -13,20 +15,28 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static com.intellij.vcs.log.data.index.SqliteVcsLogStoreKt.SQLITE_VCS_LOG_DB_FILENAME_PREFIX;
+
 public final class VcsLogCachesInvalidator extends CachesInvalidator {
   private static final Logger LOG = Logger.getInstance(VcsLogCachesInvalidator.class);
 
   public synchronized boolean isValid() {
     if (Files.exists(PersistentUtil.getCorruptionMarkerFile())) {
+      try {
+        ProjectUtil.clearCachesForAllProjectsStartingWith(SQLITE_VCS_LOG_DB_FILENAME_PREFIX);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+
       boolean deleted = FileUtil.deleteWithRenaming(PersistentUtil.LOG_CACHE);
       if (!deleted) {
         // if we could not delete caches, ensure that corruption marker is still there
         Path corruptionMarkerFile = PersistentUtil.getCorruptionMarkerFile();
         try {
-          Files.createDirectories(corruptionMarkerFile.getParent());
-          Files.createFile(corruptionMarkerFile);
+          PathKt.createFile(corruptionMarkerFile);
         }
-        catch (IOException e) {
+        catch (Exception e) {
           LOG.warn(e);
         }
       }
@@ -40,8 +50,15 @@ public final class VcsLogCachesInvalidator extends CachesInvalidator {
 
   @Override
   public void invalidateCaches() {
-    if (Files.exists(PersistentUtil.LOG_CACHE)) {
-      boolean isEmpty = true;
+    boolean isEmpty = true;
+    try {
+      isEmpty = !ProjectUtil.hasCacheForAnyProjectStartingWith(SQLITE_VCS_LOG_DB_FILENAME_PREFIX);
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+    }
+
+    if (isEmpty && Files.exists(PersistentUtil.LOG_CACHE)) {
       try {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(PersistentUtil.LOG_CACHE)) {
           if (stream.iterator().hasNext()) {
@@ -51,13 +68,14 @@ public final class VcsLogCachesInvalidator extends CachesInvalidator {
       }
       catch (IOException ignored) {
       }
-      if (!isEmpty) {
-        try {
-          Files.createFile(PersistentUtil.getCorruptionMarkerFile());
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+    }
+
+    if (!isEmpty) {
+      try {
+        PathKt.createFile(PersistentUtil.getCorruptionMarkerFile());
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
   }
