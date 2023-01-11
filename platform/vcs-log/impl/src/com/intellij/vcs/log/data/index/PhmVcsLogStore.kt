@@ -47,16 +47,17 @@ internal class PhmVcsLogStore(
   override var isFresh = false
 
   init {
-    val commitStorage = storageId.getStorageFile("messages")
-    isFresh = !Files.exists(commitStorage)
+    val messagesStorage = storageId.getStorageFile("messages")
+    isFresh = !Files.exists(messagesStorage)
 
     messages = PersistentHashMap(
-      /* file = */ commitStorage,
+      /* file = */ messagesStorage,
       /* keyDescriptor = */ EnumeratorIntegerDescriptor.INSTANCE,
       /* valueExternalizer = */ EnumeratorStringDescriptor.INSTANCE,
       /* initialSize = */ AbstractStorage.PAGE_SIZE, /* version = */ storageId.version,
       /* lockContext = */ storageLockContext,
     )
+    Disposer.register(disposable, Disposable { catchAndWarn(messages::close) })
 
     val parentsStorage = storageId.getStorageFile("parents")
     parents = PersistentHashMap(
@@ -67,6 +68,7 @@ internal class PhmVcsLogStore(
       /* version = */ storageId.version,
       /* lockContext = */ storageLockContext
     )
+    Disposer.register(disposable, Disposable { catchAndWarn(parents::close) })
 
     val committerStorage = storageId.getStorageFile("committers")
     committers = PersistentHashMap(
@@ -77,6 +79,7 @@ internal class PhmVcsLogStore(
       /* version = */ storageId.version,
       /* lockContext = */ storageLockContext,
     )
+    Disposer.register(disposable, Disposable { catchAndWarn(committers::close) })
 
     val timestampsStorage = storageId.getStorageFile("timestamps")
     timestamps = PersistentHashMap(
@@ -87,6 +90,7 @@ internal class PhmVcsLogStore(
       /* version = */ storageId.version,
       /* lockContext = */ storageLockContext,
     )
+    Disposer.register(disposable, Disposable { catchAndWarn(timestamps::close) })
 
     val storageFile = storageId.getStorageFile(VcsLogPathsIndex.RENAMES_MAP)
     renames = PersistentHashMap(/* file = */ storageFile,
@@ -95,15 +99,7 @@ internal class PhmVcsLogStore(
                                 /* initialSize = */ AbstractStorage.PAGE_SIZE,
                                 /* version = */ storageId.version,
                                 /* lockContext = */ storageLockContext)
-
-    Disposer.register(disposable, Disposable {
-      catchAndWarn(messages::close)
-      catchAndWarn(parents::close)
-      catchAndWarn(committers::close)
-      catchAndWarn(timestamps::close)
-
-      catchAndWarn(renames::close)
-    })
+    Disposer.register(disposable, Disposable { catchAndWarn(renames::close) })
 
     trigrams = VcsLogMessagesTrigramIndex(storageId, storageLockContext, errorHandler, disposable)
   }
