@@ -37,11 +37,6 @@ internal class GHPRDataContext(val scope: CoroutineScope,
       listLoader.updateData(details)
       filesManager.updateTimelineFilePresentation(details)
     }
-    filesManager.addBeforeTimelineFileOpenedListener(listenersDisposable) { file ->
-      val details = listLoader.loadedData.find { it.id == file.pullRequest.id }
-                    ?: dataProviderRepository.findDataProvider(file.pullRequest)?.detailsData?.loadedDetails
-      if (details != null) filesManager.updateTimelineFilePresentation(details)
-    }
 
     // need immediate to dispose in time
     scope.launch(Dispatchers.Main.immediate) {
