@@ -110,7 +110,9 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   @Override
   public void reformatText(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges) throws IncorrectOperationException {
-    reformatText(file, ranges, null);
+    FormatTextRanges formatRanges = new FormatTextRanges();
+    ranges.forEach((range) -> formatRanges.add(range, true));
+    reformatText(file, formatRanges);
   }
 
   @Override
@@ -120,20 +122,11 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
     ensureDocumentCommitted(file);
     FormatTextRanges formatRanges = new FormatTextRanges(info, ChangedRangesUtil.processChangedRanges(file, info));
     formatRanges.setExtendToContext(true);
-    reformatText(file, formatRanges, null);
-  }
-
-
-
-  public void reformatText(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges, @Nullable Editor editor) throws IncorrectOperationException {
-    FormatTextRanges formatRanges = new FormatTextRanges();
-    ranges.forEach((range) -> formatRanges.add(range, true));
-    reformatText(file, formatRanges, editor);
+    reformatText(file, formatRanges);
   }
 
   private void reformatText(@NotNull PsiFile file,
-                            @NotNull FormatTextRanges ranges,
-                            @Nullable Editor editor) throws IncorrectOperationException
+                            @NotNull FormatTextRanges ranges) throws IncorrectOperationException
   {
     if (ranges.isEmpty()) {
       return;
@@ -150,9 +143,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
     LOG.assertTrue(file.isValid(), "File name: " + file.getName() + " , class: " + file.getClass().getSimpleName());
 
-    if (editor == null) {
-      editor = PsiEditorUtil.findEditor(file);
-    }
+    Editor editor = PsiEditorUtil.findEditor(file);
 
     CaretPositionKeeper caretKeeper = null;
     if (editor != null) {
