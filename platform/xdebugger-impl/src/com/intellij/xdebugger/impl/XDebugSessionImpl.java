@@ -79,7 +79,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private XExecutionStack myCurrentExecutionStack;
   private XStackFrame myCurrentStackFrame;
   private boolean myIsTopFrame;
-  private volatile XSourcePosition myTopFramePosition;
+  private volatile XStackFrame myTopStackFrame;
   private final AtomicBoolean myPaused = new AtomicBoolean();
   private XValueMarkers<?, ?> myValueMarkers;
   private @Nls final String mySessionName;
@@ -272,7 +272,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   @Nullable
   @Override
   public XSourcePosition getTopFramePosition() {
-    return myTopFramePosition;
+    return myTopStackFrame.getSourcePosition();
   }
 
   void init(@NotNull XDebugProcess process, @Nullable RunContentDescriptor contentToReuse) {
@@ -616,7 +616,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     mySuspendContext = null;
     myCurrentExecutionStack = null;
     myCurrentStackFrame = null;
-    myTopFramePosition = null;
+    myTopStackFrame = null;
     clearActiveNonLineBreakpoint(false);
     updateExecutionPosition();
   }
@@ -854,13 +854,14 @@ public final class XDebugSessionImpl implements XDebugSession {
     myCurrentExecutionStack = suspendContext.getActiveExecutionStack();
     myCurrentStackFrame = myCurrentExecutionStack != null ? myCurrentExecutionStack.getTopFrame() : null;
     myIsTopFrame = true;
-    myTopFramePosition = myCurrentStackFrame != null ? myCurrentStackFrame.getSourcePosition() : null;
+    myTopStackFrame = myCurrentStackFrame;
+    XSourcePosition topFramePosition = getTopFramePosition();
 
     myPaused.set(true);
 
     updateExecutionPosition();
 
-    logPositionReached(myTopFramePosition);
+    logPositionReached(topFramePosition);
 
     final boolean showOnSuspend = myShowTabOnSuspend.compareAndSet(true, false);
     if (showOnSuspend || attract) {
@@ -882,7 +883,7 @@ public final class XDebugSessionImpl implements XDebugSession {
             mySessionTab.toFront(true, this::updateExecutionPosition);
           }
 
-          if (myTopFramePosition == null) {
+          if (topFramePosition == null) {
             // if there is no source position available, we should somehow tell the user that session is stopped.
             // the best way is to show the stack frames.
             XDebugSessionTab.showFramesView(this);
