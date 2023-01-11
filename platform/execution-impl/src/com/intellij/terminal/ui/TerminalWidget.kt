@@ -34,6 +34,5 @@ interface TerminalWidget : ComponentContainer {
    */
   fun addNotification(notificationComponent: JComponent, disposable: Disposable)
 
-  fun addTerminationCallback(onTerminated: Runnable)
-  fun removeTerminationCallback(onTerminated: Runnable)
+  fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable)
 }

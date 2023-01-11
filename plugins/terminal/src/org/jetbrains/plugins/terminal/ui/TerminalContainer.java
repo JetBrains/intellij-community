@@ -40,7 +40,6 @@ public class TerminalContainer {
   private final TerminalToolWindowManager myTerminalToolWindowManager;
   private @Nullable TerminalWrapperPanel myWrapperPanel;
   private boolean myForceHideUiWhenSessionEnds = false;
-  private final Runnable myTerminationListener;
 
   public TerminalContainer(@NotNull Project project,
                            @NotNull Content content,
@@ -50,10 +49,9 @@ public class TerminalContainer {
     myContent = content;
     myTerminalWidget = terminalWidget;
     myTerminalToolWindowManager = terminalToolWindowManager;
-    myTerminationListener = () -> {
+    terminalWidget.addTerminationCallback(() -> {
       ApplicationManager.getApplication().invokeLater(() -> processSessionCompleted(), myProject.getDisposed());
-    };
-    terminalWidget.addTerminationCallback(myTerminationListener);
+    }, terminalWidget);
     terminalToolWindowManager.register(this);
     Disposer.register(content, () -> cleanup());
   }
@@ -131,7 +129,6 @@ public class TerminalContainer {
   }
 
   private void cleanup() {
-    myTerminalWidget.removeTerminationCallback(myTerminationListener);
     myTerminalToolWindowManager.unregister(this);
   }
 

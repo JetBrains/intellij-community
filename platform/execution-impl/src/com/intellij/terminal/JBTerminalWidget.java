@@ -483,17 +483,17 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     }
 
     @Override
-    public void addTerminationCallback(@NotNull Runnable onTerminated) {
-      widget().addListener(new TerminalWidgetListener() {
+    public void addTerminationCallback(@NotNull Runnable onTerminated, @NotNull Disposable parentDisposable) {
+      TerminalWidgetListener listener = new TerminalWidgetListener() {
         @Override
         public void allSessionsClosed(com.jediterm.terminal.ui.TerminalWidget widget) {
           onTerminated.run();
         }
+      };
+      widget().addListener(listener);
+      Disposer.register(parentDisposable, () -> {
+        widget().removeListener(listener);
       });
-    }
-
-    @Override
-    public void removeTerminationCallback(@NotNull Runnable onTerminated) {
     }
 
     @Override
