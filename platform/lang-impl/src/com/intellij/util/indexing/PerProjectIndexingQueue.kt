@@ -4,7 +4,9 @@ package com.intellij.util.indexing
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbModeTask
 import com.intellij.openapi.project.Project
@@ -14,8 +16,10 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -26,14 +30,23 @@ private class PerProviderSinkFactory(private val uncommittedListener: Uncommitte
     fun commit(iterator: IndexableFilesIterator, files: List<VirtualFile>)
   }
 
+  private val activeSinksCount: AtomicInteger = AtomicInteger()
+  private val cancelActiveSinks: AtomicBoolean = AtomicBoolean()
   private val cntFilesDirty = AtomicInteger()
 
   inner class PerProviderSinkImpl(private val iterator: IndexableFilesIterator) : PerProjectIndexingQueue.PerProviderSink {
     private val files: MutableList<VirtualFile> = ArrayList()
     private var committed = false
 
+    init {
+      activeSinksCount.incrementAndGet()
+    }
+
     override fun addFile(file: VirtualFile) {
       LOG.assertTrue(!committed, "Should not invoke 'addFile' after 'commit'")
+      if (cancelActiveSinks.get()) {
+        throw ProcessCanceledException()
+      }
 
       files.add(file)
       val cntDirty = cntFilesDirty.incrementAndGet()
@@ -48,15 +61,38 @@ private class PerProviderSinkFactory(private val uncommittedListener: Uncommitte
 
     override fun commit() {
       committed = true
-      if (files.isNotEmpty()) {
-        cntFilesDirty.addAndGet(-files.size)
-        uncommittedListener.commit(iterator, files)
+      try {
+        if (files.isNotEmpty()) {
+          cntFilesDirty.addAndGet(-files.size)
+          uncommittedListener.commit(iterator, files)
+        }
+      }
+      finally {
+        activeSinksCount.decrementAndGet()
       }
     }
   }
 
   fun newSink(provider: IndexableFilesIterator): PerProjectIndexingQueue.PerProviderSink {
+    if (cancelActiveSinks.get()) {
+      throw ProcessCanceledException()
+    }
+
     return PerProviderSinkImpl(provider)
+  }
+
+  fun cancelAllProducersAndWait() {
+    cancelActiveSinks.set(true)
+    ProgressIndicatorUtils.awaitWithCheckCanceled {
+      PingProgress.interactWithEdtProgress()
+      LockSupport.parkNanos(50_000_000)
+      activeSinksCount.get() == 0
+    }
+    LOG.assertTrue(cntFilesDirty.get() == 0, "Should contain no dirty files. But got: " + cntFilesDirty.get())
+  }
+
+  fun resumeProducers() {
+    cancelActiveSinks.set(false)
   }
 
   companion object {
@@ -163,6 +199,10 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
     }
   }
 
+  fun clear() {
+    getAndResetQueuedFiles()
+  }
+
   private fun getAndResetQueuedFiles(): Triple<ConcurrentMap<IndexableFilesIterator, Collection<VirtualFile>>, Int, CountDownLatch?> {
     return lock.write {
       val filesInQueue = filesSoFar
@@ -173,8 +213,30 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
     }
   }
 
+  /**
+   * Creates new instance of **thread-unsafe** [PerProviderSink]
+   * Will throw [ProcessCanceledException] if the queue is suspended via [cancelAllTasksAndWait]
+   */
   fun getSink(provider: IndexableFilesIterator): PerProviderSink {
     return sinkFactory.newSink(provider)
+  }
+
+  /**
+   * Cancels all the created [PerProviderSink] and waits until all the Sinks are finished (invoke [PerProviderSink.commit()]).
+   * New invocations of [PerProjectIndexingQueue.getSink()] will throw [ProcessCanceledException].
+   * Use [resumeQueue] to resume the queue.
+   * Does nothing if the queue is already suspended.
+   */
+  fun cancelAllTasksAndWait() {
+    sinkFactory.cancelAllProducersAndWait()
+  }
+
+  /**
+   * Resumes the queue after [cancelAllTasksAndWait] invocation.
+   * Does nothing if the queue is already resumed.
+   */
+  fun resumeQueue() {
+    sinkFactory.resumeProducers()
   }
 
   companion object {

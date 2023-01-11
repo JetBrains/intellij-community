@@ -84,6 +84,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
   private final Project myProject;
   private final MergingTaskQueue<T> myTaskQueue;
   private final AtomicBoolean isRunning = new AtomicBoolean(false);
+  private final AtomicBoolean mySuspended = new AtomicBoolean();
   private final ExecutorStateListener myListener;
 
   protected MergingQueueGuiExecutor(@NotNull Project project,
@@ -99,6 +100,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
                                           @Nullable StructuredIdeActivity activity) {
     while (true) {
       if (myProject.isDisposed()) break;
+      if (mySuspended.get()) break;
 
       try (MergingTaskQueue.@Nullable QueuedTask<T> task = myTaskQueue.extractNextTask()) {
         if (task == null) break;
@@ -122,6 +124,8 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
    * Start task queue processing in background in SINGLE thread. If background process is already running, this method does nothing.
    */
   public final void startBackgroundProcess() {
+    if (mySuspended.get()) return;
+
     try {
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IndexingBundle.message("progress.indexing"), false) {
         @Override
@@ -217,5 +221,31 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
 
   public @NotNull MergingTaskQueue<T> getTaskQueue() {
     return myTaskQueue;
+  }
+
+  /**
+   * @return true if some task is currently executed in background thread.
+   */
+  public final boolean isRunning() {
+    return isRunning.get();
+  }
+
+  /**
+   * Suspends queue in this executor: new tasks will be added to the queue, but they will not be executed until {@linkplain  #resumeQueue()}
+   * is invoked. Already running task still continues to run.
+   * Does nothing if the queue is already suspended.
+   */
+  public void suspendQueue() {
+    mySuspended.set(true);
+  }
+
+  /**
+   * Resumes queue in this executor after {@linkplain #suspendQueue()}. All the queued tasks will be scheduled for execution immediately.
+   * Does nothing if the queue was not suspended.
+   */
+  public void resumeQueue() {
+    if (mySuspended.compareAndSet(true, false)) {
+      startBackgroundProcess();
+    }
   }
 }
