@@ -367,8 +367,7 @@ abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
     affectedCommits.forEach { (_, commitsMap) -> commitsMap.removeAll(commits) }
   }
 
-  internal abstract fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): EdgeData<FilePath>?
-
+  abstract fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): EdgeData<FilePath>?
   abstract fun getAffectedCommits(path: FilePath): Int2ObjectMap<Int2ObjectMap<ChangeKind>>
 }
 
@@ -397,9 +396,7 @@ internal class AdditionDeletion(val filePath: FilePath, val child: Int, val pare
     if (!FILE_PATH_HASHING_STRATEGY.equals(filePath, other.filePath)) return false
     if (child != other.child) return false
     if (parent != other.parent) return false
-    if (isAddition != other.isAddition) return false
-
-    return true
+    return isAddition == other.isAddition
   }
 
   override fun hashCode(): Int {
@@ -434,9 +431,7 @@ internal class Rename(val parentPath: FilePath, val childPath: FilePath, val par
     if (!FILE_PATH_HASHING_STRATEGY.equals(parentPath, other.parentPath)) return false
     if (!FILE_PATH_HASHING_STRATEGY.equals(childPath, other.childPath)) return false
     if (parentCommit != other.parentCommit) return false
-    if (childCommit != other.childCommit) return false
-
-    return true
+    return childCommit == other.childCommit
   }
 
   override fun hashCode(): Int {
@@ -458,9 +453,7 @@ class MaybeDeletedFilePath(val filePath: FilePath, val deleted: Boolean) {
     other as MaybeDeletedFilePath
 
     if (!FILE_PATH_HASHING_STRATEGY.equals(filePath, other.filePath)) return false
-    if (deleted != other.deleted) return false
-
-    return true
+    return deleted == other.deleted
   }
 
   override fun hashCode(): Int {
@@ -500,4 +493,4 @@ private fun <E, R> Collection<E>.firstNotNull(mapping: (E) -> R): R? {
 @JvmField
 internal val FILE_PATH_HASHING_STRATEGY: HashingStrategy<FilePath> = VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
 
-internal data class EdgeData<T>(@JvmField val parent: T, @JvmField val child: T)
+data class EdgeData<T>(@JvmField val parent: T, @JvmField val child: T)
