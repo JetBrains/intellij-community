@@ -110,13 +110,12 @@ internal class PhmVcsLogStore(
   override fun createWriter(): VcsLogWriter {
     return object : VcsLogWriter {
       override fun putCommit(commitId: Int, details: VcsLogIndexer.CompressedDetails, userToId: ToIntFunction<VcsUser>) {
-        messages.put(commitId, details.fullMessage)
         timestamps.put(commitId, longArrayOf(details.authorTime, details.commitTime))
         if (details.author != details.committer) {
           committers.put(commitId, userToId.applyAsInt(details.committer))
         }
-
         trigrams.update(commitId, details)
+        messages.put(commitId, details.fullMessage)
       }
 
       override fun putParents(commitId: Int, parents: List<Hash>, hashToId: ToIntFunction<Hash>) {
@@ -156,11 +155,11 @@ internal class PhmVcsLogStore(
   }
 
   fun force() {
-    messages.force()
     parents.force()
     committers.force()
     timestamps.force()
     trigrams.flush()
+    messages.force()
   }
 
   override fun getMessage(commitId: Int): String? = messages.get(commitId)

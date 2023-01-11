@@ -218,10 +218,9 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
     try {
       int commitId = myStorage.getCommitIndex(detail.getId(), detail.getRoot());
-      mutator.putCommit(commitId, detail, user -> myIndexStorage.users.getUserId(user));
-      mutator.putParents(commitId, detail.getParents(), hash -> myStorage.getCommitIndex(hash, detail.getRoot()));
-
       myIndexStorage.add(commitId, detail);
+      mutator.putParents(commitId, detail.getParents(), hash -> myStorage.getCommitIndex(hash, detail.getRoot()));
+      mutator.putCommit(commitId, detail, user -> myIndexStorage.users.getUserId(user));
     }
     catch (IOException | UncheckedIOException e) {
       myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
@@ -231,12 +230,12 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   private void flush() {
     try {
       if (myIndexStorage != null) {
+        myIndexStorage.users.flush();
+        myIndexStorage.paths.flush();
         // todo actually, it is not required for PHM also, and should be not required (transaction is used to apply changes)
         if (myIndexStorage.store instanceof PhmVcsLogStore) {
           ((PhmVcsLogStore)myIndexStorage.store).force();
         }
-        myIndexStorage.users.flush();
-        myIndexStorage.paths.flush();
       }
     }
     catch (StorageException e) {
