@@ -55,5 +55,6 @@ public final class IdentifierHighlighterPassFactory {
   public static void waitForIdentifierHighlighting() {
     // wait for async "highlight identifier" computation to apply in com.intellij.codeInsight.highlighting.BackgroundHighlighter.updateHighlighted
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 }
