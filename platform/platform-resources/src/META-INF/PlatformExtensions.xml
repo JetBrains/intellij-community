@@ -1487,6 +1487,8 @@
               activeInHeadlessMode="false"
               activeInTestMode="false"
               topic="com.intellij.notification.Notifications"/>
+    <listener class="com.intellij.formatting.EditorFormatterListener"
+              topic="com.intellij.psi.codeStyle.CodeStyleManager$Listener"/>
   </projectListeners>
 
   <xi:include href="/META-INF/RemoteDevUtil.xml">

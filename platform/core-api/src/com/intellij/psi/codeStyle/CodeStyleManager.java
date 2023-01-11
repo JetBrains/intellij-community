@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -363,5 +364,11 @@ public abstract class CodeStyleManager  {
 
   public void scheduleReformatWhenSettingsComputed(final @NotNull PsiFile file) {
     throw new UnsupportedOperationException();
+  }
+
+  public interface Listener {
+    Topic<Listener> TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.NONE, true);
+    void beforeReformatText(@NotNull PsiFile file);
+    void afterReformatText(@NotNull PsiFile file);
   }
 }
