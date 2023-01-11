@@ -191,15 +191,14 @@ public final class CodeInsightTestUtil {
     fixture.checkResultByFile(after, false);
   }
 
-  @TestOnly
   public static void doInlineRename(VariableInplaceRenameHandler handler, final String newName, CodeInsightTestFixture fixture) {
     PsiElement elementAtCaret = fixture.getElementAtCaret();
-    Editor editorForElement = openCorrectEditorFor(elementAtCaret);
+    Editor editorForElement = openEditorFor(elementAtCaret);
     doInlineRename(handler, newName, editorForElement, elementAtCaret);
   }
 
   @NotNull
-  public static Editor openCorrectEditorFor(@NotNull PsiElement elementAtCaret) {
+  public static Editor openEditorFor(@NotNull PsiElement elementAtCaret) {
     // sometimes the element found by TargetElementUtil may belong to the other editor, e.g, in case of an injected element
     // but inplace rename requires that both element and the editor must be consistent
     Editor editorForElement = PsiEditorUtil.getInstance().findEditorByPsiElement(elementAtCaret);
