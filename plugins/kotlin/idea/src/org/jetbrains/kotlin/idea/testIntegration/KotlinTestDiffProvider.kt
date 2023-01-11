@@ -17,12 +17,12 @@ import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.UParameter
 import org.jetbrains.uast.toUElementOfType
 
-class KotlinTestDiffProvider : JvmTestDiffProvider<KtCallExpression>() {
+class KotlinTestDiffProvider : JvmTestDiffProvider() {
     override fun isCompiled(file: PsiFile): Boolean {
         return file.safeAs<KtFile>()?.isCompiled == true
     }
 
-    override fun failedCall(file: PsiFile, startOffset: Int, endOffset: Int, method: UMethod?): KtCallExpression? {
+    override fun failedCall(file: PsiFile, startOffset: Int, endOffset: Int, method: UMethod?): PsiElement? {
         val failedCalls = findElementsOfClassInRange(file, startOffset, endOffset, KtCallExpression::class.java)
             .map { it as KtCallExpression }
         if (failedCalls.isEmpty()) return null
@@ -31,7 +31,8 @@ class KotlinTestDiffProvider : JvmTestDiffProvider<KtCallExpression>() {
         return failedCalls.firstOrNull { it.resolveToCall()?.resultingDescriptor?.psiElement?.isEquivalentTo(method.sourcePsi) == true }
     }
 
-    override fun getExpected(call: KtCallExpression, param: UParameter?): PsiElement? {
+    override fun getExpected(call: PsiElement, param: UParameter?): PsiElement? {
+        if (call !is KtCallExpression) return null
         val expr = if (param == null) {
             val uCallElement = call.toUElementOfType<UCallExpression>() ?: return null
             UAssertHint.createAssertEqualsUHint(uCallElement)?.expected?.sourcePsi ?: return null

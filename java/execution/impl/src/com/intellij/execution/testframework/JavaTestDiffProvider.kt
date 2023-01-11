@@ -5,17 +5,16 @@ import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.asSafely
-import com.intellij.util.containers.ContainerUtil
 import com.siyeh.ig.testFrameworks.AssertHint.Companion.createAssertEqualsHint
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.UParameter
 
-class JavaTestDiffProvider : JvmTestDiffProvider<PsiMethodCallExpression>() {
+class JavaTestDiffProvider : JvmTestDiffProvider() {
   override fun isCompiled(file: PsiFile): Boolean {
     return file is PsiCompiledFile
   }
 
-  override fun failedCall(file: PsiFile, startOffset: Int, endOffset: Int, method: UMethod?): PsiMethodCallExpression? {
+  override fun failedCall(file: PsiFile, startOffset: Int, endOffset: Int, method: UMethod?): PsiElement? {
     val failedCalls = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset)
       .filterIsInstance(PsiExpressionStatement::class.java)
       .map { it.expression }
@@ -26,7 +25,8 @@ class JavaTestDiffProvider : JvmTestDiffProvider<PsiMethodCallExpression>() {
     return failedCalls.firstOrNull { it.resolveMethod()?.isEquivalentTo(method.sourcePsi) == true }
   }
 
-  override fun getExpected(call: PsiMethodCallExpression, param: UParameter?): PsiElement? {
+  override fun getExpected(call: PsiElement, param: UParameter?): PsiElement? {
+    if (call !is PsiMethodCallExpression) return null
     val expr = if (param == null) {
       createAssertEqualsHint(call)?.expected ?: return null
     } else {
@@ -36,7 +36,7 @@ class JavaTestDiffProvider : JvmTestDiffProvider<PsiMethodCallExpression>() {
       if (argIndex != null && argIndex != -1) call.argumentList.expressions.getOrNull(argIndex) else null
     }
     if (expr is PsiLiteralExpression) return expr
-    if (expr is PsiPolyadicExpression && ContainerUtil.all(expr.operands) { it is PsiLiteralExpression }) return expr
+    if (expr is PsiPolyadicExpression && expr.operands.all { it is PsiLiteralExpression }) return expr
     if (expr is PsiReference) {
       val resolved = expr.resolve()
       if (resolved is PsiVariable) {
