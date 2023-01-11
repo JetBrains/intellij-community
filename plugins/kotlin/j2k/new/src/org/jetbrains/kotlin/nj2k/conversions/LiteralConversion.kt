@@ -72,32 +72,12 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
             else text
         }
 
-    private fun JKLiteralExpression.toStringLiteral(): String =
+    private fun JKLiteralExpression.toLongLiteral(): String =
         literal
-            .replaceOctalEscapes(format = "%s\\u%04x")
-            .replace(backslashDollarRegex, "\\\\$0")
-            .replace("\\f", "\\u000c")
-
-    private fun JKLiteralExpression.toRawStringLiteral(): String {
-        // remove implicit newlines that were suppressed with a single backslash at end of line
-        literal = literal.replace(implicitNewlineRegex, "$1")
-        while (literal.contains("\\n")) {
-            // replace escaped newlines with real newlines and leading indenting spaces
-            literal = literal.replace(escapedNewlineRegex, "\n$1$2\n$1")
-        }
-        rawStringSpecialCharReplacements.forEach { (old, new) -> literal = literal.replace(old, new) }
-        return literal
-            .replaceOctalEscapes(format = "%s\${'\\u%04x'}")
-            // unescape backslashes
-            .replace("\\\\", "\\")
-            // add a trailing line break and leading indenting spaces before the closing triple quote
-            .replace(closingTripleQuoteRegex, "\n$1$2\n$1\"\"\"")
-    }
-
-    private fun JKLiteralExpression.convertCharLiteral(): String =
-        literal.replace(charOctalEscapeRegex) {
-            String.format("\\u%04x", Integer.parseInt(it.groupValues[1], 8))
-        }
+            .cleanIntAndLongLiterals()
+            .convertHexLiteral(isLongLiteral = true)
+            .convertBinaryLiteral(isLongLiteral = true)
+            .convertOctalLiteral(isLongLiteral = true) + "L"
 
     private fun JKLiteralExpression.toIntLiteral(): String =
         literal
@@ -105,13 +85,6 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
             .convertHexLiteral(isLongLiteral = false)
             .convertBinaryLiteral(isLongLiteral = false)
             .convertOctalLiteral(isLongLiteral = false)
-
-    private fun JKLiteralExpression.toLongLiteral(): String =
-        literal
-            .cleanIntAndLongLiterals()
-            .convertHexLiteral(isLongLiteral = true)
-            .convertBinaryLiteral(isLongLiteral = true)
-            .convertOctalLiteral(isLongLiteral = true) + "L"
 
     private fun String.convertHexLiteral(isLongLiteral: Boolean): String {
         if (!startsWith("0x", ignoreCase = true)) return this
@@ -150,15 +123,44 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
     private fun String.cleanIntAndLongLiterals() =
         replace("l", "", ignoreCase = true)
             .replace("_", "")
-}
 
-private fun String.replaceOctalEscapes(format: String): String =
-    replace(stringOctalEscapeRegex) { matchResult ->
-        val leadingBackslashes = matchResult.groupValues[1]
-        if (leadingBackslashes.length % 2 == 0)
-            String.format(format, leadingBackslashes, Integer.parseInt(matchResult.groupValues[2], 8))
-        else matchResult.value
+    private fun JKLiteralExpression.convertCharLiteral(): String =
+        literal.replace(charOctalEscapeRegex) {
+            String.format("\\u%04x", Integer.parseInt(it.groupValues[1], 8))
+        }
+
+    private fun JKLiteralExpression.toStringLiteral(): String =
+        literal
+            .replaceOctalEscapes(format = "%s\\u%04x")
+            .replace(backslashDollarRegex, "\\\\$0")
+            .replace("\\f", "\\u000c")
+
+    private fun JKLiteralExpression.toRawStringLiteral(): String {
+        // remove implicit newlines that were suppressed with a single backslash at end of line
+        literal = literal.replace(implicitNewlineRegex, "$1")
+        while (literal.contains("\\n")) {
+            // replace escaped newlines with real newlines and leading indenting spaces
+            literal = literal.replace(escapedNewlineRegex, "\n$1$2\n$1")
+        }
+        rawStringSpecialCharReplacements.forEach { (old, new) -> literal = literal.replace(old, new) }
+        return literal
+            .replaceOctalEscapes(format = "%s\${'\\u%04x'}")
+            // unescape backslashes
+            .replace("\\\\", "\\")
+            // add a trailing line break and leading indenting spaces before the closing triple quote
+            .replace(closingTripleQuoteRegex, "\n$1$2\n$1\"\"\"")
     }
+
+    private fun String.replaceOctalEscapes(format: String): String =
+        replace(stringOctalEscapeRegex) { matchResult ->
+            val leadingBackslashes = matchResult.groupValues[1]
+            if (leadingBackslashes.length % 2 == 0) {
+                String.format(format, leadingBackslashes, Integer.parseInt(matchResult.groupValues[2], 8))
+            } else {
+                matchResult.value
+            }
+        }
+}
 
 private val rawStringSpecialCharReplacements: Map<String, String> = mapOf(
     "\$" to "\${'$'}",
