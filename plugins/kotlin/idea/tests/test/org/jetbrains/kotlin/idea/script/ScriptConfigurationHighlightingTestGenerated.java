@@ -85,11 +85,6 @@ public abstract class ScriptConfigurationHighlightingTestGenerated extends Abstr
             runTest("testData/script/definition/highlighting/emptyAsyncResolver/");
         }
 
-        @TestMetadata("errorResolver")
-        public void testErrorResolver() throws Exception {
-            runTest("testData/script/definition/highlighting/errorResolver/");
-        }
-
         @TestMetadata("implicitReceiver")
         public void testImplicitReceiver() throws Exception {
             runTest("testData/script/definition/highlighting/implicitReceiver/");
