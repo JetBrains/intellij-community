@@ -3,10 +3,8 @@
 package org.jetbrains.kotlin.idea.searching.usages
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiTreeUtil
@@ -22,13 +20,10 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
-import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isInheritable
 import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
-import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
@@ -236,10 +231,6 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         TODO()
     }
 
-    override fun findSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {
-        return emptyList()
-    }
-
     override fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {
         return when (val element = method.unwrapped) {
             is PsiMethod -> element.findDeepestSuperMethods().toList()
@@ -260,14 +251,6 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
             }
             else -> emptyList()
         }
-    }
-
-    override fun findTypeAliasByShortName(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> {
-        return KotlinTypeAliasShortNameIndex.get(shortName, project, scope)
-    }
-
-    override fun isInProjectSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean): Boolean {
-        return RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = includeScriptsOutsideSourceRoots).matches(element)
     }
 
     /**

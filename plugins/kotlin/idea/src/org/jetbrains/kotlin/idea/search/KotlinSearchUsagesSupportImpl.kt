@@ -3,20 +3,15 @@
 package org.jetbrains.kotlin.idea.search
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
-import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.hasJavaResolutionFacade
 import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.search.usagesSearch.*
-import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
@@ -85,15 +80,6 @@ class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
 
     override fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> =
         org.jetbrains.kotlin.idea.search.declarationsSearch.findDeepestSuperMethodsNoWrapping(method)
-
-    override fun findSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> =
-        org.jetbrains.kotlin.idea.search.declarationsSearch.findSuperMethodsNoWrapping(method)
-
-    override fun findTypeAliasByShortName(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> =
-        KotlinTypeAliasShortNameIndex.get(shortName, project, scope)
-
-    override fun isInProjectSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean): Boolean =
-        RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = includeScriptsOutsideSourceRoots).matches(element)
 
     override fun isOverridable(declaration: KtDeclaration): Boolean =
         declaration.isOverridable()

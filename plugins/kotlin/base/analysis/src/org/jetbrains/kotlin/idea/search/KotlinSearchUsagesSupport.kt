@@ -6,7 +6,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
@@ -85,12 +84,6 @@ interface KotlinSearchUsagesSupport {
         fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> =
             getInstance(method.project).findDeepestSuperMethodsNoWrapping(method)
 
-        fun findTypeAliasByShortName(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> =
-            getInstance(project).findTypeAliasByShortName(shortName, project, scope)
-
-        fun isInProjectSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean = false): Boolean =
-            getInstance(element.project).isInProjectSource(element, includeScriptsOutsideSourceRoots)
-
         fun KtDeclaration.isOverridable(): Boolean =
             getInstance(project).isOverridable(this)
 
@@ -154,12 +147,6 @@ interface KotlinSearchUsagesSupport {
     ): Boolean
 
     fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement>
-
-    fun findSuperMethodsNoWrapping(method: PsiElement): List<PsiElement>
-
-    fun findTypeAliasByShortName(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias>
-
-    fun isInProjectSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean = false): Boolean
 
     fun isOverridable(declaration: KtDeclaration): Boolean
 
