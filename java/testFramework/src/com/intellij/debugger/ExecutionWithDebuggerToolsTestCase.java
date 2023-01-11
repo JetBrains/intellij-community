@@ -130,14 +130,34 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     return myBreakpointProvider;
   }
 
+  /**
+   * Queues an action to be run a single time.
+   * <p>
+   * Whenever the VM stops, no matter whether due to a breakpoint
+   * or because an action like {@link #stepInto(SuspendContextImpl)}
+   * or {@link #stepOver(SuspendContextImpl)} finished,
+   * a single action is polled from the queue and then run.
+   */
   protected void onBreakpoint(SuspendContextRunnable runnable) {
     getBreakpointProvider().onBreakpoint(runnable);
   }
 
+  /**
+   * Runs an action every time the VM stops, no matter whether due to a breakpoint
+   * or because an action like {@link #stepInto(SuspendContextImpl)}
+   * or {@link #stepOver(SuspendContextImpl)} finished.
+   * <p>
+   * The actions added here are run after the one-time action from {@link #onBreakpoint(SuspendContextRunnable)}.
+   */
   protected void onBreakpoints(SuspendContextRunnable runnable) {
     getBreakpointProvider().onBreakpoints(runnable);
   }
 
+  /**
+   * Queues two actions to be run a single time, one after another.
+   *
+   * @see #onBreakpoint(SuspendContextRunnable)
+   */
   protected void onStop(SuspendContextRunnable runnable, SuspendContextRunnable then) {
     onBreakpoint(new SuspendContextRunnable() {
       @Override
@@ -152,6 +172,13 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     });
   }
 
+  /**
+   * Queues an action to be run a single time, see {@link #onBreakpoint(SuspendContextRunnable)}.
+   * <p>
+   * After the action is run, execution resumes.
+   *
+   * @see #onStop(SuspendContextRunnable, SuspendContextRunnable)
+   */
   protected void doWhenPausedThenResume(SuspendContextRunnable runnable) {
     onStop(runnable, this::resume);
   }
@@ -171,6 +198,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     return sourcePosition.getFile().getVirtualFile().getName() + ":" + line;
   }
 
+  /** Prints the location of the given context, in the format "file.ext:12345". */
   protected void printContext(StackFrameContext context) {
     ApplicationManager.getApplication().runReadAction(() -> {
       if (context.getFrameProxy() != null) {
@@ -291,6 +319,8 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   }
 
   /**
+   * Create breakpoints as specified by 'Breakpoint!' comments in the source code.
+   * <p>
    * A breakpoint comment has the form &#x201C;[<i>kind</i>] Breakpoint! [<i>property</i>...]&#x201D;.
    * <p>
    * Breakpoint kinds (none defaults to a line breakpoint):
