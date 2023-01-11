@@ -155,16 +155,19 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     LOG.assertTrue(changed, "actual state: " + myState.get() + ", project " + getProject());
 
     List<StartupActivity.RequiredForSmartMode> activities = REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY.getExtensionList();
-    if (activities.isEmpty()) {
-      myState.set(State.SMART);
+    for (StartupActivity.RequiredForSmartMode activity : activities) {
+      activity.runActivity(getProject());
     }
-    else {
-      for (StartupActivity.RequiredForSmartMode activity : activities) {
-        activity.runActivity(getProject());
-      }
 
-      if (isSynchronousTaskExecution()) {
-        myState.set(State.SMART);
+    if (isSynchronousTaskExecution()) {
+      // invokeLaterAfterProjectInitialized(this::updateFinished) does not work well in synchronous environments (e.g. in unit tests): code
+      // continues to execute without waiting for smart mode to start because of invoke*Later*. See, for example, DbSrcFileDialectTest
+      myState.compareAndSet(State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS, State.SMART);
+    } else {
+      // switch to smart mode and notify subscribers if no dumb mode tasks were scheduled
+      if (myState.compareAndSet(State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS, State.WAITING_FOR_FINISH)) {
+        myTrackedEdtActivityService.setDumbStartModality(ModalityState.defaultModalityState());
+        myTrackedEdtActivityService.invokeLaterAfterProjectInitialized(this::updateFinished);
       }
     }
   }
