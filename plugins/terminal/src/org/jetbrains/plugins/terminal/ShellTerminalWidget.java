@@ -10,8 +10,8 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.terminal.actions.TerminalActionUtil;
+import com.intellij.terminal.ui.TtyConnectorAccessor;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.ProcessTtyConnector;
@@ -37,6 +37,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class ShellTerminalWidget extends JBTerminalWidget {
@@ -48,7 +49,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   private String myCommandHistoryFilePath;
   private final Prompt myPrompt = new Prompt();
   private final Queue<String> myPendingCommandsToExecute = new LinkedList<>();
-  private final Queue<Consumer<TtyConnector>> myPendingActionsToExecute = new LinkedList<>();
+  private final TtyConnectorAccessor myTtyConnectorAccessor = new TtyConnectorAccessor();
   private final TerminalShellCommandHandlerHelper myShellCommandHandlerHelper;
 
   private final Alarm myVfsRefreshAlarm;
@@ -174,12 +175,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   }
 
   public void executeWithTtyConnector(@NotNull Consumer<TtyConnector> consumer) {
-    TtyConnector connector = getTtyConnector();
-    if (connector != null) {
-      consumer.consume(connector);
-    } else {
-      myPendingActionsToExecute.add(consumer);
-    }
+    myTtyConnectorAccessor.executeWithTtyConnector(consumer);
   }
 
   @Override
@@ -195,6 +191,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   @Override
   public void setTtyConnector(@NotNull TtyConnector ttyConnector) {
     super.setTtyConnector(ttyConnector);
+    myTtyConnectorAccessor.setTtyConnector(ttyConnector);
 
     String command;
     while ((command = myPendingCommandsToExecute.poll()) != null) {
@@ -204,11 +201,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       catch (IOException e) {
         LOG.warn("Cannot execute " + command, e);
       }
-    }
-
-    Consumer<TtyConnector> consumer;
-    while ((consumer = myPendingActionsToExecute.poll()) != null) {
-      consumer.consume(ttyConnector);
     }
   }
 
