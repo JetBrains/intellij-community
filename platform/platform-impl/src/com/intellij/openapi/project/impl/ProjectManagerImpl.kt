@@ -40,11 +40,8 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.CoreProgressManager
-import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.LowLevelProjectOpenProcessor
 import com.intellij.openapi.project.ex.PerProjectInstancePaths
@@ -56,6 +53,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.ZipHandler
 import com.intellij.openapi.wm.IdeFocusManager
@@ -398,6 +396,18 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       LaterInvocator.purgeExpiredItems()
       if (dispose) {
         Disposer.dispose(project)
+      }
+    }
+    if (project is ProjectImpl && Registry.`is`("ide.await.scope.completion")) {
+      val containerJob = project.coroutineScope.coroutineContext.job
+      if (!containerJob.isCancelled) {
+        LOG.error("Project container scope is expected to be cancelled during disposal")
+        containerJob.cancel()
+      }
+      if (!containerJob.isCompleted) {
+        runBlockingModal(ModalTaskOwner.guess(), IdeBundle.message("progress.closing.project"), TaskCancellation.nonCancellable()) {
+          containerJob.join()
+        }
       }
     }
     return true
