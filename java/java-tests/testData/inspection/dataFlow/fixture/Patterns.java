@@ -1,7 +1,7 @@
 class Test {
   int testIncomplete(Object obj) {
     return switch(obj) {
-      case String s &&<EOLError descr="Expression expected"></EOLError><EOLError descr="':' expected"></EOLError>
+      case String s &&<EOLError descr="Expression expected"></EOLError><EOLError descr="':' or '->' expected"></EOLError>
     };
   }
 

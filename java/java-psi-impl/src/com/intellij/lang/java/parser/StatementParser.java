@@ -602,7 +602,7 @@ public class StatementParser {
       done(statement, JavaElementType.SWITCH_LABELED_RULE);
     }
     else {
-      expectOrError(builder, JavaTokenType.COLON, "expected.colon");
+      expectOrError(builder, JavaTokenType.COLON, "expected.colon.or.arrow");
       done(statement, JavaElementType.SWITCH_LABEL_STATEMENT);
     }
 
