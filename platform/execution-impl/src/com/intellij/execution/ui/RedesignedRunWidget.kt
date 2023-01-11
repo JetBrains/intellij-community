@@ -24,6 +24,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.IconReplacer
+import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.IconUtil
@@ -136,6 +138,22 @@ class RunToolbarTopLevelExecutorActionGroup : ActionGroup() {
   }
 }
 
+private class DisabledIcon(private val width: Int, private val height: Int, private val iconFn: () -> Icon) : RetrievableIcon {
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+    iconFn().paintIcon(c, g, x, y)
+  }
+
+  override fun getIconWidth(): Int = width
+
+  override fun getIconHeight(): Int = height
+
+  override fun retrieveIcon(): Icon = iconFn()
+
+  override fun replaceBy(replacer: IconReplacer): Icon {
+    return DisabledIcon(width, height) { replacer.replaceIcon(iconFn()) }
+  }
+}
+
 private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () -> Boolean) : IdeaActionButtonLook() {
   override fun getStateBackground(component: JComponent, state: Int): Color {
 
@@ -185,12 +203,18 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
     }
   }
 
+  override fun getDisabledIcon(icon: Icon): Icon = DisabledIcon(icon.iconWidth, icon.iconHeight) {
+    IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND)
+  }
 
   override fun paintIcon(g: Graphics, actionButton: ActionButtonComponent, icon: Icon, x: Int, y: Int) {
     if (icon.iconWidth == 0 || icon.iconHeight == 0) {
       return
     }
-    super.paintIcon(g, actionButton, IconUtil.toStrokeIcon(icon, RunWidgetDefaults.FOREGROUND), x, y)
+
+    val toStrokeIcon = if (icon is DisabledIcon) icon else IconUtil.toStrokeIcon(icon, RunWidgetDefaults.FOREGROUND)
+
+    super.paintIcon(g, actionButton, toStrokeIcon, x, y)
   }
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
@@ -293,6 +317,7 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
       override fun getMargins(): Insets = JBInsets.create(0, 10)
       override fun iconTextSpace(): Int = JBUI.scale(6)
       override fun shallPaintDownArrow() = true
+      override fun getInactiveTextColor() = JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND
     }.also {
       it.foreground = RunWidgetDefaults.FOREGROUND
       it.setHorizontalTextAlignment(SwingConstants.LEFT)

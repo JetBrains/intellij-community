@@ -1888,6 +1888,11 @@
       "since": "2022.3"
     },
     {
+      "key": "RunWidget.disabledForeground",
+      "description": "Foreground for run widget components and stroke icons in disable state",
+      "since": "2022.3"
+    },
+    {
       "key": "RunWidget.background",
       "description": "Background for run widget in non-running state",
       "since": "2022.3"
