@@ -37,10 +37,8 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
-import com.intellij.openapi.editor.ex.ErrorStripeEvent;
-import com.intellij.openapi.editor.ex.ErrorStripeListener;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -71,6 +69,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -408,19 +407,33 @@ public final class DaemonListeners implements Disposable {
     name.addChangeListener(() -> stopDaemonAndRestartAllFiles(message), this);
   }
 
-  private boolean worthBothering(@Nullable Document document, @Nullable Project project) {
+  private boolean worthBothering(@Nullable Document document, @Nullable Project guessedProject) {
     if (document == null) {
       return true;
     }
-    if (project != null && project != myProject) {
+    if (guessedProject != null && guessedProject != myProject) {
       return false;
     }
     if (myProject.isDisposed()) {
       return false;
     }
+    // Used to be these lines:
+
+    /*
     // cached is essential here since we do not want to create PSI file in alien project
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(document);
     return psiFile != null && psiFile.isPhysical() && psiFile.getOriginalFile() == psiFile;
+    */
+
+    // But had to replace them with the heuristics below which are not PSI-related to avoid accessing indexes in EDT
+    // see EA-659452 T: DirectoryIndexImpl.getInfoForFile
+    // and please don't do anything PSIthic here
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    if (virtualFile == null || virtualFile instanceof LightVirtualFile) {
+      return false;
+    }
+    // non-physical docs can be updated outside EDT as a rule
+    return !(document instanceof DocumentImpl) || ((DocumentImpl)document).isWriteThreadOnly();
   }
 
   @Override
