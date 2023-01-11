@@ -16,7 +16,6 @@ import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCol
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy
 import com.intellij.openapi.externalSystem.service.project.autoimport.ProjectAware
 import com.intellij.openapi.file.*
-import com.intellij.openapi.file.CanonicalPathUtil.getAbsoluteNioPath
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
@@ -62,7 +61,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     "$projectPath/$relativePath"
 
   private fun getAbsoluteNioPath(relativePath: String) =
-    projectRoot.path.getAbsoluteNioPath(relativePath)
+    projectRoot.path.getResolvedNioPath(relativePath)
 
   protected fun createFile(relativePath: String) =
     runWriteAction { projectRoot.createVirtualFile(relativePath) }

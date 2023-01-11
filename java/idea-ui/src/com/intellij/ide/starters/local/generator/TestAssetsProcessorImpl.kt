@@ -3,7 +3,6 @@ package com.intellij.ide.starters.local.generator
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.file.*
-import com.intellij.openapi.file.NioPathUtil.getAbsoluteNioPath
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -52,7 +51,7 @@ class TestAssetsProcessorImpl : AssetsProcessorImpl() {
   override fun findOrCreateFile(outputDirectory: Path, relativePath: String): Path {
     if (outputDirectory is TestFileSystemLocation) {
       val vFile = outputDirectory.virtualFile.findOrCreateVirtualFile(relativePath)
-      val debugPath = outputDirectory.debugPath.getAbsoluteNioPath(relativePath)
+      val debugPath = outputDirectory.debugPath.getResolvedNioPath(relativePath)
       return TestFileSystemLocation(vFile, debugPath)
     }
     return super.findOrCreateFile(outputDirectory, relativePath)
@@ -61,7 +60,7 @@ class TestAssetsProcessorImpl : AssetsProcessorImpl() {
   override fun findOrCreateDirectory(outputDirectory: Path, relativePath: String): Path {
     if (outputDirectory is TestFileSystemLocation) {
       val vFile = outputDirectory.virtualFile.findOrCreateVirtualDirectory(relativePath)
-      val debugPath = outputDirectory.debugPath.getAbsoluteNioPath(relativePath)
+      val debugPath = outputDirectory.debugPath.getResolvedNioPath(relativePath)
       return TestFileSystemLocation(vFile, debugPath)
     }
     return super.findOrCreateDirectory(outputDirectory, relativePath)

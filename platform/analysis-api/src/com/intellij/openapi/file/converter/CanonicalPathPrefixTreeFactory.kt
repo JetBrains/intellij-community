@@ -2,10 +2,11 @@
 package com.intellij.openapi.file.converter
 
 import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
+import org.jetbrains.annotations.SystemIndependent
 
-object CanonicalPathPrefixTreeFactory : AbstractPrefixTreeFactory<String, String>() {
+object CanonicalPathPrefixTreeFactory : AbstractPrefixTreeFactory<@SystemIndependent String, String>() {
 
-  override fun convertToList(element: String): List<String> {
+  override fun convertToList(element: @SystemIndependent String): List<String> {
     return element.removeSuffix("/").split("/")
   }
 }

@@ -7,9 +7,9 @@ import com.intellij.ide.impl.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.file.CanonicalPathUtil.getAbsoluteNioPath
-import com.intellij.openapi.file.CanonicalPathUtil.getAbsolutePath
-import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
+import com.intellij.openapi.file.getResolvedNioPath
+import com.intellij.openapi.file.getResolvedPath
+import com.intellij.openapi.file.toNioPath
 import com.intellij.openapi.file.findOrCreateVirtualDirectory
 import com.intellij.openapi.file.getVirtualDirectory
 import com.intellij.openapi.project.Project
@@ -97,7 +97,7 @@ abstract class GradleUntrustedProjectTestCase {
 
   suspend fun linkProjectAsyncAndWait(project: Project, relativePath: String) {
     val deferred = getProjectDataLoadPromise()
-    linkAndRefreshGradleProject(testRoot.path.getAbsolutePath(relativePath), project)
+    linkAndRefreshGradleProject(testRoot.path.getResolvedPath(relativePath), project)
     withContext(Dispatchers.EDT) {
       withTimeout(10.minutes) {
         deferred.asDeferred().join()
@@ -111,7 +111,7 @@ abstract class GradleUntrustedProjectTestCase {
 
   fun assertTrustedLocations(relativePaths: List<String>) {
     Assertions.assertEquals(
-      relativePaths.map { testRoot.path.getAbsoluteNioPath(it) }.toSet(),
+      relativePaths.map { testRoot.path.getResolvedNioPath(it) }.toSet(),
       trustedLocations.toSet()
     )
   }
@@ -122,7 +122,7 @@ abstract class GradleUntrustedProjectTestCase {
   ) {
     val locatedProject = LocatedProject.locateProject(project)
     Assertions.assertEquals(
-      relativePaths.map { testRoot.path.getAbsoluteNioPath(it) }.toSet(),
+      relativePaths.map { testRoot.path.getResolvedNioPath(it) }.toSet(),
       locatedProject.projectRoots.toSet()
     )
   }

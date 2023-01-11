@@ -10,8 +10,8 @@ import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.file.CanonicalPathUtil.getAbsoluteNioPath
-import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
+import com.intellij.openapi.file.getResolvedNioPath
+import com.intellij.openapi.file.toNioPath
 import com.intellij.openapi.file.findVirtualFile
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
@@ -58,7 +58,7 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
 
   private fun addFilesToOpen(relativeCanonicalPaths: Iterable<String>) {
     for (relativePath in relativeCanonicalPaths) {
-      filesToOpen.add(outputDirectory.getAbsoluteNioPath(relativePath))
+      filesToOpen.add(outputDirectory.getResolvedNioPath(relativePath))
     }
   }
 

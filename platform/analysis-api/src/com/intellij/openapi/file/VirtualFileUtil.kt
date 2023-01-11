@@ -1,16 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("MemberVisibilityCanBePrivate", "unused")
-
+@file:JvmName("VirtualFileUtil")
 package com.intellij.openapi.file
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.*
-import com.intellij.openapi.file.CanonicalPathUtil.getAbsolutePath
-import com.intellij.openapi.file.CanonicalPathUtil.getFileName
-import com.intellij.openapi.file.CanonicalPathUtil.getParentPath
-import com.intellij.openapi.file.NioPathUtil.toCanonicalPath
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -48,7 +44,9 @@ fun VirtualFile.findDocument(): Document? {
 }
 
 fun VirtualFile.getDocument(): Document {
-  return requireNotNull(findDocument()) { "Cannot find Document for $path" }
+  return checkNotNull(findDocument()) {
+    "Cannot find Document for $path"
+  }
 }
 
 fun VirtualFile.reloadDocument() {
@@ -72,7 +70,9 @@ fun VirtualFile.findPsiFile(project: Project): PsiFile? {
 }
 
 fun VirtualFile.getPsiFile(project: Project): PsiFile {
-  return requireNotNull(findPsiFile(project)) { "Cannot find PSI file for $path" }
+  return checkNotNull(findPsiFile(project)) {
+    "Cannot find PSI file for $path"
+  }
 }
 
 fun refreshVirtualFiles(vararg paths: Path, async: Boolean = false, recursive: Boolean = true, callback: () -> Unit = {}) {
@@ -84,51 +84,51 @@ fun refreshVirtualFiles(vararg files: VirtualFile, async: Boolean = false, recur
 }
 
 fun VirtualFile.findVirtualFileOrDirectory(relativePath: @SystemIndependent String): VirtualFile? {
-  return fileSystem.findVirtualFileOrDirectory(path.getAbsolutePath(relativePath))
+  return fileSystem.findVirtualFileOrDirectory(path.getResolvedPath(relativePath))
 }
 
 fun VirtualFile.getVirtualFileOrDirectory(relativePath: @SystemIndependent String): VirtualFile {
-  return fileSystem.getVirtualFileOrDirectory(path.getAbsolutePath(relativePath))
+  return fileSystem.getVirtualFileOrDirectory(path.getResolvedPath(relativePath))
 }
 
 fun VirtualFile.findVirtualFile(relativePath: @SystemIndependent String): VirtualFile? {
-  return fileSystem.findVirtualFile(path.getAbsolutePath(relativePath))
+  return fileSystem.findVirtualFile(path.getResolvedPath(relativePath))
 }
 
 fun VirtualFile.getVirtualFile(relativePath: @SystemIndependent String): VirtualFile {
-  return fileSystem.getVirtualFile(path.getAbsolutePath(relativePath))
+  return fileSystem.getVirtualFile(path.getResolvedPath(relativePath))
 }
 
 fun VirtualFile.findVirtualDirectory(relativePath: @SystemIndependent String): VirtualFile? {
-  return fileSystem.findVirtualDirectory(path.getAbsolutePath(relativePath))
+  return fileSystem.findVirtualDirectory(path.getResolvedPath(relativePath))
 }
 
 fun VirtualFile.getVirtualDirectory(relativePath: @SystemIndependent String): VirtualFile {
-  return fileSystem.getVirtualDirectory(path.getAbsolutePath(relativePath))
-}
-
-fun VirtualFile.findOrCreateVirtualFile(relativePath: @SystemIndependent String): VirtualFile {
-  return fileSystem.findOrCreateVirtualFile(path.getAbsolutePath(relativePath))
-}
-
-fun VirtualFile.findOrCreateVirtualDirectory(relativePath: @SystemIndependent String): VirtualFile {
-  return fileSystem.findOrCreateVirtualDirectory(path.getAbsolutePath(relativePath))
+  return fileSystem.getVirtualDirectory(path.getResolvedPath(relativePath))
 }
 
 fun VirtualFile.createVirtualFile(relativePath: @SystemIndependent String): VirtualFile {
-  return fileSystem.createVirtualFile(path.getAbsolutePath(relativePath))
+  return fileSystem.createVirtualFile(path.getResolvedPath(relativePath))
 }
 
 fun VirtualFile.createVirtualDirectory(relativePath: @SystemIndependent String): VirtualFile {
-  return fileSystem.createVirtualDirectory(path.getAbsolutePath(relativePath))
+  return fileSystem.createVirtualDirectory(path.getResolvedPath(relativePath))
+}
+
+fun VirtualFile.findOrCreateVirtualFile(relativePath: @SystemIndependent String): VirtualFile {
+  return fileSystem.findOrCreateVirtualFile(path.getResolvedPath(relativePath))
+}
+
+fun VirtualFile.findOrCreateVirtualDirectory(relativePath: @SystemIndependent String): VirtualFile {
+  return fileSystem.findOrCreateVirtualDirectory(path.getResolvedPath(relativePath))
 }
 
 fun VirtualFile.deleteVirtualFileOrDirectory(relativePath: @SystemIndependent String = ".") {
-  fileSystem.deleteVirtualFileOrDirectory(path.getAbsolutePath(relativePath))
+  fileSystem.deleteVirtualFileOrDirectory(path.getResolvedPath(relativePath))
 }
 
 fun VirtualFile.deleteVirtualChildren(relativePath: @SystemIndependent String = ".", predicate: (VirtualFile) -> Boolean = { true }) {
-  fileSystem.deleteVirtualChildren(path.getAbsolutePath(relativePath), predicate)
+  fileSystem.deleteVirtualChildren(path.getResolvedPath(relativePath), predicate)
 }
 
 fun Path.findVirtualFileOrDirectory(): VirtualFile? {
@@ -159,16 +159,16 @@ fun Path.findOrCreateVirtualFile(): VirtualFile {
   return getVirtualFileSystem().findOrCreateVirtualFile(toCanonicalPath())
 }
 
-fun Path.findOrCreateVirtualDirectory(): VirtualFile {
-  return getVirtualFileSystem().findOrCreateVirtualDirectory(toCanonicalPath())
-}
-
 fun Path.createVirtualFile(): VirtualFile {
   return getVirtualFileSystem().createVirtualFile(toCanonicalPath())
 }
 
 fun Path.createVirtualDirectory(): VirtualFile {
   return getVirtualFileSystem().createVirtualDirectory(toCanonicalPath())
+}
+
+fun Path.findOrCreateVirtualDirectory(): VirtualFile {
+  return getVirtualFileSystem().findOrCreateVirtualDirectory(toCanonicalPath())
 }
 
 fun Path.deleteVirtualFileOrDirectory() {
@@ -209,7 +209,9 @@ fun VirtualFileSystem.findVirtualFile(path: @SystemIndependent String): VirtualF
 }
 
 fun VirtualFileSystem.getVirtualFile(path: @SystemIndependent String): VirtualFile {
-  return requireNotNull(findVirtualFile(path)) { "File doesn't exist: $path" }
+  return checkNotNull(findVirtualFile(path)) {
+    "File doesn't exist: $path"
+  }
 }
 
 fun VirtualFileSystem.findVirtualDirectory(path: @SystemIndependent String): VirtualFile? {
@@ -226,14 +228,6 @@ fun VirtualFileSystem.getVirtualDirectory(path: @SystemIndependent String): Virt
   }
 }
 
-fun VirtualFileSystem.findOrCreateVirtualFile(path: @SystemIndependent String): VirtualFile {
-  return findVirtualFile(path) ?: createVirtualFile(path)
-}
-
-fun VirtualFileSystem.findOrCreateVirtualDirectory(path: @SystemIndependent String): VirtualFile {
-  return findVirtualDirectory(path) ?: createVirtualDirectory(path)
-}
-
 fun VirtualFileSystem.createVirtualFile(path: @SystemIndependent String): VirtualFile {
   val parentFile = findOrCreateParentDirectory(path)
   return parentFile.createChildData(null, path.getFileName())
@@ -242,6 +236,14 @@ fun VirtualFileSystem.createVirtualFile(path: @SystemIndependent String): Virtua
 fun VirtualFileSystem.createVirtualDirectory(path: @SystemIndependent String): VirtualFile {
   val parentFile = findOrCreateParentDirectory(path)
   return parentFile.createChildDirectory(null, path.getFileName())
+}
+
+fun VirtualFileSystem.findOrCreateVirtualFile(path: @SystemIndependent String): VirtualFile {
+  return findVirtualFile(path) ?: createVirtualFile(path)
+}
+
+fun VirtualFileSystem.findOrCreateVirtualDirectory(path: @SystemIndependent String): VirtualFile {
+  return findVirtualDirectory(path) ?: createVirtualDirectory(path)
 }
 
 fun VirtualFileSystem.deleteVirtualFileOrDirectory(path: @SystemIndependent String) {

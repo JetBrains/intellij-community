@@ -1,72 +1,54 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("MemberVisibilityCanBePrivate", "unused")
+@file:JvmName("CanonicalPathUtil")
 package com.intellij.openapi.file
 
-import com.intellij.openapi.file.NioPathUtil.toCanonicalPath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.text.nullize
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.SystemIndependent
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 
-@ApiStatus.Experimental
-object CanonicalPathUtil {
 
-  @JvmStatic
-  fun String.toNioPath(): Path {
-    return Paths.get(FileUtil.toSystemDependentName(this))
-  }
+fun @SystemIndependent String.toNioPath(): Path {
+  return Paths.get(FileUtil.toSystemDependentName(this))
+}
 
-  @JvmStatic
-  fun String.toIoFile(): File {
-    return toNioPath().toFile()
-  }
+fun @SystemIndependent String.toIoFile(): File {
+  return toNioPath().toFile()
+}
 
-  @JvmStatic
-  fun String.getFileName(): String {
-    return PathUtil.getFileName(this)
-  }
+fun @SystemIndependent String.getFileName(): String {
+  return PathUtil.getFileName(this)
+}
 
-  @JvmStatic
-  fun String.getParentPath(): String? {
-    return PathUtil.getParentPath(this).nullize()
-  }
+fun @SystemIndependent String.getParentPath(): @SystemIndependent String? {
+  return PathUtil.getParentPath(this).nullize()
+}
 
-  @JvmStatic
-  fun String.getParentNioPath(): Path? {
-    return getParentPath()?.toNioPath()
-  }
+fun @SystemIndependent String.getParentNioPath(): Path? {
+  return getParentPath()?.toNioPath()
+}
 
-  @JvmStatic
-  fun String.getAbsolutePath(relativePath: String): String {
-    val path = "$this/$relativePath"
-    return FileUtil.toCanonicalPath(path) // resolve simple symlinks . and ..
-  }
+fun @SystemIndependent String.getResolvedPath(relativePath: @SystemIndependent String): @SystemIndependent String {
+  val path = "$this/$relativePath"
+  return FileUtil.toCanonicalPath(path) // resolve simple symlinks . and ..
+}
 
-  @JvmStatic
-  fun String.getAbsoluteNioPath(relativePath: String): Path {
-    return getAbsolutePath(relativePath).toNioPath()
-  }
+fun @SystemIndependent String.getResolvedNioPath(relativePath: @SystemIndependent String): Path {
+  return getResolvedPath(relativePath).toNioPath()
+}
 
-  @JvmStatic
-  fun String.getRelativePath(path: String): String? {
-    return FileUtil.getRelativePath(this, path, '/')
-  }
+fun @SystemIndependent String.getRelativePath(path: @SystemIndependent String): @SystemIndependent String? {
+  return FileUtil.getRelativePath(this, path, '/')
+}
 
-  @JvmStatic
-  fun String.getRelativeNioPath(path: String): Path? {
-    return getRelativePath(path)?.toNioPath()
-  }
+fun @SystemIndependent String.getRelativeNioPath(path: @SystemIndependent String): Path? {
+  return getRelativePath(path)?.toNioPath()
+}
 
-  @JvmStatic
-  fun String.isAncestor(path: String, strict: Boolean): Boolean {
-    return FileUtil.isAncestor(this, path, strict)
-  }
-
-  @JvmStatic
-  fun String.isAncestor(path: Path, strict: Boolean): Boolean {
-    return isAncestor(path.toCanonicalPath(), strict)
-  }
+fun @SystemIndependent String.isAncestor(path: @SystemIndependent String, strict: Boolean): Boolean {
+  return FileUtil.isAncestor(this, path, strict)
 }

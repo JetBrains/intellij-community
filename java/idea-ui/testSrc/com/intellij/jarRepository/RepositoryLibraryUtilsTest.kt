@@ -4,7 +4,7 @@ package com.intellij.jarRepository
 import com.intellij.application.options.PathMacrosImpl
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
+import com.intellij.openapi.file.toNioPath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.doNotEnableExternalStorageByDefaultInTests
 import com.intellij.openapi.roots.impl.libraries.LibraryEx

@@ -7,13 +7,10 @@ import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileCha
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installBulkVirtualFileListener
 import com.intellij.openapi.externalSystem.util.*
 import com.intellij.openapi.file.*
-import com.intellij.openapi.file.CanonicalPathUtil.getAbsoluteNioPath
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
-import com.intellij.openapi.file.CanonicalPathUtil.getRelativePath
-import com.intellij.openapi.file.NioPathUtil.toCanonicalPath
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.common.runAll
@@ -61,7 +58,7 @@ internal class FileTestFixtureImpl(
     val configuration = createFixtureConfiguration()
 
     excludedFiles = configuration.excludedFiles
-      .map { root.path.getAbsoluteNioPath(it) }
+      .map { root.path.getResolvedNioPath(it) }
       .toSet()
 
     withSuppressedErrors {
@@ -174,7 +171,7 @@ internal class FileTestFixtureImpl(
   }
 
   override fun snapshot(relativePath: String) {
-    snapshot(root.path.getAbsoluteNioPath(relativePath))
+    snapshot(root.path.getResolvedNioPath(relativePath))
   }
 
   private fun snapshot(path: Path) {
@@ -191,7 +188,7 @@ internal class FileTestFixtureImpl(
   }
 
   override fun rollback(relativePath: String) {
-    rollback(root.path.getAbsoluteNioPath(relativePath))
+    rollback(root.path.getResolvedNioPath(relativePath))
   }
 
   private fun rollback(path: Path) {
@@ -202,7 +199,7 @@ internal class FileTestFixtureImpl(
   }
 
   private fun revertFile(relativePath: String, text: String?) {
-    revertFile(root.path.getAbsoluteNioPath(relativePath), text)
+    revertFile(root.path.getResolvedNioPath(relativePath), text)
   }
 
   private fun revertFile(path: Path, text: String?) {

@@ -1,119 +1,113 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("MemberVisibilityCanBePrivate", "unused")
-
+@file:JvmName("NioPathUtil")
 package com.intellij.openapi.file
 
-import com.intellij.openapi.file.CanonicalPathUtil.getAbsoluteNioPath
-import com.intellij.openapi.file.CanonicalPathUtil.getAbsolutePath
-import com.intellij.openapi.file.CanonicalPathUtil.getRelativeNioPath
-import com.intellij.openapi.file.CanonicalPathUtil.getRelativePath
-import com.intellij.openapi.file.CanonicalPathUtil.isAncestor
-import com.intellij.openapi.file.system.NioPathSystemUtil
 import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.util.io.createDirectories
+import com.intellij.util.io.createFile
+import com.intellij.util.io.delete
+import org.jetbrains.annotations.SystemIndependent
 import java.io.File
+import java.nio.file.DirectoryStream
+import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 
-@ApiStatus.Experimental
-object NioPathUtil {
+fun Path.toCanonicalPath(): @SystemIndependent String {
+  return FileUtil.toCanonicalPath(toString())
+}
 
-  @JvmStatic
-  fun findFileOrDirectory(path: Path, relativePath: String): Path? {
-    return NioPathSystemUtil.findFileOrDirectory(path.getAbsoluteNioPath(relativePath))
+fun Path.toIoFile(): File {
+  return toFile()
+}
+
+fun Path.getResolvedPath(relativePath: @SystemIndependent String): String {
+  return toCanonicalPath().getResolvedPath(relativePath)
+}
+
+fun Path.getResolvedNioPath(relativePath: @SystemIndependent String): Path {
+  return toCanonicalPath().getResolvedNioPath(relativePath)
+}
+
+fun Path.getRelativePath(path: Path): @SystemIndependent String? {
+  return toCanonicalPath().getRelativePath(path.toCanonicalPath())
+}
+
+fun Path.getRelativeNioPath(path: Path): Path? {
+  return toCanonicalPath().getRelativeNioPath(path.toCanonicalPath())
+}
+
+fun Path.isAncestor(path: Path, strict: Boolean): Boolean {
+  return FileUtil.isAncestor(this, path, strict)
+}
+
+fun Path.findNioFileOrDirectory(): Path? {
+  if (!exists()) {
+    return null
   }
+  return this
+}
 
-  @JvmStatic
-  fun getFileOrDirectory(path: Path, relativePath: String): Path {
-    return NioPathSystemUtil.getFileOrDirectory(path.getAbsoluteNioPath(relativePath))
+fun Path.getNioFileOrDirectory(): Path {
+  return checkNotNull(findNioFileOrDirectory()) {
+    "File or directory doesn't exist: $this"
   }
+}
 
-  @JvmStatic
-  fun findFile(path: Path, relativePath: String): Path? {
-    return NioPathSystemUtil.findFile(path.getAbsoluteNioPath(relativePath))
+fun Path.findNioFile(): Path? {
+  val filePath = findNioFileOrDirectory() ?: return null
+  check(filePath.isRegularFile()) {
+    "Expected file instead directory: $filePath"
   }
+  return this
+}
 
-  @JvmStatic
-  fun getFile(path: Path, relativePath: String): Path {
-    return NioPathSystemUtil.getFile(path.getAbsoluteNioPath(relativePath))
+fun Path.getNioFile(): Path {
+  return checkNotNull(findNioFile()) {
+    "File doesn't exist: $this"
   }
+}
 
-  @JvmStatic
-  fun findDirectory(path: Path, relativePath: String): Path? {
-    return NioPathSystemUtil.findDirectory(path.getAbsoluteNioPath(relativePath))
+fun Path.findNioDirectory(): Path? {
+  val filePath = findNioFileOrDirectory() ?: return null
+  check(filePath.isDirectory()) {
+    "Expected directory instead file: $filePath"
   }
+  return filePath
+}
 
-  @JvmStatic
-  fun getDirectory(path: Path, relativePath: String): Path {
-    return NioPathSystemUtil.getDirectory(path.getAbsoluteNioPath(relativePath))
+fun Path.getNioDirectory(): Path {
+  return checkNotNull(findNioDirectory()) {
+    "Directory doesn't exist: $this"
   }
+}
 
-  @JvmStatic
-  fun findOrCreateFile(path: Path, relativePath: String): Path {
-    return NioPathSystemUtil.findOrCreateFile(path.getAbsoluteNioPath(relativePath))
-  }
+fun Path.createNioFile(): Path {
+  return createFile()
+}
 
-  @JvmStatic
-  fun findOrCreateDirectory(path: Path, relativePath: String): Path {
-    return NioPathSystemUtil.findOrCreateDirectory(path.getAbsoluteNioPath(relativePath))
-  }
+fun Path.createNioDirectory(): Path {
+  return createDirectories()
+}
 
-  @JvmStatic
-  fun createFile(path: Path, relativePath: String): Path {
-    return NioPathSystemUtil.createFile(path.getAbsoluteNioPath(relativePath))
-  }
+fun Path.findOrCreateNioFile(): Path {
+  return findNioFile() ?: createNioFile()
+}
 
-  @JvmStatic
-  fun createDirectory(path: Path, relativePath: String): Path {
-    return NioPathSystemUtil.createDirectory(path.getAbsoluteNioPath(relativePath))
-  }
+fun Path.findOrCreateNioDirectory(): Path {
+  return findNioDirectory() ?: createNioDirectory()
+}
 
-  @JvmStatic
-  fun deleteFileOrDirectory(path: Path, relativePath: String = ".") {
-    NioPathSystemUtil.deleteFileOrDirectory(path.getAbsoluteNioPath(relativePath))
-  }
+fun Path.deleteNioFileOrDirectory() {
+  delete(recursively = true)
+}
 
-  @JvmStatic
-  fun deleteChildren(path: Path, relativePath: String = ".", predicate: (Path) -> Boolean = { true }) {
-    NioPathSystemUtil.deleteChildren(path.getAbsoluteNioPath(relativePath), predicate)
-  }
-
-  @JvmStatic
-  fun Path.toCanonicalPath(): String {
-    return FileUtil.toCanonicalPath(toString())
-  }
-
-  @JvmStatic
-  fun Path.toIoFile(): File {
-    return toFile()
-  }
-
-  @JvmStatic
-  fun Path.getAbsolutePath(relativePath: String): String {
-    return toCanonicalPath().getAbsolutePath(relativePath)
-  }
-
-  @JvmStatic
-  fun Path.getAbsoluteNioPath(relativePath: String): Path {
-    return toCanonicalPath().getAbsoluteNioPath(relativePath)
-  }
-
-  @JvmStatic
-  fun Path.getRelativePath(path: Path): String? {
-    return toCanonicalPath().getRelativePath(path.toCanonicalPath())
-  }
-
-  @JvmStatic
-  fun Path.getRelativeNioPath(path: Path): Path? {
-    return toCanonicalPath().getRelativeNioPath(path.toCanonicalPath())
-  }
-
-  @JvmStatic
-  fun Path.isAncestor(canonicalPath: String, strict: Boolean): Boolean {
-    return toCanonicalPath().isAncestor(canonicalPath, strict)
-  }
-
-  @JvmStatic
-  fun Path.isAncestor(path: Path, strict: Boolean): Boolean {
-    return FileUtil.isAncestor(this, path, strict)
+fun Path.deleteNioChildren(predicate: (Path) -> Boolean = { true }) {
+  val filter = DirectoryStream.Filter(predicate)
+  Files.newDirectoryStream(this, filter).use { stream ->
+    stream.forEach { it.deleteNioFileOrDirectory() }
   }
 }

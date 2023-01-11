@@ -5,8 +5,8 @@ import com.intellij.ide.impl.trustedProjects.LocatedProject
 import com.intellij.ide.impl.trustedProjects.ProjectLocator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.file.CanonicalPathUtil.getAbsoluteNioPath
-import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
+import com.intellij.openapi.file.getResolvedNioPath
+import com.intellij.openapi.file.toNioPath
 import com.intellij.openapi.file.converter.NioPathPrefixTreeFactory
 import com.intellij.openapi.file.createVirtualDirectory
 import com.intellij.openapi.file.findOrCreateVirtualDirectory
@@ -160,7 +160,7 @@ abstract class TrustedProjectsHeavyTestCase {
   ) {
     val locatedProject = LocatedProject.locateProject(project)
     Assertions.assertEquals(
-      relativeRoots.map { testRoot.path.getAbsoluteNioPath(it) }.toSet(),
+      relativeRoots.map { testRoot.path.getResolvedNioPath(it) }.toSet(),
       locatedProject.projectRoots.toSet()
     )
   }

@@ -3,7 +3,7 @@
 
 package com.intellij.openapi.file.converter
 
-import com.intellij.openapi.file.NioPathUtil.toCanonicalPath
+import com.intellij.openapi.file.toCanonicalPath
 import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
 import java.nio.file.Path
 
