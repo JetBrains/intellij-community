@@ -42,7 +42,7 @@ internal class GitLabToolWindowFactory : ToolWindowFactory, DumbAware {
     val projectsManager = project.service<GitLabProjectsManager>()
     val accountManager = service<GitLabAccountManager>()
 
-    val connectionManager = GitLabProjectConnectionManager(scope, projectsManager, accountManager)
+    val connectionManager = project.service<GitLabProjectConnectionManager>()
 
     val vm = GitLabToolWindowTabViewModel(scope, connectionManager, projectsManager, accountManager)
 

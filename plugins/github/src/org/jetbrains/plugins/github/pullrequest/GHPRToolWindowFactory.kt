@@ -67,8 +67,8 @@ internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
   private fun configureContent(project: Project, content: Content) {
     val scope = DisposingScope(content)
     val repositoriesManager = project.service<GHHostedRepositoriesManager>()
+    val connectionManager = project.service<GHRepositoryConnectionManager>()
     val accountManager = service<GHAccountManager>()
-    val connectionManager = GHRepositoryConnectionManager(scope, repositoriesManager, accountManager, project.service())
     val vm = GHPRToolWindowTabViewModel(scope, repositoriesManager, accountManager, connectionManager, project.service())
 
     val controller = GHPRToolWindowTabControllerImpl(scope, project, vm, content)

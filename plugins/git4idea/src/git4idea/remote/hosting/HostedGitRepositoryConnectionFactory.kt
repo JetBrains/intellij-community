@@ -26,8 +26,8 @@ class ValidatingHostedGitRepositoryConnectionFactory<
   C : HostedGitRepositoryConnection<M, A>,
   Cred : Any
   >(
-  private val repositoriesManager: HostedGitRepositoriesManager<M>,
-  private val accountManager: AccountManager<A, Cred>,
+  private val repositoriesManager: () -> HostedGitRepositoriesManager<M>,
+  private val accountManager: () -> AccountManager<A, Cred>,
   private val createConnection: suspend CoroutineScope.(M, A, StateFlow<Cred>) -> C)
   : HostedGitRepositoryConnectionFactory<M, A, C> {
 
@@ -39,7 +39,7 @@ class ValidatingHostedGitRepositoryConnectionFactory<
     // not a supervisor so that if any of the listeners or loaders fail the scope is cancelled
     val connectionScope = parentScope.childScope(loggingExceptionHandler, supervisor = false)
 
-    val credentialsState = accountManager.getCredentialsState(connectionScope, account)
+    val credentialsState = accountManager().getCredentialsState(connectionScope, account)
     val requiredCredentialsState = credentialsState
       .transform {
         if (it == null) {
@@ -51,7 +51,7 @@ class ValidatingHostedGitRepositoryConnectionFactory<
       }.stateIn(connectionScope)
 
     connectionScope.launch {
-      repositoriesManager.knownRepositoriesState.collect {
+      repositoriesManager().knownRepositoriesState.collect {
         if (!it.contains(repo)) {
           throw IllegalStateException("Repository mapping $repo is missing")
         }
@@ -59,7 +59,7 @@ class ValidatingHostedGitRepositoryConnectionFactory<
     }
 
     connectionScope.launch {
-      accountManager.accountsState.collect {
+      accountManager().accountsState.collect {
         if (!it.contains(account)) {
           throw IllegalStateException("Account $account is missing")
         }

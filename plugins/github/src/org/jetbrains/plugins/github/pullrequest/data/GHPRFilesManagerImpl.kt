@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.data
 import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffVirtualFileBase
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
