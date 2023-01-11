@@ -213,20 +213,29 @@ public final class FileStatusMap implements Disposable {
    */
   @Nullable
   public TextRange getFileDirtyScope(@NotNull Document document, int passId) {
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    RangeMarker marker;
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null) {
-        return file == null ? null : file.getTextRange();
+        marker = WHOLE_FILE_DIRTY_MARKER;
       }
-      if (status.defensivelyMarked) {
-        status.markWholeFileDirty(myProject);
-        status.defensivelyMarked = false;
+      else {
+        if (status.defensivelyMarked) {
+          status.markWholeFileDirty(myProject);
+          status.defensivelyMarked = false;
+        }
+        assertRegisteredPass(passId, status);
+        marker = status.dirtyScopes.get(passId);
       }
-      assertRegisteredPass(passId, status);
-      RangeMarker marker = status.dirtyScopes.get(passId);
-      return marker == null ? null : marker.isValid() ? TextRange.create(marker) : new TextRange(0, document.getTextLength());
     }
+    if (marker == null) {
+      return null;
+    }
+    if (marker == WHOLE_FILE_DIRTY_MARKER) {
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+      return file == null ? null : file.getTextRange();
+    }
+    return marker.isValid() ? TextRange.create(marker) : new TextRange(0, document.getTextLength());
   }
 
   private static void assertRegisteredPass(int passId, @NotNull FileStatus status) {
