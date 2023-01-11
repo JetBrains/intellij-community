@@ -40,6 +40,10 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
   @NotNull
   public abstract OutgoingCommitsProvider<Repo, Source, Target> getOutgoingCommitsProvider();
 
+  public boolean canBePushed(@NotNull Repo repository, @NotNull Source source, @NotNull Target target) {
+    return true;
+  }
+
   /**
    * @return Default push destination
    */

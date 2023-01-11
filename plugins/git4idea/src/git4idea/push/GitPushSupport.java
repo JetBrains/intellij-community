@@ -62,6 +62,12 @@ public final class GitPushSupport extends PushSupport<GitRepository, GitPushSour
     return myOutgoingCommitsProvider;
   }
 
+  @Override
+  public boolean canBePushed(@NotNull GitRepository repository, @NotNull GitPushSource source, @NotNull GitPushTarget target) {
+    if (repository.isFresh()) return false;
+    return true;
+  }
+
   @Nullable
   @Override
   public GitPushTarget getDefaultTarget(@NotNull GitRepository repository) {
