@@ -206,7 +206,7 @@ public class RemoteConnectionBuilder {
             }
             else {
               Path classesRoot = Path.of(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
-              agentArtifactPath = classesRoot.resolve("rt").resolve(AGENT_JAR_NAME);
+              agentArtifactPath = classesRoot.resolveSibling("rt").resolve(AGENT_JAR_NAME);
             }
 
             if (Files.exists(agentArtifactPath)) {
