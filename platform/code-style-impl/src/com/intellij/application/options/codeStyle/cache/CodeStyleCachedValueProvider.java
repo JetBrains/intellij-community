@@ -184,6 +184,10 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
     private void computeSettings() {
       VirtualFile file = myViewProvider.getVirtualFile();
       PsiFile psiFile = getPsiFile();
+      if (psiFile == null) {
+        cancel();
+        return;
+      }
       try {
         myComputationLock.lock();
         if (LOG.isDebugEnabled()) {
@@ -287,7 +291,7 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
     }
   }
 
-  private PsiFile getPsiFile() {
+  private @Nullable PsiFile getPsiFile() {
     return myViewProvider.getPsi(myViewProvider.getBaseLanguage());
   }
 
