@@ -260,12 +260,19 @@ internal object BranchesDashboardActions {
   }
 
   class DeleteBranchAction : BranchesActionBase(icon = AllIcons.Actions.GC) {
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
     override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {
       e.presentation.text = message("action.Git.Delete.Branch.title", branches.size)
-      val controller = e.getData(BRANCHES_UI_CONTROLLER)!!
+
+      @Suppress("UNCHECKED_CAST")
+      val selectionPaths = e.getData(SELECTED_ITEMS) as? Array<TreePath>
 
       val disabled =
-        branches.any { it.isCurrent || (!it.isLocal && isRemoteBranchProtected(controller.getSelectedRepositories(it), it.branchName)) }
+        branches.any {
+          it.isCurrent || (!it.isLocal && isRemoteBranchProtected(getSelectedRepositories(it, selectionPaths), it.branchName))
+        }
 
       e.presentation.isEnabled = !disabled
     }
