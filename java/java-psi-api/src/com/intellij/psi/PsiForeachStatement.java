@@ -27,11 +27,9 @@ public interface PsiForeachStatement extends PsiLoopStatement {
   /**
    * Returns the variable containing the iteration parameter of the statement.
    *
-   * @deprecated use getIterationDeclaration(), this method doesn't consider patterns
    * @return the iteration parameter instance.
    */
-  @NotNull
-  @Deprecated
+  @Nullable
   PsiParameter getIterationParameter();
 
   /**

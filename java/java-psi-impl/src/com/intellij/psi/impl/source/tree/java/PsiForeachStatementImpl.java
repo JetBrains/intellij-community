@@ -13,6 +13,7 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -26,12 +27,12 @@ public class PsiForeachStatementImpl extends PsiLoopStatementImpl implements Psi
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiParameter getIterationParameter() {
     PsiParameter parameter = (PsiParameter)findChildByRoleAsPsiElement(ChildRole.FOR_ITERATION_PARAMETER);
     if (parameter == null) {
       LOG.error("getIterationParameter is used when forEach element contains pattern. Migrate to getIterationDeclaration()");
-      return new LightParameter("__pattern_replacement__", PsiType.BOOLEAN, this);
+      return null;
     }
     return parameter;
   }
