@@ -1047,7 +1047,7 @@
                      implementationClass="com.siyeh.ig.inheritance.ProblematicVarargsMethodOverrideInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantMethodOverride" bundle="messages.InspectionGadgetsBundle"
                      key="redundant.method.override.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.inheritance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.inheritance.RedundantMethodOverrideInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="MethodDoesntCallSuperMethod" shortName="RefusedBequest" bundle="messages.InspectionGadgetsBundle" key="refused.bequest.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues" enabledByDefault="true"
