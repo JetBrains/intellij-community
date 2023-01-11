@@ -3843,11 +3843,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/literalExpression/stringEscaping.java");
         }
 
-        @TestMetadata("stringOctalChars.java")
-        public void testStringOctalChars() throws Exception {
-            runTest("testData/newJ2k/literalExpression/stringOctalChars.java");
-        }
-
         @TestMetadata("trueOrFalse.java")
         public void testTrueOrFalse() throws Exception {
             runTest("testData/newJ2k/literalExpression/trueOrFalse.java");
@@ -5203,24 +5198,9 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("escapedBackslash.java")
-        public void testEscapedBackslash() throws Exception {
-            runTest("testData/newJ2k/strings/escapedBackslash.java");
-        }
-
-        @TestMetadata("escapedDollar.java")
-        public void testEscapedDollar() throws Exception {
-            runTest("testData/newJ2k/strings/escapedDollar.java");
-        }
-
         @TestMetadata("formattedString.java")
         public void testFormattedString() throws Exception {
             runTest("testData/newJ2k/strings/formattedString.java");
-        }
-
-        @TestMetadata("octalEscape.java")
-        public void testOctalEscape() throws Exception {
-            runTest("testData/newJ2k/strings/octalEscape.java");
         }
     }
 
