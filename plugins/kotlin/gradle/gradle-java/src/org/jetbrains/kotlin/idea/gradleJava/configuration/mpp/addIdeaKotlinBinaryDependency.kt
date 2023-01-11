@@ -36,8 +36,14 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDepe
     Those dependencies are not bound to the particular SourceSet!
      */
     if (dependency.isIdeaProjectLevel) {
-        dependencyNode.data.level = LibraryLevel.PROJECT
-        GradleProjectResolverUtil.linkProjectLibrary(getParent(ProjectData::class.java), dependencyNode.data.target)
+        // workaround for `dependencyNode.data.level = LibraryLevel.PROJECT` from master (setter for level not available here)
+        if (dependencyNode.data.level != LibraryLevel.PROJECT) {
+            val data: LibraryDependencyData = dependencyNode.data
+            val newData = LibraryDependencyData(data.ownerModule, data.target, LibraryLevel.PROJECT)
+            // replace data
+            dependencyNode.visitData { newData }
+        }
+        GradleProjectResolverUtil.linkProjectLibrary(null, getParent(ProjectData::class.java), dependencyNode.data.target)
     }
 
     /*
