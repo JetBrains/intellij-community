@@ -20,7 +20,7 @@ public final class OuterModelsModificationTrackerManager implements Disposable {
   }
 
   public OuterModelsModificationTrackerManager(@NotNull Project project) {
-    myTracker = new OuterModelsModificationTracker(project, this, Registry.is("spring.use.uast.modification.tracker"));
+    myTracker = new OuterModelsModificationTracker(project, this, true);
   }
 
   public ModificationTracker getTracker() {
