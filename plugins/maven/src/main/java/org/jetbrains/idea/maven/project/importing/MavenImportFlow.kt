@@ -48,7 +48,7 @@ class MavenImportFlow {
                        importingSettings: MavenImportingSettings,
                        enabledProfiles: Collection<String>,
                        disabledProfiles: Collection<String>): MavenInitialImportContext {
-    val isVeryNewProject = project.getUserData<Boolean>(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == true
+    val isVeryNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == true
                            && ModuleManager.getInstance(project).modules.size == 0
     if (isVeryNewProject) {
       ExternalStorageConfigurationManager.getInstance(project).isEnabled = true
