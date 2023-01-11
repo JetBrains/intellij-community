@@ -57,7 +57,7 @@ internal class DslHighlighter(
  * Returns a dsl style ID for the given annotation [KtClass]. This class must be annotated with [DslMarker].
  */
 fun KtClass.getDslStyleId(): Int? {
-    if (!isAnnotation() || annotations.isEmpty()) {
+    if (!isAnnotation() || annotationEntries.isEmpty()) {
         return null
     }
     analyze(this) {
