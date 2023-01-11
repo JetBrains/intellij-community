@@ -49,9 +49,7 @@ class KtInternalFileTreeNode(project: Project?, lightClass: KtLightClass, viewSe
         val file = jvmNameAnnotations.singleOrNull()?.containingKtFile ?: run {
             // top level functions and properties are located in files like `SomeClassKt.class`
             val fqName = ktClsFile.packageFqName.child(Name.identifier(baseName))
-            KotlinFileFacadeFqNameIndex[fqName.asString(), prj, scope].singleOrNull() ?: run {
-                null
-            }
+            KotlinFileFacadeFqNameIndex[fqName.asString(), prj, scope].singleOrNull()
         }
         file?.let(smartPointerManager::createSmartPsiElementPointer)
     }
