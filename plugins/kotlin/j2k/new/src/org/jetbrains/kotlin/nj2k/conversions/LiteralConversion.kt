@@ -138,11 +138,23 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
     private fun JKLiteralExpression.toRawStringLiteral(): String {
         // remove implicit newlines that were suppressed with a single backslash at end of line
         literal = literal.replace(implicitNewlineRegex, "$1")
+
         while (literal.contains("\\n")) {
             // replace escaped newlines with real newlines and leading indenting spaces
             literal = literal.replace(escapedNewlineRegex, "\n$1$2\n$1")
         }
-        rawStringSpecialCharReplacements.forEach { (old, new) -> literal = literal.replace(old, new) }
+
+        rawStringSpecialCharSimpleReplacements.forEach { (old: String, new: String) -> literal = literal.replace(old, new) }
+
+        rawStringSpecialCharRegexReplacements.forEach { (pattern: Regex, replacement: String) ->
+            literal = literal.replace(pattern) { matchResult ->
+                val leadingBackslashes = matchResult.groupValues[1]
+                // if the number of leading backslashes is odd, then the next backslash
+                // is actually an escaped backslash, not a part of the char escape sequence.
+                if (leadingBackslashes.length % 2 == 0) "$leadingBackslashes$replacement" else matchResult.value
+            }
+        }
+
         return literal
             .replaceOctalEscapes(format = "%s\${'\\u%04x'}")
             // unescape backslashes
@@ -172,18 +184,19 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
         }
 }
 
-private val rawStringSpecialCharReplacements: Map<String, String> = mapOf(
+private val rawStringSpecialCharSimpleReplacements: Map<String, String> = mapOf(
     "\$" to "\${'$'}",
-    "\\040" to " ", // escaped (trailing) space
-    "\\s" to " ", // also escaped (trailing) space
     "\\\'" to "'",
     "\\\"" to "\${'\"'}",
-    "\\r" to "\${'\\r'}",
-    "\\t" to "\${'\\t'}",
-    "\\b" to "\${'\\b'}",
-    "\\f" to "\${'\\u000c'}"
 )
-
+private val rawStringSpecialCharRegexReplacements: Map<Regex, String> = mapOf(
+    """(\\*)\\040""".toRegex() to " ", // escaped (trailing) space
+    """(\\*)\\s""".toRegex() to " ", // also escaped (trailing) space
+    """(\\*)\\r""".toRegex() to "\${'\\r'}",
+    """(\\*)\\t""".toRegex() to "\${'\\t'}",
+    """(\\*)\\b""".toRegex() to "\${'\\b'}",
+    """(\\*)\\f""".toRegex() to "\${'\\u000c'}"
+)
 private val dollarRegex = """\$([A-Za-z]+|\{)""".toRegex()
 private val formFeedRegex = """(\\*)\\f""".toRegex()
 private val implicitNewlineRegex = "([^\\\\])\\\\\n\\s*".toRegex()
