@@ -1276,12 +1276,20 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       }
       else if (!item.old.isVisible && item.new.isVisible) {
         toShowWindow = true
-      } else if (item.new.isVisible && item.old.isDocked && item.new.isDocked && item.old.weight != item.new.weight) {
-        getToolWindowPane(item.entry.toolWindow).setWeight(item.entry.toolWindow, item.new.weight)
       }
 
       if (toShowWindow) {
         doShowWindow(item.entry, item.new, dirtyMode = true)
+      }
+    }
+
+    // Now that the windows are shown/hidden/docked/whatever, we can adjust their sizes properly:
+
+    for (item in list) {
+      if (item.new.isVisible && item.new.isDocked) {
+        if (item.old.weight != item.new.weight) {
+          getToolWindowPane(item.entry.toolWindow).setWeight(item.entry.toolWindow, item.new.weight)
+        }
       }
     }
 
