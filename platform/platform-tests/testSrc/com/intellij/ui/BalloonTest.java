@@ -18,7 +18,7 @@ import java.awt.event.MouseMotionAdapter;
 
 public final class BalloonTest {
   public static void main(String[] args) {
-    IconLoader.INSTANCE.activate();
+    IconLoader.activate();
 
     final JFrame frame = new JFrame();
     frame.getContentPane().setLayout(new BorderLayout());

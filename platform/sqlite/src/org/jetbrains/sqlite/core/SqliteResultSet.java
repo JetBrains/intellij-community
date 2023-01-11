@@ -263,16 +263,18 @@ public final class SqliteResultSet implements Codes {
     // do the real work
     int statusCode = stmt.pointer.safeRunInt(DB::step);
     switch (statusCode) {
-      case SQLITE_DONE:
+      case SQLITE_DONE -> {
         pastLastRow = true;
         return false;
-      case SQLITE_ROW:
+      }
+      case SQLITE_ROW -> {
         row++;
         return true;
-      case SQLITE_BUSY:
-      default:
+      }
+      default -> {
         getDatabase().throwex(statusCode);
         return false;
+      }
     }
   }
 
@@ -617,24 +619,21 @@ public final class SqliteResultSet implements Codes {
 
   /** @see ResultSet#getObject(int) */
   public Object getObject(int col) throws SQLException {
-    switch (safeGetColumnType(markCol(col))) {
-      case SQLITE_INTEGER:
+    return switch (safeGetColumnType(markCol(col))) {
+      case SQLITE_INTEGER -> {
         long val = getLong(col);
         if (val > Integer.MAX_VALUE || val < Integer.MIN_VALUE) {
-          return Long.valueOf(val);
+          yield Long.valueOf(val);
         }
         else {
-          return Integer.valueOf((int)val);
+          yield Integer.valueOf((int)val);
         }
-      case SQLITE_FLOAT:
-        return Double.valueOf(getDouble(col));
-      case SQLITE_BLOB:
-        return getBytes(col);
-      case SQLITE_NULL:
-        return null;
-      default:
-        return getString(col);
-    }
+      }
+      case SQLITE_FLOAT -> Double.valueOf(getDouble(col));
+      case SQLITE_BLOB -> getBytes(col);
+      case SQLITE_NULL -> null;
+      default -> getString(col);
+    };
   }
 
   /** @see ResultSetMetaData#getColumnCount() */

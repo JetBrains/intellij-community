@@ -17,7 +17,8 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static java.util.Comparator.comparing;
@@ -159,8 +160,8 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     }
   }
 
-  protected Future<?> enqueueStoragePagesClosing(final @NotNull PagedFileStorageLockFree storage,
-                                                 final @NotNull CompletableFuture<Object> finish) {
+  Future<?> enqueueStoragePagesClosing(final @NotNull PagedFileStorageLockFree storage,
+                                       final @NotNull CompletableFuture<Object> finish) {
     checkNotClosed();
     final CloseStorageCommand task = new CloseStorageCommand(storage, finish);
     commandsQueue.add(task);
@@ -434,7 +435,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
    * Pages with usageCount > 0 are not reclaimed, and method returns false if there is at least one
    * such a page. Method is designed to be called repeatedly, until all pages are reclaimed.
    */
-  protected boolean tryToReclaimAll(final @NotNull PagesTable pagesTable) {
+  boolean tryToReclaimAll(final @NotNull PagesTable pagesTable) {
     pagesTable.pagesLock().writeLock().lock();
     try {
       final AtomicReferenceArray<PageImpl> pages = pagesTable.pages();
@@ -564,8 +565,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     return pageBuffer;
   }
 
-  @NotNull
-  protected ByteBuffer allocatePageBuffer(final int bufferSize) {
+  @NotNull ByteBuffer allocatePageBuffer(final int bufferSize) {
     checkNotClosed();
     final ByteBuffer reclaimedBuffer = tryReclaimPageOfSize(bufferSize, MAX_PAGES_TO_RECLAIM_AT_ONCE);
 

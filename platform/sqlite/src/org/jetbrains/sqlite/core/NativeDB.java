@@ -336,7 +336,7 @@ public final class NativeDB extends DB {
 
   private static byte[] nameToUtf8ByteArray(String nameType, String name) throws SQLException {
     final byte[] nameUtf8 = stringToUtf8ByteArray(name);
-    if (name == null || "".equals(name) || nameUtf8.length > 255) {
+    if (name == null || name.isEmpty() || nameUtf8.length > 255) {
       throw new SQLException("invalid " + nameType + " name: '" + name + "'");
     }
     return nameUtf8;
@@ -440,7 +440,7 @@ public final class NativeDB extends DB {
   /**
    * Provides metadata for table columns.
    *
-   * @returns For each column returns: <br>
+   * @return For each column returns: <br>
    * res[col][0] = true if column constrained NOT NULL<br>
    * res[col][1] = true if column is part of the primary key<br>
    * res[col][2] = true if column is auto-increment.
