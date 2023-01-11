@@ -140,7 +140,7 @@ bool FindJVMInSettings() {
     std::wstring path(copy);
     path += module.substr(module.find_last_of('\\')) + L".jdk";
     FILE *f;
-    if (!_wfopen_s(&f, path.c_str(), L"rt")) return false;
+    if (_wfopen_s(&f, path.c_str(), L"rt")) return false;
 
     char line[_MAX_PATH];
     if (!fgets(line, _MAX_PATH, f)) {
@@ -197,7 +197,7 @@ void TrimLine(char* line)
 
 static bool LoadVMOptionsFile(const char* path, std::vector<std::string>& vmOptionLines) {
   FILE *f;
-  if (!fopen_s(&f, path, "rt")) return false;
+  if (fopen_s(&f, path, "rt")) return false;
 
   char line[4096];
   while (fgets(line, sizeof(line), f)) {
