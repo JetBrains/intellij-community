@@ -221,40 +221,22 @@ public final class IndexDataGetter {
                       @NotNull IntConsumer consumer) throws IOException {
     VcsLogStore store = myIndexStorage.store;
     if (candidates == null) {
-      store.processMessages((commit, message) -> filterCommit(message, commit, condition, consumer));
+      store.processMessages((commit, message) -> {
+        if (message != null && condition.test(message)) {
+          consumer.accept(commit);
+        }
+        return true;
+      });
     }
     else {
       for (IntIterator iterator = candidates.iterator(); iterator.hasNext(); ) {
         int commit = iterator.nextInt();
-        if (!filterCommit(store.getMessage(commit), commit, condition, consumer)) {
-          break;
-        }
-      }
-    }
-  }
-
-  private boolean filterCommit(@Nullable String value,
-                               int commit,
-                               @NotNull Predicate<String> condition,
-                               @NotNull IntConsumer consumer) {
-    try {
-      if (value != null) {
-        if (condition.test(value)) {
+        String value = store.getMessage(commit);
+        if (value != null && condition.test(value)) {
           consumer.accept(commit);
         }
       }
     }
-    catch (Exception e) {
-      //noinspection ConstantValue,InstanceofCatchParameter
-      if (e instanceof IOException) {
-        myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
-        return false;
-      }
-      else {
-        throw e;
-      }
-    }
-    return true;
   }
 
   //
