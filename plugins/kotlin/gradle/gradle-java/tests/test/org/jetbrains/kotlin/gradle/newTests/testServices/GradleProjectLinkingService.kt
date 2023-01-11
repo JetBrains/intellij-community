@@ -5,13 +5,15 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
-import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.project.open.createLinkSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
 object GradleProjectLinkingService {
+    // copied from GradleImportingTestCase.GRADLE_JDK_NAME
+    private val GRADLE_JDK_NAME = "Gradle JDK"
+
     fun linkGradleProject(relativeProjectPath: String, projectPath: Path, project: Project) {
         val absoluteProjectPath = projectPath.resolve(relativeProjectPath).absolutePathString()
         val localFileSystem = LocalFileSystem.getInstance()
@@ -19,7 +21,7 @@ object GradleProjectLinkingService {
             ?: error("Failed to find projectFile: $absoluteProjectPath")
 
         val settings = createLinkSettings(projectFile.toNioPath(), project).apply {
-            gradleJvm = GradleImportingTestCase.GRADLE_JDK_NAME
+            gradleJvm = GRADLE_JDK_NAME
         }
 
         ExternalSystemUtil.linkExternalProject(
