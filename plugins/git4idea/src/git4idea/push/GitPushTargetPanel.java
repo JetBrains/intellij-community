@@ -66,7 +66,8 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   private static final Color NEW_BRANCH_LABEL_SELECTION_BG =
     new JBColor(ColorUtil.toAlpha(NEW_BRANCH_LABEL_SELECTION_FG, 20), ColorUtil.toAlpha(NEW_BRANCH_LABEL_SELECTION_FG, 30));
   private static final RelativeFont NEW_BRANCH_LABEL_FONT = RelativeFont.TINY.small();
-  private static final TextIcon NEW_BRANCH_LABEL = new TextIcon(GitBundle.message("push.dialog.target.panel.new"), NEW_BRANCH_LABEL_FG, NEW_BRANCH_LABEL_BG, 0);
+  private static final TextIcon NEW_BRANCH_LABEL =
+    new TextIcon(GitBundle.message("push.dialog.target.panel.new"), NEW_BRANCH_LABEL_FG, NEW_BRANCH_LABEL_BG, 0);
 
   @NotNull private final GitPushSupport myPushSupport;
   @NotNull private final GitRepository myRepository;
@@ -181,31 +182,33 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   }
 
   private void addRemoteUnderModal(@NotNull final String remoteName, @NotNull final String remoteUrl) {
-    ProgressManager.getInstance().run(new Task.Modal(myRepository.getProject(), GitBundle.message("push.dialog.target.panel.adding.remote"), true) {
-      private GitCommandResult myResult;
+    ProgressManager.getInstance()
+      .run(new Task.Modal(myRepository.getProject(), GitBundle.message("push.dialog.target.panel.adding.remote"), true) {
+        private GitCommandResult myResult;
 
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
-        myResult = myGit.addRemote(myRepository, remoteName, remoteUrl);
-        myRepository.update();
-      }
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          indicator.setIndeterminate(true);
+          myResult = myGit.addRemote(myRepository, remoteName, remoteUrl);
+          myRepository.update();
+        }
 
-      @Override
-      public void onSuccess() {
-        if (myResult.success()) {
-          updateComponents(myPushSupport.getDefaultTarget(myRepository, mySource));
-          if (myFireOnChangeAction != null) {
-            myFireOnChangeAction.run();
+        @Override
+        public void onSuccess() {
+          if (myResult.success()) {
+            updateComponents(myPushSupport.getDefaultTarget(myRepository, mySource));
+            if (myFireOnChangeAction != null) {
+              myFireOnChangeAction.run();
+            }
+          }
+          else {
+            String message = GitBundle.message("push.dialog.target.panel.couldnt.add.remote", myResult.getErrorOutputAsHtmlString());
+            LOG.warn(message);
+            Messages.showErrorDialog(myProject, XmlStringUtil.wrapInHtml(message),
+                                     GitBundle.message("push.dialog.target.panel.add.remote"));
           }
         }
-        else {
-          String message = GitBundle.message("push.dialog.target.panel.couldnt.add.remote", myResult.getErrorOutputAsHtmlString());
-          LOG.warn(message);
-          Messages.showErrorDialog(myProject, XmlStringUtil.wrapInHtml(message), GitBundle.message("push.dialog.target.panel.add.remote"));
-        }
-      }
-    });
+      });
   }
 
   private void showRemoteSelector(@NotNull Component component, @NotNull Point point) {
@@ -282,7 +285,8 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer, boolean isSelected, boolean isActive, @Nullable String forceRenderedText) {
 
-    SimpleTextAttributes targetTextAttributes = PushLogTreeUtil.addTransparencyIfNeeded(renderer, SimpleTextAttributes.REGULAR_ATTRIBUTES, isActive);
+    SimpleTextAttributes targetTextAttributes =
+      PushLogTreeUtil.addTransparencyIfNeeded(renderer, SimpleTextAttributes.REGULAR_ATTRIBUTES, isActive);
     if (myError != null) {
       renderer.append(myError, PushLogTreeUtil.addTransparencyIfNeeded(renderer, SimpleTextAttributes.ERROR_ATTRIBUTES, isActive));
     }
