@@ -1,7 +1,9 @@
 class A {
     // ascii escapes
-    var a = "\t\b\n\r\'\"\\"
-    var b = "\u000c"
+    var ascii1 = "\t\b\n\r\'\"\\"
+    var ascii2 = "\u000c"
+    var ascii3 = "\\f"
+    var ascii4 = "\\\u000c"
 
     // backslash
     var backslash1 = "\u0001"

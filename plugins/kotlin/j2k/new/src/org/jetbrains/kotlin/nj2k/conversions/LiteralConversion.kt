@@ -132,8 +132,8 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
     private fun JKLiteralExpression.toStringLiteral(): String =
         literal
             .replaceOctalEscapes(format = "%s\\u%04x")
-            .replace(backslashDollarRegex, "\\\\$0")
-            .replace("\\f", "\\u000c")
+            .replace(dollarRegex, "\\\\$0")
+            .replaceFormFeed()
 
     private fun JKLiteralExpression.toRawStringLiteral(): String {
         // remove implicit newlines that were suppressed with a single backslash at end of line
@@ -154,11 +154,21 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
     private fun String.replaceOctalEscapes(format: String): String =
         replace(stringOctalEscapeRegex) { matchResult ->
             val leadingBackslashes = matchResult.groupValues[1]
+            // if the number of leading backslashes is odd, then the backslash in "\123"
+            // is actually an escaped backslash, not a part of the octal escape sequence.
             if (leadingBackslashes.length % 2 == 0) {
                 String.format(format, leadingBackslashes, Integer.parseInt(matchResult.groupValues[2], 8))
             } else {
                 matchResult.value
             }
+        }
+
+    private fun String.replaceFormFeed(): String =
+        replace(formFeedRegex) { matchResult ->
+            val leadingBackslashes = matchResult.groupValues[1]
+            // if the number of leading backslashes is odd, then the backslash in "\f"
+            // is actually an escaped backslash, not a part of the form feed character.
+            if (leadingBackslashes.length % 2 == 0) "$leadingBackslashes\\u000c" else matchResult.value
         }
 }
 
@@ -174,7 +184,8 @@ private val rawStringSpecialCharReplacements: Map<String, String> = mapOf(
     "\\f" to "\${'\\u000c'}"
 )
 
-private val backslashDollarRegex = """\$([A-Za-z]+|\{)""".toRegex()
+private val dollarRegex = """\$([A-Za-z]+|\{)""".toRegex()
+private val formFeedRegex = """(\\*)\\f""".toRegex()
 private val implicitNewlineRegex = "([^\\\\])\\\\\n\\s*".toRegex()
 private val escapedNewlineRegex = """\n(\s*)(.*)(\\n)""".toRegex()
 private val closingTripleQuoteRegex = "\\n(\\s*)(.*)\"\"\"\\Z".toRegex()

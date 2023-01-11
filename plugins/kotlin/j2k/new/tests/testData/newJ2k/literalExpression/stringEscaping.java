@@ -1,7 +1,9 @@
 public class A {
     // ascii escapes
-    String a = "\t\b\n\r\'\"\\";
-    String b = "\f";
+    String ascii1 = "\t\b\n\r\'\"\\";
+    String ascii2 = "\f";
+    String ascii3 = "\\f";
+    String ascii4 = "\\\f";
 
     // backslash
     String backslash1 = "\1";
