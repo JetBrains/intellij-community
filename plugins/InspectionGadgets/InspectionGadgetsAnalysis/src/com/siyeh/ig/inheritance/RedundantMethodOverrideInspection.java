@@ -35,7 +35,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class RedundantMethodOverrideInspection extends BaseInspection {
 
-  public boolean checkLibraryMethods = false;
+  public boolean checkLibraryMethods = true;
   public boolean ignoreDelegates = true;
 
   @Override
