@@ -136,7 +136,7 @@ internal class PhmVcsLogStore(
 
   override val isEmpty: Boolean
     get() {
-      return messages.keysCountApproximately() != 0
+      return messages.keysCountApproximately() == 0
     }
 
   fun markCorrupted() {
