@@ -414,6 +414,9 @@ object CommunityRepositoryModules {
       // android-extensions-ide.jar
       spec.withModule("intellij.android.kotlin.extensions.common", "android-extensions-ide.jar")
 
+      // android-kotlin-extensions-tooling.jar
+      spec.withModule("intellij.android.kotlin.extensions.tooling", "android-kotlin-extensions-tooling.jar")
+
       //android-gradle-tooling.jar
       spec.withModule("intellij.android.gradle-tooling.api", "android-gradle.jar")
       spec.withModule("intellij.android.gradle-tooling.impl", "android-gradle.jar")
@@ -520,6 +523,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.server-flags", "android.jar")
       spec.withModule("intellij.android.codenavigation", "android.jar")
       spec.withModule("intellij.android.execution.common", "android.jar")
+      spec.withModule("intellij.android.explainer", "android.jar")
       spec.withModuleLibrary("precompiled-kotlin-multiplatform-models", "android.sdktools.android.kotlin-multiplatform-models", "android.jar")
 
 
