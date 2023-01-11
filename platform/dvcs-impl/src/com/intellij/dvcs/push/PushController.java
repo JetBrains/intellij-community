@@ -284,12 +284,13 @@ public final class PushController implements Disposable {
                                                                                               @NotNull final RepositoryNode node,
                                                                                               final boolean initial) {
     node.cancelLoading();
+    node.setEnabled(true);
+
     final T target = model.getTarget();
     if (target == null) {
       node.stopLoading();
       return;
     }
-    node.setEnabled(true);
     final PushSupport<R, S, T> support = model.getSupport();
     final AtomicReference<OutgoingResult> result = new AtomicReference<>();
     Runnable task = () -> {

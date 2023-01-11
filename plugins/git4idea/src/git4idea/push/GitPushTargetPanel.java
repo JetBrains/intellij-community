@@ -148,21 +148,17 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   private void updateComponents(@Nullable GitPushTarget target) {
     myCurrentTarget = target;
 
+    boolean noRemotes = myRepository.getRemotes().isEmpty();
+    if (myRepository.isFresh()) {
+      myError = GitBundle.message("push.dialog.target.panel.empty.repository");
+    }
+    else if (target == null && !noRemotes) {
+      myError = GitBundle.message("push.dialog.target.panel.can.t.push");
+    }
+
     String initialBranch = "";
     String initialRemote = "";
-    boolean noRemotes = myRepository.getRemotes().isEmpty();
-    if (target == null) {
-      if (myRepository.getCurrentBranch() == null) {
-        myError = GitBundle.message("push.dialog.target.panel.detached.head");
-      }
-      else if (myRepository.isFresh()) {
-        myError = GitBundle.message("push.dialog.target.panel.empty.repository");
-      }
-      else if (!noRemotes) {
-        myError = GitBundle.message("push.dialog.target.panel.can.t.push");
-      }
-    }
-    else {
+    if (target != null) {
       initialBranch = getTextFieldText(target);
       initialRemote = target.getBranch().getRemote().getName();
     }
