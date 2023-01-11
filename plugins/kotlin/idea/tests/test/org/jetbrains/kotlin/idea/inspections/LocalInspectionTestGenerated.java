@@ -10404,9 +10404,24 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantValueArgument/constant.kt");
         }
 
+        @TestMetadata("constantQualified.kt")
+        public void testConstantQualified() throws Exception {
+            runTest("testData/inspectionsLocal/redundantValueArgument/constantQualified.kt");
+        }
+
         @TestMetadata("constructorCall.kt")
         public void testConstructorCall() throws Exception {
             runTest("testData/inspectionsLocal/redundantValueArgument/constructorCall.kt");
+        }
+
+        @TestMetadata("differentValue.kt")
+        public void testDifferentValue() throws Exception {
+            runTest("testData/inspectionsLocal/redundantValueArgument/differentValue.kt");
+        }
+
+        @TestMetadata("firstArgument.kt")
+        public void testFirstArgument() throws Exception {
+            runTest("testData/inspectionsLocal/redundantValueArgument/firstArgument.kt");
         }
 
         @TestMetadata("namedArgument.kt")
@@ -10414,24 +10429,34 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantValueArgument/namedArgument.kt");
         }
 
-        @TestMetadata("notEqual.kt")
-        public void testNotEqual() throws Exception {
-            runTest("testData/inspectionsLocal/redundantValueArgument/notEqual.kt");
+        @TestMetadata("secondArgument.kt")
+        public void testSecondArgument() throws Exception {
+            runTest("testData/inspectionsLocal/redundantValueArgument/secondArgument.kt");
         }
 
-        @TestMetadata("notLastArgument.kt")
-        public void testNotLastArgument() throws Exception {
-            runTest("testData/inspectionsLocal/redundantValueArgument/notLastArgument.kt");
+        @TestMetadata("shuffledArguments.kt")
+        public void testShuffledArguments() throws Exception {
+            runTest("testData/inspectionsLocal/redundantValueArgument/shuffledArguments.kt");
         }
 
-        @TestMetadata("notLastNamedArgument.kt")
-        public void testNotLastNamedArgument() throws Exception {
-            runTest("testData/inspectionsLocal/redundantValueArgument/notLastNamedArgument.kt");
+        @TestMetadata("singleArgument.kt")
+        public void testSingleArgument() throws Exception {
+            runTest("testData/inspectionsLocal/redundantValueArgument/singleArgument.kt");
         }
 
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/inspectionsLocal/redundantValueArgument/simple.kt");
+        @TestMetadata("vararg.kt")
+        public void testVararg() throws Exception {
+            runTest("testData/inspectionsLocal/redundantValueArgument/vararg.kt");
+        }
+
+        @TestMetadata("varargDoubleSpread.kt")
+        public void testVarargDoubleSpread() throws Exception {
+            runTest("testData/inspectionsLocal/redundantValueArgument/varargDoubleSpread.kt");
+        }
+
+        @TestMetadata("varargSpread.kt")
+        public void testVarargSpread() throws Exception {
+            runTest("testData/inspectionsLocal/redundantValueArgument/varargSpread.kt");
         }
 
         @TestMetadata("variable.kt")
