@@ -6,55 +6,56 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION
+import org.jetbrains.kotlin.analysis.api.symbols.sourcePsiSafe
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class RedundantOptionalArgumentInspection : AbstractKotlinInspection() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = valueArgumentVisitor {
-        if (it.isRedundant()) {
-            holder.registerProblem(
-                it,
-                KotlinBundle.message("inspection.redundant.optional.argument.annotation"),
-                ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                RemoveArgumentFix()
-            )
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = valueArgumentVisitor(fun(argument: KtValueArgument) {
+        val argumentExpression = argument.getArgumentExpression() ?: return
+
+        val argumentList = argument.getStrictParentOfType<KtValueArgumentList>() ?: return
+        val callElement = argumentList.getStrictParentOfType<KtCallElement>() ?: return
+
+        if (hasUnnamedFollowingArguments(argumentList, argument)) {
+            return
         }
-    }
 
-    private fun KtValueArgument.isRedundant(): Boolean {
-        val expression = getArgumentExpression().takeIf { it is KtConstantExpression || it is KtNameReferenceExpression } ?: return false
-        val arguments = getStrictParentOfType<KtValueArgumentList>()?.arguments ?: return false
-        if (this != arguments.lastOrNull() && !arguments.all { it.isNamed() }) return false
+        analyze(argument, action = fun KtAnalysisSession.() {
+            val argumentConstantValue = argumentExpression.evaluate(CONSTANT_EXPRESSION_EVALUATION) ?: return
 
-        val context = analyze(BodyResolveMode.PARTIAL)
-        val parameter = correspondingParameter(context) ?: return false
-        val expectedType = parameter.type
-        val argumentValue = ConstantExpressionEvaluator.getConstant(expression, context)?.getValue(expectedType) ?: return false
-        return argumentValue == parameter.defaultValue(expectedType)
-    }
+            val call = callElement.resolveCall().successfulFunctionCallOrNull() ?: return
+            val parameterSymbol = call.argumentMapping[argumentExpression]?.symbol ?: return
+            if (parameterSymbol.hasDefaultValue) {
+                val parameter = parameterSymbol.sourcePsiSafe<KtParameter>()?.takeIf { !it.isVarArg } ?: return
+                val parameterName = parameter.name ?: return
 
-    private fun KtValueArgument.correspondingParameter(context: BindingContext): ValueParameterDescriptor? {
-        val resolvedCall = getStrictParentOfType<KtCallElement>()?.getResolvedCall(context) ?: return null
-        val argumentMatch = resolvedCall.getArgumentMapping(this).safeAs<ArgumentMatch>()?.takeIf { !it.isError() } ?: return null
-        return argumentMatch.valueParameter
-    }
+                val defaultValueExpression = parameter.defaultValue ?: return
+                val defaultConstantValue = defaultValueExpression.evaluate(CONSTANT_EXPRESSION_EVALUATION) ?: return
 
-    private fun ValueParameterDescriptor.defaultValue(expectedType: KotlinType): Any? {
-        val defaultValue = DescriptorToSourceUtils.descriptorToDeclaration(this)?.safeAs<KtParameter>()?.defaultValue ?: return null
-        return ConstantExpressionEvaluator.getConstant(defaultValue, defaultValue.safeAnalyzeNonSourceRootCode())?.getValue(expectedType)
+                if (argumentConstantValue.value == defaultConstantValue.value) {
+                    val description = KotlinBundle.message("inspection.redundant.optional.argument.annotation", parameterName)
+                    holder.registerProblem(argument, description, ProblemHighlightType.LIKE_UNUSED_SYMBOL, RemoveArgumentFix())
+                }
+            }
+        })
+    })
+
+    private fun hasUnnamedFollowingArguments(argumentList: KtValueArgumentList, argument: KtValueArgument): Boolean {
+        val arguments = argumentList.arguments
+
+        val argumentIndex = arguments.indexOf(argument)
+        if (argumentIndex < 0 || argumentIndex == arguments.lastIndex) {
+            return false
+        }
+
+        return arguments.subList(argumentIndex + 1, arguments.size).any { !it.isNamed() }
     }
 
     private class RemoveArgumentFix : LocalQuickFix {
@@ -63,8 +64,9 @@ class RedundantOptionalArgumentInspection : AbstractKotlinInspection() {
         override fun getFamilyName() = name
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val argument = descriptor.psiElement.safeAs<KtValueArgument>() ?: return
-            argument.getStrictParentOfType<KtValueArgumentList>()?.removeArgument(argument)
+            val argument = descriptor.psiElement as? KtValueArgument ?: return
+            val argumentList = argument.getStrictParentOfType<KtValueArgumentList>() ?: return
+            argumentList.removeArgument(argument)
         }
     }
 }
