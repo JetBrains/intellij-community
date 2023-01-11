@@ -188,10 +188,14 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         createHighlightingCheck(testLineMarkers).invokeOnAllModules()
     }
 
-    fun checkWorkspaceModel(testClassifier: String? = null) {
+    fun checkWorkspaceModel(
+        testClassifier: String? = null,
+        configure: TestConfiguration.() -> Unit = {}
+        ) {
         val testConfiguration = TestConfiguration().apply {
             // Temporary hack for older usages (they were expecting K/N Dist to be leniently folded)
             getConfiguration(OrderEntriesFilteringTestFeature).hideKonanDist = true
+            configure()
         }
 
         checkWorkspaceModel(
