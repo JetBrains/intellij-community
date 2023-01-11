@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
@@ -53,6 +53,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+import static com.intellij.ide.ShutdownKt.joinBlocking;
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
 
 @ApiStatus.Internal
@@ -191,6 +192,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       startDispose();
       Disposer.dispose(this);
     });
+    joinBlocking(this);
     Disposer.assertIsEmpty();
   }
 
