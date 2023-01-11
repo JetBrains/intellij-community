@@ -79,7 +79,7 @@ public final class PushController implements Disposable {
     myModalityState = ModalityState.stateForComponent(myDialog.getRootPane());
     CheckedTreeNode rootNode = new CheckedTreeNode(null);
     createTreeModel(rootNode);
-    myPushLog = new PushLog(myProject, rootNode, isSyncStrategiesAllowed());
+    myPushLog = new PushLog(myProject, rootNode, myModalityState, isSyncStrategiesAllowed());
     myPushLog.getTree().addPropertyChangeListener(PushLogTreeUtil.EDIT_MODE_PROP, new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
