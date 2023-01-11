@@ -54,11 +54,10 @@ import kotlin.time.Duration.Companion.seconds
 private typealias FrameAllocatorTask<T> = suspend CoroutineScope.(saveTemplateJob: Job?, initFrame: (project: Project) -> Unit) -> T
 
 internal open class ProjectFrameAllocator(private val options: OpenProjectTask) {
-  open suspend fun <T : Any> run(task: FrameAllocatorTask<T>): T {
-    return coroutineScope {
+  open suspend fun <T : Any> run(task: FrameAllocatorTask<T>): T =
+    coroutineScope {
       task(saveTemplateAsync(options)) {}
     }
-  }
 
   open suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
     cannotConvertException?.let { throw cannotConvertException }
@@ -67,22 +66,19 @@ internal open class ProjectFrameAllocator(private val options: OpenProjectTask) 
   open fun projectOpened(project: Project) {}
 }
 
-private fun CoroutineScope.saveTemplateAsync(options: OpenProjectTask): Job? {
+private fun CoroutineScope.saveTemplateAsync(options: OpenProjectTask): Job? =
   if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
-    return launch(Dispatchers.IO + CoroutineName("save default project")) {
+    launch(Dispatchers.IO + CoroutineName("save default project")) {
       saveSettings(ProjectManager.getInstance().defaultProject, forceSavingAllSettings = true)
     }
   }
-  else {
-    return null
-  }
-}
+  else null
 
 internal class ProjectUiFrameAllocator(val options: OpenProjectTask, private val projectStoreBaseDir: Path) : ProjectFrameAllocator(options) {
   private val deferredProjectFrameHelper = CompletableDeferred<ProjectFrameHelper>()
 
-  override suspend fun <T : Any> run(task: FrameAllocatorTask<T>): T {
-    return coroutineScope {
+  override suspend fun <T : Any> run(task: FrameAllocatorTask<T>): T =
+    coroutineScope {
       val debugTask = launch {
         delay(10.seconds)
         logger<ProjectFrameAllocator>().warn("Cannot load project in 10 seconds: ${dumpCoroutines()}")
@@ -122,7 +118,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, private val
         }
       }
 
-      // use current context for executing async tasks to make sure that we pass correct modality
+      // use the current context for executing async tasks to make sure that we pass the correct modality
       // if someone uses runBlockingModal to call openProject
       val anyEditorOpened = CompletableDeferred<Unit>()
       try {
@@ -191,7 +187,6 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, private val
         }
       }
     }
-  }
 
   private suspend fun createFrameManager(watcher: (frameHelper: ProjectFrameHelper, loadingState: MutableLoadingState) -> Unit) {
     var frame = options.frame
@@ -255,7 +250,8 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, private val
     deferredProjectFrameHelper.complete(frameHelper)
   }
 
-  private fun getFrameInfo() = options.frameInfo ?: RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(projectStoreBaseDir)?.frame
+  private fun getFrameInfo(): FrameInfo? =
+    options.frameInfo ?: RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(projectStoreBaseDir)?.frame
 
   private fun updateFullScreenState(frameHelper: ProjectFrameHelper, frameInfo: FrameInfo?) {
     if (frameInfo != null && frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {

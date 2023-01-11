@@ -66,12 +66,11 @@ public final class FrameBoundsConverter {
    */
   public static Rectangle convertToDeviceSpace(GraphicsConfiguration gc, @NotNull Rectangle bounds) {
     Rectangle b = bounds.getBounds();
-    if (!shouldConvert()) return b;
-
-    try {
-      scaleUp(b, gc);
-    }
-    catch (HeadlessException ignore) {
+    if (shouldConvert()) {
+      try {
+        scaleUp(b, gc);
+      }
+      catch (HeadlessException ignore) { }
     }
     return b;
   }
