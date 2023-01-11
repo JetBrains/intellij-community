@@ -253,31 +253,6 @@ public interface Configurable extends UnnamedConfigurable {
   }
 
 
-  /**
-   * @deprecated Prefer using {@link #isFieldModified(JTextField, String)}
-   */
-  @Deprecated(forRemoval = true)
-  default boolean isModified(@NotNull JTextField textField, @NotNull String initialValue) {
-    return isFieldModified(textField, initialValue);
-  }
-
-  /**
-   * @deprecated Prefer using {@link #isFieldModified(JTextField, int, UINumericRange)}
-   */
-  @Deprecated(forRemoval = true)
-  default boolean isModified(@NotNull JTextField textField, int initialValue, @NotNull UINumericRange range) {
-    return isFieldModified(textField, initialValue, range);
-  }
-
-  /**
-   * @deprecated Prefer using {@link #isCheckboxModified(JCheckBox, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  default boolean isModified(@NotNull JToggleButton toggleButton, boolean initialValue) {
-    return toggleButton.isSelected() != initialValue;
-  }
-
-
   static boolean isFieldModified(@NotNull JTextField textField, @NotNull String initialValue) {
     return !StringUtil.equals(textField.getText().trim(), initialValue);
   }
@@ -305,4 +280,33 @@ public interface Configurable extends UnnamedConfigurable {
   static boolean isCheckboxModified(@NotNull JCheckBox checkbox, boolean initialValue) {
     return checkbox.isSelected() != initialValue;
   }
+
+
+  //region Deprecated
+
+  /**
+   * @deprecated Prefer using {@link #isFieldModified(JTextField, String)}
+   */
+  @Deprecated(forRemoval = true)
+  default boolean isModified(@NotNull JTextField textField, @NotNull String initialValue) {
+    return isFieldModified(textField, initialValue);
+  }
+
+  /**
+   * @deprecated Prefer using {@link #isFieldModified(JTextField, int, UINumericRange)}
+   */
+  @Deprecated(forRemoval = true)
+  default boolean isModified(@NotNull JTextField textField, int initialValue, @NotNull UINumericRange range) {
+    return isFieldModified(textField, initialValue, range);
+  }
+
+  /**
+   * @deprecated Prefer using {@link #isCheckboxModified(JCheckBox, boolean)}
+   */
+  @Deprecated(forRemoval = true)
+  default boolean isModified(@NotNull JToggleButton toggleButton, boolean initialValue) {
+    return toggleButton.isSelected() != initialValue;
+  }
+
+  //endregion
 }
