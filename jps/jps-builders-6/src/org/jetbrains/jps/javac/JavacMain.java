@@ -158,8 +158,10 @@ public final class JavacMain {
         try {
           fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
           if (!usingJavac &&
-            isAnnotationProcessingEnabled && !Iterators.contains(_options, "-processorpath") &&
-              (javacBefore9 || (!Iterators.contains(_options, "--processor-module-path") && getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null))) {
+              isAnnotationProcessingEnabled &&
+              !Iterators.contains(_options, "-processorpath") &&
+              !Iterators.contains(_options, "--processor-module-path") &&
+              getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null) {
             // for non-javac file manager ensure annotation processor path defaults to classpath
             fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, classpath);
           }

@@ -152,9 +152,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     if (result == null) {
       result = FileEditorManagerEx.getInstanceEx(myProject);
       myFileEditorManager = result;
-      if (result == null && !myProject.isDefault()) {
-        throw new IllegalStateException("FileEditorManagerEx.getInstanceEx(myProject) = null; project=" + myProject);
-      }
     }
     return result;
   }
