@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.EmptyConsumer;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -248,10 +247,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   @Override
   public void markCorrupted() {
     if (myIndexStorage != null) {
-      VcsLogStore storage = myIndexStorage.store;
-      if (storage instanceof PhmVcsLogStore) {
-        ((PhmVcsLogStore)storage).markCorrupted();
-      }
+      myIndexStorage.markCorrupted();
     }
   }
 
@@ -382,8 +378,13 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     }
 
     void markCorrupted() {
-      if (store instanceof PhmVcsLogStore) {
-        catchAndWarn(((PhmVcsLogStore)store)::markCorrupted);
+      try {
+        if (store instanceof PhmVcsLogStore) {
+          ((PhmVcsLogStore)store).markCorrupted();
+        }
+      }
+      catch (Throwable t) {
+        LOG.warn(t);
       }
     }
 
@@ -397,15 +398,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
     @Override
     public void dispose() {
-    }
-
-    private static void catchAndWarn(@NotNull ThrowableRunnable<? extends IOException> runnable) {
-      try {
-        runnable.run();
-      }
-      catch (IOException e) {
-        LOG.warn(e);
-      }
     }
   }
 
