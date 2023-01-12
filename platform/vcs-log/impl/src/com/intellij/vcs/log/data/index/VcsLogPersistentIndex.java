@@ -338,7 +338,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       }
     }
 
-    void add(int commitId, VcsLogIndexer.@NotNull CompressedDetails detail) {
+    void add(int commitId, @NotNull VcsLogIndexer.CompressedDetails detail) {
       users.update(commitId, detail);
       paths.update(commitId, detail);
     }
