@@ -1,8 +1,11 @@
 package com.intellij.settingsSync.config
 
+import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
@@ -19,7 +22,9 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.and
+import com.intellij.ui.layout.not
 import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CountDownLatch
@@ -95,12 +100,25 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     val authService = SettingsSyncAuthService.getInstance()
     configPanel = panel {
       val isSyncEnabled = LoggedInPredicate().and(EnabledPredicate())
+      if (settingsRepositoryIsEnabled()) {
+        row {
+          label(message("settings.warning.sync.cannot.be.enabled.label")).applyToComponent {
+            icon = AllIcons.General.Warning
+          }
+          bottomGap(BottomGap.MEDIUM)
+        }
+      }
+
       row {
         val statusCell = label("")
-        statusCell.visibleIf(LoggedInPredicate())
+        statusCell
+          .visibleIf(LoggedInPredicate())
+          .enabled(!settingsRepositoryIsEnabled())
         statusLabel = statusCell.component
         updateStatusInfo()
-        label(message("sync.status.login.message")).visibleIf(LoggedInPredicate().not())
+        label(message("sync.status.login.message"))
+          .visibleIf(LoggedInPredicate().not())
+          .enabled(!settingsRepositoryIsEnabled())
       }
       row {
         comment(message("settings.sync.info.message"), 80)
@@ -109,7 +127,9 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       row {
         button(message("config.button.login")) {
           authService.login()
-        }.visibleIf(LoggedInPredicate().not()).enabled(authService.isLoginAvailable())
+        }.visibleIf(LoggedInPredicate().not())
+         .enabled(authService.isLoginAvailable() && !settingsRepositoryIsEnabled())
+
         label(message("error.label.login.not.available")).component.apply {
           isVisible = !authService.isLoginAvailable()
           icon = AllIcons.General.Error
@@ -117,7 +137,10 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
         }
         enableButton = button(message("config.button.enable")) {
           syncEnabler.checkServerState()
-        }.visibleIf(LoggedInPredicate().and(EnabledPredicate().not())).enabledIf(SyncEnablerRunning().not())
+        }.visibleIf(LoggedInPredicate().and(EnabledPredicate().not()))
+         .enabledIf(SyncEnablerRunning().not())
+         .enabled(!settingsRepositoryIsEnabled())
+
         button(message("config.button.disable")) {
           LoggedInPredicate().and(EnabledPredicate())
           disableSync()
@@ -153,6 +176,11 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       }
     }, disposable!!)
     return configPanel
+  }
+
+  private fun settingsRepositoryIsEnabled(): Boolean {
+    return !SettingsSyncSettings.getInstance().syncEnabled &&
+           (ApplicationManager.getApplication().stateStore.storageManager as StateStorageManagerImpl).compoundStreamProvider.isExclusivelyEnabled
   }
 
   override fun serverStateCheckFinished(updateResult: UpdateResult) {
