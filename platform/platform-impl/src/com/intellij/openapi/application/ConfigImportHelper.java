@@ -25,7 +25,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.NaturalComparator;
@@ -358,13 +361,11 @@ public final class ConfigImportHelper {
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
     AppUIUtil.updateWindowIcon(dialog);
 
-    Ref<Pair<Path, Path>> result = new Ref<>();
-    SplashManager.executeWithHiddenSplash(dialog, () -> {
-      dialog.setVisible(true);
-      result.set(dialog.getSelectedFile());
-      dialog.dispose();
-    });
-    return result.get();
+    SplashManager.hide();
+    dialog.setVisible(true);
+    var result = dialog.getSelectedFile();
+    dialog.dispose();
+    return result;
   }
 
   /** Returns {@code true} when the IDE is launched for the first time (i.e. there was no config directory). */
@@ -978,14 +979,12 @@ public final class ConfigImportHelper {
       ConfigImportProgressDialog dialog = new ConfigImportProgressDialog();
       dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
       AppUIUtil.updateWindowIcon(dialog);
-
-      SplashManager.executeWithHiddenSplash(dialog, () -> {
-        PluginDownloader.runSynchronouslyInBackground(() -> {
-          downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, dialog.getIndicator());
-          SwingUtilities.invokeLater(() -> dialog.setVisible(false));
-        });
-        dialog.setVisible(true);
+      SplashManager.hide();
+      PluginDownloader.runSynchronouslyInBackground(() -> {
+        downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, dialog.getIndicator());
+        SwingUtilities.invokeLater(() -> dialog.setVisible(false));
       });
+      dialog.setVisible(true);
     }
   }
 
