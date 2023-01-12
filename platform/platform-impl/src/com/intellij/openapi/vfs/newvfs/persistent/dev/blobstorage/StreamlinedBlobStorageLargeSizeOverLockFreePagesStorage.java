@@ -34,7 +34,6 @@ import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.Streaml
  * so smaller records have just 2 bytes of overhead because of header. At the same time storage allows
  * record size up to 1Mb large -- in contrast to {@link SmallStreamlinedBlobStorage}.
  * <p>
- * 
  */
 public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage implements StreamlinedBlobStorage {
   private static final Logger LOG = Logger.getInstance(StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage.class);
@@ -269,6 +268,7 @@ public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage implements 
         };
       }
 
+      @SuppressWarnings("DuplicatedCode")
       @VisibleForTesting
       static class SmallRecord extends RecordLayout {
         //recordSizeType: SMALL => header: 2 bytes
@@ -538,6 +538,7 @@ public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage implements 
         target.putInt(offset + REDIRECT_TO_OFFSET, redirectToId);
       }
 
+      @Override
       public int capacity(final ByteBuffer source,
                           final int offset) {
         final byte headerByte0 = source.get(offset);
@@ -614,6 +615,7 @@ public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage implements 
         target.put(offset + 1, headerByte1);
       }
 
+      @Override
       public int capacity(final ByteBuffer source,
                           final int offset) {
         final byte headerByte0 = source.get(offset);
@@ -825,7 +827,7 @@ public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage implements 
    * i.e. position=0, limit=payload.length. Reader is free to do whatever it likes with the buffer.
    *
    * @param redirectToIdRef if not-null, will contain actual recordId of the record,
-   *                        which could be different from recordId passed in if record was moved (e.g.
+   *                        which could be different from recordId passed in if the record was moved (e.g.
    *                        re-allocated in a new place) and recordId used to call the method is now
    *                        outdated. Clients could still use old recordId, but better to replace
    *                        this outdated id with actual one, since it improves performance (at least)
@@ -895,16 +897,17 @@ public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage implements 
    * Writer is called with writeable ByteBuffer represented current record content (payload).
    * Buffer is prepared for read: position=0, limit=payload.length, capacity=[current record capacity].
    * <br> <br>
-   * Writer is free to read and/or modify the buffer, and return it in a 'after puts' state, i.e.
+   * Writer is free to read and/or modify the buffer, and return it in an 'after puts' state, i.e.
    * position=[#last byte of payload], new payload content = buffer[0..position].
    * <br> <br>
-   * NOTE: this implies that even if writer writes nothing, only reads -- it must set
-   * buffer.position=limit, because otherwise storage will treat it as if record should be set length=0
-   * For simplicity, if writer change nothing, it could return null.
+   * NOTE: this implies that even if the writer writes nothing, only reads -- it is still required to
+   * set buffer.position=limit, because otherwise storage will treat the buffer state as if record
+   * should be set length=0. This is a bit unnatural, so there is a shortcut: if the writer changes
+   * nothing, it could just return null.
    * <br> <br>
    * Capacity: if new payload fits into buffer passed in -> it could be written right into it. If new
    * payload requires more space, writer should allocate its own buffer with enough capacity, write
-   * new payload into it, and return that buffer (in a 'after puts' state), instead of buffer passed
+   * new payload into it, and return that buffer (in an 'after puts' state), instead of buffer passed
    * in. Storage will re-allocate space for the record with capacity >= returned buffer capacity.
    *
    * @param expectedRecordSizeHint          hint to a storage about how big data writer intend to write. May be used for allocating buffer
@@ -1300,6 +1303,8 @@ public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage implements 
     pagedStorage.putLong(offset, value);
   }
 
+  /** Storage header size */
+  //RC: Method instead of constant because I expect headers to become variable-size with 'auxiliary headers' introduction
   private long headerSize() {
     return HEADER_SIZE;
   }

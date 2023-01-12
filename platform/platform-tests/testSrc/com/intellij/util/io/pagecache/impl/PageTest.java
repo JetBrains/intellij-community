@@ -31,7 +31,7 @@ public class PageTest {
     final int pageSize = blockSize * threadsCount * blocksPerThread;
     final byte[] backingStorage = new byte[pageSize];
 
-    final byte[] block = generateRandomByteArray(blockSize);
+    final byte[] block = randomByteArrayOfSize(blockSize);
 
     final PageToStorageHandle handle = new PageStorageHandleHelper() {
       @Override
@@ -152,10 +152,11 @@ public class PageTest {
 
   // =================== infrastructure: ============================================================================ //
 
-  private static byte[] generateRandomByteArray(final int length) {
+  private static byte[] randomByteArrayOfSize(final int length) {
     final byte[] array = new byte[length];
+    final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     for (int i = 0; i < array.length; i++) {
-      array[i] = (byte)ThreadLocalRandom.current().nextInt(Byte.MIN_VALUE, Byte.MAX_VALUE);
+      array[i] = (byte)rnd.nextInt(Byte.MIN_VALUE, Byte.MAX_VALUE);
     }
     return array;
   }
