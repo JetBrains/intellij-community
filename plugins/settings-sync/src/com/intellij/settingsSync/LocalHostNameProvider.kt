@@ -2,6 +2,7 @@ package com.intellij.settingsSync
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,5 +40,9 @@ internal class LocalHostNameProvider: Disposable {
   companion object {
     private val LOG = Logger.getInstance(LocalHostNameProvider::class.java)
     private val defaultHostName get() = System.getenv("HOSTNAME") ?: System.getenv("COMPUTERNAME") ?: "unknown"
+
+    fun initialize() {
+      service<LocalHostNameProvider>()
+    }
   }
 }
