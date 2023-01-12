@@ -16,14 +16,18 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class HtmlUnknownBooleanAttributeInspection extends HtmlUnknownBooleanAttributeInspectionBase {
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return HtmlUnknownTagInspection.createOptionsPanel(this);
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myCustomValuesEnabled", XmlAnalysisBundle.message("html.inspections.unknown.tag.boolean.attribute.checkbox.title"),
+               stringSet("myValues", XmlAnalysisBundle.message("html.inspections.unknown.tag.boolean.attribute.title")))
+    );
   }
 }

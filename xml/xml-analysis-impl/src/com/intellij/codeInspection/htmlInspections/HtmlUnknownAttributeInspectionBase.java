@@ -56,17 +56,6 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
   }
 
   @Override
-  protected String getCheckboxTitle() {
-    return XmlAnalysisBundle.message("html.inspections.unknown.tag.attribute.checkbox.title");
-  }
-
-  @NotNull
-  @Override
-  protected String getPanelTitle() {
-    return XmlAnalysisBundle.message("html.inspections.unknown.tag.attribute.title");
-  }
-
-  @Override
   @NotNull
   protected Logger getLogger() {
     return LOG;
