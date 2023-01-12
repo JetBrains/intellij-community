@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
@@ -24,12 +23,6 @@ public class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements
   @Override
   protected String getPopupTitle(@NotNull AnActionEvent e) {
     return IdeBundle.message("popup.title.switch");
-  }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    super.actionPerformed(e);
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.scheme.quickswitch");
   }
 
   private static DefaultActionGroup getGroup() {

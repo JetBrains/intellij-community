@@ -20,11 +20,6 @@ import java.awt.*;
  */
 public class QuickPreviewAction extends ShowImplementationsAction {
   @Override
-  protected void triggerFeatureUsed(@NotNull Project project) {
-    triggerFeatureUsed(project, "codeassist.quickpreview", "codeassist.quickpreview.lookup");
-  }
-
-  @Override
   protected boolean couldPinPopup() {
     return false;
   }

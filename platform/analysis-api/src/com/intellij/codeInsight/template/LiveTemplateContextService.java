@@ -92,14 +92,14 @@ public final class LiveTemplateContextService implements Disposable {
 
   public @NotNull TemplateContextType getTemplateContextType(@NotNull String id) {
     LiveTemplateContext context = getLiveTemplateContext(id);
-    if (context == null) throw new IllegalStateException("Unable to find LiveTemplateContext with contextId " + id);
+    if (context == null) throw new LiveTemplateContextNotFoundException("Unable to find LiveTemplateContext with contextId " + id);
 
     return context.getTemplateContextType();
   }
 
   public @NotNull TemplateContextType getTemplateContextType(@NotNull Class<?> clazz) {
     LiveTemplateContext context = getLiveTemplateContext(clazz);
-    if (context == null) throw new IllegalStateException("Unable to find LiveTemplateContext with class " + clazz);
+    if (context == null) throw new LiveTemplateContextNotFoundException("Unable to find LiveTemplateContext with class " + clazz);
 
     return context.getTemplateContextType();
   }
@@ -149,5 +149,11 @@ public final class LiveTemplateContextService implements Disposable {
 
   @Override
   public void dispose() {
+  }
+}
+
+final class LiveTemplateContextNotFoundException extends IllegalStateException {
+  LiveTemplateContextNotFoundException(String s) {
+    super(s);
   }
 }

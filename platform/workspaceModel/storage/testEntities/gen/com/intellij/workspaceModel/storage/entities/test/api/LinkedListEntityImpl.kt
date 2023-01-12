@@ -37,11 +37,15 @@ open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedLi
   override val next: LinkedListEntityId
     get() = dataSource.next
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: LinkedListEntityData?) : ModifiableWorkspaceEntityBase<LinkedListEntity>(), LinkedListEntity.Builder {
+  class Builder(result: LinkedListEntityData?) : ModifiableWorkspaceEntityBase<LinkedListEntity, LinkedListEntityData>(
+    result), LinkedListEntity.Builder {
     constructor() : this(LinkedListEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -61,7 +65,7 @@ open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedLi
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -100,7 +104,7 @@ open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedLi
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -109,7 +113,7 @@ open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedLi
       get() = getEntityData().myName
       set(value) {
         checkModificationAllowed()
-        getEntityData().myName = value
+        getEntityData(true).myName = value
         changedProperty.add("myName")
       }
 
@@ -117,12 +121,11 @@ open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedLi
       get() = getEntityData().next
       set(value) {
         checkModificationAllowed()
-        getEntityData().next = value
+        getEntityData(true).next = value
         changedProperty.add("next")
 
       }
 
-    override fun getEntityData(): LinkedListEntityData = result ?: super.getEntityData() as LinkedListEntityData
     override fun getEntityClass(): Class<LinkedListEntity> = LinkedListEntity::class.java
   }
 }
@@ -173,20 +176,15 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Linked
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<LinkedListEntity> {
     val modifiable = LinkedListEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): LinkedListEntity {
     return getCached(snapshot) {
       val entity = LinkedListEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

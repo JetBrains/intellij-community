@@ -115,7 +115,7 @@ abstract class ToolWindowHeader internal constructor(
               if (!contentActions.isNullOrEmpty()) {
                 extraActions.addAll(0, contentActions)
                 extraActions.add(0, Separator.create())
-                extraActions.add(0, singleContentLayout.CloseCurrentContentAction())
+                extraActions.add(0, singleContentLayout.closeCurrentContentAction)
               }
             }
           }

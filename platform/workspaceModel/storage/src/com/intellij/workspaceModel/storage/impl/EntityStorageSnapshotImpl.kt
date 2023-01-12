@@ -171,7 +171,7 @@ internal class MutableEntityStorageImpl(
     try {
       lockWrite()
 
-      entity as ModifiableWorkspaceEntityBase<T>
+      entity as ModifiableWorkspaceEntityBase<T, *>
 
       entity.applyToBuilder(this)
       entity.changedProperty.clear()
@@ -184,7 +184,7 @@ internal class MutableEntityStorageImpl(
   }
 
   // This should be removed or not extracted into the interface
-  fun <T : WorkspaceEntity, D: ModifiableWorkspaceEntityBase<T>> putEntity(entity: D) {
+  fun <T : WorkspaceEntity, E: WorkspaceEntityData<T>, D: ModifiableWorkspaceEntityBase<T, E>> putEntity(entity: D) {
     try {
       lockWrite()
 
@@ -237,7 +237,7 @@ internal class MutableEntityStorageImpl(
   override fun <M : WorkspaceEntity.Builder<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
     try {
       lockWrite()
-      if (e is ModifiableWorkspaceEntityBase<*> && e.diff !== this) error("Trying to modify entity from a different builder")
+      if (e is ModifiableWorkspaceEntityBase<*, *> && e.diff !== this) error("Trying to modify entity from a different builder")
       val entityId = (e as WorkspaceEntityBase).id
 
       val originalEntityData = this.getOriginalEntityData(entityId) as WorkspaceEntityData<T>
@@ -246,7 +246,7 @@ internal class MutableEntityStorageImpl(
       val copiedData = entitiesByType.getEntityDataForModification(entityId) as WorkspaceEntityData<T>
 
       val modifiableEntity = (if (e is WorkspaceEntity.Builder<*>) e else copiedData.wrapAsModifiable(this)) as M
-      modifiableEntity as ModifiableWorkspaceEntityBase<*>
+      modifiableEntity as ModifiableWorkspaceEntityBase<*, *>
       modifiableEntity.changedProperty.clear()
 
       val beforeSymbolicId = if (e is WorkspaceEntityWithSymbolicId) e.symbolicId else null
@@ -322,7 +322,7 @@ internal class MutableEntityStorageImpl(
   override fun removeEntity(e: WorkspaceEntity): Boolean {
     try {
       lockWrite()
-      if (e is ModifiableWorkspaceEntityBase<*> && e.diff !== this) error("Trying to remove entity from a different builder")
+      if (e is ModifiableWorkspaceEntityBase<*, *> && e.diff !== this) error("Trying to remove entity from a different builder")
 
       LOG.debug { "Removing ${e.javaClass}..." }
       e as WorkspaceEntityBase

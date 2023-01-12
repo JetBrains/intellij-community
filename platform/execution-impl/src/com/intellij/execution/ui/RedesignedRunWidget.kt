@@ -4,6 +4,7 @@ package com.intellij.execution.ui
 import com.intellij.execution.*
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.impl.ExecutionManagerImpl
+import com.intellij.execution.impl.isOfSameType
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
@@ -72,7 +73,7 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
     return createRunActionToolbar {
       presentation.getClientProperty(runToolbarDataKey) ?: false
     }.component.let {
-      Wrapper(it).apply { border = JBUI.Borders.empty(RUN_TOOLBAR_BORDER_HEIGHT, 2) }
+      Wrapper(it).apply { border = JBUI.Borders.empty(RUN_TOOLBAR_BORDER_HEIGHT, 12, RUN_TOOLBAR_BORDER_HEIGHT, 2) }
     }
   }
 
@@ -102,7 +103,7 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
       return !runningDescriptors.isEmpty()
     }
     else {
-      val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { it === selectedConfiguration }
+      val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { it.isOfSameType(selectedConfiguration) }
       return !runningDescriptors.isEmpty()
     }
   }

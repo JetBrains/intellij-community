@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.intentions.openInProject;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.actions.OpenFileAction;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.lightEdit.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.Editor;
@@ -47,23 +48,24 @@ public final class LightEditOpenInProjectIntention implements IntentionAction, L
   }
 
   public static void performOn(@NotNull Project project, @NotNull VirtualFile currentFile) throws IncorrectOperationException {
-    LightEditorInfo editorInfo =
-      ((LightEditorManagerImpl)LightEditService.getInstance().getEditorManager()).findOpen(currentFile);
-    if (editorInfo != null) {
-      Project openProject = findOpenProject(currentFile);
-      if (openProject != null) {
-        LightEditFeatureUsagesUtil.logOpenFileInProject(project, Open);
+    LightEditorInfo editorInfo = ((LightEditorManagerImpl)LightEditService.getInstance().getEditorManager()).findOpen(currentFile);
+    if (editorInfo == null) {
+      return;
+    }
+
+    Project openProject = findOpenProject(currentFile);
+    if (openProject != null) {
+      LightEditFeatureUsagesUtil.logOpenFileInProject(project, Open);
+    }
+    else {
+      VirtualFile projectRoot = ProjectRootSearchUtil.findProjectRoot(project, currentFile);
+      if (projectRoot != null) {
+        openProject = PlatformProjectOpenProcessor.Companion.doOpenProject(projectRoot.toNioPath(), OpenProjectTask.build());
       }
-      else {
-        VirtualFile projectRoot = ProjectRootSearchUtil.findProjectRoot(project, currentFile);
-        if (projectRoot != null) {
-          openProject = PlatformProjectOpenProcessor.getInstance().openProjectAndFile(projectRoot.toNioPath(), -1, -1, false);
-        }
-      }
-      if (openProject != null) {
-        ((LightEditServiceImpl)LightEditService.getInstance()).closeEditor(editorInfo);
-        OpenFileAction.openFile(currentFile, openProject);
-      }
+    }
+    if (openProject != null) {
+      ((LightEditServiceImpl)LightEditService.getInstance()).closeEditor(editorInfo);
+      OpenFileAction.openFile(currentFile, openProject);
     }
   }
 

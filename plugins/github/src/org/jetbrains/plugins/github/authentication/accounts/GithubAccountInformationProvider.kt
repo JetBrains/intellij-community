@@ -23,7 +23,7 @@ import java.time.temporal.ChronoUnit
 class GithubAccountInformationProvider : Disposable {
 
   private val informationCache = Caffeine.newBuilder()
-    .expireAfterAccess(Duration.of(30, ChronoUnit.MINUTES))
+    .expireAfterWrite(Duration.of(30, ChronoUnit.MINUTES))
     .build<GithubAccount, GithubAuthenticatedUser>()
 
   init {

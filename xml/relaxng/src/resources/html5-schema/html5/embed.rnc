@@ -44,6 +44,7 @@ namespace local = ""
 			|	common.attrs.aria.role.option
 			|	common.attrs.aria.role.presentation
 			|	common.attrs.aria.role.progressbar
+			|	common.attrs.aria.role.radio
 			|	common.attrs.aria.role.scrollbar
 			|	common.attrs.aria.role.separator
 			|	common.attrs.aria.role.slider
@@ -138,6 +139,8 @@ namespace local = ""
 		&	source.picture.attrs.srcset
 		&	source.picture.attrs.sizes?
 		&	source.picture.attrs.type?
+		&	source.picture.attrs.width?
+		&	source.picture.attrs.height?
 		)
 		source.picture.attrs.media =
 			attribute media {
@@ -154,6 +157,14 @@ namespace local = ""
 		source.picture.attrs.type =
 			attribute type {
 				common.data.mimetype
+			}
+		source.picture.attrs.width =
+			attribute width {
+				common.data.integer.non-negative
+			}
+		source.picture.attrs.height =
+			attribute height {
+				common.data.integer.non-negative
 			}
 	source.picture.inner =
 		( empty )
@@ -207,6 +218,7 @@ namespace local = ""
 			                    | style
 			                    | tabindex
 			                    | autofocus
+			                    | inert
 			                    | contenteditable
 			                    | draggable
 			                    | hidden
@@ -214,6 +226,8 @@ namespace local = ""
 			                    | nonce
 			                    | onabort
 			                    | onauxclick
+			                    | onbeforeinput
+			                    | onbeforematch
 			                    | onblur
 			                    | oncancel
 			                    | oncanplay
@@ -221,7 +235,9 @@ namespace local = ""
 			                    | onchange
 			                    | onclick
 			                    | onclose
+			                    | oncontextlost
 			                    | oncontextmenu
+			                    | oncontextrestored
 			                    | oncopy
 			                    | oncuechange
 			                    | oncut
@@ -269,8 +285,8 @@ namespace local = ""
 			                    | onsecuritypolicyviolation
 			                    | onseeked
 			                    | onseeking
-			                    | onslotchange
 			                    | onselect
+			                    | onslotchange
 			                    | onstalled
 			                    | onsubmit
 			                    | onsuspend
@@ -290,6 +306,7 @@ namespace local = ""
 			                    | aria-current
 			                    | aria-details
 			                    | aria-describedby
+			                    | aria-description
 			                    | aria-disabled
 			                    | aria-dropeffect
 			                    | aria-errormessage
@@ -309,6 +326,7 @@ namespace local = ""
 			                    | aria-roledescription
 			                    | spellcheck
 			                    | autocapitalize
+			                    | enterkeyhint
 			                    | accesskey
 			                    | itemref
 			                    | itemprop

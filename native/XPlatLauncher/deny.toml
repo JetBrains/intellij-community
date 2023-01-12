@@ -17,6 +17,7 @@ confidence-threshold = 0.95
 allow = [
     "MIT",
     "Apache-2.0",
+    "BSD-3-Clause", # instant, BSD-2-like, test-only dependency
     "ISC", # libloading, MIT / Apache 2.0 alike
     "Unicode-DFS-2016" # simplelog -> [..] -> unicode-ident
 ]

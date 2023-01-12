@@ -153,6 +153,7 @@ public class PyStackFrame extends XStackFrame {
           isReturnEmpty = false;
         }
         else if (!debuggerSettings.isSimplifiedView()) {
+          if (ProtocolParser.HIDDEN_TYPES.contains(name)) continue;
           filteredChildren.add(name, value);
         }
         else {

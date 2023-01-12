@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.scale.JBUIScale;
@@ -65,7 +66,7 @@ import static java.awt.event.MouseEvent.*;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
 
-public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
+public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup {
   @NonNls public static final String SHOW_HINTS = "ShowHints";
 
   // Popup size stored with DimensionService is null first time
@@ -481,17 +482,22 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     if (UiInterceptors.tryIntercept(this)) return;
     Window window = null;
 
-    Component focusedComponent = getWndManager().getFocusedComponent(project);
-    if (focusedComponent != null) {
-      Component parent = UIUtil.findUltimateParent(focusedComponent);
-      if (parent instanceof Window) {
-        window = (Window)parent;
+    WindowManagerEx manager = getWndManager();
+    if (manager != null) {
+      Component focusedComponent = manager.getFocusedComponent(project);
+      if (focusedComponent != null) {
+        Component parent = UIUtil.findUltimateParent(focusedComponent);
+        if (parent instanceof Window) {
+          window = (Window)parent;
+        }
       }
     }
     if (window == null) {
       window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
     }
-
+    if ((window == null || !window.isShowing()) && manager != null) {
+      window = manager.getFrame(project);
+    }
     if (window != null && window.isShowing()) {
       showInCenterOf(window);
     }
@@ -507,14 +513,29 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   @Override
   public void showUnderneathOf(@NotNull Component aComponent) {
-    int x = Registry.is("ide.popup.align.by.content") ? calcHorizontalAlignment(aComponent) : JBUIScale.scale(2);
+    showUnderneathOf(aComponent, true);
+  }
+
+  @Override
+  public void showUnderneathOf(@NotNull Component aComponent, boolean useAlignment) {
+    int x = Registry.is("ide.popup.align.by.content") && useAlignment && isComponentSupportsAlignment(aComponent)
+            ? calcHorizontalAlignment(aComponent)
+            : JBUIScale.scale(2);
     show(new RelativePoint(aComponent, new Point(x, aComponent.getHeight())));
+  }
+
+  private boolean isComponentSupportsAlignment(Component c) {
+    if (!(c instanceof JComponent)
+        || (c instanceof ActionButton)
+        || (c instanceof ComboBoxWithWidePopup<?>)) {
+      return false;
+    }
+
+    return true;
   }
 
   private static int calcHorizontalAlignment(@NotNull Component comp) {
     if (!(comp instanceof JComponent jcomp)) return JBUIScale.scale(2);
-    if (comp instanceof ActionButton) return JBUIScale.scale(2);
-    if (comp instanceof ComboBoxWithWidePopup<?>) return JBUIScale.scale(2);
 
     int componentLeftInset = jcomp.getInsets().left;
     int popupLeftInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() + JBUI.CurrentTheme.Popup.Selection.innerInsets().left;

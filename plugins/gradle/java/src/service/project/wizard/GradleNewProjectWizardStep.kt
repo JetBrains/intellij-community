@@ -94,8 +94,8 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       val errorMessage = GradleBundle.message(
         "gradle.settings.wizard.unsupported.jdk.message",
         javaVersion.toFeatureString(),
-        MINIMUM_SUPPORTED_JAVA.toFeatureString(),
-        MAXIMUM_SUPPORTED_JAVA.toFeatureString(),
+        suggestOldestCompatibleJavaVersion(preferredGradleVersion),
+        suggestJavaVersion(preferredGradleVersion),
         preferredGradleVersion.version)
       val dialog = MessageDialogBuilder.yesNo(errorTitle, errorMessage).asWarning()
       if (!dialog.ask(component)) {

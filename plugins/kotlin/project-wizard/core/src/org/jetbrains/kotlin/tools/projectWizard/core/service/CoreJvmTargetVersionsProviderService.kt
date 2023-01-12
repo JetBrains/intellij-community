@@ -13,7 +13,6 @@ class CoreJvmTargetVersionsProviderService : JvmTargetVersionsProviderService(),
 
         private val kotlinToJvmTargetVersions: Map<Version, Set<TargetJvmVersion>> = mapOf(
             Versions.KOTLIN to KOTLIN_14_JVM_TARGETS,
-            Versions.KOTLIN_VERSION_FOR_COMPOSE to KOTLIN_14_JVM_TARGETS
         )
 
         private fun listSupportedJvmTargetVersions(kotlinVersion: Version) =
@@ -21,7 +20,6 @@ class CoreJvmTargetVersionsProviderService : JvmTargetVersionsProviderService(),
     }
 
     override fun listSupportedJvmTargetVersions(projectKind: ProjectKind): Set<TargetJvmVersion> {
-        val version = CoreKotlinVersionProviderService.getKotlinVersion(projectKind)
-        return listSupportedJvmTargetVersions(version)
+        return listSupportedJvmTargetVersions(Versions.KOTLIN)
     }
 }

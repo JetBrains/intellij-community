@@ -35,11 +35,15 @@ open class OneEntityWithSymbolicIdImpl(val dataSource: OneEntityWithSymbolicIdDa
   override val myName: String
     get() = dataSource.myName
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: OneEntityWithSymbolicIdData?) : ModifiableWorkspaceEntityBase<OneEntityWithSymbolicId>(), OneEntityWithSymbolicId.Builder {
+  class Builder(result: OneEntityWithSymbolicIdData?) : ModifiableWorkspaceEntityBase<OneEntityWithSymbolicId, OneEntityWithSymbolicIdData>(
+    result), OneEntityWithSymbolicId.Builder {
     constructor() : this(OneEntityWithSymbolicIdData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -59,7 +63,7 @@ open class OneEntityWithSymbolicIdImpl(val dataSource: OneEntityWithSymbolicIdDa
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -94,7 +98,7 @@ open class OneEntityWithSymbolicIdImpl(val dataSource: OneEntityWithSymbolicIdDa
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -103,11 +107,10 @@ open class OneEntityWithSymbolicIdImpl(val dataSource: OneEntityWithSymbolicIdDa
       get() = getEntityData().myName
       set(value) {
         checkModificationAllowed()
-        getEntityData().myName = value
+        getEntityData(true).myName = value
         changedProperty.add("myName")
       }
 
-    override fun getEntityData(): OneEntityWithSymbolicIdData = result ?: super.getEntityData() as OneEntityWithSymbolicIdData
     override fun getEntityClass(): Class<OneEntityWithSymbolicId> = OneEntityWithSymbolicId::class.java
   }
 }
@@ -119,20 +122,15 @@ class OneEntityWithSymbolicIdData : WorkspaceEntityData.WithCalculableSymbolicId
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<OneEntityWithSymbolicId> {
     val modifiable = OneEntityWithSymbolicIdImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): OneEntityWithSymbolicId {
     return getCached(snapshot) {
       val entity = OneEntityWithSymbolicIdImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

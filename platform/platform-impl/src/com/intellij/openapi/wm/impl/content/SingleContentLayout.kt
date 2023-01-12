@@ -59,6 +59,7 @@ import javax.swing.SwingUtilities
 internal class SingleContentLayout(
   ui: ToolWindowContentUi
 ) : TabContentLayout(ui) {
+  val closeCurrentContentAction: AnAction = CloseCurrentContentAction()
   private var tabAdapter: TabAdapter? = null
   private val toolbars = mutableMapOf<ToolbarType, ActionToolbar>()
   private var wrapper: JComponent? = null
@@ -149,7 +150,7 @@ internal class SingleContentLayout(
     if (!isNewUI()) {
       let {
         val contentActions = DefaultActionGroup()
-        contentActions.add(CloseCurrentContentAction())
+        contentActions.add(closeCurrentContentAction)
         contentActions.add(Separator.create())
         contentActions.addAll(supplier.getContentActions())
         contentActions.add(MyInvisibleAction())
@@ -324,7 +325,7 @@ internal class SingleContentLayout(
         if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
           val tabLabel = e.component as? MyContentTabLabel
           if (tabLabel != null && tabLabel.content.isCloseable) {
-            tabLabel?.closeContent()
+            tabLabel.closeContent()
           }
         }
       }
@@ -558,7 +559,7 @@ internal class SingleContentLayout(
       }
   }
 
-  inner class CloseCurrentContentAction : DumbAwareAction(CommonBundle.messagePointer("action.close"), AllIcons.Actions.Cancel) {
+  private inner class CloseCurrentContentAction : DumbAwareAction(CommonBundle.messagePointer("action.close"), AllIcons.Actions.Cancel) {
     override fun actionPerformed(e: AnActionEvent) {
       val content = getSingleContentOrNull()
       if (content != null && content.isPinned) {

@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.move.moveInner;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.jvm.JvmLanguage;
@@ -59,7 +58,6 @@ public class MoveInnerToUpperHandler extends MoveHandlerDelegate {
                            final Editor editor) {
     if (isNonStaticInnerClass(element) && !JavaMoveClassesOrPackagesHandler.isReferenceInAnonymousClass(reference)) {
       PsiClass aClass = (PsiClass) element;
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.move.moveInner");
       final PsiClass containingClass = aClass.getContainingClass();
       if (containingClass instanceof JspClass) {
         CommonRefactoringUtil.showErrorHint(project, editor, JavaRefactoringBundle.message("move.nonstatic.class.from.jsp.not.supported"),

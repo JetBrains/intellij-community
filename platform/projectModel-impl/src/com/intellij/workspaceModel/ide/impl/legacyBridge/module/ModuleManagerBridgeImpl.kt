@@ -131,7 +131,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     }
 
     if (targetBuilder == null) {
-      (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent { builder ->
+      (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Add module mapping") { builder ->
         fillBuilder(builder)
       }
     } else {
@@ -291,7 +291,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
             val unloadedModuleDescription = UnloadedModuleDescriptionImpl(
               modulePath, description.dependencyModuleNames, contentRoots)
             unloadedModules[module.name] = unloadedModuleDescription
-            (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent {
+            (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Remove mapping of the unloaded module") {
               it.mutableModuleMap.removeMapping(moduleEntity)
             }
             fireEventAndDisposeModule(module)
@@ -299,7 +299,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
 
           // Remove Facet bridges to recreate them. String constant is taken from
           // com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.FACET_BRIDGE_MAPPING_ID
-          (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent { builder ->
+          (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Remove facet mapping of the unloaded module") { builder ->
             // TODO:: Fix fo external entities associated with facets
             moduleEntitiesToLoad.flatMap { it.facets }.forEach {
               builder.getMutableExternalMapping<Any>(
@@ -495,7 +495,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
       }
       else {
         WriteAction.runAndWait<RuntimeException> {
-          WorkspaceModel.getInstance(module.project).updateProjectModel { builder ->
+          WorkspaceModel.getInstance(module.project).updateProjectModel("Change module entity source") { builder ->
             changeSources(builder, builder)
           }
         }

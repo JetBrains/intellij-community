@@ -30,6 +30,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
@@ -286,8 +287,10 @@ private class AllRunConfigurationsToggle : ToggleAction(
     selected = state
 
     val inputEvent = e.inputEvent ?: return
-    val listPopupModel = (inputEvent.source as? JList<*>)?.model as? ListPopupModel<*> ?: return
+    val jList = inputEvent.source as? JList<*>
+    val listPopupModel = jList?.model as? ListPopupModel<*> ?: return
     listPopupModel.refilter()
+    PopupUtil.getPopupContainerFor(jList).pack(true, true)
   }
 
   override fun update(e: AnActionEvent) {

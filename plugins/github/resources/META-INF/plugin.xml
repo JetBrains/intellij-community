@@ -179,20 +179,6 @@
     <action id="Github.Break.Api.Requests" internal="true"
             class="org.jetbrains.plugins.github.api.GHRequestExecutorBreaker$Action"/>
 
-    <!-- Android Studio: disable web flow for GitHub auth (via account.jetbrains.com and internal web browser redirect) -->
-    <!-- move action out of `Github.Accounts.AddAccount` group, and mark as internal -->
-    <action id="Github.Accounts.AddGHAccount" internal="true" class="org.jetbrains.plugins.github.authentication.ui.AddGHAccountAction"/>
-
-    <group id="Github.Accounts.AddAccount">
-      <!-- Android Studio: disable web flow for GitHub auth (via account.jetbrains.com and internal web browser redirect)
-      <action id="Github.Accounts.AddGHAccount" class="org.jetbrains.plugins.github.authentication.ui.AddGHAccountAction"/>
-      Android Studio: disable web flow for GitHub auth (via account.jetbrains.com and internal web browser redirect) -->
-      <action id="Github.Accounts.AddGHAccountWithToken"
-              class="org.jetbrains.plugins.github.authentication.ui.AddGHAccountWithTokenAction"/>
-      <separator/>
-      <action id="Github.Accounts.AddGHEAccount" class="org.jetbrains.plugins.github.authentication.ui.AddGHEAccountAction"/>
-    </group>
-
     <action id="Github.PullRequest.Diff.Comment.Create"
             class="org.jetbrains.plugins.github.pullrequest.comment.action.GHPRCreateDiffCommentAction">
       <keyboard-shortcut first-keystroke="control shift X" keymap="$default"/>

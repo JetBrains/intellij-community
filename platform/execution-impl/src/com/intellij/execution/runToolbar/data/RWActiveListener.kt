@@ -2,6 +2,7 @@
 package com.intellij.execution.runToolbar.data
 
 interface RWActiveListener {
-  fun enabled()
+  fun enabled() {}
   fun disabled() {}
+  fun initialize() {}
 }

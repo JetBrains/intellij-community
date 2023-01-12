@@ -50,7 +50,7 @@ internal class ExternalStorageConfigurationManagerImpl(private val project: Proj
 
   private fun updateEntitySource() {
     val value = state.enabled
-    WorkspaceModel.getInstance(project).updateProjectModel { updater ->
+    WorkspaceModel.getInstance(project).updateProjectModel("Change entity sources to externally imported") { updater ->
       val entitiesMap = updater.entitiesBySource { it is JpsImportedEntitySource && it.storedExternally != value }
       entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatMap { entities -> entities.asSequence() } }.forEach { entity ->
         val source = entity.entitySource

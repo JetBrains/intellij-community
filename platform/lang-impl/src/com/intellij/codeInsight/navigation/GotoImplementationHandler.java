@@ -38,7 +38,7 @@ import java.util.List;
 public class GotoImplementationHandler extends GotoTargetHandler {
   @Override
   protected String getFeatureUsedKey() {
-    return "navigation.goto.implementation";
+    return null;
   }
 
   @Override

@@ -43,11 +43,15 @@ open class TreeMultiparentRootEntityImpl(val dataSource: TreeMultiparentRootEnti
   override val children: List<TreeMultiparentLeafEntity>
     get() = snapshot.extractOneToManyChildren<TreeMultiparentLeafEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: TreeMultiparentRootEntityData?) : ModifiableWorkspaceEntityBase<TreeMultiparentRootEntity>(), TreeMultiparentRootEntity.Builder {
+  class Builder(result: TreeMultiparentRootEntityData?) : ModifiableWorkspaceEntityBase<TreeMultiparentRootEntity, TreeMultiparentRootEntityData>(
+    result), TreeMultiparentRootEntity.Builder {
     constructor() : this(TreeMultiparentRootEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -67,7 +71,7 @@ open class TreeMultiparentRootEntityImpl(val dataSource: TreeMultiparentRootEnti
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -113,7 +117,7 @@ open class TreeMultiparentRootEntityImpl(val dataSource: TreeMultiparentRootEnti
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -122,7 +126,7 @@ open class TreeMultiparentRootEntityImpl(val dataSource: TreeMultiparentRootEnti
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
@@ -146,9 +150,9 @@ open class TreeMultiparentRootEntityImpl(val dataSource: TreeMultiparentRootEnti
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
@@ -160,7 +164,7 @@ open class TreeMultiparentRootEntityImpl(val dataSource: TreeMultiparentRootEnti
         }
         else {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
@@ -171,7 +175,6 @@ open class TreeMultiparentRootEntityImpl(val dataSource: TreeMultiparentRootEnti
         changedProperty.add("children")
       }
 
-    override fun getEntityData(): TreeMultiparentRootEntityData = result ?: super.getEntityData() as TreeMultiparentRootEntityData
     override fun getEntityClass(): Class<TreeMultiparentRootEntity> = TreeMultiparentRootEntity::class.java
   }
 }
@@ -183,20 +186,15 @@ class TreeMultiparentRootEntityData : WorkspaceEntityData.WithCalculableSymbolic
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<TreeMultiparentRootEntity> {
     val modifiable = TreeMultiparentRootEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): TreeMultiparentRootEntity {
     return getCached(snapshot) {
       val entity = TreeMultiparentRootEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

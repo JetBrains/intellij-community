@@ -6,7 +6,7 @@ import com.intellij.xdebugger.attach.XAttachPresentationGroup
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogDebuggersFilter
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
 
-internal class AttachToProcessElementsFilters(private val selectedFilter: AtomicLazyProperty<AttachDialogDebuggersFilter>) {
+class AttachToProcessElementsFilters(private val selectedFilter: AtomicLazyProperty<AttachDialogDebuggersFilter>) {
 
   private val speedSearch = SpeedSearch().apply {
     updatePattern("")

@@ -152,3 +152,12 @@ internal val <E> ListModel<E>.items
       }
     }
   }
+
+fun ComboBoxModel<*>.selectFirst() {
+  val size = size
+  if (size == 0) {
+    return
+  }
+  val first = getElementAt(0)
+  selectedItem = first
+}

@@ -79,8 +79,9 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
   }
 
   private fun getCasePreview(): String? {
-    val path = "codeVisionProviders/" + id + "/preview." + previewLanguage?.associatedFileType?.defaultExtension
-    val stream = this.javaClass.classLoader.getResourceAsStream(path)
+    val associatedFileType = previewLanguage?.associatedFileType ?: return null
+    val path = "codeVisionProviders/" + id + "/preview." + associatedFileType.defaultExtension
+    val stream = associatedFileType.javaClass.classLoader.getResourceAsStream(path)
     return if (stream != null) ResourceUtil.loadText(stream) else null
   }
 }

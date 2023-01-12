@@ -51,13 +51,9 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       sectionNl(
         "override fun wrapAsModifiable(diff: ${MutableEntityStorage::class.fqn}): ${WorkspaceEntity.Builder::class.fqn}<$javaFullName>") {
         line("val modifiable = $javaImplBuilderName(null)")
-        line("modifiable.allowModifications {")
-        line("  modifiable.diff = diff")
-        line("  modifiable.snapshot = diff")
-        line("  modifiable.id = createEntityId()")
-        line("  modifiable.entitySource = this.entitySource")
-        line("}")
-        line("modifiable.changedProperty.clear()")
+        line("modifiable.diff = diff")
+        line("modifiable.snapshot = diff")
+        line("modifiable.id = createEntityId()")
         line("return modifiable")
       }
 
@@ -65,7 +61,6 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       sectionNl("override fun createEntity(snapshot: ${EntityStorage::class.fqn}): $javaFullName") {
         section("return getCached(snapshot)") {
           line("val entity = $javaImplName(this)")
-          line("entity.entitySource = entitySource")
           line("entity.snapshot = snapshot")
           line("entity.id = createEntityId()")
           line("entity")

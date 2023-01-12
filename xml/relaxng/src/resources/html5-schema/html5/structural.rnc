@@ -14,6 +14,7 @@
 			|	common.attrs.aria.role.application
 			|	common.attrs.aria.role.dialog
 			|	common.attrs.aria.role.feed
+			|	common.attrs.aria.role.group
 			|	common.attrs.aria.role.log
 			|	common.attrs.aria.role.marquee
 			|	common.attrs.aria.role.presentation
@@ -74,6 +75,11 @@
 			|	common.attrs.aria.role.doc-index
 			|	common.attrs.aria.role.doc-pagelist
 			|	common.attrs.aria.role.doc-toc
+			|	common.attrs.aria.role.menu
+			|	common.attrs.aria.role.menubar
+			|	common.attrs.aria.role.none
+			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.tablist
 			)?
 		)
 	nav.inner =

@@ -76,7 +76,7 @@ private class GHServerVersionsCollector(private val project: Project) : Disposab
     val accountsFlow = project.service<GHAccountManager>().accountsState
     scope.launch {
       accountsFlow.collect {
-        for ((account, _) in it) {
+        for (account in it) {
           val server = account.server
           if (server.isGithubDotCom) continue
 

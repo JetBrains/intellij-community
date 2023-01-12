@@ -3,13 +3,11 @@ use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::{env, fs, io, thread, time};
 use std::collections::HashMap;
-use std::fs::{create_dir, File};
+use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Output};
-use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Once;
-use std::time::SystemTime;
 use utils::{get_path_from_env_var, PathExt};
 
 static INIT: Once = Once::new();
@@ -17,7 +15,7 @@ static mut SHARED: Option<TestEnvironmentShared> = None;
 
 pub struct TestEnvironment {
     pub launcher_path: PathBuf,
-    pub test_root_dir: PathBuf
+    pub test_root_dir: tempfile::TempDir
 }
 
 pub fn prepare_test_env(layout_kind: &LauncherLocation) -> TestEnvironment {
@@ -45,29 +43,26 @@ fn prepare_test_env_impl(layout_kind: &LauncherLocation) -> Result<TestEnvironme
     let product_info_relative = format!("resources/product_info_{os}.json");
     let product_info_path = shared.project_root.join(product_info_relative);
 
-    let test_number = shared.test_counter.fetch_add(1, Ordering::SeqCst);
     // create tmp dir
-    let timestamp = shared.start_unix_timestamp_nanos;
-    let dir_name = format!("{timestamp}_{test_number}");
-    let test_dir = env::temp_dir().join(dir_name.to_string());
-    create_dir(&test_dir).context(format!("Failed to create temp directory: {test_dir:?}"))?;
+    let temp_dir = tempfile::tempdir().context(format!("Failed to create temp directory"))?;
+    let temp_dir_path = temp_dir.path();
 
     layout_launcher(
-        &test_dir,
+        &temp_dir_path,
         &shared.project_root,
         &shared.jbrsdk_root,
         &shared.intellij_app_jar_source,
         &product_info_path,
     )?;
 
-    let launcher_dir = resolve_launcher_dir(&test_dir, layout_kind);
+    let launcher_dir = resolve_launcher_dir(&temp_dir_path, layout_kind);
     env::set_current_dir(&launcher_dir)?;
 
     let launcher_path = launcher_dir.join("xplat-launcher");
 
     let result = TestEnvironment {
         launcher_path,
-        test_root_dir: test_dir
+        test_root_dir: temp_dir
     };
 
     Ok(result)
@@ -98,17 +93,10 @@ pub fn init_test_environment_once() -> Result<TestEnvironmentShared> {
     let jar_path = Path::new("./resources/TestProject/build/libs/app.jar");
     let intellij_app_jar_source = jar_path.canonicalize()?;
 
-    let start_unix_timestamp_nanos = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)?
-        .as_nanos();
-
-    let test_counter = AtomicU32::new(0);
     let result = TestEnvironmentShared {
         project_root,
         jbrsdk_root,
-        intellij_app_jar_source,
-        start_unix_timestamp_nanos,
-        test_counter
+        intellij_app_jar_source
     };
 
     Ok(result)
@@ -117,9 +105,7 @@ pub fn init_test_environment_once() -> Result<TestEnvironmentShared> {
 pub struct TestEnvironmentShared {
     project_root: PathBuf,
     jbrsdk_root: PathBuf,
-    intellij_app_jar_source: PathBuf,
-    start_unix_timestamp_nanos: u128,
-    test_counter: AtomicU32
+    intellij_app_jar_source: PathBuf
 }
 
 pub fn gradle_command_wrapper(gradle_command: &str) {
@@ -424,7 +410,7 @@ pub struct IntellijMainDumpedLaunchParameters {
 }
 
 pub fn run_launcher_with_default_args(test: &TestEnvironment, args: &[&str]) -> LauncherRunResult {
-    let output_file = test.test_root_dir.join(TEST_OUTPUT_FILE_NAME);
+    let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
     let output_args = ["dump-launch-parameters", "--output", &output_file.to_string_lossy()];
     let full_args = &mut output_args.to_vec();
     full_args.append(&mut args.to_vec());

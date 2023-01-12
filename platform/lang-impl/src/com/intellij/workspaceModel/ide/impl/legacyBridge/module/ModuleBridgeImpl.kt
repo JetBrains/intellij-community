@@ -26,9 +26,9 @@ import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -170,7 +170,7 @@ internal class ModuleBridgeImpl(
       @Suppress("DEPRECATION")
       if (getOptionValue(key) != value) {
         WriteAction.runAndWait<RuntimeException> {
-          WorkspaceModel.getInstance(project).updateProjectModel { builder ->
+          WorkspaceModel.getInstance(project).updateProjectModel("Set option in module entity") { builder ->
             val entity = this.findModuleEntity(builder)
             if (entity != null) {
               updateOptionInEntity(builder, entity)

@@ -11,6 +11,13 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface ToolbarSettings : PersistentStateComponent<ExperimentalToolbarSettingsState> {
   companion object {
+    /*
+     *     0 - indefinite
+     *     1 - first inclusion
+     *     >1 - not first inclusion
+     */
+    const val INCLUSION_STATE = "ide.widget.toolbar.first.inclusion"
+
     @JvmStatic
     fun getInstance(): ToolbarSettings = ApplicationManager.getApplication().getService(ToolbarSettings::class.java)
   }

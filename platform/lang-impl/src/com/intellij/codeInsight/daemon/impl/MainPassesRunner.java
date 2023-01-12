@@ -101,7 +101,7 @@ public class MainPassesRunner {
 
       VirtualFile file = files.get(i);
 
-      progress.setText(ProjectUtil.calcRelativeToProjectPath(file, myProject));
+      progress.setText(ReadAction.compute(() -> ProjectUtil.calcRelativeToProjectPath(file, myProject)));
       progress.setFraction((double)i / (double)files.size());
 
       while (true) {

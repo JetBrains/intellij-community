@@ -92,7 +92,7 @@ internal fun CompositePackagingElementEntity.toCompositeElement(
             }
           }
           else {
-            (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent {
+            (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Apply packaging elements mappings") {
               val mutableMapping = it.mutableElements
               for ((entity, mapping) in mappingsCollector) {
                 mutableMapping.addMapping(entity, mapping)
@@ -232,7 +232,7 @@ fun PackagingElementEntity.toElement(
             }
           }
           else {
-            (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent {
+            (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Apply packaging elements mappings (toElement)") {
               val mutableMapping = it.mutableElements
               for ((entity, mapping) in mappingsCollector) {
                 mutableMapping.addMapping(entity, mapping)

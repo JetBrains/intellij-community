@@ -10,25 +10,25 @@ internal class SettingsSyncEnabler {
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
 
   object State {
-    val CANCELLED = ServerState.Error("Cancelled")
+    val CANCELLED = UpdateResult.Error("Cancelled")
   }
 
   fun checkServerState() {
     eventDispatcher.multicaster.serverStateCheckStarted()
     val communicator = SettingsSyncMain.getInstance().getRemoteCommunicator()
     object : Task.Modal(null, SettingsSyncBundle.message("enable.sync.check.server.data.progress"), true) {
-      private lateinit var serverState: ServerState
+      private lateinit var updateResult: UpdateResult
 
       override fun run(indicator: ProgressIndicator) {
-        serverState = communicator.checkServerState()
+        updateResult = communicator.receiveUpdates()
       }
 
       override fun onCancel() {
-        serverState = State.CANCELLED
+        updateResult = State.CANCELLED
       }
 
       override fun onFinished() {
-        eventDispatcher.multicaster.serverStateCheckFinished(serverState)
+        eventDispatcher.multicaster.serverStateCheckFinished(updateResult)
       }
     }.queue()
   }
@@ -76,7 +76,7 @@ internal class SettingsSyncEnabler {
       serverRequestStarted()
     }
 
-    fun serverStateCheckFinished(state: ServerState) {
+    fun serverStateCheckFinished(state: UpdateResult) {
       serverRequestFinished()
     }
 

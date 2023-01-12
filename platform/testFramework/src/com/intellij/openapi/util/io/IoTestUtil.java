@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -438,6 +438,25 @@ public final class IoTestUtil {
     }
 
     return false;
+  }
+
+  public static @NotNull String assumeWorkingWslDistribution() {
+    assumeWindows();
+    assumeWslPresence();
+
+    var distributions = enumerateWslDistributions();
+    assumeTrue("No WSL distributions found", !distributions.isEmpty());
+
+    for (var distribution : distributions) {
+      if (reanimateWslDistribution(distribution)) {
+        return distribution;
+      }
+    }
+
+    //noinspection DataFlowIssue
+    assumeTrue("Cannot find a working distribution among " + distributions, false);
+    // making the compiler happy
+    return "";
   }
 
   public static void setCaseSensitivity(@NotNull File dir, boolean caseSensitive) throws IOException {

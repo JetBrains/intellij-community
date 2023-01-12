@@ -7,16 +7,13 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.util.ClearableLazyValue.createAtomic;
 
-@ApiStatus.Internal
 public final class LiveTemplateContextBean extends BaseKeyedLazyInstance<TemplateContextType> implements LiveTemplateContext {
-  @ApiStatus.Internal
-  public static final ExtensionPointName<LiveTemplateContextBean> EP_NAME = new ExtensionPointName<>("com.intellij.liveTemplateContext");
+  static final ExtensionPointName<LiveTemplateContextBean> EP_NAME = new ExtensionPointName<>("com.intellij.liveTemplateContext");
 
   public static final String EVERYWHERE_CONTEXT_ID = "OTHER";
 

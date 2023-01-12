@@ -7,12 +7,15 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Clock
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.DateFormatUtil
 import git4idea.test.GitPlatformTest
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GithubRepo
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import java.util.concurrent.ThreadLocalRandom
 
@@ -34,7 +37,7 @@ import java.util.concurrent.ThreadLocalRandom
  */
 abstract class GithubTest : GitPlatformTest() {
 
-  private lateinit var authenticationManager: GithubAuthenticationManager
+  private lateinit var accountManager: GHAccountManager
 
   private lateinit var organisation: String
   protected lateinit var mainAccount: AccountData
@@ -54,7 +57,7 @@ abstract class GithubTest : GitPlatformTest() {
     assertNotNull(token1)
     assertNotNull(token2)
 
-    authenticationManager = service()
+    accountManager = service()
 
     organisation = System.getenv("idea_test_github_org") ?: System.getenv("idea.test.github.org")
     assertNotNull(organisation)
@@ -64,9 +67,9 @@ abstract class GithubTest : GitPlatformTest() {
   }
 
   private fun createAccountData(host: GithubServerPath, token: String): AccountData {
-    val executorManager = service<GithubApiRequestExecutorManager>()
-    val account = authenticationManager.registerAccount("token", host, token)
-    val executor = executorManager.getExecutor(account)
+    val account = GHAccountManager.createAccount("token", host)
+    runBlocking { accountManager.updateAccount(account, token) }
+    val executor = service<GithubApiRequestExecutor.Factory>().create(token)
     val username = executor.execute(GithubApiRequests.CurrentUser.get(account.server)).login
 
     return AccountData(token, account, username, executor)
@@ -78,7 +81,7 @@ abstract class GithubTest : GitPlatformTest() {
       ThrowableRunnable { deleteRepos(secondaryAccount, secondaryRepos) },
       ThrowableRunnable { deleteRepos(mainAccount, mainRepos) },
       ThrowableRunnable { setCurrentAccount(null) },
-      ThrowableRunnable { if (::authenticationManager.isInitialized) authenticationManager.clearAccounts() },
+      ThrowableRunnable { if (::accountManager.isInitialized) runBlocking { accountManager.updateAccounts(emptyMap()) } },
       ThrowableRunnable { super.tearDown() }
     ).run()
   }
@@ -88,7 +91,7 @@ abstract class GithubTest : GitPlatformTest() {
   }
 
   protected open fun setCurrentAccount(accountData: AccountData?) {
-    authenticationManager.setDefaultAccount(myProject, accountData?.account)
+    GHAccountsUtil.setDefaultAccount(myProject, accountData?.account)
   }
 
   protected fun createUserRepo(account: AccountData, autoInit: Boolean = false): GithubRepo {
@@ -175,7 +178,11 @@ abstract class GithubTest : GitPlatformTest() {
     assertEquals("Notification has wrong type", type, actualNotification.type)
   }
 
-  override fun runInDispatchThread() = true
+  override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
+    runInEdtAndWait {
+      super.runTestRunnable(testRunnable)
+    }
+  }
 
   protected data class AccountData(val token: String,
                                    val account: GithubAccount,

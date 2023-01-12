@@ -16,7 +16,8 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
   override fun <T : RunConfigurationBase<*>> updateJavaParameters(configuration: T,
                                                                   javaParameters: JavaParameters,
                                                                   runnerSettings: RunnerSettings?) {
-    val project = (configuration as ApplicationConfiguration).project
+    val applicationConfiguration = configuration as? ApplicationConfiguration ?: return
+    val project = applicationConfiguration.project
     if (!PsiUtil.isIdeaProject(project)) {
       return
     }

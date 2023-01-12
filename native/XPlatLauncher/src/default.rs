@@ -30,6 +30,10 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
         result.extend_from_slice(&vm_options_from_files);
         result.extend_from_slice(additional_jvm_arguments);
 
+        for i in 0..result.len() {
+            result[i] = self.expand_ide_home(&result[i]);
+        }
+
         Ok(result)
     }
 
@@ -75,7 +79,9 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
                 }
             };
 
-            canonical_class_path.push(item_canonical_path);
+            let expanded = self.expand_ide_home(&item_canonical_path);
+
+            canonical_class_path.push(expanded);
         }
 
         Ok(canonical_class_path)
@@ -462,6 +468,16 @@ impl DefaultLaunchConfiguration {
 
         let os_specific_vm_options = self.ide_bin.join(os_specific_dir).join(vm_options_file_name);
         is_readable(os_specific_vm_options)
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    fn expand_ide_home(&self, value: &str) -> String {
+        value.to_string()
+    }
+
+    #[cfg(target_os = "windows")]
+    fn expand_ide_home(&self, value: &str) -> String {
+        value.replace("%IDE_HOME%", &self.ide_home.to_string_lossy())
     }
 }
 

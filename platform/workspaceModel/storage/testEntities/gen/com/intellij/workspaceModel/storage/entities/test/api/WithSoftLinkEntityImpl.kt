@@ -36,11 +36,15 @@ open class WithSoftLinkEntityImpl(val dataSource: WithSoftLinkEntityData) : With
   override val link: NameId
     get() = dataSource.link
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: WithSoftLinkEntityData?) : ModifiableWorkspaceEntityBase<WithSoftLinkEntity>(), WithSoftLinkEntity.Builder {
+  class Builder(result: WithSoftLinkEntityData?) : ModifiableWorkspaceEntityBase<WithSoftLinkEntity, WithSoftLinkEntityData>(
+    result), WithSoftLinkEntity.Builder {
     constructor() : this(WithSoftLinkEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -60,7 +64,7 @@ open class WithSoftLinkEntityImpl(val dataSource: WithSoftLinkEntityData) : With
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -95,7 +99,7 @@ open class WithSoftLinkEntityImpl(val dataSource: WithSoftLinkEntityData) : With
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -104,12 +108,11 @@ open class WithSoftLinkEntityImpl(val dataSource: WithSoftLinkEntityData) : With
       get() = getEntityData().link
       set(value) {
         checkModificationAllowed()
-        getEntityData().link = value
+        getEntityData(true).link = value
         changedProperty.add("link")
 
       }
 
-    override fun getEntityData(): WithSoftLinkEntityData = result ?: super.getEntityData() as WithSoftLinkEntityData
     override fun getEntityClass(): Class<WithSoftLinkEntity> = WithSoftLinkEntity::class.java
   }
 }
@@ -158,20 +161,15 @@ class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(), SoftLi
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<WithSoftLinkEntity> {
     val modifiable = WithSoftLinkEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): WithSoftLinkEntity {
     return getCached(snapshot) {
       val entity = WithSoftLinkEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

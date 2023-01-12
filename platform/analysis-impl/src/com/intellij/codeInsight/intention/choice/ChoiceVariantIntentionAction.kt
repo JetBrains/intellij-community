@@ -7,7 +7,8 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionWithChoice
 import com.intellij.codeInspection.IntentionAndQuickFixAction
 import com.intellij.openapi.util.Iconable
-import com.intellij.util.ui.EmptyIcon
+import com.intellij.ui.IconManager
+import com.intellij.util.PlatformIcons
 import javax.swing.Icon
 
 /**
@@ -20,13 +21,19 @@ import javax.swing.Icon
  */
 abstract class ChoiceVariantIntentionAction : IntentionAndQuickFixAction(), HighlightInfoType.Iconable, Iconable, CustomizableIntentionAction,
                                               Comparable<IntentionAction> {
+  companion object {
+    private val EMPTY_ICON by lazy {
+      IconManager.getInstance().createEmptyIcon(PlatformIcons.PUBLIC_ICON)
+    }
+  }
+
   abstract val index: Int
 
   override fun isShowSubmenu(): Boolean = false
 
-  override fun getIcon(): Icon = EmptyIcon.ICON_0
+  override fun getIcon(): Icon = EMPTY_ICON
 
-  override fun getIcon(flags: Int): Icon = EmptyIcon.ICON_0
+  override fun getIcon(flags: Int): Icon = EMPTY_ICON
 
   override fun compareTo(other: IntentionAction): Int {
     if (familyName != other.familyName) return this.familyName.compareTo(other.familyName)

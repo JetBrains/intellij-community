@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
+import com.intellij.openapi.rd.util.launchUnderModalProgress
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.remoteDev.RemoteDevUtilBundle
@@ -16,6 +17,7 @@ import com.intellij.util.application
 import com.intellij.util.fragmentParameters
 import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.ApiStatus
+import java.net.URI
 import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Experimental
@@ -23,6 +25,8 @@ object CodeWithMeGuestLauncher {
   private val LOG = logger<CodeWithMeGuestLauncher>()
 
   private val alreadyDownloading = ConcurrentHashMap.newKeySet<String>()
+
+  fun isUnattendedModeUri(uri: URI) = uri.fragmentParameters["jt"] != null
 
   fun downloadCompatibleClientAndLaunch(project: Project?, url: String, @NlsContexts.DialogTitle product: String, onDone: (Lifetime) -> Unit) {
     if (!application.isDispatchThread) {
@@ -48,7 +52,7 @@ object CodeWithMeGuestLauncher {
             "tcp", "gwws" -> {
               val clientBuild = uri.fragmentParameters["cb"] ?: error("there is no client build in url")
               val jreBuild = uri.fragmentParameters["jb"] ?: error("there is no jre build in url")
-              val unattendedMode = uri.fragmentParameters["jt"] != null
+              val unattendedMode = isUnattendedModeUri(uri)
 
               CodeWithMeClientDownloader.createSessionInfo(clientBuild, jreBuild, unattendedMode)
             }

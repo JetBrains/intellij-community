@@ -5,23 +5,30 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import git4idea.remote.GitRepositoryHostingService
 import git4idea.remote.InteractiveGitHttpAuthDataProvider
-import org.jetbrains.plugins.github.extensions.GHHttpAuthDataProvider.Companion.getGitAuthenticationAccounts
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.github.util.GithubUtil
 
 internal class GHRepositoryHostingService : GitRepositoryHostingService() {
   override fun getServiceDisplayName(): String = GithubUtil.SERVICE_DISPLAY_NAME
 
   @RequiresBackgroundThread
-  override fun getInteractiveAuthDataProvider(project: Project, url: String): InteractiveGitHttpAuthDataProvider? =
-    getProvider(project, url, null)
+  override fun getInteractiveAuthDataProvider(project: Project, url: String)
+    : InteractiveGitHttpAuthDataProvider? = runBlocking {
+    GHHttpAuthDataProvider.getAccountsWithTokens(project, url).takeIf { it.isNotEmpty() }?.let {
+      GHSelectAccountHttpAuthDataProvider(project, it)
+    }
+  }
 
   @RequiresBackgroundThread
-  override fun getInteractiveAuthDataProvider(project: Project, url: String, login: String): InteractiveGitHttpAuthDataProvider? =
-    getProvider(project, url, login)
-
-  private fun getProvider(project: Project, url: String, login: String?): InteractiveGitHttpAuthDataProvider? {
-    val accounts = getGitAuthenticationAccounts(project, url, login)
-
-    return if (accounts.isNotEmpty()) GHSelectAccountHttpAuthDataProvider(project, accounts) else null
+  override fun getInteractiveAuthDataProvider(project: Project, url: String, login: String)
+    : InteractiveGitHttpAuthDataProvider? = runBlocking {
+    GHHttpAuthDataProvider.getAccountsWithTokens(project, url).mapNotNull { (acc, token) ->
+      if (token == null) return@mapNotNull null
+      val details = GHHttpAuthDataProvider.getAccountDetails(acc, token) ?: return@mapNotNull null
+      if (details.login != login) return@mapNotNull null
+      acc to token
+    }.takeIf { it.isNotEmpty() }?.let {
+      GHSelectAccountHttpAuthDataProvider(project, it.toMap())
+    }
   }
 }

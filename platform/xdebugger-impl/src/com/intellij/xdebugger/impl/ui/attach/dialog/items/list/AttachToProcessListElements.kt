@@ -6,6 +6,7 @@ import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachSelectionIgnoredNode
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElement
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElementsFilters
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.TableGroupHeaderSeparator
 
 
 internal class AttachToProcessListItem(
@@ -18,7 +19,7 @@ internal class AttachToProcessListItem(
   override fun getProcessItem(): AttachDialogProcessItem = item
 }
 
-internal abstract class AttachToProcessListGroupBase(val groupName: String) : AttachToProcessElement, AttachSelectionIgnoredNode {
+internal abstract class AttachToProcessListGroupBase(val groupName: String?) : AttachToProcessElement, AttachSelectionIgnoredNode {
 
   private val relatedNodes = mutableListOf<AttachToProcessListItem>()
 
@@ -40,6 +41,10 @@ internal abstract class AttachToProcessListGroupBase(val groupName: String) : At
   abstract fun getOrder(): Int
 
   override fun getProcessItem(): AttachDialogProcessItem? = null
+
+  fun getExpectedHeight(): Int {
+    return TableGroupHeaderSeparator.getExpectedHeight(isFirstGroup)
+  }
 }
 
 internal class AttachToProcessListGroup(private val presentationGroup: XAttachPresentationGroup<*>) : AttachToProcessListGroupBase(presentationGroup.groupName) {
@@ -52,10 +57,18 @@ internal class AttachToProcessListGroup(private val presentationGroup: XAttachPr
 }
 
 internal class AttachToProcessListRecentGroup : AttachToProcessListGroupBase(
-  XDebuggerBundle.message("xdebugger.attach.toLocal.popup.recent")) {
+  XDebuggerBundle.message("xdebugger.attach.dialog.recently.attached.message")) {
   override fun isAcceptedByFilters(filters: AttachToProcessElementsFilters): Boolean {
     return true
   }
 
   override fun getOrder(): Int = Int.MIN_VALUE
+}
+
+internal class AttachToProcessOtherItemsGroup : AttachToProcessListGroupBase(XDebuggerBundle.message("xdebugger.attach.dialog.other.processes.message")) {
+  override fun isAcceptedByFilters(filters: AttachToProcessElementsFilters): Boolean {
+    return getNodes().any { filters.matches(it) }
+  }
+
+  override fun getOrder(): Int = Int.MAX_VALUE
 }

@@ -98,6 +98,16 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertDelegatedBaseJavaProject();
   }
 
+  @Test
+  @TargetVersions("5.6+")
+  public void testBaseJavaProjectHasNoWarnings() throws Exception {
+    createDefaultDirs();
+    createProjectSubFile("gradle.properties", "org.gradle.warning.mode=fail");
+    importProject("apply plugin: 'java'");
+
+    assertDelegatedBaseJavaProject();
+  }
+
   private void assertNotDelegatedBaseJavaProject() {
     assertModules("project", "project.main", "project.test");
     assertContentRoots("project", getProjectPath());

@@ -425,7 +425,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     for (DataNode<?> node : nodes) {
       node.visit(dataNode -> dataNode.setIgnored(ignored));
     }
-    ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectDataNode, myProject, true);
+    ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectDataNode, myProject);
   }
 
   protected void importProject(@NonNls String config, Boolean skipIndexing) throws IOException {
@@ -464,7 +464,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
             System.err.println("Got null External project after import");
             return;
           }
-          ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, myProject, true);
+          ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, myProject);
           System.out.println("External project was successfully imported");
         }
 

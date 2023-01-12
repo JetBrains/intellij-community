@@ -4,6 +4,8 @@ package com.intellij.codeInsight.hint.actions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.ImplementationViewSession;
 import com.intellij.codeInsight.hint.ImplementationViewSessionFactory;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
@@ -39,7 +41,9 @@ public class ShowImplementationsAction extends ShowRelatedElementsActionBase {
 
   @Override
   protected void triggerFeatureUsed(@NotNull Project project) {
-    triggerFeatureUsed(project, CODEASSISTS_QUICKDEFINITION_FEATURE, CODEASSISTS_QUICKDEFINITION_LOOKUP_FEATURE);
+    if (LookupManager.getInstance(project).getActiveLookup() != null) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKDEFINITION_LOOKUP_FEATURE);
+    }
   }
 
   @Override

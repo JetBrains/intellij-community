@@ -2,37 +2,25 @@
 package org.jetbrains.plugins.github.extensions
 
 import com.intellij.collaboration.async.disposingScope
+import com.intellij.collaboration.auth.AccountUrlAuthenticationFailuresHolder
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
-import kotlinx.coroutines.launch
+import com.intellij.openapi.util.Disposer
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import java.util.concurrent.ConcurrentHashMap
 
 internal class GHGitAuthenticationFailureManager : Disposable {
-  private val storeMap = ConcurrentHashMap<GithubAccount, Set<String>>()
-
-  init {
-    disposingScope().launch {
-      val accountsState = service<GHAccountManager>().accountsState
-      val prev = accountsState.value
-      accountsState.collect {
-        prev.forEach { (acc, token) ->
-          if (it[acc] != token) {
-            storeMap.remove(acc)
-          }
-        }
-      }
-    }
+  private val holder = AccountUrlAuthenticationFailuresHolder(disposingScope()) {
+    service<GHAccountManager>()
+  }.also {
+    Disposer.register(this, it)
   }
 
   fun ignoreAccount(url: String, account: GithubAccount) {
-    storeMap.compute(account) { _, current -> current?.plus(url) ?: setOf(url) }
+    holder.markFailed(account, url)
   }
 
-  fun isAccountIgnored(url: String, account: GithubAccount): Boolean = storeMap[account]?.contains(url) ?: false
+  fun isAccountIgnored(url: String, account: GithubAccount): Boolean = holder.isFailed(account, url)
 
-  override fun dispose() {
-    storeMap.clear()
-  }
+  override fun dispose() = Unit
 }

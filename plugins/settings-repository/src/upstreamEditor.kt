@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
@@ -10,8 +12,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.DialogManager
 import com.intellij.util.text.nullize
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.settingsRepository.actions.NOTIFICATION_GROUP
+import java.awt.Component
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
@@ -39,7 +41,10 @@ private class SyncAction(private val syncType: SyncType,
 
   override fun actionPerformed(event: ActionEvent) {
     dialogManager.performAction {
-      runBlocking {
+      val owner = project?.let(ModalTaskOwner::project)
+                  ?: (event.source as? Component)?.let(ModalTaskOwner::component)
+                  ?: ModalTaskOwner.guess()
+      runBlockingModal(owner, "") { // TODO title
         val url = urlTextField.text.nullize(true)
         validateUrl(url, project)
         ?: doSync(icsManager, project, syncType, url!!)

@@ -11,10 +11,10 @@ mod tests {
     #[case::plugins_bin(&LauncherLocation::PluginsBin)]
     fn remote_dev_args_test(#[case]launcher_location: &LauncherLocation) {
         let test = &prepare_test_env(launcher_location);
-        let output_file = test.test_root_dir.join(TEST_OUTPUT_FILE_NAME);
+        let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
         let output_args = [
             "--remote-dev",
-            "dumpLaunchParameters", &test.test_root_dir.to_string_lossy(),
+            "dumpLaunchParameters", &test.test_root_dir.path().to_string_lossy(),
             "--output",
             &output_file.to_string_lossy()
         ];
@@ -28,11 +28,10 @@ mod tests {
 
         let dump = &result.dump.expect("Exit status was successful, but no dump was received");
 
-        assert_eq!(&dump.cmdArguments[0], test.launcher_path.to_string_lossy().as_ref());
-        assert_eq!(&dump.cmdArguments[1], "dump-launch-parameters");
-        assert_eq!(&dump.cmdArguments[2], test.test_root_dir.to_string_lossy().as_ref());
-        assert_eq!(&dump.cmdArguments[3], "--output");
-        assert_eq!(&dump.cmdArguments[4], test.test_root_dir.join(TEST_OUTPUT_FILE_NAME).to_string_lossy().as_ref());
-        assert_eq!(&dump.cmdArguments[5], args[0]);
+        assert_eq!(&dump.cmdArguments[0], "dump-launch-parameters");
+        assert_eq!(&dump.cmdArguments[1], &test.test_root_dir.path().to_string_lossy());
+        assert_eq!(&dump.cmdArguments[2], "--output");
+        assert_eq!(&dump.cmdArguments[3], &test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME).to_string_lossy());
+        assert_eq!(&dump.cmdArguments[4], args[0]);
     }
 }

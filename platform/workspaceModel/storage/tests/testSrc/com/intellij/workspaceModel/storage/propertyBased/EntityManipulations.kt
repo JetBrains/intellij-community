@@ -89,7 +89,7 @@ private class AddDetachedToStorage(private val storage: MutableEntityStorageImpl
     if (entities.isEmpty()) return
     val entityIndex = env.generateValue(Generator.integers(0, entities.size - 1), null)
     val someEntity = entities.removeAt(entityIndex)
-    if (someEntity is ModifiableWorkspaceEntityBase<*> && someEntity.diff == null) {
+    if (someEntity is ModifiableWorkspaceEntityBase<*, *> && someEntity.diff == null) {
       storage.addEntity(someEntity)
       env.logMessage("Added ${someEntity.id.asString()} to storage")
     } else {
@@ -173,7 +173,7 @@ internal abstract class CreateDetachedEntity(storage: MutableEntityStorageImpl,
     val (createdEntity, description) = makeEntity(source, property, env)
     if (createdEntity != null) {
       createdEntity as WorkspaceEntityBase
-      if (createdEntity is ModifiableWorkspaceEntityBase<*> && createdEntity.diff == null) {
+      if (createdEntity is ModifiableWorkspaceEntityBase<*, *> && createdEntity.diff == null) {
         detachedEntities.add(createdEntity)
       }
       env.logMessage("New detached entity created: $createdEntity. Source: ${createdEntity.entitySource}. $description")

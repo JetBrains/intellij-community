@@ -69,7 +69,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   }
 
   private final boolean myIsConstant;
-  private PsiClass myParentClass;
+  private @Nullable PsiClass myParentClass;
 
   protected BaseExpressionToFieldHandler(boolean isConstant) {
     myIsConstant = isConstant;
@@ -260,7 +260,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
   protected abstract OccurrenceManager createOccurrenceManager(PsiExpression selectedExpr, PsiClass parentClass);
 
-  protected final PsiClass getParentClass() {
+  protected final @Nullable PsiClass getParentClass() {
     return myParentClass;
   }
 
@@ -297,7 +297,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     return CommonJavaRefactoringUtil.getTypeByExpressionWithExpectedType(expr);
   }
 
-  public PsiClass getParentClass(@NotNull PsiExpression initializerExpression) {
+  public @Nullable PsiClass getParentClass(@NotNull PsiExpression initializerExpression) {
     PsiElement element = initializerExpression.getUserData(ElementToWorkOn.PARENT);
     if (element == null) element = initializerExpression.getParent();
     PsiElement parent = element;

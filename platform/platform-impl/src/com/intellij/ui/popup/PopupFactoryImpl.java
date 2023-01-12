@@ -511,7 +511,14 @@ public class PopupFactoryImpl extends JBPopupFactory {
       popupMenuPoint = new Point(rect.x, rect.y + rect.height - 1);
     }
     else if (component instanceof PopupOwner) {
-      popupMenuPoint = ((PopupOwner)component).getBestPopupPosition();
+      PopupOwner popupOwner = (PopupOwner)component;
+      JComponent popupComponent = popupOwner.getPopupComponent();
+      if (popupComponent == null || popupComponent == popupOwner) {
+        popupMenuPoint = ((PopupOwner)component).getBestPopupPosition();
+      }
+      else {
+        popupMenuPoint = guessBestPopupLocation(popupComponent).getPoint(component);
+      }
     }
     if (popupMenuPoint == null) {
       popupMenuPoint = new Point(visibleRect.x + visibleRect.width / 2, visibleRect.y + visibleRect.height / 2);

@@ -9,7 +9,7 @@ import com.intellij.model.Pointer
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.registry.WebSymbolDefaultIconProvider
+import com.intellij.webSymbols.query.WebSymbolDefaultIconProvider
 import com.intellij.webSymbols.completion.impl.WebSymbolCodeCompletionItemImpl
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import javax.swing.Icon

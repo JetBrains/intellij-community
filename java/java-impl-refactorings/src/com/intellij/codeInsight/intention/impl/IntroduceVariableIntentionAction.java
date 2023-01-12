@@ -2,8 +2,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.java.JavaLanguage;
@@ -13,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.refactoring.introduceVariable.IntroduceEmptyVariableHandlerImpl;
 import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import com.intellij.util.IncorrectOperationException;
@@ -25,7 +24,7 @@ import java.util.List;
 /**
  * @author Danila Ponomarenko
  */
-public class IntroduceVariableIntentionAction extends PsiElementBaseIntentionAction implements HighPriorityAction {
+public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAction {
   @NotNull
   @Override
   public String getText() {

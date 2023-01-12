@@ -37,11 +37,15 @@ open class SymbolicIdEntityImpl(val dataSource: SymbolicIdEntityData) : Symbolic
   override val data: String
     get() = dataSource.data
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: SymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SymbolicIdEntity>(), SymbolicIdEntity.Builder {
+  class Builder(result: SymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SymbolicIdEntity, SymbolicIdEntityData>(
+    result), SymbolicIdEntity.Builder {
     constructor() : this(SymbolicIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -61,7 +65,7 @@ open class SymbolicIdEntityImpl(val dataSource: SymbolicIdEntityData) : Symbolic
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -96,7 +100,7 @@ open class SymbolicIdEntityImpl(val dataSource: SymbolicIdEntityData) : Symbolic
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -105,11 +109,10 @@ open class SymbolicIdEntityImpl(val dataSource: SymbolicIdEntityData) : Symbolic
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
-    override fun getEntityData(): SymbolicIdEntityData = result ?: super.getEntityData() as SymbolicIdEntityData
     override fun getEntityClass(): Class<SymbolicIdEntity> = SymbolicIdEntity::class.java
   }
 }
@@ -121,20 +124,15 @@ class SymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Symbol
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SymbolicIdEntity> {
     val modifiable = SymbolicIdEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): SymbolicIdEntity {
     return getCached(snapshot) {
       val entity = SymbolicIdEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

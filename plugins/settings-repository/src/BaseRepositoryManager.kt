@@ -1,9 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.fileTypes.StdFileTypes
@@ -14,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.io.InputStream
@@ -24,6 +24,7 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManager {
+
   protected val lock: ReentrantReadWriteLock = ReentrantReadWriteLock()
 
   override fun processChildren(path: String, filter: (name: String) -> Boolean, processor: (name: String, inputStream: InputStream) -> Boolean) {
@@ -153,7 +154,7 @@ suspend fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvi
   }
 
   var processedFiles: List<VirtualFile>? = null
-  withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+  withContext(Dispatchers.EDT) {
     val fileMergeDialog = MultipleFileMergeDialog(null, files, mergeProvider, object : MergeDialogCustomizer() {
       override fun getMultipleFileDialogTitle() = icsMessage("merge.settings.dialog.title")
     })

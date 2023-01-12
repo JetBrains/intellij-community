@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -110,7 +111,18 @@ public abstract class TemplateContextType {
    * </ol>
    */
   public @Nullable TemplateContextType getBaseContextType() {
-    return myBaseContextType != null ? myBaseContextType.getValue() : null;
+    if (myBaseContextType != null) {
+      try {
+        return myBaseContextType.getValue();
+      } catch (LiveTemplateContextNotFoundException e) {
+        Logger.getInstance(TemplateContextType.class)
+          .error("Error in liveTemplateContext with ID '" + myContextId +"', base liveTemplateContext is not registered plugin.xml", e);
+        // looks like broken plugin, fallback to any context parent
+        return LiveTemplateContextService.getInstance().getTemplateContextType(EverywhereContextType.class);
+      }
+    }
+
+    return null;
   }
 
   @ApiStatus.Internal

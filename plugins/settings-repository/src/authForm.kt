@@ -1,18 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.OneTimeString
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.dialog
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.panel
 import com.intellij.util.PathUtilRt
 import com.intellij.util.text.nullize
 import com.intellij.util.text.trimMiddle
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.swing.JPasswordField
 import javax.swing.JTextField
@@ -40,7 +40,7 @@ internal suspend fun showAuthenticationForm(credentials: Credentials?,
     icsMessage("log.in.to", uri.trimMiddle(50))
   else IcsBundle.message("authentication.form.prompt.enter.ssh.key.password", PathUtilRt.getFileName(sshKeyFile))
 
-  return withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+  return withContext(Dispatchers.EDT) {
     val userField = JTextField(username)
     val passwordField = JPasswordField(credentials?.getPasswordAsString())
 

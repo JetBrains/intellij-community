@@ -39,6 +39,16 @@ class AccountSelectorComponentFactory<A : Account>(
 
     val comboModel = ComboBoxWithActionsModel<A>().apply {
       bind(scope, accountsState, selectionState, actions, Comparator.comparing { it.name })
+
+      if (size > 0) {
+        for (i in 0 until size) {
+          val item = getElementAt(i)
+          if (item is ComboBoxWithActionsModel.Item.Wrapper) {
+            selectedItem = item
+            break
+          }
+        }
+      }
     }
 
     val label = JLabel().apply {
@@ -78,14 +88,13 @@ class AccountSelectorComponentFactory<A : Account>(
     private fun updateLabel() {
       val selectedAccount = accountsModel.selectedItem?.wrappee
       with(label) {
-        isVisible = accountsModel.items.isNotEmpty()
-
         icon = avatarIconsProvider.getIcon(selectedAccount, avatarSize)
         toolTipText = selectedAccount?.name ?: emptyStateTooltip
       }
     }
 
     private fun showPopup() {
+      if (!label.isEnabled) return
       popup = object : ComboBoxPopup<ComboBoxWithActionsModel.Item<A>>(this, accountsModel.selectedItem, {
         accountsModel.setSelectedItem(it)
       }) {

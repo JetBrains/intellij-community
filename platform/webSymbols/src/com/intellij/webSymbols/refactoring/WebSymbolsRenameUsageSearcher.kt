@@ -5,8 +5,8 @@ import com.intellij.model.Pointer
 import com.intellij.refactoring.rename.api.*
 import com.intellij.util.Query
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.registry.WebSymbolsRegistry
-import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.search.WebSymbolsUsageSearcher
 
 class WebSymbolsRenameUsageSearcher : RenameUsageSearcher {
@@ -18,31 +18,31 @@ class WebSymbolsRenameUsageSearcher : RenameUsageSearcher {
         WebSymbolsUsageSearcher.buildWebSymbolUsagesQueries(symbol, parameters.project, parameters.searchScope)
           .map { query ->
             query.mapping {
-              WebSymbolPsiModifiableRenameUsage(WebSymbolsRegistryManager.get(it.file), symbol, PsiRenameUsage.defaultPsiRenameUsage(it))
+              WebSymbolPsiModifiableRenameUsage(WebSymbolsQueryExecutorFactory.create(it.file), symbol, PsiRenameUsage.defaultPsiRenameUsage(it))
             }
           }
       }
     ?: emptyList()
 
-  private class WebSymbolPsiModifiableRenameUsage(private val registry: WebSymbolsRegistry,
+  private class WebSymbolPsiModifiableRenameUsage(private val queryExecutor: WebSymbolsQueryExecutor,
                                                   private val symbol: WebSymbol,
                                                   private val psiRenameUsage: PsiRenameUsage)
     : PsiRenameUsage by psiRenameUsage, PsiModifiableRenameUsage {
 
     override val fileUpdater: ModifiableRenameUsage.FileUpdater
       get() = fileRangeUpdater {
-        symbol.adjustNameForRefactoring(registry, it, range.substring(file.text))
+        symbol.adjustNameForRefactoring(queryExecutor, it, range.substring(file.text))
       }
 
     override fun createPointer(): Pointer<out PsiModifiableRenameUsage> {
-      val registryPtr = registry.createPointer()
+      val queryExecutorPtr = queryExecutor.createPointer()
       val symbolPtr = symbol.createPointer()
       val usagePtr = psiRenameUsage.createPointer()
       return Pointer {
-        val registry = registryPtr.dereference() ?: return@Pointer null
+        val queryExecutor = queryExecutorPtr.dereference() ?: return@Pointer null
         val symbol = symbolPtr.dereference() ?: return@Pointer null
         val usage = usagePtr.dereference() ?: return@Pointer null
-        WebSymbolPsiModifiableRenameUsage(registry, symbol, usage)
+        WebSymbolPsiModifiableRenameUsage(queryExecutor, symbol, usage)
       }
     }
   }

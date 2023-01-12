@@ -3,9 +3,9 @@ package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.registry.WebSymbolMatch
+import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.WebSymbolNameSegment
-import com.intellij.webSymbols.WebSymbolsContainer
+import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
 import kotlin.math.max
@@ -16,7 +16,7 @@ internal class ItemPattern(val displayName: String?) : WebSymbolsPattern() {
   override fun isStaticAndRequired(): Boolean = false
 
   override fun match(owner: WebSymbol?,
-                     contextStack: Stack<WebSymbolsContainer>,
+                     scopeStack: Stack<WebSymbolsScope>,
                      itemsProvider: WebSymbolsPatternItemsProvider?,
                      params: MatchParameters,
                      start: Int,
@@ -27,12 +27,12 @@ internal class ItemPattern(val displayName: String?) : WebSymbolsPattern() {
         start, end, emptyList(),
         problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_ITEM,
         displayName = displayName,
-        symbolKinds = itemsProvider?.getSymbolKinds(owner ?: contextStack.lastOrNull() as? WebSymbol) ?: emptySet()
+        symbolKinds = itemsProvider?.getSymbolKinds(owner ?: scopeStack.lastOrNull() as? WebSymbol) ?: emptySet()
       ))))
     }
 
     val hits = itemsProvider
-                 ?.matchName(params.name.substring(start, end), contextStack, params.registry)
+                 ?.matchName(params.name.substring(start, end), scopeStack, params.queryExecutor)
                ?: emptyList()
 
     return listOf(MatchResult(
@@ -50,20 +50,20 @@ internal class ItemPattern(val displayName: String?) : WebSymbolsPattern() {
           emptyList(),
           problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_ITEM,
           displayName = displayName,
-          symbolKinds = itemsProvider?.getSymbolKinds(owner ?: contextStack.lastOrNull() as? WebSymbol) ?: emptySet(),
+          symbolKinds = itemsProvider?.getSymbolKinds(owner ?: scopeStack.lastOrNull() as? WebSymbol) ?: emptySet(),
         ))
       }
     ))
   }
 
   override fun getCompletionResults(owner: WebSymbol?,
-                                    contextStack: Stack<WebSymbolsContainer>,
+                                    scopeStack: Stack<WebSymbolsScope>,
                                     itemsProvider: WebSymbolsPatternItemsProvider?,
                                     params: CompletionParameters,
                                     start: Int,
                                     end: Int): CompletionResults =
     itemsProvider
-      ?.codeCompletion(params.name.substring(start, end), max(params.position - start, 0), contextStack, params.registry)
+      ?.codeCompletion(params.name.substring(start, end), max(params.position - start, 0), scopeStack, params.queryExecutor)
       ?.let { results ->
         val stop = start == end && start == params.position
         CompletionResults(results.map { it.withOffset(it.offset + start).withStopSequencePatternEvaluation(stop) }, true)

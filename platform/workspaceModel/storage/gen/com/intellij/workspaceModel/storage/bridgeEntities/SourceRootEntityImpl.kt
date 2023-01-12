@@ -71,11 +71,15 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
   override val javaResourceRoots: List<JavaResourceRootPropertiesEntity>
     get() = snapshot.extractOneToManyChildren<JavaResourceRootPropertiesEntity>(JAVARESOURCEROOTS_CONNECTION_ID, this)!!.toList()
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: SourceRootEntityData?) : ModifiableWorkspaceEntityBase<SourceRootEntity>(), SourceRootEntity.Builder {
+  class Builder(result: SourceRootEntityData?) : ModifiableWorkspaceEntityBase<SourceRootEntity, SourceRootEntityData>(
+    result), SourceRootEntity.Builder {
     constructor() : this(SourceRootEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -95,7 +99,7 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       index(this, "url", this.url)
       // Process linked entities that are connected without a builder
@@ -171,7 +175,7 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -190,21 +194,21 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(CONTENTROOT_CONNECTION_ID, this, value)
         }
         else {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = data
           }
@@ -219,7 +223,7 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
       get() = getEntityData().url
       set(value) {
         checkModificationAllowed()
-        getEntityData().url = value
+        getEntityData(true).url = value
         changedProperty.add("url")
         val _diff = diff
         if (_diff != null) index(this, "url", value)
@@ -229,7 +233,7 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
       get() = getEntityData().rootType
       set(value) {
         checkModificationAllowed()
-        getEntityData().rootType = value
+        getEntityData(true).rootType = value
         changedProperty.add("rootType")
       }
 
@@ -247,18 +251,18 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneChildOfParent(CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -290,9 +294,9 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, JAVASOURCEROOTS_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
@@ -304,7 +308,7 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
         }
         else {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, JAVASOURCEROOTS_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
@@ -337,9 +341,9 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, JAVARESOURCEROOTS_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
@@ -351,7 +355,7 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
         }
         else {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, JAVARESOURCEROOTS_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
@@ -362,7 +366,6 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
         changedProperty.add("javaResourceRoots")
       }
 
-    override fun getEntityData(): SourceRootEntityData = result ?: super.getEntityData() as SourceRootEntityData
     override fun getEntityClass(): Class<SourceRootEntity> = SourceRootEntity::class.java
   }
 }
@@ -376,20 +379,15 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SourceRootEntity> {
     val modifiable = SourceRootEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): SourceRootEntity {
     return getCached(snapshot) {
       val entity = SourceRootEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

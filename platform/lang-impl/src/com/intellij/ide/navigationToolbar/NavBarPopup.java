@@ -52,6 +52,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     myItemIndex = itemIndex;
     setFocusRequestor(getComponent());
     setForceShowAsPopup(true);
+    setCancelOnOtherWindowOpen(false);
     panel.installPopupHandler(getList(), selectedIndex);
     
     getList().addMouseListener(new MouseAdapter() {

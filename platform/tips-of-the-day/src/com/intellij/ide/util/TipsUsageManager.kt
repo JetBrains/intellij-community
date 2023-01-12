@@ -47,17 +47,14 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
   }
 
   fun makeLastShownTipFirst(tips: List<TipAndTrickBean>): List<TipAndTrickBean> {
-    return if (wereTipsShownToday()) {
-      val resultTips = tips.toMutableList()
-      shownTips.maxByOrNull { it.value }?.let {
-        resultTips.find { tip -> tip.id == it.key }?.let { tip ->
-          resultTips.remove(tip)
-          resultTips.add(0, tip)
-        }
+    val resultTips = tips.toMutableList()
+    shownTips.maxByOrNull { it.value }?.let {
+      resultTips.find { tip -> tip.id == it.key }?.let { tip ->
+        resultTips.remove(tip)
+        resultTips.add(0, tip)
       }
-      resultTips
     }
-    else tips
+    return resultTips
   }
 
   fun wereTipsShownToday(): Boolean {

@@ -150,6 +150,9 @@ trait LaunchConfiguration {
 
 pub fn is_remote_dev(cmd_args: &[String]) -> bool {
     // 0 arg is binary itself
+    let args = cmd_args.join(" ");
+    debug!("cmd_args={args}");
+
     cmd_args.len() > 1 && cmd_args[1] == "--remote-dev"
 }
 
@@ -157,6 +160,7 @@ fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
     let cmd_args: Vec<String> = env::args().collect();
     
     let is_remote_dev = is_remote_dev(&cmd_args);
+    debug!("is_remote_dev={is_remote_dev}");
 
     let (remote_dev_project_path, ij_args) = match is_remote_dev {
         true => {

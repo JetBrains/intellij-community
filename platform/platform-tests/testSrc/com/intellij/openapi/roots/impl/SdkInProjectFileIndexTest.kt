@@ -102,6 +102,26 @@ class SdkInProjectFileIndexTest {
   }
 
   @Test
+  fun `change project SDK`() {
+    val sdk1 = projectModel.addSdk("sdk1") {
+      it.addRoot(sdkRoot, OrderRootType.CLASSES)
+    }
+    val sdk2Root = projectModel.baseProjectDir.newVirtualDirectory("sdk2")
+    val sdk2 = projectModel.addSdk("sdk2") {
+      it.addRoot(sdk2Root, OrderRootType.CLASSES)
+    }
+
+    setProjectSdk(sdk1)
+    ModuleRootModificationUtil.setSdkInherited(module)
+    fileIndex.assertScope(sdkRoot, IN_LIBRARY)
+    fileIndex.assertScope(sdk2Root, NOT_IN_PROJECT)
+
+    setProjectSdk(sdk2)
+    fileIndex.assertScope(sdk2Root, IN_LIBRARY)
+    fileIndex.assertScope(sdkRoot, NOT_IN_PROJECT)
+  }
+
+  @Test
   fun `add and remove project SDK inherited in module`() {
     val module2 = projectModel.createModule("module2")
     val sdk2 = projectModel.createSdk("sdk2")

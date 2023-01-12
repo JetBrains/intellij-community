@@ -127,6 +127,7 @@ class ActionsCollectorImpl : ActionsCollector() {
       val project = CommonDataKeys.PROJECT.getData(dataContext)
       ActionsEventLogGroup.ACTION_GROUP_EXPANDED.log(project) {
         val info = getPluginInfo(action.javaClass)
+        val size = result?.count { it !is Separator } ?: -1
         val language = getInjectedOrFileLanguage(project, dataContext) ?: Language.ANY
         addActionClass(this, action, info)
         add(EventFields.PluginInfo.with(info))
@@ -134,7 +135,7 @@ class ActionsCollectorImpl : ActionsCollector() {
         add(EventFields.ActionPlace.with(place))
         add(ActionsEventLogGroup.IS_SUBMENU.with(submenu))
         add(EventFields.DurationMs.with(durationMs))
-        add(EventFields.Size.with(result?.size ?: -1))
+        add(EventFields.Size.with(size))
       }
     }
 

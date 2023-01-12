@@ -8,9 +8,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
-import org.jetbrains.plugins.gitlab.api.TestGitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.testutil.MainDispatcherRule
@@ -22,10 +20,7 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnit
 import org.mockito.junit.MockitoRule
-import org.mockito.kotlin.doAnswer
-import org.mockito.kotlin.doReturn
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
+import org.mockito.kotlin.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class GitLabRepositoryAndAccountSelectorViewModelTest {
@@ -46,13 +41,11 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
   @Mock
   internal lateinit var accountManager: GitLabAccountManager
 
-  private val connectionManager = TestGitLabProjectConnectionManager()
-
   @Test
   fun `initial selection`() = runTest {
     val projectMapping = mock<GitLabProjectMapping> {
       on { repository } doAnswer {
-        mock<GitLabProjectCoordinates> {
+        mock {
           on { serverPath } doReturn GitLabServerPath.DEFAULT_SERVER
         }
       }
@@ -61,10 +54,11 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     whenever(projectManager.knownRepositoriesState) doReturn MutableStateFlow(setOf(projectMapping))
 
     val account = GitLabAccount(name = "test", server = GitLabServerPath.DEFAULT_SERVER)
-    whenever(accountManager.accountsState) doReturn MutableStateFlow(mapOf(account to "token"))
+    whenever(accountManager.accountsState) doReturn MutableStateFlow(setOf(account))
+    whenever(accountManager.getCredentialsState(any(), any())) doReturn MutableStateFlow("")
 
     val scope = childScope(Dispatchers.Main)
-    val vm = GitLabRepositoryAndAccountSelectorViewModel(scope, connectionManager, projectManager, accountManager)
+    val vm = GitLabRepositoryAndAccountSelectorViewModel(scope, projectManager, accountManager) { _, _ -> mock() }
 
     assertEquals(null, vm.repoSelectionState.value)
     assertEquals(null, vm.accountSelectionState.value)

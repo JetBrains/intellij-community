@@ -62,6 +62,7 @@ public class PluginImagesComponent extends JPanel {
   private int myCurrentImage;
   private boolean myHovered;
   private Object myLoadingState;
+  private Object myShowState;
   private JBPopup myFullScreenPopup;
 
   public PluginImagesComponent() {
@@ -126,6 +127,7 @@ public class PluginImagesComponent extends JPanel {
     synchronized (myLock) {
       myImages = null;
       state = myLoadingState = new Object();
+      myShowState = null;
     }
 
     loadImages(descriptor, state);
@@ -138,6 +140,7 @@ public class PluginImagesComponent extends JPanel {
         return;
       }
 
+      myShowState = state;
       myLoadingState = null;
       myImages = images;
       myCurrentImage = 0;
@@ -334,12 +337,14 @@ public class PluginImagesComponent extends JPanel {
 
     List<BufferedImage> images;
     int current;
+    Object showState;
     synchronized (myLock) {
       if (ContainerUtil.isEmpty(myImages)) {
         return;
       }
       images = myImages;
       current = myCurrentImage;
+      showState = myShowState;
     }
 
     PluginImagesComponent component = new PluginImagesComponent(images, current);
@@ -348,6 +353,7 @@ public class PluginImagesComponent extends JPanel {
 
     myFullScreenPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, component).createPopup();
     component.myFullScreenPopup = myFullScreenPopup;
+    component.myShowState = showState;
 
     myFullScreenPopup.addListener(new JBPopupListener() {
       @Override
@@ -361,7 +367,7 @@ public class PluginImagesComponent extends JPanel {
       public void onClosed(@NotNull LightweightWindowEvent event) {
         myFullScreenPopup = null;
         synchronized (myLock) {
-          if (component.myCurrentImage != myCurrentImage) {
+          if (myShowState == component.myShowState && component.myCurrentImage != myCurrentImage) {
             myCurrentImage = component.myCurrentImage;
           }
         }

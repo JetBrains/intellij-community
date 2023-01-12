@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -23,7 +23,6 @@ import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.ArrayUtilRt;
@@ -955,6 +954,38 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testPatternVariableIntroduced3() throws Exception {
+    doTestWithLanguageLevel(LanguageLevel.HIGHEST);
+  }
+
+  public void testParenthesizedPatternIntroduced() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testParenthesizedPatternIntroduced2() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testParenthesizedPatternIntroduced3() throws Exception {
+    doTestWithLanguageLevel(LanguageLevel.HIGHEST);
+  }
+
+  public void testRecordPatternIntroduced() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testRecordPatternIntroduced2() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testRecordPatternIntroduced3() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testRecordPatternIntroduced4() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testRecordPatternIntroduced5() throws Exception {
     doTestWithLanguageLevel(LanguageLevel.HIGHEST);
   }
 

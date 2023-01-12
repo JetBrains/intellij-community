@@ -31,11 +31,15 @@ open class MainEntityListImpl(val dataSource: MainEntityListData) : MainEntityLi
   override val x: String
     get() = dataSource.x
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: MainEntityListData?) : ModifiableWorkspaceEntityBase<MainEntityList>(), MainEntityList.Builder {
+  class Builder(result: MainEntityListData?) : ModifiableWorkspaceEntityBase<MainEntityList, MainEntityListData>(
+    result), MainEntityList.Builder {
     constructor() : this(MainEntityListData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -55,7 +59,7 @@ open class MainEntityListImpl(val dataSource: MainEntityListData) : MainEntityLi
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -90,7 +94,7 @@ open class MainEntityListImpl(val dataSource: MainEntityListData) : MainEntityLi
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -99,11 +103,10 @@ open class MainEntityListImpl(val dataSource: MainEntityListData) : MainEntityLi
       get() = getEntityData().x
       set(value) {
         checkModificationAllowed()
-        getEntityData().x = value
+        getEntityData(true).x = value
         changedProperty.add("x")
       }
 
-    override fun getEntityData(): MainEntityListData = result ?: super.getEntityData() as MainEntityListData
     override fun getEntityClass(): Class<MainEntityList> = MainEntityList::class.java
   }
 }
@@ -115,20 +118,15 @@ class MainEntityListData : WorkspaceEntityData<MainEntityList>() {
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<MainEntityList> {
     val modifiable = MainEntityListImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): MainEntityList {
     return getCached(snapshot) {
       val entity = MainEntityListImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

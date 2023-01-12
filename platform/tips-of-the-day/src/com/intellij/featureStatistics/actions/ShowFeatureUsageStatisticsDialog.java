@@ -132,7 +132,10 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     for (String id : registry.getFeatureIds()) {
       FeatureDescriptor feature = registry.getFeatureDescriptor(id);
       if (feature.isNeedToBeShownInGuide()) {
-        features.add(feature);
+        TipAndTrickBean tip = TipUtils.getTip(feature);
+        if (tip != null && TipUtils.checkTipFileExist(tip)) {
+          features.add(feature);
+        }
       }
     }
     TableView<FeatureDescriptor> table = new TableView<>(new ListTableModel<>(COLUMNS, features, 0));

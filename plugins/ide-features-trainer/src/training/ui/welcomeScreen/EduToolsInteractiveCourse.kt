@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.InteractiveCourseFactory
+import com.intellij.util.PlatformUtils
 import training.FeaturesTrainerIcons
 import training.learn.LearnBundle
 import java.awt.event.ActionEvent
@@ -16,7 +17,17 @@ import javax.swing.Icon
 
 private val EDU_TOOLS_PLUGIN_ID = PluginId.getId("com.jetbrains.edu")
 internal class EduToolsInteractiveCourse : InteractiveCourseFactory {
-  override fun getInteractiveCourseData(): InteractiveCourseData = EduToolsInteractiveCourseData()
+  override fun getInteractiveCourseData(): InteractiveCourseData? {
+    return if (PlatformUtils.isDataSpell() ||
+               PlatformUtils.isIntelliJ() ||
+               PlatformUtils.isPyCharm() ||
+               PlatformUtils.isGoIde()) {
+      EduToolsInteractiveCourseData()
+    }
+    else {
+      null
+    }
+  }
 }
 
 private class EduToolsInteractiveCourseData : InteractiveCourseData {

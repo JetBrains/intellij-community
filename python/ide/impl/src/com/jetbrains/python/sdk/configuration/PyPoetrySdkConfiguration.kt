@@ -38,7 +38,7 @@ class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
   override fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSDk(module, false)
 
   override fun getIntention(module: Module): @IntentionName String? =
-    module.pyProjectToml?.let { PyCharmCommunityCustomizationBundle.message("sdk.create.poetry.environment", it.name) }
+    module.pyProjectToml?.let { PyCharmCommunityCustomizationBundle.message("sdk.set.up.poetry.environment", it.name) }
 
   override fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSDk(module, true)
 
@@ -84,7 +84,7 @@ class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
     catch (e: ExecutionException) {
       LOGGER.warn("Exception during creating poetry environment", e)
       showSdkExecutionException(null, e,
-                                PyCharmCommunityCustomizationBundle.message("sdk.dialog.title.failed.to.create.poetry.environment"))
+                                PyCharmCommunityCustomizationBundle.message("sdk.dialog.title.failed.to.set.up.poetry.environment"))
       return null
     }
 
@@ -135,7 +135,7 @@ class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
     override fun createCenterPanel(): JComponent {
       return JPanel(BorderLayout()).apply {
         val border = IdeBorderFactory.createEmptyBorder(Insets(4, 0, 6, 0))
-        val message = PyCharmCommunityCustomizationBundle.message("sdk.notification.label.create.poetry.environment.from.pyproject.toml.dependencies")
+        val message = PyCharmCommunityCustomizationBundle.message("sdk.notification.label.set.up.poetry.environment.from.pyproject.toml.dependencies")
 
         add(
           JBUI.Panels.simplePanel(JBLabel(message)).withBorder(border),

@@ -31,11 +31,15 @@ open class AttachedEntityParentListImpl(val dataSource: AttachedEntityParentList
   override val data: String
     get() = dataSource.data
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: AttachedEntityParentListData?) : ModifiableWorkspaceEntityBase<AttachedEntityParentList>(), AttachedEntityParentList.Builder {
+  class Builder(result: AttachedEntityParentListData?) : ModifiableWorkspaceEntityBase<AttachedEntityParentList, AttachedEntityParentListData>(
+    result), AttachedEntityParentList.Builder {
     constructor() : this(AttachedEntityParentListData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -55,7 +59,7 @@ open class AttachedEntityParentListImpl(val dataSource: AttachedEntityParentList
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -90,7 +94,7 @@ open class AttachedEntityParentListImpl(val dataSource: AttachedEntityParentList
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -99,11 +103,10 @@ open class AttachedEntityParentListImpl(val dataSource: AttachedEntityParentList
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
-    override fun getEntityData(): AttachedEntityParentListData = result ?: super.getEntityData() as AttachedEntityParentListData
     override fun getEntityClass(): Class<AttachedEntityParentList> = AttachedEntityParentList::class.java
   }
 }
@@ -115,20 +118,15 @@ class AttachedEntityParentListData : WorkspaceEntityData<AttachedEntityParentLis
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<AttachedEntityParentList> {
     val modifiable = AttachedEntityParentListImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): AttachedEntityParentList {
     return getCached(snapshot) {
       val entity = AttachedEntityParentListImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

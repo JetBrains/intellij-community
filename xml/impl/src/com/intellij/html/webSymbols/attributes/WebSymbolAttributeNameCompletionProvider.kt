@@ -5,8 +5,8 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.XmlAttributeInsertHandler
 import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
-import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension
-import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension.Companion.getStandardHtmlAttributeDescriptors
+import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator
+import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator.Companion.getStandardHtmlAttributeDescriptors
 import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.html.HtmlTag
@@ -17,8 +17,8 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.registry.WebSymbolsRegistry
-import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
 
@@ -31,7 +31,7 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
                               result: CompletionResultSet,
                               position: Int,
                               name: String,
-                              registry: WebSymbolsRegistry,
+                              queryExecutor: WebSymbolsQueryExecutor,
                               context: XmlElement) {
     val tag = (context as? XmlAttribute)?.parent ?: context as XmlTag
     val patchedResultSet = result.withPrefixMatcher(
@@ -39,17 +39,17 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
 
     val providedAttributes = tag.attributes.asSequence().mapNotNull { it.name }.toMutableSet()
 
-    val attributesFilter = WebSymbolsFrameworkHtmlSupport.get(registry.framework)
+    val attributesFilter = WebSymbolsFrameworkHtmlSupport.get(queryExecutor.framework)
       .getAttributeNameCodeCompletionFilter(tag)
 
     val symbols = (tag.descriptor as? WebSymbolElementDescriptor)?.symbol?.let { listOf(it) }
-                  ?: registry.runNameMatchQuery(listOf(NAMESPACE_HTML, KIND_HTML_ELEMENTS, tag.name))
+                  ?: queryExecutor.runNameMatchQuery(listOf(NAMESPACE_HTML, KIND_HTML_ELEMENTS, tag.name))
 
     val filteredOutStandardSymbols = getStandardHtmlAttributeDescriptors(tag)
       .map { it.name }.toMutableSet()
 
     processCompletionQueryResults(
-      registry,
+      queryExecutor,
       patchedResultSet,
       NAMESPACE_HTML,
       KIND_HTML_ATTRIBUTES,
@@ -58,7 +58,7 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
       symbols,
       providedAttributes,
       filter = { item ->
-        if (item.symbol is WebSymbolsHtmlRegistryExtension.StandardHtmlSymbol
+        if (item.symbol is WebSymbolsHtmlQueryConfigurator.StandardHtmlSymbol
             && item.offset == 0
             && item.symbol?.name == item.name) {
           filteredOutStandardSymbols.remove(item.name)
@@ -74,11 +74,11 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
           { insertionContext, lookupItem ->
             // At this instant the file is already modified by LookupElement, so every PsiElement inside WebSymbolsRegistry is invalid
             // We need freshly constructed registry to avoid PsiInvalidElementAccessException when calling runNameMatchQuery
-            val freshRegistry = WebSymbolsRegistryManager.get(context,
-                                                              registry.allowResolve) // TODO Fix pointer dereference and use it here
+            val freshRegistry = WebSymbolsQueryExecutorFactory.create(context,
+                                                                      queryExecutor.allowResolve) // TODO Fix pointer dereference and use it here
 
             val fullName = name.substring(0, item.offset) + item.name
-            val match = freshRegistry.runNameMatchQuery(listOf(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, fullName), context = symbols)
+            val match = freshRegistry.runNameMatchQuery(listOf(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, fullName), scope = symbols)
             val info = WebSymbolHtmlAttributeInfo.create(fullName, freshRegistry, match)
             if (info != null && info.acceptsValue && !info.acceptsNoValue) {
               XmlAttributeInsertHandler.INSTANCE.handleInsert(insertionContext, lookupItem)

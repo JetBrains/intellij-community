@@ -1,19 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.AtomicClearableLazyValue
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.mapSmartNotNull
 import com.intellij.util.io.exists
+import kotlinx.coroutines.ensureActive
 import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.util.io.DisabledOutputStream
 import org.jetbrains.settingsRepository.git.*
 import java.nio.file.Path
+import kotlin.coroutines.coroutineContext
 
 class ReadOnlySourceManager(private val icsManager: IcsManager, val rootDir: Path) {
   private val repositoryList = object : AtomicClearableLazyValue<List<Repository>>() {
@@ -50,7 +51,7 @@ class ReadOnlySourceManager(private val icsManager: IcsManager, val rootDir: Pat
     repositoryList.drop()
   }
 
-  fun update(indicator: ProgressIndicator? = null): Set<String>? {
+  suspend fun update(): Set<String>? {
     var changedRootDirs: MutableSet<String>? = null
 
     fun addChangedPath(path: String?) {
@@ -74,10 +75,10 @@ class ReadOnlySourceManager(private val icsManager: IcsManager, val rootDir: Pat
     }
 
     for (repo in repositories) {
-      indicator?.checkCanceled()
+      coroutineContext.ensureActive()
       LOG.debug { "Pull changes from read-only repo ${repo.upstream}" }
 
-      Pull(GitRepositoryClientImpl(repo, icsManager.credentialsStore), indicator).fetch(refUpdateProcessor = { refUpdate ->
+      Pull(GitRepositoryClientImpl(repo, icsManager.credentialsStore)).fetch(refUpdateProcessor = { refUpdate ->
         val diffFormatter = DiffFormatter(DisabledOutputStream.INSTANCE)
         diffFormatter.setRepository(repo)
         diffFormatter.use {

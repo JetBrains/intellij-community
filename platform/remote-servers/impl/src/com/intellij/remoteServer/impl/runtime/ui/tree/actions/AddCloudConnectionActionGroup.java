@@ -16,6 +16,10 @@ import java.util.List;
 import static com.intellij.remoteServer.impl.runtime.ui.RemoteServersServiceViewContributor.addNewRemoteServer;
 
 public class AddCloudConnectionActionGroup extends ActionGroup {
+  public AddCloudConnectionActionGroup() {
+    getTemplatePresentation().setHideGroupIfEmpty(true);
+  }
+
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     List<ServerType> serverTypes = ContainerUtil.filter(ServerType.EP_NAME.getExtensionList(),

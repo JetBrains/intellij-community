@@ -13,7 +13,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.addIfNotNull
-import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.CustomModuleEntitySource
+import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
@@ -24,11 +27,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.childrenFacets
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.annotations.TestOnly
 
 class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
@@ -125,7 +124,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
       moduleDiff.addDiff(diff)
     }
     else {
-      WorkspaceModel.getInstance(moduleBridge.project).updateProjectModel {
+      WorkspaceModel.getInstance(moduleBridge.project).updateProjectModel("Facet model commit") {
         it.addDiff(diff)
       }
     }

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindSettings;
@@ -178,7 +177,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.usages");
     DataContext dataContext = e.getDataContext();
     showUsages(project, dataContext, ResolverKt.allTargets(dataContext));
   }

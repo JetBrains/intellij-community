@@ -39,11 +39,15 @@ open class SimpleSymbolicIdEntityImpl(val dataSource: SimpleSymbolicIdEntityData
   override val sealedClassWithLinks: SealedClassWithLinks
     get() = dataSource.sealedClassWithLinks
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: SimpleSymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SimpleSymbolicIdEntity>(), SimpleSymbolicIdEntity.Builder {
+  class Builder(result: SimpleSymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SimpleSymbolicIdEntity, SimpleSymbolicIdEntityData>(
+    result), SimpleSymbolicIdEntity.Builder {
     constructor() : this(SimpleSymbolicIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -63,7 +67,7 @@ open class SimpleSymbolicIdEntityImpl(val dataSource: SimpleSymbolicIdEntityData
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -107,7 +111,7 @@ open class SimpleSymbolicIdEntityImpl(val dataSource: SimpleSymbolicIdEntityData
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -116,7 +120,7 @@ open class SimpleSymbolicIdEntityImpl(val dataSource: SimpleSymbolicIdEntityData
       get() = getEntityData().version
       set(value) {
         checkModificationAllowed()
-        getEntityData().version = value
+        getEntityData(true).version = value
         changedProperty.add("version")
       }
 
@@ -124,7 +128,7 @@ open class SimpleSymbolicIdEntityImpl(val dataSource: SimpleSymbolicIdEntityData
       get() = getEntityData().name
       set(value) {
         checkModificationAllowed()
-        getEntityData().name = value
+        getEntityData(true).name = value
         changedProperty.add("name")
       }
 
@@ -132,7 +136,7 @@ open class SimpleSymbolicIdEntityImpl(val dataSource: SimpleSymbolicIdEntityData
       get() = getEntityData().related
       set(value) {
         checkModificationAllowed()
-        getEntityData().related = value
+        getEntityData(true).related = value
         changedProperty.add("related")
 
       }
@@ -141,12 +145,11 @@ open class SimpleSymbolicIdEntityImpl(val dataSource: SimpleSymbolicIdEntityData
       get() = getEntityData().sealedClassWithLinks
       set(value) {
         checkModificationAllowed()
-        getEntityData().sealedClassWithLinks = value
+        getEntityData(true).sealedClassWithLinks = value
         changedProperty.add("sealedClassWithLinks")
 
       }
 
-    override fun getEntityData(): SimpleSymbolicIdEntityData = result ?: super.getEntityData() as SimpleSymbolicIdEntityData
     override fun getEntityClass(): Class<SimpleSymbolicIdEntity> = SimpleSymbolicIdEntity::class.java
   }
 }
@@ -164,20 +167,15 @@ class SimpleSymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymbolicId<
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SimpleSymbolicIdEntity> {
     val modifiable = SimpleSymbolicIdEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): SimpleSymbolicIdEntity {
     return getCached(snapshot) {
       val entity = SimpleSymbolicIdEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

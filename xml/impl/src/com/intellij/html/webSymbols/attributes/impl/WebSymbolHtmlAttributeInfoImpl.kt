@@ -6,7 +6,7 @@ import com.intellij.html.webSymbols.attributes.WebSymbolHtmlAttributeValueTypeSu
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
-import com.intellij.webSymbols.registry.WebSymbolsRegistry
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.utils.asSingleSymbol
 import javax.swing.Icon
 
@@ -26,7 +26,7 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
 
   companion object {
     fun create(name: String,
-               registry: WebSymbolsRegistry,
+               queryExecutor: WebSymbolsQueryExecutor,
                symbols: List<WebSymbol>): WebSymbolHtmlAttributeInfo? {
       val symbol = symbols.asSingleSymbol() ?: return null
       val typeSupport = symbol.origin.typeSupport as? WebSymbolHtmlAttributeValueTypeSupport
@@ -44,8 +44,8 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
           WebSymbolHtmlAttributeValue.Type.BOOLEAN -> typeSupport.createBooleanType(symbol)
           WebSymbolHtmlAttributeValue.Type.NUMBER -> typeSupport.createNumberType(symbol)
           WebSymbolHtmlAttributeValue.Type.ENUM -> {
-            val valuesSymbols = registry.runNameMatchQuery(
-              listOf(WebSymbol.KIND_HTML_ATTRIBUTE_VALUES), virtualSymbols = false, context = symbols)
+            val valuesSymbols = queryExecutor.runNameMatchQuery(
+              listOf(WebSymbol.KIND_HTML_ATTRIBUTE_VALUES), virtualSymbols = false, scope = symbols)
             typeSupport.createEnumType(symbol, valuesSymbols)
           }
           WebSymbolHtmlAttributeValue.Type.OF_MATCH -> symbol.type
@@ -66,7 +66,7 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
         else if (kind == WebSymbolHtmlAttributeValue.Kind.PLAIN) {
           when (type) {
             WebSymbolHtmlAttributeValue.Type.ENUM -> {
-              registry.runCodeCompletionQuery(listOf(WebSymbol.KIND_HTML_ATTRIBUTE_VALUES), 0, context = symbols)
+              queryExecutor.runCodeCompletionQuery(listOf(WebSymbol.KIND_HTML_ATTRIBUTE_VALUES), 0, scope = symbols)
                 .filter { !it.completeAfterInsert }
             }
             WebSymbolHtmlAttributeValue.Type.COMPLEX,

@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
@@ -11,15 +10,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@SuppressWarnings("NotNullFieldNotInitialized")
 public class FeatureDescriptor {
   @NotNull private String myId;
   @NotNull private String myDisplayName;
-  @Nullable private String myGroupId;
+  @Nullable private final String myGroupId;
   @Nullable private String myTipId;
   @Nullable private Set<String> myDependencies;
-  private int myDaysBeforeFirstShowUp;
-  private int myDaysBetweenSuccessiveShowUps;
-  private int myMinUsageCount;
+  private int myDaysBeforeFirstShowUp = 1;
+  private int myDaysBetweenSuccessiveShowUps = 3;
+  private int myMinUsageCount = 1;
+  private int myUtilityScore = 3;  // should be from 1 to 5, required for tips sorting in Tips of the Day
   private boolean myNeedToBeShownInGuide = true;
   private final List<FeatureUsageEvent.Action> myActionEvents = new ArrayList<>();
   private final List<FeatureUsageEvent.Intention> myIntentionEvents = new ArrayList<>();
@@ -30,7 +31,6 @@ public class FeatureDescriptor {
   private int myShownCount;
   @Nullable private final ProductivityFeaturesProvider myProvider;
 
-  private static final Logger LOG = Logger.getInstance(FeatureDescriptor.class);
   @NonNls private static final String ATTRIBUTE_COUNT = "count";
   @NonNls private static final String ATTRIBUTE_LAST_SHOWN = "last-shown";
   @NonNls private static final String ATTRIBUTE_LAST_USED = "last-used";
@@ -40,6 +40,7 @@ public class FeatureDescriptor {
   @NonNls private static final String ATTRIBUTE_FIRST_SHOW = "first-show";
   @NonNls private static final String ATTRIBUTE_SUCCESSIVE_SHOW = "successive-show";
   @NonNls private static final String ATTRIBUTE_MIN_USAGE_COUNT = "min-usage-count";
+  @NonNls private static final String ATTRIBUTE_UTILITY_SCORE = "utility-score";
   @NonNls private static final String ATTRIBUTE_SHOW_IN_GUIDE = "show-in-guide";
   @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
   @NonNls private static final String ELEMENT_DEPENDENCY = "dependency";
@@ -61,6 +62,19 @@ public class FeatureDescriptor {
                            @Nullable Set<String> dependencies,
                            int minUsageCount,
                            @Nullable ProductivityFeaturesProvider provider) {
+    this(id, groupId, tipId, displayName, daysBeforeFirstShowUp, daysBetweenSuccessiveShowUps, dependencies, minUsageCount, 3, provider);
+  }
+
+  public FeatureDescriptor(@NonNls @NotNull String id,
+                           @NonNls @Nullable String groupId,
+                           @NonNls @Nullable String tipId,
+                           @NotNull String displayName,
+                           int daysBeforeFirstShowUp,
+                           int daysBetweenSuccessiveShowUps,
+                           @Nullable Set<String> dependencies,
+                           int minUsageCount,
+                           int utilityScore,
+                           @Nullable ProductivityFeaturesProvider provider) {
     myId = id;
     myGroupId = groupId;
     myTipId = tipId;
@@ -69,6 +83,7 @@ public class FeatureDescriptor {
     myDaysBetweenSuccessiveShowUps = daysBetweenSuccessiveShowUps;
     myDependencies = dependencies;
     myMinUsageCount = minUsageCount;
+    myUtilityScore = utilityScore;
     myProvider = provider;
   }
 
@@ -80,10 +95,10 @@ public class FeatureDescriptor {
     if (needToBeShownInGuide != null) {
       myNeedToBeShownInGuide = Boolean.parseBoolean(needToBeShownInGuide);
     }
-    myDaysBeforeFirstShowUp = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_FIRST_SHOW), 1);
-    myDaysBetweenSuccessiveShowUps = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_SUCCESSIVE_SHOW), 3);
-    String minUsageCount = element.getAttributeValue(ATTRIBUTE_MIN_USAGE_COUNT);
-    myMinUsageCount = minUsageCount == null ? 1 : Integer.parseInt(minUsageCount);
+    myDaysBeforeFirstShowUp = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_FIRST_SHOW), myDaysBeforeFirstShowUp);
+    myDaysBetweenSuccessiveShowUps = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_SUCCESSIVE_SHOW), myDaysBetweenSuccessiveShowUps);
+    myMinUsageCount = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_MIN_USAGE_COUNT), myMinUsageCount);
+    myUtilityScore = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_UTILITY_SCORE), myUtilityScore);
     List<Element> actionEvents = element.getChildren(ELEMENT_TRACK_ACTION);
     for (Element actionElement : actionEvents) {
       @NonNls String actionId = actionElement.getAttributeValue(ATTRIBUTE_ID);
@@ -191,8 +206,8 @@ public class FeatureDescriptor {
     return myDaysBetweenSuccessiveShowUps;
   }
 
-  public int getMinUsageCount() {
-    return myMinUsageCount;
+  public int getUtilityScore() {
+    return myUtilityScore;
   }
 
   public long getLastTimeShown() {

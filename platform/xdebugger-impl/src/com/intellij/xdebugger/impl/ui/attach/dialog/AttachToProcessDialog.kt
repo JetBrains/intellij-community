@@ -507,24 +507,27 @@ open class AttachToProcessDialog(
       putValue(DEFAULT_ACTION, java.lang.Boolean.TRUE)
     }
 
-    private var debuggers = mapOf<XAttachPresentationGroup<*>, List<AttachDebuggerAction>>()
-    private var activePresentationGroup: XAttachPresentationGroup<*>? = null
+    private var debuggers: List<AttachDebuggerAction> = emptyList()
+    private var selectedItem: AttachDialogProcessItem? = null
 
     fun setItem(item: AttachDialogProcessItem?) {
-      val groupsWithItems = item?.groupsWithItems ?: emptyMap()
-      debuggers = groupsWithItems.map { pair -> Pair(pair.key, pair.value.flatMap { item -> item.debuggers.map { AttachDebuggerAction(it, item) } }) }.toMap()
+      selectedItem = item
+      debuggers = item?.groupsWithItems?.flatMap { groupToItems ->
+        groupToItems.second.flatMap { item ->
+          item.debuggers.map {
+            AttachDebuggerAction(it, item)
+          }
+        }
+      } ?: emptyList()
       onFilterUpdated()
     }
 
     private fun getActiveDebuggerAction(): AttachDebuggerAction? {
-      val group = activePresentationGroup ?: debuggers.keys.minByOrNull { it.order } ?: return null
-      return debuggers[group]?.firstOrNull()
+      return debuggers.firstOrNull { it.debugger == selectedItem?.getMainDebugger(state) }
     }
 
     fun onFilterUpdated() {
-      val filter = state.selectedDebuggersFilter.get()
-      activePresentationGroup = debuggers.keys.filter { filter.canBeAppliedTo(setOf(it)) }.minByOrNull { it.order } ?: debuggers.keys.minByOrNull { it.order }
-      debuggers.forEach { debuggersPair -> debuggersPair.value.forEach { it.isMainAction = false } }
+      debuggers.forEach { debugger -> debugger.isMainAction = false }
       val activeDebuggerAction = getActiveDebuggerAction()
       activeDebuggerAction?.isMainAction = true
       isEnabled = activeDebuggerAction != null
@@ -536,7 +539,7 @@ open class AttachToProcessDialog(
     }
 
     override fun getOptions(): Array<Action> {
-      val actions: Array<Action> = debuggers.values.flatten().toTypedArray()
+      val actions: Array<Action> = debuggers.toTypedArray()
       return if (actions.size > 1) actions else emptyArray()
     }
   }

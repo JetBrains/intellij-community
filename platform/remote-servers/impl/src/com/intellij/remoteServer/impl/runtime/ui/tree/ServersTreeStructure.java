@@ -38,6 +38,8 @@ import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
+import com.intellij.ui.BadgeIconSupplier;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
@@ -113,8 +115,27 @@ public final class ServersTreeStructure {
       RemoteServer<?> server = getServer();
       ServerConnection<?> connection = getConnection();
       presentation.setPresentableText(server.getName());
-      presentation
-        .setIcon(getServerNodeIcon(server.getType().getIcon(), connection != null ? getStatusIcon(connection.getStatus()) : null));
+
+      Icon icon;
+
+      if (ExperimentalUI.isNewUI()) {
+        if (connection == null) {
+          icon = server.getType().getIcon();
+        }
+        else {
+          icon = switch (connection.getStatus()) {
+            case CONNECTED -> new BadgeIconSupplier(server.getType().getIcon()).getLiveIndicatorIcon();
+            case DISCONNECTED -> new LayeredIcon(server.getType().getIcon(), AllIcons.RunConfigurations.InvalidConfigurationLayer);
+            default -> server.getType().getIcon();
+          };
+        }
+      }
+      else {
+        icon = getServerNodeIcon(server.getType().getIcon(), connection != null ? getStatusIcon(connection.getStatus()) : null);
+      }
+
+      presentation.setIcon(icon);
+
       presentation.setTooltip(connection != null ? connection.getStatusText() : null);
     }
 

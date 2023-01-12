@@ -4,10 +4,13 @@ package com.intellij.webSymbols.context
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 
+/*
+ * DEPRECATION -> @JvmDefault
+ */
+@Suppress("DEPRECATION")
 interface WebSymbolsContextProvider {
   /**
    * Determines whether a particular, parsed file should have a particular web symbols context (like web framework) enabled.
@@ -15,6 +18,7 @@ interface WebSymbolsContextProvider {
    * support in particular files, when the support should not be provided on a directory level.
    * It is a responsibility of the context provider to cache value if needed.
    */
+  @JvmDefault
   fun isEnabled(file: PsiFile): Boolean = false
 
   /**
@@ -23,6 +27,7 @@ interface WebSymbolsContextProvider {
    * This API serves for a purpose of enabling the support in particular files, when the support should not be provided
    * on a directory level. It is a responsibility of the context provider to cache value if needed.
    */
+  @JvmDefault
   fun isEnabled(file: VirtualFile, project: Project): Boolean = false
 
   /**
@@ -41,7 +46,8 @@ interface WebSymbolsContextProvider {
    *
    * @return {@code null} if not enabled, otherwise a proximity score
    */
-  fun isEnabled(directory: PsiDirectory): CachedValueProvider.Result<Int?> =
+  @JvmDefault
+  fun isEnabled(project: Project, directory: VirtualFile): CachedValueProvider.Result<Int?> =
     CachedValueProvider.Result(null, ModificationTracker.NEVER_CHANGED)
 
   /**
@@ -56,6 +62,7 @@ interface WebSymbolsContextProvider {
    * You can register a context provider with only a context kind, and it's {@code isForbidden} method will always be called
    * and will allow you to forbid any context of the particular kind.
    */
+  @JvmDefault
   fun isForbidden(contextFile: VirtualFile, project: Project): Boolean = false
 
 }

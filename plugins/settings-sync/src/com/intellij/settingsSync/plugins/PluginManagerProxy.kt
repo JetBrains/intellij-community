@@ -15,7 +15,7 @@ interface PluginManagerProxy {
   fun disablePlugins(plugins: Set<PluginId>)
   fun findPlugin(pluginId: PluginId): IdeaPluginDescriptor?
 
-  fun createInstaller(): SettingsSyncPluginInstaller
+  fun createInstaller(notifyErrors: Boolean = false): SettingsSyncPluginInstaller
 
   fun addDisablePluginListener(disabledListener: Runnable, parentDisposable: Disposable)
   fun getDisabledPluginIds(): Set<PluginId>

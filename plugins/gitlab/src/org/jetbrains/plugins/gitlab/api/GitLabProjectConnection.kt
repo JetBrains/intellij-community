@@ -2,30 +2,32 @@
 package org.jetbrains.plugins.gitlab.api
 
 import git4idea.remote.hosting.HostedGitRepositoryConnection
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 class GitLabProjectConnection(
+  private val scope: CoroutineScope,
   override val repo: GitLabProjectMapping,
   override val account: GitLabAccount,
-  internal var token: String
+  val apiClient: GitLabApi
 ) : HostedGitRepositoryConnection<GitLabProjectMapping, GitLabAccount> {
 
-  val apiClient: GitLabApi = GitLabApi { token }
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is GitLabProjectConnection) return false
-
-    if (repo != other.repo) return false
-    if (account != other.account) return false
-
-    return true
+  override suspend fun close() {
+    try {
+      (scope.coroutineContext[Job] ?: error("Missing job")).cancelAndJoin()
+    }
+    catch (_: Exception) {
+    }
   }
 
-  override fun hashCode(): Int {
-    var result = repo.hashCode()
-    result = 31 * result + account.hashCode()
-    return result
+  override suspend fun awaitClose() {
+    try {
+      (scope.coroutineContext[Job] ?: error("Missing job")).join()
+    }
+    catch (_: Exception) {
+    }
   }
 }

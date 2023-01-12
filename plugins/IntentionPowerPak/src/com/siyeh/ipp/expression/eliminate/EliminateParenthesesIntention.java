@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -64,7 +65,8 @@ public final class EliminateParenthesesIntention extends BaseElementAtCaretInten
   }
 
   private static void processInnerExpression(@Nullable Editor editor, @NotNull List<PsiParenthesizedExpression> expressions) {
-    if (expressions.size() == 1) {
+    PsiParenthesizedExpression firstItem = ContainerUtil.getFirstItem(expressions);
+    if (expressions.size() == 1 || firstItem != null && !firstItem.isPhysical()) {
       replaceExpression(expressions.get(0));
       return;
     }

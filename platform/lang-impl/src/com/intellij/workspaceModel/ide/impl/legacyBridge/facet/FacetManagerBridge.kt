@@ -51,7 +51,7 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
         val mutableEntityStorage = module.diff ?: WorkspaceModel.getInstance(module.project).entityStorage.current.toBuilder()
         facet.applyChangesToStorage(mutableEntityStorage, module)
         if (module.diff == null) {
-          WorkspaceModel.getInstance(module.project).updateProjectModel { it.addDiff(mutableEntityStorage) }
+          WorkspaceModel.getInstance(module.project).updateProjectModel("Update facet configuration") { it.addDiff(mutableEntityStorage) }
         }
       }
     } else {
@@ -62,7 +62,7 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
           runWriteAction {
             val change: FacetEntity.Builder.() -> Unit = { this.configurationXmlTag = facetConfigurationXml }
             module.diff?.modifyEntity(facetEntity, change) ?: WorkspaceModel.getInstance(module.project)
-              .updateProjectModel { it.modifyEntity(facetEntity, change) }
+              .updateProjectModel("Update facet configuration (not bridge)") { it.modifyEntity(facetEntity, change) }
           }
         }
       }
@@ -264,7 +264,7 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
       }
     }
     else {
-      (WorkspaceModel.getInstance(moduleBridge.project) as WorkspaceModelImpl).updateProjectModelSilent {
+      (WorkspaceModel.getInstance(moduleBridge.project) as WorkspaceModelImpl).updateProjectModelSilent("Facet manager update storage") {
         it.mutableFacetMapping().updater()
       }
     }

@@ -14,7 +14,6 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
@@ -82,8 +81,6 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
     final PsiElement psiElement = e.getData(CommonDataKeys.PSI_ELEMENT);
     final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     final VirtualFile[] virtualFiles = ObjectUtils.notNull(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY), VirtualFile.EMPTY_ARRAY);
-
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.inspection");
 
     final GotoInspectionModel model = new GotoInspectionModel(project);
     showNavigationPopup(e, model, new GotoActionCallback<>() {

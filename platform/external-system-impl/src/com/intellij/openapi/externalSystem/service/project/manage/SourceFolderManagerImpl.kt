@@ -237,7 +237,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
     ApplicationManager.getApplication().invokeAndWait {
       WriteAction.run<RuntimeException> {
         if (project.isDisposed) return@run
-        WorkspaceModel.getInstance(project).updateProjectModel { updater ->
+        WorkspaceModel.getInstance(project).updateProjectModel("Source folder manager: batch update models") { updater ->
           updater.addDiff(diffBuilder)
         }
         modifiableRootModels.forEach { it.postCommit() }

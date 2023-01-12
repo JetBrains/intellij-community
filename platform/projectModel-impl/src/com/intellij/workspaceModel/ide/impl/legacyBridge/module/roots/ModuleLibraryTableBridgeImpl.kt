@@ -67,7 +67,7 @@ class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : Mod
       storageBuilder.mutableLibraryMap.addMapping(entity, library)
     }
     else {
-      (WorkspaceModel.getInstance(moduleBridge.project) as WorkspaceModelImpl).updateProjectModelSilent {
+      (WorkspaceModel.getInstance(moduleBridge.project) as WorkspaceModelImpl).updateProjectModelSilent("Add module library mapping") {
         it.mutableLibraryMap.addMapping(entity, library)
       }
     }

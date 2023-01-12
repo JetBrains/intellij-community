@@ -448,7 +448,11 @@ Page custom ConfirmDesktopShortcut
 !define MUI_PAGE_HEADER_TEXT "$(installing_product)"
 !insertmacro MUI_PAGE_INSTFILES
 
+!ifdef RUN_AFTER_FINISH
+!define MUI_FINISHPAGE_RUN_CHECKED
+!else
 !define MUI_FINISHPAGE_RUN_NOTCHECKED
+!endif
 !define MUI_FINISHPAGE_REBOOTLATER_DEFAULT
 !define MUI_FINISHPAGE_RUN
 !define MUI_FINISHPAGE_RUN_FUNCTION PageFinishRun
@@ -466,6 +470,7 @@ InstallDir "$PROGRAMFILES\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
 BrandingText " "
 
 Function PageFinishRun
+  IfSilent +2 +1
   !insertmacro UAC_AsUser_ExecShell "" "${PRODUCT_EXE_FILE}" "" "$INSTDIR\bin" ""
 FunctionEnd
 

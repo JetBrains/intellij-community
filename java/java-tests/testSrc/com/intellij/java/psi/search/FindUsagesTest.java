@@ -11,6 +11,7 @@ import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -342,11 +343,13 @@ public class FindUsagesTest extends JavaPsiTestCase {
     try {
       AtomicReference<Collection<PsiReference>> usages = new AtomicReference<>();
       Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() ->
-        ProgressManager.getInstance().runProcess(() ->
-          usages.set(ReferencesSearch.search(field, GlobalSearchScope.fileScope(myProject, field.getContainingFile().getVirtualFile())).findAll()), new EmptyProgressIndicator())
+        ProgressManager.getInstance().runProcess(() -> {
+          GlobalSearchScope scope = ReadAction.compute(() -> GlobalSearchScope.fileScope(myProject, field.getContainingFile().getVirtualFile()));
+          usages.set(ReferencesSearch.search(field, scope).findAll());
+        }, new EmptyProgressIndicator())
       );
 
-      while(!resolveStarted.get()) {
+      while(!resolveStarted.get() && !future.isDone()) {
         UIUtil.dispatchAllInvocationEvents();
       }
 

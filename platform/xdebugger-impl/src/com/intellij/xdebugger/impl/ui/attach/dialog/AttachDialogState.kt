@@ -5,11 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.AtomicLazyProperty
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessItemsListBase
-import com.intellij.xdebugger.impl.ui.attach.dialog.items.list.AttachListColumnSettingsState
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.tree.AttachTreeColumnSettingsState
 import com.intellij.xdebugger.impl.ui.attach.dialog.statistics.AttachDialogStatisticsCollector
 
-internal class AttachDialogState(val dialogDisposable: Disposable) {
+class AttachDialogState(val dialogDisposable: Disposable) {
 
   companion object {
     private const val IS_ATTACH_VIEW_TREE_ENABLED = "ATTACH_VIEW_TREE_ENABLED"
@@ -22,7 +21,6 @@ internal class AttachDialogState(val dialogDisposable: Disposable) {
 
     val COLUMN_MINIMUM_WIDTH = JBUI.scale(20)
     val DEFAULT_ROW_HEIGHT = JBUI.scale(20)
-    val GROUP_ROW_HEIGHT = JBUI.scale(28)
   }
 
   val searchFieldValue = AtomicLazyProperty { "" }
@@ -32,7 +30,7 @@ internal class AttachDialogState(val dialogDisposable: Disposable) {
   val selectedDebuggersFilter = AtomicLazyProperty<AttachDialogDebuggersFilter> { AttachDialogAllDebuggersFilter }
 
   val attachTreeColumnSettings = AttachTreeColumnSettingsState()
-  val attachListColumnSettings = AttachListColumnSettingsState()
+  val attachListColumnSettings = AttachTreeColumnSettingsState()
 
   val selectedViewType = AtomicLazyProperty { getDefaultView() }
 

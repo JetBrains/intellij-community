@@ -12,6 +12,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
@@ -41,14 +43,6 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
               accountManager: AccountManager<A, Cred>,
               accountsModel: AccountsListModel<A, Cred>) : this(accountManager, null, accountsModel, scope)
 
-  init {
-    scope.launch {
-      accountManager.accountsState.collect {
-        if (!isModified()) reset()
-      }
-    }
-  }
-
   fun accountsPanelCell(row: Row,
                         detailsProvider: LoadingAccountsDetailsProvider<A, *>,
                         actionsController: AccountsPanelActionsController<A>): Cell<JComponent> {
@@ -63,7 +57,7 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
     return row.cell(component)
       .onIsModified(::isModified)
       .onReset(::reset)
-      .onApply(::apply)
+      .onApply { apply(component) }
   }
 
   private fun isModified(): Boolean {
@@ -73,30 +67,36 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
     else false
 
     return accountsModel.newCredentials.isNotEmpty()
-           || accountsModel.accounts != accountManager.accounts
+           || accountsModel.accounts != accountManager.accountsState.value
            || defaultModified
   }
 
   private fun reset() {
-    accountsModel.accounts = accountManager.accounts
+    accountsModel.accounts = accountManager.accountsState.value
     if (defaultAccountHolder != null && accountsModel is AccountsListModel.WithDefault) {
       accountsModel.defaultAccount = defaultAccountHolder.account
     }
     accountsModel.clearNewCredentials()
   }
 
-  private fun apply() {
-    val newTokensMap = mutableMapOf<A, Cred?>()
-    newTokensMap.putAll(accountsModel.newCredentials)
-    for (account in accountsModel.accounts) {
-      newTokensMap.putIfAbsent(account, null)
-    }
-    accountManager.updateAccounts(newTokensMap)
-    accountsModel.clearNewCredentials()
+  private fun apply(component: JComponent) {
+    try {
+      val newTokensMap = mutableMapOf<A, Cred?>()
+      newTokensMap.putAll(accountsModel.newCredentials)
+      for (account in accountsModel.accounts) {
+        newTokensMap.putIfAbsent(account, null)
+      }
+      runBlockingModal(ModalTaskOwner.component(component), CollaborationToolsBundle.message("accounts.saving.credentials")) {
+        accountManager.updateAccounts(newTokensMap)
+      }
+      accountsModel.clearNewCredentials()
 
-    if (defaultAccountHolder != null && accountsModel is AccountsListModel.WithDefault) {
-      val defaultAccount = accountsModel.defaultAccount
-      defaultAccountHolder.account = defaultAccount
+      if (defaultAccountHolder != null && accountsModel is AccountsListModel.WithDefault) {
+        val defaultAccount = accountsModel.defaultAccount
+        defaultAccountHolder.account = defaultAccount
+      }
+    }
+    catch (_: Exception) {
     }
   }
 

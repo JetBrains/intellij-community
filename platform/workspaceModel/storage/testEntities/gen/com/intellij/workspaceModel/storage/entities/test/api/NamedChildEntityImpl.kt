@@ -41,11 +41,15 @@ open class NamedChildEntityImpl(val dataSource: NamedChildEntityData) : NamedChi
   override val parentEntity: NamedEntity
     get() = snapshot.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this)!!
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: NamedChildEntityData?) : ModifiableWorkspaceEntityBase<NamedChildEntity>(), NamedChildEntity.Builder {
+  class Builder(result: NamedChildEntityData?) : ModifiableWorkspaceEntityBase<NamedChildEntity, NamedChildEntityData>(
+    result), NamedChildEntity.Builder {
     constructor() : this(NamedChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -65,7 +69,7 @@ open class NamedChildEntityImpl(val dataSource: NamedChildEntityData) : NamedChi
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -114,7 +118,7 @@ open class NamedChildEntityImpl(val dataSource: NamedChildEntityData) : NamedChi
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -123,7 +127,7 @@ open class NamedChildEntityImpl(val dataSource: NamedChildEntityData) : NamedChi
       get() = getEntityData().childProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().childProperty = value
+        getEntityData(true).childProperty = value
         changedProperty.add("childProperty")
       }
 
@@ -141,21 +145,21 @@ open class NamedChildEntityImpl(val dataSource: NamedChildEntityData) : NamedChi
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
         }
         else {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
@@ -166,7 +170,6 @@ open class NamedChildEntityImpl(val dataSource: NamedChildEntityData) : NamedChi
         changedProperty.add("parentEntity")
       }
 
-    override fun getEntityData(): NamedChildEntityData = result ?: super.getEntityData() as NamedChildEntityData
     override fun getEntityClass(): Class<NamedChildEntity> = NamedChildEntity::class.java
   }
 }
@@ -178,20 +181,15 @@ class NamedChildEntityData : WorkspaceEntityData<NamedChildEntity>() {
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<NamedChildEntity> {
     val modifiable = NamedChildEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): NamedChildEntity {
     return getCached(snapshot) {
       val entity = NamedChildEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

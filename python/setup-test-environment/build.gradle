@@ -3,6 +3,7 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 
 plugins {
@@ -41,6 +42,7 @@ envs {
   String python38version = "3.8.10"
   String python39version = "3.9.5"
   String python310version = "3.10.0"
+  String python311version = "3.11.0"
 
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
@@ -82,7 +84,7 @@ envs {
                                                        : versionMinor
           String linkName = "python$versionMajor.$versionMinor"
 
-          Closure createLinkClosure = { java.nio.file.Path link, java.nio.file.Path existing ->
+          Closure createLinkClosure = { Path link, Path existing ->
             if (!link.toFile().exists()) Files.createLink(link, existing)
           }
 
@@ -133,6 +135,12 @@ envs {
                python310version,
                [],
                "python3.10",
+               true)
+
+  createPython("python3.11",
+               python311version,
+               [],
+               "python3.11",
                true)
 
   // For tox

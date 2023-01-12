@@ -7,10 +7,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.process.KillableColoredProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.WriteAction;
@@ -45,10 +42,12 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
   protected RunnerAndConfigurationSettings mySettings;
   private boolean myMultiprocessDebug = false;
   private boolean myWaitForTermination = true;
-  private @Nullable StringBuilder myOutputBuilder;
+  private final @NotNull StringBuilder myOutputBuilder = new StringBuilder();
+  private final @NotNull StringBuilder myStdErrBuilder = new StringBuilder();
 
   protected PyCustomConfigDebuggerTask(@Nullable String relativeTestDataPath) {
     super(relativeTestDataPath);
+    setProcessCanTerminate(false);
   }
 
   protected abstract AbstractPythonRunConfiguration<? extends AbstractPythonRunConfiguration<?>> createRunConfiguration(
@@ -89,8 +88,6 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
 
       before();
 
-      setProcessCanTerminate(false);
-
       myTerminateSemaphore = new Semaphore(0);
 
       WriteAction.runAndWait(() -> {
@@ -105,14 +102,13 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
               myDebugProcess =
                 new PyDebugProcess(session, serverSocket, myExecutionResult.getExecutionConsole(), myExecutionResult.getProcessHandler(),
                                    isMultiprocessDebug());
-
-
-              myOutputBuilder = new StringBuilder();
-
               myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
                 @Override
                 public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                   myOutputBuilder.append(event.getText());
+                  if (outputType == ProcessOutputType.STDERR) {
+                    myStdErrBuilder.append(event.getText());
+                  }
                 }
 
                 @Override
@@ -190,6 +186,10 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
   @Override
   protected @NotNull String output() {
     return myOutputBuilder.toString();
+  }
+
+  protected @NotNull String stderr() {
+    return myStdErrBuilder.toString();
   }
 
   protected String getExecutorId() {

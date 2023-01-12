@@ -27,6 +27,7 @@ import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
@@ -39,8 +40,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Dennis.Ushakov
@@ -79,6 +79,135 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       }
     }
     invoke(project, editor, (PyTargetExpression)element, refExpr);
+  }
+
+  private static boolean isStringAvailableInFStringFragment(boolean stringElementTripleQuoted, @NotNull String str) {
+    if (stringElementTripleQuoted) {
+      return !str.contains("\\");
+    }
+    return !str.contains("'") && !str.contains("\"") && !str.contains("\\");
+  }
+
+  @NotNull
+  private static List<PyStringElement> getStringElements(@NotNull PyExpression expression) {
+    List<PyStringElement> result = new ArrayList<>();
+    for (var stringLiteralExpr : PsiTreeUtil.findChildrenOfAnyType(expression, false, PyStringLiteralExpression.class)) {
+      result.addAll(stringLiteralExpr.getStringElements());
+    }
+    return result;
+  }
+
+  @NotNull
+  private static PyExpression replaceQuotesInExpression(@NotNull PyExpression expression, char stringElementQuote) {
+    var expressionCopy = (PyExpression)expression.copy();
+    var valueStringElements = getStringElements(expressionCopy);
+    for (var valueStringElement : valueStringElements) {
+      char actualQuote = valueStringElement.getQuote().charAt(0);
+      PyStringElement elementToReplace = valueStringElement;
+      if (actualQuote == stringElementQuote) {
+        elementToReplace = PyQuotesUtil.createCopyWithConvertedQuotes(valueStringElement);
+      }
+      valueStringElement.replace(elementToReplace);
+    }
+    return expressionCopy;
+  }
+
+  private static boolean checkPossibleInlineElement(@NotNull PsiElement element, @NotNull PyExpression value,
+                                                    @NotNull Project project, @NotNull Editor editor,
+                                                    @NotNull Map<PsiElement, PsiElement> simpleReplacements,
+                                                    @NotNull Map<PyFStringFragment, PyStringElement> fStringFragmentsReplacements) {
+    PyFStringFragment fStringParent = PsiTreeUtil.getParentOfType(element, PyFStringFragment.class);
+    if (fStringParent == null) {
+      simpleReplacements.put(element, value);
+      return true;
+    }
+
+    var valueStringElements = getStringElements(value);
+    boolean valueIsStringElement = value instanceof PyStringLiteralExpression && valueStringElements.size() == 1;
+
+    PyFormattedStringElement stringElement = PsiTreeUtil.getParentOfType(element, PyFormattedStringElement.class);
+    assert (stringElement != null);
+    boolean stringElementTripleQuoted = stringElement.isTripleQuoted();
+
+    if (!stringElementTripleQuoted && value.textContains('\n')) {
+      CommonRefactoringUtil.showErrorHint(project, editor, PyPsiBundle.message("refactoring.inline.can.not.multiline.string.to.f.string"),
+                                          getRefactoringName(), HELP_ID);
+      return false;
+    }
+
+    boolean pasteInFStringInFString = PsiTreeUtil.getParentOfType(stringElement, PyFormattedStringElement.class) != null;
+
+    var elementParent = element.getParent();
+    if (valueIsStringElement && elementParent instanceof PyFStringFragment) {
+      var fStringFragment = (PyFStringFragment)elementParent;
+      var stringLiteralValue = (PyStringLiteralExpression)value;
+      if (fStringFragment.getTypeConversion() == null && fStringFragment.getFormatPart() == null) {
+        PyStringElement valueStringElement = valueStringElements.get(0);
+        if (pasteInFStringInFString && !isStringAvailableInFStringFragment(stringElementTripleQuoted, valueStringElement.getContent())) {
+          CommonRefactoringUtil.showErrorHint(project, editor, PyPsiBundle.message("refactoring.inline.can.not.string.with.backslashes.or.quotes.to.f.string"),
+                                              getRefactoringName(), HELP_ID);
+          return false;
+        }
+
+        char quote = PyStringLiteralUtil.flipQuote(stringElement.getQuote().charAt(0));
+        var valueReplacedQuotes = replaceQuotesInExpression(stringLiteralValue, quote);
+        var stringElements = getStringElements(valueReplacedQuotes);
+        if (stringElements.size() == 1) {
+          fStringFragmentsReplacements.put(fStringFragment, stringElements.get(0));
+          return true;
+        }
+      }
+    }
+
+    if (pasteInFStringInFString) {
+      CommonRefactoringUtil.showErrorHint(project, editor, PyPsiBundle.message("refactoring.inline.can.not.string.to.nested.f.string"),
+                                          getRefactoringName(), HELP_ID);
+      return false;
+    }
+
+    for (var valueStringElement: valueStringElements) {
+      if (!isStringAvailableInFStringFragment(stringElementTripleQuoted, valueStringElement.getContent())) {
+        final String message = PyPsiBundle.message("refactoring.inline.can.not.string.with.backslashes.or.quotes.to.f.string");
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HELP_ID);
+        return false;
+      }
+    }
+
+    var valueReplacedQuotes = replaceQuotesInExpression(value, stringElement.getQuote().charAt(0));
+    simpleReplacements.put(element, valueReplacedQuotes);
+    return true;
+  }
+
+  private static void makeFStringFragmentsReplacements(@NotNull Map<PyFStringFragment, PyStringElement> fStringFragmentsReplacements) {
+    var fString2Replacements = new MultiMap<PyFormattedStringElement, Pair<PyFStringFragment, String>>();
+
+    for (var entry: fStringFragmentsReplacements.entrySet()) {
+      PyFStringFragment fStringFragment = entry.getKey();
+      PyFormattedStringElement fString = (PyFormattedStringElement)fStringFragment.getParent();
+      String valueProperQuotes = entry.getValue().getContent();
+      fString2Replacements.putValue(fString, Pair.create(fStringFragment, valueProperQuotes));
+    }
+
+    var fStrings = new ArrayList<>(fString2Replacements.keySet());
+    fStrings.sort(Comparator.comparingInt(it -> -it.getTextOffset()));
+
+    for (var fString: fStrings) {
+      var replacements = fString2Replacements.get(fString);
+      PyElementGenerator elementGenerator = PyElementGenerator.getInstance(fString.getProject());
+
+      var replacementsSegments = ContainerUtil.map(replacements, it -> Pair.create(it.first.getTextRangeInParent(), it.second));
+      replacementsSegments.sort(Comparator.comparingInt(it -> -it.first.getStartOffset()));
+
+      StringBuilder elementStringBuilder = new StringBuilder(fString.getText());
+      for (var segment : replacementsSegments) {
+        elementStringBuilder.replace(segment.first.getStartOffset(), segment.first.getEndOffset(), segment.second);
+      }
+
+      String resultString = elementStringBuilder.toString();
+
+      PyStringElement elementToReplace = (PyStringElement)elementGenerator.createStringLiteralAlreadyEscaped(resultString).getFirstChild();
+      fString.replace(elementToReplace);
+    }
   }
 
   private static void invoke(@NotNull final Project project,
@@ -170,26 +299,35 @@ public class PyInlineLocalHandler extends InlineActionHandler {
         project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
           .refactoringStarted(getRefactoringId(), afterData);
 
-        final PsiElement[] exprs = new PsiElement[refsToInline.length];
+        final List<PsiElement> exprs = new ArrayList<>();
         final PyExpression value = prepareValue(def, localName, project);
-        final LanguageLevel level = LanguageLevel.forElement(value);
-        final PyExpression withParenthesis =
-          PyElementGenerator.getInstance(project).createExpressionFromText(level, "(" + value.getText() + ")");
         final PsiElement lastChild = def.getLastChild();
         if (lastChild != null && lastChild.getNode().getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
           final PsiElement parent = def.getParent();
           if (parent != null) parent.addBefore(lastChild, def);
         }
 
-        for (int i = 0, refsToInlineLength = refsToInline.length; i < refsToInlineLength; i++) {
-          final PsiElement element = refsToInline[i];
-          if (PyReplaceExpressionUtil.isNeedParenthesis((PyExpression)element, value)) {
-            exprs[i] = element.replace(withParenthesis);
-          }
-          else {
-            exprs[i] = element.replace(value);
+        // Determine possibility to inline all refs
+        // Return if at least one ref is impossible to inline
+        var simpleReplacements = new HashMap<PsiElement, PsiElement>();
+        var fStringFragmentsReplacements = new HashMap<PyFStringFragment, PyStringElement>();
+        for (var refToInline: refsToInline) {
+          if (!checkPossibleInlineElement(refToInline, value, project, editor, simpleReplacements, fStringFragmentsReplacements)) {
+            return;
           }
         }
+
+        final LanguageLevel level = LanguageLevel.forElement(value);
+        for (var entry : simpleReplacements.entrySet()) {
+          PsiElement replElement = entry.getKey();
+          PsiElement replValue = entry.getValue();
+          if (PyReplaceExpressionUtil.isNeedParenthesis((PyExpression)replElement, (PyExpression)replValue)) {
+            replValue = PyElementGenerator.getInstance(project).createExpressionFromText(level, "(" + replValue.getText() + ")");
+          }
+          exprs.add(replElement.replace(replValue));
+        }
+        makeFStringFragmentsReplacements(fStringFragmentsReplacements);
+
         final PsiElement next = def.getNextSibling();
         if (next instanceof PsiWhiteSpace) {
           PyPsiUtils.removeElements(next);
@@ -204,7 +342,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
         CodeStyleManager.getInstance(project).reformatText(workingFile, ranges);
 
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          highlightManager.addOccurrenceHighlights(editor, exprs, EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
+          highlightManager.addOccurrenceHighlights(editor, exprs.toArray(PsiElement.EMPTY_ARRAY), EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
           WindowManager.getInstance().getStatusBar(project)
             .setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         }

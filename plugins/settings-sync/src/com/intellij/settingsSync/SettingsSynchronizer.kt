@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.settingsSync.migration.SettingsRepositoryToSettingsSyncMigration
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -35,15 +36,16 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     }
 
     if (!SettingsSyncSettings.getInstance().migrationFromOldStorageChecked) {
-      val migration = MIGRATION_EP.extensionList.firstOrNull()
+      SettingsSyncSettings.getInstance().migrationFromOldStorageChecked = true
+      val migration = MIGRATION_EP.extensionList.firstOrNull { it.isLocalDataAvailable(PathManager.getConfigDir()) }
       if (migration != null) {
-        val migrationPossible = migration.isLocalDataAvailable(PathManager.getConfigDir())
-        SettingsSyncSettings.getInstance().migrationFromOldStorageChecked = true
-        if (migrationPossible) {
-          LOG.info("Found migration from an old storage via ${migration.javaClass.simpleName}, migration possible: $migrationPossible")
-          SettingsSyncSettings.getInstance().syncEnabled = true
-          executorService.schedule(initializeSyncing(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration)), 0, TimeUnit.SECONDS)
-        }
+        LOG.info("Found migration from an old storage via ${migration.javaClass.simpleName}")
+        executorService.schedule(initializeSyncing(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration)), 0, TimeUnit.SECONDS)
+        SettingsSyncSettings.getInstance().syncEnabled = true
+        SettingsSyncEventsStatistics.MIGRATED_FROM_OLD_PLUGIN.log()
+      }
+      else {
+        SettingsRepositoryToSettingsSyncMigration.migrateIfNeeded(executorService)
       }
     }
   }

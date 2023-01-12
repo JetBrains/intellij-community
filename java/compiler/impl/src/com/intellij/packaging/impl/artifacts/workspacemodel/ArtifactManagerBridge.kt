@@ -203,7 +203,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
     (ArtifactPointerManager.getInstance(project) as ArtifactPointerManagerImpl).disposePointers(changedArtifacts)
 
-    WorkspaceModel.getInstance(project).updateProjectModel {
+    WorkspaceModel.getInstance(project).updateProjectModel("Commit artifact manager") {
       it.addDiff(artifactModel.diff)
     }
 
@@ -292,7 +292,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
             }
             .toList()
 
-          (workspaceModel as WorkspaceModelImpl).updateProjectModelSilent {
+          (workspaceModel as WorkspaceModelImpl).updateProjectModelSilent("Initialize artifact bridges") {
             addBridgesToDiff(newBridges, it)
           }
         }
@@ -323,7 +323,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   fun dropMappings(selector: (ArtifactEntity) -> Boolean) {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-    (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent {
+    (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Drop artifact mappings") {
       val map = it.mutableArtifactsMap
       it.entities(ArtifactEntity::class.java).filter(selector).forEach { artifact ->
         map.removeMapping(artifact)

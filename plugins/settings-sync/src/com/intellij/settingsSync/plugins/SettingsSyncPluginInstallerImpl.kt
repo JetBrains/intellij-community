@@ -17,7 +17,7 @@ import com.intellij.settingsSync.SettingsSyncBundle
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 
-internal class SettingsSyncPluginInstallerImpl : SettingsSyncPluginInstaller {
+internal class SettingsSyncPluginInstallerImpl(private val notifyErrors: Boolean) : SettingsSyncPluginInstaller {
   companion object {
     val LOG = logger<SettingsSyncPluginInstallerImpl>()
   }
@@ -28,7 +28,7 @@ internal class SettingsSyncPluginInstallerImpl : SettingsSyncPluginInstaller {
         ApplicationManager.getApplication().isUnitTestMode // Register TestPluginManager in Unit Test Mode
     ) return
     ApplicationManager.getApplication().invokeAndWait {
-      val prepareRunnable = PrepareInstallationRunnable(pluginsToInstall)
+      val prepareRunnable = PrepareInstallationRunnable(pluginsToInstall, notifyErrors)
       if (ProgressManager.getInstance().runProcessWithProgressSynchronously(
           prepareRunnable, SettingsSyncBundle.message("installing.plugins.indicator"), true, null)) {
         installCollected(prepareRunnable.getInstallers())
@@ -62,7 +62,7 @@ internal class SettingsSyncPluginInstallerImpl : SettingsSyncPluginInstaller {
   }
 
 
-  private class PrepareInstallationRunnable(val pluginIds: List<PluginId>) : Runnable {
+  private class PrepareInstallationRunnable(val pluginIds: List<PluginId>, val notifyErrors: Boolean) : Runnable {
 
     private val collectedInstallers = ArrayList<PluginDownloader>()
 
@@ -82,9 +82,17 @@ internal class SettingsSyncPluginInstallerImpl : SettingsSyncPluginInstaller {
           collectedInstallers.add(downloader)
         }
       }
+      else {
+        val message = SettingsSyncBundle.message("install.plugin.failed.no.compatible.notification.error.message", pluginId )
+        LOG.info(message)
+        if (notifyErrors) {
+          NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
+            .createNotification("", message, NotificationType.ERROR)
+            .notify(null)
+        }
+      }
     }
 
     fun getInstallers() = collectedInstallers
   }
-
 }

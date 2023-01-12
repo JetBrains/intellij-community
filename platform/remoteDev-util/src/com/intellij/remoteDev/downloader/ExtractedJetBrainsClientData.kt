@@ -11,4 +11,5 @@ data class ExtractedJetBrainsClientData(
    * jreDir is not required for newer clients, it's bundled in
    */
   val jreDir: Path?,
+  val version: String,
 )

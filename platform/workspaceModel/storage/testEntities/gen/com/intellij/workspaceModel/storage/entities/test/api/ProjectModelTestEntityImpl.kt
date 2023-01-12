@@ -35,11 +35,15 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
   override val descriptor: Descriptor
     get() = dataSource.descriptor
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: ProjectModelTestEntityData?) : ModifiableWorkspaceEntityBase<ProjectModelTestEntity>(), ProjectModelTestEntity.Builder {
+  class Builder(result: ProjectModelTestEntityData?) : ModifiableWorkspaceEntityBase<ProjectModelTestEntity, ProjectModelTestEntityData>(
+    result), ProjectModelTestEntity.Builder {
     constructor() : this(ProjectModelTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -59,7 +63,7 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -98,7 +102,7 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -107,7 +111,7 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
       get() = getEntityData().info
       set(value) {
         checkModificationAllowed()
-        getEntityData().info = value
+        getEntityData(true).info = value
         changedProperty.add("info")
       }
 
@@ -115,12 +119,11 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
       get() = getEntityData().descriptor
       set(value) {
         checkModificationAllowed()
-        getEntityData().descriptor = value
+        getEntityData(true).descriptor = value
         changedProperty.add("descriptor")
 
       }
 
-    override fun getEntityData(): ProjectModelTestEntityData = result ?: super.getEntityData() as ProjectModelTestEntityData
     override fun getEntityClass(): Class<ProjectModelTestEntity> = ProjectModelTestEntity::class.java
   }
 }
@@ -134,20 +137,15 @@ class ProjectModelTestEntityData : WorkspaceEntityData<ProjectModelTestEntity>()
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ProjectModelTestEntity> {
     val modifiable = ProjectModelTestEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): ProjectModelTestEntity {
     return getCached(snapshot) {
       val entity = ProjectModelTestEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

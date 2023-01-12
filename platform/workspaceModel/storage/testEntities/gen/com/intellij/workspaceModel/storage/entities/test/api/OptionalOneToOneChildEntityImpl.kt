@@ -42,11 +42,15 @@ open class OptionalOneToOneChildEntityImpl(val dataSource: OptionalOneToOneChild
   override val parent: OptionalOneToOneParentEntity?
     get() = snapshot.extractOneToOneParent(PARENT_CONNECTION_ID, this)
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: OptionalOneToOneChildEntityData?) : ModifiableWorkspaceEntityBase<OptionalOneToOneChildEntity>(), OptionalOneToOneChildEntity.Builder {
+  class Builder(result: OptionalOneToOneChildEntityData?) : ModifiableWorkspaceEntityBase<OptionalOneToOneChildEntity, OptionalOneToOneChildEntityData>(
+    result), OptionalOneToOneChildEntity.Builder {
     constructor() : this(OptionalOneToOneChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -66,7 +70,7 @@ open class OptionalOneToOneChildEntityImpl(val dataSource: OptionalOneToOneChild
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -105,7 +109,7 @@ open class OptionalOneToOneChildEntityImpl(val dataSource: OptionalOneToOneChild
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -114,7 +118,7 @@ open class OptionalOneToOneChildEntityImpl(val dataSource: OptionalOneToOneChild
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
@@ -132,18 +136,18 @@ open class OptionalOneToOneChildEntityImpl(val dataSource: OptionalOneToOneChild
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneParentOfChild(PARENT_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -153,7 +157,6 @@ open class OptionalOneToOneChildEntityImpl(val dataSource: OptionalOneToOneChild
         changedProperty.add("parent")
       }
 
-    override fun getEntityData(): OptionalOneToOneChildEntityData = result ?: super.getEntityData() as OptionalOneToOneChildEntityData
     override fun getEntityClass(): Class<OptionalOneToOneChildEntity> = OptionalOneToOneChildEntity::class.java
   }
 }
@@ -165,20 +168,15 @@ class OptionalOneToOneChildEntityData : WorkspaceEntityData<OptionalOneToOneChil
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<OptionalOneToOneChildEntity> {
     val modifiable = OptionalOneToOneChildEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): OptionalOneToOneChildEntity {
     return getCached(snapshot) {
       val entity = OptionalOneToOneChildEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

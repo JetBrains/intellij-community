@@ -23,16 +23,6 @@ public class ProjectTemplateBuildFileGenerationTestGenerated extends AbstractPro
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @TestMetadata("composeDesktopApplication")
-    public void testComposeDesktopApplication() throws Exception {
-        runTest("testData/projectTemplatesBuildFileGeneration/composeDesktopApplication/");
-    }
-
-    @TestMetadata("composeMultiplatformApplication")
-    public void testComposeMultiplatformApplication() throws Exception {
-        runTest("testData/projectTemplatesBuildFileGeneration/composeMultiplatformApplication/");
-    }
-
     @TestMetadata("consoleApplication")
     public void testConsoleApplication() throws Exception {
         runTest("testData/projectTemplatesBuildFileGeneration/consoleApplication/");

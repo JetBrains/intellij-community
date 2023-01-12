@@ -28,7 +28,7 @@ internal class ModifiableModelCommitterServiceBridge : ModifiableModelCommitterS
       else rootModel.dispose()
     }
 
-    WorkspaceModel.getInstance(moduleModel.project).updateProjectModel { builder ->
+    WorkspaceModel.getInstance(moduleModel.project).updateProjectModel("Multicommit for modifiable models") { builder ->
       diffs.forEach { builder.addDiff(it) }
     }
 

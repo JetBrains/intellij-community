@@ -53,9 +53,16 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
       background = WelcomeScreenUIManager.getProjectsBackground()
     }
 
-    contentPanel.add(helpAndResourcesPanel, BorderLayout.SOUTH)
-    initInteractiveCoursesPanel()
+    val interactiveCoursesExtensions = InteractiveCourseFactory.INTERACTIVE_COURSE_FACTORY_EP.extensions
+    initInteractiveCoursesPanel(interactiveCoursesExtensions)
     initHelpAndResourcePanel()
+
+    if (interactiveCoursesExtensions.isEmpty()) {
+      contentPanel.add(helpAndResourcesPanel, BorderLayout.CENTER)
+    }
+    else {
+      contentPanel.add(helpAndResourcesPanel, BorderLayout.SOUTH)
+    }
 
     //set LearnPanel UI
     add(myScrollPane, BorderLayout.CENTER)
@@ -74,22 +81,21 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
     }
   }
 
-  private fun initInteractiveCoursesPanel() {
-    updateInteractiveCoursesPanel()
+  private fun initInteractiveCoursesPanel(interactiveCoursesExtensions: Array<InteractiveCourseFactory>) {
+    updateInteractiveCoursesPanel(interactiveCoursesExtensions)
     InteractiveCourseFactory.INTERACTIVE_COURSE_FACTORY_EP.addExtensionPointListener(
       object : ExtensionPointListener<InteractiveCourseFactory> {
         override fun extensionAdded(extension: InteractiveCourseFactory, pluginDescriptor: PluginDescriptor) {
-          updateInteractiveCoursesPanel()
+          updateInteractiveCoursesPanel(interactiveCoursesExtensions)
         }
 
         override fun extensionRemoved(extension: InteractiveCourseFactory, pluginDescriptor: PluginDescriptor) {
-          updateInteractiveCoursesPanel()
+          updateInteractiveCoursesPanel(interactiveCoursesExtensions)
         }
       }, parentDisposable)
   }
 
-  private fun updateInteractiveCoursesPanel() {
-    val interactiveCoursesExtensions: Array<InteractiveCourseFactory> = InteractiveCourseFactory.INTERACTIVE_COURSE_FACTORY_EP.extensions
+  private fun updateInteractiveCoursesPanel(interactiveCoursesExtensions: Array<InteractiveCourseFactory>) {
     //clear before
     interactiveCoursesPanel.removeAll()
     contentPanel.remove(interactiveCoursesPanel)

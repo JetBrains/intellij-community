@@ -2,12 +2,11 @@
 package org.jetbrains.plugins.github.authentication.accounts
 
 import com.intellij.collaboration.auth.AccountManagerBase
-import com.intellij.collaboration.auth.AccountsListener
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.collaboration.auth.PasswordSafeCredentialsRepository
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.util.messages.Topic
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.util.GithubUtil
 
@@ -18,14 +17,17 @@ internal val GithubAccount.isGHAccount: Boolean get() = server.isGithubDotCom
  */
 @Service
 internal class GHAccountManager
-  : AccountManagerBase<GithubAccount, String>(GithubUtil.SERVICE_DISPLAY_NAME) {
+  : AccountManagerBase<GithubAccount, String>(logger<GHAccountManager>()), Disposable {
 
   override fun accountsRepository() = service<GHPersistentAccounts>()
 
-  override fun serializeCredentials(credentials: String): String = credentials
-  override fun deserializeCredentials(credentials: String): String = credentials
+  override fun credentialsRepository() =
+    PasswordSafeCredentialsRepository<GithubAccount, String>(GithubUtil.SERVICE_DISPLAY_NAME,
+                                                             PasswordSafeCredentialsRepository.CredentialsMapper.Simple)
 
   companion object {
     fun createAccount(name: String, server: GithubServerPath) = GithubAccount(name, server)
   }
+
+  override fun dispose() = Unit
 }

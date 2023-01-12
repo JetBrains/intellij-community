@@ -8,6 +8,7 @@ import com.intellij.model.Pointer
 internal class NavBarVmItem(
   val pointer: Pointer<out NavBarItem>,
   val presentation: NavBarItemPresentation,
+  val isModuleContentRoot: Boolean,
   itemClass: Class<NavBarItem>,
 ) {
 

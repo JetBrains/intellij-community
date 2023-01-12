@@ -16,7 +16,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.util.Objects;
 
-abstract class ContentLayout {
+public abstract class ContentLayout {
   ToolWindowContentUi ui;
   BaseLabel idLabel;
 

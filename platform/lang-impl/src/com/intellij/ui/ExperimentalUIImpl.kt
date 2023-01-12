@@ -22,7 +22,7 @@ import com.intellij.util.ResourceUtil
 class ExperimentalUIImpl : ExperimentalUI() {
   override fun getIconMappings() = loadIconMappingsImpl()
 
-  override fun onExpUIEnabled() {
+  override fun onExpUIEnabled(suggestRestart: Boolean) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) return
 
     NewUIInfoService.getInstance().updateEnableNewUIDate()
@@ -45,10 +45,12 @@ class ExperimentalUIImpl : ExperimentalUI() {
         }
       }
     }
-    ApplicationManager.getApplication().invokeLater({ RegistryBooleanOptionDescriptor.suggestRestart(null) }, ModalityState.NON_MODAL)
+    if (suggestRestart) {
+      ApplicationManager.getApplication().invokeLater({ RegistryBooleanOptionDescriptor.suggestRestart(null) }, ModalityState.NON_MODAL)
+    }
   }
 
-  override fun onExpUIDisabled() {
+  override fun onExpUIDisabled(suggestRestart: Boolean) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) return
 
     NewUIInfoService.getInstance().updateDisableNewUIDate()
@@ -69,7 +71,9 @@ class ExperimentalUIImpl : ExperimentalUI() {
         }
       }
     }
-    ApplicationManager.getApplication().invokeLater({ RegistryBooleanOptionDescriptor.suggestRestart(null) }, ModalityState.NON_MODAL)
+    if (suggestRestart) {
+      ApplicationManager.getApplication().invokeLater({ RegistryBooleanOptionDescriptor.suggestRestart(null) }, ModalityState.NON_MODAL)
+    }
   }
 
   companion object {

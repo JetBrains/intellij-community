@@ -33,11 +33,15 @@ open class ExcludeUrlEntityImpl(val dataSource: ExcludeUrlEntityData) : ExcludeU
   override val url: VirtualFileUrl
     get() = dataSource.url
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: ExcludeUrlEntityData?) : ModifiableWorkspaceEntityBase<ExcludeUrlEntity>(), ExcludeUrlEntity.Builder {
+  class Builder(result: ExcludeUrlEntityData?) : ModifiableWorkspaceEntityBase<ExcludeUrlEntity, ExcludeUrlEntityData>(
+    result), ExcludeUrlEntity.Builder {
     constructor() : this(ExcludeUrlEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -57,7 +61,7 @@ open class ExcludeUrlEntityImpl(val dataSource: ExcludeUrlEntityData) : ExcludeU
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       index(this, "url", this.url)
       // Process linked entities that are connected without a builder
@@ -93,7 +97,7 @@ open class ExcludeUrlEntityImpl(val dataSource: ExcludeUrlEntityData) : ExcludeU
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -102,13 +106,12 @@ open class ExcludeUrlEntityImpl(val dataSource: ExcludeUrlEntityData) : ExcludeU
       get() = getEntityData().url
       set(value) {
         checkModificationAllowed()
-        getEntityData().url = value
+        getEntityData(true).url = value
         changedProperty.add("url")
         val _diff = diff
         if (_diff != null) index(this, "url", value)
       }
 
-    override fun getEntityData(): ExcludeUrlEntityData = result ?: super.getEntityData() as ExcludeUrlEntityData
     override fun getEntityClass(): Class<ExcludeUrlEntity> = ExcludeUrlEntity::class.java
   }
 }
@@ -120,20 +123,15 @@ class ExcludeUrlEntityData : WorkspaceEntityData<ExcludeUrlEntity>() {
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ExcludeUrlEntity> {
     val modifiable = ExcludeUrlEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): ExcludeUrlEntity {
     return getCached(snapshot) {
       val entity = ExcludeUrlEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

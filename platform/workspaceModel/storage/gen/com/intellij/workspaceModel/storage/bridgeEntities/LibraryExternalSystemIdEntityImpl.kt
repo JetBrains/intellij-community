@@ -43,11 +43,15 @@ open class LibraryExternalSystemIdEntityImpl(val dataSource: LibraryExternalSyst
   override val library: LibraryEntity
     get() = snapshot.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)!!
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: LibraryExternalSystemIdEntityData?) : ModifiableWorkspaceEntityBase<LibraryExternalSystemIdEntity>(), LibraryExternalSystemIdEntity.Builder {
+  class Builder(result: LibraryExternalSystemIdEntityData?) : ModifiableWorkspaceEntityBase<LibraryExternalSystemIdEntity, LibraryExternalSystemIdEntityData>(
+    result), LibraryExternalSystemIdEntity.Builder {
     constructor() : this(LibraryExternalSystemIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -67,7 +71,7 @@ open class LibraryExternalSystemIdEntityImpl(val dataSource: LibraryExternalSyst
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -116,7 +120,7 @@ open class LibraryExternalSystemIdEntityImpl(val dataSource: LibraryExternalSyst
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -125,7 +129,7 @@ open class LibraryExternalSystemIdEntityImpl(val dataSource: LibraryExternalSyst
       get() = getEntityData().externalSystemId
       set(value) {
         checkModificationAllowed()
-        getEntityData().externalSystemId = value
+        getEntityData(true).externalSystemId = value
         changedProperty.add("externalSystemId")
       }
 
@@ -143,18 +147,18 @@ open class LibraryExternalSystemIdEntityImpl(val dataSource: LibraryExternalSyst
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneParentOfChild(LIBRARY_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -164,7 +168,6 @@ open class LibraryExternalSystemIdEntityImpl(val dataSource: LibraryExternalSyst
         changedProperty.add("library")
       }
 
-    override fun getEntityData(): LibraryExternalSystemIdEntityData = result ?: super.getEntityData() as LibraryExternalSystemIdEntityData
     override fun getEntityClass(): Class<LibraryExternalSystemIdEntity> = LibraryExternalSystemIdEntity::class.java
   }
 }
@@ -176,20 +179,15 @@ class LibraryExternalSystemIdEntityData : WorkspaceEntityData<LibraryExternalSys
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<LibraryExternalSystemIdEntity> {
     val modifiable = LibraryExternalSystemIdEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): LibraryExternalSystemIdEntity {
     return getCached(snapshot) {
       val entity = LibraryExternalSystemIdEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

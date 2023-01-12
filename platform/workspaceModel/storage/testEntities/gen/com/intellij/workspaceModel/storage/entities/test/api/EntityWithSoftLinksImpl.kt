@@ -83,11 +83,15 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
   override val children: List<SoftLinkReferencedChild>
     get() = snapshot.extractOneToManyChildren<SoftLinkReferencedChild>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: EntityWithSoftLinksData?) : ModifiableWorkspaceEntityBase<EntityWithSoftLinks>(), EntityWithSoftLinks.Builder {
+  class Builder(result: EntityWithSoftLinksData?) : ModifiableWorkspaceEntityBase<EntityWithSoftLinks, EntityWithSoftLinksData>(
+    result), EntityWithSoftLinks.Builder {
     constructor() : this(EntityWithSoftLinksData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -107,7 +111,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -215,7 +219,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -224,7 +228,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() = getEntityData().link
       set(value) {
         checkModificationAllowed()
-        getEntityData().link = value
+        getEntityData(true).link = value
         changedProperty.add("link")
 
       }
@@ -247,7 +251,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().manyLinks = value
+        getEntityData(true).manyLinks = value
         manyLinksUpdater.invoke(value)
       }
 
@@ -255,7 +259,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() = getEntityData().optionalLink
       set(value) {
         checkModificationAllowed()
-        getEntityData().optionalLink = value
+        getEntityData(true).optionalLink = value
         changedProperty.add("optionalLink")
 
       }
@@ -264,7 +268,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() = getEntityData().inContainer
       set(value) {
         checkModificationAllowed()
-        getEntityData().inContainer = value
+        getEntityData(true).inContainer = value
         changedProperty.add("inContainer")
 
       }
@@ -273,7 +277,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() = getEntityData().inOptionalContainer
       set(value) {
         checkModificationAllowed()
-        getEntityData().inOptionalContainer = value
+        getEntityData(true).inOptionalContainer = value
         changedProperty.add("inOptionalContainer")
 
       }
@@ -296,7 +300,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().inContainerList = value
+        getEntityData(true).inContainerList = value
         inContainerListUpdater.invoke(value)
       }
 
@@ -318,7 +322,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().deepContainer = value
+        getEntityData(true).deepContainer = value
         deepContainerUpdater.invoke(value)
       }
 
@@ -326,7 +330,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() = getEntityData().sealedContainer
       set(value) {
         checkModificationAllowed()
-        getEntityData().sealedContainer = value
+        getEntityData(true).sealedContainer = value
         changedProperty.add("sealedContainer")
 
       }
@@ -349,7 +353,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().listSealedContainer = value
+        getEntityData(true).listSealedContainer = value
         listSealedContainerUpdater.invoke(value)
       }
 
@@ -357,7 +361,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() = getEntityData().justProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().justProperty = value
+        getEntityData(true).justProperty = value
         changedProperty.add("justProperty")
       }
 
@@ -365,7 +369,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() = getEntityData().justNullableProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().justNullableProperty = value
+        getEntityData(true).justNullableProperty = value
         changedProperty.add("justNullableProperty")
       }
 
@@ -387,7 +391,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().justListProperty = value
+        getEntityData(true).justListProperty = value
         justListPropertyUpdater.invoke(value)
       }
 
@@ -395,7 +399,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() = getEntityData().deepSealedClass
       set(value) {
         checkModificationAllowed()
-        getEntityData().deepSealedClass = value
+        getEntityData(true).deepSealedClass = value
         changedProperty.add("deepSealedClass")
 
       }
@@ -420,9 +424,9 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
@@ -434,7 +438,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
         }
         else {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
@@ -445,7 +449,6 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
         changedProperty.add("children")
       }
 
-    override fun getEntityData(): EntityWithSoftLinksData = result ?: super.getEntityData() as EntityWithSoftLinksData
     override fun getEntityClass(): Class<EntityWithSoftLinks> = EntityWithSoftLinks::class.java
   }
 }
@@ -1091,20 +1094,15 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<EntityWithSoftLinks> {
     val modifiable = EntityWithSoftLinksImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): EntityWithSoftLinks {
     return getCached(snapshot) {
       val entity = EntityWithSoftLinksImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

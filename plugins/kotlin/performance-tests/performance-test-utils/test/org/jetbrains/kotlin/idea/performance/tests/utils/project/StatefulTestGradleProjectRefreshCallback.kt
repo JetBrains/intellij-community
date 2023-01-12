@@ -34,7 +34,7 @@ class StatefulTestGradleProjectRefreshCallback(
             error = Error("Got null external project after Gradle import")
             return
         }
-        service<ProjectDataManager>().importData(externalProject, project, true)
+        service<ProjectDataManager>().importData(externalProject, project)
     }
 
     override fun onFailure(errorMessage: String, errorDetails: String?) {

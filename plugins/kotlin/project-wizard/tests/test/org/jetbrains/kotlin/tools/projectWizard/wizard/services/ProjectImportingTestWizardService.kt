@@ -46,7 +46,7 @@ class GradleProjectImportingTestWizardService(private val project: Project) : Pr
                         if (externalProject == null) {
                             importingErrorMessage = "Got null External project after import"
                         } else {
-                            service<ProjectDataManager>().importData(externalProject, project, true)
+                            service<ProjectDataManager>().importData(externalProject, project)
                         }
                     }
 

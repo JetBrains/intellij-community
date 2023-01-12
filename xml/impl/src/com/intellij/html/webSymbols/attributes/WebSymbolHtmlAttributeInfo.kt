@@ -6,7 +6,7 @@ import com.intellij.html.webSymbols.attributes.impl.WebSymbolHtmlAttributeInfoIm
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
-import com.intellij.webSymbols.registry.WebSymbolsRegistry
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -51,9 +51,9 @@ interface WebSymbolHtmlAttributeInfo {
 
     @JvmStatic
     fun create(name: String,
-               registry: WebSymbolsRegistry,
+               queryExecutor: WebSymbolsQueryExecutor,
                symbols: List<WebSymbol>): WebSymbolHtmlAttributeInfo? =
-      WebSymbolHtmlAttributeInfoImpl.create(name, registry, symbols)
+      WebSymbolHtmlAttributeInfoImpl.create(name, queryExecutor, symbols)
 
   }
 }

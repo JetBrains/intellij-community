@@ -103,6 +103,10 @@
       <with attribute="targetClass" implements="com.intellij.model.Symbol"/>
       <with attribute="implementationClass" implements="com.intellij.model.psi.PsiSymbolReferenceProvider"/>
     </extensionPoint>
+
+    <extensionPoint name="xml.xmlAttributeRenameProvider"
+                    interface="com.intellij.codeInspection.htmlInspections.XmlAttributeRenameProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -661,11 +665,11 @@
     <webSymbols.inspectionToolMapping symbolNamespace="html" symbolKind="elements" problemKind="DeprecatedSymbol"
                                       toolShortName="HtmlDeprecatedTag"/>
 
-    <webSymbols.registryExtension
-      implementation="com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension"/>
+    <webSymbols.queryConfigurator
+      implementation="com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator"/>
     <webSymbols.codeCompletionItemCustomizer
       id="html"
-      implementation="com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension$HtmlSymbolsCodeCompletionItemCustomizer"/>
+      implementation="com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator$HtmlSymbolsCodeCompletionItemCustomizer"/>
     <xml.attributeDescriptorsProvider
       implementation="com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptorsProvider"/>
     <xml.elementDescriptorProvider

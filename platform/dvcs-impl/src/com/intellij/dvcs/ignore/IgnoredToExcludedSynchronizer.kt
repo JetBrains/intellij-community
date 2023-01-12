@@ -164,11 +164,12 @@ class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(proje
 }
 
 private fun markIgnoredAsExcluded(project: Project, files: Collection<VirtualFile>) {
-  val ignoredDirsByModule =
+  val ignoredDirsByModule = runReadAction {  
     files
       .groupBy { ModuleUtil.findModuleForFile(it, project) }
       //if the directory already excluded then ModuleUtil.findModuleForFile return null and this will filter out such directories from processing.
       .filterKeys(Objects::nonNull)
+  }
 
   for ((module, ignoredDirs) in ignoredDirsByModule) {
     excludeAction.exclude(module!!, ignoredDirs)

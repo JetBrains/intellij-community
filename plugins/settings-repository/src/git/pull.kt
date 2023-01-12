@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import com.intellij.util.containers.hash.LinkedHashMap
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import org.eclipse.jgit.api.MergeCommand.FastForwardMode
 import org.eclipse.jgit.api.MergeResult
 import org.eclipse.jgit.api.MergeResult.MergeStatus
@@ -31,6 +33,7 @@ import org.eclipse.jgit.treewalk.FileTreeIterator
 import org.jetbrains.settingsRepository.*
 import java.io.IOException
 import java.text.MessageFormat
+import kotlin.coroutines.coroutineContext
 
 interface GitRepositoryClient {
   val repository: Repository
@@ -44,7 +47,7 @@ class GitRepositoryClientImpl(override val repository: Repository, private val c
   }
 }
 
-internal open class Pull(val manager: GitRepositoryClient, val indicator: ProgressIndicator?, val commitMessageFormatter: CommitMessageFormatter = IdeaCommitMessageFormatter()) {
+internal open class Pull(val manager: GitRepositoryClient, val commitMessageFormatter: CommitMessageFormatter = IdeaCommitMessageFormatter()) {
   val repository = manager.repository
 
   // we must use the same StoredConfig instance during the operation
@@ -52,7 +55,7 @@ internal open class Pull(val manager: GitRepositoryClient, val indicator: Progre
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)
 
   suspend fun pull(mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE, commitMessage: String? = null, prefetchedRefToMerge: Ref? = null): UpdateResult? {
-    indicator?.checkCanceled()
+    coroutineContext.ensureActive()
 
     LOG.debug("Pull")
 
@@ -74,10 +77,13 @@ internal open class Pull(val manager: GitRepositoryClient, val indicator: Progre
     }
   }
 
-  fun fetch(prevRefUpdateResult: RefUpdate.Result? = null, refUpdateProcessor: ((TrackingRefUpdate) -> Unit)? = null): Ref? {
-    indicator?.checkCanceled()
+  suspend fun fetch(prevRefUpdateResult: RefUpdate.Result? = null, refUpdateProcessor: ((TrackingRefUpdate) -> Unit)? = null): Ref? {
+    coroutineContext.ensureActive()
 
-    val fetchResult = repository.fetch(remoteConfig, manager.credentialsProvider, indicator.asProgressMonitor()) ?: return null
+    val progressMonitor = progressMonitor()
+    val fetchResult = blockingContext {
+      repository.fetch(remoteConfig, manager.credentialsProvider, progressMonitor)
+    } ?: return null
 
     if (LOG.isDebugEnabled) {
       printMessages(fetchResult)
@@ -86,7 +92,7 @@ internal open class Pull(val manager: GitRepositoryClient, val indicator: Progre
       }
     }
 
-    indicator?.checkCanceled()
+    coroutineContext.ensureActive()
 
     var hasChanges = false
     for (fetchRefSpec in remoteConfig.fetchRefSpecs) {
@@ -104,7 +110,7 @@ internal open class Pull(val manager: GitRepositoryClient, val indicator: Progre
         }
 
         LOG.warn("Ref update result ${refUpdateResult.name}, trying again after 500 ms")
-        Thread.sleep(500)
+        delay(500)
         return fetch(refUpdateResult)
       }
 
@@ -127,14 +133,16 @@ internal open class Pull(val manager: GitRepositoryClient, val indicator: Progre
     return fetchResult.getAdvertisedRef(config.getRemoteBranchFullName()) ?: throw IllegalStateException("Could not get advertised ref")
   }
 
-  fun merge(unpeeledRef: Ref,
-            mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE,
-            commit: Boolean = true,
-            fastForwardMode: FastForwardMode = FastForwardMode.FF,
-            squash: Boolean = false,
-            forceMerge: Boolean = false,
-            commitMessage: String? = null): MergeResultEx {
-    indicator?.checkCanceled()
+  suspend fun merge(
+    unpeeledRef: Ref,
+    mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE,
+    commit: Boolean = true,
+    fastForwardMode: FastForwardMode = FastForwardMode.FF,
+    squash: Boolean = false,
+    forceMerge: Boolean = false,
+    commitMessage: String? = null,
+  ): MergeResultEx {
+    coroutineContext.ensureActive()
 
     val head = repository.findRef(Constants.HEAD) ?: throw NoHeadException(JGitText.get().commitOnRepoWithoutHEADCurrentlyNotSupported)
 

@@ -23,12 +23,14 @@ import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
+ *
+ * @deprecated Use ordinary {@link AnAction} and {@link ToolbarDecorator#addExtraAction(AnAction)}
  */
+@Deprecated
 public abstract class AnActionButton extends AnAction implements ShortcutProvider {
   private static final Logger LOG = Logger.getInstance(AnActionButton.class);
   private boolean myEnabled = true;
   private boolean myVisible = true;
-  private ShortcutSet myShortcut;
   private JComponent myContextComponent;
   private Set<AnActionButtonUpdater> myUpdaters;
   private final List<ActionButtonListener> myListeners = new ArrayList<>();
@@ -97,7 +99,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
   @Override
   public final void update(@NotNull AnActionEvent e) {
-    boolean enabled = isEnabled() && isContextComponentOk();
+    boolean enabled = isEnabled();
     if (enabled && myUpdaters != null) {
       for (AnActionButtonUpdater updater : myUpdaters) {
         if (!updater.isEnabled(e)) {
@@ -122,17 +124,15 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   }
 
   public void updateButton(@NotNull AnActionEvent e) {
-    final JComponent component = getContextComponent();
-    e.getPresentation().setEnabled(component != null && component.isShowing() && component.isEnabled());
   }
 
   @Override
   public ShortcutSet getShortcut() {
-    return myShortcut;
+    return getShortcutSet();
   }
 
-  public void setShortcut(ShortcutSet shortcut) {
-    myShortcut = shortcut;
+  public void setShortcut(@NotNull ShortcutSet shortcut) {
+    setShortcutSet(shortcut);
   }
 
   public void setContextComponent(JComponent contextComponent) {
@@ -148,12 +148,6 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     return DataManager.getInstance().getDataContext(getContextComponent());
   }
 
-  private boolean isContextComponentOk() {
-    return myContextComponent == null
-           || (myContextComponent.isVisible() && ComponentUtil.getParentOfType((Class<? extends JLayeredPane>)JLayeredPane.class,
-                                                                               (Component)myContextComponent) != null);
-  }
-
   @NotNull
   public final RelativePoint getPreferredPopupPoint() {
     Container c = myContextComponent;
@@ -164,19 +158,29 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
         break;
       }
     }
+
     if (toolbar instanceof JComponent) {
-      for (Component comp : ((JComponent)toolbar).getComponents()) {
-        if (comp instanceof ActionButtonComponent) {
-          if (comp instanceof AnActionHolder) {
-            if (((AnActionHolder)comp).getAction() == this) {
-              return new RelativePoint(comp.getParent(), new Point(comp.getX(), comp.getY() + comp.getHeight()));
-            }
+      RelativePoint preferredPoint = computePreferredPopupPoint((JComponent)toolbar, this);
+      if (preferredPoint != null) return preferredPoint;
+    }
+    LOG.error("Can't find toolbar button");
+    return RelativePoint.getCenterOf(myContextComponent);
+  }
+
+  public static @Nullable RelativePoint computePreferredPopupPoint(@NotNull JComponent toolbar, @NotNull AnAction action) {
+    for (Component comp : toolbar.getComponents()) {
+      if (comp instanceof ActionButtonComponent) {
+        if (comp instanceof AnActionHolder) {
+          AnAction componentAction = ((AnActionHolder)comp).getAction();
+          if (componentAction == action ||
+              (componentAction instanceof ActionWithDelegate<?> && ((ActionWithDelegate<?>)componentAction).getDelegate() == action)) {
+            return new RelativePoint(comp.getParent(), new Point(comp.getX(), comp.getY() + comp.getHeight()));
           }
         }
       }
     }
-    LOG.error("Can't find toolbar button");
-    return RelativePoint.getCenterOf(myContextComponent);
+
+    return null;
   }
 
   public void addActionButtonListener(ActionButtonListener l, Disposable parentDisposable) {
@@ -210,11 +214,6 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     @Override
     public void updateButton(@NotNull AnActionEvent e) {
       myAction.update(e);
-      final boolean enabled = e.getPresentation().isEnabled();
-      final boolean visible = e.getPresentation().isVisible();
-      if (enabled && visible) {
-        super.updateButton(e);
-      }
     }
 
     @Override

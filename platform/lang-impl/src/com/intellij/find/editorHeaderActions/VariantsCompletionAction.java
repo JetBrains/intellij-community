@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.editorHeaderActions;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -54,7 +53,6 @@ public class VariantsCompletionAction extends DumbAwareAction implements LightEd
       return;
     }
 
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("find.completion");
     final JList<String> list = new JBList<>(array) {
       @Override
       protected void paintComponent(final Graphics g) {

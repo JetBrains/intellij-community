@@ -55,6 +55,7 @@ internal class GHPRTimelineFileEditor(private val project: Project,
         .subscribe(TOPIC, EditorColorsListener { scheme -> it.background = scheme?.defaultBackground })
 
       val prevProvider = DataManager.getDataProvider(it)
+      DataManager.removeDataProvider(it) // suppress warning - we're delegating to the old provider
       DataManager.registerDataProvider(it) { dataId ->
         when {
           GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> dataProvider

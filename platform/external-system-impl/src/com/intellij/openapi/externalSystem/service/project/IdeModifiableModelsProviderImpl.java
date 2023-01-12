@@ -188,7 +188,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
         }
       }
       myModifiableModels.values().forEach(ModifiableModel::commit);
-      WorkspaceModel.getInstance(myProject).updateProjectModel(builder -> {
+      WorkspaceModel.getInstance(myProject).updateProjectModel("External system: commit model", builder -> {
         MutableEntityStorage storageBuilder = getActualStorageBuilder();
         if (LOG.isTraceEnabled()) {
           LOG.trace("Apply builder in ModifiableModels commit. builder: " + storageBuilder);

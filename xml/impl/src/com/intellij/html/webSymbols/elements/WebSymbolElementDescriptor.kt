@@ -3,8 +3,8 @@ package com.intellij.html.webSymbols.elements
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
-import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension.HtmlElementDescriptorBasedSymbol
-import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension.StandardHtmlSymbol
+import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator.HtmlElementDescriptorBasedSymbol
+import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator.StandardHtmlSymbol
 import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl
@@ -15,7 +15,7 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
-import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.xml.*
 import com.intellij.xml.impl.XmlElementDescriptorEx
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor
@@ -36,12 +36,12 @@ open class WebSymbolElementDescriptor private constructor(private val tag: XmlTa
                         virtualSymbols: Boolean = true,
                         abstractSymbols: Boolean = false,
                         strictScope: Boolean = false): List<WebSymbol> =
-    WebSymbolsRegistryManager.get(tag).runNameMatchQuery(path, virtualSymbols, abstractSymbols, strictScope, listOf(symbol))
+    WebSymbolsQueryExecutorFactory.create(tag).runNameMatchQuery(path, virtualSymbols, abstractSymbols, strictScope, listOf(symbol))
 
   fun runCodeCompletionQuery(path: List<String>,
                              position: Int,
                              virtualSymbols: Boolean = true): List<WebSymbolCodeCompletionItem> =
-    WebSymbolsRegistryManager.get(tag).runCodeCompletionQuery(path, position, virtualSymbols, listOf(symbol))
+    WebSymbolsQueryExecutorFactory.create(tag).runCodeCompletionQuery(path, position, virtualSymbols, listOf(symbol))
 
   override fun getQualifiedName(): String {
     return name

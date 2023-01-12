@@ -33,6 +33,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	script.attrs.language? # restricted in Schematron
 		&	script.attrs.integrity?
 		&	embedded.content.attrs.crossorigin?
+		&	common.attrs.blocking?
 		&	referrerpolicy?
 		)
 		script.attrs.src =
@@ -114,6 +115,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 	common.attrs.scripting &=
 		(	scripting.attr.onabort?
 		&	scripting.attr.onauxclick?
+		&	scripting.attr.onbeforeinput?
+		&	scripting.attr.onbeforematch?
 		&	scripting.attr.onblur?
 		&	scripting.attr.oncancel?
 		&	scripting.attr.oncanplay?
@@ -121,7 +124,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	scripting.attr.onchange?
 		&	scripting.attr.onclick?
 		&	scripting.attr.onclose?
+		&	scripting.attr.oncontextlost?
 		&	scripting.attr.oncontextmenu?
+		&	scripting.attr.oncontextrestored?
 		&	scripting.attr.oncopy?
 		&	scripting.attr.oncuechange?
 		&	scripting.attr.oncut?
@@ -191,12 +196,16 @@ datatypes w = "http://whattf.org/datatype-draft"
 		attribute onabort { common.data.functionbody }
 	scripting.attr.onauxclick =
 		attribute onauxclick { common.data.functionbody }
+	scripting.attr.onbeforeinput =
+		attribute onbeforeinput { common.data.functionbody }
+	scripting.attr.onbeforematch =
+		attribute onbeforematch { common.data.functionbody }
 	scripting.attr.onblur =
 		attribute onblur { common.data.functionbody }
-	scripting.attr.oncanplay =
-		attribute oncanplay { common.data.functionbody }
 	scripting.attr.oncancel =
 		attribute oncancel { common.data.functionbody }
+	scripting.attr.oncanplay =
+		attribute oncanplay { common.data.functionbody }
 	scripting.attr.oncanplaythrough =
 		attribute oncanplaythrough { common.data.functionbody }
 	scripting.attr.onchange =
@@ -205,8 +214,12 @@ datatypes w = "http://whattf.org/datatype-draft"
 		attribute onclick { common.data.functionbody }
 	scripting.attr.onclose =
 		attribute onclose { common.data.functionbody }
+	scripting.attr.oncontextlost =
+		attribute oncontextlost { common.data.functionbody }
 	scripting.attr.oncontextmenu =
 		attribute oncontextmenu { common.data.functionbody }
+	scripting.attr.oncontextrestored =
+		attribute oncontextrestored { common.data.functionbody }
 	scripting.attr.oncopy =
 		attribute oncopy { common.data.functionbody }
 	scripting.attr.oncuechange =
@@ -333,6 +346,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 		attribute onvolumechange { common.data.functionbody }
 	scripting.attr.onwaiting =
 		attribute onwaiting { common.data.functionbody }
+	scripting.attr.onwheel =
+		attribute onwheel { common.data.functionbody }
 
 #	scripting.attr.common =
 #		(	scripting.attr.mouse

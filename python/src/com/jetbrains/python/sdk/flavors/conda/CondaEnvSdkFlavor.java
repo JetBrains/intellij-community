@@ -35,6 +35,13 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor<PyCondaFlavorData>
     return PythonSdkFlavor.EP_NAME.findExtension(CondaEnvSdkFlavor.class);
   }
 
+
+  @Override
+  public boolean providePyCharmHosted() {
+    // Conda + Colorama doesn't play well with this var, see DS-4036
+    return false;
+  }
+
   @Override
   public boolean supportsVirtualEnvActivation() {
     // Conda has its own machinery to set env vars, so it doesn't need explicit activation.

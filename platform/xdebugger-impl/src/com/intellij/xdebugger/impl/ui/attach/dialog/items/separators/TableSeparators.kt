@@ -8,13 +8,25 @@ import com.intellij.ui.paint.RectanglePainter
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
 import java.awt.*
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 import kotlin.math.max
 
 abstract class TableGroupHeaderSeparator(private val hideLine: Boolean) : SeparatorWithText() {
-  private var myLabelInsets: Insets = JBUI.insets(3, 18)
+
+  companion object {
+    private val LINE_HEIGHT = JBUI.scale(1)
+    private val LABEL_TOP_BOTTOM_INSETS = JBUI.scale(3)
+    private val LINE_TOP_BOTTOM_INSETS = JBUI.scale(6)
+
+    fun getExpectedHeight(hideLine: Boolean): Int {
+      return LABEL_TOP_BOTTOM_INSETS * 2 + AttachDialogState.DEFAULT_ROW_HEIGHT + (if (hideLine) 0 else LINE_HEIGHT + LINE_TOP_BOTTOM_INSETS * 2)
+    }
+  }
+
+  private var myLabelInsets: Insets = JBUI.insets(LABEL_TOP_BOTTOM_INSETS, 8)
   private var baseLineInsets: Insets
 
   init {
@@ -26,6 +38,7 @@ abstract class TableGroupHeaderSeparator(private val hideLine: Boolean) : Separa
     else {
       baseLineInsets = JBUI.insets(getVgap(), getHgap(), getVgap(), getHgap())
     }
+    baseLineInsets.set(LINE_TOP_BOTTOM_INSETS, baseLineInsets.left, LINE_TOP_BOTTOM_INSETS, baseLineInsets.right)
   }
 
   override fun getInsets(): Insets = JBInsets.emptyInsets()
@@ -52,7 +65,7 @@ abstract class TableGroupHeaderSeparator(private val hideLine: Boolean) : Separa
     val lineInsets = getModifiedLineInsets(baseLineInsets)
     if (!hideLine) {
       paintLine(g, bounds)
-      val lineHeight = lineInsets.top + lineInsets.bottom + 1
+      val lineHeight = lineInsets.top + lineInsets.bottom + LINE_HEIGHT
       bounds.y += lineHeight
       bounds.height -= lineHeight
     }

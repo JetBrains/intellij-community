@@ -20,7 +20,7 @@ import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceSet
 
 fun ObjClass<*>.implWsEntityBuilderCode(): String {
   return """
-    class Builder(var result: $javaDataName?): ${ModifiableWorkspaceEntityBase::class.fqn}<$javaFullName>(), $javaBuilderName {
+    class Builder(result: $javaDataName?): ${ModifiableWorkspaceEntityBase::class.fqn}<$javaFullName, $javaDataName>(result), $javaBuilderName {
         constructor(): this($javaDataName())
         
 ${
@@ -41,7 +41,7 @@ ${
         line("this.id = getEntityData().createEntityId()")
         lineComment("After adding entity data to the builder, we need to unbind it and move the control over entity data to builder")
         lineComment("Builder may switch to snapshot at any moment and lock entity data to modification")
-        line("this.result = null")
+        line("this.currentEntityData = null")
         line()
         list(vfuFields) {
           val suffix = if (valueType is ValueType.Collection<*, *>) ".toHashSet()" else ""
@@ -146,7 +146,6 @@ ${
         
         ${allFields.filter { it.name != "symbolicId" }.lines("        ") { implWsBuilderFieldCode }.trimEnd()}
         
-        override fun getEntityData(): $javaDataName${if (openness.extendable) "<T>" else ""} = result ?: super.getEntityData() as $javaDataName${if (openness.extendable) "<T>" else ""}
         override fun getEntityClass(): Class<$javaFullName> = $javaFullName::class.java
     }
     """.trimIndent()

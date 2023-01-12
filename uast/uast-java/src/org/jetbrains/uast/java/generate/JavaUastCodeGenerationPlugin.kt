@@ -123,7 +123,14 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
 
     val elementFactory = JavaPsiFacade.getInstance(psiMethod.project).elementFactory
     val prefix = if (uField.name == uParameter.name) "this." else ""
-    body.add(elementFactory.createStatementFromText("$prefix${uField.name} = ${uParameter.name};", psiMethod))
+    val statement = elementFactory.createStatementFromText("$prefix${uField.name} = ${uParameter.name};", psiMethod)
+    val lastBodyElement = body.lastBodyElement
+    if (lastBodyElement is PsiWhiteSpace) {
+      lastBodyElement.replace(statement)
+    }
+    else {
+      body.add(statement)
+    }
   }
 }
 

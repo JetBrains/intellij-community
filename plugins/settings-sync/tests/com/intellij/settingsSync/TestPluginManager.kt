@@ -59,7 +59,7 @@ internal class TestPluginManager : PluginManagerProxy {
     else PluginManagerCore.findPlugin(pluginId)
   }
 
-  override fun createInstaller(): SettingsSyncPluginInstaller {
+  override fun createInstaller(notifyErrors: Boolean): SettingsSyncPluginInstaller {
     return installer
   }
 

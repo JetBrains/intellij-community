@@ -17,11 +17,16 @@ import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.*
 import java.io.InputStream
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
 import java.time.Instant
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 import kotlin.random.Random
 
@@ -135,19 +140,23 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
                                roamingType: RoamingType,
                                filter: (name: String) -> Boolean,
                                processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean {
-    rootConfig.resolve(path).directoryStreamIfExists({ filter(it.fileName.toString()) }) { fileStream ->
-      for (file in fileStream) {
+    val folder = rootConfig.resolve(path)
+    if (!folder.exists()) return true
+
+    Files.walkFileTree(folder, object : SimpleFileVisitor<Path>() {
+      override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
+        if (!filter(file.name)) return FileVisitResult.CONTINUE
+        if (!file.isFile()) return FileVisitResult.CONTINUE
+
         val shouldProceed = file.inputStream().use { inputStream ->
           val fileSpec = rootConfig.relativize(file).systemIndependentPath
           read(fileSpec) {
             processor(file.fileName.toString(), inputStream, false)
           }
         }
-        if (!shouldProceed) {
-          break
-        }
+        return if (shouldProceed) FileVisitResult.CONTINUE else FileVisitResult.TERMINATE
       }
-    }
+    })
     // this method is called only for reading => no SETTINGS_CHANGED_TOPIC message is needed
     return true
   }
