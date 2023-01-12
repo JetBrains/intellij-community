@@ -480,6 +480,9 @@
     <projectService serviceInterface="com.intellij.openapi.project.DumbService" serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.project.DumbUtil" serviceImplementation="com.intellij.openapi.project.DumbUtilImpl"/>
+    
+    <projectService serviceInterface="com.intellij.openapi.project.BaseProjectDirectories"
+                    serviceImplementation="com.intellij.ide.project.impl.BaseProjectDirectoriesImpl"/>
 
     <projectService serviceImplementation="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"/>
     <registryKey key="scroll.to.first.trace" defaultValue="true"

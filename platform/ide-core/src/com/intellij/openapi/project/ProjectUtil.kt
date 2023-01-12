@@ -15,6 +15,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
@@ -144,6 +145,10 @@ fun Project.guessProjectDir() : VirtualFile? {
     .firstOrNull()
   if (customBaseDir != null) {
     return customBaseDir
+  }
+  val baseDirectory = getBaseDirectories().firstOrNull()
+  if (baseDirectory != null) {
+    return baseDirectory
   }
 
   val modules = ModuleManager.getInstance(this).modules
