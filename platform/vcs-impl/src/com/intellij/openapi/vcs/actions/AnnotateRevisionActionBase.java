@@ -126,7 +126,7 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
         try {
           FileAnnotation fileAnnotation = annotationProvider.annotate(file, fileRevision);
 
-          int newLine = translateLine(oldContent, fileAnnotation.getAnnotatedContent(), annotatedLine);
+          int newLine = annotatedLine < 0 ? -1 : translateLine(oldContent, fileAnnotation.getAnnotatedContent(), annotatedLine);
 
           fileAnnotationRef.set(fileAnnotation);
           newLineRef.set(newLine);
