@@ -69,6 +69,8 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   // as part of EDT task scheduled in a start-up activity, do fill it. That's to avoid flickering due to resizing.
   @RequiresEdt
   fun init(actionGroups: List<Pair<ActionGroup, String>>) {
+    removeAll()
+
     mainMenuButton?.let {
       addWidget(it.button, HorizontalLayout.LEFT)
     }

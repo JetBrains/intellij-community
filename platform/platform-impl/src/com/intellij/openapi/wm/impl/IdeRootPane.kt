@@ -164,7 +164,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     updateMainMenuVisibility()
 
     if (helper.toolbarHolder == null) {
-      toolbar = createToolbar(initActions = true)
+      toolbar = createToolbar()
       northPanel.add(toolbar, 0)
       val uiSettings = UISettings.shadowInstance
       val visible = !isToolbarInHeader(uiSettings) && !uiSettings.presentationMode
@@ -574,12 +574,10 @@ private val isDecoratedMenu: Boolean
     return osSupported && (isToolbarInHeader() || IdeFrameDecorator.isCustomDecorationActive())
   }
 
-private fun createToolbar(initActions: Boolean = true): JComponent {
+private fun createToolbar(): JComponent {
   if (ExperimentalUI.isNewUI()) {
     val toolbar = MainToolbar()
-    if (initActions) {
-      toolbar.init(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
-    }
+    toolbar.init(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
     toolbar.border = JBUI.Borders.empty()
     return toolbar
   }
