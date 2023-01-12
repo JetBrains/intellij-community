@@ -261,6 +261,9 @@ private class CopyrightManagerDocumentListener : BulkFileListener {
   }
 
   private fun handleEvent(virtualFile: VirtualFile, project: Project) {
+    val copyrightManager = CopyrightManager.getInstance(project)
+    if (!copyrightManager.hasAnyCopyrights()) return
+
     val module = ProjectRootManager.getInstance(project).fileIndex.getModuleForFile(virtualFile) ?: return
     if (!FileTypeUtil.isSupportedFile(virtualFile)) {
       return
@@ -272,7 +275,7 @@ private class CopyrightManagerDocumentListener : BulkFileListener {
       return
     }
 
-    CopyrightManager.getInstance(project).getCopyrightOptions(file) ?: return
+    copyrightManager.getCopyrightOptions(file) ?: return
 
     AppUIExecutor.onUiThread(ModalityState.NON_MODAL).later().withDocumentsCommitted(project).execute {
       if (project.isDisposed || !file.isValid) {
