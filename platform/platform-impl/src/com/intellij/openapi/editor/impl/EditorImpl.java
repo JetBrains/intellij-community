@@ -545,6 +545,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
     Disposer.register(myDisposable, myScrollingPositionKeeper);
     putUserData(INITIALIZED, Boolean.TRUE);
+
+    myScrollPane.getHorizontalScrollBar().updateUI();
   }
 
   public void applyFocusMode() {
@@ -5087,7 +5089,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public @NotNull JScrollBar createHorizontalScrollBar() {
-      return new OpaqueAwareScrollBar(Adjustable.HORIZONTAL);
+      return new OpaqueAwareScrollBar(Adjustable.HORIZONTAL) {
+        @Override
+        public void updateUI() {
+          //noinspection ConstantValue
+          if (SystemInfo.isMac && myMarkupModel != null) {
+            setUI(myMarkupModel.createMacHorizontalScrollBarUI());
+          }
+          else {
+            super.updateUI();
+          }
+        }
+      };
     }
 
     @Override
