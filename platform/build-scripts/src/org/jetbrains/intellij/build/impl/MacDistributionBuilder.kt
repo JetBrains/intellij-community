@@ -148,6 +148,7 @@ class MacDistributionBuilder(override val context: BuildContext,
       val compressionLevel = if (publishSit || publishZipOnly) Deflater.DEFAULT_COMPRESSION else Deflater.BEST_SPEED
       if (context.options.buildMacArtifactsWithRuntime) {
         buildMacZip(
+          arch = arch,
           targetFile = macZip,
           zipRoot = zipRoot,
           productJson = generateMacProductJson(builtinModule = context.builtinModule,
@@ -156,12 +157,13 @@ class MacDistributionBuilder(override val context: BuildContext,
                                                context = context),
           directories = directories,
           extraFiles = extraFiles,
-          executableFilePatterns = generateExecutableFilesPatterns(true),
+          includeRuntime = true,
           compressionLevel = compressionLevel
         )
       }
       if (context.options.buildMacArtifactsWithoutRuntime) {
         buildMacZip(
+          arch = arch,
           targetFile = macZipWithoutRuntime,
           zipRoot = zipRoot,
           productJson = generateMacProductJson(builtinModule = context.builtinModule,
@@ -170,7 +172,7 @@ class MacDistributionBuilder(override val context: BuildContext,
                                                context = context),
           directories = directories.filterNot { it == runtimeDist },
           extraFiles = extraFiles,
-          executableFilePatterns = generateExecutableFilesPatterns(false),
+          includeRuntime = false,
           compressionLevel = compressionLevel
         )
       }
@@ -454,22 +456,23 @@ internal fun generateMacProductJson(builtinModule: BuiltinModulesFileData?,
 
 private suspend fun MacDistributionBuilder.buildMacZip(targetFile: Path,
                                                        zipRoot: String,
+                                                       arch: JvmArchitecture,
                                                        productJson: String,
                                                        directories: List<Path>,
                                                        extraFiles: Collection<DistFile>,
-                                                       executableFilePatterns: List<String>,
+                                                       includeRuntime: Boolean,
                                                        compressionLevel: Int) {
+  val executableFileMatchers = generateExecutableFilesMatchers(includeRuntime, arch)
   withContext(Dispatchers.IO) {
     spanBuilder("build zip archive for macOS")
       .setAttribute("file", targetFile.toString())
       .setAttribute("zipRoot", zipRoot)
-      .setAttribute(AttributeKey.stringArrayKey("executableFilePatterns"), executableFilePatterns)
+      .setAttribute(AttributeKey.stringArrayKey("executableFilePatterns"), executableFileMatchers.values.toList())
       .useWithScope2 {
-        for (dir in directories) {
-          updateExecutablePermissions(dir, executableFilePatterns)
-        }
-        val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, _ ->
-          if (SystemInfoRt.isUnix && PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions(file)) {
+        val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, relativePathString ->
+          val relativePath = Path.of(relativePathString)
+          if (executableFileMatchers.any { it.key.matches(relativePath) } ||
+              SystemInfoRt.isUnix && PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions(file)) {
             entry.unixMode = executableFileUnixMode
           }
         }
