@@ -92,7 +92,6 @@ public abstract class CollectionsListSettings {
   }
   
   public @NotNull OptionController getOptionController() {
-    return OptionController.empty().onValue("myCollectionClassesRequiringCapacity",
-                                            () -> myCollectionClassesRequiringCapacity);
+    return OptionController.fieldsOf(this);
   }
 }

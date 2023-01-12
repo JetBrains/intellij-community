@@ -25,7 +25,6 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.serialization.SerializationException;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.CollectionFactory;
@@ -43,7 +42,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Field;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -367,31 +365,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * {@link OptionController#onValue}.
    */
   public @NotNull OptionController getOptionController() {
-    return OptionController.of(
-      bindId -> {
-        Field field;
-        try {
-          field = ReflectionUtil.findAssignableField(getClass(), null, bindId);
-        }
-        catch (NoSuchFieldException e) {
-          throw new IllegalArgumentException("Inspection " + getClass().getName() + ": Unable to find bindId = " + bindId, e);
-        }
-        return ReflectionUtil.getFieldValue(field, this);
-      },
-      (bindId, value) -> {
-        try {
-          final Field field = ReflectionUtil.findAssignableField(getClass(), null, bindId);
-          if (ReflectionUtil.getFieldValue(field, this) != value) {
-            // Avoid updating field if new value is not the same
-            // this way we can support final mutable fields, used by e.g. OptSet 
-            field.set(this, value);
-          }
-        }
-        catch (NoSuchFieldException | IllegalAccessException e) {
-          throw new IllegalArgumentException("Inspection " + getClass().getName() + ": Unable to find bindId = " + bindId, e);
-        }
-      }
-    );
+    return OptionController.fieldsOf(this);
   }
 
   /**
