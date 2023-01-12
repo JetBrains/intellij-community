@@ -97,7 +97,14 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
       myProcess.getOutputStream().close();
     }
     catch (IOException e) {
-      LOG.warn(e);
+      // The process may have already terminated, but some data has not yet been written to its standard input.
+      // For example, `com.intellij.execution.process.ProcessServiceImpl.sendWinProcessCtrlC(int, OutputStream)`
+      // tries to terminate a process with `GenerateConsoleCtrlEvent(CTRL_C_EVENT)` and then writes `-1` to process's input to
+      // unblock ReadConsoleW/ReadFile.
+      // In this case, `close` will expectedly fail, but logging it doesn't make much sense.
+      if (myProcess.isAlive()) {
+        LOG.warn("Cannot close stdin of '" + getCommandLine() + "'", e);
+      }
     }
   }
 }
