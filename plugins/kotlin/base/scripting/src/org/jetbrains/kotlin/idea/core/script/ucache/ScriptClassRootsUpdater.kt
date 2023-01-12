@@ -3,10 +3,7 @@
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
@@ -22,12 +19,14 @@ import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.applyIf
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.base.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptDependenciesClassFinder
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.dependencies.hasGradleDependency
@@ -37,6 +36,7 @@ import org.jetbrains.kotlin.idea.util.FirPluginOracleService
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -230,13 +230,10 @@ abstract class ScriptClassRootsUpdater(
                         val actualScriptPaths = updates.cache.scriptsPaths()
                         val (filesToAddOrUpdate, filesToRemove) = updatedScriptFiles.partition { actualScriptPaths.contains(it.path) }
 
-                        // Here we're sometimes under read-lock, so there is no way to call syncScriptEntities() synchronously (dead lock)
-                        runInEdt(ModalityState.NON_MODAL) {
-                            runWriteAction {
-                                if (!project.isDisposed)
-                                    project.syncScriptEntities(filesToAddOrUpdate, filesToRemove)
-                            }
-                        }
+                        // Here we're sometimes under read-lock.
+                        // There is no way to acquire write-lock (on EDT) without releasing this thread.
+
+                        applyDiffToModel(filesToAddOrUpdate, filesToRemove)
                     }
             }
 
@@ -299,6 +296,34 @@ abstract class ScriptClassRootsUpdater(
             }
         } finally {
             scheduledUpdate = null
+        }
+    }
+
+    private fun applyDiffToModel(
+        filesToAddOrUpdate: List<VirtualFile>,
+        filesToRemove: List<VirtualFile>
+    ) {
+        if (project.isDisposed) return
+
+        val builderSnapshot = WorkspaceModel.getInstance(project).getBuilderSnapshot()
+        builderSnapshot.syncScriptEntities(project, filesToAddOrUpdate, filesToRemove) // time-consuming call
+        val replacement = builderSnapshot.getStorageReplacement()
+
+        runInEdt(ModalityState.NON_MODAL) {
+            val replaced = runWriteAction {
+                if (project.isDisposed) false
+                else WorkspaceModel.getInstance(project).replaceProjectModel(replacement)
+            }
+            if (!replaced) {
+                // initiate update once again
+                if (ApplicationManager.getApplication().isUnitTestMode) {
+                    applyDiffToModel(filesToAddOrUpdate, filesToRemove)
+                } else {
+                    BackgroundTaskUtil.executeOnPooledThread(KotlinPluginDisposable.getInstance(project)) {
+                        applyDiffToModel(filesToAddOrUpdate, filesToRemove)
+                    }
+                }
+            }
         }
     }
 
