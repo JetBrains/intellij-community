@@ -64,7 +64,7 @@ internal class SafeStatementPointer(
    * @param task the function to run
    * @return the return of the passed in function
    */
-  inline fun safeRunInt(task: (db: DB, pointer: Long) -> Int): Int {
+  inline fun safeRunInt(task: (db: DB, statementPointer: Long) -> Int): Int {
     synchronized(db) {
       ensureOpen()
       return task(db, pointer)

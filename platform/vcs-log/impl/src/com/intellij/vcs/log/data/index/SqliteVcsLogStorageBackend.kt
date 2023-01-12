@@ -21,6 +21,9 @@ import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntSet
 import kotlinx.coroutines.*
 import org.intellij.lang.annotations.Language
+import org.jetbrains.sqlite.EmptyBinder
+import org.jetbrains.sqlite.IntBinder
+import org.jetbrains.sqlite.ObjectBinder
 import org.jetbrains.sqlite.StatementCollection
 import org.jetbrains.sqlite.core.SqliteConnection
 import org.jetbrains.sqlite.core.SqlitePreparedStatement
@@ -137,9 +140,10 @@ internal class SqliteVcsLogStorageBackend(project: Project) : VcsLogStorageBacke
   }
 
   override fun collectMissingCommits(commitIds: IntSet, missing: IntSet) {
-    connection.prepareStatement("select exists (select commitId from log where commitId = ?)").use { statement ->
+    val batch = IntBinder(paramCount = 1)
+    connection.prepareStatement("select exists (select commitId from log where commitId = ?)", batch).use { statement ->
       commitIds.forEach(IntConsumer {
-        statement.setInt(1, it)
+        batch.bind(it)
         if (!statement.selectBoolean()) {
           missing.add(it)
         }
@@ -152,41 +156,44 @@ internal class SqliteVcsLogStorageBackend(project: Project) : VcsLogStorageBacke
   }
 
   override fun getCommitterOrAuthor(commitId: Int, getUserById: IntFunction<VcsUser>, getAuthorForCommit: IntFunction<VcsUser>): VcsUser? {
-    connection.prepareStatement("select committerId from log where commitId = ?").use { statement ->
-      statement.setInt(1, commitId)
+    val batch = IntBinder(paramCount = 1)
+    connection.prepareStatement("select committerId from log where commitId = ?", batch).use { statement ->
+      batch.bind(commitId)
       val resultSet = statement.executeQuery()
       if (!resultSet.next()) {
         return null
       }
 
-      val result = resultSet.getInt(1)
+      val result = resultSet.getInt(0)
       return if (resultSet.wasNull()) getAuthorForCommit.apply(commitId) else getUserById.apply(result)
     }
   }
 
   override fun getTimestamp(commitId: Int): LongArray? {
-    connection.prepareStatement("select authorTime, commitTime from log where commitId = ?").use { statement ->
-      statement.setInt(1, commitId)
+    val batch = IntBinder(paramCount = 1)
+    connection.prepareStatement("select authorTime, commitTime from log where commitId = ?", batch).use { statement ->
+      batch.bind(commitId)
       val resultSet = statement.executeQuery()
       if (!resultSet.next()) {
         return null
       }
-      return longArrayOf(resultSet.getLong(1), resultSet.getLong(2))
+      return longArrayOf(resultSet.getLong(0), resultSet.getLong(1))
     }
   }
 
   override fun getParent(commitId: Int): IntArray {
-    connection.prepareStatement("select parent from parent where commitId = ?").use { statement ->
-      statement.setInt(1, commitId)
+    val batch = IntBinder(paramCount = 1)
+    connection.prepareStatement("select parent from parent where commitId = ?", batch).use { statement ->
+      batch.bind(commitId)
       return readIntArray(statement)
     }
   }
 
   override fun processMessages(processor: (Int, String) -> Boolean) {
-    connection.prepareStatement("select commitId, message from log").use { statement ->
+    connection.prepareStatement("select commitId, message from log", EmptyBinder).use { statement ->
       val resultSet = statement.executeQuery()
       while (resultSet.next()) {
-        if (!processor(resultSet.getInt(1), resultSet.getString(2)!!)) {
+        if (!processor(resultSet.getInt(0), resultSet.getString(1)!!)) {
           break
         }
       }
@@ -199,12 +206,11 @@ internal class SqliteVcsLogStorageBackend(project: Project) : VcsLogStorageBacke
       connection.beginTransaction()
       connection.execute(RENAME_DELETE_SQL, arrayOf(parent, child))
 
-      connection.prepareStatement(RENAME_SQL).use { statement ->
+      val batch = IntBinder(paramCount = 3)
+      connection.prepareStatement(RENAME_SQL, batch).use { statement ->
         for (rename in renames) {
-          statement.setInt(1, parent)
-          statement.setInt(2, child)
-          statement.setInt(3, rename)
-          statement.addBatch()
+          batch.bind(parent, child, rename)
+          batch.addBatch()
         }
 
         statement.executeBatch()
@@ -226,9 +232,9 @@ internal class SqliteVcsLogStorageBackend(project: Project) : VcsLogStorageBacke
   }
 
   override fun getRename(parent: Int, child: Int): IntArray {
-    connection.prepareStatement("select rename from rename where parent = ? and child = ?").use { statement ->
-      statement.setInt(1, parent)
-      statement.setInt(2, child)
+    val batch = IntBinder(paramCount = 2)
+    connection.prepareStatement("select rename from rename where parent = ? and child = ?", batch).use { statement ->
+      batch.bind(parent, child)
       return readIntArray(statement)
     }
   }
@@ -246,9 +252,10 @@ internal class SqliteVcsLogStorageBackend(project: Project) : VcsLogStorageBacke
     // So, we use `like` instead of a full-text query if the string is fewer than 3 chars.
 
     val stringParam: String
+    val batch = ObjectBinder(1)
     val statement = if (string.length >= 3) {
       stringParam = '"' + string.replace("\"", "\"\"") + '"'
-      connection.prepareStatement("select rowid, message from fts_message_index(?)")
+      connection.prepareStatement("select rowid, message from fts_message_index(?)", batch)
     }
     else {
       stringParam = "%" + string
@@ -257,10 +264,10 @@ internal class SqliteVcsLogStorageBackend(project: Project) : VcsLogStorageBacke
         .replace("_", "!_")
         .replace("[", "![") + "%"
 
-      connection.prepareStatement("select rowid, message from fts_message_index where message like ? escape '!'")
+      connection.prepareStatement("select rowid, message from fts_message_index where message like ? escape '!'", batch)
     }
     statement.use {
-      statement.setString(1, stringParam)
+      batch.bind(stringParam)
       val resultSet = statement.executeQuery()
       if (!resultSet.next()) {
         // noTrigramSources is not used
@@ -269,8 +276,8 @@ internal class SqliteVcsLogStorageBackend(project: Project) : VcsLogStorageBacke
       }
 
       do {
-        val commitId = resultSet.getInt(1)
-        if ((candidates == null || candidates.contains(commitId)) && filter.matches(resultSet.getString(2)!!)) {
+        val commitId = resultSet.getInt(0)
+        if ((candidates == null || candidates.contains(commitId)) && filter.matches(resultSet.getString(1)!!)) {
           consumer.accept(commitId)
         }
       }
@@ -291,11 +298,11 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection) : Vcs
 
   private val statementCollection = StatementCollection(connection)
 
-  private val logStatement = statementCollection.prepareStatement("""
+  private val logBatch = statementCollection.prepareStatement("""
     insert into log(commitId, message, authorTime, commitTime, committerId) 
     values(?, ?, ?, ?, ?) 
     on conflict(commitId) do update set message=excluded.message
-    """)
+    """, ObjectBinder(paramCount = 5, batchCountHint = 256)).binder
 
   // first `delete`, then `insert` - `delete` statement must be added to the statement collection first
   private val parentDeleteStatement = statementCollection.prepareIntStatement("delete from parent where commitId = ?")
@@ -305,19 +312,9 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection) : Vcs
   private val renameStatement = statementCollection.prepareIntStatement(RENAME_SQL)
 
   override fun putCommit(commitId: Int, details: VcsLogIndexer.CompressedDetails, userToId: ToIntFunction<VcsUser>) {
-    logStatement.setInt(1, commitId)
-    logStatement.setString(2, details.fullMessage)
-    logStatement.setLong(3, details.authorTime)
-    logStatement.setLong(4, details.commitTime)
-
-    if (details.author == details.committer) {
-      logStatement.setNull(5)
-    }
-    else {
-      logStatement.setInt(5, userToId.applyAsInt(details.committer))
-    }
-
-    logStatement.addBatch()
+    val committer = if (details.author == details.committer) null else userToId.applyAsInt(details.committer)
+    logBatch.bind(commitId, details.fullMessage, details.authorTime, details.commitTime, committer)
+    logBatch.addBatch()
   }
 
   override fun putParents(commitId: Int, parents: List<Hash>, hashToId: ToIntFunction<Hash>) {
@@ -366,14 +363,14 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection) : Vcs
   }
 }
 
-private fun readIntArray(statement: SqlitePreparedStatement): IntArray {
+private fun readIntArray(statement: SqlitePreparedStatement<IntBinder>): IntArray {
   val resultSet = statement.executeQuery()
   if (!resultSet.next()) {
     // not a null because we cannot distinguish "no rows at all" vs "empty array was a value"
     return ArrayUtilRt.EMPTY_INT_ARRAY
   }
 
-  val first = resultSet.getInt(1)
+  val first = resultSet.getInt(0)
   if (!resultSet.next()) {
     return intArrayOf(first)
   }
@@ -381,7 +378,7 @@ private fun readIntArray(statement: SqlitePreparedStatement): IntArray {
   val result = IntArrayList()
   result.add(first)
   do {
-    result.add(resultSet.getInt(1))
+    result.add(resultSet.getInt(0))
   }
   while (resultSet.next())
   return result.toIntArray()

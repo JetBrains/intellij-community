@@ -8,7 +8,7 @@ import org.jetbrains.sqlite.*
 import java.nio.file.Files
 import java.nio.file.Path
 
-class SqliteConnection(file: Path, config: SQLiteConfig = SQLiteConfig()) : AutoCloseable {
+class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : AutoCloseable {
   //private final AtomicInteger savePoint = new AtomicInteger(0);
   @JvmField
   internal val db: NativeDB
@@ -59,10 +59,11 @@ class SqliteConnection(file: Path, config: SQLiteConfig = SQLiteConfig()) : Auto
   //}
 
   init {
-    file.parent?.let { Files.createDirectories(it) }
+    file?.parent?.let { Files.createDirectories(it) }
     loadNativeDb()
     db = NativeDB()
-    db.open(file.toAbsolutePath().normalize().toString(), config.openModeFlag)
+    @Suppress("IfThenToElvis")
+    db.open(if (file == null) ":memory:" else file.toAbsolutePath().normalize().toString(), config.openModeFlag)
     try {
       config.apply(this)
       currentBusyTimeout = config.busyTimeout
@@ -95,9 +96,9 @@ class SqliteConnection(file: Path, config: SQLiteConfig = SQLiteConfig()) : Auto
     }
   }
 
-  fun prepareStatement(@Language("SQLite") sql: String): SqlitePreparedStatement {
+  fun <T : Binder> prepareStatement(@Language("SQLite") sql: String, binder: T): SqlitePreparedStatement<T> {
     checkOpen()
-    return SqlitePreparedStatement(connection = this, sql = sql)
+    return SqlitePreparedStatement(connection = this, sql = sql, binder = binder)
   }
 
   val isClosed: Boolean

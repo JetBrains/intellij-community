@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.sqlite.core
 
-import java.io.Reader
-
-class SqliteResultSet(private val statement: SqlitePreparedStatement) {
+class SqliteResultSet(private val statement: SqlitePreparedStatement<*>) {
   /**
    * Checks the status of the result set. True, if it has results and can iterate them; false otherwise.
    */
@@ -37,15 +35,12 @@ class SqliteResultSet(private val statement: SqlitePreparedStatement) {
   val isClosed: Boolean
     get() = !isOpen
 
-  private val database: DB
-    get() = statement.db
-
   /**
    * Takes col in [1,x] forms and marks it as last accessed and returns [0,x-1]
    */
   private fun markColumn(column: Int): Int {
     lastColumn = column
-    return column - 1
+    return column
   }
 
   operator fun next(): Boolean {
@@ -72,7 +67,7 @@ class SqliteResultSet(private val statement: SqlitePreparedStatement) {
         row++
         true
       }
-      else -> throw database.newSQLException(statusCode)
+      else -> throw statement.db.newSQLException(statusCode)
     }
   }
 
@@ -91,7 +86,7 @@ class SqliteResultSet(private val statement: SqlitePreparedStatement) {
   //val isFirst: Boolean
   //  get() = row == 1
 
-  fun wasNull(): Boolean = safeGetColumnType(markColumn(lastColumn)) == Codes.SQLITE_NULL
+  fun wasNull(): Boolean = safeGetColumnType(lastColumn) == Codes.SQLITE_NULL
 
   ///** @see ResultSet.getBigDecimal
   // */
@@ -112,7 +107,7 @@ class SqliteResultSet(private val statement: SqlitePreparedStatement) {
   //  }
   //}
 
-  fun getBoolean(col: Int): Boolean = getInt(col) != 0
+  fun getBoolean(zeroBasedColumnIndex: Int): Boolean = getInt(zeroBasedColumnIndex) != 0
 
   ///** @see ResultSet.getBinaryStream
   // */
@@ -126,8 +121,6 @@ class SqliteResultSet(private val statement: SqlitePreparedStatement) {
     return statement.pointer.safeRun { db, pointer -> db.column_blob(pointer, markColumn(col)) }
   }
 
-  fun getCharacterStream(col: Int): Reader? = getString(col)?.reader()
-
   fun getDouble(col: Int): Double {
     return if (safeGetColumnType(markColumn(col)) == Codes.SQLITE_NULL) 0.0 else safeGetDoubleCol(col)
   }
@@ -136,33 +129,35 @@ class SqliteResultSet(private val statement: SqlitePreparedStatement) {
     return if (safeGetColumnType(markColumn(col)) == Codes.SQLITE_NULL) 0f else safeGetDoubleCol(col).toFloat()
   }
 
-  fun getInt(col: Int): Int {
-    return statement.pointer.safeRunInt { db, pointer -> db.column_int(pointer, markColumn(col)) }
-  }
-
-  fun getLong(column: Int): Long {
-    val pointer = statement.pointer
-    synchronized(pointer.db) {
-      pointer.ensureOpen()
-      return pointer.db.column_long(pointer.pointer, markColumn(column))
+  fun getInt(zeroBasedColumnIndex: Int): Int {
+    return statement.pointer.safeRunInt { db, pointer ->
+      db.column_int(pointer, markColumn(zeroBasedColumnIndex))
     }
   }
 
-  fun getString(col: Int): String? = safeGetColumnText(col)
-
-  private fun safeGetColumnType(col: Int): Int {
-    return statement.pointer.safeRunInt { db, ptr -> db.column_type(ptr, col) }
-  }
-
-  private fun safeGetDoubleCol(col: Int): Double {
+  fun getLong(zeroBasedColumnIndex: Int): Long {
     val pointer = statement.pointer
     synchronized(pointer.db) {
       pointer.ensureOpen()
-      return pointer.db.column_double(pointer.pointer, markColumn(col))
+      return pointer.db.column_long(pointer.pointer, markColumn(zeroBasedColumnIndex))
     }
   }
 
-  private fun safeGetColumnText(col: Int): String? {
-    return statement.pointer.safeRun { db, pointer -> db.column_text(pointer, markColumn(col)) }
+  fun getString(zeroBasedColumnIndex: Int): String? = safeGetColumnText(zeroBasedColumnIndex)
+
+  private fun safeGetColumnType(zeroBasedColumnIndex: Int): Int {
+    return statement.pointer.safeRunInt { db, ptr -> db.column_type(ptr, zeroBasedColumnIndex) }
+  }
+
+  private fun safeGetDoubleCol(zeroBasedColumnIndex: Int): Double {
+    val pointer = statement.pointer
+    synchronized(pointer.db) {
+      pointer.ensureOpen()
+      return pointer.db.column_double(pointer.pointer, markColumn(zeroBasedColumnIndex))
+    }
+  }
+
+  private fun safeGetColumnText(zeroBasedColumnIndex: Int): String? {
+    return statement.pointer.safeRun { db, pointer -> db.column_text(pointer, markColumn(zeroBasedColumnIndex)) }
   }
 }

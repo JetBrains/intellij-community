@@ -14,8 +14,8 @@ import org.jetbrains.sqlite.core.SqliteStatement
 class StatementCollection(private val connection: SqliteConnection) {
   private val statements = mutableListOf<SqliteStatement>()
 
-  fun prepareStatement(@Language("SQLite") sql: String): SqlitePreparedStatement {
-    val statement = connection.prepareStatement(sql)
+  fun <T : Binder> prepareStatement(@Language("SQLite") sql: String, binder: T): SqlitePreparedStatement<T> {
+    val statement = connection.prepareStatement(sql, binder)
     statements.add(statement)
     return statement
   }

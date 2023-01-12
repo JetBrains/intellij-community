@@ -175,55 +175,55 @@ public final class NativeDB extends DB {
 
   /** @see DB#column_text(long, int) */
   @Override
-  public synchronized String column_text(long stmt, int col) {
-    return utf8ByteBufferToString(column_text_utf8(stmt, col));
+  public synchronized String column_text(long statementPointer, int zeroBasedColumnIndex) {
+    return utf8ByteBufferToString(column_text_utf8(statementPointer, zeroBasedColumnIndex));
   }
 
   synchronized native ByteBuffer column_text_utf8(long stmt, int col);
 
   /** @see DB#column_blob(long, int) */
   @Override
-  public synchronized native byte[] column_blob(long stmt, int col);
+  public synchronized native byte[] column_blob(long statementPointer, int zeroBasedColumnIndex);
 
   /** @see DB#column_double(long, int) */
   @Override
-  public synchronized native double column_double(long stmt, int col);
+  public synchronized native double column_double(long statementPointer, int zeroBasedColumnIndex);
 
   /** @see DB#column_long(long, int) */
   @Override
-  public synchronized native long column_long(long stmt, int col);
+  public synchronized native long column_long(long statementPointer, int zeroBasedColumnIndex);
 
   /** @see DB#column_int(long, int) */
   @Override
-  public synchronized native int column_int(long stmt, int col);
+  public synchronized native int column_int(long statementPointer, int zeroBasedColumnIndex);
 
   /** @see DB#bind_null(long, int) */
   @Override
-  synchronized native int bind_null(long stmt, int pos);
+  synchronized native int bind_null(long stmt, int oneBasedColumnIndex);
 
   /** @see DB#bind_int(long, int, int) */
   @Override
-  synchronized native int bind_int(long stmt, int pos, int v);
+  public synchronized native int bind_int(long stmt, int oneBasedColumnIndex, int v);
 
   /** @see DB#bind_long(long, int, long) */
   @Override
-  synchronized native int bind_long(long stmt, int pos, long v);
+  public synchronized native int bind_long(long stmt, int oneBasedColumnIndex, long v);
 
   /** @see DB#bind_double(long, int, double) */
   @Override
-  synchronized native int bind_double(long stmt, int pos, double v);
+  synchronized native int bind_double(long stmt, int oneBasedColumnIndex, double v);
 
   /** @see DB#bind_text(long, int, String) */
   @Override
-  synchronized int bind_text(long stmt, int pos, String v) {
-    return bind_text_utf8(stmt, pos, stringToUtf8ByteArray(v));
+  synchronized int bind_text(long stmt, int oneBasedColumnIndex, String v) {
+    return bind_text_utf8(stmt, oneBasedColumnIndex, stringToUtf8ByteArray(v));
   }
 
   synchronized native int bind_text_utf8(long stmt, int pos, byte[] vUtf8);
 
   /** @see DB#bind_blob(long, int, byte[]) */
   @Override
-  synchronized native int bind_blob(long stmt, int pos, byte[] v);
+  synchronized native int bind_blob(long stmt, int oneBasedColumnIndex, byte[] v);
 
   /** @see DB#result_null(long) */
   @Override

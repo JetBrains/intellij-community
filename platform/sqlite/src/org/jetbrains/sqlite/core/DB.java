@@ -339,125 +339,18 @@ public abstract class DB implements Codes {
    */
   public abstract String column_name(long stmt, int col);
 
-  /**
-   * @param stmt Pointer to the statement.
-   * @param col  Number of column.
-   * @return Value of the column as text data type in the result set of a SELECT statement.
-   * @see <a
-   * href="http://www.sqlite.org/c3ref/column_blob.html">http://www.sqlite.org/c3ref/column_blob.html</a>
-   */
-  public abstract String column_text(long stmt, int col);
+  public abstract String column_text(long statementPointer, int zeroBasedColumnIndex);
+  public abstract byte[] column_blob(long statementPointer, int zeroBasedColumnIndex);
+  public abstract double column_double(long statementPointer, int zeroBasedColumnIndex);
+  public abstract long column_long(long statementPointer, int zeroBasedColumnIndex);
+  public abstract int column_int(long statementPointer, int zeroBasedColumnIndex);
 
-  /**
-   * @param stmt Pointer to the statement.
-   * @param col  Number of column.
-   * @return BLOB value of the column in the result set of a SELECT statement
-   * @see <a
-   * href="http://www.sqlite.org/c3ref/column_blob.html">http://www.sqlite.org/c3ref/column_blob.html</a>
-   */
-  public abstract byte[] column_blob(long stmt, int col);
-
-  /**
-   * @param stmt Pointer to the statement.
-   * @param col  Number of column.
-   * @return DOUBLE value of the column in the result set of a SELECT statement
-   * @see <a
-   * href="http://www.sqlite.org/c3ref/column_blob.html">http://www.sqlite.org/c3ref/column_blob.html</a>
-   */
-  public abstract double column_double(long stmt, int col);
-
-  /**
-   * @param stmt Pointer to the statement.
-   * @param col  Number of column.
-   * @return LONG value of the column in the result set of a SELECT statement.
-   * @see <a
-   * href="http://www.sqlite.org/c3ref/column_blob.html">http://www.sqlite.org/c3ref/column_blob.html</a>
-   */
-  public abstract long column_long(long stmt, int col);
-
-  /**
-   * @param stmt Pointer to the statement.
-   * @param col  Number of column.
-   * @return INT value of column in the result set of a SELECT statement.
-   * @see <a
-   * href="http://www.sqlite.org/c3ref/column_blob.html">http://www.sqlite.org/c3ref/column_blob.html</a>
-   */
-  public abstract int column_int(long stmt, int col);
-
-  /**
-   * Binds NULL value to prepared statements with the pointer to the statement object and the
-   * index of the SQL parameter to be set to NULL.
-   *
-   * @param stmt Pointer to the statement.
-   * @param pos  The index of the SQL parameter to be set to NULL.
-   * @return <a href="http://www.sqlite.org/c3ref/c_abort.html">Result Codes</a>
-   */
-  abstract int bind_null(long stmt, int pos);
-
-  /**
-   * Binds int value to prepared statements with the pointer to the statement object, the index of
-   * the SQL parameter to be set and the value to bind to the parameter.
-   *
-   * @param stmt Pointer to the statement.
-   * @param pos  The index of the SQL parameter to be set.
-   * @param v    Value to bind to the parameter.
-   * @return <a href="http://www.sqlite.org/c3ref/c_abort.html">Result Codes</a>
-   * @see <a
-   * href="http://www.sqlite.org/c3ref/bind_blob.html">http://www.sqlite.org/c3ref/bind_blob.html</a>
-   */
-  abstract int bind_int(long stmt, int pos, int v);
-
-  /**
-   * Binds long value to prepared statements with the pointer to the statement object, the index
-   * of the SQL parameter to be set and the value to bind to the parameter.
-   *
-   * @param stmt Pointer to the statement.
-   * @param pos  The index of the SQL parameter to be set.
-   * @param v    Value to bind to the parameter.
-   * @return <a href="http://www.sqlite.org/c3ref/c_abort.html">Result Codes</a>
-   * @see <a
-   * href="http://www.sqlite.org/c3ref/bind_blob.html">http://www.sqlite.org/c3ref/bind_blob.html</a>
-   */
-  abstract int bind_long(long stmt, int pos, long v);
-
-  /**
-   * Binds double value to prepared statements with the pointer to the statement object, the index
-   * of the SQL parameter to be set and the value to bind to the parameter.
-   *
-   * @param stmt Pointer to the statement.
-   * @param pos  Index of the SQL parameter to be set.
-   * @param v    Value to bind to the parameter.
-   * @return <a href="http://www.sqlite.org/c3ref/c_abort.html">Result Codes</a>
-   * @see <a
-   * href="http://www.sqlite.org/c3ref/bind_blob.html">http://www.sqlite.org/c3ref/bind_blob.html</a>
-   */
-  abstract int bind_double(long stmt, int pos, double v);
-
-  /**
-   * Binds text value to prepared statements with the pointer to the statement object, the index
-   * of the SQL parameter to be set and the value to bind to the parameter.
-   *
-   * @param stmt Pointer to the statement.
-   * @param pos  Index of the SQL parameter to be set.
-   * @param v    value to bind to the parameter.
-   * @return <a href="http://www.sqlite.org/c3ref/c_abort.html">Result Codes</a>
-   * @see <a
-   * href="http://www.sqlite.org/c3ref/bind_blob.html">http://www.sqlite.org/c3ref/bind_blob.html</a>
-   */
-  abstract int bind_text(long stmt, int pos, String v);
-
-  /**
-   * Binds blob value to prepared statements with the pointer to the statement object, the index
-   * of the SQL parameter to be set and the value to bind to the parameter.
-   *
-   * @param stmt Pointer to the statement.
-   * @param pos  Index of the SQL parameter to be set.
-   * @param v    Value to bind to the parameter.
-   * @return <a href="http://www.sqlite.org/c3ref/c_abort.html">Result Codes</a>
-   * @see <a
-   * href="http://www.sqlite.org/c3ref/bind_blob.html">http://www.sqlite.org/c3ref/bind_blob.html</a>
-   */
-  abstract int bind_blob(long stmt, int pos, byte[] v);
+  abstract int bind_null(long stmt, int oneBasedColumnIndex);
+  public abstract int bind_int(long stmt, int oneBasedColumnIndex, int v);
+  public abstract int bind_long(long stmt, int oneBasedColumnIndex, long v);
+  abstract int bind_double(long stmt, int oneBasedColumnIndex, double v);
+  abstract int bind_text(long stmt, int oneBasedColumnIndex, String v);
+  abstract int bind_blob(long stmt, int oneBasedColumnIndex, byte[] v);
 
   /**
    * Sets the result of an SQL function as NULL with the pointer to the SQLite database context.
@@ -804,7 +697,7 @@ public abstract class DB implements Codes {
    * @param errorCode Error code to be passed.
    * @return SQLException with error code and message.
    */
-  final SQLiteException newSQLException(int errorCode) {
+  public final SQLiteException newSQLException(int errorCode) {
     return newSQLException(errorCode, errmsg(), null);
   }
 
