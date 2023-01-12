@@ -76,6 +76,10 @@ internal class NavBarService(private val project: Project) : Disposable {
   }
 
   private fun showFloatingNavbar(dataContext: DataContext) {
+    if (floatingBarJob != null) {
+      return
+    }
+
     val job = cs.launch(ModalityState.current().asContextElement()) {
       val model = contextModel(dataContext, project).ifEmpty {
         defaultModel(project)
