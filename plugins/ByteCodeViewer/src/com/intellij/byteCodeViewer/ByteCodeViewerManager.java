@@ -33,6 +33,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Queue;
 
 /**
  * @author anna
@@ -266,17 +269,20 @@ public final class ByteCodeViewerManager extends DockablePopupManager<ByteCodeVi
     if (containingClass == null) {
       PsiFile containingFile = psiElement.getContainingFile();
       if (containingFile instanceof PsiClassOwner) {
-        PsiClass[] classes = ((PsiClassOwner)containingFile).getClasses();
-        if (classes.length == 1) return classes[0];
-
         TextRange textRange = psiElement.getTextRange();
-        if (textRange != null) {
-          for (PsiClass aClass : classes) {
-            PsiElement navigationElement = aClass.getNavigationElement();
-            TextRange classRange = navigationElement != null ? navigationElement.getTextRange() : null;
-            if (classRange != null && classRange.contains(textRange)) return aClass;
+        PsiClass result = null;
+        Queue<PsiClass> queue = new ArrayDeque<>(Arrays.asList(((PsiClassOwner)containingFile).getClasses()));
+        while (!queue.isEmpty()) {
+          PsiClass c = queue.remove();
+          PsiElement navigationElement = c.getNavigationElement();
+          TextRange classRange = navigationElement != null ? navigationElement.getTextRange() : null;
+          if (classRange != null && classRange.contains(textRange)) {
+            result = c;
+            queue.clear();
+            queue.addAll(Arrays.asList(c.getInnerClasses()));
           }
         }
+        return result;
       }
       return null;
     }
