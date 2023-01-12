@@ -284,8 +284,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
   }
 
   /**
-   * @param bindId identifier of binding variable used by inspection; the corresponding variable is expected to be {@code Set<String>} or
-   *               {@code List<String>}.
+   * @param bindId identifier of binding variable used by inspection; the corresponding variable is expected to be a mutable {@code List<String>}.
    * @param label  label above the control
    * @return editable sorted list of unique strings
    */
@@ -294,8 +293,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
   }
 
   /**
-   * @param bindId    identifier of binding variable used by inspection; the corresponding variable is expected to be {@code Set<String>} or
-   *                  {@code List<String>}.
+   * @param bindId    identifier of binding variable used by inspection; the corresponding variable is expected to be a mutable {@code List<String>}.
    * @param label     label above the control
    * @param validator optional validator for content; can validate max-length or be something more complicated
    *                  (e.g., validate that a string is a class-name which is a subclass of specific class)
