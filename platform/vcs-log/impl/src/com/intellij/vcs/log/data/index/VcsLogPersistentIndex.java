@@ -640,7 +640,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
           indicator.checkCanceled();
           storeDetail(detail, mutator);
           if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) {
-            flush();
             mutator.flush();
           }
 
@@ -655,7 +654,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         storeDetail(details, mutator);
 
         if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) {
-          flush();
           mutator.flush();
         }
 
