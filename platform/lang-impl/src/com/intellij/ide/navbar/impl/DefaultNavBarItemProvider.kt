@@ -47,7 +47,7 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
       catch (pce: ProcessCanceledException) {
         // implementations may throw PCE manually, try to replace it with expected exception
         ProgressManager.checkCanceled()
-        throw pce
+        null
       }
     }
     if (parent == null || !parent.isValid) return null

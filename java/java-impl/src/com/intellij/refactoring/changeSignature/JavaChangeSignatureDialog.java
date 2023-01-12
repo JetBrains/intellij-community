@@ -752,7 +752,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
   static String getModifiersText(PsiModifierList list, String newVisibility) {
     final String oldVisibility = VisibilityUtil.getVisibilityModifier(list);
-    List<String> modifierKeywords = ContainerUtil.map(PsiTreeUtil.findChildrenOfType(list, PsiKeyword.class), PsiElement::getText);
+    List<String> modifierKeywords =
+      new ArrayList<>(ContainerUtil.map(PsiTreeUtil.findChildrenOfType(list, PsiKeyword.class), PsiElement::getText));
     if (!oldVisibility.equals(newVisibility)) {
       if (oldVisibility.equals(PsiModifier.PACKAGE_LOCAL)) {
         modifierKeywords.add(0, PsiModifier.PACKAGE_LOCAL);

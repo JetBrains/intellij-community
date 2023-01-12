@@ -58,7 +58,7 @@ class RootIndex {
   @NotNull private final Project myProject;
   private final RootFileSupplier myRootSupplier;
   final PackageDirectoryCache myPackageDirectoryCache;
-  private OrderEntryGraph myOrderEntryGraph;
+  private volatile OrderEntryGraph myOrderEntryGraph;
 
   RootIndex(@NotNull Project project) {
     this(project, RootFileSupplier.INSTANCE);
@@ -460,7 +460,7 @@ class RootIndex {
   }
 
   @NotNull
-  private synchronized OrderEntryGraph getOrderEntryGraph() {
+  private OrderEntryGraph getOrderEntryGraph() {
     if (myOrderEntryGraph == null) {
       RootInfo rootInfo = buildRootInfo(myProject);
       Couple<MultiMap<VirtualFile, OrderEntry>> pair = initLibraryClassSourceRoots();

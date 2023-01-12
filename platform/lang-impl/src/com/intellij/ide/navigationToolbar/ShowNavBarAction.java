@@ -56,7 +56,7 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
 
   private static void showNavBarV2(@NotNull AnActionEvent e, @NotNull Project project) {
     DataContext context = e.getDataContext();
-    project.getService(NavBarService.class).jumpToNavbar(context);
+    NavBarService.getInstance(project).jumpToNavbar(context);
   }
 
   private static boolean isInsideNavBar(Component c) {

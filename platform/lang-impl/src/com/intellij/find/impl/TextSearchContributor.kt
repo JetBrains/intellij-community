@@ -104,7 +104,7 @@ internal class TextSearchContributor(
       }
       else {
         SearchEverywhereItem(usage, usagePresentation(project, scope, usage)).also {
-          consumer.process(FoundItemDescriptor(it, 0))
+         if (!consumer.process(FoundItemDescriptor(it, 0))) return@findUsages false
         }
       }
       recentItemRef.set(WeakReference(newItem))

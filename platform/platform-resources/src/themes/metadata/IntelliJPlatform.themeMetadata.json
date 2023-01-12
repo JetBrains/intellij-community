@@ -894,6 +894,9 @@
       "key": "Plugins.tagForeground"
     },
     {
+      "key": "Plugins.ScreenshotPagination.CurrentImage.fillColor"
+    },
+    {
       "key": "ComplexPopup.Header.background",
       "description": "Complex popup (like Find in Files) header background (experimental UI only)",
       "since": "2022.1"

@@ -803,19 +803,14 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
         }
 
         if (toggle) {
-          DataContext dataContext = actionWithParentGroup.myModel.getDataContext();
-          AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
-          boolean selected = ((ToggleAction)anAction).isSelected(event);
-          addOnOffButton(panel, selected);
+          addOnOffButton(panel, Toggleable.isSelected(presentation));
         }
-        else {
-          if (groupName != null) {
-            JLabel groupLabel = new JLabel(groupName);
-            groupLabel.setBackground(bg);
-            groupLabel.setBorder(eastBorder);
-            groupLabel.setForeground(groupFg);
-            panel.setRight(groupLabel);
-          }
+        else if (groupName != null) {
+          JLabel groupLabel = new JLabel(groupName);
+          groupLabel.setBackground(bg);
+          groupLabel.setBorder(eastBorder);
+          groupLabel.setForeground(groupFg);
+          panel.setRight(groupLabel);
         }
 
         panel.setToolTipText(presentation.getDescription());

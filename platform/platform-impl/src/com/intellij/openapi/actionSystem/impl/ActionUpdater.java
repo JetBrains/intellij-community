@@ -120,7 +120,6 @@ final class ActionUpdater {
     myEventTransform = eventTransform;
     myLaterInvocator = laterInvocator;
     myPreCacheSlowDataKeys = Utils.isAsyncDataContext(dataContext) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
-    myForcedUpdateThread = Registry.is("actionSystem.update.actions.async.unsafe") ? ActionUpdateThread.BGT : null;
     myRealUpdateStrategy = new UpdateStrategy(
       action -> updateActionReal(action),
       group -> callAction(group, Op.getChildren, () -> doGetChildren(group, createActionEvent(orDefault(group, myUpdatedPresentations.get(group))))));

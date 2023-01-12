@@ -4,7 +4,7 @@ package com.intellij.projectView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
-import com.intellij.ide.projectView.impl.AsyncProjectViewPane;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPaneWithAsyncSupport;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.openapi.project.Project;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 
-class TestProjectViewPSIPane extends AsyncProjectViewPane {
+class TestProjectViewPSIPane extends AbstractProjectViewPaneWithAsyncSupport {
   private final TestProjectTreeStructure myTestTreeStructure;
   private final int myWeight;
 

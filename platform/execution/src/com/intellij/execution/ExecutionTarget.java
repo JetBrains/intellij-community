@@ -36,6 +36,12 @@ public abstract class ExecutionTarget {
   public abstract String getDisplayName();
 
   @Nullable
+  @Nls
+  public String getGroupName() {
+    return null;
+  }
+
+  @Nullable
   public abstract Icon getIcon();
 
   /**

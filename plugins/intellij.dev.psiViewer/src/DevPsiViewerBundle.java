@@ -6,7 +6,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
 
-final class DevPsiViewerBundle {
+public final class DevPsiViewerBundle {
 
   private static final @NonNls String BUNDLE_FQN = "messages.DevPsiViewerBundle";
   private static final DynamicBundle BUNDLE = new DynamicBundle(DevPsiViewerBundle.class, BUNDLE_FQN);

@@ -1,16 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.ide.navbar.actions.NavBarActionHandler;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT;
 
-public abstract class NavBarActions extends AnAction implements DumbAware {
+public sealed abstract class NavBarActions extends AnAction implements DumbAware {
   NavBarActions() {
     setEnabledInModalContext(true);
   }
@@ -21,24 +25,26 @@ public abstract class NavBarActions extends AnAction implements DumbAware {
   }
 
   @Override
-  public final void update(@NotNull AnActionEvent event) {
-    NavBarPanel panel = ComponentUtil.getParentOfType(NavBarPanel.class, event.getData(CONTEXT_COMPONENT));
-    boolean isEnabled = panel != null
-                        && (isEnabledWithActivePopupSpeedSearch() || !panel.isNodePopupSpeedSearchActive());
+  public void update(@NotNull AnActionEvent event) {
+    NavBarActionHandler handler = actionHandler(event);
+    boolean isEnabled = handler != null && (isEnabledWithActivePopupSpeedSearch() || !handler.isNodePopupSpeedSearchActive());
     event.getPresentation().setEnabled(isEnabled);
+  }
+
+  private @Nullable NavBarActionHandler actionHandler(@NotNull AnActionEvent event) {
+    return ComponentUtil.getParentOfType(NavBarPanel.class, event.getData(CONTEXT_COMPONENT));
   }
 
   @Override
   public final void actionPerformed(@NotNull AnActionEvent event) {
-    NavBarPanel panel = ComponentUtil.getParentOfType(NavBarPanel.class, event.getData(CONTEXT_COMPONENT));
-    if (panel != null) actionPerformed(panel);
+    actionPerformed(Objects.requireNonNull(actionHandler(event)));
   }
 
   protected boolean isEnabledWithActivePopupSpeedSearch() {
     return true;
   }
 
-  abstract void actionPerformed(@NotNull NavBarPanel panel);
+  abstract void actionPerformed(@NotNull NavBarActionHandler handler);
 
   public static final class Home extends NavBarActions {
     @Override
@@ -47,8 +53,8 @@ public abstract class NavBarActions extends AnAction implements DumbAware {
     }
 
     @Override
-    void actionPerformed(@NotNull NavBarPanel panel) {
-      panel.moveHome();
+    void actionPerformed(@NotNull NavBarActionHandler handler) {
+      handler.moveHome();
     }
   }
 
@@ -59,8 +65,8 @@ public abstract class NavBarActions extends AnAction implements DumbAware {
     }
 
     @Override
-    void actionPerformed(@NotNull NavBarPanel panel) {
-      panel.moveEnd();
+    void actionPerformed(@NotNull NavBarActionHandler handler) {
+      handler.moveEnd();
     }
   }
 
@@ -71,8 +77,8 @@ public abstract class NavBarActions extends AnAction implements DumbAware {
     }
 
     @Override
-    void actionPerformed(@NotNull NavBarPanel panel) {
-      panel.moveDown();
+    void actionPerformed(@NotNull NavBarActionHandler handler) {
+      handler.moveUpDown();
     }
   }
 
@@ -83,22 +89,22 @@ public abstract class NavBarActions extends AnAction implements DumbAware {
     }
 
     @Override
-    void actionPerformed(@NotNull NavBarPanel panel) {
-      panel.moveDown();
+    void actionPerformed(@NotNull NavBarActionHandler handler) {
+      handler.moveUpDown();
     }
   }
 
   public static final class Left extends NavBarActions {
     @Override
-    void actionPerformed(@NotNull NavBarPanel panel) {
-      panel.moveLeft();
+    void actionPerformed(@NotNull NavBarActionHandler handler) {
+      handler.moveLeft();
     }
   }
 
   public static final class Right extends NavBarActions {
     @Override
-    void actionPerformed(@NotNull NavBarPanel panel) {
-      panel.moveRight();
+    void actionPerformed(@NotNull NavBarActionHandler handler) {
+      handler.moveRight();
     }
   }
 
@@ -109,22 +115,22 @@ public abstract class NavBarActions extends AnAction implements DumbAware {
     }
 
     @Override
-    void actionPerformed(@NotNull NavBarPanel panel) {
-      panel.escape();
+    void actionPerformed(@NotNull NavBarActionHandler handler) {
+      handler.escape();
     }
   }
 
   public static final class Enter extends NavBarActions {
     @Override
-    void actionPerformed(@NotNull NavBarPanel panel) {
-      panel.enter();
+    void actionPerformed(@NotNull NavBarActionHandler handler) {
+      handler.enter();
     }
   }
 
   public static final class Navigate extends NavBarActions {
     @Override
-    void actionPerformed(@NotNull NavBarPanel panel) {
-      panel.navigate();
+    void actionPerformed(@NotNull NavBarActionHandler handler) {
+      handler.navigate();
     }
   }
 }

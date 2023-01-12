@@ -69,8 +69,11 @@ interface MavenProjectImporter {
                                               modelsProvider, importingSettings)
       }
 
-      return MavenProjectImporterImpl(project, projectsTree, projectsToImportWithChanges, importModuleGroupsRequired,
-                                      modelsProvider, importingSettings, previewModule)
+      return MavenProjectLegacyImporter(project, projectsTree,
+                                        projectsToImportWithChanges,
+                                        importModuleGroupsRequired,
+                                        modelsProvider, importingSettings,
+                                        previewModule)
     }
 
     @JvmStatic

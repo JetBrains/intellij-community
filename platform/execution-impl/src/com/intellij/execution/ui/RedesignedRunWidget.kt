@@ -22,11 +22,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.util.PopupImplUtil
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
@@ -194,7 +193,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
   override fun getButtonArc(): JBValue = JBValue.Float(8f)
 }
 
-
+private const val MINIMAL_POPUP_WIDTH = 270
 private abstract class TogglePopupAction : ToggleAction {
 
   constructor()
@@ -208,14 +207,14 @@ private abstract class TogglePopupAction : ToggleAction {
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val presentation = e.presentation
-    Toggleable.setSelected(presentation, state)
     if (!state) return
+    val presentation = e.presentation
     val component = e.inputEvent?.component as? JComponent ?: return
     val actionGroup = getActionGroup(e) ?: return
     val disposeCallback = { Toggleable.setSelected(presentation, false) }
     val popup = createPopup(actionGroup, e, disposeCallback)
     PopupImplUtil.setPopupToggleButton(popup, e.inputEvent.component)
+    popup.setMinimumSize(JBDimension(MINIMAL_POPUP_WIDTH, 0))
     popup.showUnderneathOf(component)
   }
 
@@ -255,12 +254,12 @@ private fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationS
 }
 
 private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomComponentAction, DumbAware {
-  override fun setSelected(e: AnActionEvent, state: Boolean) {
+  override fun actionPerformed(e: AnActionEvent) {
     if (e.inputEvent.modifiersEx and InputEvent.SHIFT_DOWN_MASK != 0) {
       ActionManager.getInstance().getAction("editRunConfigurations").actionPerformed(e)
       return
     }
-    super.setSelected(e, state)
+    super.actionPerformed(e)
   }
 
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {
@@ -302,18 +301,21 @@ private class RunToolbarSeparator(private val isCurrentConfigurationRunning: () 
   override fun paint(g: Graphics) {
     super.paint(g)
     val g2 = g.create() as Graphics2D
-    g2.color = getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
-    g2.fill(Rectangle(size))
-    g2.color = JBUI.CurrentTheme.RunWidget.SEPARATOR
-    g2.stroke = BasicStroke(JBUIScale.scale(1f))
-    g2.drawLine(0, JBUI.scale(5), 0, JBUI.scale(25))
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+      g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+      g2.color = getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
+      g2.fill(Rectangle(size))
+      g2.color = JBUI.CurrentTheme.RunWidget.SEPARATOR
+      g2.stroke = BasicStroke(JBUI.pixScale(this))
+      g2.drawLine(0, JBUI.scale(5), 0, JBUI.scale(25))
+    }
+    finally {
+      g2.dispose()
+    }
   }
 
   override fun getPreferredSize(): Dimension = Dimension(JBUI.scale(1), JBUI.scale(RUN_TOOLBAR_HEIGHT))
-}
-
-private fun Color.addAlpha(alpha: Double): Color {
-  return JBColor.lazy { Color(red, green, blue, (255 * alpha).toInt()) }
 }
 
 private fun getRunWidgetBackgroundColor(isRunning: Boolean): Color = if (isRunning)

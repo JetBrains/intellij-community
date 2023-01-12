@@ -19,6 +19,12 @@
     </action>
   </actions>
 
+  <actions resource-bundle="messages.JsonBundle">
+    <action id="ConsoleView.ShowAsJsonAction" class="com.intellij.json.actions.ShowAsJsonAction">
+      <add-to-group group-id="ConsoleEditorPopupMenu" anchor="after" relative-to-action="ConsoleView.FoldLinesLikeThis"/>
+    </action>
+  </actions>
+
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="JSON" extensions="har;json" implementationClass="com.intellij.json.JsonFileType" fieldName="INSTANCE" language="JSON"/>
     <fileType name="JSON5" extensions="json5" implementationClass="com.intellij.json.json5.Json5FileType" fieldName="INSTANCE" language="JSON5"/>

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.jar.Attributes;
@@ -80,7 +81,12 @@ public final class JdkUtil {
   }
 
   public static boolean checkForJdk(@NotNull String homePath) {
-    return checkForJdk(Path.of(homePath));
+    try {
+      return checkForJdk(Path.of(homePath));
+    }
+    catch (InvalidPathException e) {
+      return false;
+    }
   }
 
   public static boolean checkForJdk(@NotNull Path homePath) {

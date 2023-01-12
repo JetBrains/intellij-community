@@ -4,10 +4,16 @@ package com.intellij.ide.util
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface TipAndTrickManager {
+  /**
+   * Shows the dialog with the tips sorted in descending order of usefulness.
+   * Should be run from background thread, because sorting of the tips can take some time.
+   */
+  @RequiresBackgroundThread
   fun showTipDialog(project: Project)
 
   /**

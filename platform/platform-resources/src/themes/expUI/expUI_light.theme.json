@@ -424,8 +424,7 @@
 
     "SpeedSearch": {
       "background": "Grey13",
-      "borderColor": "Grey10",
-      "errorForeground": "errorForeground"
+      "borderColor": "Grey11"
     },
 
     "StatusBar": {

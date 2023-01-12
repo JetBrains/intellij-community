@@ -634,6 +634,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
   private static final class EditorTabs extends SingleHeightTabs implements ComponentWithMnemonics {
     private final @NotNull EditorWindow myWindow;
+    private final DefaultActionGroup myEntryPointActionGroup;
 
     private EditorTabs(Project project, @NotNull Disposable parentDisposable, @NotNull EditorWindow window) {
       super(project, parentDisposable);
@@ -658,6 +659,10 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
           updateActive();
         }
       });
+
+      AnAction source = ActionManager.getInstance().getAction("EditorTabsEntryPoint");
+      source.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+      myEntryPointActionGroup = new DefaultActionGroup(source);
     }
 
     @Override
@@ -683,9 +688,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
     @Override
     protected DefaultActionGroup getEntryPointActionGroup() {
-      AnAction source = ActionManager.getInstance().getAction("EditorTabsEntryPoint");
-      source.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
-      return new DefaultActionGroup(source);
+      return myEntryPointActionGroup; // return same instance to avoid unnecessary action toolbar updates
     }
 
     @Override

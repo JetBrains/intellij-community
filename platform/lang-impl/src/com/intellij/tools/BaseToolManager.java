@@ -4,10 +4,12 @@ package com.intellij.tools;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeProcessor;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +27,9 @@ public abstract class BaseToolManager<T extends Tool> implements Disposable {
   public BaseToolManager(@NotNull SchemeManagerFactory factory, @NotNull String schemePath, @NotNull String presentableName) {
     myFactory = factory;
     //noinspection AbstractMethodCallInConstructor
-    mySchemeManager = factory.create(schemePath, createProcessor(), presentableName, null, SettingsCategory.TOOLS);
+    mySchemeManager =
+      factory.create(schemePath, createProcessor(), presentableName, RoamingType.DISABLED, name -> FileUtil.sanitizeFileName(name, false),
+                     null, null, true, SettingsCategory.OTHER);
     mySchemeManager.loadSchemes();
   }
 

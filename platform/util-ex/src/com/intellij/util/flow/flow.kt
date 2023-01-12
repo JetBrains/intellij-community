@@ -68,3 +68,39 @@ suspend fun <X> SharedFlow<X>.collectLatestUndispatched(action: suspend (value: 
     collectLatest(action)
   }
 }
+
+private object UNINITIALIZED
+
+/**
+ * Returns a cold flow, which pairs an original value with a previous value.
+ *
+ * Example:
+ * ```kotlin
+ * flow {
+ *   emit(1)
+ *   emit(2)
+ *   emit(3)
+ *   emit(4)
+ * }.zipWithPrevious()
+ * ```
+ * produces the following emissions
+ * ```
+ * (1,2)
+ * (2,3)
+ * (3,4)
+ * ```
+ *
+ * The returned flow is empty if [this] flow is empty or emits a single element.
+ */
+fun <X> Flow<X>.zipWithPrevious(): Flow<Pair<X, X>> {
+  return flow {
+    @Suppress("UNCHECKED_CAST")
+    var previous: X = UNINITIALIZED as X
+    collect {
+      if (previous != UNINITIALIZED) {
+        emit(Pair(previous, it))
+      }
+      previous = it
+    }
+  }
+}

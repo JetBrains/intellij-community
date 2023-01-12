@@ -470,6 +470,8 @@
     "kotlin.compiler-plugins.parcelize.gradle",
     "kotlin.compiler-plugins.sam-with-receiver.gradle",
     "kotlin.compiler-plugins.sam-with-receiver.maven",
+    "kotlin.compiler-plugins.assignment.gradle",
+    "kotlin.compiler-plugins.assignment.maven",
     "kotlin.compiler-plugins.scripting",
     "kotlin.copyright",
     "kotlin.coverage",

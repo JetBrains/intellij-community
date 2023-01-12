@@ -68,7 +68,7 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
   private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
   private val todoSettings: TodoPanelSettings get() = settings.myTodoPanelSettings
 
-  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.LATE
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.POST_COMMIT
 
   override fun isEnabled(): Boolean = settings.CHECK_NEW_TODO
 

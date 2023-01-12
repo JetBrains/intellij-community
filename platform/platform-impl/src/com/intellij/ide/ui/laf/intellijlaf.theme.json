@@ -650,10 +650,7 @@
     },
 
     "SpeedSearch": {
-      "background": "contentBackground",
-      "borderColor": "grey02",
-      "errorForeground": "#ff0000",
-      "foreground": "foreground"
+      "background": "contentBackground"
     },
 
     "Spinner": {

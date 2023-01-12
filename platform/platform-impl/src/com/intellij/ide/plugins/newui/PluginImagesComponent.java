@@ -22,6 +22,7 @@ import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,9 @@ import java.util.Objects;
  * @author Alexander Lobas
  */
 public class PluginImagesComponent extends JPanel {
+  private static final Color CURRENT_IMAGE_FILL_COLOR =
+    JBColor.namedColor("Plugins.ScreenshotPagination.CurrentImage.fillColor", new JBColor(0x6C707E, 0xCED0D6));
+
   private static final int None = -1;
   private static final int NextImage = -2;
   private static final int PrevImage = -3;
@@ -60,8 +64,7 @@ public class PluginImagesComponent extends JPanel {
   private Object myLoadingState;
   private JBPopup myFullScreenPopup;
 
-  public PluginImagesComponent(@NotNull JComponent parent) {
-    myParent = parent;
+  public PluginImagesComponent() {
     myShowFullContent = false;
 
     MouseAdapter listener = new MouseAdapter() {
@@ -111,6 +114,10 @@ public class PluginImagesComponent extends JPanel {
     };
     addMouseListener(listener);
     addMouseMotionListener(listener);
+  }
+
+  public void setParent(@NotNull JComponent parent) {
+    myParent = parent;
   }
 
   public void show(@NotNull IdeaPluginDescriptor descriptor) {
@@ -207,20 +214,20 @@ public class PluginImagesComponent extends JPanel {
         isImages = !ContainerUtil.isEmpty(myImages);
       }
       if (isImages) {
-        int fullWidth = parent.getWidth();
-        if (fullWidth > 0) {
-          if (myParent != null) {
-            fullWidth = Math.min(fullWidth, myParent.getWidth());
-          }
-          width = fullWidth;
-          //height = (int)(width / 1.58) + JBUI.scale(28);
-          height = (int)(width / 1.33) + JBUI.scale(28);
-          //height = width / 2 + JBUI.scale(28);
-        }
+        width = getFullWidth();
+        height = (int)(width / 1.58) + JBUI.scale(28);
       }
     }
 
     return new Dimension(width, height);
+  }
+
+  private int getFullWidth() {
+    Container parent = getParent();
+    if (parent != null && myParent != null) {
+      return myParent.getWidth() - parent.getInsets().left;
+    }
+    return getWidth();
   }
 
   private void handleMMove(@NotNull MouseEvent e) {
@@ -442,27 +449,29 @@ public class PluginImagesComponent extends JPanel {
       g.fillRect(x, y, width, height);
     }
 
+    int imageX = insets.left + offset;
+    int imageY = insets.top;
     int imageWidth = image.getWidth();
     int imageHeight = image.getHeight();
-    int paintWidth = width - x - 2 * offset;
-    int paintHeight = height - y - offset;
+    int paintWidth = width - 2 * offset;
+    int paintHeight = height - offset;
 
     if (imageWidth <= paintWidth && imageHeight <= paintHeight) {
-      g.drawImage(image, x + offset + (paintWidth - imageWidth) / 2, y + (paintHeight - imageHeight) / 2, null);
-    }
-    else if (myShowFullContent) {
-      int newHeight = paintWidth / 2;
-
-      if (newHeight < paintHeight) {
-        int newY = y + (paintHeight - newHeight) / 2;
-        g.drawImage(image, x + offset, newY, x + offset + paintWidth, newY + newHeight, 0, 0, imageWidth, imageHeight, null);
-      }
-      else {
-        g.drawImage(image, x + offset, y, x + offset + paintWidth, y + imageHeight, 0, 0, imageWidth, imageHeight, null);
-      }
+      StartupUiUtil.drawImage(g, image, imageX + (paintWidth - imageWidth) / 2, imageY + (paintHeight - imageHeight) / 2, null);
     }
     else {
-      g.drawImage(image, x + offset, y, width - offset, height - offset, 0, 0, imageWidth, imageHeight, null);
+      int zoomedHeight = imageHeight * paintWidth / imageWidth;
+      int zoomedWidth = imageWidth * paintHeight / imageHeight;
+
+      if (zoomedWidth <= paintWidth) {
+        StartupUiUtil.drawImage(g, image, new Rectangle(imageX + (paintWidth - zoomedWidth) / 2, imageY, zoomedWidth, paintHeight), null);
+      }
+      else if (zoomedHeight <= paintHeight) {
+        StartupUiUtil.drawImage(g, image, new Rectangle(imageX, imageY + (paintHeight - zoomedHeight) / 2, paintWidth, zoomedHeight), null);
+      }
+      else {
+        StartupUiUtil.drawImage(g, image, new Rectangle(imageX, imageY, paintWidth, paintHeight), null);
+      }
     }
 
     Graphics2D g2 = (Graphics2D)g.create();
@@ -488,7 +497,7 @@ public class PluginImagesComponent extends JPanel {
 
       for (int i = 0; i < count; i++) {
         if (i == current) {
-          g2.setColor(new JBColor(Gray.x6E, JBUI.CurrentTheme.Button.buttonColorStart()));
+          g2.setColor(CURRENT_IMAGE_FILL_COLOR);
           g2.fillOval(ovalX, ovalY, ovalSize, ovalSize);
         }
         else {
@@ -506,14 +515,6 @@ public class PluginImagesComponent extends JPanel {
     finally {
       g2.dispose();
     }
-  }
-
-  private int getFullWidth() {
-    int fullWidth = getWidth();
-    if (myParent != null) {
-      fullWidth = Math.min(fullWidth, myParent.getWidth());
-    }
-    return fullWidth;
   }
 
   private void paintAction(Graphics2D g2, int x, int y, int width, int height, int offset, boolean left) {

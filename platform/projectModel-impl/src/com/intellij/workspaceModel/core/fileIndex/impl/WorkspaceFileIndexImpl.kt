@@ -7,10 +7,14 @@ import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider
+import com.intellij.openapi.roots.impl.DirectoryIndexImpl
 import com.intellij.openapi.roots.impl.RootFileSupplier
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -24,6 +28,19 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
   @Volatile
   private var indexData: WorkspaceFileIndexData? = null 
 
+  init {
+    project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun after(events: List<VFileEvent>) {
+        val data = indexData
+        if (data != null && DirectoryIndexImpl.shouldResetOnEvents(events)) {
+          if (events.any { DirectoryIndexImpl.isIgnoredFileCreated(it) }) {
+            data.resetFileCache()
+          }
+        }
+      }
+    })
+  }
+  
   override fun findFileSet(file: VirtualFile,                                                                        
                            honorExclusion: Boolean,
                            includeContentSets: Boolean,

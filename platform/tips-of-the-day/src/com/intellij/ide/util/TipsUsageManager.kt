@@ -6,10 +6,13 @@ import com.intellij.featureStatistics.FeaturesRegistryListener
 import com.intellij.ide.TipsOfTheDayUsagesCollector
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.util.text.DateFormatUtil
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
@@ -57,7 +60,13 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
     else tips
   }
 
-  fun wereTipsShownToday(): Boolean = System.currentTimeMillis() - (shownTips.maxOfOrNull { it.value } ?: 0) < DateFormatUtil.DAY
+  fun wereTipsShownToday(): Boolean {
+    val lastShownTimeMillis = shownTips.maxOfOrNull { it.value } ?: 0
+    val currentZoneId = ZoneId.systemDefault()
+    val curDayStartTime = LocalDate.now(currentZoneId).atStartOfDay()
+    val lastShownTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(lastShownTimeMillis), currentZoneId)
+    return lastShownTime.isAfter(curDayStartTime)
+  }
 
   @Serializable
   data class State(val shownTips: Map<String, Long> = emptyMap())

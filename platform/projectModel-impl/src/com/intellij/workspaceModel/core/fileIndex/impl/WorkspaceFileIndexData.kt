@@ -7,6 +7,8 @@ import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.RootFileSupplier
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.ide.WorkspaceModel
@@ -22,13 +24,11 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
   private val contributorsWithDependency = contributorList
     .flatMap { contributor -> contributor.dependenciesOnParentEntities.map { it to contributor } }
     .groupBy({ it.second.entityClass }, { it.first to it.second })
-  private val fileSets = MultiMap.create<VirtualFile, WorkspaceFileSetImpl>()
-  private val excludedRoots = MultiMap.create<VirtualFile, ExcludedRootData>()
-  private val exclusionPatternsByRoot = MultiMap.create<VirtualFile, ExclusionPatterns>()
-  private val exclusionConditionsByRoot = MultiMap.create<VirtualFile, ExclusionCondition>()
-  private val customExcludedRootContributors = CustomExcludedRootContributors(project, rootFileSupplier)
-  private val syntheticLibraryContributors = SyntheticLibraryContributors(project, rootFileSupplier)
-  private val librariesAndSdkContributors = LibrariesAndSdkContributors(project, rootFileSupplier, fileSets, excludedRoots)
+  /** this map is accessed under 'Read Action' and updated under 'Write Action' or under 'Read Action' with a special lock in [NonIncrementalContributors.updateIfNeeded] */
+  private val fileSets = MultiMap.create<VirtualFile, StoredFileSet>()
+  private val nonIncrementalContributors = NonIncrementalContributors(project, rootFileSupplier)
+  private val librariesAndSdkContributors = LibrariesAndSdkContributors(project, rootFileSupplier, fileSets)
+  private val fileIdWithoutFileSets = ConcurrentBitSet.create()
   private val storeFileSetRegistrar = StoreFileSetsRegistrarImpl()
   private val removeFileSetRegistrar = RemoveFileSetsRegistrarImpl()
   private val fileTypeRegistry = FileTypeRegistry.getInstance()
@@ -44,7 +44,6 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
         registerFileSets(it, entityClass, storage)
       }
     }
-    syntheticLibraryContributors.registerFileSets(fileSets, excludedRoots, exclusionConditionsByRoot)
     librariesAndSdkContributors.registerFileSets()
   }
 
@@ -57,6 +56,7 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
     if (hasDirtyEntities && ApplicationManager.getApplication().isWriteAccessAllowed) {
       updateDirtyEntities()
     }
+    nonIncrementalContributors.updateIfNeeded(fileSets)
 
     val originalKindMask = 
       (if (includeContentSets) WorkspaceFileKindMask.CONTENT else 0) or 
@@ -66,52 +66,71 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
     var current: VirtualFile? = file
     var currentExclusionMask = 0
     while (current != null) {
-      if (honorExclusion) {
-        if (excludedRoots.containsKey(current)) {
-          val excludedRootData = excludedRoots[current]
-          excludedRootData.forEach { 
-            currentExclusionMask = currentExclusionMask or it.mask
-          }
-          if (currentExclusionMask.inv() and kindMask == 0) {
-            return WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
+      val fileId = (current as? VirtualFileWithId)?.id ?: -1
+      val mayHaveFileSets = fileId < 0 || !fileIdWithoutFileSets.get(fileId)
+      if (mayHaveFileSets) {
+        var firstRelevantFileSet: WorkspaceFileSetImpl? = null
+        var additionalRelevantFileSets: MutableList<WorkspaceFileSetImpl>? = null
+        val storedFileSets = fileSets.get(current)
+        for (info in storedFileSets) {
+          when (info) {
+            is ExcludedFileSet.ByFileKind -> {
+              if (honorExclusion) {
+                currentExclusionMask = currentExclusionMask or info.mask
+              }
+            }
+            is ExcludedFileSet.ByPattern -> {
+              if (honorExclusion && info.isExcluded(file)) return WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
+            }
+            is ExcludedFileSet.ByCondition -> {
+              if (honorExclusion && info.isExcluded(file)) return WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
+            }
+            is WorkspaceFileSetImpl -> {
+              if (info.kind.toMask() and kindMask != 0 && !info.isUnloaded(project)) {
+                if (firstRelevantFileSet == null) {
+                  firstRelevantFileSet = info
+                }
+                else if (additionalRelevantFileSets == null) {
+                  additionalRelevantFileSets = ArrayList<WorkspaceFileSetImpl>(2).apply { add(info) }
+                }
+                else {
+                  additionalRelevantFileSets.add(info)
+                }
+              }
+            }
           }
         }
-        val exclusionPatterns = exclusionPatternsByRoot[current]
-        if (exclusionPatterns.isNotEmpty()) {
-          if (exclusionPatterns.any { it.isExcluded(file) }) {
-            return WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
-          }
-        }
-        if (exclusionConditionsByRoot[current].any { it.isExcluded(file) }) {
+        if (honorExclusion && currentExclusionMask.inv() and kindMask == 0) {
           return WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
         }
-        val mask = customExcludedRootContributors.getCustomExcludedRootMask(current)
-        if (mask != 0) {
-          currentExclusionMask = currentExclusionMask or mask
-          if (currentExclusionMask.inv() and kindMask == 0) {
-            return WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
+        if (firstRelevantFileSet != null) {
+          val firstNotExcluded = firstRelevantFileSet.takeIf { it.kind.toMask() and kindMask and currentExclusionMask.inv() != 0 }
+          if (firstNotExcluded != null && additionalRelevantFileSets == null) return firstNotExcluded
+          
+          val additionalNotExcluded = additionalRelevantFileSets?.filter { it.kind.toMask() and kindMask and currentExclusionMask.inv() != 0 }
+                                                                ?.takeIf { it.isNotEmpty() }
+          if (firstNotExcluded != null || additionalNotExcluded != null) {
+            if (additionalNotExcluded == null) return firstNotExcluded!!
+            val allNotExcluded = 
+              if (firstNotExcluded != null) ArrayList<WorkspaceFileSetImpl>().apply { add(firstNotExcluded); addAll(additionalNotExcluded) }
+              else additionalNotExcluded
+            val single = allNotExcluded.singleOrNull()
+            return single ?: MultipleWorkspaceFileSets(allNotExcluded)
           }
-        }
-      }
-      val fileSets = fileSets[current]
-      if (fileSets.isNotEmpty()) {
-        val relevant = fileSets.filter { it.kind.toMask() and kindMask != 0 && !it.isUnloaded(project) }
-        if (relevant.isNotEmpty()) {
-          val notExcluded = relevant.filter { it.kind.toMask() and kindMask and currentExclusionMask.inv() != 0 }
-          if (notExcluded.isNotEmpty()) {
-            val single = notExcluded.singleOrNull()
-            return single ?: MultipleWorkspaceFileSets(notExcluded)
-          }
-          relevant.forEach { 
+          kindMask = kindMask and firstRelevantFileSet.kind.toMask().inv()
+          additionalRelevantFileSets?.forEach {
             kindMask = kindMask and it.kind.toMask().inv()
           }
           if (currentExclusionMask.inv() and kindMask == 0) {
             return WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
           }
         }
-      }
-      if (fileTypeRegistry.isFileIgnored(current)) {
-        return WorkspaceFileInternalInfo.NonWorkspace.IGNORED
+        if (fileTypeRegistry.isFileIgnored(current)) {
+          return WorkspaceFileInternalInfo.NonWorkspace.IGNORED
+        }
+        if (fileId >= 0 && storedFileSets.isEmpty()) {
+          fileIdWithoutFileSets.set(fileId)
+        }
       }
       current = current.parent
     }
@@ -174,9 +193,8 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
 
   fun resetCustomContributors() {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-    customExcludedRootContributors.resetCache()
-    syntheticLibraryContributors.unregisterFileSets(fileSets, excludedRoots, exclusionConditionsByRoot)
-    syntheticLibraryContributors.registerFileSets(fileSets, excludedRoots, exclusionConditionsByRoot)
+    nonIncrementalContributors.resetCache()
+    resetFileCache()
   }
 
   fun markDirty(entities: Collection<WorkspaceEntity>, files: Collection<VirtualFile>) {
@@ -191,15 +209,13 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
     contributors.keys.forEach { entityClass ->
       processChanges(event, entityClass)
     }
+    resetFileCache()
   }
 
   fun updateDirtyEntities() {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     for (file in dirtyFiles) {
       fileSets.remove(file)
-      excludedRoots.remove(file)
-      exclusionPatternsByRoot.remove(file)
-      exclusionPatternsByRoot.remove(file)
     }
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
     for (entity in dirtyEntities) {
@@ -208,7 +224,12 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
     }
     dirtyFiles.clear()
     dirtyEntities.clear()
+    resetFileCache()
     hasDirtyEntities = false
+  }
+
+  fun resetFileCache() {
+    fileIdWithoutFileSets.clear()
   }
 
   private inner class StoreFileSetsRegistrarImpl : WorkspaceFileSetRegistrar {
@@ -232,7 +253,7 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
     override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, entity: WorkspaceEntity) {
       val excludedRootFile = rootFileSupplier.findFile(excludedRoot)
       if (excludedRootFile != null) {
-        excludedRoots.putValue(excludedRootFile, ExcludedRootData(WorkspaceFileKindMask.ALL, entity.createReference()))
+        fileSets.putValue(excludedRootFile, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.ALL, entity.createReference()))
       }
     }
 
@@ -240,7 +261,7 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
                                       excludedFrom: WorkspaceFileKind,
                                       entity: WorkspaceEntity) {
       val mask = if (excludedFrom == WorkspaceFileKind.EXTERNAL) WorkspaceFileKindMask.EXTERNAL else excludedFrom.toMask()
-      excludedRoots.putValue(excludedRoot, ExcludedRootData(mask, entity.createReference()))
+      fileSets.putValue(excludedRoot, ExcludedFileSet.ByFileKind(mask, entity.createReference()))
     }
 
     override fun registerExclusionPatterns(root: VirtualFileUrl,
@@ -248,14 +269,14 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
                                            entity: WorkspaceEntity) {
       val rootFile = rootFileSupplier.findFile(root)
       if (rootFile != null && !patterns.isEmpty()) {
-        exclusionPatternsByRoot.putValue(rootFile, ExclusionPatterns(rootFile, patterns, entity.createReference()))
+        fileSets.putValue(rootFile, ExcludedFileSet.ByPattern(rootFile, patterns, entity.createReference()))
       }
     }
 
     override fun registerExclusionCondition(root: VirtualFile,
                                             condition: (VirtualFile) -> Boolean,
                                             entity: WorkspaceEntity) {
-      exclusionConditionsByRoot.putValue(root, ExclusionCondition(root, condition, entity.createReference()))
+      fileSets.putValue(root, ExcludedFileSet.ByCondition(root, condition, entity.createReference()))
     }
   }
 
@@ -274,7 +295,7 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
                                  kind: WorkspaceFileKind,
                                  entity: WorkspaceEntity,
                                  customData: WorkspaceFileSetData?) {
-      fileSets.removeValueIf(root) { isResolvesTo(it.entityReference, entity) }
+      fileSets.removeValueIf(root) { it is WorkspaceFileSetImpl && isResolvesTo(it.entityReference, entity) }
     }
 
     private fun isResolvesTo(reference: EntityReference<*>, entity: WorkspaceEntity) = reference == entity.createReference<WorkspaceEntity>() 
@@ -283,14 +304,14 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
       val excludedRootFile = rootFileSupplier.findFile(excludedRoot)
       if (excludedRootFile != null) {
         //todo compare origins, not just their entities?
-        excludedRoots.removeValueIf(excludedRootFile) { isResolvesTo(it.entityReference, entity) }
+        fileSets.removeValueIf(excludedRootFile) { it is ExcludedFileSet && isResolvesTo(it.entityReference, entity) }
       }
     }
 
     override fun registerExcludedRoot(excludedRoot: VirtualFile,
                                       excludedFrom: WorkspaceFileKind,
                                       entity: WorkspaceEntity) {
-      excludedRoots.removeValueIf(excludedRoot) { isResolvesTo(it.entityReference, entity) }
+      fileSets.removeValueIf(excludedRoot) { it is ExcludedFileSet && isResolvesTo(it.entityReference, entity) }
     }
 
     override fun registerExclusionPatterns(root: VirtualFileUrl,
@@ -298,22 +319,23 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
                                            entity: WorkspaceEntity) {
       val rootFile = rootFileSupplier.findFile(root)
       if (rootFile != null) {
-        exclusionPatternsByRoot.removeValueIf(rootFile) { isResolvesTo(it.entityReference, entity) }
+        fileSets.removeValueIf(rootFile) { it is ExcludedFileSet.ByPattern && isResolvesTo(it.entityReference, entity) }
       }
     }
 
     override fun registerExclusionCondition(root: VirtualFile,
                                             condition: (VirtualFile) -> Boolean,
                                             entity: WorkspaceEntity) {
-      exclusionConditionsByRoot.removeValueIf(root) { isResolvesTo(it.entityReference, entity) }
+      fileSets.removeValueIf(root) { it is ExcludedFileSet.ByCondition && isResolvesTo(it.entityReference, entity) }
     }
   }
 }
 
 internal class WorkspaceFileSetImpl(override val root: VirtualFile,
                                     override val kind: WorkspaceFileKind,
-                                    val entityReference: EntityReference<WorkspaceEntity>,
-                                    override val data: WorkspaceFileSetData) : WorkspaceFileSetWithCustomData<WorkspaceFileSetData>, WorkspaceFileInternalInfo {
+                                    override val entityReference: EntityReference<WorkspaceEntity>,
+                                    override val data: WorkspaceFileSetData)
+  : WorkspaceFileSetWithCustomData<WorkspaceFileSetData>, StoredFileSet, WorkspaceFileInternalInfo {
   fun isUnloaded(project: Project): Boolean {
     return (data as? UnloadableFileSetData)?.isUnloaded(project) == true
   }
@@ -331,43 +353,52 @@ internal object WorkspaceFileKindMask {
   const val ALL = CONTENT or EXTERNAL
 }
 
-internal class ExcludedRootData(@MagicConstant(flagsFromClass = WorkspaceFileKindMask::class) val mask: Int,
-                                val entityReference: EntityReference<WorkspaceEntity>)
-
-private class ExclusionPatterns(val root: VirtualFile, patterns: List<String>,
-                                val entityReference: EntityReference<WorkspaceEntity>) {
-  val table = FileTypeAssocTable<Boolean>()
-
-  init {
-    for (pattern in patterns) {
-      table.addAssociation(FileNameMatcherFactory.getInstance().createMatcher(pattern), true)
-    }
-  }
-
-  fun isExcluded(file: VirtualFile): Boolean {
-    var current = file
-    while (current != root) {
-      if (table.findAssociatedFileType(current.nameSequence) != null) {
-        return true
-      }
-      current = current.parent
-    }
-    return false
-  }
+/**
+ * Base interface for file sets stored in [WorkspaceFileIndexData]. 
+ */
+internal sealed interface StoredFileSet {
+  val entityReference: EntityReference<WorkspaceEntity>
 }
 
-internal class ExclusionCondition(val root: VirtualFile, val condition: (VirtualFile) -> Boolean,
-                                  val entityReference: EntityReference<WorkspaceEntity>) {
-  fun isExcluded(file: VirtualFile): Boolean {
-    var current = file
-    while (current != root) {
-      if (condition(current)) {
-        return true
+internal sealed interface ExcludedFileSet : StoredFileSet {
+  class ByFileKind(@MagicConstant(flagsFromClass = WorkspaceFileKindMask::class) val mask: Int,
+                   override val entityReference: EntityReference<WorkspaceEntity>) : ExcludedFileSet
+  
+  class ByPattern(val root: VirtualFile, patterns: List<String>,
+                  override val entityReference: EntityReference<WorkspaceEntity>) : ExcludedFileSet {
+    val table = FileTypeAssocTable<Boolean>()
+
+    init {
+      for (pattern in patterns) {
+        table.addAssociation(FileNameMatcherFactory.getInstance().createMatcher(pattern), true)
       }
-      current = current.parent
     }
-    
-    return condition(root)
+
+    fun isExcluded(file: VirtualFile): Boolean {
+      var current = file
+      while (current != root) {
+        if (table.findAssociatedFileType(current.nameSequence) != null) {
+          return true
+        }
+        current = current.parent
+      }
+      return false
+    }
+  }
+  
+  class ByCondition(val root: VirtualFile, val condition: (VirtualFile) -> Boolean,
+                    override val entityReference: EntityReference<WorkspaceEntity>) : ExcludedFileSet {
+    fun isExcluded(file: VirtualFile): Boolean {
+      var current = file
+      while (current != root) {
+        if (condition(current)) {
+          return true
+        }
+        current = current.parent
+      }
+
+      return condition(root)
+    }
   }
 }
 

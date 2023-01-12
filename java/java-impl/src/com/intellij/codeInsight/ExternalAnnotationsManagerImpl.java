@@ -755,6 +755,9 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     if (!element.isPhysical() && !(element.getOriginalElement() instanceof PsiCompiledElement)) {
       return AnnotationPlace.IN_CODE; //element just created
     }
+    if (element instanceof PsiLocalVariable) {
+      return AnnotationPlace.IN_CODE;
+    }
     if (!element.getManager().isInProject(element)) return AnnotationPlace.EXTERNAL;
     final Project project = myPsiManager.getProject();
 

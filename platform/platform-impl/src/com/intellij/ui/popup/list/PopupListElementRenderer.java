@@ -258,7 +258,6 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     myMainPane.setOpaque(false);
     myButtonPane.setOpaque(false);
 
-    updateExtraButtons(list, value, step, isSelected);
 
     boolean nextStepButtonSelected = false;
     boolean showNextStepLabel = step.hasSubstep(value) && !myInlineActionsSupport.hasExtraButtons(value);
@@ -274,15 +273,17 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       myNextStepLabel.setVisible(false);
     }
 
+    boolean hasNextIcon = myNextStepLabel.getIcon() != null && myNextStepLabel.isVisible();
+    boolean hasInlineButtons = updateExtraButtons(list, value, step, isSelected, hasNextIcon);
+
     if (ExperimentalUI.isNewUI() && myComponent instanceof SelectablePanel) {
       ((SelectablePanel)myComponent).setSelectionColor(isSelected && isSelectable ? UIUtil.getListSelectionBackground(true) : null);
 
       int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
       Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
-      boolean hasNextIcon = myNextStepLabel.getIcon() != null && myNextStepLabel.isVisible();
       //noinspection UseDPIAwareBorders
       myComponent.setBorder(
-        new EmptyBorder(0, innerInsets.left + leftRightInset, 0, hasNextIcon ? leftRightInset : leftRightInset + leftRightInset));
+        new EmptyBorder(0, innerInsets.left + leftRightInset, 0, hasNextIcon || hasInlineButtons ? leftRightInset : leftRightInset + leftRightInset));
     }
 
     if (step instanceof BaseListPopupStep) {
@@ -365,7 +366,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     }
   }
 
-  private void updateExtraButtons(JList<? extends E> list, E value, ListPopupStep<Object> step, boolean isSelected) {
+  private boolean updateExtraButtons(JList<? extends E> list, E value, ListPopupStep<Object> step, boolean isSelected, boolean hasNextIcon) {
     myButtonPane.removeAll();
     GridBag gb = new GridBag().setDefaultFill(GridBagConstraints.BOTH)
       .setDefaultAnchor(GridBagConstraints.CENTER)
@@ -393,10 +394,16 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
         myRendererComponent.setToolTipText(myInlineActionsSupport.getActiveExtraButtonToolTipText(list, value));
       }
     }
+    else if (!hasNextIcon && myInlineActionsSupport.hasExtraButtons(value)){
+      myButtonsSeparator.setVisible(false);
+      myButtonPane.add(Box.createHorizontalStrut(InlineActionsUtilKt.buttonWidth()), gb.next());
+    }
     else {
       myButtonsSeparator.setVisible(false);
       myButtonPane.add(myNextStepLabel, gb.next());
     }
+
+    return !extraButtons.isEmpty();
   }
 
   protected JComponent createIconBar() {
@@ -424,7 +431,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   static Insets getListCellPadding() {
     if (ExperimentalUI.isNewUI()) {
       int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
-      return JBUI.insets(0, leftRightInset, 0, leftRightInset + leftRightInset);
+      return JBUI.insets(0, leftRightInset, 0, leftRightInset);
     }
 
     return UIUtil.getListCellPadding();

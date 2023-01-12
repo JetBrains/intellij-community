@@ -15,7 +15,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -51,6 +53,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private static final Logger LOG = Logger.getInstance(TipPanel.class);
 
   private @NotNull final Project myProject;
+  private @NotNull final JPanel myContentPanel;
   private @NotNull final JLabel mySubSystemLabel;
   private final StyledTextPane myTextPane;
   final AbstractAction myPreviousTipAction;
@@ -64,13 +67,13 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private final Map<String, Boolean> myTipIdToLikenessState = new LinkedHashMap<>();
   private Boolean myCurrentLikenessState = null;
 
-  public TipPanel(@NotNull final Project project, @NotNull final List<TipAndTrickBean> tips, @NotNull Disposable parentDisposable) {
+  public TipPanel(@NotNull final Project project, @NotNull final TipsSortingResult sortingResult, @NotNull Disposable parentDisposable) {
     setLayout(new BorderLayout());
     myProject = project;
 
-    JPanel contentPanel = new JPanel();
-    contentPanel.setBackground(TipUiSettings.getPanelBackground());
-    contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+    myContentPanel = new JPanel();
+    myContentPanel.setBackground(TipUiSettings.getPanelBackground());
+    myContentPanel.setLayout(new BoxLayout(myContentPanel, BoxLayout.Y_AXIS));
 
     mySubSystemLabel = new JLabel() {
       @Override
@@ -82,14 +85,14 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     mySubSystemLabel.setForeground(UIUtil.getLabelInfoForeground());
     mySubSystemLabel.setBorder(JBUI.Borders.emptyBottom((int)TextParagraph.SMALL_INDENT));
     mySubSystemLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    contentPanel.add(mySubSystemLabel);
+    myContentPanel.add(mySubSystemLabel);
 
     myTextPane = new StyledTextPane();
     myTextPane.setBackground(TipUiSettings.getPanelBackground());
     myTextPane.setMargin(JBInsets.emptyInsets());
     myTextPane.setAlignmentX(Component.LEFT_ALIGNMENT);
     Disposer.register(parentDisposable, myTextPane);
-    contentPanel.add(myTextPane);
+    myContentPanel.add(myTextPane);
 
     JPanel centerPanel = new JPanel();
     centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
@@ -100,7 +103,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
 
     // scroll will not be shown in a regular case
     // it is required only for technical writers to test whether the content of the new do not exceed the bounds
-    JBScrollPane scrollPane = new JBScrollPane(contentPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
+    JBScrollPane scrollPane = new JBScrollPane(myContentPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setBorder(JBUI.Borders.empty());
     centerPanel.add(scrollPane);
 
@@ -113,7 +116,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     myPreviousTipAction = new PreviousTipAction();
     myNextTipAction = new NextTipAction();
 
-    setTips(tips);
+    setTips(sortingResult);
   }
 
   private JPanel createFeedbackPanel() {
@@ -227,11 +230,10 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     };
   }
 
-  void setTips(@NotNull List<TipAndTrickBean> list) {
-    RecommendationDescription recommendation = TipsOrderUtil.getInstance().sort(list, myProject);
-    myTips = recommendation.getTips();
-    myAlgorithm = recommendation.getAlgorithm();
-    myAlgorithmVersion = recommendation.getVersion();
+  void setTips(@NotNull TipsSortingResult sortingResult) {
+    myTips = sortingResult.getTips();
+    myAlgorithm = sortingResult.getAlgorithm();
+    myAlgorithmVersion = sortingResult.getVersion();
     showNext(true);
   }
 
@@ -253,6 +255,13 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   private void setTip(@NotNull TipAndTrickBean tip) {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      List<TextParagraph> tipContent = TipUtils.loadAndParseTip(tip);
+      ApplicationManager.getApplication().invokeLater(() -> doSetTip(tip, tipContent), ModalityState.stateForComponent(this));
+    });
+  }
+
+  private void doSetTip(@NotNull TipAndTrickBean tip, @NotNull List<TextParagraph> tipContent) {
     saveCurrentTipLikenessState();
     myCurrentLikenessState = getLikenessState(tip);
     myCurrentTip = tip;
@@ -261,7 +270,6 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     mySubSystemLabel.setText(ObjectUtils.notNull(groupName, ""));
     mySubSystemLabel.setVisible(groupName != null);
 
-    List<TextParagraph> tipContent = TipUtils.loadAndParseTip(tip);
     myTextPane.setParagraphs(tipContent);
     adjustTextPaneBorder(tipContent);
     setPromotionForCurrentTip();
@@ -356,6 +364,10 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
       return myTipIdToLikenessState.get(tipId);
     }
     return TipsFeedback.getInstance().getLikenessState(tipId);
+  }
+
+  @NotNull JPanel getContentPanel() {
+    return myContentPanel;
   }
 
   @Override

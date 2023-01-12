@@ -386,12 +386,6 @@
       "endBackground": "#FFD333FF"
     },
 
-    "SpeedSearch": {
-      "foreground": "#000000",
-      "borderColor": "#000000",
-      "background": "#1AEBFF"
-    },
-
     "StatusBar.borderColor": "#b3b3b3",
 
     "TabbedPane": {

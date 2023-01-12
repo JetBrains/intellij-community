@@ -207,6 +207,32 @@ internal class GitSettingsLogTest {
   }
 
   @Test
+  fun `do not fail if unknown gpg option is written in global config`() {
+    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = initializeGitSettingsLog(editorXml)
+
+    (settingsSyncStorage / ".git" / "config").writeText("""
+      [commit]
+          gpgsign = true
+      [user]
+          signingkey = KEYHERE
+      [gpg]
+	        format = ssh
+      [gpg "ssh"]
+        allowedSignersFile = ~/.config/git/allowed_signers""".trimIndent())
+
+    settingsLog.forceWriteToMaster(
+      settingsSnapshot {
+        fileState("options/editor.xml", "ideEditorContent")
+      }, "Local changes"
+    )
+    settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
+      fileState("options/editor.xml", "ideEditorContent")
+    }
+  }
+
+  @Test
   fun `plugins state is written to the settings log`() {
     val editorXml = (configDir / "options" / "editor.xml").createFile()
     editorXml.writeText("editorContent")

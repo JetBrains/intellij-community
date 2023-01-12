@@ -4,6 +4,7 @@ package com.intellij.ide.util
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.util.TipAndTrickManager.Companion.DISABLE_TIPS_FOR_PROJECT
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
@@ -17,10 +18,19 @@ class TipAndTrickManagerImpl : TipAndTrickManager {
   override fun showTipDialog(project: Project, tip: TipAndTrickBean) = showTipDialog(project, listOf(tip))
 
   private fun showTipDialog(project: Project, tips: List<TipAndTrickBean>) {
-    closeTipDialog()
-    openedDialog = TipDialog(project, tips).also { dialog ->
-      Disposer.register(dialog.disposable, Disposable { openedDialog = null })  // clear link to not leak the project
-      dialog.show()
+    val sortingResult = if (tips.size > 1) {
+      TipsOrderUtil.getInstance().sort(tips, project)
+    }
+    else TipsSortingResult(tips)
+
+    invokeLater {
+      if (!project.isDisposed) {
+        closeTipDialog()
+        openedDialog = TipDialog(project, sortingResult).also { dialog ->
+          Disposer.register(dialog.disposable, Disposable { openedDialog = null })  // clear link to not leak the project
+          dialog.show()
+        }
+      }
     }
   }
 

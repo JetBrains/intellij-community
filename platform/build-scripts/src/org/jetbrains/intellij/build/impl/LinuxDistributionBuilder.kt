@@ -333,7 +333,7 @@ internal fun generateUnixScripts(distBinDir: Path,
     classPath += "\nCLASS_PATH=\"\$CLASS_PATH:\$IDE_HOME/lib/${classPathJars[i]}\""
   }
 
-  val additionalJvmArguments = context.getAdditionalJvmArguments(os = os, arch = arch).toMutableList()
+  val additionalJvmArguments = context.getAdditionalJvmArguments(os = os, arch = arch, isScript = true).toMutableList()
   if (!context.xBootClassPathJarNames.isEmpty()) {
     val bootCp = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$IDE_HOME/lib/${it}" }
     additionalJvmArguments.add("\"-Xbootclasspath/a:$bootCp\"")

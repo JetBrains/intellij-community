@@ -485,8 +485,12 @@ public interface Application extends ComponentManager {
 
   boolean isEAP();
 
+  /**
+   * @deprecated this scope will die only with the application => plugin coroutines which use it will leak on unloading.
+   * Instead, use Disposable application service approach described here https://youtrack.jetbrains.com/articles/IDEA-A-237338670
+   */
+  @Deprecated
   @ApiStatus.Internal
-  @ApiStatus.Experimental
   CoroutineScope getCoroutineScope();
 
   //<editor-fold desc="Deprecated stuff">

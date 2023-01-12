@@ -169,8 +169,6 @@
       "underlinedTabBackground": "#4E5254"
     },
 
-    "Editor.SearchField.background": "#45494A",
-
     "FileView.fileIcon": "AllIcons.FileTypes.Unknown",
     "Focus.color": "ff0000",
 

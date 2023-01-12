@@ -63,8 +63,8 @@
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.SourceRootFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.ExcludedRootFileIndexContributor"/>
-    <registryKey key="platform.projectModel.workspace.model.file.index" defaultValue="false"
-                 description="Use new implementation of ProjectFileIndex based of WorkspaceModel with incremental updates"
+    <registryKey key="platform.projectModel.workspace.model.file.index" defaultValue="true"
+                 description="Use new implementation of ProjectFileIndex based on WorkspaceModel with incremental updates"
                  restartRequired="true"/>
     
   </extensions>

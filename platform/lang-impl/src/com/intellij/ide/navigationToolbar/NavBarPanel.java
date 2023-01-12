@@ -8,6 +8,7 @@ import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.ide.impl.ProjectUtilKt;
+import com.intellij.ide.navbar.actions.NavBarActionHandler;
 import com.intellij.ide.navigationToolbar.ui.NavBarUI;
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.ide.projectView.ProjectView;
@@ -83,7 +84,7 @@ import java.util.function.Supplier;
  * @author Anna Kozlova
  */
 public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Disposable, Queryable,
-                                                   InfoAndProgressPanel.ScrollableToSelected {
+                                                   InfoAndProgressPanel.ScrollableToSelected, NavBarActionHandler {
 
   private final NavBarModel myModel;
 
@@ -245,10 +246,12 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     return myUpdateQueue;
   }
 
-  boolean isNodePopupSpeedSearchActive() {
+  @Override
+  public boolean isNodePopupSpeedSearchActive() {
     return isNodePopupActive() && SpeedSearchSupply.getSupply(myNodePopup.getList()) != null;
   }
 
+  @Override
   public void escape() {
     if (isNodePopupActive()) cancelPopup();
     else {
@@ -258,6 +261,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
   }
 
+  @Override
   public void enter() {
     if (isNodePopupActive()) {
       Selection indexes = mySelection;
@@ -272,14 +276,21 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (index != -1) ctrlClick(index);
   }
 
+  @Override
   public void moveHome() {
     shiftFocus(-myModel.getSelectedIndex());
   }
 
+  @Override
   public void navigate() {
     if (myModel.getSelectedIndex() != -1) {
       doubleClick(myModel.getSelectedIndex());
     }
+  }
+
+  @Override
+  public void moveUpDown() {
+    moveDown();
   }
 
   public void moveDown() {
@@ -295,6 +306,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
   }
 
+  @Override
   public void moveEnd() {
     shiftFocus(myModel.size() - 1 - myModel.getSelectedIndex());
   }
@@ -394,10 +406,12 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
   }
 
+  @Override
   public void moveLeft() {
     move(-1);
   }
 
+  @Override
   public void moveRight() {
     move(1);
   }

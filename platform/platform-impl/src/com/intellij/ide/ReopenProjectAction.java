@@ -10,12 +10,14 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem;
 import com.intellij.util.BitUtil;
 import kotlin.Unit;
@@ -28,7 +30,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-@SuppressWarnings("ComponentNotRegistered")
 public class ReopenProjectAction extends AnAction implements DumbAware, LightEditCompatible {
   private final String myProjectPath;
   private final String myProjectName;
@@ -43,6 +44,10 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
     String text = projectPath.equals(displayName) ? FileUtil.getLocationRelativeToUserHome(projectPath) : displayName;
     presentation.setText(text, false);
     presentation.setDescription(FileUtil.toSystemDependentName(projectPath));
+    if (StringUtil.isEmpty(text)) {
+      Logger.getInstance(ReopenProjectAction.class).error(
+        String.format("Empty action text for projectName='%s' displayName='%s' path='%s'", projectName, displayName, projectPath));
+    }
   }
 
   @Override
