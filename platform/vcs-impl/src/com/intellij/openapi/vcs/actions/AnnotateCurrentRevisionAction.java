@@ -38,4 +38,9 @@ class AnnotateCurrentRevisionAction extends AnnotateRevisionAction {
     if (lineNumber < 0 || lineNumber >= myAnnotation.getLineCount()) return null;
     return myProvider.getRevision(lineNumber);
   }
+
+  @Override
+  protected int getAnnotatedLine(@NotNull AnActionEvent e) {
+    return ShowAnnotateOperationsPopup.getAnnotationLineNumber(e.getDataContext());
+  }
 }

@@ -77,11 +77,6 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
     return new MyVcsVirtualFile(filePath, revision, currentFileType);
   }
 
-  @Override
-  protected int getAnnotatedLine(@NotNull AnActionEvent e) {
-    return ShowAnnotateOperationsPopup.getAnnotationLineNumber(e.getDataContext());
-  }
-
   @Nullable
   @Override
   protected Editor getEditor(@NotNull AnActionEvent e) {
