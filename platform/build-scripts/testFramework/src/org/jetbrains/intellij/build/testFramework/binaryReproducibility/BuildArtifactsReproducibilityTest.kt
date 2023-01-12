@@ -103,10 +103,14 @@ internal class BuildArtifactsReproducibilityTest {
 
   private fun BuildContext.cleanBuildOutput() {
     Files.newDirectoryStream(paths.buildOutputDir).use { content ->
-      content.filter { it != paths.artifactDir }.forEach(NioFiles::deleteRecursively)
+      content.filter {
+        it != paths.artifactDir && it != paths.logDir
+      }.forEach(NioFiles::deleteRecursively)
     }
     Files.newDirectoryStream(paths.artifactDir).use { content ->
-      content.filter { it.name == "unscrambled" || it.name == "scramble-logs" }.forEach(NioFiles::deleteRecursively)
+      content.filter {
+        it.name == "unscrambled" || it.name == "scramble-logs"
+      }.forEach(NioFiles::deleteRecursively)
     }
   }
 }
