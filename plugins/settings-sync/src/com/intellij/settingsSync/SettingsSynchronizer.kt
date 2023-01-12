@@ -4,7 +4,6 @@ import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
@@ -73,7 +72,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     settingsSyncMain.controls.bridge.initialize(initMode)
     SettingsSyncEvents.getInstance().addCategoriesChangeListener(this)
     syncSettings()
-    service<LocalHostNameProvider>()
+    LocalHostNameProvider.initialize()
   }
 
   override fun enabledStateChanged(syncEnabled: Boolean) {
