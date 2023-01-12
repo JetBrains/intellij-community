@@ -118,7 +118,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     return createModifiableModel(MutableEntityStorage.from(storage))
   }
 
-  override fun createModifiableModel(mutableEntityStorage: MutableEntityStorage): ModifiableArtifactModel {
+  private fun createModifiableModel(mutableEntityStorage: MutableEntityStorage): ModifiableArtifactModel {
     return ArtifactModifiableModelBridge(project, mutableEntityStorage, this)
   }
 

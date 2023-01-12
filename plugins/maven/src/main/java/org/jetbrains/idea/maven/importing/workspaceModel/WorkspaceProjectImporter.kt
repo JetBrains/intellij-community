@@ -22,6 +22,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
@@ -86,14 +87,15 @@ internal class WorkspaceProjectImporter(
     builder.addEntity(MavenProjectsTreeSettingsEntity(projectChangesInfo.projectFilePaths, MavenProjectsTreeEntitySource))
 
     val contextData = UserDataHolderBase()
+    val artifactModel = ImporterModifiableArtifactModel(myProject, builder)
 
     val projectsWithModuleEntities = stats.recordPhase(MavenImportCollector.WORKSPACE_POPULATE_PHASE) {
-      importModules(storageBeforeImport, builder, allProjectsToChanges, mavenProjectToModuleName, contextData, stats).also {
-        beforeModelApplied(it, builder, contextData, stats)
+      importModules(storageBeforeImport, builder, allProjectsToChanges, mavenProjectToModuleName, artifactModel, contextData, stats).also {
+        beforeModelApplied(it, builder, artifactModel, contextData, stats)
       }
     }
     val appliedProjectsWithModules = stats.recordPhase(MavenImportCollector.WORKSPACE_COMMIT_PHASE) {
-      commitModulesToWorkspaceModel(projectsWithModuleEntities, builder, contextData, stats)
+      commitModulesToWorkspaceModel(projectsWithModuleEntities, builder, artifactModel, contextData, stats)
     }
 
     stats.recordPhase(MavenImportCollector.WORKSPACE_LEGACY_IMPORTERS_PHASE) { activity ->
@@ -179,6 +181,7 @@ internal class WorkspaceProjectImporter(
                             builder: MutableEntityStorage,
                             projectsToImport: Map<MavenProject, MavenProjectChanges>,
                             mavenProjectToModuleName: java.util.HashMap<MavenProject, String>,
+                            artifactModel: ModifiableArtifactModel,
                             contextData: UserDataHolderBase,
                             stats: WorkspaceImportStats): List<MavenProjectWithModulesData<ModuleEntity>> {
     val context = MavenProjectImportContextProvider(myProject, myProjectsTree, myImportingSettings,
@@ -215,7 +218,7 @@ internal class WorkspaceProjectImporter(
       MavenProjectWithModulesData(mavenProject, partialData.changes, partialData.modules)
     }
 
-    configureModules(result, builder, contextData, stats)
+    configureModules(result, builder, artifactModel, contextData, stats)
     return result
   }
 
@@ -246,9 +249,11 @@ internal class WorkspaceProjectImporter(
 
   private fun commitModulesToWorkspaceModel(mavenProjectsWithModules: List<MavenProjectWithModulesData<ModuleEntity>>,
                                             newStorage: MutableEntityStorage,
+                                            artifactModel: ImporterModifiableArtifactModel,
                                             contextData: UserDataHolderBase,
                                             stats: WorkspaceImportStats): List<MavenProjectWithModulesData<Module>> {
     val appliedModulesResult = mutableListOf<MavenProjectWithModulesData<Module>>()
+    artifactModel.applyToStorage()
     updateProjectModelFastOrSlow(myProject, stats,
                                  { snapshot -> applyToCurrentStorage(mavenProjectsWithModules, snapshot, newStorage) },
                                  { applied ->
@@ -379,12 +384,14 @@ internal class WorkspaceProjectImporter(
 
   private fun configureModules(projectsWithModules: List<MavenWorkspaceConfigurator.MavenProjectWithModules<ModuleEntity>>,
                                builder: MutableEntityStorage,
+                               artifactModel: ModifiableArtifactModel,
                                contextDataHolder: UserDataHolderBase,
                                stats: WorkspaceImportStats) {
     val context = object : MavenWorkspaceConfigurator.MutableMavenProjectContext, UserDataHolder by contextDataHolder {
       override val project = myProject
       override val storage = builder
       override val mavenProjectsTree = myProjectsTree
+      override val artifactModel = artifactModel
       override lateinit var mavenProjectWithModules: MavenWorkspaceConfigurator.MavenProjectWithModules<ModuleEntity>
     }
     WORKSPACE_CONFIGURATOR_EP.extensions.forEach { configurator ->
@@ -403,6 +410,7 @@ internal class WorkspaceProjectImporter(
 
   private fun beforeModelApplied(projectsWithModules: List<MavenWorkspaceConfigurator.MavenProjectWithModules<ModuleEntity>>,
                                  builder: MutableEntityStorage,
+                                 artifactModel: ModifiableArtifactModel,
                                  contextDataHolder: UserDataHolderBase,
                                  stats: WorkspaceImportStats) {
     val context = object : MavenWorkspaceConfigurator.MutableModelContext, UserDataHolder by contextDataHolder {
@@ -410,6 +418,7 @@ internal class WorkspaceProjectImporter(
       override val storage = builder
       override val mavenProjectsTree = myProjectsTree
       override val mavenProjectsWithModules = projectsWithModules.asSequence()
+      override val artifactModel = artifactModel
       override fun <T : WorkspaceEntity> importedEntities(clazz: Class<T>): Sequence<T> = importedEntities(builder, clazz)
     }
     WORKSPACE_CONFIGURATOR_EP.extensions.forEach { configurator ->
