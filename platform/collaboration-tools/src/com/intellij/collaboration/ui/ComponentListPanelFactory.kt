@@ -8,7 +8,7 @@ import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
 object ComponentListPanelFactory {
-  fun <T : Any> createVertical(model: ListModel<T>, componentFactory: (T) -> JComponent, gap: Int): JPanel {
+  fun <T : Any> createVertical(model: ListModel<T>, gap: Int, componentFactory: (T) -> JComponent): JPanel {
     val panel = VerticalListPanel(gap)
 
     model.addListDataListener(object : ListDataListener {

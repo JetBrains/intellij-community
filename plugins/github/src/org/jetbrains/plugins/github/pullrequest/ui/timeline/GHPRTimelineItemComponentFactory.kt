@@ -13,7 +13,6 @@ import com.intellij.collaboration.ui.codereview.onHyperlinkActivated
 import com.intellij.collaboration.ui.codereview.setHtmlBody
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
-import com.intellij.collaboration.ui.codereview.timeline.TimelineItemComponentFactory
 import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.application.ApplicationBundle
@@ -84,11 +83,12 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                        private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
                                        private val ghostUser: GHUser,
                                        private val prAuthor: GHActor?,
-                                       private val currentUser: GHUser) : TimelineItemComponentFactory<GHPRTimelineItem> {
+                                       private val currentUser: GHUser)
+  : (GHPRTimelineItem) -> JComponent {
 
   private val eventComponentFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider, ghostUser)
 
-  override fun createComponent(item: GHPRTimelineItem): JComponent {
+  override fun invoke(item: GHPRTimelineItem): JComponent {
     try {
       return when (item) {
         is GHPullRequestCommitShort -> createComponent(listOf(item))
@@ -316,7 +316,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                                                      CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
 
 
-    val commentsListPanel = ComponentListPanelFactory.createVertical(thread.repliesModel, commentComponentFactory, 0)
+    val commentsListPanel = ComponentListPanelFactory.createVertical(thread.repliesModel, 0, commentComponentFactory)
 
     val commentsPanel = if (reviewDataProvider.canComment()) {
       val actionsComponent = GHPRReviewThreadComponent

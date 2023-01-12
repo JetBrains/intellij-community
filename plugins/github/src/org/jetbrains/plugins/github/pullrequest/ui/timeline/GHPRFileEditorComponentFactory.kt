@@ -3,11 +3,11 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.ComponentListPanelFactory
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
-import com.intellij.collaboration.ui.codereview.timeline.TimelineComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
@@ -138,7 +138,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       descriptionWrapper.setContent(itemComponentFactory.createComponent(detailsModel.value))
     }
 
-    val timeline = TimelineComponentFactory.create(timelineModel, itemComponentFactory, 0)
+    val timeline = ComponentListPanelFactory.createVertical(timelineModel, 0, itemComponentFactory)
     val timelineLoader = editor.timelineLoader
 
     val progressAndErrorPanel = JPanel(ListLayout.vertical(0, ListLayout.Alignment.CENTER)).apply {
