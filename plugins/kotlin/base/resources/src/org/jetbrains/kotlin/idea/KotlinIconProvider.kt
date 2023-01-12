@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import com.intellij.ui.IconManager
 import com.intellij.ui.RowIcon
@@ -56,10 +57,7 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
     override fun getIcon(psiElement: PsiElement, flags: Int): Icon? {
         if (psiElement is KtFile) {
             if (psiElement.isScript()) {
-                return when {
-                    psiElement.name.endsWith(".gradle.kts") -> GRADLE_SCRIPT
-                    else -> SCRIPT
-                }
+                return psiElement.scriptIcon()
             }
             val mainClass = getSingleClass(psiElement)
             return if (mainClass != null) getIcon(mainClass, flags) else FILE
@@ -128,6 +126,11 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
             return icon?.let(IconManager.getInstance()::getPlatformIcon) ?: PlatformIcons.PUBLIC_ICON
         }
 
+        private fun PsiFile.scriptIcon(): Icon = when {
+            virtualFile.name.endsWith(".gradle.kts") -> GRADLE_SCRIPT
+            else -> SCRIPT
+        }
+
         fun PsiElement.getBaseIcon(): Icon? = when (this) {
             is KtPackageDirective -> AllIcons.Nodes.Package
             is KtFile, is KtLightClassForFacade -> FILE
@@ -163,6 +166,7 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
                     PARAMETER
             }
             is KtProperty -> if (isVar) FIELD_VAR else FIELD_VAL
+            is KtScriptInitializer -> containingFile.scriptIcon()
             is KtClassInitializer -> CLASS_INITIALIZER
             is KtTypeAlias -> TYPE_ALIAS
             is KtAnnotationEntry -> {

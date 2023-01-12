@@ -93,6 +93,7 @@ internal class KtDeclarationTreeNode(
                 is KtProperty -> declaration.presentableText()
                 is KtFunction -> declaration.presentableText()
                 is KtObjectDeclaration -> declaration.presentableText()
+                is KtScriptInitializer -> ((declaration.body as? KtCallExpression)?.calleeExpression as? KtNameReferenceExpression)?.getReferencedNameAsName()?.asString() ?: CLASS_INITIALIZER
                 is KtAnonymousInitializer -> CLASS_INITIALIZER
                 else -> declaration.name.orErrorName()
             }
