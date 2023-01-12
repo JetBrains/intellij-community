@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInspection.options.OptPane;
@@ -116,8 +116,11 @@ public class LawOfDemeterInspection extends BaseInspection {
           }
           return true;
         }
-        else if (target instanceof PsiLocalVariable) {
-          final PsiExpression definition = DeclarationSearchUtils.findDefinition(referenceExpression, (PsiVariable)target);
+        else if (target instanceof PsiLocalVariable variable) {
+          if (ignoreLibraryCalls && variable.getType() instanceof PsiArrayType) {
+            return false;
+          }
+          final PsiExpression definition = DeclarationSearchUtils.findDefinition(referenceExpression, variable);
           return violatesLawOfDemeter(definition);
         }
       }
