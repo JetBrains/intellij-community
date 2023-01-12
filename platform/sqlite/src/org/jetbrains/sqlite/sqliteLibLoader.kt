@@ -3,6 +3,7 @@ package org.jetbrains.sqlite
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.ResourceUtil
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.system.CpuArch
@@ -38,10 +39,19 @@ private fun loadSqliteNativeLibrary() {
   @Suppress("SpellCheckingInspection")
   var nativeLibraryName = System.mapLibraryName("sqlitejdbc")?.replace(".dylib", ".jnilib")!!
   val relativeDirName = "${osNameToDirName()}/${if (CpuArch.isArm64()) "aarch64" else "x86_64"}"
-  val nativeLibFile = Path.of(PathManager.getLibPath(), "native", relativeDirName, nativeLibraryName).toAbsolutePath().normalize()
-  if (Files.exists(nativeLibFile)) {
-    System.load(nativeLibFile.toString())
-    return
+  val libPath = try {
+    PathManager.getLibPath()
+  }
+  catch (ignore: RuntimeException) {
+    // unit test or benchmark - no home path
+    null
+  }
+  if (libPath != null) {
+    val nativeLibFile = Path.of(libPath, "native", relativeDirName, nativeLibraryName).toAbsolutePath().normalize()
+    if (Files.exists(nativeLibFile)) {
+      System.load(nativeLibFile.toString())
+      return
+    }
   }
 
   // load the os-dependent library from the jar file
@@ -60,7 +70,15 @@ private fun loadSqliteNativeLibrary() {
 
   if (hasNativeLib) {
     // try extracting the library from jar
-    extractAndLoadLibraryFile(libFolderForCurrentOS = nativeLibraryPath, libraryFileName = nativeLibraryName)
+    val tempDir = if (libPath == null) {
+      val dir = Files.createTempDirectory("sqlite-")
+      Runtime.getRuntime().addShutdownHook(Thread(Runnable { NioFiles.deleteRecursively(dir) }, "remove sqlite native temp dir"))
+      dir
+    }
+    else {
+      Path.of(PathManager.getTempPath())
+    }
+    extractAndLoadLibraryFile(libFolderForCurrentOS = nativeLibraryPath, libraryFileName = nativeLibraryName, tempDir = tempDir)
   }
   else {
     throw Exception("No native library found for os.name=${SystemInfoRt.OS_NAME}, os.arch=${CpuArch.CURRENT}")
@@ -70,14 +88,14 @@ private fun loadSqliteNativeLibrary() {
 /**
  * Extracts and loads the specified library file to the target folder
  */
-private fun extractAndLoadLibraryFile(libFolderForCurrentOS: String, libraryFileName: String) {
+private fun extractAndLoadLibraryFile(libFolderForCurrentOS: String, libraryFileName: String, tempDir: Path) {
   val nativeLibraryFilePath = "$libFolderForCurrentOS/$libraryFileName"
   val classLoader = Codes::class.java.classLoader
 
   val expectedHash = ResourceUtil.getResourceAsBytes("$nativeLibraryFilePath.sha256", classLoader)!!.decodeToString()
 
   val extractedLibFileName = "sqlite-$VERSION-$libraryFileName"
-  val targetDir = Path.of(PathManager.getTempPath(), "sqlite-native").toAbsolutePath().normalize()
+  val targetDir = tempDir.resolve("sqlite-native").toAbsolutePath().normalize()
   val extractedLibFile = targetDir.resolve(extractedLibFileName)
   if (!Files.exists(extractedLibFile) || expectedHash != DigestUtil.sha256Hex(extractedLibFile)) {
     Files.createDirectories(targetDir)
