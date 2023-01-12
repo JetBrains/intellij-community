@@ -38,7 +38,7 @@ internal class ImporterModifiableArtifact(private val project: Project,
 
   override fun <T : Any?> getUserData(key: Key<T>): T? = contextData.getUserData(key)
   override fun <T : Any?> putUserData(key: Key<T>, value: T?) = contextData.putUserData(key, value)
-    override fun getExternalSource() = externalSource
+  override fun getExternalSource() = externalSource
   override fun getArtifactType() = artifactType
   override fun getName() = name
   override fun getRootElement() = rootElement
@@ -69,9 +69,8 @@ internal class ImporterModifiableArtifact(private val project: Project,
     rootElement = root
   }
 
-  override fun getPropertiesProviders(): Collection<ArtifactPropertiesProvider> {
-    val artifactType = this.artifactType
-    return ArtifactPropertiesProvider.getProviders().filter { it.isAvailableFor(artifactType) }
+  override fun getPropertiesProviders(): Collection<ArtifactPropertiesProvider> = ArtifactPropertiesProvider.getProviders().filter {
+    it.isAvailableFor(this.artifactType)
   }
 
   override fun getProperties(propertiesProvider: ArtifactPropertiesProvider): ArtifactProperties<*>? {
@@ -104,14 +103,6 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
   override fun getOriginalArtifact(artifact: Artifact): Artifact = artifact
   override fun getArtifactsByType(type: ArtifactType): MutableCollection<out Artifact> = artifacts.filter { it.artifactType == type }.toMutableList()
   override fun getAllArtifactsIncludingInvalid(): MutableList<out Artifact> = artifacts
-
-  override fun addArtifact(name: String, artifactType: ArtifactType): ModifiableArtifact {
-    return addArtifact(name, artifactType, artifactType.createRootElement(name))
-  }
-
-  override fun addArtifact(name: String, artifactType: ArtifactType, rootElement: CompositePackagingElement<*>): ModifiableArtifact {
-    return addArtifact(name, artifactType, rootElement, null)
-  }
 
   private fun generateUniqueName(baseName: String): String {
     return UniqueNameGenerator.generateUniqueName(baseName) { findArtifact(it) == null }
