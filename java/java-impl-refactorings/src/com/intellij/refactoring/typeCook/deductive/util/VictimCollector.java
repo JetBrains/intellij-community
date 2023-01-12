@@ -55,6 +55,7 @@ public class VictimCollector extends Visitor {
   @Override public void visitForeachStatement(final @NotNull PsiForeachStatement statement) {
     super.visitForeachStatement(statement);
     final PsiParameter parameter = statement.getIterationParameter();
+    if (parameter == null) return;
     testNAdd(parameter, parameter.getType());
   }
 

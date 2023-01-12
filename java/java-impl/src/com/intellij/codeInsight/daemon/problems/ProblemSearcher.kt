@@ -78,7 +78,9 @@ internal class ProblemSearcher(private val file: PsiFile, private val memberType
 
   override fun visitForeachStatement(statement: PsiForeachStatement) {
     visitStatement(statement)
-    findProblem(statement.iterationParameter)
+    val element = statement.iterationParameter
+    if (element == null) return;
+    findProblem(element)
   }
 
   override fun visitStatement(statement: PsiStatement) {

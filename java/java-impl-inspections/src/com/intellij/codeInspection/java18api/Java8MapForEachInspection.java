@@ -82,9 +82,13 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
         if (DO_NOT_HIGHLIGHT_LOOP && !isOnTheFly) return;
         PsiMethodCallExpression call =
           ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(loop.getIteratedValue()), PsiMethodCallExpression.class);
+        PsiParameter parameter = loop.getIterationParameter();
+        if (parameter == null) {
+          return;
+        }
         if (MAP_ENTRY_SET.test(call) &&
             LambdaGenerationUtil.canBeUncheckedLambda(loop.getBody()) &&
-            allUsagesAllowed(loop.getIterationParameter())) {
+            allUsagesAllowed(parameter)) {
           ProblemHighlightType type =
             DO_NOT_HIGHLIGHT_LOOP ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
           boolean wholeStatement =
@@ -189,6 +193,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
       PsiElement body = loop.getBody();
       if (body == null) return;
       PsiParameter entryParameter = loop.getIterationParameter();
+      if (entryParameter == null) return;
       CommentTracker ct = new CommentTracker();
       String replacementExpression = createReplacementExpression(entrySetCall, entryParameter, body, ct);
       ct.replaceAndRestoreComments(loop, replacementExpression + ";");

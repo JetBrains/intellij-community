@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.j2k
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.j2k.ast.*
-import java.util.*
 
 interface StatementConverter {
     fun convertStatement(statement: PsiStatement, codeConverter: CodeConverter): Statement
@@ -105,7 +104,7 @@ class DefaultStatementConverter : JavaElementVisitor(), StatementConverter {
 
     override fun visitForeachStatement(statement: PsiForeachStatement) {
         val iterator = codeConverter.convertExpression(statement.iteratedValue, null, Nullability.NotNull)
-        val iterationParameter = statement.iterationParameter
+        val iterationParameter = statement.iterationParameter ?: TODO("iterationParameter is absent")
         result = ForeachStatement(iterationParameter.declarationIdentifier(),
                                   if (codeConverter.settings.specifyLocalVariableTypeByDefault) codeConverter.typeConverter.convertVariableType(iterationParameter) else null,
                                   iterator,

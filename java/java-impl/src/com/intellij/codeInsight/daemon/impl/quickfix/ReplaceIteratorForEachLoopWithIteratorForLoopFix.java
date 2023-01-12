@@ -80,6 +80,9 @@ public final class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements I
       return;
     }
     final PsiParameter iterationParameter = myStatement.getIterationParameter();
+    if (iterationParameter == null) {
+      return;
+    }
     final String iterationParameterName = iterationParameter.getName();
     final PsiStatement forEachBody = myStatement.getBody();
 

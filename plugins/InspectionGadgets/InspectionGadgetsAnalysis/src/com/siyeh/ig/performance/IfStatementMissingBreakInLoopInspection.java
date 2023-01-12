@@ -53,6 +53,7 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection impl
       PsiStatement body = statement.getBody();
       if (body == null) return;
       PsiParameter parameter = statement.getIterationParameter();
+      if (parameter == null) return;
       Set<PsiVariable> nonFinalVariables = new HashSet<>();
       nonFinalVariables.add(parameter);
       Set<PsiVariable> declaredVariables = new HashSet<>();

@@ -521,7 +521,9 @@ public final class ExpectedTypesProvider {
     @Override
     public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       if (myExpr.equals(statement.getIteratedValue())) {
-        PsiType type = statement.getIterationParameter().getType();
+        PsiParameter iterationParameter = statement.getIterationParameter();
+        if (iterationParameter == null) return;
+        PsiType type = iterationParameter.getType();
 
         if (PsiType.NULL.equals(type)) return;
 
