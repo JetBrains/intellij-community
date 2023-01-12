@@ -557,6 +557,16 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       }
     }
 
+    private void flushUserAndPathMaps() {
+      try {
+        myIndexStorage.users.flush();
+        myIndexStorage.paths.flush();
+      }
+      catch (Exception e) {
+        myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
+      }
+    }
+
     private void processException(@NotNull Throwable e) {
       int errorHash = ThrowableInterner.computeTraceHashCode(e);
       int errors = myIndexingErrors.get(myRoot).cacheOrGet(errorHash, 0);
@@ -629,7 +639,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     }
 
     private void indexOneByOne(@NotNull IntStream commits, @NotNull ProgressIndicator indicator, VcsLogWriter mutator) throws VcsException {
-      // We pass hashes to VcsLogProvider#readFullDetails in batches
+      // We pass hashes to VcsLogProvider#readFullDetails in batchesf
       // in order to avoid allocating too much memory for these hashes
       // a batch of 20k will occupy ~2.4Mb
       IntCollectionUtil.processBatches(commits, BATCH_SIZE, batch -> {
@@ -640,6 +650,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
           indicator.checkCanceled();
           storeDetail(detail, mutator);
           if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) {
+            flushUserAndPathMaps();
             mutator.flush();
           }
 
@@ -654,6 +665,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         storeDetail(details, mutator);
 
         if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) {
+          flushUserAndPathMaps();
           mutator.flush();
         }
 
