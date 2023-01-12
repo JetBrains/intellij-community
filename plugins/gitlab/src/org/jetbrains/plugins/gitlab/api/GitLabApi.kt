@@ -8,8 +8,10 @@ import com.intellij.collaboration.api.httpclient.CommonHeadersConfigurer
 import com.intellij.collaboration.api.httpclient.CompoundRequestConfigurer
 import com.intellij.collaboration.api.httpclient.RequestTimeoutConfigurer
 import com.intellij.collaboration.api.json.JsonHttpApiHelper
+import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpSecurityUtil
+import java.net.http.HttpResponse
 
 class GitLabApi private constructor(httpHelper: HttpApiHelper)
   : HttpApiHelper by httpHelper,
@@ -25,6 +27,11 @@ class GitLabApi private constructor(httpHelper: HttpApiHelper)
 
   constructor(tokenSupplier: () -> String) : this(httpHelper(tokenSupplier))
 
+  suspend inline fun <reified T> loadList(uri: String): HttpResponse<out List<T>> {
+    val request = request(uri).GET().build()
+    return loadJsonList(request)
+  }
+
   companion object {
     private fun httpHelper(tokenSupplier: () -> String): HttpApiHelper {
       val authConfigurer = object : AuthorizationConfigurer() {
@@ -37,6 +44,5 @@ class GitLabApi private constructor(httpHelper: HttpApiHelper)
       return HttpApiHelper(logger = logger<GitLabApi>(),
                            requestConfigurer = requestConfigurer)
     }
-
   }
 }

@@ -16,8 +16,3 @@ suspend fun GitLabApi.loadMergeRequests(project: GitLabProjectCoordinates,
   val request = request(uri).GET().build()
   return loadJsonList(request)
 }
-
-suspend fun GitLabApi.loadMergeRequests(uri: String): HttpResponse<out List<GitLabMergeRequestShortDTO>> {
-  val request = request(uri).GET().build()
-  return loadJsonList(request)
-}
