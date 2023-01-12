@@ -9,6 +9,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.childScope
 import com.intellij.vcs.log.Hash
@@ -69,8 +70,11 @@ internal const val SQLITE_VCS_LOG_DB_FILENAME_PREFIX = "vcs-log-v"
 
 @Service(Service.Level.PROJECT)
 private class ProjectLevelStoreManager(project: Project) : Disposable {
-  @JvmField
-  val connection: SqliteConnection
+  var connection: SqliteConnection
+    private set
+
+  private val dbFile = project.getProjectDataPath(
+    "$SQLITE_VCS_LOG_DB_FILENAME_PREFIX${DB_VERSION}-${VcsLogStorageImpl.VERSION}-${VcsLogPersistentIndex.VERSION}.db")
 
   @Suppress("DEPRECATION")
   private val coroutineScope: CoroutineScope = ApplicationManager.getApplication().coroutineScope.childScope()
@@ -79,13 +83,23 @@ private class ProjectLevelStoreManager(project: Project) : Disposable {
   var isFresh = false
 
   init {
-    val dbFile = project.getProjectDataPath("$SQLITE_VCS_LOG_DB_FILENAME_PREFIX${DB_VERSION}-${VcsLogStorageImpl.VERSION}-${VcsLogPersistentIndex.VERSION}.db")
-    isFresh = !Files.exists(dbFile)
-    connection = SqliteConnection(dbFile)
+    connection = connect()
+  }
 
+  private fun connect(): SqliteConnection {
+    isFresh = !Files.exists(dbFile)
+    val connection = SqliteConnection(dbFile)
     if (isFresh) {
       connection.execute(TABLE_SCHEMA)
     }
+    return connection
+  }
+
+  fun recreate() {
+    connection.close()
+    // not a regular Files.deleteIfExists; to use a repeated delete operation to overcome possible issues on Windows
+    NioFiles.deleteRecursively(dbFile)
+    connection = connect()
   }
 
   override fun dispose() {
@@ -110,7 +124,8 @@ internal class SqliteVcsLogStore(project: Project) : VcsLogStore {
       connectionManager.isFresh = value
     }
 
-  private val connection = connectionManager.connection
+  private val connection: SqliteConnection
+    get() = connectionManager.connection
 
   override fun createWriter(): VcsLogWriter = SqliteVcsLogWriter(connection)
 
@@ -261,6 +276,10 @@ internal class SqliteVcsLogStore(project: Project) : VcsLogStore {
       }
       while (resultSet.next())
     }
+  }
+
+  override fun markCorrupted() {
+    connectionManager.recreate()
   }
 }
 

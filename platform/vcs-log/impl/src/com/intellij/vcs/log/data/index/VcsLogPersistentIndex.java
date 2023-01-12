@@ -361,9 +361,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
     void markCorrupted() {
       try {
-        if (store instanceof PhmVcsLogStore) {
-          ((PhmVcsLogStore)store).markCorrupted();
-        }
+        store.markCorrupted();
       }
       catch (Throwable t) {
         LOG.warn(t);

@@ -54,6 +54,8 @@ internal interface VcsLogStore {
                              noTrigramSources: MutableList<String>,
                              consumer: IntConsumer,
                              filter: VcsLogTextFilter)
+
+  fun markCorrupted()
 }
 
 interface VcsLogWriter {

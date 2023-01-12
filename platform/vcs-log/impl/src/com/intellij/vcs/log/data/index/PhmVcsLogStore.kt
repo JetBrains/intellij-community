@@ -143,7 +143,7 @@ internal class PhmVcsLogStore(
       return messages.keysCountApproximately() == 0
     }
 
-  fun markCorrupted() {
+  override fun markCorrupted() {
     messages.markCorrupted()
     messages.force()
   }
