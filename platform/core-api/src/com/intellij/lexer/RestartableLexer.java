@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lexer;
 
-import com.intellij.openapi.editor.event.DocumentEvent;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * In some cases some additional information is needed to restart from non-trivial state.
  * {@link #start(CharSequence, int, int, int, TokenIterator)} implementation helps quickly retrieve information from preceding part of the file
  * to restore lexer properly.
- * {@link com.intellij.openapi.editor.ex.util.LexerEditorHighlighter#documentChanged(DocumentEvent)}
+ * {@link com.intellij.openapi.editor.ex.util.LexerEditorHighlighter#documentChanged(com.intellij.openapi.editor.event.DocumentEvent)}
  */
 public interface RestartableLexer {
 
