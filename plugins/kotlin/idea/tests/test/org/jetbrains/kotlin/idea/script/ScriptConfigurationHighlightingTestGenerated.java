@@ -124,11 +124,6 @@ public abstract class ScriptConfigurationHighlightingTestGenerated extends Abstr
         public void testSimple() throws Exception {
             runTest("testData/script/definition/highlighting/simple/");
         }
-
-        @TestMetadata("throwingResolver")
-        public void testThrowingResolver() throws Exception {
-            runTest("testData/script/definition/highlighting/throwingResolver/");
-        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
