@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.project.Project
@@ -52,7 +52,7 @@ class SdkIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   }
 
   private fun builderToRoot(builder: SdkIteratorBuilder) =
-    builder.root?.let { ListOfRoots(it) } ?: AllRoots
+    builder.roots?.let { ListOfRoots(it) } ?: AllRoots
 
   private sealed interface Roots {
     fun merge(newRoot: Roots): Roots
@@ -66,8 +66,8 @@ class SdkIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   }
 
   private class ListOfRoots() : ArrayList<VirtualFile>(), Roots {
-    constructor(file: VirtualFile) : this() {
-      add(file)
+    constructor(files: Collection<VirtualFile>) : this() {
+      addAll(files)
     }
 
     override fun merge(newRoot: Roots): Roots {

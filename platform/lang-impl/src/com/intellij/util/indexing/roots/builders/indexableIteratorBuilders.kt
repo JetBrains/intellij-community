@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.diagnostic.thisLogger
@@ -38,7 +38,9 @@ object IndexableIteratorBuilders {
 
   fun forSdk(sdkName: String, sdkType: String): Collection<IndexableIteratorBuilder> = listOf(SdkIteratorBuilder(sdkName, sdkType))
 
-  fun forSdk(sdk: Sdk, file: VirtualFile): Collection<IndexableIteratorBuilder> = listOf(SdkIteratorBuilder(sdk, file))
+  fun forSdk(sdk: Sdk, file: VirtualFile): Collection<IndexableIteratorBuilder> = forSdk(sdk, listOf(file))
+
+  fun forSdk(sdk: Sdk, files: Collection<VirtualFile>): Collection<IndexableIteratorBuilder> = listOf(SdkIteratorBuilder(sdk, files))
 
   fun forInheritedSdk(): Collection<IndexableIteratorBuilder> = listOf(InheritedSdkIteratorBuilder)
 
@@ -71,8 +73,10 @@ internal data class LibraryIdIteratorBuilder(val libraryId: LibraryId,
                                              val root: VirtualFile? = null,
                                              val dependencyChecked: Boolean = false) : IndexableIteratorBuilder
 
-internal data class SdkIteratorBuilder(val sdkName: String, val sdkType: String, val root: VirtualFile? = null) : IndexableIteratorBuilder {
-  constructor(sdk: Sdk, root: VirtualFile? = null) : this(sdk.name, sdk.sdkType.name, root)
+internal data class SdkIteratorBuilder(val sdkName: String,
+                                       val sdkType: String,
+                                       val roots: Collection<VirtualFile>? = null) : IndexableIteratorBuilder {
+  constructor(sdk: Sdk, roots: Collection<VirtualFile>) : this(sdk.name, sdk.sdkType.name, roots)
 }
 
 internal object InheritedSdkIteratorBuilder : IndexableIteratorBuilder
