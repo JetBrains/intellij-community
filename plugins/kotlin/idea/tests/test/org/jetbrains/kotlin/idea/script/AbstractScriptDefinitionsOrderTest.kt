@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.script
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
-import com.intellij.testFramework.exceptionCases.AbstractExceptionCase
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
@@ -35,7 +35,7 @@ abstract class AbstractScriptDefinitionsOrderTest : AbstractScriptConfigurationT
         }
 
         ScriptDefinitionsManager.getInstance(project).reorderScriptDefinitions()
-
+        updateScriptDependenciesSynchronously(myFile)
         checkHighlighting(editor, false, false)
     }
 }
