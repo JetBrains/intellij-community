@@ -15,11 +15,10 @@ import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.UpdateResult.*
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.ui.JBColor
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.and
+import com.intellij.ui.layout.not
 import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CountDownLatch
@@ -125,16 +124,6 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
         bottomGap(BottomGap.MEDIUM)
       }
       row {
-        checkBox(message("settings.cross.ide.sync.checkbox"))
-          .comment(message("settings.cross.ide.sync.checkbox.description", ApplicationNamesInfo.getInstance().fullProductName))
-          .visibleIf(LoggedInPredicate().and(EnabledPredicate()))
-          .bindSelected(SettingsSyncLocalSettings.getInstance()::isCrossIdeSyncEnabled)
-          .onApply {
-            SettingsSyncEvents.getInstance().fireSettingsChanged(
-              SyncSettingsEvent.CrossIdeSyncStateChanged(SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled))
-          }
-      }
-      row {
         cell(categoriesPanel)
           .visibleIf(LoggedInPredicate().and(EnabledPredicate()))
           .onApply {
@@ -144,6 +133,32 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
           .onReset { categoriesPanel.reset() }
           .onIsModified { categoriesPanel.isModified() }
       }
+
+      panel {
+        row {
+          topGap(TopGap.MEDIUM)
+          label(message("settings.cross.product.sync"))
+        }
+        indent {
+          buttonsGroup {
+            row {
+              val edition = ApplicationNamesInfo.getInstance().editionName
+              val suffix = if (edition != null) " " + edition.removeSuffix(" Edition") else ""
+              val productName = ApplicationNamesInfo.getInstance().fullProductName + suffix
+              radioButton(message("settings.cross.product.sync.choice.only.this.product", productName), false)
+            }
+            row {
+              radioButton(message("settings.cross.product.sync.choice.all.products"), true)
+            }
+          }.bind({ SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled },
+                 {
+                   SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled = it
+
+                   SettingsSyncEvents.getInstance().fireSettingsChanged(
+                     SyncSettingsEvent.CrossIdeSyncStateChanged(SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled))
+                 })
+        }
+      }.visibleIf(LoggedInPredicate().and(EnabledPredicate()))
     }
     SettingsSyncAuthService.getInstance().addListener(object : SettingsSyncAuthService.Listener {
       override fun stateChanged() {
