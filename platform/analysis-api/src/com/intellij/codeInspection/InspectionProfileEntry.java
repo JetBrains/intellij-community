@@ -350,16 +350,18 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   /**
    * @return declarative representation of the inspection options. If this method returns a non-empty pane, then
    * {@link #createOptionsPanel()} is not used.
+   * 
    * @see OptPane#pane(OptRegularComponent...) 
-   * @see InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable, Project) 
+   * @see InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable, Project)
+   * @see #getOptionController() if you need custom logic to read/write options
    */
   public @NotNull OptPane getOptionsPane() {
     return OptPane.EMPTY;
   }
 
   /**
-   * @return a controller to process inspection options. The default implementation
-   * finds a field with the corresponding name and uses/updates its value.
+   * @return a controller to process inspection options specified by {@link #getOptionsPane()}. 
+   * The default implementation finds a field with the corresponding name and uses/updates its value.
    * If you need to process some options specially, you can override this method in particular inspection
    * and compose a new controller using methods like {@link OptionController#onPrefix} and
    * {@link OptionController#onValue}.
