@@ -48,7 +48,9 @@ public interface OptionController {
    */
   default @NotNull OptionController onValue(@NotNull String bindId, @NotNull Supplier<@NotNull Object> getter) {
     return onValue(bindId, getter, (value) -> {
-      throw new UnsupportedOperationException("Setting value is not supported");
+      if (value != getter.get()) {
+        throw new UnsupportedOperationException("Setting value is not supported");
+      }
     });
   }
 

@@ -251,11 +251,12 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
         is OptSet -> {
           @Suppress("UNCHECKED_CAST") val list = tool.getOption(component.bindId) as MutableList<String>
+          val listWithListener = ListWithListener(list) { tool.setOption(component.bindId, list) }
           val validator = component.validator
           val form = if (validator is StringValidatorWithSwingSelector) {
-            ListEditForm("", component.label.label(), list, "", validator::select)
+            ListEditForm("", component.label.label(), listWithListener, "", validator::select)
           } else {
-            ListEditForm("", component.label.label(), list)
+            ListEditForm("", component.label.label(), listWithListener)
           }
           cell(form.contentPanel)
             .align(Align.FILL)
@@ -275,6 +276,13 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         is OptCheckboxPanel, is OptGroup, is OptHorizontalStack, is OptSeparator, is OptTabSet -> { throw IllegalStateException("Unsupported nested component: ${component.javaClass}") }
     }
   }
+  
+  private class ListWithListener(val list: MutableList<String>, val changeListener: () -> Unit): MutableList<String> by list {
+    override fun removeAt(index: Int): String = list.removeAt(index).also { changeListener() }
+    override fun remove(element: String): Boolean = list.remove(element).also { changeListener() }
+    override fun add(element: String): Boolean = list.add(element).also { changeListener() }
+    override fun set(index: Int, element: String): String = list.set(index, element).also { changeListener() }
+  } 
 
   private val OptComponent.splitLabel: LocMessage.PrefixSuffix?
     get() = when (this) {

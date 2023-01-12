@@ -381,7 +381,11 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       (bindId, value) -> {
         try {
           final Field field = ReflectionUtil.findAssignableField(getClass(), null, bindId);
-          field.set(this, value);
+          if (ReflectionUtil.getFieldValue(field, this) != value) {
+            // Avoid updating field if new value is not the same
+            // this way we can support final mutable fields, used by e.g. OptSet 
+            field.set(this, value);
+          }
         }
         catch (NoSuchFieldException | IllegalAccessException e) {
           throw new IllegalArgumentException("Inspection " + getClass().getName() + ": Unable to find bindId = " + bindId, e);
