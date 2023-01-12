@@ -272,8 +272,6 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           cell(extension.render(component, JPanel()))
         }
 
-        is OptMap -> TODO()
-
         is OptCheckboxPanel, is OptGroup, is OptHorizontalStack, is OptSeparator, is OptTabSet -> { throw IllegalStateException("Unsupported nested component: ${component.javaClass}") }
     }
   }

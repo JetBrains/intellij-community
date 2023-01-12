@@ -306,29 +306,6 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
     return new OptSet(bindId, new PlainMessage(label), validator);
   }
 
-  /**
-   * @param bindId         identifier of binding variable used by inspection; the corresponding variable is expected to be
-   *                       {@code Map<String, String>}.
-   * @param label          label above the control
-   * @return editable two-column table of strings; strings in the left column are unique and sorted
-   */
-  public static @NotNull OptMap stringMap(@Language("jvm-field-name") @NotNull String bindId, @NotNull @NlsContexts.Label String label) {
-    return new OptMap(bindId, new PlainMessage(label), null, null);
-  }
-
-  /**
-   * @param bindId         identifier of binding variable used by inspection; the corresponding variable is expected to be
-   *                       {@code Map<String, String>}.
-   * @param label          label above the control
-   * @param keyValidator   optional validator for keys column
-   * @param valueValidator optional validator for values column
-   * @return editable two-column table of strings; strings in the left column are unique and sorted
-   */
-  public static @NotNull OptMap stringMap(@Language("jvm-field-name") @NotNull String bindId, @NotNull @NlsContexts.Label String label,
-                                          @NotNull StringValidator keyValidator, @NotNull StringValidator valueValidator) {
-    return new OptMap(bindId, new PlainMessage(label), keyValidator, valueValidator);
-  }
-
   /* Layout elements */
 
   /**
