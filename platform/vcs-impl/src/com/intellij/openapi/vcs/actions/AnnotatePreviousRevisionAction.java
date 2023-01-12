@@ -31,11 +31,11 @@ class AnnotatePreviousRevisionAction extends AnnotateRevisionAction {
     super.update(e);
   }
 
-  @Nullable
   @Override
-  protected VcsFileRevision getRevision(int lineNumber) {
+  protected @Nullable VcsFileRevision getFileRevision(@NotNull AnActionEvent e) {
     assert myProvider != null;
 
+    int lineNumber = getAnnotatedLine(e);
     if (lineNumber == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) {
       return myProvider.getLastRevision();
     }
