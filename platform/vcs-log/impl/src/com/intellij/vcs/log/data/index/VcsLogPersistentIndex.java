@@ -304,7 +304,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   }
 
   static final class IndexStorage implements Disposable {
-    public final @NotNull VcsLogStore store;
+    public final @NotNull VcsLogStorageBackend store;
     public final @NotNull VcsLogUserBiMap users;
     public final @NotNull VcsLogPathsIndex paths;
 
@@ -321,10 +321,10 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       try {
         StorageLockContext storageLockContext = new StorageLockContext();
         if (useSqlite) {
-          store = new SqliteVcsLogStore(project);
+          store = new SqliteVcsLogStorageBackend(project);
         }
         else {
-          store = new PhmVcsLogStore(indexStorageId, storageLockContext, errorHandler, this);
+          store = new PhmVcsLogStorageBackend(indexStorageId, storageLockContext, errorHandler, this);
         }
 
         users = new VcsLogUserIndex(indexStorageId, storageLockContext, userRegistry, errorHandler, this);

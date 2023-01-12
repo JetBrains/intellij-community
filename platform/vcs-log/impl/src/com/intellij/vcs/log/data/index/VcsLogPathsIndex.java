@@ -50,7 +50,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
                           @NotNull Set<VirtualFile> roots,
                           @Nullable StorageLockContext storageLockContext,
                           @NotNull VcsLogErrorHandler errorHandler,
-                          @NotNull VcsLogStore store,
+                          @NotNull VcsLogStorageBackend store,
                           @NotNull Disposable disposableParent) throws IOException {
     super(storageId,
           PATHS,
@@ -156,13 +156,13 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
   private static final class PathIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> {
     private final @NotNull VcsLogStorage myStorage;
     private final @NotNull PersistentEnumerator<LightFilePath> myPathsEnumerator;
-    private final VcsLogStore store;
+    private final VcsLogStorageBackend store;
     @Nullable VcsLogWriter mutator;
     private @NotNull Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
 
     private PathIndexer(@NotNull VcsLogStorage storage,
                         @NotNull PersistentEnumerator<LightFilePath> enumerator,
-                        @NotNull VcsLogStore store) {
+                        @NotNull VcsLogStorageBackend store) {
       myStorage = storage;
       myPathsEnumerator = enumerator;
       this.store = store;

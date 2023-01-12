@@ -28,12 +28,12 @@ import java.util.function.IntConsumer
 import java.util.function.IntFunction
 import java.util.function.ToIntFunction
 
-internal class PhmVcsLogStore(
+internal class PhmVcsLogStorageBackend(
   storageId: StorageId,
   storageLockContext: StorageLockContext,
   errorHandler: VcsLogErrorHandler,
   disposable: Disposable,
-) : VcsLogStore {
+) : VcsLogStorageBackend {
   private val messages: PersistentHashMap<Int, String>
   private val parents: PersistentHashMap<Int, IntArray>
   private val committers: PersistentHashMap<Int, Int>
@@ -119,7 +119,7 @@ internal class PhmVcsLogStore(
       }
 
       override fun putParents(commitId: Int, parents: List<Hash>, hashToId: ToIntFunction<Hash>) {
-        this@PhmVcsLogStore.parents.put(commitId, IntArray(parents.size) {
+        this@PhmVcsLogStorageBackend.parents.put(commitId, IntArray(parents.size) {
           hashToId.applyAsInt(parents[it])
         })
       }
@@ -133,7 +133,7 @@ internal class PhmVcsLogStore(
       }
 
       override fun putRename(parent: Int, child: Int, renames: IntArray) {
-        this@PhmVcsLogStore.putRename(parent, child, renames)
+        this@PhmVcsLogStorageBackend.putRename(parent, child, renames)
       }
     }
   }

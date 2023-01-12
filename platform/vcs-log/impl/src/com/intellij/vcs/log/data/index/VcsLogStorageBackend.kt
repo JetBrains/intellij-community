@@ -11,7 +11,7 @@ import java.util.function.IntConsumer
 import java.util.function.IntFunction
 import java.util.function.ToIntFunction
 
-internal interface VcsLogStore {
+internal interface VcsLogStorageBackend {
   val isEmpty: Boolean
 
   /**

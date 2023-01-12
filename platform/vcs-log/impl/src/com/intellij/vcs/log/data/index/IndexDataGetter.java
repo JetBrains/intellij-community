@@ -219,7 +219,7 @@ public final class IndexDataGetter {
   private void filter(@Nullable IntIterable candidates,
                       @NotNull Predicate<String> condition,
                       @NotNull IntConsumer consumer) throws IOException {
-    VcsLogStore store = myIndexStorage.store;
+    VcsLogStorageBackend store = myIndexStorage.store;
     if (candidates == null) {
       store.processMessages((commit, message) -> {
         if (message != null && condition.test(message)) {

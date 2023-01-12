@@ -15,7 +15,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static com.intellij.vcs.log.data.index.SqliteVcsLogStoreKt.SQLITE_VCS_LOG_DB_FILENAME_PREFIX;
+import static com.intellij.vcs.log.data.index.SqliteVcsLogStorageBackendKt.SQLITE_VCS_LOG_DB_FILENAME_PREFIX;
 
 public final class VcsLogCachesInvalidator extends CachesInvalidator {
   private static final Logger LOG = Logger.getInstance(VcsLogCachesInvalidator.class);

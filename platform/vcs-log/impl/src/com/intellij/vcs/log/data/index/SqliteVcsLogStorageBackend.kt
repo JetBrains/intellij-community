@@ -115,7 +115,7 @@ private class ProjectLevelStoreManager(project: Project) : Disposable {
 private const val RENAME_SQL = "insert into rename(parent, child, rename) values(?, ?, ?)"
 private const val RENAME_DELETE_SQL = "delete from rename where parent = ? and child = ?"
 
-internal class SqliteVcsLogStore(project: Project) : VcsLogStore {
+internal class SqliteVcsLogStorageBackend(project: Project) : VcsLogStorageBackend {
   private val connectionManager = project.service<ProjectLevelStoreManager>()
 
   override var isFresh: Boolean
