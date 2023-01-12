@@ -24,7 +24,8 @@ object InlayDumpUtil {
     renderer: (EditorCustomElementRenderer, Inlay<*>) -> String = { r, _ -> r.toString() },
     file: PsiFile,
     editor: Editor,
-    document: Document
+    document: Document,
+    offsetShift: Int = 0
   ): String {
     val model = editor.inlayModel
     val range = file.textRange
@@ -44,7 +45,7 @@ object InlayDumpUtil {
             continue
           }
         }
-        val nextOffset = inlay.effectiveOffset(document)
+        val nextOffset = inlay.effectiveOffset(document) + offsetShift
         append(sourceText.subSequence(currentOffset, nextOffset))
         append(inlay.render(renderer))
         currentOffset = nextOffset
