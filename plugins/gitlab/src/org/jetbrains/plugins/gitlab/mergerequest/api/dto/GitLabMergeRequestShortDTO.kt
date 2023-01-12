@@ -31,7 +31,7 @@ data class GitLabMergeRequestShortDTO(
   val mergeStatusEnum: GitLabMergeStatus = parseMergeStatus(mergeStatus)
 
   companion object {
-    private val logger: Logger = logger<GitLabMemberDTO>()
+    private val logger: Logger = logger<GitLabMergeRequestShortDTO>()
 
     private fun parseState(state: String): GitLabMergeRequestState = try {
       GitLabMergeRequestState.valueOf(state.uppercase(Locale.getDefault()))
