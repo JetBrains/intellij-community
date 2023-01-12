@@ -1060,7 +1060,7 @@
                          id="actions.on.save"
                          bundle="messages.IdeBundle"
                          key="actions.on.save.page.title"
-                         nonDefaultProject="true"/>
+                         nonDefaultProject="false"/>
     <search.optionContributor implementation="com.intellij.ide.actionsOnSave.ActionsOnSaveSearchableOptionsContributor"/>
 
     <!--troubleshooting-->
