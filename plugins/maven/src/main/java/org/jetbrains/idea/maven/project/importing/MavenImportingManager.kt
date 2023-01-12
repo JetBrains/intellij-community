@@ -267,9 +267,7 @@ class MavenImportingManager(val project: Project) {
     return context != null && context !is MavenImportFinishedContext
   }
 
-  @RequiresEdt
   fun getImportFinishPromise(): Promise<MavenImportFinishedContext> {
-    ApplicationManager.getApplication().assertIsDispatchThread()
     return getWaitingPromise()
   }
 
