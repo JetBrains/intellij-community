@@ -14,10 +14,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.ProgressSink
-import com.intellij.openapi.progress.jobToIndicator
-import com.intellij.openapi.progress.progressSink
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -199,25 +196,34 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
   }
 
   private fun findCodeSmells(changedFiles: Map<VirtualFile, Change>, isPostCommit: Boolean): List<CodeSmellInfo> {
-    withCommittedElementsContext(changedFiles, isPostCommit).use {
-      val indicator = ProgressManager.getGlobalProgressIndicator()
-      val newAnalysisThreshold = Registry.intValue("vcs.code.analysis.before.checkin.show.only.new.threshold", 0)
-      val files = changedFiles.keys.toList()
+    try {
+      withCommittedElementsContext(changedFiles, isPostCommit).use {
+        val indicator = ProgressManager.getGlobalProgressIndicator()
+        val newAnalysisThreshold = Registry.intValue("vcs.code.analysis.before.checkin.show.only.new.threshold", 0)
+        val files = changedFiles.keys.toList()
 
-      if (files.size > newAnalysisThreshold) {
-        return CodeSmellDetector.getInstance(project).findCodeSmells(files)
+        if (files.size > newAnalysisThreshold) {
+          return CodeSmellDetector.getInstance(project).findCodeSmells(files)
+        }
+        else {
+          indicator.isIndeterminate = true
+          val codeSmells = CodeAnalysisBeforeCheckinShowOnlyNew.runAnalysis(project, files, indicator)
+
+          // CodeAnalysisBeforeCheckinShowOnlyNew shelve-unshelve logic might start the dumb mode.
+          // Wait for it to end, not to disturb the following pre-commit handlers.
+          indicator.text = message("before.checkin.waiting.for.smart.mode")
+          DumbService.getInstance(project).waitForSmartMode()
+
+          return codeSmells
+        }
       }
-      else {
-        indicator.isIndeterminate = true
-        val codeSmells = CodeAnalysisBeforeCheckinShowOnlyNew.runAnalysis(project, files, indicator)
-
-        // CodeAnalysisBeforeCheckinShowOnlyNew shelve-unshelve logic might start the dumb mode.
-        // Wait for it to end, not to disturb the following pre-commit handlers.
-        indicator.text = message("before.checkin.waiting.for.smart.mode")
-        DumbService.getInstance(project).waitForSmartMode()
-
-        return codeSmells
-      }
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      logger<CodeAnalysisBeforeCheckinHandler>().error(e)
+      return emptyList()
     }
   }
 
