@@ -27,28 +27,38 @@ import javax.swing.JComponent
 
 class EditorConfigWrongFileEncodingNotificationProvider : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
-    return Function { createNotificationPanel(file, it, project) }
-  }
-
-  private fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
-    if (fileEditor !is TextEditor) return null
-    val editor = fileEditor.editor
-    if (editor.getUserData(HIDDEN_KEY) != null) return null
     if (PropertiesComponent.getInstance().isTrueValue(DISABLE_KEY)) return null
     if (file.extension != EditorConfigFileConstants.FILE_EXTENSION) return null
     if (file.charset == Charsets.UTF_8) return null
-    return buildPanel(project, editor, file)
+    val document = FileDocumentManager.getInstance().getDocument(file)
+    if (document == null) return null
+    val text = document.text
+    val isSafeToConvert = isSafeToConvertTo(file, text)
+    val isSafeToReload = isSafeToReloadIn(file, text)
+    return Function { createNotificationPanel(file, it, project, isSafeToConvert, isSafeToReload) }
   }
 
-  private fun buildPanel(project: Project, editor: Editor, file: VirtualFile): EditorNotificationPanel {
+  private fun createNotificationPanel(file: VirtualFile,
+                                      fileEditor: FileEditor,
+                                      project: Project,
+                                      isSafeToConvert: EncodingUtil.Magic8,
+                                      isSafeToReload: EncodingUtil.Magic8): EditorNotificationPanel? {
+    if (fileEditor !is TextEditor) return null
+    val editor = fileEditor.editor
+    if (editor.getUserData(HIDDEN_KEY) != null) return null
+    return buildPanel(project, editor, file, isSafeToConvert, isSafeToReload)
+  }
+
+  private fun buildPanel(project: Project,
+                         editor: Editor,
+                         file: VirtualFile,
+                         isSafeToConvert: EncodingUtil.Magic8,
+                         isSafeToReload: EncodingUtil.Magic8): EditorNotificationPanel {
     val result = EditorNotificationPanel(editor, null, null, EditorNotificationPanel.Status.Warning)
     result.text(EditorConfigBundle.get("notification.encoding.message"))
 
     val convert = EditorConfigBundle["notification.action.convert"]
     result.createActionLabel(convert) {
-      val text = editor.document.text
-      val isSafeToConvert = isSafeToConvertTo(file, text)
-      val isSafeToReload = isSafeToReloadIn(file, text)
       ChangeFileEncodingAction.changeTo(project, editor.document, editor, file, Charsets.UTF_8, isSafeToConvert, isSafeToReload)
     }
 
