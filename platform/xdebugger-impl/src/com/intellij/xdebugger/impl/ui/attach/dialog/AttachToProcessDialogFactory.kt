@@ -27,8 +27,8 @@ class AttachToProcessDialogFactory(private val project: Project) {
     application.assertIsDispatchThread()
     val isLocalViewDefault = isLocalViewDefault(context)
 
-    val currentDialogInstance = currentDialog
-    if (currentDialogInstance != null && currentDialogInstance.isShowing && currentDialogInstance.disposable.isAlive) {
+    val currentDialogInstance = getOpenDialog()
+    if (currentDialogInstance != null) {
       currentDialogInstance.setShowLocalView(isLocalViewDefault)
       return
     }
@@ -39,4 +39,7 @@ class AttachToProcessDialogFactory(private val project: Project) {
     currentDialog = dialog
     dialog.show()
   }
+
+  fun getOpenDialog(): AttachToProcessDialog? =
+    currentDialog?.takeIf { it.isShowing && it.disposable.isAlive }
 }

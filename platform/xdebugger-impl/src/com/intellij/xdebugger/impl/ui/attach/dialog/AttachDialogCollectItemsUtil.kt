@@ -2,6 +2,8 @@ package com.intellij.xdebugger.impl.ui.attach.dialog
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessInfo
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
@@ -13,9 +15,17 @@ import com.intellij.xdebugger.impl.actions.AttachToProcessActionBase.AttachToPro
 import com.intellij.xdebugger.impl.ui.attach.dialog.diagnostics.ProcessesFetchingProblemException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ensureActive
+import java.util.function.Predicate
+import java.util.function.Supplier
 import kotlin.coroutines.coroutineContext
 
 private val logger = Logger.getInstance("AttachDialogCollectItemsUtil")
+
+/**
+ * Actions added to the [AttachDialogSettings] group can implement this interface to
+ * affect list of processes. Only processes accepted by all predicates will be shown.
+ */
+interface ProcessPredicate : Supplier<Predicate<ProcessInfo>>
 
 internal suspend fun collectAttachProcessItemsGroupByProcessInfo(
   project: Project,
@@ -29,7 +39,8 @@ internal suspend fun collectAttachProcessItemsGroupByProcessInfo(
 
     val allItems = mutableListOf<AttachToProcessItem>()
 
-    val processesToAttachItems = processes.associateWith { processInfo ->
+    val filteredProcesses = processes.filter(getProcessPredicate())
+    val processesToAttachItems = filteredProcesses.associateWith { processInfo ->
       coroutineContext.ensureActive()
 
       val providersWithItems = mutableMapOf<XAttachPresentationGroup<*>, MutableList<AttachToProcessItem>>()
@@ -63,6 +74,18 @@ internal suspend fun collectAttachProcessItemsGroupByProcessInfo(
   catch (t: Throwable) {
     logger.error(t)
     return AttachItemsInfo.EMPTY
+  }
+}
+
+private fun getProcessPredicate(): (ProcessInfo) -> Boolean {
+  val settingsGroup = ActionManager.getInstance().getAction("XDebugger.Attach.Dialog.Settings") as? DefaultActionGroup
+  val settingsActions = settingsGroup?.getChildren(null)
+  val processPredicates = settingsActions?.mapNotNull { (it as? ProcessPredicate)?.get() } ?: emptyList()
+  return if (processPredicates.isEmpty()) {
+    { true }
+  }
+  else {
+    { process -> processPredicates.all { it.test(process) } }
   }
 }
 

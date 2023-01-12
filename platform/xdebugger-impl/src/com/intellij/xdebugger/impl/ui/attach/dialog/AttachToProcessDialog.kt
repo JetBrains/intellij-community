@@ -262,7 +262,7 @@ open class AttachToProcessDialog(
     list.getFocusedComponent().addKeyListener(keyListener)
   }
 
-  private fun updateProcesses() {
+  fun updateProcesses() {
     currentAttachView.get().updateProcesses()
   }
 
