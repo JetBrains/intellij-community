@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.openapi.externalSystem.util.runReadAction
-import com.intellij.openapi.file.readText
+import com.intellij.openapi.vfs.readText
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.assertInstanceOf
 import org.gradle.util.GradleVersion

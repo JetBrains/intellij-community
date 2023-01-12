@@ -10,12 +10,11 @@ import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.file.getResolvedNioPath
-import com.intellij.openapi.file.toNioPath
-import com.intellij.openapi.file.findVirtualFile
+import com.intellij.openapi.util.io.*
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findVirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.ApiStatus

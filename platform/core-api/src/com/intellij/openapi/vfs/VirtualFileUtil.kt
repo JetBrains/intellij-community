@@ -1,16 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("MemberVisibilityCanBePrivate", "unused")
 @file:JvmName("VirtualFileUtil")
-package com.intellij.openapi.file
+
+package com.intellij.openapi.vfs
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.*
-import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.openapi.util.io.*
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
 import org.jetbrains.annotations.SystemIndependent
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -20,11 +21,11 @@ val VirtualFile.isFile: Boolean
   get() = isValid && !isDirectory
 
 fun VirtualFile.readText(): String {
-  return VfsUtil.loadText(this)
+  return VfsUtilCore.loadText(this)
 }
 
 fun VirtualFile.writeText(content: String) {
-  VfsUtil.saveText(this, content)
+  VfsUtilCore.saveText(this, content)
 }
 
 fun VirtualFile.readBytes(): ByteArray {
@@ -73,14 +74,6 @@ fun VirtualFile.getPsiFile(project: Project): PsiFile {
   return checkNotNull(findPsiFile(project)) {
     "Cannot find PSI file for $path"
   }
-}
-
-fun refreshVirtualFiles(vararg paths: Path, async: Boolean = false, recursive: Boolean = true, callback: () -> Unit = {}) {
-  RefreshQueue.getInstance().refresh(async, recursive, callback, paths.mapNotNull { it.findVirtualFileOrDirectory() })
-}
-
-fun refreshVirtualFiles(vararg files: VirtualFile, async: Boolean = false, recursive: Boolean = true, callback: () -> Unit = {}) {
-  RefreshQueue.getInstance().refresh(async, recursive, callback, files.toList())
 }
 
 fun VirtualFile.findVirtualFileOrDirectory(relativePath: @SystemIndependent String): VirtualFile? {
@@ -266,4 +259,11 @@ private fun VirtualFileSystem.findOrCreateParentDirectory(path: @SystemIndepende
     return getVirtualDirectory("/")
   }
   return findOrCreateVirtualDirectory(parentPath)
+}
+
+object VirtualFilePrefixTreeFactory : AbstractPrefixTreeFactory<VirtualFile, String>() {
+
+  override fun convertToList(element: VirtualFile): List<String> {
+    return CanonicalPathPrefixTreeFactory.convertToList(element.path)
+  }
 }

@@ -3,8 +3,8 @@ package com.intellij.openapi.externalSystem.service.project.trusted
 
 import com.intellij.ide.impl.trustedProjects.ProjectLocator
 import com.intellij.openapi.externalSystem.ExternalSystemManager
-import com.intellij.openapi.file.toNioPath
-import com.intellij.openapi.file.converter.NioPathPrefixTreeFactory
+import com.intellij.openapi.util.io.toNioPath
+import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
 import com.intellij.openapi.project.Project
 import java.nio.file.Path
 

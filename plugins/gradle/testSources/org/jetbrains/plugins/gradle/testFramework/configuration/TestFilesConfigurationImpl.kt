@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.testFramework.configuration
 
 import com.intellij.openapi.externalSystem.util.*
-import com.intellij.openapi.file.*
 import com.intellij.openapi.vfs.*
 import java.util.ArrayList
 import java.util.HashMap

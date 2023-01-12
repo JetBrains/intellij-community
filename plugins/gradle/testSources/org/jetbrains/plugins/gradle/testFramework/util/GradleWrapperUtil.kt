@@ -6,8 +6,8 @@ import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.starters.local.generator.TestFileSystemLocation
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.file.createVirtualFile
-import com.intellij.openapi.file.writeText
+import com.intellij.openapi.vfs.createVirtualFile
+import com.intellij.openapi.vfs.writeText
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.WrapperConfiguration
 import org.gradle.wrapper.WrapperExecutor.*

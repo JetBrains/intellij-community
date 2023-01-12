@@ -2,8 +2,8 @@
 package com.intellij.ide.starters.local.generator
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.file.*
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.util.io.*
+import com.intellij.openapi.vfs.*
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 

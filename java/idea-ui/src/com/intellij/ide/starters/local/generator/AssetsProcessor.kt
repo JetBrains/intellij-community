@@ -6,7 +6,7 @@ import com.intellij.ide.starters.local.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.file.*
+import com.intellij.openapi.util.io.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path

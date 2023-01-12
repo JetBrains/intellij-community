@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.externalSystem.util.runInEdtAndWait
-import com.intellij.openapi.file.readText
+import com.intellij.openapi.vfs.readText
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.asSafely

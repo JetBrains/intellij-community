@@ -15,7 +15,7 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrack
 import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy
 import com.intellij.openapi.externalSystem.service.project.autoimport.ProjectAware
-import com.intellij.openapi.file.*
+import com.intellij.openapi.util.io.*
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
@@ -90,14 +90,14 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
 
   protected fun createIoFile(relativePath: String): VirtualFile {
     val path = getAbsoluteNioPath(relativePath)
-    refreshVirtualFiles(path) // ensure that file is removed from VFS
+    LocalFileSystem.getInstance().findFileByNioFile(path) // ensure that file is removed from VFS
     createIoFileUnsafe(path)
     return getFile(relativePath)
   }
 
   private fun VirtualFile.updateIoFile(action: File.() -> Unit) {
     toNioPath().toFile().action()
-    refreshVirtualFiles(this) // ensure that file is updated in VFS
+    LocalFileSystem.getInstance().refreshFiles(listOf(this)) // ensure that file is updated in VFS
   }
 
   protected fun VirtualFile.appendLineInIoFile(line: String) =

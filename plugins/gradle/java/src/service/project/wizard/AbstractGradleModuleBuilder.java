@@ -27,7 +27,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.file.NioPathUtil;
+import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.module.Module;

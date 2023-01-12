@@ -6,7 +6,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installBulkVirtualFileListener
 import com.intellij.openapi.externalSystem.util.*
-import com.intellij.openapi.file.*
+import com.intellij.openapi.util.io.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil

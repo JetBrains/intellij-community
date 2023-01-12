@@ -9,7 +9,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.file.converter.CanonicalPathPrefixTreeFactory
+import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener

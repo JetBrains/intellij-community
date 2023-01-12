@@ -1,22 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("MemberVisibilityCanBePrivate", "unused")
 @file:JvmName("NioPathUtil")
-package com.intellij.openapi.file
+package com.intellij.openapi.util.io
 
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.createDirectories
-import com.intellij.util.io.createFile
-import com.intellij.util.io.delete
-import org.jetbrains.annotations.SystemIndependent
+import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
 import java.io.File
 import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.exists
-import kotlin.io.path.isDirectory
-import kotlin.io.path.isRegularFile
+import kotlin.io.path.*
 
-fun Path.toCanonicalPath(): @SystemIndependent String {
+fun Path.toCanonicalPath(): String {
   return FileUtil.toCanonicalPath(toString())
 }
 
@@ -24,15 +18,15 @@ fun Path.toIoFile(): File {
   return toFile()
 }
 
-fun Path.getResolvedPath(relativePath: @SystemIndependent String): String {
+fun Path.getResolvedPath(relativePath: String): String {
   return toCanonicalPath().getResolvedPath(relativePath)
 }
 
-fun Path.getResolvedNioPath(relativePath: @SystemIndependent String): Path {
+fun Path.getResolvedNioPath(relativePath: String): Path {
   return toCanonicalPath().getResolvedNioPath(relativePath)
 }
 
-fun Path.getRelativePath(path: Path): @SystemIndependent String? {
+fun Path.getRelativePath(path: Path): String? {
   return toCanonicalPath().getRelativePath(path.toCanonicalPath())
 }
 
@@ -45,6 +39,7 @@ fun Path.isAncestor(path: Path, strict: Boolean): Boolean {
 }
 
 fun Path.createNioFile(): Path {
+  parent?.createDirectories()
   return createFile()
 }
 
@@ -73,12 +68,19 @@ fun Path.findOrCreateNioDirectory(): Path {
 }
 
 fun Path.deleteNioFileOrDirectory() {
-  delete(recursively = true)
+  NioFiles.deleteRecursively(this)
 }
 
 fun Path.deleteNioChildren(predicate: (Path) -> Boolean = { true }) {
   val filter = DirectoryStream.Filter(predicate)
   Files.newDirectoryStream(this, filter).use { stream ->
     stream.forEach { it.deleteNioFileOrDirectory() }
+  }
+}
+
+object NioPathPrefixTreeFactory : AbstractPrefixTreeFactory<Path, String>() {
+
+  override fun convertToList(element: Path): List<String> {
+    return CanonicalPathPrefixTreeFactory.convertToList(element.toCanonicalPath())
   }
 }
