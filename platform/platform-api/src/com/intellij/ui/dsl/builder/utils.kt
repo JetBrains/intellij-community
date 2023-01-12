@@ -3,8 +3,10 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.ui.UINumericRange
+import com.intellij.ui.SimpleListCellRenderer
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
 
@@ -104,3 +106,11 @@ fun interface HyperlinkEventAction {
 data class VerticalComponentGap(val top: Boolean? = null, val bottom: Boolean? = null)
 
 fun UINumericRange.asRange(): IntRange = min..max
+
+fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T>.(T) -> Unit): SimpleListCellRenderer<T> {
+  return object : SimpleListCellRenderer<T>() {
+    override fun customize(list: JList<out T>, value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
+      renderer(value)
+    }
+  }
+}

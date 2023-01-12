@@ -19,7 +19,6 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.layout.listCellRenderer
 import javax.swing.JComponent
 
 class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Simple(), AutoImportOptionsProvider {
@@ -42,13 +41,13 @@ class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Sim
       row(JavaBundle.message("combobox.paste.insert.imports")) {
         comboBox(
           CollectionComboBoxModel(listOf(CodeInsightSettings.YES, CodeInsightSettings.NO, CodeInsightSettings.ASK)),
-          listCellRenderer { value, _, _ ->
-            setText(when (value) {
-                      CodeInsightSettings.YES -> ApplicationBundle.message("combobox.insert.imports.all")
-                      CodeInsightSettings.NO -> ApplicationBundle.message("combobox.insert.imports.none")
-                      CodeInsightSettings.ASK -> ApplicationBundle.message("combobox.insert.imports.ask")
-                      else -> ""
-                    })
+          listCellRenderer {
+            text = when (it) {
+              CodeInsightSettings.YES -> ApplicationBundle.message("combobox.insert.imports.all")
+              CodeInsightSettings.NO -> ApplicationBundle.message("combobox.insert.imports.none")
+              CodeInsightSettings.ASK -> ApplicationBundle.message("combobox.insert.imports.ask")
+              else -> ""
+            }
           }
         ).bindItem(ciSettings::ADD_IMPORTS_ON_PASTE.toNullableProperty())
       }

@@ -432,6 +432,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<in T?>?): Cell<ComboBox<T>> {
     val component = ComboBox(model)
+    // todo check usage of com.intellij.ui.dsl.builder.UtilsKt#listCellRenderer here
     component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
     return cell(component)
   }
@@ -442,10 +443,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
     return comboBox(items.toList(), renderer)
-  }
-
-  override fun <T> comboBox(items: Collection<T>, renderer: (T) -> String): Cell<ComboBox<T>> {
-    return comboBox(items, SimpleListCellRenderer.create("") { renderer(it!!) })
   }
 
   override fun customize(customRowGaps: VerticalGaps): Row {

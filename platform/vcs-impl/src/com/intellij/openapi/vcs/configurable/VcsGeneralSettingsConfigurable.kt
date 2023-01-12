@@ -25,9 +25,7 @@ import com.intellij.openapi.vcs.impl.VcsEP
 import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsSetting
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
@@ -78,13 +76,12 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
             .gap(RightGap.SMALL)
           val addComboBox = comboBox(
             EnumComboBoxModel(VcsShowConfirmationOption.Value::class.java),
-            renderer = listCellRenderer { value, _, _ ->
-              setText(when (value) {
-                        VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> message("radio.after.creation.show.options")
-                        VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY -> message("radio.after.creation.add.silently")
-                        VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> message("radio.after.creation.do.not.add")
-                        else -> ""
-                      })
+            renderer = listCellRenderer {
+              text = when (it) {
+                VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> message("radio.after.creation.show.options")
+                VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY -> message("radio.after.creation.add.silently")
+                VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> message("radio.after.creation.do.not.add")
+              }
             })
             .bindItem({ addConfirmation.value }, { addConfirmation.value = it })
             .withApplicableVcsesTooltip(addConfirmation, vcsListeners)
@@ -101,13 +98,12 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
             .withApplicableVcsesTooltip(removeConfirmation, vcsListeners)
             .gap(RightGap.SMALL)
           comboBox(EnumComboBoxModel(VcsShowConfirmationOption.Value::class.java),
-                   renderer = listCellRenderer { value, _, _ ->
-                     setText(when (value) {
-                               VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> message("radio.after.deletion.show.options")
-                               VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY -> message("radio.after.deletion.remove.silently")
-                               VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> message("radio.after.deletion.do.not.remove")
-                               else -> ""
-                             })
+                   renderer = listCellRenderer {
+                     text = when (it) {
+                       VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> message("radio.after.deletion.show.options")
+                       VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY -> message("radio.after.deletion.remove.silently")
+                       VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> message("radio.after.deletion.do.not.remove")
+                     }
                    })
             .bindItem({ removeConfirmation.value }, { removeConfirmation.value = it })
             .withApplicableVcsesTooltip(removeConfirmation, vcsListeners)

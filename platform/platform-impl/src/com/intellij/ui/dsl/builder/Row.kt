@@ -21,7 +21,7 @@ import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import com.intellij.ui.dsl.gridLayout.Grid
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.annotations.ApiStatus
@@ -373,11 +373,15 @@ interface Row {
    */
   fun textArea(): Cell<JBTextArea>
 
+  /**
+   * @see listCellRenderer
+   */
   fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
 
+  /**
+   * @see listCellRenderer
+   */
   fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
-
-  fun <T> comboBox(items: Collection<T>, renderer: (T) -> @Nls String): Cell<ComboBox<T>>
 
   @Deprecated("Use overloaded comboBox(...) with Collection")
   @ApiStatus.ScheduledForRemoval

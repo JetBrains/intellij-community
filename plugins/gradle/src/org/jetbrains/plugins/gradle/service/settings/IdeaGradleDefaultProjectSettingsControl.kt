@@ -57,7 +57,7 @@ class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
         row {
           label(GradleBundle.message("gradle.project.settings.distribution"))
             .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
-          comboBox(listOf(WRAPPER, LOCAL)) { it.text }
+          comboBox(listOf(WRAPPER, LOCAL), listCellRenderer { text = it.text })
             .columns(COLUMNS_SHORT)
             .bindItem(distributionTypeProperty)
         }
