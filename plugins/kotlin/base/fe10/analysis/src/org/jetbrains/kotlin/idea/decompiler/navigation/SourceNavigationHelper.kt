@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.debugText.getDebugText
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.utils.SmartList
 
 object SourceNavigationHelper {
     private val LOG = Logger.getInstance(SourceNavigationHelper::class.java)
@@ -103,13 +104,18 @@ object SourceNavigationHelper {
     private fun BinaryModuleInfo.associatedCommonLibraries(): List<BinaryModuleInfo> {
         if (platform.isCommon()) return emptyList()
 
-        return dependencies().filterIsInstance<BinaryModuleInfo>().filter {
-            it.platform.isCommon()
+        val result = SmartList<BinaryModuleInfo>()
+        val dependencies = dependencies()
+        for (ideaModuleInfo in dependencies) {
+            if (ideaModuleInfo is BinaryModuleInfo && ideaModuleInfo.platform.isCommon()) {
+                result += ideaModuleInfo
+            }
         }
+        return result
     }
 
     private fun Collection<GlobalSearchScope>.union(): List<GlobalSearchScope> =
-        if (this.isNotEmpty()) listOf(GlobalSearchScope.union(this.toTypedArray())) else emptyList()
+        if (this.isNotEmpty()) listOf(GlobalSearchScope.union(this)) else emptyList()
 
     private fun haveRenamesInImports(files: Collection<KtFile>) = files.any { file -> file.importDirectives.any { it.aliasName != null } }
 
@@ -124,9 +130,9 @@ object SourceNavigationHelper {
 
         // enum entries
         if (containingClass.hasModifier(KtTokens.ENUM_KEYWORD)) {
-            for (enumEntry in containingClass.declarations.filterIsInstance<KtEnumEntry>()) {
-                if (memberName == enumEntry.nameAsName) {
-                    return enumEntry
+            for (declaration in containingClass.declarations) {
+                if (declaration is KtEnumEntry && declaration.nameAsSafeName == memberName) {
+                    return declaration
                 }
             }
         }
@@ -142,11 +148,11 @@ object SourceNavigationHelper {
             return sourceClassOrObject?.primaryConstructor ?: sourceClassOrObject
         }
 
-        val memberNameAsString = declaration.name
-        if (memberNameAsString == null) {
+        val memberNameAsString = declaration.name ?: run {
             LOG.debug("Declaration with null name:" + declaration.getDebugText())
             return null
         }
+
         val memberName = Name.identifier(memberNameAsString)
 
         val decompiledContainer = declaration.parent
@@ -227,9 +233,8 @@ object SourceNavigationHelper {
         }
     }
 
-    private fun findClassOrObject(decompiledClassOrObject: KtClassOrObject, navigationKind: NavigationKind): KtClassOrObject? {
-        return findFirstMatchingInIndex<KtClassOrObject>(decompiledClassOrObject, navigationKind, KotlinFullClassNameIndex)
-    }
+    private fun findClassOrObject(decompiledClassOrObject: KtClassOrObject, navigationKind: NavigationKind): KtClassOrObject? =
+        findFirstMatchingInIndex(decompiledClassOrObject, navigationKind, KotlinFullClassNameIndex)
 
     private fun getInitialTopLevelCandidates(
         declaration: KtNamedDeclaration,
@@ -253,8 +258,14 @@ object SourceNavigationHelper {
         sourceClassOrObject: KtClassOrObject,
         name: Name,
         declarationClass: Class<out KtNamedDeclaration>
-    ) = sourceClassOrObject.declarations.filterIsInstance(declarationClass).filter { declaration ->
-        name == declaration.nameAsSafeName
+    ): List<KtNamedDeclaration> {
+        val result = SmartList<KtNamedDeclaration>()
+        for (declaration in sourceClassOrObject.declarations) {
+            if (declarationClass.isInstance(declaration) && name == (declaration as? KtNamedDeclaration)?.nameAsSafeName) {
+                result += declaration
+            }
+        }
+        return result
     }
 
     fun getNavigationElement(declaration: KtDeclaration): KtDeclaration {
