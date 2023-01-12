@@ -4,9 +4,14 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.analysis.PackagesScopesProvider;
 import com.intellij.application.options.colors.ScopeAttributesUtil;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -22,20 +27,21 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.io.File;
 import java.util.Collection;
+import java.util.concurrent.ExecutionException;
 
 /**
  * This class intended for "heavy-loaded" tests only, e.g. those need to setup separate project directory structure to run.
@@ -181,5 +187,33 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     allowTreeAccessForAllFiles();
 
     doTest(BASE_PATH + "/unusedPublicMethodRefViaSubclass/x/I.java", BASE_PATH + "/unusedPublicMethodRefViaSubclass", true, false);
+  }
+
+  public void testJavaFileOutsideSourceRootsMustNotContainErrors() throws ExecutionException, InterruptedException {
+    VirtualFile root = createVirtualDirectoryForContentFile();
+    VirtualFile virtualFile = createChildData(root, "A.java");
+    @Language("JAVA")
+    String text = "class A { String f; }";
+    setFileText(virtualFile, text);
+
+    assertEquals(JavaFileType.INSTANCE, virtualFile.getFileType());
+    PsiFile psiFile = getPsiManager().findFile(virtualFile);
+    assertTrue(String.valueOf(psiFile), psiFile instanceof PsiJavaFile);
+    assertFalse(ProblemHighlightFilter.shouldHighlightFile(psiFile));
+
+    configureByExistingFile(virtualFile);
+
+    TrafficLightRenderer renderer = ReadAction.nonBlocking(()->new TrafficLightRenderer(getProject(), getDocument(psiFile))).submit(
+      AppExecutorUtil.getAppExecutorService()).get();
+    while (true) {
+      TrafficLightRenderer.DaemonCodeAnalyzerStatus status = renderer.getDaemonCodeAnalyzerStatus();
+      assertNotNull(status.reasonWhyDisabled);
+      if (status.errorAnalyzingFinished) {
+        break;
+      }
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    Collection<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getDocument(psiFile), null, getProject());
+    assertEmpty(infos);
   }
 }
