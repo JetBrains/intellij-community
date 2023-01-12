@@ -67,20 +67,22 @@ public interface OptionController {
   }
 
   /**
+   * @param <T> type of property
    * @param bindId bindId of the option value to process especially
    * @param getter getter for an option with a given bindId
    * @param setter setter for an option with a given bindId
    * @return a new controller that processes the specified bindId with a specified getter and setter,
    * and delegates to this controller for any other bindId.
    */
-  default @NotNull OptionController onValue(@NotNull String bindId, @NotNull Supplier<@NotNull Object> getter,
-                                            @NotNull Consumer<@NotNull Object> setter) {
+  default <T> @NotNull OptionController onValue(@NotNull String bindId, @NotNull Supplier<@NotNull T> getter,
+                                                @NotNull Consumer<@NotNull T> setter) {
     OptionController controller = this;
     return new OptionController() {
       @Override
       public void setOption(@NotNull String _bindId, Object value) {
         if (_bindId.equals(bindId)) {
-          setter.accept(value);
+          //noinspection unchecked
+          setter.accept((T)value);
         }
         else {
           controller.setOption(_bindId, value);

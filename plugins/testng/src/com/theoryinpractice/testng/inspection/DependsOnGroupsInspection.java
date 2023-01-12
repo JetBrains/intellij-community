@@ -62,9 +62,8 @@ public class DependsOnGroupsInspection extends AbstractBaseJavaLocalInspectionTo
       () -> StringUtil.join(ArrayUtilRt.toStringArray(groups), ","),
       value -> {
         groups.clear();
-        String text = (String)value;
-        if (!StringUtil.isEmptyOrSpaces(text)) {
-          ContainerUtil.addAll(groups, text.split("[, ]"));
+        if (!StringUtil.isEmptyOrSpaces(value)) {
+          ContainerUtil.addAll(groups, value.split("[, ]"));
         }
       });
   }

@@ -72,7 +72,7 @@ public class OptControlTest {
       return super.getOptionController()
         .onPrefix("adv", bindId -> options.getOrDefault(bindId, true),
                   (bindId, value) -> options.put(bindId, (Boolean)value))
-        .onValue("valueDouble", () -> valueDouble / 2, val -> valueDouble = 2 * (int)val);
+        .onValue("valueDouble", () -> valueDouble / 2, val -> valueDouble = 2 * val);
     }
   }
 

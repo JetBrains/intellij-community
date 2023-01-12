@@ -53,6 +53,6 @@ public class NamingConventionWithFallbackBean extends NamingConventionBean {
   @Override
   public OptionController getOptionController() {
     return super.getOptionController()
-      .onValue("inheritDefaultSettings", () -> !inheritDefaultSettings, val -> inheritDefaultSettings = !(boolean)val);
+      .onValue("inheritDefaultSettings", () -> !inheritDefaultSettings, val -> inheritDefaultSettings = !val);
   }
 }
