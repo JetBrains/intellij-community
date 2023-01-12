@@ -43,6 +43,11 @@ public abstract class KotlinGoToSuperDeclarationsHandlerTestGenerated extends Ab
                 performTest();
             }
 
+            @TestMetadata("classObject.kt")
+            public void testClassObject() throws Exception {
+                performTest();
+            }
+
             @TestMetadata("classWithDeepHeiarchy.kt")
             public void testClassWithDeepHeiarchy() throws Exception {
                 performTest();

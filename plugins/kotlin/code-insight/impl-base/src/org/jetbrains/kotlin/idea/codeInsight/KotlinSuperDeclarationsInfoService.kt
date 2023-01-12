@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.psi.*
 
 @ApiStatus.Internal
 sealed class SuperDeclaration {
-    class Class(override val declaration: SmartPsiElementPointer<KtClass>): SuperDeclaration()
+    class Class(override val declaration: SmartPsiElementPointer<KtClassOrObject>): SuperDeclaration()
     class JavaClass(override val declaration: SmartPsiElementPointer<PsiClass>): SuperDeclaration()
     class Function(override val declaration: SmartPsiElementPointer<KtNamedFunction>): SuperDeclaration()
     class JavaMethod(override val declaration: SmartPsiElementPointer<PsiMethod>): SuperDeclaration()
@@ -60,7 +60,7 @@ object SuperDeclarationProvider {
                             continue
                         }
                         when (val psi = superSymbol.psi) {
-                            is KtClass -> add(SuperDeclaration.Class(psi.createSmartPointer()))
+                            is KtClassOrObject -> add(SuperDeclaration.Class(psi.createSmartPointer()))
                             is KtNamedFunction -> add(SuperDeclaration.Function(psi.createSmartPointer()))
                             is KtProperty -> add(SuperDeclaration.Property(psi.createSmartPointer()))
                             is PsiMethod -> add(SuperDeclaration.JavaMethod(psi.createSmartPointer()))
