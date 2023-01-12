@@ -400,7 +400,12 @@ public final class InstanceOfUtils {
         return isConflictingNameDeclaredInside(variable, loop.getBody());
       }
       else {
-        return isConflictingNameDeclaredOutside(variable, loop);
+        boolean noBreak = PsiTreeUtil.processElements(loop,
+                                                      e -> !(e instanceof PsiBreakStatement) ||
+                                                           ((PsiBreakStatement)e).findExitedStatement() != loop);
+        if (noBreak) {
+          return isConflictingNameDeclaredOutside(variable, loop);
+        }
       }
     }
 
