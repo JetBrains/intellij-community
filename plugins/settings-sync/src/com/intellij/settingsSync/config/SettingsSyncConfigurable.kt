@@ -324,7 +324,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
             .append(message("sync.status.enabled"))
           if (statusTracker.isSynced()) {
             messageBuilder
-              .append(' ')
+              .append(". ")
               .append(message("sync.status.last.sync.message", getReadableSyncTime(), getUserName()))
           }
         }
