@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
-import com.intellij.ide.GeneralSettings
+import com.intellij.ide.GeneralLocalSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.BrowserLauncherAppless.Companion.canUseSystemDefaultBrowserPolicy
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -198,7 +198,6 @@ internal class BrowserSettingsPanel {
   val isModified: Boolean
     get() {
       val browserManager = WebBrowserManager.getInstance()
-      val generalSettings = GeneralSettings.getInstance()
       val defaultBrowserPolicy = defaultBrowser
       if (getDefaultBrowserPolicy(browserManager) != defaultBrowserPolicy ||
           browserManager.isShowBrowserHover != showBrowserHover.isSelected ||
@@ -208,15 +207,15 @@ internal class BrowserSettingsPanel {
         return true
       }
       return if (defaultBrowserPolicy == DefaultBrowserPolicy.ALTERNATIVE &&
-                 !Comparing.strEqual(generalSettings.browserPath, alternativeBrowserPathField.text)) {
+                 !Comparing.strEqual(GeneralLocalSettings.getInstance().browserPath, alternativeBrowserPathField.text)) {
         true
       }
       else browsersEditor.isModified
     }
 
   fun apply() {
-    val settings = GeneralSettings.getInstance()
-    settings.isUseDefaultBrowser = defaultBrowser == DefaultBrowserPolicy.SYSTEM
+    val settings = GeneralLocalSettings.getInstance()
+    settings.useDefaultBrowser = defaultBrowser == DefaultBrowserPolicy.SYSTEM
     if (alternativeBrowserPathField.isEnabled) {
       settings.browserPath = alternativeBrowserPathField.text
     }
@@ -238,11 +237,10 @@ internal class BrowserSettingsPanel {
     defaultBrowserPolicyComboBox.selectedItem = effectiveDefaultBrowserPolicy
     previewReloadModeComboBox.item = browserManager.getWebPreviewReloadMode()
     serverReloadModeComboBox.item = browserManager.getWebServerReloadMode()
-    val settings = GeneralSettings.getInstance()
     showBrowserHover.isSelected = browserManager.isShowBrowserHover
     showBrowserHoverXml.isSelected = browserManager.isShowBrowserHoverXml
     browsersEditor.reset(browserManager.list)
-    customPathValue = settings.browserPath
+    customPathValue = GeneralLocalSettings.getInstance().browserPath
     alternativeBrowserPathField.isEnabled = effectiveDefaultBrowserPolicy == DefaultBrowserPolicy.ALTERNATIVE
     updateCustomPathTextFieldValue(effectiveDefaultBrowserPolicy)
   }

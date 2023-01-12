@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -13,8 +13,7 @@ import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.PropertyBinding
 import com.intellij.util.PlatformUtils
 
 // @formatter:off
@@ -96,7 +95,7 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
         row(IdeUICustomization.getInstance().projectMessage("settings.general.default.directory")) {
           textFieldWithBrowseButton(fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
                                       .also { it.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, false) })
-            .bindText(model::getDefaultProjectDirectory, model::setDefaultProjectDirectory)
+            .bindText(GeneralLocalSettings.getInstance()::defaultProjectDirectory)
             .columns(COLUMNS_MEDIUM)
             .comment(IdeBundle.message("settings.general.directory.preselected"), 80)
         }

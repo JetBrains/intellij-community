@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.CommonBundle
@@ -6,6 +6,7 @@ import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
 import com.intellij.execution.wsl.WslPath.Companion.isWslUncPath
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
+import com.intellij.ide.GeneralLocalSettings
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectsManager
@@ -23,7 +24,10 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -485,7 +489,7 @@ object ProjectUtil {
 
   @JvmStatic
   fun getBaseDir(): String {
-    val defaultDirectory = GeneralSettings.getInstance().defaultProjectDirectory
+    val defaultDirectory = GeneralLocalSettings.getInstance().defaultProjectDirectory
     if (!defaultDirectory.isNullOrEmpty()) {
       return defaultDirectory.replace('/', File.separatorChar)
     }
@@ -545,7 +549,7 @@ object ProjectUtil {
   @JvmStatic
   fun getProjectsPath(): @SystemDependent String {
     val application = ApplicationManager.getApplication()
-    val fromSettings = if (application == null || application.isHeadlessEnvironment) null else GeneralSettings.getInstance().defaultProjectDirectory
+    val fromSettings = if (application == null || application.isHeadlessEnvironment) null else GeneralLocalSettings.getInstance().defaultProjectDirectory
     if (!fromSettings.isNullOrEmpty()) {
       return PathManager.getAbsolutePath(fromSettings)
     }
