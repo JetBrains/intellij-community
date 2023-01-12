@@ -1,5 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("MemberVisibilityCanBePrivate", "unused")
 @file:JvmName("CanonicalPathUtil")
 
 package com.intellij.openapi.util.io
@@ -34,7 +33,7 @@ fun String.getParentNioPath(): Path? {
 
 fun String.getResolvedPath(relativePath: String): String {
   val path = "$this/$relativePath"
-  return FileUtil.toCanonicalPath(path, '/') // resolve simple symlinks . and ..
+  return FileUtil.toCanonicalPath(path, '/', true) // resolve simple symlinks . and ..
 }
 
 fun String.getResolvedNioPath(relativePath: String): Path {

@@ -1,10 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("MemberVisibilityCanBePrivate", "unused")
 @file:JvmName("NioPathUtil")
+
 package com.intellij.openapi.util.io
 
 import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
 import java.io.File
+import java.io.IOException
 import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
@@ -38,33 +39,23 @@ fun Path.isAncestor(path: Path, strict: Boolean): Boolean {
   return FileUtil.isAncestor(this, path, strict)
 }
 
-fun Path.createNioFile(): Path {
-  parent?.createDirectories()
-  return createFile()
-}
-
-fun Path.createNioDirectory(): Path {
-  return createDirectories()
-}
-
 fun Path.findOrCreateNioFile(): Path {
-  if (exists()) {
-    check(isRegularFile()) {
-      "Expected file instead of directory: $this"
-    }
-    return this
+  parent?.createDirectories()
+  if (!exists()) {
+    createFile()
   }
-  return createNioFile()
+  if (!isRegularFile()) {
+    throw IOException("Expected file instead of directory: $this")
+  }
+  return this
 }
 
 fun Path.findOrCreateNioDirectory(): Path {
-  if (exists()) {
-    check(isDirectory()) {
-      "Expected directory instead of file: $this"
-    }
-    return this
+  createDirectories()
+  if (!isDirectory()) {
+    throw IOException("Expected directory instead of file: $this")
   }
-  return createNioDirectory()
+  return this
 }
 
 fun Path.deleteNioFileOrDirectory() {
