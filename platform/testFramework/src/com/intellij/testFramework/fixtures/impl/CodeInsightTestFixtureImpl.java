@@ -256,13 +256,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   @TestOnly
-  public static List<HighlightInfo> instantiateAndRun(@NotNull PsiFile file,
+  public static List<HighlightInfo> instantiateAndRun(@NotNull PsiFile psiFile,
                                                       @NotNull Editor editor,
                                                       int @NotNull [] toIgnore,
                                                       boolean canChangeDocument,
                                                       boolean readEditorMarkupModel) {
-    Project project = file.getProject();
+    Project project = psiFile.getProject();
     ensureIndexesUpToDate(project);
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (!ReadAction.compute(() -> ProblemHighlightFilter.shouldHighlightFile(psiFile))) {
+      boolean inSource = ReadAction.compute(() -> ProjectRootManager.getInstance(project).getFileIndex().isInSource(virtualFile));
+      throw new IllegalStateException("ProblemHighlightFilter.shouldHighlightFile('" + psiFile + "') == false, so can't highlight it." +
+                                      (inSource ? "" : " Maybe it's because " + virtualFile+ " is outside source folders? (source folders: " +
+                                      ReadAction.compute(() -> Arrays.toString(ProjectRootManager.getInstance(project).getContentSourceRoots()))+")"));
+    }
+
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
@@ -276,7 +284,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         settings.setAutoReparseDelay(0);
         List<HighlightInfo> infos = new ArrayList<>();
         EdtTestUtil.runInEdtAndWait(() -> {
-          codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, toIgnore, canChangeDocument, null);
+          codeAnalyzer.runPasses(psiFile, editor.getDocument(), textEditor, toIgnore, canChangeDocument, null);
           IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
           if (policy != null) {
             policy.waitForHighlighting(project, editor);
@@ -289,7 +297,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                    Processors.cancelableCollectProcessor(infos));
           }
         });
-        infos.addAll(DaemonCodeAnalyzerEx.getInstanceEx(project).getFileLevelHighlights(project, file));
+        infos.addAll(DaemonCodeAnalyzerEx.getInstanceEx(project).getFileLevelHighlights(project, psiFile));
         return infos;
       }
       catch (ProcessCanceledException e) {
@@ -1644,12 +1652,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Project project = getProject();
     EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
     PsiFileImpl file = (PsiFileImpl)getHostFile();
-    if (!ReadAction.compute(() -> ProblemHighlightFilter.shouldHighlightFile(file))) {
-      boolean inSource = ReadAction.compute(() -> ProjectRootManager.getInstance(project).getFileIndex().isInSource(myFile));
-      throw new IllegalStateException("ProblemHighlightFilter.shouldHighlightFile('" + myFile + "') == false, so can't highlight it." +
-                                      (inSource ? "" : " Maybe it's because the file is outside source folders? (source folders: " +
-                                      ReadAction.compute(() -> Arrays.toString(ProjectRootManager.getInstance(project).getContentSourceRoots()))+")"));
-    }
     FileElement hardRefToFileElement = file.calcTreeElement();//to load text
 
     // to load AST for changed files before it's prohibited by "fileTreeAccessFilter"
