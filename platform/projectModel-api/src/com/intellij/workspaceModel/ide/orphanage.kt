@@ -30,21 +30,23 @@ class Orphanage {
 
 class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
-    val modules = event.getChanges(ModuleEntity::class.java)
-      .filterIsInstance<EntityChange.Added<ModuleEntity>>()
-      .mapNotNull {
-        project.workspaceModel.currentSnapshot.resolve(it.entity.symbolicId)
-      }
-
-    // This is important to use invokeLater in order not to update the project model inside of the listeners
-    ApplicationManager.getApplication().invokeLater {
-      WorkspaceModel.getInstance(project).updateProjectModel("") {
-        for (module in modules) {
-          it.modifyEntity(module) {
-            // TODO: Implement copy with parents
-          }
-        }
-      }
-    }
+    //val modules = event.getChanges(ModuleEntity::class.java)
+    //  .filterIsInstance<EntityChange.Added<ModuleEntity>>()
+    //  .mapNotNull {
+    //    project.workspaceModel.currentSnapshot.resolve(it.entity.symbolicId)
+    //  }
+    //
+    //// This is important to use invokeLater in order not to update the project model inside of the listeners
+    //ApplicationManager.getApplication().invokeLater {
+    //  ApplicationManager.getApplication().runWriteAction {
+    //    WorkspaceModel.getInstance(project).updateProjectModel("") {
+    //      for (module in modules) {
+    //        it.modifyEntity(module) {
+    //          // TODO: Implement copy with parents
+    //        }
+    //      }
+    //    }
+    //  }
+    //}
   }
 }
