@@ -295,6 +295,11 @@
                      key="jvm.inspections.usages.of.obsolete.api.display.name"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UsagesOfObsoleteApiInspection"/>
 
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="ExtensionRegisteredAsService"
+                     key="inspection.extension.registered.as.service"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionRegisteredAsServiceInspection"/>
+
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
 
