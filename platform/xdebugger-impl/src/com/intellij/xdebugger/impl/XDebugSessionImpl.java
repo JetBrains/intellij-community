@@ -627,7 +627,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     if (myDebuggerManager.getCurrentSession() == this) {
       boolean isTopFrame = isTopFrameSelected();
 
-      myDebuggerManager.updateExecutionPoint(getCurrentPosition(), !isTopFrame, getPositionIconRenderer(isTopFrame));
+      myDebuggerManager.updateExecutionPoint(getCurrentPosition(), isTopFrame, getPositionIconRenderer(isTopFrame));
     }
   }
 

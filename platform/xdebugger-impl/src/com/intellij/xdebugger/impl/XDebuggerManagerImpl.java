@@ -315,9 +315,9 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     }
   }
 
-  void updateExecutionPoint(@Nullable XSourcePosition position, boolean nonTopFrame, @Nullable GutterIconRenderer gutterIconRenderer) {
+  void updateExecutionPoint(@Nullable XSourcePosition position, boolean isTopFrame, @Nullable GutterIconRenderer gutterIconRenderer) {
     if (position != null) {
-      myExecutionPointHighlighter.show(position, nonTopFrame, gutterIconRenderer);
+      myExecutionPointHighlighter.show(position, !isTopFrame, gutterIconRenderer);
     }
     else {
       myExecutionPointHighlighter.hide();
