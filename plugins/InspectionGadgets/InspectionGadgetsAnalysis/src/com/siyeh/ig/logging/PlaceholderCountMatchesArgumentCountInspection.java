@@ -2,11 +2,12 @@
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.options.OptDropdown;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.Stack;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -16,13 +17,16 @@ import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import one.util.streamex.EntryStream;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
-import static com.intellij.codeInspection.options.OptPane.checkbox;
-import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.option;
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
@@ -40,7 +44,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
 
     @Override
     public LoggerType findType(PsiMethodCallExpression expression, LoggerContext context) {
-      if (context.ignoreSlf4jThrowableHavePlaceholder) {
+      if (context.log4jAsImplementationForSlf4j) {
         //use old style as more common
         return LoggerType.LOG4J_OLD_STYLE;
       }
@@ -52,7 +56,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
 
     @Override
     public LoggerType findType(PsiMethodCallExpression expression, LoggerContext context) {
-      if (context.ignoreSlf4jThrowableHavePlaceholder) {
+      if (context.log4jAsImplementationForSlf4j) {
         return LoggerType.EQUAL_PLACEHOLDERS;
       }
       PsiExpression qualifierExpression = expression.getMethodExpression().getQualifierExpression();
@@ -125,13 +129,21 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
   }
 
   @SuppressWarnings("PublicField")
-  public boolean ignoreSlf4jThrowableHavePlaceholder = false;
+  public Slf4jToLog4J2Type slf4jToLog4J2Type = Slf4jToLog4J2Type.AUTO;
 
   @Override
   public @NotNull OptPane getOptionsPane() {
+    Map<Slf4jToLog4J2Type, @Nls String> options = Map.of(
+      Slf4jToLog4J2Type.AUTO, InspectionGadgetsBundle.message( "placeholder.count.matches.argument.count.slf4j.throwable.option.auto"),
+      Slf4jToLog4J2Type.NO, InspectionGadgetsBundle.message( "placeholder.count.matches.argument.count.slf4j.throwable.option.no"),
+      Slf4jToLog4J2Type.YES, InspectionGadgetsBundle.message( "placeholder.count.matches.argument.count.slf4j.throwable.option.yes")
+    );
+
     return pane(
-      checkbox("ignoreSlf4jThrowableHavePlaceholder", InspectionGadgetsBundle.message(
-        "placeholder.count.matches.argument.count.slf4j.throwable.option")));
+      dropdown("slf4jToLog4J2Type", InspectionGadgetsBundle.message(
+                 "placeholder.count.matches.argument.count.slf4j.throwable.option"),
+               EntryStream.of(options).mapKeyValue((idx, name) -> option(String.valueOf(idx), name))
+                 .toArray(OptDropdown.Option.class)));
   }
 
   @Override
@@ -147,7 +159,12 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
 
       LoggerTypeSearcher holder = LOGGER_TYPE_SEARCHERS.mapFirst(expression);
       if (holder == null) return;
-      LoggerType loggerType = holder.findType(expression, new LoggerContext(ignoreSlf4jThrowableHavePlaceholder));
+      boolean log4jAsImplementationForSlf4j = switch (slf4jToLog4J2Type){
+        case AUTO -> hasBridgeFromSlf4jToLog4j2(expression);
+        case YES -> true;
+        case NO -> false;
+      };
+      LoggerType loggerType = holder.findType(expression, new LoggerContext(log4jAsImplementationForSlf4j));
       if (loggerType == null) return;
       PsiMethod method = expression.resolveMethod();
       if (method == null) return;
@@ -252,6 +269,17 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       }
 
       registerError(logStringArgument, new Result(argumentCount, placeholderCountHolder.count, resultType));
+    }
+
+    private static boolean hasBridgeFromSlf4jToLog4j2(PsiElement element) {
+      PsiFile file = element.getContainingFile();
+      return CachedValuesManager.<ConcurrentMap<String, PsiClass>>getCachedValue(file, () -> {
+        var project = file.getProject();
+        return new CachedValueProvider.Result<>(
+          ConcurrentFactoryMap.createMap(
+            markerInterfaceName -> JavaPsiFacade.getInstance(project).findClass(markerInterfaceName, file.getResolveScope())),
+          ProjectRootManager.getInstance(project));
+      }).get("org.apache.logging.slf4j.Log4jLogger") != null;
     }
 
     @NotNull
@@ -492,7 +520,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
     LoggerType findType(PsiMethodCallExpression expression, LoggerContext context);
   }
 
-  private record LoggerContext(boolean ignoreSlf4jThrowableHavePlaceholder) {
+  private record LoggerContext(boolean log4jAsImplementationForSlf4j) {
   }
 
   private record Result(int argumentCount, int placeholderCount, ResultType result) {
@@ -510,5 +538,9 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
    * @param isConstant - it is a constant
    */
   private record PartHolder(@Nullable String text, boolean isConstant) {
+  }
+
+  enum Slf4jToLog4J2Type{
+    AUTO, YES, NO
   }
 }
