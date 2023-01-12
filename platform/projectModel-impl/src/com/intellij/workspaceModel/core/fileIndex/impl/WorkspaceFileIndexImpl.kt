@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.model.ModelBranch
 import com.intellij.notebook.editor.BackedVirtualFile
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider
@@ -23,11 +24,15 @@ import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import org.jetbrains.annotations.TestOnly
 
-class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexEx {
+class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexEx, Disposable.Default {
   companion object {
     private val EP_NAME = ExtensionPointName<WorkspaceFileIndexContributor<*>>("com.intellij.workspaceModel.fileIndexContributor")
     private val BRANCH_INDEX_DATA_KEY = Key.create<Pair<Long, WorkspaceFileIndexData>>("BRANCH_WORKSPACE_FILE_INDEX")
+    
+    @TestOnly
+    fun getEpName(): ExtensionPointName<WorkspaceFileIndexContributor<*>> = EP_NAME
   }
 
   @Volatile
@@ -48,6 +53,9 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     LowMemoryWatcher.register({
       indexData?.onLowMemory()
     }, project)
+    val clearData = Runnable { indexData = null }
+    EP_NAME.addChangeListener(clearData, this)
+    CustomEntityProjectModelInfoProvider.EP.addChangeListener(clearData, this)
   }
 
   override fun isInWorkspace(file: VirtualFile): Boolean {
