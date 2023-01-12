@@ -15,13 +15,11 @@ import com.intellij.openapi.util.Ref
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.Alarm
 import org.jetbrains.concurrency.AsyncPromise
-import org.junit.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 class AutoReloadTest : AutoReloadTestCase() {
 
-  @Test
   fun `test simple modification tracking`() {
     test { settingsFile ->
       settingsFile.appendString("println 'hello'")
@@ -57,7 +55,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test modification tracking disabled by ES plugin`() {
     val autoImportAwareCondition = Ref.create(true)
     testWithDummyExternalSystem(autoImportAwareCondition) { settingsFile ->
@@ -77,7 +74,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test simple modification tracking in xml`() {
     test {
       val settingsFile = createSettingsVirtualFile("settings.xml")
@@ -126,7 +122,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test unrecognized settings file`() {
     test {
       val settingsFile = createSettingsVirtualFile("settings.elvish")
@@ -155,7 +150,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test deletion tracking`() {
     test { settingsFile ->
       settingsFile.modify(EXTERNAL)
@@ -182,7 +176,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test directory deletion tracking`() {
     test {
       val directory = findOrCreateDirectory("directory")
@@ -200,7 +193,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test modification tracking with several settings files`() {
     test { settingsFile ->
       settingsFile.replaceContent("println 'hello'")
@@ -235,7 +227,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test modification tracking with several sub projects`() {
     val systemId1 = ProjectSystemId("External System 1")
     val systemId2 = ProjectSystemId("External System 2")
@@ -291,7 +282,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     assertNotificationAware(event = "project refresh")
   }
 
-  @Test
   fun `test project link-unlink`() {
     test { settingsFile ->
       settingsFile.modify(INTERNAL)
@@ -305,7 +295,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test external modification tracking`() {
     test {
       var settingsFile = it
@@ -382,7 +371,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test tracker store and restore`() {
     val projectAware = mockProjectAware()
     val settingsFile = findOrCreateFile(SETTINGS_FILE)
@@ -480,7 +468,7 @@ class AutoReloadTest : AutoReloadTestCase() {
 
   fun `test document changes between save`() {
     test { settingsFile ->
-      val settingsDocument = settingsFile.asDocument()
+      val settingsDocument = settingsFile.getDocument()
 
       settingsDocument.replaceContent("println 'hello'")
       assertState(numReload = 0, notified = true, event = "change")
@@ -598,7 +586,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test activation of auto-import`() {
     val systemId = ProjectSystemId("External System")
     val projectId1 = ExternalSystemProjectId(systemId, projectPath)
@@ -652,7 +639,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     assertActivationStatus(projectId1, projectId2, event = "refresh project")
   }
 
-  @Test
   fun `test merging of refreshes with different nature`() {
     test { settingsFile ->
       enableAsyncExecution()
@@ -672,7 +658,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test enabling-disabling internal-external changes importing`() {
     test { settingsFile ->
       settingsFile.modify(INTERNAL)
@@ -720,7 +705,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test failure auto-reload with enabled auto-reload of any changes`() {
     test { settingsFile ->
       setAutoReloadType(ALL)
@@ -745,7 +729,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test up-to-date promise after modifications with enabled auto-import`() {
     test { settingsFile ->
       for (collisionPassType in ReloadCollisionPassType.values()) {
@@ -770,7 +753,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test providing explicit reload`() {
     test { settingsFile ->
       onceWhenReloading {
@@ -789,7 +771,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test settings files modification partition`() {
     test {
       val settingsFile1 = createSettingsVirtualFile("settings1.groovy")
@@ -836,7 +817,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test settings files cache`() {
     test {
       val settings1File = createSettingsVirtualFile("settings1.groovy")
@@ -909,7 +889,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test configuration for unknown file type`() {
     test("unknown") { settingsFile ->
       settingsFile.replaceContent(byteArrayOf(1, 2, 3))
@@ -926,7 +905,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test reload during reload`() {
     test { settingsFile ->
       enableAsyncExecution()
@@ -952,7 +930,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test modification during reload`() {
     test { settingsFile ->
       enableAsyncExecution()
@@ -969,7 +946,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test generation during reload`() {
     test {
       onceWhenReloading {
@@ -991,7 +967,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test merge project reloads`() {
     test { settingsFile ->
       enableAsyncExecution()
@@ -1015,7 +990,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test handle explicit settings files list change event`() {
     initialize()
     setAutoReloadType(ALL)
@@ -1036,7 +1010,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     assertProjectAware(projectAware, numReload = 2, event = "handle settings files list change event when file added")
   }
 
-  @Test
   fun `test partial ignoring settings files modification events`() {
     test {
       ignoreSettingsFileWhen("ignored.groovy") { it.event == UPDATE }
