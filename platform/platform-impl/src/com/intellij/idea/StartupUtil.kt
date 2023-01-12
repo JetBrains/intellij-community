@@ -275,9 +275,7 @@ fun CoroutineScope.startApplication(args: List<String>,
         appStarter = appStarterDeferred.await(),
         euaDocumentDeferred = euaDocumentDeferred,
       )
-      if (!PlatformUtils.isRider()) {
-        PluginManagerCore.scheduleDescriptorLoading(mainScope, zipFilePoolDeferred)
-      }
+      PluginManagerCore.scheduleDescriptorLoading(mainScope, zipFilePoolDeferred)
     }
     else {
       // must be scheduled before starting app
