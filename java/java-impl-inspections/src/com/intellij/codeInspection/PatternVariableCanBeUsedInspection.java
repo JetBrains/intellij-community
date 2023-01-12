@@ -143,6 +143,9 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
                                                                    existingPatternVariable.getName(), name),
                                    new ExistingPatternVariableCanBeUsedFix(name, existingPatternVariable));
           } else {
+            if (InstanceOfUtils.hasConflictingDeclaredNames(variable, instanceOf)) {
+              return;
+            }
             holder.registerProblem(identifier,
                                    InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.message", name),
                                    new PatternVariableCanBeUsedFix(name, instanceOf));

@@ -205,10 +205,8 @@ public final class InstanceOfUtils {
    */
   @Nullable
   public static PsiInstanceOfExpression findCorrespondingInstanceOf(@NotNull PsiTypeCastExpression cast) {
-    PsiIdentifier identifier = null;
     PsiElement context = PsiUtil.skipParenthesizedExprUp(cast.getParent());
     if (context instanceof PsiLocalVariable) {
-      identifier = ((PsiLocalVariable)context).getNameIdentifier();
       context = context.getParent();
     } else {
       while (true) {
@@ -266,7 +264,6 @@ public final class InstanceOfUtils {
             }
           }
         }
-        if (isConflictingNameDeclaredInside(identifier, stmt)) return null;
         if (stmt instanceof PsiSwitchLabelStatementBase) break;
       }
       if (parent.getParent() instanceof PsiBlockStatement) {
@@ -299,29 +296,6 @@ public final class InstanceOfUtils {
       return findInstanceOf(((PsiConditionalLoopStatement)parent).getCondition(), cast, true);
     }
     return null;
-  }
-
-  private static boolean isConflictingNameDeclaredInside(@Nullable PsiIdentifier identifier, @NotNull PsiElement statement) {
-    if (identifier == null) return false;
-    class Visitor extends JavaRecursiveElementWalkingVisitor {
-      boolean hasConflict = false;
-
-      @Override
-      public void visitClass(final @NotNull PsiClass aClass) {}
-
-      @Override
-      public void visitVariable(@NotNull PsiVariable variable) {
-        String name = variable.getName();
-        if (name != null && identifier.textMatches(name)) {
-          hasConflict = true;
-          stopWalking();
-        }
-        super.visitVariable(variable);
-      }
-    }
-    Visitor visitor = new Visitor();
-    statement.accept(visitor);
-    return visitor.hasConflict;
   }
 
   private static boolean canCompleteNormally(@NotNull PsiElement parent, @Nullable PsiStatement statement) {
@@ -389,6 +363,166 @@ public final class InstanceOfUtils {
       }
     }
     return false;
+  }
+
+  /**
+   * @param variable a variable, which is used to check, if the scope contains variables with the same name
+   * @param instanceOf an instanceof expression that is used to calculate declaration scope
+   * @return true if another declared variables with the same name are found in the scope of instanceof with variable patterns.
+   * Patterns' names are not process
+   */
+  public static boolean hasConflictingDeclaredNames(PsiLocalVariable variable, PsiInstanceOfExpression instanceOf) {
+    PsiIdentifier identifier = variable.getNameIdentifier();
+    if (identifier == null) {
+      return false;
+    }
+
+    InstanceOfStateWrapper condition = getInstanceOfState(instanceOf);
+    if (isConflictingNameDeclaredInside(variable, condition.expression)) {
+      return true;
+    }
+    PsiElement parent = condition.expression.getParent();
+    if (parent == null) {
+      return false;
+    }
+    if (parent instanceof PsiConditionalExpression conditionalExpression &&
+        condition.expression.isEquivalentTo(conditionalExpression.getCondition())) {
+      return condition.value ? isConflictingNameDeclaredInside(variable, conditionalExpression.getThenExpression()) :
+             isConflictingNameDeclaredInside(variable, conditionalExpression.getElseExpression());
+    }
+
+    if (parent instanceof PsiConditionalLoopStatement loop &&
+        condition.expression.isEquivalentTo(loop.getCondition())) {
+      if (condition.value) {
+        if (loop instanceof PsiForStatement forStatement && isConflictingNameDeclaredInside(variable, forStatement.getUpdate())) {
+          return true;
+        }
+        return isConflictingNameDeclaredInside(variable, loop.getBody());
+      }
+      else {
+        return isConflictingNameDeclaredOutside(variable, loop);
+      }
+    }
+
+    if (parent instanceof PsiIfStatement psiIfStatement) {
+      if (psiIfStatement.getParent() instanceof PsiIfStatement parentIf && psiIfStatement.isEquivalentTo(parentIf.getElseBranch())) {
+        return false;
+      }
+      if (condition.value) {
+        if (isConflictingNameDeclaredInside(variable, psiIfStatement.getThenBranch())) {
+          return true;
+        }
+        if (!canCompleteNormally(psiIfStatement, psiIfStatement.getElseBranch()) && isConflictingNameDeclaredOutside(variable, psiIfStatement)) {
+          return true;
+        }
+      }else {
+        if (isConflictingNameDeclaredInside(variable, psiIfStatement.getElseBranch())) {
+          return true;
+        }
+        if (!canCompleteNormally(psiIfStatement, psiIfStatement.getThenBranch()) && isConflictingNameDeclaredOutside(variable, psiIfStatement)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * @return wrapper, which contains top level value if instanceof is true and reference to this expression.
+   */
+  public static InstanceOfStateWrapper getInstanceOfState(@NotNull PsiInstanceOfExpression instanceOfExpression) {
+    boolean condition = true;
+    @NotNull PsiElement topLevelCondition = instanceOfExpression;
+    while (true) {
+      PsiElement parent = topLevelCondition.getParent();
+      if (parent instanceof PsiParenthesizedExpression) {
+        topLevelCondition = parent;
+        continue;
+      }
+      if (parent instanceof PsiPrefixExpression prefixExpression) {
+        if (!prefixExpression.getOperationTokenType().equals(JavaTokenType.EXCL)) {
+          break;
+        }
+        condition = !condition;
+        topLevelCondition = parent;
+        continue;
+      }
+
+      if (parent instanceof PsiPolyadicExpression polyadicExpression) {
+        IElementType tokenType = polyadicExpression.getOperationTokenType();
+        if (tokenType.equals(JavaTokenType.ANDAND) && condition) {
+          topLevelCondition = parent;
+          continue;
+        }
+        if (tokenType.equals(JavaTokenType.OROR) && !condition) {
+          topLevelCondition = parent;
+          continue;
+        }
+      }
+      break;
+    }
+    return new InstanceOfStateWrapper(condition, topLevelCondition);
+  }
+
+  public record InstanceOfStateWrapper(boolean value, @NotNull PsiElement expression) {
+
+  }
+
+
+  private static boolean isConflictingNameDeclaredOutside(@Nullable PsiLocalVariable myVariable,
+                                                          @Nullable PsiStatement statement) {
+    if (myVariable == null || statement == null) return false;
+    HasDeclaredVariableWithTheSameNameVisitor visitor = new HasDeclaredVariableWithTheSameNameVisitor(myVariable);
+    PsiElement current = statement.getNextSibling();
+    while (current != null) {
+      current.accept(visitor);
+      if (visitor.hasConflict) {
+        return true;
+      }
+      current = current.getNextSibling();
+    }
+    return false;
+  }
+
+  private static boolean isConflictingNameDeclaredInside(@Nullable PsiVariable myVariable,
+                                                         @Nullable PsiElement statement) {
+    if (myVariable == null || statement == null) return false;
+    PsiIdentifier identifier = myVariable.getNameIdentifier();
+    if (identifier == null) {
+      return false;
+    }
+    HasDeclaredVariableWithTheSameNameVisitor visitor = new HasDeclaredVariableWithTheSameNameVisitor(myVariable);
+    statement.accept(visitor);
+    return visitor.hasConflict;
+  }
+
+  private static class HasDeclaredVariableWithTheSameNameVisitor extends JavaRecursiveElementWalkingVisitor {
+    boolean hasConflict = false;
+
+    private final PsiVariable myVariable;
+    private final PsiIdentifier myIdentifier;
+
+    private HasDeclaredVariableWithTheSameNameVisitor(@NotNull PsiVariable variable) {
+      myVariable = variable;
+      myIdentifier = variable.getNameIdentifier();
+      if (myIdentifier == null) {
+        stopWalking();
+      }
+    }
+
+    @Override
+    public void visitClass(final @NotNull PsiClass aClass) {}
+
+    @Override
+    public void visitVariable(@NotNull PsiVariable variable) {
+      String name = variable.getName();
+      if (name != null && !myVariable.isEquivalentTo(variable) && myIdentifier.textMatches(name)) {
+        hasConflict = true;
+        stopWalking();
+      }
+      super.visitVariable(variable);
+    }
   }
 
   private static class InstanceofChecker extends JavaElementVisitor {

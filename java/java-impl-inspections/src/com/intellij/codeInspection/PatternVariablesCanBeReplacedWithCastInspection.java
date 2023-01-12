@@ -10,13 +10,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.InstanceOfUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -277,40 +277,15 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
       replaceWithCast(variable, unusedReferences);
     }
 
-    private static ConditionState getConditionIfInstanceOfTrue(PsiInstanceOfExpression expression, PsiExpression condition) {
-      if (!(condition != null && PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class, PsiPrefixExpression.class,
-                                                               PsiPolyadicExpression.class) == condition.getParent())) {
+    private static ConditionState getConditionIfInstanceOfTrue(PsiInstanceOfExpression expression, @Nullable PsiExpression condition) {
+      if (condition == null) {
         return ConditionState.UNKNOWN;
       }
-      PsiElement current = expression.getParent();
-      boolean currentState = true;
-      while (current != condition.getParent()) {
-        if (current instanceof PsiParenthesizedExpression) {
-          current = current.getParent();
-          continue;
-        }
-        if (current instanceof PsiPrefixExpression prefixExpression) {
-          if (!prefixExpression.getOperationTokenType().equals(JavaTokenType.EXCL)) {
-            return ConditionState.UNKNOWN;
-          }
-          currentState = !currentState;
-          current = current.getParent();
-          continue;
-        }
-        if (current instanceof PsiPolyadicExpression polyadicExpression) {
-          IElementType tokenType = polyadicExpression.getOperationTokenType();
-          if (tokenType.equals(JavaTokenType.ANDAND) && currentState) {
-            current = current.getParent();
-            continue;
-          }
-          if (tokenType.equals(JavaTokenType.OROR) && !currentState) {
-            current = current.getParent();
-            continue;
-          }
-          return ConditionState.UNKNOWN;
-        }
+      InstanceOfUtils.InstanceOfStateWrapper state = InstanceOfUtils.getInstanceOfState(expression);
+      if (state.expression().isEquivalentTo(condition)) {
+        return state.value() ? ConditionState.TRUE : ConditionState.FALSE;
       }
-      return currentState ? ConditionState.TRUE : ConditionState.FALSE;
+      return ConditionState.UNKNOWN;
     }
 
 
