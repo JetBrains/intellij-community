@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use log::{debug, info};
 use path_absolutize::Absolutize;
 use anyhow::{bail, Context, Result};
-use utils::{get_current_exe, get_path_from_env_var, PathExt, read_file_to_end};
+use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, PathExt, read_file_to_end};
 use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_logs_home, LaunchConfiguration};
 
 pub struct RemoteDevLaunchConfiguration {
@@ -116,7 +116,7 @@ impl DefaultLaunchConfiguration {
         base_dir_env_var_name: &str,
         default_base_dir: &Path,
         per_project_config_dir_name: &str) -> Result<PathBuf> {
-        debug!("Per project config dir name: {per_project_config_dir_name:?}");
+        debug!("Per-project {human_readable_name} name: {per_project_config_dir_name:?}");
 
         let specific_dir = match get_path_from_env_var(specific_dir_env_var_name) {
             Ok(x) => {
@@ -261,11 +261,20 @@ impl RemoteDevLaunchConfiguration {
         return Ok(absolute_project_path);
     }
 
-    pub fn new(project_path: PathBuf, default: DefaultLaunchConfiguration) -> Result<Self> {
-        let per_project_config_dir_name = project_path.to_string_lossy()
+    pub fn new(project_path: &Path, default: DefaultLaunchConfiguration) -> Result<Self> {
+        // prevent opening of 2 backends for the same directory via symlinks
+        let canonical_project_path = canonical_non_unc(project_path)?;
+        
+        if project_path != project_path.canonicalize()? {
+            info!("Will use canonical form '{canonical_project_path:?}' of '{project_path:?}' to avoid concurrent IDE instances on the same project");
+        }
+
+        let per_project_config_dir_name = canonical_project_path
             .replace("/", "_")
             .replace("\\", "_")
             .replace(":", "_");
+
+        debug!("Per-project config dir name: '{per_project_config_dir_name}'");
 
         let config_dir = default.prepare_host_config_dir(&per_project_config_dir_name)?;
         let system_dir = default.prepare_host_system_dir(&per_project_config_dir_name)?;

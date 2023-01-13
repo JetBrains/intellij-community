@@ -186,7 +186,7 @@ fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
     match remote_dev_project_path {
         None => Ok(Box::new(default)),
         Some(x) => {
-            let config = RemoteDevLaunchConfiguration::new(x, default)?;
+            let config = RemoteDevLaunchConfiguration::new(&x, default)?;
             Ok(Box::new(config))
         }
     }
