@@ -205,6 +205,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
 
     TrafficLightRenderer renderer = ReadAction.nonBlocking(()->new TrafficLightRenderer(getProject(), getDocument(psiFile))).submit(
       AppExecutorUtil.getAppExecutorService()).get();
+    Disposer.register(getTestRootDisposable(), renderer);
     while (true) {
       TrafficLightRenderer.DaemonCodeAnalyzerStatus status = renderer.getDaemonCodeAnalyzerStatus();
       assertNotNull(status.reasonWhyDisabled);
@@ -215,5 +216,6 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     }
     Collection<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getDocument(psiFile), null, getProject());
     assertEmpty(infos);
+    UIUtil.dispatchAllInvocationEvents();
   }
 }
