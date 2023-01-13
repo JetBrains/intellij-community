@@ -13,11 +13,13 @@ import com.intellij.collaboration.api.graphql.GraphQLErrorException
 import com.intellij.collaboration.api.json.JsonDataSerializer
 import org.jetbrains.plugins.gitlab.api.GitLabRestJsonDataDeSerializer.genericConfig
 import java.io.Reader
+import java.text.SimpleDateFormat
 
 object GitLabGQLDataDeSerializer : JsonDataSerializer, GraphQLDataDeserializer {
 
   private val mapper: ObjectMapper = jacksonObjectMapper()
     .genericConfig()
+    .setDateFormat(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX"))
     .setPropertyNamingStrategy(PropertyNamingStrategies.LOWER_CAMEL_CASE)
 
   override fun toJsonBytes(content: Any): ByteArray = mapper.writeValueAsBytes(content)
