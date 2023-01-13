@@ -44,9 +44,9 @@ private class KotlinProjectArtifactDependencyResolverImpl(
         val modulesOutputsMap = project.getUserData(GradleProjectResolver.MODULES_OUTPUTS).orEmpty()
 
         return dependency.artifactsClasspath.flatMap { artifactFile ->
-            val id = artifactsMap[artifactFile.path] ?: modulesOutputsMap[artifactFile.path]?.first ?: return emptySet()
-            val sourceSetDataNode = sourceSetMap[id]?.first ?: return emptySet()
-            val sourceSet = sourceSetMap[id]?.second ?: return emptySet()
+            val id = artifactsMap[artifactFile.path] ?: modulesOutputsMap[artifactFile.path]?.first ?: return@flatMap emptySet()
+            val sourceSetDataNode = sourceSetMap[id]?.first ?: return@flatMap emptySet()
+            val sourceSet = sourceSetMap[id]?.second ?: return@flatMap emptySet()
             val sourceSetNames = sourceSetDataNode.kotlinSourceSetData?.sourceSetInfo?.dependsOn.orEmpty()
                 .mapNotNull { dependsOnId -> sourceSetMap[dependsOnId]?.second?.name } + sourceSet.name
 
