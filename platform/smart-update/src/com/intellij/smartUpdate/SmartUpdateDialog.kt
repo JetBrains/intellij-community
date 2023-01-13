@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.layout.selected
 import com.intellij.util.ui.JBFont
 
 class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
@@ -27,26 +28,20 @@ class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
       }
       indent {
         row {
-          label(IdeUpdateStep().getDescription()).enabled(ideUpdateAvailable).component.font = JBFont.smallOrNewUiMedium()
+          label(IdeUpdateStep().getDescription()).component.font = JBFont.smallOrNewUiMedium()
         }
         row {
           val restartCheckBox = checkBox(SmartUpdateBundle.message("checkbox.switch.to.updated.ide.restart.required")).bindSelected(
             { ideUpdateAvailable && options.updateIde && options.restartIde },
             { if (ideUpdateAvailable && options.updateIde) options.restartIde = it }).component
-          restartCheckBox.isEnabled = ideUpdateAvailable
           updateCheckBox.addActionListener { restartCheckBox.isEnabled = updateCheckBox.isSelected }
         }
-
+      }.enabledIf(updateCheckBox.selected)
+      row {
+        checkBox(SmartUpdateBundle.message("checkbox.update.project")).bindSelected(options::updateProject)
       }
       row {
-        checkBox(SmartUpdateBundle.message("checkbox.update.project")).bindSelected(
-          { options.updateProject },
-          { options.updateProject = it })
-      }
-      row {
-        checkBox(SmartUpdateBundle.message("checkbox.build.project")).bindSelected(
-          { options.buildProject },
-          { options.buildProject = it })
+        checkBox(SmartUpdateBundle.message("checkbox.build.project")).bindSelected(options::buildProject)
       }
     }
   }
