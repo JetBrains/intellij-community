@@ -3,19 +3,19 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.ResolveResult
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtPrefixExpression
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UIdentifier
-import org.jetbrains.uast.UPrefixExpression
-import org.jetbrains.uast.UastPrefixOperator
+import org.jetbrains.uast.*
+import org.jetbrains.uast.kotlin.internal.getResolveResultVariants
 
 @ApiStatus.Internal
 class KotlinUPrefixExpression(
     override val sourcePsi: KtPrefixExpression,
     givenParent: UElement?
-) : KotlinAbstractUExpression(givenParent), UPrefixExpression, KotlinUElementWithType, KotlinEvaluatableUElement {
+) : KotlinAbstractUExpression(givenParent), UPrefixExpression, KotlinUElementWithType, KotlinEvaluatableUElement,
+    UMultiResolvable {
     override val operand by lz {
         baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.baseExpression, this)
     }
@@ -34,4 +34,7 @@ class KotlinUPrefixExpression(
         KtTokens.MINUSMINUS -> UastPrefixOperator.DEC
         else -> UastPrefixOperator.UNKNOWN
     }
+
+    override fun multiResolve(): Iterable<ResolveResult> =
+        getResolveResultVariants(baseResolveProviderService, sourcePsi)
 }

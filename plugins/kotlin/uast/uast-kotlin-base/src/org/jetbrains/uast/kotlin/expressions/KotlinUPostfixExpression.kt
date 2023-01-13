@@ -3,18 +3,19 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.ResolveResult
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtPostfixExpression
 import org.jetbrains.uast.*
-import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
+import org.jetbrains.uast.kotlin.internal.getResolveResultVariants
 
 @ApiStatus.Internal
 class KotlinUPostfixExpression(
     override val sourcePsi: KtPostfixExpression,
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UPostfixExpression, KotlinUElementWithType, KotlinEvaluatableUElement,
-    UResolvable, DelegatedMultiResolve {
+    UResolvable, UMultiResolvable {
     override val operand by lz {
         baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.baseExpression, this)
     }
@@ -36,4 +37,7 @@ class KotlinUPostfixExpression(
         KtTokens.EXCLEXCL -> operand.tryResolve() as? PsiMethod
         else -> null
     }
+
+    override fun multiResolve(): Iterable<ResolveResult> =
+        getResolveResultVariants(baseResolveProviderService, sourcePsi)
 }
