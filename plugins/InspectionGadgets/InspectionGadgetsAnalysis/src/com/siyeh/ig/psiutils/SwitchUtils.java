@@ -573,6 +573,35 @@ public final class SwitchUtils {
   }
 
   /**
+   * Checks if the label has the following form {@code 'case null'}
+   *
+   * @param label label to check
+   * @return {@code true} if the label has the following form {@code 'case null'}, {@code false} otherwise.
+   */
+  public static boolean isCaseNull(@Nullable PsiSwitchLabelStatementBase label) {
+    if (label == null) return false;
+    PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
+    return labelElementList != null &&
+           labelElementList.getElementCount() == 1 &&
+           labelElementList.getElements()[0] instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr);
+  }
+
+  /**
+   * Checks if the label has the following form {@code 'case null, default'}
+   *
+   * @param label label to check
+   * @return {@code true} if the label has the following form {@code 'case null, default'}, {@code false} otherwise.
+   */
+  public static boolean isCaseNullDefault(@Nullable PsiSwitchLabelStatementBase label) {
+    if (label == null) return false;
+    PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
+    return labelElementList != null &&
+           labelElementList.getElementCount() == 2 &&
+           labelElementList.getElements()[0] instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr) &&
+           labelElementList.getElements()[1] instanceof PsiDefaultCaseLabelElement;
+  }
+
+  /**
    * Checks if the given switch label statement contains a {@code default} case or a total pattern
    *
    * @param label a switch label statement to test

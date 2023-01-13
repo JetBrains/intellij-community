@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.project.Project;
@@ -9,6 +9,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -158,6 +159,35 @@ public final class JavaPsiPatternUtil {
     else {
       return null;
     }
+  }
+
+  /**
+   * Checks if the pattern declares one or more pattern variables
+   *
+   * @param pattern pattern to check
+   * @return {@code true} if the pattern declares one or more pattern variables, {@code false} otherwise.
+   */
+  @Contract(value = "null -> false", pure = true)
+  public static boolean containsPatternVariable(@Nullable PsiCaseLabelElement pattern) {
+    if (pattern instanceof PsiPatternGuard) {
+      return containsPatternVariable(((PsiPatternGuard)pattern).getPattern());
+    }
+    else if (pattern instanceof PsiGuardedPattern) {
+      return containsPatternVariable(((PsiGuardedPattern)pattern).getPrimaryPattern());
+    }
+    else if (pattern instanceof PsiTypeTestPattern) {
+      return ((PsiTypeTestPattern)pattern).getPatternVariable() != null;
+    }
+    else if (pattern instanceof PsiParenthesizedPattern) {
+      return containsPatternVariable(((PsiParenthesizedPattern)pattern).getPattern());
+    }
+    else if (pattern instanceof PsiDeconstructionPattern) {
+      PsiDeconstructionPattern deconstructionPattern = (PsiDeconstructionPattern)pattern;
+      return deconstructionPattern.getPatternVariable() != null ||
+             ContainerUtil.exists(deconstructionPattern.getDeconstructionList().getDeconstructionComponents(),
+                                  component -> containsPatternVariable(component));
+    }
+    return false;
   }
 
   /**

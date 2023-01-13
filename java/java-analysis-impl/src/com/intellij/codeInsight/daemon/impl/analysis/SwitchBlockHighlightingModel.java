@@ -837,7 +837,7 @@ public class SwitchBlockHighlightingModel {
               addIllegalFallThroughError(currentElement, "invalid.case.label.combination", holder, alreadyFallThroughElements);
               break;
             }
-            if (containsPatternVariable(currentElement)) {
+            if (JavaPsiPatternUtil.containsPatternVariable(currentElement)) {
               if (existPattern || PsiTreeUtil.skipWhitespacesAndCommentsForward(switchLabelElement) instanceof PsiSwitchLabelStatement) {
                 addIllegalFallThroughError(currentElement, "switch.illegal.fall.through.from", holder, alreadyFallThroughElements);
                 break;
@@ -884,7 +884,7 @@ public class SwitchBlockHighlightingModel {
           PsiCaseLabelElementList labelElementList = switchLabel.getCaseLabelElementList();
           if (labelElementList == null) continue;
           List<PsiCaseLabelElement> patternElements = ContainerUtil.filter(labelElementList.getElements(),
-                                                                           labelElement -> containsPatternVariable(labelElement));
+                                                                           labelElement -> JavaPsiPatternUtil.containsPatternVariable(labelElement));
           if (patternElements.isEmpty()) continue;
           PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(firstSwitchLabelInGroup, PsiStatement.class);
           if (prevStatement == null) continue;
@@ -894,28 +894,6 @@ public class SwitchBlockHighlightingModel {
           }
         }
       }
-    }
-
-    private static boolean containsPatternVariable(@NotNull PsiCaseLabelElement element) {
-      if (element instanceof PsiPatternGuard patternGuard) {
-        return containsPatternVariable(patternGuard.getPattern());
-      }
-      else if (element instanceof PsiGuardedPattern guardedPattern) {
-        return containsPatternVariable(guardedPattern.getPrimaryPattern());
-      }
-      else if (element instanceof PsiTypeTestPattern typeTestPattern) {
-        return typeTestPattern.getPatternVariable() != null;
-      }
-      else if (element instanceof PsiParenthesizedPattern parenthesizedPattern) {
-        PsiPattern pattern = parenthesizedPattern.getPattern();
-        return pattern != null && containsPatternVariable(pattern);
-      }
-      else if (element instanceof PsiDeconstructionPattern deconstructionPattern) {
-        return deconstructionPattern.getPatternVariable() != null ||
-               ContainerUtil.exists(deconstructionPattern.getDeconstructionList().getDeconstructionComponents(),
-                                    pattern -> containsPatternVariable(pattern));
-      }
-      return false;
     }
 
     /**
