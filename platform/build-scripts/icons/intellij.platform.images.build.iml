@@ -37,5 +37,6 @@
     <orderEntry type="library" scope="RUNTIME" name="skiko-awt-runtime-linux-x64" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="skiko-awt-runtime-windows" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
+    <orderEntry type="library" name="jsoup" level="project" />
   </component>
 </module>
