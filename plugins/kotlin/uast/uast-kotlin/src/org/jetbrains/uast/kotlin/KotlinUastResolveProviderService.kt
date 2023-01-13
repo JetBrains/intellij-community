@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -172,6 +173,66 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
     override fun getPsiAnnotations(psiElement: PsiModifierListOwner): Array<PsiAnnotation> {
         return psiElement.actionUnderSafeAnalyzeBlock({ psiElement.annotations }, { emptyArray() })
+    }
+
+    override fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement> {
+        val unwrappedPsi = KtPsiUtil.deparenthesize(ktExpression) ?: ktExpression
+        return sequence {
+            when (unwrappedPsi) {
+                is KtUnaryExpression -> {
+                    if (unwrappedPsi.operationToken in KtTokens.INCREMENT_AND_DECREMENT ||
+                        unwrappedPsi.operationToken == KtTokens.EXCLEXCL
+                    ) {
+                        // E.g., `i++` -> access to `i`
+                        unwrappedPsi.baseExpression?.let { resolveToDeclaration(it) }?.let { yield(it) }
+                    }
+                    // Look for regular function call, e.g., inc() in `i++`
+                    resolveToDeclaration(ktExpression)?.let { yield(it) }
+                }
+                is KtBinaryExpression -> {
+                    val left = unwrappedPsi.left
+                    when (unwrappedPsi.operationToken) {
+                      KtTokens.EQ -> {
+                          if (left is KtArrayAccessExpression) {
+                              // E.g., `array[...] = ...` -> access to `array[...]`, i.e., (overloaded) setter
+                              val context = left.analyze()
+                              val resolvedSetCall = context[BindingContext.INDEXED_LVALUE_SET, left]
+                              resolvedSetCall?.resultingDescriptor?.let { resolveToPsiMethod(unwrappedPsi, it) }?.let { yield(it) }
+                          } else {
+                              // E.g. `i = ...` -> access to `i`
+                              left?.let {  resolveToDeclaration(it) }?.let { yield(it) }
+                          }
+                      }
+                      in KtTokens.AUGMENTED_ASSIGNMENTS -> {
+                          val context = left?.analyze() ?: BindingContext.EMPTY
+                          if (left is KtArrayAccessExpression) {
+                              // E.g., `array[...] += ...` -> access to `array[...]`, i.e., (overloaded) getter and setter
+                              val resolvedGetCall = context[BindingContext.INDEXED_LVALUE_GET, left]
+                              resolvedGetCall?.resultingDescriptor?.let { resolveToPsiMethod(unwrappedPsi, it) }?.let { yield(it) }
+                              val resolvedSetCall = context[BindingContext.INDEXED_LVALUE_SET, left]
+                              resolvedSetCall?.resultingDescriptor?.let { resolveToPsiMethod(unwrappedPsi, it) }?.let { yield(it) }
+                          } else {
+                              // Look for regular function call, e.g., plusAssign() in `i += j`
+                              resolveToDeclaration(ktExpression)?.let { yield(it) }
+                              when (val descriptor = left?.getResolvedCall(context)?.resultingDescriptor) {
+                                  is SyntheticJavaPropertyDescriptor -> {
+                                      resolveToPsiMethod(ktExpression, descriptor.getMethod)?.let { yield(it) }
+                                      descriptor.setMethod?.let { resolveToPsiMethod(ktExpression, it) }?.let { yield(it) }
+                                  }
+                                  is CallableDescriptor ->
+                                      resolveToPsiMethod(ktExpression, descriptor)?.let { yield(it) }
+                                  else -> {}
+                              }
+                          }
+                      }
+                      else -> {}
+                    }
+                }
+                else -> {
+                    // TODO: regular function call resolution?
+                }
+            }
+        }
     }
 
     override fun resolveBitwiseOperators(ktBinaryExpression: KtBinaryExpression): UastBinaryOperator {

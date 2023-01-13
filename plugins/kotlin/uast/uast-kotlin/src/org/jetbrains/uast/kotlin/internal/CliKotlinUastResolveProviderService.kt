@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.context.ProjectContext
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingTrace
@@ -47,9 +46,6 @@ class CliKotlinUastResolveProviderService : KotlinUastResolveProviderService {
     override fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings {
         return element.project.analysisCompletedHandler?.getLanguageVersionSettings() ?: LanguageVersionSettingsImpl.DEFAULT
     }
-
-    override fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement> =
-        emptySequence() // Not supported
 }
 
 class UastAnalysisHandlerExtension : AnalysisHandlerExtension {

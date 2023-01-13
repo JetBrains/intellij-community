@@ -860,8 +860,9 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         myFixture.configureByText(
             "main.kt", """
                 fun foo(array: SparseArray<String>) {
-                  array[42L] = "forty two"
+                  array[42L] = "forty"
                   val y = array[42]
+                  array[42L] += " two"
                 }
             """.trimIndent()
         )
@@ -891,6 +892,16 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals(1, getResolved.parameterList.parameters.size)
         TestCase.assertEquals("int", getResolved.parameterList.parameters[0].type.canonicalText)
         TestCase.assertEquals("E", getResolved.returnType?.canonicalText)
+
+        val augmented = uFile.findElementByTextFromPsi<UBinaryExpression>("array[42L] +=", strict = false)
+            .orFail("cant convert to UBinaryExpression")
+        val augmentedResolved = augmented.resolveOperator()
+            .orFail("cant resolve from $augmented")
+        // NB: not exactly same as above one, which is `E get(int)`, whereas this one is `E get(long)`
+        TestCase.assertEquals(getResolved.name, augmentedResolved.name)
+        TestCase.assertEquals(1, augmentedResolved.parameterList.parameters.size)
+        TestCase.assertEquals("long", augmentedResolved.parameterList.parameters[0].type.canonicalText)
+        TestCase.assertEquals("E", augmentedResolved.returnType?.canonicalText)
     }
 
     fun checkOperatorOverloads(myFixture: JavaCodeInsightTestFixture) {
@@ -978,6 +989,116 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals("plus", plusPoint?.name)
         TestCase.assertEquals("other", plusPoint?.parameters?.get(0)?.name)
         TestCase.assertEquals("Point", plusPoint?.containingClass?.name)
+    }
+
+    fun checkOperatorMultiResolvable(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+            public class SparseArray<E> {
+              private Map<Long, E> map = new HashMap<Long, E>();
+              public void set(int key, E value) { map.put(key, value); }
+              public void set(long key, E value) { map.put(key, value); }
+              public E get(int key) { return map.get(key); }
+              public E get(long key) { return map.get(key); }
+              public void setSize(long s) {}
+              public long getSize() { return map.size(); }
+            }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                data class Point(val x: Int, val y: Int) {
+                  operator fun inc() = Point(x + 1, y + 1)
+                }
+                operator fun Point.dec() = Point(x - 1, y - 1)
+
+                fun test(array: SparseArray<String>) {
+                  var i = Point(0, 0)
+
+                  i++
+                  i--
+
+                  ++i
+                  --i
+
+                  array[42L] = "forty"
+                  array[42L] += " two"
+                  
+                  array.size += 42
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        val iPlusPlus = uFile.findElementByTextFromPsi<UPostfixExpression>("i++", strict = false)
+            .orFail("cant convert to UPostfixExpression")
+        val iPlusPlusResolvedDeclarations = (iPlusPlus as UMultiResolvable).multiResolve()
+        val iPlusPlusResolvedDeclarationsStrings = iPlusPlusResolvedDeclarations.map { it.element?.text ?: "<null>" }
+        assertContainsElements(
+            iPlusPlusResolvedDeclarationsStrings,
+            "var i = Point(0, 0)",
+            "operator fun inc() = Point(x + 1, y + 1)",
+        )
+
+        val iMinusMinus = uFile.findElementByTextFromPsi<UPostfixExpression>("i--", strict = false)
+            .orFail("cant convert to UPostfixExpression")
+        val iMinusMinusResolvedDeclarations = (iMinusMinus as UMultiResolvable).multiResolve()
+        val iMinusMinusResolvedDeclarationsStrings = iMinusMinusResolvedDeclarations.map { it.element?.text ?: "<null>" }
+        assertContainsElements(
+            iMinusMinusResolvedDeclarationsStrings,
+            "var i = Point(0, 0)",
+            "operator fun Point.dec() = Point(x - 1, y - 1)",
+        )
+
+        val plusPlusI = uFile.findElementByTextFromPsi<UPrefixExpression>("++i", strict = false)
+            .orFail("cant convert to UPrefixExpression")
+        val plusPlusIResolvedDeclarations = (plusPlusI as UMultiResolvable).multiResolve()
+        val plusPlusIResolvedDeclarationsStrings = plusPlusIResolvedDeclarations.map { it.element?.text ?: "<null>" }
+        assertContainsElements(
+            plusPlusIResolvedDeclarationsStrings,
+            "var i = Point(0, 0)",
+            "operator fun inc() = Point(x + 1, y + 1)",
+        )
+
+        val minusMinusI = uFile.findElementByTextFromPsi<UPrefixExpression>("--i", strict = false)
+            .orFail("cant convert to UPrefixExpression")
+        val minusMinusIResolvedDeclarations = (minusMinusI as UMultiResolvable).multiResolve()
+        val minusMinusIResolvedDeclarationsStrings = minusMinusIResolvedDeclarations.map { it.element?.text ?: "<null>" }
+        assertContainsElements(
+            minusMinusIResolvedDeclarationsStrings,
+            "var i = Point(0, 0)",
+            "operator fun Point.dec() = Point(x - 1, y - 1)",
+        )
+
+        val aEq = uFile.findElementByTextFromPsi<UBinaryExpression>("array[42L] =", strict = false)
+            .orFail("cant convert to UBinaryExpression")
+        val aEqResolvedDeclarations = (aEq as UMultiResolvable).multiResolve()
+        val aEqResolvedDeclarationsStrings = aEqResolvedDeclarations.map { it.element?.text ?: "<null>" }
+        assertContainsElements(
+            aEqResolvedDeclarationsStrings,
+            "public void set(long key, E value) { map.put(key, value); }",
+        )
+
+        val aPlusEq = uFile.findElementByTextFromPsi<UBinaryExpression>("array[42L] +=", strict = false)
+            .orFail("cant convert to UBinaryExpression")
+        val aPlusEqResolvedDeclarations = (aPlusEq as UMultiResolvable).multiResolve()
+        val aPlusEqResolvedDeclarationsStrings = aPlusEqResolvedDeclarations.map { it.element?.text ?: "<null>" }
+        assertContainsElements(
+            aPlusEqResolvedDeclarationsStrings,
+            "public E get(long key) { return map.get(key); }",
+            "public void set(long key, E value) { map.put(key, value); }",
+        )
+
+        val arraySizePlusEq = uFile.findElementByTextFromPsi<UBinaryExpression>("array.size +=", strict = false)
+            .orFail("cant convert to UBinaryExpression")
+        val arraySizePlusEqResolvedDeclarations = (arraySizePlusEq as UMultiResolvable).multiResolve()
+        val arraySizePlusEqResolvedDeclarationsStrings = arraySizePlusEqResolvedDeclarations.map { it.element?.text ?: "<null>" }
+        assertContainsElements(
+            arraySizePlusEqResolvedDeclarationsStrings,
+            "public long getSize() { return map.size(); }",
+            "public void setSize(long s) {}",
+        )
     }
 
     fun checkResolveSyntheticJavaPropertyAccessor(myFixture: JavaCodeInsightTestFixture) {
