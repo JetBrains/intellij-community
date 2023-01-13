@@ -1,0 +1,23 @@
+Node: MyKotlinClass
+User object class: KtClassOrObjectTreeNode
+
+Value: CLASS
+Value file: MyKotlinClass.class
+
+Navigation item #0: CLASS
+Navigation item file #0: MyKotlinClass.class
+Navigation item #1: CLASS
+Navigation item file #1: MyKotlinClass.kt
+
+
+-Project
+ +PsiDirectory: src
+ -External Libraries
+  +Library: < java 11 >
+  +Library: kotlin-stdlib
+  -Library: kotlinMockLibrary
+   -PsiDirectory: kotlinMockLibrary.jar
+    +PsiDirectory: META-INF
+    +PsiDirectory: one
+    [MyKotlinClass]
+    UtilsKt

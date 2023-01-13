@@ -1,0 +1,9 @@
+// WITH_STDLIB
+// WITH_SOURCES
+// PATH: kotlin/annotation/AnnotationTarget.class
+
+// FILE: usage.kt
+@Deprecated("deprecated")
+fun myDeprecatedFunction() {
+
+}
