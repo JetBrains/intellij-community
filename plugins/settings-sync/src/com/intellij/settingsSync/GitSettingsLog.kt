@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
+import com.intellij.settingsSync.plugins.SettingsSyncPluginsStateMerger.mergePluginStates
 import com.intellij.util.io.createFile
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
@@ -18,6 +19,8 @@ import org.eclipse.jgit.api.errors.EmptyCommitException
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.lib.Constants.R_HEADS
 import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.revwalk.RevWalk
+import org.eclipse.jgit.revwalk.filter.RevFilter
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.treewalk.TreeWalk
 import java.nio.charset.StandardCharsets
@@ -26,6 +29,7 @@ import java.time.Instant
 import java.util.regex.Pattern
 import kotlin.io.path.div
 import kotlin.io.path.exists
+
 
 internal class GitSettingsLog(private val settingsSyncStorage: Path,
                               private val rootConfigPath: Path,
@@ -307,8 +311,17 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       val conflictingFiles = mergeResult.conflicts.keys.toMutableList()
       LOG.info("Merge of master&ide with cloud failed with conflicts in files: ${conflictingFiles}")
 
+      val ideBranchTip = getBranchTip(ide)
+      val cloudBranchTip = getBranchTip(cloud)
+
       val addCommand = git.add()
-      mergeFilesOneByOne(conflictingFiles)
+      val pluginJson = conflictingFiles.find { it == "$METAINFO_FOLDER/$PLUGINS_FILE" }
+      if (pluginJson != null) {
+        mergePluginJson(pluginJson, ideBranchTip, cloudBranchTip)
+        addCommand.addFilepattern(pluginJson)
+        conflictingFiles -= pluginJson
+      }
+      mergeFilesOneByOne(conflictingFiles, ideBranchTip, cloudBranchTip)
       for (file in conflictingFiles) {
         addCommand.addFilepattern(file)
       }
@@ -318,6 +331,44 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     }
     // todo check other statuses and force consistency if needed
     return getPosition(master)
+  }
+
+  private fun mergePluginJson(pluginJson: String, ideBranchTip: RevCommit, cloudBranchTip: RevCommit) {
+    val ideContent = getFileContentInBranch(pluginJson, ideBranchTip)
+    val ideState = json.decodeFromString<SettingsSyncPluginsState>(ideContent)
+    val cloudContent = getFileContentInBranch(pluginJson, cloudBranchTip)
+    val cloudState = json.decodeFromString<SettingsSyncPluginsState>(cloudContent)
+    val mergeBaseContent = findMergeBaseContent(pluginJson, ideBranchTip, cloudBranchTip)
+    val baseState = if (mergeBaseContent != null)
+      json.decodeFromString<SettingsSyncPluginsState>(mergeBaseContent)
+      else SettingsSyncPluginsState(emptyMap())
+
+    val mergedState = mergePluginStates(baseState, cloudState, ideState)
+    val mergedContent = json.encodeToString(mergedState)
+    pluginsFile.write(mergedContent)
+  }
+
+  private fun findMergeBaseContent(pluginJson: String, commit1: RevCommit, commit2: RevCommit): String? {
+    val mergeBase = try {
+      findMergeBase(commit1, commit2)
+    }
+    catch (e: Exception) {
+      LOG.warn("Couldn't find the merge base for $pluginJson between $commit1 and $commit2", e)
+      null
+    }
+    if (mergeBase == null) {
+      return null
+    }
+    return getFileContentInBranch(pluginJson, mergeBase)
+  }
+
+  private fun findMergeBase(commit1: RevCommit, commit2: RevCommit): RevCommit? {
+    RevWalk(repository).use { walk ->
+      walk.revFilter = RevFilter.MERGE_BASE
+      walk.markStart(repository.parseCommit(commit1.toObjectId()))
+      walk.markStart(repository.parseCommit(commit2.toObjectId()))
+      return walk.next()
+    }
   }
 
   private fun getFileContentInBranch(file: String, branchTip: RevCommit): String {
@@ -330,14 +381,12 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     }
   }
 
-  private fun mergeFilesOneByOne(conflictingFiles: Collection<String>) {
+  private fun mergeFilesOneByOne(conflictingFiles: Collection<String>, ideTip: RevCommit, cloudTip: RevCommit) {
     if (conflictingFiles.isEmpty()) {
       return
     }
 
-    val ideTip = getBranchTip(ide)
     val ideTipDate = getDate(ideTip)
-    val cloudTip = getBranchTip(cloud)
     val cloudTipDate = getDate(cloudTip)
     for (file in conflictingFiles) {
       val ideTipForFile = getLatestCommitForFile(file, ide)

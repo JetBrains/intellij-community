@@ -2,6 +2,7 @@ package com.intellij.settingsSync
 
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
+import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.*
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
@@ -248,6 +249,43 @@ internal class GitSettingsLogTest {
     snapshot.assertSettingsSnapshot {
       fileState("options/editor.xml", "editorContent")
       plugin(id, enabled = true, SettingsCategory.UI, dependencies)
+    }
+  }
+
+  @Test
+  fun `merge conflict in plugins-json should be resolved smartly`() {
+    val editorXml = (configDir / "options" / "editor.xml").write("Editor Initial")
+    val settingsLog = initializeGitSettingsLog(editorXml)
+
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        plugin("A", true)
+      }, "Local"
+    )
+    settingsLog.applyCloudState(
+      settingsSnapshot {
+        plugin("B", true)
+      }, "Remote"
+    )
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        fileState("options/editor.xml", "Editor IDE")
+      }, "Local"
+    )
+    settingsLog.applyCloudState(
+      settingsSnapshot {
+        fileState("options/laf.xml", "LaF Cloud")
+      }, "Remote"
+    )
+
+    settingsLog.advanceMaster()
+
+    val snapshot = settingsLog.collectCurrentSnapshot()
+    snapshot.assertSettingsSnapshot {
+      fileState("options/editor.xml", "Editor IDE")
+      fileState("options/laf.xml", "LaF Cloud")
+      plugin("A", true)
+      plugin("B", true)
     }
   }
 
