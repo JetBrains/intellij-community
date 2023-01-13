@@ -135,6 +135,10 @@ abstract class ServiceView extends JPanel implements Disposable {
       if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
         return ContainerUtil.map2Array(serviceView.getSelectedItems(), ServiceViewItem::getValue);
       }
+      if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
+        ServiceViewItem item = ContainerUtil.getOnlyItem(serviceView.getSelectedItems());
+        return item != null ? item.getValue() : null;
+      }
       if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
         List<ServiceViewItem> selection = serviceView.getSelectedItems();
         ServiceViewContributor<?> contributor = ServiceViewDragHelper.getTheOnlyRootContributor(selection);
