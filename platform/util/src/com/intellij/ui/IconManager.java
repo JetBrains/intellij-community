@@ -60,6 +60,10 @@ public interface IconManager {
     return source;
   }
 
+  /**
+   * @param param Unique key that WILL BE USED to cache the icon instance.
+   *              Prefer passing unique objects over {@link String} or {@link Integer} to avoid accidental clashes with another module.
+   */
   @NotNull <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> iconProducer);
 
   @NotNull RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags);
