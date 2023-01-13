@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "BlockingMethodInNonBlockingContext")
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
@@ -259,8 +259,10 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     val variants = icon.variants
     // the key is the same for all variants
     val imageKey = icon.imageKey
-    val light1x = SVGDOM(Data.makeFromBytes(icon.light1xData))
-    val light2x = variants.firstOrNull { it.toString().endsWith("@2x.svg") }?.let { createSvgDom(it) }
+    val light1x = SVGDOM(Data.makeFromBytes(inlineSvgStyles(icon.light1xData.decodeToString())))
+    val light2x = variants.firstOrNull { it.toString().endsWith("@2x.svg") }?.let {
+      SVGDOM(Data.makeFromBytes(inlineSvgStyles(Files.readString(it))))
+    }
 
     val dark2xFile = variants.find { it.toString().endsWith("@2x_dark.svg") }
     val dark1x = variants.find { it !== dark2xFile && it.toString().endsWith("_dark.svg") }?.let { createSvgDom(it) }
