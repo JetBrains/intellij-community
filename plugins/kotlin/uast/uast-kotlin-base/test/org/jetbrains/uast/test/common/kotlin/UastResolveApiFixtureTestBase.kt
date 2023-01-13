@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions.assertSameElements
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
-import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
 import org.jetbrains.uast.test.env.findElementByText
 import org.jetbrains.uast.test.env.findElementByTextFromPsi
 import org.jetbrains.uast.test.env.findUElementByTextFromPsi
@@ -55,7 +54,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
                 fun foo(a: Int): Int = TODO()
                 fun foo(a: Int, b: Int): Int = TODO()
 
-
                 fun main(args: Array<String>) {
                     foo(1<caret>
                 }"""
@@ -63,10 +61,10 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
 
         val main = file.toUElement()!!.findElementByTextFromPsi<UElement>("main").getContainingUMethod()!!
         val functionCall =
-            main.findElementByText<UElement>("foo").uastParent as KotlinUFunctionCallExpression
+            main.findElementByText<UElement>("foo").uastParent as UCallExpression
 
-        val resolvedDeclaration = functionCall.multiResolve()
-        val resolvedDeclarationsStrings = resolvedDeclaration.map { it.element.text ?: "<null>" }
+        val resolvedDeclaration = (functionCall as UMultiResolvable).multiResolve()
+        val resolvedDeclarationsStrings = resolvedDeclaration.map { it.element?.text ?: "<null>" }
         assertContainsElements(
             resolvedDeclarationsStrings,
             "fun foo(): Int = TODO()",
@@ -79,7 +77,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         val firstArgument = main.findElementByText<UElement>("1")
         val firstParameter = functionCall.getArgumentForParameter(0)
         TestCase.assertEquals(firstArgument, firstParameter)
-
     }
 
     fun checkMultiResolveJava(myFixture: JavaCodeInsightTestFixture) {
@@ -92,10 +89,12 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         )
 
         val main = file.toUElement()!!.findElementByTextFromPsi<UElement>("main").getContainingUMethod()!!
-        val functionCall = main.findElementByText<UElement>("print").uastParent as KotlinUFunctionCallExpression
+        val functionCall = main.findElementByText<UElement>("print").uastParent as UCallExpression
 
-        val resolvedDeclaration = functionCall.multiResolve()
-        val resolvedDeclarationsStrings = resolvedDeclaration.map { r -> methodSignature(r.element) }
+        val resolvedDeclaration = (functionCall as UMultiResolvable).multiResolve()
+        val resolvedDeclarationsStrings = resolvedDeclaration.mapNotNull { r ->
+            (r.element as? PsiMethod)?.let { methodSignature(it) }
+        }
         assertContainsElements(
             resolvedDeclarationsStrings,
             "void print(boolean)",
@@ -149,16 +148,15 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         )
 
         val main = file.toUElement()!!.findElementByTextFromPsi<UElement>("main").getContainingUMethod()!!
-        val functionCall = main.findElementByText<UElement>("setParameter").uastParent as KotlinUFunctionCallExpression
+        val functionCall = main.findElementByText<UElement>("setParameter").uastParent as UCallExpression
 
-        val resolvedDeclaration = functionCall.multiResolve()
-        val resolvedDeclarationsStrings = resolvedDeclaration.map { it.element.text ?: "<null>" }
+        val resolvedDeclaration = (functionCall as UMultiResolvable).multiResolve()
+        val resolvedDeclarationsStrings = resolvedDeclaration.map { it.element?.text ?: "<null>" }
         assertContainsElements(
             resolvedDeclarationsStrings,
             "public void setParameter(String name, int value){}",
             "public void setParameter(String name, double value){}",
             "public void setParameter(String name, String value){}"
-
         )
 
         TestCase.assertEquals(PsiType.VOID, functionCall.getExpressionType())
@@ -218,7 +216,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
 
                 fun foo(string: String) = TODO()
 
-
                 fun main(args: Array<String>) {
                     MyClass().foo(
                 }
@@ -227,10 +224,10 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
 
         val functionCall =
             file.toUElement()!!.findElementByTextFromPsi<UElement>("main").getContainingUMethod()!!
-                .findElementByText<UElement>("foo").uastParent as KotlinUFunctionCallExpression
+                .findElementByText<UElement>("foo").uastParent as UCallExpression
 
-        val resolvedDeclaration = functionCall.multiResolve()
-        val resolvedDeclarationsStrings = resolvedDeclaration.map { it.element.text ?: "<null>" }
+        val resolvedDeclaration = (functionCall as UMultiResolvable).multiResolve()
+        val resolvedDeclarationsStrings = resolvedDeclaration.map { it.element?.text ?: "<null>" }
         assertContainsElements(
             resolvedDeclarationsStrings,
             "fun foo(): Int = TODO()",
@@ -289,7 +286,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
 
         val main = file.toUElement()!!.findElementByTextFromPsi<UElement>("main").getContainingUMethod()!!
         val functionCalls = (1..3).map { i ->
-            main.findElementByText<UElement>("foo$i").uastParent as KotlinUFunctionCallExpression
+            main.findElementByText<UElement>("foo$i").uastParent as UCallExpression
         }
 
         UsefulTestCase.assertSameElements(
@@ -314,7 +311,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
 
                 fun MyClass(string: String): MyClass = MyClass(1)
 
-
                 fun main(args: Array<String>) {
                     MyClass(
                 }
@@ -323,10 +319,10 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
 
         val functionCall =
             file.toUElement()!!.findElementByTextFromPsi<UElement>("main").getContainingUMethod()!!
-                .findElementByText<UElement>("MyClass").uastParent as KotlinUFunctionCallExpression
+                .findElementByText<UElement>("MyClass").uastParent as UCallExpression
 
-        val resolvedDeclaration = functionCall.multiResolve()
-        val resolvedDeclarationsStrings = resolvedDeclaration.map { it.element.text ?: "<null>" }
+        val resolvedDeclaration = (functionCall as UMultiResolvable).multiResolve()
+        val resolvedDeclarationsStrings = resolvedDeclaration.map { it.element?.text ?: "<null>" }
         assertContainsElements(
             resolvedDeclarationsStrings,
             "(int: Int)",
@@ -356,10 +352,10 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
 
         val functionCall =
             file.toUElement()!!.findElementByTextFromPsi<UElement>("main").getContainingUMethod()!!
-                .findElementByText<UElement>("Foo").uastParent as KotlinUFunctionCallExpression
+                .findElementByText<UElement>("Foo").uastParent as UCallExpression
 
-        val resolvedDeclaration = functionCall.multiResolve()
-        val resolvedDeclarationsStrings = resolvedDeclaration.map { it.element.text ?: "<null>" }
+        val resolvedDeclaration = (functionCall as UMultiResolvable).multiResolve()
+        val resolvedDeclarationsStrings = resolvedDeclaration.map { it.element?.text ?: "<null>" }
         assertContainsElements(
             resolvedDeclarationsStrings,
             "operator fun invoke(i: Int): Int = TODO()",
@@ -387,10 +383,10 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
 
         val functionCall =
             file.toUElement()!!.findElementByTextFromPsi<UElement>("main").getContainingUMethod()!!
-                .findElementByText<UElement>("foo").uastParent as KotlinUFunctionCallExpression
+                .findElementByText<UElement>("foo").uastParent as UCallExpression
 
-        val resolvedDeclaration = functionCall.multiResolve()
-        val resolvedDeclarationsStrings = resolvedDeclaration.map { it.element.text ?: "<null>" }
+        val resolvedDeclaration = (functionCall as UMultiResolvable).multiResolve()
+        val resolvedDeclarationsStrings = resolvedDeclaration.map { it.element?.text ?: "<null>" }
         assertContainsElements(
             resolvedDeclarationsStrings,
             "@JvmOverloads\n                    fun foo(i1: Int = 1, i2: Int = 2): Int = TODO()"
@@ -828,7 +824,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
 
         val testValueOf = uFile.findElementByTextFromPsi<UMethod>("testValueOf", strict = false)
         TestCase.assertNotNull("testValueOf should be successfully converted", testValueOf)
-        val valueOfCall = testValueOf.findElementByText<UElement>("valueOf").uastParent as KotlinUFunctionCallExpression
+        val valueOfCall = testValueOf.findElementByText<UElement>("valueOf").uastParent as UCallExpression
         val resolvedValueOfCall = valueOfCall.resolve()
         TestCase.assertNotNull("Unresolved MyEnum.valueOf(String)", resolvedValueOfCall)
         TestCase.assertNotNull("Null return type of $resolvedValueOfCall", resolvedValueOfCall?.returnType)
@@ -839,7 +835,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
 
         val testValues = uFile.findElementByTextFromPsi<UMethod>("testValues", strict = false)
         TestCase.assertNotNull("testValues should be successfully converted", testValues)
-        val valuesCall = testValues.findElementByText<UElement>("values").uastParent as KotlinUFunctionCallExpression
+        val valuesCall = testValues.findElementByText<UElement>("values").uastParent as UCallExpression
         val resolvedValuesCall = valuesCall.resolve()
         TestCase.assertNotNull("Unresolved MyEnum.values()", resolvedValuesCall)
         TestCase.assertNotNull("Null return type of $resolvedValuesCall", resolvedValuesCall?.returnType)
