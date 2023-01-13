@@ -65,26 +65,28 @@ fun VirtualFile.findPsiFile(project: Project): PsiFile? {
   return PsiManager.getInstance(project).findFile(this)
 }
 
-fun VirtualFile.findVirtualFile(relativePath: @SystemIndependent String): VirtualFile? {
-  val path = path.getResolvedPath(relativePath)
-  val file = fileSystem.findFileByPath(path) ?: return null
+private fun VirtualFile.findFileOrDirectory(relativePath: @SystemIndependent String): VirtualFile? {
+  return fileSystem.findFileByPath(path.getResolvedPath(relativePath))
+}
+
+fun VirtualFile.findFile(relativePath: @SystemIndependent String): VirtualFile? {
+  val file = findFileOrDirectory(relativePath) ?: return null
   if (!file.isFile) {
-    throw IOException("Expected file instead of directory: $path")
+    throw IOException("Expected file instead of directory: $path/$relativePath")
   }
   return file
 }
 
-fun VirtualFile.findVirtualDirectory(relativePath: @SystemIndependent String): VirtualFile? {
-  val path = path.getResolvedPath(relativePath)
-  val file = fileSystem.findFileByPath(path) ?: return null
+fun VirtualFile.findDirectory(relativePath: @SystemIndependent String): VirtualFile? {
+  val file = findFileOrDirectory(relativePath) ?: return null
   if (!file.isDirectory) {
-    throw IOException("Expected directory instead of file: $path")
+    throw IOException("Expected directory instead of file: $path/$relativePath")
   }
   return file
 }
 
-fun VirtualFile.findOrCreateVirtualFile(relativePath: @SystemIndependent String): VirtualFile {
-  val directory = findOrCreateVirtualDirectory("$relativePath/..")
+fun VirtualFile.findOrCreateFile(relativePath: @SystemIndependent String): VirtualFile {
+  val directory = findOrCreateDirectory("$relativePath/..")
   val name = path.getResolvedPath(relativePath).getFileName()
   val file = directory.findChild(name) ?: directory.createChildData(fileSystem, name)
   if (!file.isFile) {
@@ -93,7 +95,7 @@ fun VirtualFile.findOrCreateVirtualFile(relativePath: @SystemIndependent String)
   return file
 }
 
-fun VirtualFile.findOrCreateVirtualDirectory(relativePath: @SystemIndependent String): VirtualFile {
+fun VirtualFile.findOrCreateDirectory(relativePath: @SystemIndependent String): VirtualFile {
   val path = path.getResolvedPath(relativePath)
   var directory = checkNotNull(fileSystem.findFileByPath("/")) {
     "Cannot find file system root for file: $path"
@@ -107,8 +109,20 @@ fun VirtualFile.findOrCreateVirtualDirectory(relativePath: @SystemIndependent St
   return directory
 }
 
-fun VirtualFile.deleteVirtualChildren(predicate: (VirtualFile) -> Boolean = { true }) {
+fun VirtualFile.deleteRecursively() {
+  delete(fileSystem)
+}
+
+fun VirtualFile.deleteChildrenRecursively(predicate: (VirtualFile) -> Boolean) {
   children.filter(predicate).forEach { it.delete(fileSystem) }
+}
+
+fun VirtualFile.deleteRecursively(relativePath: String) {
+  findFileOrDirectory(relativePath)?.deleteRecursively()
+}
+
+fun VirtualFile.deleteChildrenRecursively(relativePath: String, predicate: (VirtualFile) -> Boolean) {
+  findFileOrDirectory(relativePath)?.deleteChildrenRecursively(predicate)
 }
 
 fun Path.findVirtualFile(): VirtualFile? {

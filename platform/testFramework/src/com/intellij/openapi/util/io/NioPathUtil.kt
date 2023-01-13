@@ -1,27 +1,31 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io
 
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
 
-fun Path.createNioFile(): Path {
+val Path.children: List<Path>
+  get() = Files.newDirectoryStream(this).use { it.toList() }
+
+fun Path.createFile(): Path {
   check(!exists()) {
     "File already exists: $this"
   }
-  return findOrCreateNioFile()
+  return findOrCreateFile()
 }
 
-fun Path.createNioDirectory(): Path {
+fun Path.createDirectory(): Path {
   check(!exists()) {
     "Directory already exists: $this"
   }
-  return findOrCreateNioDirectory()
+  return findOrCreateDirectory()
 }
 
-fun Path.createNioFile(relativePath: String): Path {
-  return getResolvedNioPath(relativePath).createNioFile()
+fun Path.createFile(relativePath: String): Path {
+  return getResolvedNioPath(relativePath).createFile()
 }
 
-fun Path.createNioDirectory(relativePath: String): Path {
-  return getResolvedNioPath(relativePath).createNioDirectory()
+fun Path.createDirectory(relativePath: String): Path {
+  return getResolvedNioPath(relativePath).createDirectory()
 }

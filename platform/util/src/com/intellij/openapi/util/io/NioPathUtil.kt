@@ -4,7 +4,6 @@
 package com.intellij.openapi.util.io
 
 import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
-import java.io.File
 import java.io.IOException
 import java.nio.file.DirectoryStream
 import java.nio.file.Files
@@ -15,20 +14,8 @@ fun Path.toCanonicalPath(): String {
   return FileUtil.toCanonicalPath(toString())
 }
 
-fun Path.toIoFile(): File {
-  return toFile()
-}
-
-fun Path.getResolvedPath(relativePath: String): String {
-  return toCanonicalPath().getResolvedPath(relativePath)
-}
-
 fun Path.getResolvedNioPath(relativePath: String): Path {
   return toCanonicalPath().getResolvedNioPath(relativePath)
-}
-
-fun Path.getRelativePath(path: Path): String? {
-  return toCanonicalPath().getRelativePath(path.toCanonicalPath())
 }
 
 fun Path.getRelativeNioPath(path: Path): Path? {
@@ -39,7 +26,7 @@ fun Path.isAncestor(path: Path, strict: Boolean): Boolean {
   return FileUtil.isAncestor(this, path, strict)
 }
 
-fun Path.findOrCreateNioFile(): Path {
+fun Path.findOrCreateFile(): Path {
   parent?.createDirectories()
   if (!exists()) {
     createFile()
@@ -50,7 +37,7 @@ fun Path.findOrCreateNioFile(): Path {
   return this
 }
 
-fun Path.findOrCreateNioDirectory(): Path {
+fun Path.findOrCreateDirectory(): Path {
   createDirectories()
   if (!isDirectory()) {
     throw IOException("Expected directory instead of file: $this")
@@ -58,31 +45,31 @@ fun Path.findOrCreateNioDirectory(): Path {
   return this
 }
 
-fun Path.deleteNioFileOrDirectory() {
+fun Path.deleteRecursively() {
   NioFiles.deleteRecursively(this)
 }
 
-fun Path.deleteNioChildren(predicate: (Path) -> Boolean = { true }) {
+fun Path.deleteChildrenRecursively(predicate: (Path) -> Boolean) {
   val filter = DirectoryStream.Filter(predicate)
   Files.newDirectoryStream(this, filter).use { stream ->
-    stream.forEach { it.deleteNioFileOrDirectory() }
+    stream.forEach { it.deleteRecursively() }
   }
 }
 
-fun Path.findOrCreateNioFile(relativePath: String): Path {
-  return getResolvedNioPath(relativePath).findOrCreateNioFile()
+fun Path.findOrCreateFile(relativePath: String): Path {
+  return getResolvedNioPath(relativePath).findOrCreateFile()
 }
 
-fun Path.findOrCreateNioDirectory(relativePath: String): Path {
-  return getResolvedNioPath(relativePath).findOrCreateNioDirectory()
+fun Path.findOrCreateDirectory(relativePath: String): Path {
+  return getResolvedNioPath(relativePath).findOrCreateDirectory()
 }
 
-fun Path.deleteNioFileOrDirectory(relativePath: String) {
-  getResolvedNioPath(relativePath).deleteNioFileOrDirectory()
+fun Path.deleteRecursively(relativePath: String) {
+  getResolvedNioPath(relativePath).deleteRecursively()
 }
 
-fun Path.deleteNioChildren(relativePath: String, predicate: (Path) -> Boolean = { true }) {
-  getResolvedNioPath(relativePath).deleteNioChildren()
+fun Path.deleteChildrenRecursively(relativePath: String, predicate: (Path) -> Boolean) {
+  getResolvedNioPath(relativePath).deleteChildrenRecursively(predicate)
 }
 
 object NioPathPrefixTreeFactory : AbstractPrefixTreeFactory<Path, String>() {

@@ -26,30 +26,30 @@ fun VirtualFile.getPsiFile(project: Project): PsiFile {
   }
 }
 
-fun VirtualFile.getVirtualFile(relativePath: @SystemIndependent String): VirtualFile {
-  return checkNotNull(findVirtualFile(relativePath)) {
+fun VirtualFile.getFile(relativePath: @SystemIndependent String): VirtualFile {
+  return checkNotNull(findFile(relativePath)) {
     "File or directory doesn't exist: $path/$relativePath"
   }
 }
 
-fun VirtualFile.getVirtualDirectory(relativePath: @SystemIndependent String): VirtualFile {
-  return checkNotNull(findVirtualDirectory(relativePath)) {
+fun VirtualFile.getDirectory(relativePath: @SystemIndependent String): VirtualFile {
+  return checkNotNull(findDirectory(relativePath)) {
     "File or directory doesn't exist: $path/$relativePath"
   }
 }
 
-fun VirtualFile.createVirtualFile(relativePath: @SystemIndependent String): VirtualFile {
-  check(findVirtualFile(relativePath) == null) {
+fun VirtualFile.createFile(relativePath: @SystemIndependent String): VirtualFile {
+  check(findFile(relativePath) == null) {
     "File already exists: $path/$relativePath"
   }
-  return findOrCreateVirtualFile(relativePath)
+  return findOrCreateFile(relativePath)
 }
 
-fun VirtualFile.createVirtualDirectory(relativePath: @SystemIndependent String): VirtualFile {
-  check(findVirtualDirectory(relativePath) == null) {
+fun VirtualFile.createDirectory(relativePath: @SystemIndependent String): VirtualFile {
+  check(findDirectory(relativePath) == null) {
     "Directory already exists: $path/$relativePath"
   }
-  return findOrCreateVirtualDirectory(relativePath)
+  return findOrCreateDirectory(relativePath)
 }
 
 fun Path.getVirtualFile(): VirtualFile {
