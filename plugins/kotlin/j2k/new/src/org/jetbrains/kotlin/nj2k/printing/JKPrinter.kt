@@ -17,19 +17,37 @@ internal open class JKPrinterBase {
     var currentIndent = 0
     private val indentSymbol = " ".repeat(4)
     private var lastSymbolIsLineBreak = false
+    private var lastSymbolIsSingleSpace = false
 
     override fun toString(): String = stringBuilder.toString()
 
+    fun printWithSurroundingSpaces(value: String) {
+        print(" ")
+        print(value)
+        print(" ")
+    }
+
     fun print(value: String) {
-        if (value.isNotEmpty()) {
-            lastSymbolIsLineBreak = false
+        if (value.isEmpty()) return
+        lastSymbolIsLineBreak = false
+
+        if (value == " ") {
+            // To prettify the printed code for easier debugging, don't try to print multiple single spaces in a row
+            val prevLastSymbolIsSingleSpace = lastSymbolIsSingleSpace
+            lastSymbolIsSingleSpace = true
+            if (!prevLastSymbolIsSingleSpace) {
+                stringBuilder.append(" ")
+            }
+        } else {
+            lastSymbolIsSingleSpace = false
+            stringBuilder.append(value)
         }
-        stringBuilder.append(value)
     }
 
     fun println() {
         if (lastSymbolIsLineBreak) return
         stringBuilder.append('\n')
+        lastSymbolIsSingleSpace = false
         repeat(currentIndent) {
             stringBuilder.append(indentSymbol)
         }

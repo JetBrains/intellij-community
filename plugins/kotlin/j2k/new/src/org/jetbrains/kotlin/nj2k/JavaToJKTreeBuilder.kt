@@ -718,7 +718,7 @@ class JavaToJKTreeBuilder constructor(
             ).also { klass ->
                 klass.psi = this
                 symbolProvider.provideUniverseSymbol(this, klass)
-                klass.withFormattingFrom(this)
+                klass.withFormattingFrom(this, assignLineBreaks = true)
             }
 
         private fun PsiClass.recordComponents(): List<JKJavaRecordComponent> =
