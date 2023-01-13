@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -59,6 +60,16 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         return false
     }
 
+    override fun getClassNameToSearch(namedElement: PsiNamedElement): String? {
+        if (namedElement is KtNamedFunction && OperatorNameConventions.INVOKE.asString() == namedElement.name) {
+            val containingClass = namedElement.getParentOfType<KtClassOrObject>(true)
+            if (containingClass != null && (containingClass is KtObjectDeclaration || containingClass is KtClass && containingClass.isInterface())) {
+                containingClass.name?.let { return it }
+            }
+        }
+
+        return super.getClassNameToSearch(namedElement)
+    }
 
     override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> {
         return emptySet()

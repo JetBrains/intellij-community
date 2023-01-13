@@ -13,9 +13,11 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.ImportPath
+import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 
 interface KotlinSearchUsagesSupport {
 
@@ -48,6 +50,10 @@ interface KotlinSearchUsagesSupport {
 
             return if (kotlinOptions.searchForComponentConventions) this else filter { !it.isComponentElement() }
         }
+
+        fun PsiNamedElement.getClassNameForCompanionObject(): String? =
+            getInstance(project).getClassNameToSearch(this)
+
 
         fun PsiReference.isCallableOverrideUsage(declaration: KtNamedDeclaration): Boolean =
             getInstance(declaration.project).isCallableOverrideUsage(this, declaration)
@@ -162,4 +168,12 @@ interface KotlinSearchUsagesSupport {
     fun createConstructorHandle(ktDeclaration: KtDeclaration): ConstructorCallHandle
 
     fun createConstructorHandle(psiMethod: PsiMethod): ConstructorCallHandle
+
+    /**
+     * Name for companion object or for invoke located in class without constructor
+     */
+    fun getClassNameToSearch(namedElement : PsiNamedElement): String? =
+        (namedElement is KtObjectDeclaration && namedElement.isCompanion())
+            .ifTrue { namedElement.getNonStrictParentOfType<KtClass>()?.name }
+
 }
