@@ -1287,11 +1287,18 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     for (item in list) {
       if (item.new.isVisible && item.new.isDocked) {
+        val toolWindowPane = getToolWindowPane(item.entry.toolWindow)
         if (item.old.weight != item.new.weight) {
-          getToolWindowPane(item.entry.toolWindow).setWeight(item.entry.toolWindow, item.new.weight)
+          val anchor = item.new.anchor
+          var weight = item.new.weight
+          val another = list.firstOrNull { it !== item && it.new.anchor == anchor && it.new.isVisible && it.new.isDocked }
+          if (another != null && anchor.isUltrawideLayout()) { // split windows side-by-side, set weight of the entire splitter
+            weight += another.new.weight
+          }
+          toolWindowPane.setWeight(item.entry.toolWindow, weight)
         }
         if (item.old.sideWeight != item.new.sideWeight) {
-          getToolWindowPane(item.entry.toolWindow).setSideWeight(item.entry.toolWindow, item.new.sideWeight)
+          toolWindowPane.setSideWeight(item.entry.toolWindow, item.new.sideWeight)
         }
       }
     }

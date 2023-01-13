@@ -12,10 +12,7 @@ import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.wm.ToolWindowEP
-import com.intellij.openapi.wm.ToolWindowFactory
-import com.intellij.openapi.wm.ToolWindowType
-import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ui.EmptyIcon
@@ -91,6 +88,8 @@ fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory, pluginDescr
     return EmptyIcon.ICON_13
   }
 }
+
+internal fun ToolWindowAnchor.isUltrawideLayout(): Boolean = !isHorizontal && !isSplitVertically
 
 @Serializable
 data class ToolWindowDescriptor(
