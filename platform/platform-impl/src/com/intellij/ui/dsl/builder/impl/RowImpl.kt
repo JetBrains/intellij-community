@@ -380,7 +380,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
         }
       }
     result.columns(COLUMNS_TINY)
-    result.component.putClientProperty(DSL_INT_TEXT_RANGE_PROPERTY, range)
+    result.component.putClientProperty(DslComponentPropertyInternal.INT_TEXT_RANGE, range)
 
     keyboardStep?.let {
       result.component.addKeyListener(object : KeyAdapter() {

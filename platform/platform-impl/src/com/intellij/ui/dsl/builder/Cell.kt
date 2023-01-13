@@ -18,9 +18,6 @@ import javax.swing.JComponent
 import javax.swing.JEditorPane
 import javax.swing.JLabel
 
-@ApiStatus.Internal
-internal const val DSL_INT_TEXT_RANGE_PROPERTY = "dsl.intText.range"
-
 enum class LabelPosition {
   LEFT,
 

@@ -27,7 +27,14 @@ internal enum class DslComponentPropertyInternal {
    *
    * Value: true
    */
-  CELL_LABEL
+  CELL_LABEL,
+
+  /**
+   * Range of allowed integer values in text fields
+   *
+   * Value: IntRange
+   */
+  INT_TEXT_RANGE
 }
 
 /**
