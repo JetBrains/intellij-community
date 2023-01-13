@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.MovablePopup;
+import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
@@ -45,7 +46,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
         g2d.translate(0, -devPix);
       }
       try {
-        if (borderArc > 0) {
+        if (transparentPopup) {
           g2d.setComposite(AlphaComposite.Src);
         }
         UIUtil.drawImage(g2d, myImage, insets.left, insets.top, null);
@@ -62,6 +63,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   private Rectangle myKeyItemBounds;
   private BufferedImage myImage;
   private int borderArc = 0;
+  private boolean transparentPopup;
 
   public static void setRelativeBounds(@NotNull Component parent, @NotNull Rectangle bounds,
                                        @NotNull Component child, @NotNull Container validationParent) {
@@ -193,7 +195,6 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   protected void setBorderArc(int borderArc) {
     this.borderArc = borderArc;
-    myPopup.setTransparent(borderArc > 0);
   }
 
   @NotNull
@@ -271,6 +272,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     }
     else {
       Rectangle bounds = new Rectangle(location, myTipComponent.getPreferredSize());
+      myPopup.setTransparent(transparentPopup);
       myPopup.setBounds(bounds);
       myPopup.onAncestorFocusLost(() -> onFocusLost());
       myPopup.setVisible(noIntersections(bounds));
@@ -338,6 +340,14 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     }
   }
 
+  private static SelectablePanel unwrapRenderer(@NotNull JComponent renderer) {
+    Component result = renderer;
+    while (result instanceof ExpandedItemRendererComponentWrapper) {
+      result = ExpandedItemRendererComponentWrapper.unwrap(result);
+    }
+    return result instanceof SelectablePanel selectablePanel ? selectablePanel : null;
+  }
+
   @Nullable
   private Point createToolTipImage(@NotNull KeyType key) {
     ClientProperty.put(myComponent, EXPANDED_RENDERER, true);
@@ -354,6 +364,9 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       rendererAndBounds.getSecond().setSize(renderer.getSize());
     }
 
+    SelectablePanel selectablePanel = unwrapRenderer(renderer);
+    int arc = selectablePanel == null ? borderArc : selectablePanel.getSelectionArc();
+    transparentPopup = arc > 0;
     myKeyItemBounds = rendererAndBounds.second;
 
     Rectangle cellBounds = myKeyItemBounds;
@@ -383,19 +396,23 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (width <= 0 || height <= 0) return null;
 
     Graphics2D g;
-    if (borderArc > 0) {
+    if (arc > 0) {
       width += borderSize;
       height += borderSize * 2;
+      if (selectablePanel != null) {
+        width -= selectablePanel.getSelectionInsets().right;
+      }
       myImage = UIUtil.createImage(myComponent, width, height, BufferedImage.TYPE_INT_ARGB);
       g = myImage.createGraphics();
-      g.setClip(new RoundRectangle2D.Float(-borderArc, 0, width + borderArc, height, borderArc, borderArc));
+      //noinspection GraphicsSetClipInspection
+      g.setClip(new RoundRectangle2D.Float(-arc, 0, width + arc, height, arc, arc));
 
       if (borderSize > 0) {
         location.y -= borderSize;
         g.setColor(getBorderColor());
         g.fillRect(0, 0, width, height);
-        g.setClip(new RoundRectangle2D.Float(-borderArc, borderSize, width + borderArc - borderSize, height - borderSize * 2,
-                                             borderArc, borderArc));
+        //noinspection GraphicsSetClipInspection
+        g.setClip(new RoundRectangle2D.Float(-arc, borderSize, width + arc - borderSize, height - borderSize * 2, arc, arc));
       }
       doFillBackground(height, width, g);
       g.translate(cellBounds.x - visMaxX, borderSize);
@@ -404,6 +421,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     else {
       myImage = UIUtil.createImage(myComponent, width, height, BufferedImage.TYPE_INT_RGB);
       g = myImage.createGraphics();
+      //noinspection GraphicsSetClipInspection
       g.setClip(null);
       doFillBackground(height, width, g);
 
