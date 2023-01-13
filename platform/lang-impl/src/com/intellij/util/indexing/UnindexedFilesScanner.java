@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsUsageCollector;
@@ -389,46 +390,50 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
 
       ProgressManager.checkCanceled(); // give a chance to suspend indexing
 
-      PerProjectIndexingQueue.PerProviderSink perProviderSink = project.getService(PerProjectIndexingQueue.class).getSink(provider);
-      ContentIterator collectingIterator = fileOrDir -> {
+      class CollectingIterator implements ContentIterator {
+        PerProjectIndexingQueue.PerProviderSink perProviderSink = project.getService(PerProjectIndexingQueue.class).getSink(provider);
 
-        ProgressManager.checkCanceled(); // give a chance to suspend indexing
-        if (subTaskIndicator.isCanceled()) {
-          return false;
-        }
-        long scanningStart = System.nanoTime();
-        PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors);
-        if (pushers != null && myPusher instanceof PushedFilePropertiesUpdaterImpl) {
-          ((PushedFilePropertiesUpdaterImpl)myPusher).applyPushersToFile(fileOrDir, pushers, moduleValues);
-        }
-        else if (pusherExs != null && myPusher instanceof PushedFilePropertiesUpdaterImpl) {
-          ((PushedFilePropertiesUpdaterImpl)myPusher).applyPushersToFile(fileOrDir, pusherExs, moduleValues);
-        }
-
-        UnindexedFileStatus status;
-        long statusTime = System.nanoTime();
-        try {
-          status = ourTestMode == TestMode.PUSHING ? null : unindexedFileFinder.getFileStatus(fileOrDir);
-        }
-        finally {
-          statusTime = System.nanoTime() - statusTime;
-        }
-        if (status != null) {
-          if (status.getShouldIndex() && ourTestMode == null) {
-            perProviderSink.addFile(fileOrDir);
+        @Override
+        public boolean processFile(@NotNull VirtualFile fileOrDir) {
+          ProgressManager.checkCanceled(); // give a chance to suspend indexing
+          if (subTaskIndicator.isCanceled()) {
+            return false;
           }
-          scanningStatistics.addStatus(fileOrDir, status, statusTime, project);
+          long scanningStart = System.nanoTime();
+          PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors);
+          if (pushers != null && myPusher instanceof PushedFilePropertiesUpdaterImpl) {
+            ((PushedFilePropertiesUpdaterImpl)myPusher).applyPushersToFile(fileOrDir, pushers, moduleValues);
+          }
+          else if (pusherExs != null && myPusher instanceof PushedFilePropertiesUpdaterImpl) {
+            ((PushedFilePropertiesUpdaterImpl)myPusher).applyPushersToFile(fileOrDir, pusherExs, moduleValues);
+          }
+
+          UnindexedFileStatus status;
+          long statusTime = System.nanoTime();
+          try {
+            status = ourTestMode == TestMode.PUSHING ? null : unindexedFileFinder.getFileStatus(fileOrDir);
+          }
+          finally {
+            statusTime = System.nanoTime() - statusTime;
+          }
+          if (status != null) {
+            if (status.getShouldIndex() && ourTestMode == null) {
+              perProviderSink.addFile(fileOrDir);
+            }
+            scanningStatistics.addStatus(fileOrDir, status, statusTime, project);
+          }
+          scanningStatistics.addScanningTime(System.nanoTime() - scanningStart);
+          return true;
         }
-        scanningStatistics.addScanningTime(System.nanoTime() - scanningStart);
-        return true;
-      };
+      }
       return () -> {
         subTaskIndicator.setText(provider.getRootsScanningProgressText());
+        CollectingIterator collectingIterator = new CollectingIterator();
         try {
           provider.iterateFiles(project, collectingIterator, thisProviderDeduplicateFilter);
         }
         catch (Exception e) {
-          perProviderSink.clear();
+          collectingIterator.perProviderSink.clear();
         }
         finally {
           scanningStatistics.setNumberOfSkippedFiles(thisProviderDeduplicateFilter.getNumberOfSkippedFiles());
@@ -437,7 +442,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
               projectIndexingHistory.addScanningStatistics(scanningStatistics);
             }
           }
-          perProviderSink.commit();
+          collectingIterator.perProviderSink.commit();
           subTaskIndicator.finished();
         }
       };
