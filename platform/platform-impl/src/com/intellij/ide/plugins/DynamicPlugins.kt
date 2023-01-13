@@ -686,6 +686,7 @@ object DynamicPlugins {
 
       if (classLoader is PluginClassLoader && classLoader.pluginDescriptor === subDescriptor) {
         classLoaders.add(classLoader)
+        classLoader.state = PluginAwareClassLoader.UNLOAD_IN_PROGRESS
       }
 
       unloadDependencyDescriptors(subDescriptor, pluginSet, classLoaders)
@@ -699,6 +700,7 @@ object DynamicPlugins {
       val classLoader = subDescriptor.pluginClassLoader ?: continue
       if (classLoader is PluginClassLoader && classLoader.pluginDescriptor === subDescriptor) {
         classLoaders.add(classLoader)
+        classLoader.state = PluginAwareClassLoader.UNLOAD_IN_PROGRESS
       }
 
       unloadModuleDescriptorNotRecursively(subDescriptor)
