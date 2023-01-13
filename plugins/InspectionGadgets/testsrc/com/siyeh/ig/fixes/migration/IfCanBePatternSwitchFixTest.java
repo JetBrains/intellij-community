@@ -42,6 +42,7 @@ public class IfCanBePatternSwitchFixTest extends IGQuickFixesTestCase {
   public void testCastsReplacedWithPattern() { doTest(); }
   public void testMultipleCastedVariables() { doTest(); }
   public void testMutableCastedVariable() { doTest(); }
+  public void testLeakScope() { assertQuickfixNotAvailable(); }
   public void testPatternGuard() {
     IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_19_PREVIEW, () -> doTest());
   }

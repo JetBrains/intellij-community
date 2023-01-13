@@ -294,8 +294,11 @@ public final class SwitchUtils {
   }
 
   private static @Nullable PsiExpression findPossiblePatternOperand(@Nullable PsiExpression expression) {
-    if (expression instanceof PsiInstanceOfExpression) {
-      return ((PsiInstanceOfExpression)expression).getOperand();
+    if (expression instanceof PsiInstanceOfExpression psiInstanceOfExpression) {
+      if (hasLeakingScope(psiInstanceOfExpression)) {
+        return null;
+      }
+      return psiInstanceOfExpression.getOperand();
     }
     if (expression instanceof PsiPolyadicExpression polyadicExpression) {
       final IElementType operationToken = polyadicExpression.getOperationTokenType();
@@ -311,6 +314,17 @@ public final class SwitchUtils {
       }
     }
     return null;
+  }
+
+  private static boolean hasLeakingScope(@NotNull PsiInstanceOfExpression expression) {
+    PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(expression, PsiIfStatement.class);
+    if (!PsiTreeUtil.isAncestor(ifStatement, expression, false)) {
+      //something strange, return true as safe result
+      return true;
+    }
+    return JavaPsiPatternUtil.getExposedPatternVariables(expression)
+      .stream().flatMap(variable -> VariableAccessUtils.getVariableReferences(variable, ifStatement.getParent()).stream())
+      .anyMatch(variable -> !PsiTreeUtil.isAncestor(ifStatement, variable, false));
   }
 
   public static @Nullable PsiExpression findPatternSwitchExpression(@Nullable PsiExpression expression){
