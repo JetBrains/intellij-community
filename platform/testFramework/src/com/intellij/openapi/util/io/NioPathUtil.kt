@@ -17,3 +17,11 @@ fun Path.createNioDirectory(): Path {
   }
   return findOrCreateNioDirectory()
 }
+
+fun Path.createNioFile(relativePath: String): Path {
+  return getResolvedNioPath(relativePath).createNioFile()
+}
+
+fun Path.createNioDirectory(relativePath: String): Path {
+  return getResolvedNioPath(relativePath).createNioDirectory()
+}

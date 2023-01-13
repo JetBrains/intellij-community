@@ -69,6 +69,22 @@ fun Path.deleteNioChildren(predicate: (Path) -> Boolean = { true }) {
   }
 }
 
+fun Path.findOrCreateNioFile(relativePath: String): Path {
+  return getResolvedNioPath(relativePath).findOrCreateNioFile()
+}
+
+fun Path.findOrCreateNioDirectory(relativePath: String): Path {
+  return getResolvedNioPath(relativePath).findOrCreateNioDirectory()
+}
+
+fun Path.deleteNioFileOrDirectory(relativePath: String) {
+  getResolvedNioPath(relativePath).deleteNioFileOrDirectory()
+}
+
+fun Path.deleteNioChildren(relativePath: String, predicate: (Path) -> Boolean = { true }) {
+  getResolvedNioPath(relativePath).deleteNioChildren()
+}
+
 object NioPathPrefixTreeFactory : AbstractPrefixTreeFactory<Path, String>() {
 
   override fun convertToList(element: Path): List<String> {
