@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.ComponentListPanelFactory
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
@@ -163,8 +164,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
         .wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH + CodeReviewTimelineUIUtil.ITEM_HOR_PADDING * 2)
     }
 
-    val timelinePanel = ScrollablePanel(ListLayout.vertical(0)).apply {
-      isOpaque = false
+    val timelinePanel = VerticalListPanel().apply {
       border = JBUI.Borders.empty(CodeReviewTimelineUIUtil.VERT_PADDING, 0)
 
       add(header)

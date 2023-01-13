@@ -7,6 +7,7 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
@@ -178,13 +179,13 @@ object CollaborationToolsUIUtil {
 
 @Suppress("FunctionName")
 fun VerticalListPanel(gap: Int = 0): JPanel =
-  JPanel(ListLayout.vertical(gap)).apply {
+  ScrollablePanel(ListLayout.vertical(gap)).apply {
     isOpaque = false
   }
 
 @Suppress("FunctionName")
 fun HorizontalListPanel(gap: Int = 0): JPanel =
-  JPanel(ListLayout.horizontal(gap)).apply {
+  ScrollablePanel(ListLayout.horizontal(gap)).apply {
     isOpaque = false
   }
 
