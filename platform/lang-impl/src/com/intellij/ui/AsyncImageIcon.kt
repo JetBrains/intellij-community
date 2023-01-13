@@ -5,9 +5,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.ui.icons.CopyableIcon
+import com.intellij.ui.paint.withTxAndClipAligned
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.UserScaleContext
 import com.intellij.util.IconUtil
+import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -90,7 +92,9 @@ class AsyncImageIcon private constructor(
     }
     else {
       val bounds = Rectangle(x, y, iconWidth, iconHeight)
-      StartupUiUtil.drawImage(g, image, bounds, c)
+      withTxAndClipAligned(g, x, y, iconWidth, iconHeight) {
+        StartupUiUtil.drawImage(g, image, bounds, c)
+      }
     }
   }
 
