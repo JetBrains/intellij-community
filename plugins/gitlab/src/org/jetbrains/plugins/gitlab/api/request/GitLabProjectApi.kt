@@ -9,8 +9,8 @@ import com.intellij.collaboration.api.page.foldToList
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabGQLQueries
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabLabelDTO
 
 suspend fun GitLabApi.loadAllProjectLabels(project: GitLabProjectCoordinates): List<GitLabLabelDTO> =
   ApiPageUtil.createGQLPagesFlow { page ->
