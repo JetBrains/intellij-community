@@ -410,6 +410,49 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/invoke")
+            public abstract static class Invoke extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/invoke")
+                public static class TestInvokeAsTypeParameterExtension extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("invokeAsTypeParameterExtension.0.kt")
+                    public void testInvokeAsTypeParameterExtension() throws Exception {
+                        runTest("../../idea/tests/testData/findUsages/kotlin/conventions/invoke/invokeAsTypeParameterExtension.0.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/invoke")
+                public static class TestInvokeAsTypeParameterExtensionWithSmartCast extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("invokeAsTypeParameterExtensionWithSmartCast.0.kt")
+                    public void testInvokeAsTypeParameterExtensionWithSmartCast() throws Exception {
+                        runTest("../../idea/tests/testData/findUsages/kotlin/conventions/invoke/invokeAsTypeParameterExtensionWithSmartCast.0.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/invoke")
+                public static class TestInvokeInObjectAsFunction extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("invokeInObjectAsFunction.0.kt")
+                    public void testInvokeInObjectAsFunction() throws Exception {
+                        runTest("../../idea/tests/testData/findUsages/kotlin/conventions/invoke/invokeInObjectAsFunction.0.kt");
+                    }
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestCompareTo extends AbstractFindUsagesWithCompilerReferenceIndexTest {
                 private void runTest(String testDataFilePath) throws Exception {

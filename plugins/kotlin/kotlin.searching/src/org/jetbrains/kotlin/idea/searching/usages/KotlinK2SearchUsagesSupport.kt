@@ -185,8 +185,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                             val receiverType =
                                 elementSymbol.receiverType
                                     ?: getContainingClassType(elementSymbol)
-                                    ?: return@analyzeWithReadAction null
-                            val psiClass = getPsiClassOfKtType(receiverType) ?: return@analyzeWithReadAction null
+                            val psiClass = receiverType?.let { getPsiClassOfKtType(it) }
 
                             ReceiverTypeSearcherInfo(psiClass) {
                                 // TODO: stubbed - not exercised by FindUsagesFir Test Suite
