@@ -92,14 +92,6 @@ class X {
     System.out.println(text);
   }
 
-  private static void simpleIfElseIf(Object o) {
-    if (o instanceof String text) {
-        System.out.println(text);
-    } else if(o.hashCode()==1) {
-      String text = "1";
-      System.out.println(text);
-    }
-  }
   private static void simpleIfElseOutside(Object o) {
     if (o instanceof String text) {
     } else {

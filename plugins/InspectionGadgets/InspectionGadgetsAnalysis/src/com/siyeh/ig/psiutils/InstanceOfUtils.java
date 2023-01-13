@@ -22,6 +22,7 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -373,7 +374,7 @@ public final class InstanceOfUtils {
    * @param variable a variable, which is used to check if the scope contains variables with the same name
    * @param instanceOf an instanceof expression that is used to calculate declaration scope
    * @return true if other declared variables with the same name are found in the scope of instanceof with variable patterns.
-   * Pattern names are not processed
+   * The scope from {@link JavaSharedImplUtil#getPatternVariableDeclarationScope(PsiInstanceOfExpression)} is used
    */
   public static boolean hasConflictingDeclaredNames(@NotNull PsiLocalVariable variable, @NotNull PsiInstanceOfExpression instanceOf) {
     PsiIdentifier identifier = variable.getNameIdentifier();
@@ -381,121 +382,11 @@ public final class InstanceOfUtils {
       return false;
     }
 
-    TopLevelInstanceOfState condition = getInstanceOfState(instanceOf);
-    if (isConflictingNameDeclaredInside(variable, condition.topLevelExpression)) {
-      return true;
-    }
-    PsiElement parent = condition.topLevelExpression.getParent();
-    if (parent == null) {
+    PsiElement scope = JavaSharedImplUtil.getPatternVariableDeclarationScope(instanceOf);
+    if (scope == null) {
       return false;
     }
-    if (parent instanceof PsiConditionalExpression conditionalExpression &&
-        condition.topLevelExpression == conditionalExpression.getCondition()) {
-      return condition.value ? isConflictingNameDeclaredInside(variable, conditionalExpression.getThenExpression()) :
-             isConflictingNameDeclaredInside(variable, conditionalExpression.getElseExpression());
-    }
-
-    if (parent instanceof PsiConditionalLoopStatement loop &&
-        condition.topLevelExpression == loop.getCondition()) {
-      if (condition.value) {
-        if (loop instanceof PsiForStatement forStatement && isConflictingNameDeclaredInside(variable, forStatement.getUpdate())) {
-          return true;
-        }
-        return isConflictingNameDeclaredInside(variable, loop.getBody());
-      }
-      else {
-        boolean noBreak = PsiTreeUtil.processElements(loop,
-                                                      e -> !(e instanceof PsiBreakStatement) ||
-                                                           ((PsiBreakStatement)e).findExitedStatement() != loop);
-        if (noBreak) {
-          return isConflictingNameDeclaredOutside(variable, loop);
-        }
-      }
-    }
-
-    if (parent instanceof PsiIfStatement psiIfStatement) {
-      if (psiIfStatement.getParent() instanceof PsiIfStatement parentIf && psiIfStatement.isEquivalentTo(parentIf.getElseBranch())) {
-        return false;
-      }
-      if (condition.value) {
-        if (isConflictingNameDeclaredInside(variable, psiIfStatement.getThenBranch())) {
-          return true;
-        }
-        if (!canCompleteNormally(psiIfStatement, psiIfStatement.getElseBranch()) && isConflictingNameDeclaredOutside(variable, psiIfStatement)) {
-          return true;
-        }
-      }else {
-        if (isConflictingNameDeclaredInside(variable, psiIfStatement.getElseBranch())) {
-          return true;
-        }
-        if (!canCompleteNormally(psiIfStatement, psiIfStatement.getThenBranch()) && isConflictingNameDeclaredOutside(variable, psiIfStatement)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  /**
-   * @return container, which contains top level value if instanceof is true and reference to this expression.
-   */
-  public static TopLevelInstanceOfState getInstanceOfState(@NotNull PsiInstanceOfExpression instanceOfExpression) {
-    boolean condition = true;
-    @NotNull PsiExpression topLevelCondition = instanceOfExpression;
-    while (true) {
-      PsiElement parent = topLevelCondition.getParent();
-      if (parent instanceof PsiParenthesizedExpression expression) {
-        topLevelCondition = expression;
-        continue;
-      }
-      if (parent instanceof PsiPrefixExpression prefixExpression) {
-        if (!prefixExpression.getOperationTokenType().equals(JavaTokenType.EXCL)) {
-          break;
-        }
-        condition = !condition;
-        topLevelCondition = prefixExpression;
-        continue;
-      }
-
-      if (parent instanceof PsiPolyadicExpression polyadicExpression) {
-        IElementType tokenType = polyadicExpression.getOperationTokenType();
-        if (tokenType.equals(JavaTokenType.ANDAND) && condition) {
-          topLevelCondition = polyadicExpression;
-          continue;
-        }
-        if (tokenType.equals(JavaTokenType.OROR) && !condition) {
-          topLevelCondition = polyadicExpression;
-          continue;
-        }
-      }
-      break;
-    }
-    return new TopLevelInstanceOfState(condition, topLevelCondition);
-  }
-
-  /**
-   * @param value expected value of {@link #topLevelExpression} when instanceof expression is true
-   * @param topLevelExpression the highest expression, which it is possible to calculate {@link #value} for
-   */
-  public record TopLevelInstanceOfState(boolean value, @NotNull PsiExpression topLevelExpression) {
-
-  }
-
-
-  private static boolean isConflictingNameDeclaredOutside(@Nullable PsiLocalVariable myVariable,
-                                                          @Nullable PsiStatement statement) {
-    if (myVariable == null || statement == null) return false;
-    HasDeclaredVariableWithTheSameNameVisitor visitor = new HasDeclaredVariableWithTheSameNameVisitor(myVariable);
-    PsiElement current = statement.getNextSibling();
-    while (current != null) {
-      current.accept(visitor);
-      if (visitor.hasConflict) {
-        return true;
-      }
-      current = current.getNextSibling();
-    }
-    return false;
+    return isConflictingNameDeclaredInside(variable, scope);
   }
 
   private static boolean isConflictingNameDeclaredInside(@Nullable PsiVariable myVariable,
@@ -530,7 +421,7 @@ public final class InstanceOfUtils {
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {
       String name = variable.getName();
-      if (name != null && !myVariable.isEquivalentTo(variable) && myIdentifier.textMatches(name)) {
+      if (name != null && myVariable != variable && myIdentifier.textMatches(name)) {
         hasConflict = true;
         stopWalking();
       }

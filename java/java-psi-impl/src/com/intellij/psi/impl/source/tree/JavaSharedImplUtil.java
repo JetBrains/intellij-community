@@ -197,6 +197,15 @@ public final class JavaSharedImplUtil {
         && !(parent instanceof PsiDeconstructionList) && !(parent instanceof PsiPatternGuard)) {
       return parent;
     }
+    return getInstanceOfPartDeclarationScope(parent);
+  }
+
+  @Nullable
+  public static PsiElement getPatternVariableDeclarationScope(@NotNull PsiInstanceOfExpression instanceOfExpression) {
+    return getInstanceOfPartDeclarationScope(instanceOfExpression);
+  }
+
+  private static PsiElement getInstanceOfPartDeclarationScope(@NotNull PsiElement parent) {
     boolean negated = false;
     for (PsiElement nextParent = parent.getParent(); ; parent = nextParent, nextParent = parent.getParent()) {
       if (nextParent instanceof PsiParenthesizedExpression) continue;
