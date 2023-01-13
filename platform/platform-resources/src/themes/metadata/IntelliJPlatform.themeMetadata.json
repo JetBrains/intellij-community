@@ -1319,6 +1319,11 @@
       "description": "A background of a hovered row in an unfocused tree if hover is allowed."
     },
     {
+      "key": "Tree.Selection.arc",
+      "since": "2023",
+      "description": "Selection border corners radius in tree selection"
+    },
+    {
       "key": "Table.hoverBackground",
       "since": "2020.3",
       "description": "A background of a hovered row in a focused table if hover is allowed."

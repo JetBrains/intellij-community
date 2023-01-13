@@ -1528,6 +1528,7 @@ public final class JBUI {
     public interface Tree {
       Color BACKGROUND = JBColor.namedColor("Tree.background", DEFAULT_RENDERER_BACKGROUND);
       Color FOREGROUND = JBColor.namedColor("Tree.foreground", Label.foreground(false));
+      JBValue ARC = new JBValue.UIInteger("Tree.Selection.arc", 8);
 
       static @NotNull Color background(boolean selected, boolean focused) {
         return selected ? Selection.background(focused) : BACKGROUND;

@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.hover.TreeHoverListener;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -17,6 +18,8 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+
+import static com.intellij.openapi.util.registry.Registry.is;
 
 public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<Integer, JTree> {
   protected TreeExpandableItemsHandler(final JTree tree) {
@@ -78,6 +81,10 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
         }
       }
     });
+
+    if(ExperimentalUI.isNewUI() && is("ide.experimental.ui.tree.selection")) {
+      setBorderArc(JBUI.CurrentTheme.Tree.ARC.get());
+    }
   }
 
   private void updateSelection(JTree tree) {
