@@ -1,7 +1,9 @@
 package com.intellij.settingsSync
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.ApiStatus
@@ -32,7 +34,12 @@ data class SettingsSnapshot(val metaInfo: MetaInfo,
 
   data class MetaInfo(val dateCreated: Instant, val appInfo: AppInfo?, val isDeleted: Boolean = false)
 
-  data class AppInfo(val applicationId: UUID, val userName: String, val hostName: String, val configFolder: String)
+  data class AppInfo(
+    val applicationId: UUID,
+    val buildNumber: BuildNumber?,
+    val userName: String,
+    val hostName: String,
+    val configFolder: String)
 
   fun isEmpty(): Boolean = fileStates.isEmpty() && (plugins == null || plugins.plugins.isEmpty()) && additionalFiles.isEmpty()
 
@@ -44,6 +51,7 @@ data class SettingsSnapshot(val metaInfo: MetaInfo,
 @ApiStatus.Internal
 fun getLocalApplicationInfo(): SettingsSnapshot.AppInfo {
   return SettingsSnapshot.AppInfo(SettingsSyncLocalSettings.getInstance().applicationId,
+                                  ApplicationInfo.getInstance().build,
                                   SystemProperties.getUserName(),
                                   service<LocalHostNameProvider>().getHostName(),
                                   PathManager.getConfigPath())

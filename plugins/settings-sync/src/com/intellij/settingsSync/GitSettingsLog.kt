@@ -156,6 +156,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       val thisOrThat = if (info.applicationId == SettingsSyncLocalSettings.getInstance().applicationId) "[this]" else "[other]"
       "\n\n" + """
         id:     $thisOrThat ${info.applicationId}
+        build:  ${info.buildNumber}
         user:   ${info.userName}
         host:   ${info.hostName}
         config: ${info.configFolder}
