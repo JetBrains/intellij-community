@@ -16,6 +16,7 @@ fun KotlinMultiplatformImportReflection(kotlin: KotlinExtensionReflection): Kotl
 
 interface KotlinMultiplatformImportReflection {
     fun resolveDependenciesSerialized(sourceSet: KotlinSourceSetReflection): Iterable<ByteArray>
+    fun resolveExtrasSerialized(owner: Any): ByteArray?
 }
 
 class KotlinMultiplatformImportReflectionImpl(val instance: Any) : KotlinMultiplatformImportReflection {
@@ -24,6 +25,12 @@ class KotlinMultiplatformImportReflectionImpl(val instance: Any) : KotlinMultipl
         return instance.callReflective(
             "resolveDependenciesSerialized", parameters(parameter(sourceSet.name)), returnType<Iterable<ByteArray?>>(), logger
         )?.filterNotNull().orEmpty()
+    }
+
+    override fun resolveExtrasSerialized(owner: Any): ByteArray? {
+        return instance.callReflective(
+            "resolveExtrasSerialized", parameters(parameter(owner)), returnType(), logger
+        )
     }
 
     companion object {
