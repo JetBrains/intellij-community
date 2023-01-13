@@ -411,18 +411,26 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (!myHolder.hasErrorResults() && functionalInterfaceType != null) {
-      String parentInferenceErrorMessage = null;
       PsiCallExpression callExpression = parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression ?
                                                (PsiCallExpression)parent.getParent() : null;
-      JavaResolveResult containingCallResolveResult = callExpression != null ? callExpression.resolveMethodGenerics() : null;
-      if (containingCallResolveResult instanceof MethodCandidateInfo) {
-        parentInferenceErrorMessage = ((MethodCandidateInfo)containingCallResolveResult).getInferenceErrorMessage();
+      MethodCandidateInfo parentCallResolveResult =
+        callExpression != null ? tryCast(callExpression.resolveMethodGenerics(), MethodCandidateInfo.class) : null;
+      String parentInferenceErrorMessage = parentCallResolveResult != null ? parentCallResolveResult.getInferenceErrorMessage() : null;
+      PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+      Map<PsiElement, @Nls String> returnErrors = null;
+      Set<PsiTypeParameter> parentTypeParameters = parentCallResolveResult == null ? Set.of() : Set.of(parentCallResolveResult.getElement().getTypeParameters());
+      // If return type of the lambda was not fully inferred and lambda parameters don't mention the same type,
+      // it means that lambda is not responsible for inference failure and blaming it would be unreasonable.
+      boolean skipReturnCompatibility = parentCallResolveResult != null &&
+                                        PsiTypesUtil.mentionsTypeParameters(returnType, parentTypeParameters)
+                                        && !lambdaParametersMentionTypeParameter(functionalInterfaceType, parentTypeParameters);
+      if (!skipReturnCompatibility) {
+        returnErrors = LambdaUtil.checkReturnTypeCompatible(expression, returnType);
       }
-      Map<PsiElement, @Nls String> returnErrors = LambdaUtil.checkReturnTypeCompatible(expression, LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType));
       if (parentInferenceErrorMessage != null && (returnErrors == null || !returnErrors.containsValue(parentInferenceErrorMessage))) {
         if (returnErrors == null) return;
         HighlightInfo.Builder info = HighlightMethodUtil.createIncompatibleTypeHighlightInfo(callExpression, getResolveHelper(myHolder.getProject()),
-                                                                                             (MethodCandidateInfo)containingCallResolveResult, expression);
+                                                                                             parentCallResolveResult, expression);
         if (info != null) {
           returnErrors.keySet().forEach(k -> {
             IntentionAction action = AdjustFunctionContextFix.createFix(k);
@@ -467,6 +475,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         add(HighlightControlFlowUtil.checkUnreachableStatement((PsiCodeBlock)body));
       }
     }
+  }
+
+  private static boolean lambdaParametersMentionTypeParameter(PsiType functionalInterfaceType, Set<PsiTypeParameter> parameters) {
+    if (!(functionalInterfaceType instanceof PsiClassType classType)) return false;
+    PsiSubstitutor substitutor = classType.resolveGenerics().getSubstitutor();
+    PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
+    if (method == null) return false;
+    for (PsiParameter parameter : method.getParameterList().getParameters()) {
+      if (PsiTypesUtil.mentionsTypeParameters(substitutor.substitute(parameter.getType()), parameters)) return true;
+    }
+    return false;
   }
 
   @Override

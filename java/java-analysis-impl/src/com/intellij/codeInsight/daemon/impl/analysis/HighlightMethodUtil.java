@@ -455,9 +455,15 @@ public final class HighlightMethodUtil {
       else if (candidateInfo != null && !candidateInfo.isApplicable()) {
         if (candidateInfo.isTypeArgumentsApplicable()) {
           builder = createIncompatibleCallHighlightInfo(holder, list, candidateInfo);
-
           if (builder != null) {
-            HighlightFixUtil.registerQualifyMethodCallFix(resolveHelper.getReferencedMethodCandidates(methodCall, false), methodCall, list, builder);
+            PsiType expectedTypeByParent = InferenceSession.getTargetTypeByParent(methodCall);
+            PsiType actualType = ((PsiExpression)methodCall.copy()).getType();
+            TextRange fixRange = getFixRange(list);
+            if (expectedTypeByParent != null && actualType != null && !expectedTypeByParent.isAssignableFrom(actualType)) {
+              AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(builder, fixRange, methodCall, expectedTypeByParent, actualType);
+            }
+            HighlightFixUtil.registerQualifyMethodCallFix(resolveHelper.getReferencedMethodCandidates(methodCall, false), methodCall,
+                                                          list, builder);
             registerMethodCallIntentions(builder, methodCall, list, resolveHelper);
             registerMethodReturnFixAction(builder, candidateInfo, methodCall);
             registerTargetTypeFixesBasedOnApplicabilityInference(methodCall, candidateInfo, resolvedMethod, builder);
