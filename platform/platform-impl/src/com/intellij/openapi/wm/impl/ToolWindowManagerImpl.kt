@@ -1972,7 +1972,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       // docked and sliding windows
       val anchor = info.anchor
       var another: InternalDecoratorImpl? = null
-      val wholeSize = getToolWindowPane(toolWindow).rootPane.size
       if (source.parent is Splitter) {
         var sizeInSplit = if (anchor.isSplitVertically) source.height else source.width
         val splitter = source.parent as Splitter
@@ -1988,8 +1987,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
                                            direction = if (splitter.secondComponent === source) -1 else 1)
       }
 
-      val paneWeight = getAdjustedRatio(partSize = if (anchor.isHorizontal) source.height else source.width,
-                                        totalSize = if (anchor.isHorizontal) wholeSize.height else wholeSize.width, direction = 1)
+      val toolWindowPane = getToolWindowPane(toolWindow)
+      val paneWeight = getAdjustedWeight(toolWindowPane, anchor, source)
       info.weight = paneWeight
       layoutState.setUnifiedAnchorWeight(anchor, paneWeight)
       if (another != null) {
@@ -1997,6 +1996,19 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       }
     }
     fireStateChanged(MovedOrResized, toolWindow)
+  }
+
+  private fun getAdjustedWeight(
+    toolWindowPane: ToolWindowPane,
+    anchor: ToolWindowAnchor,
+    component: Component
+  ): Float {
+    val wholeSize = toolWindowPane.rootPane.size
+    return getAdjustedRatio(
+      partSize = if (anchor.isHorizontal) component.height else component.width,
+      totalSize = if (anchor.isHorizontal) wholeSize.height else wholeSize.width,
+      direction = 1
+    )
   }
 
   private fun focusToolWindowByDefault() {
