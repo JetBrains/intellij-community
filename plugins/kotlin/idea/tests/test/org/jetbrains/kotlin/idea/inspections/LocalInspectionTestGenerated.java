@@ -2396,6 +2396,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/collections/uselessCallOnCollection/FilterIsForFlexibleOnSequence.kt");
             }
 
+            @TestMetadata("FilterIsForInVariance.kt")
+            public void testFilterIsForInVariance() throws Exception {
+                runTest("testData/inspectionsLocal/collections/uselessCallOnCollection/FilterIsForInVariance.kt");
+            }
+
+            @TestMetadata("FilterIsForOutVariance.kt")
+            public void testFilterIsForOutVariance() throws Exception {
+                runTest("testData/inspectionsLocal/collections/uselessCallOnCollection/FilterIsForOutVariance.kt");
+            }
+
             @TestMetadata("FilterIsSupertypeInstance.kt")
             public void testFilterIsSupertypeInstance() throws Exception {
                 runTest("testData/inspectionsLocal/collections/uselessCallOnCollection/FilterIsSupertypeInstance.kt");
