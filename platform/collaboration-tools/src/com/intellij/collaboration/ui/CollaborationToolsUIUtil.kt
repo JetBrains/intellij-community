@@ -25,6 +25,7 @@ import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
+import java.awt.Color
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.*
@@ -175,6 +176,13 @@ object CollaborationToolsUIUtil {
       add(component)
     }
   }
+
+  fun getLabelBackground(hexColor: String): JBColor {
+    val color = ColorUtil.fromHex(hexColor)
+    return JBColor(color, ColorUtil.darker(color, 3))
+  }
+
+  fun getLabelForeground(bg: Color): Color = if (ColorUtil.isDark(bg)) Color.white else Color.black
 
   /**
    * Use method for different sizes depending on the type of UI (old/new).
