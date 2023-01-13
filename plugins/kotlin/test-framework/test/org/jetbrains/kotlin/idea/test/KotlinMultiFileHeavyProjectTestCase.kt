@@ -69,8 +69,11 @@ abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase() {
                 val library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary("kotlin-stdlib")
                 with (library.modifiableModel) {
                     addRoot(TestKotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
+                    addRoot(TestKotlinArtifacts.kotlinStdlibCommon, OrderRootType.CLASSES)
+
                     if ("WITH_SOURCES" in globalDirectives) {
                         addRoot(TestKotlinArtifacts.kotlinStdlibSources, OrderRootType.SOURCES)
+                        addRoot(TestKotlinArtifacts.kotlinStdlibCommonSources, OrderRootType.SOURCES)
                     }
 
                     commit()

@@ -83,9 +83,17 @@ abstract class AbstractKotlinProjectViewTest : KotlinMultiFileHeavyProjectTestCa
         deepNavigation(navigateElement, count + 1)
     }
 
-    private fun sanitizeTree(tree: String): String = Holder.STDLIB_REGEX.replaceFirst(tree, "kotlin-stdlib.jar")
+    private fun sanitizeTree(tree: String): String {
+        val resultSequence = Holder.STDLIB_REGEX.findAll(tree)
+        var resultString = tree
+        for (matchResult in resultSequence) {
+            resultString = resultString.replace(matchResult.value, matchResult.groupValues[1] + matchResult.groupValues[3])
+        }
+
+        return resultString
+    }
 
     private object Holder {
-        val STDLIB_REGEX: Regex = Regex("kotlin-stdlib-.*[.]jar")
+        val STDLIB_REGEX: Regex = Regex("(kotlin-stdlib.*?)(-\\d.*)([.]jar)")
     }
 }

@@ -4,10 +4,8 @@ User object class: KtInternalFileTreeNode
 Value: KtLightClassForDecompiledDeclaration of PsiFile:ArraysKt___ArraysKt.class
 Value file: ArraysKt___ArraysKt.class
 
-Navigation item #0: KtLightClassForDecompiledDeclaration of PsiFile:ArraysKt___ArraysKt.class
-Navigation item file #0: ArraysKt___ArraysKt.class
-Navigation item #1: KtFile: ArraysKt___ArraysKt.class
-Navigation item file #1: ArraysKt___ArraysKt.class
+Navigation item #0: KtFile: _Arrays.kt
+Navigation item file #0: _Arrays.kt
 
 
 -Project
@@ -214,3 +212,4 @@ Navigation item file #1: ArraysKt___ArraysKt.class
      UShortArrayKt
      UShortKt
     +PsiDirectory: META-INF
+   +PsiDirectory: kotlin-stdlib-common.jar

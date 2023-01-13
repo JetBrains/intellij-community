@@ -214,3 +214,4 @@ Navigation item file #1: ArraysKt___ArraysKt.class
      UShortArrayKt
      UShortKt
     +PsiDirectory: META-INF
+   +PsiDirectory: kotlin-stdlib-common.jar

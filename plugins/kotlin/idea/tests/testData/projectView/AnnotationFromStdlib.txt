@@ -142,3 +142,4 @@ Navigation item file #0: AnnotationTarget.class
      UShortArrayKt
      UShortKt
     +PsiDirectory: META-INF
+   +PsiDirectory: kotlin-stdlib-common.jar
