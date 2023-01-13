@@ -12,6 +12,7 @@ import io.opentelemetry.api.trace.StatusCode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
@@ -25,7 +26,6 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import kotlin.io.path.name
 
 fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: ProductProperties, skipDependencySetup: Boolean = false) {
   options.skipDependencySetup = skipDependencySetup
@@ -76,78 +76,29 @@ fun runTestBuild(
   onFinish: suspend (context: BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
 ) {
-  if (!BuildArtifactsReproducibilityTest.isEnabled) {
-    testBuild(homePath = homePath,
-              productProperties = productProperties,
-              buildTools = buildTools,
-              communityHomePath = communityHomePath,
-              traceSpanName = traceSpanName,
-              onFinish = onFinish,
-              buildOptionsCustomizer = buildOptionsCustomizer)
-    return
-  }
-
-  val buildArtifactsReproducibilityTest = BuildArtifactsReproducibilityTest()
-  testBuild(homePath = homePath,
+  runBlocking(Dispatchers.Default) {
+    val reproducibilityTest = BuildArtifactsReproducibilityTest()
+    repeat(reproducibilityTest.iterations) { iterationNumber ->
+      launch {
+        runTestBuild(
+          context = createBuildContext(
+            homePath = homePath,
             productProperties = productProperties,
             buildTools = buildTools,
             communityHomePath = communityHomePath,
-            traceSpanName = traceSpanName,
             buildOptionsCustomizer = {
               buildOptionsCustomizer(it)
-              buildArtifactsReproducibilityTest.configure(it)
+              reproducibilityTest.configure(it)
             },
-            onFinish = { firstIteration ->
-              onFinish(firstIteration)
-              firstIteration.cleanBuildOutput()
-              testBuild(homePath = homePath,
-                        productProperties = productProperties,
-                        buildTools = buildTools,
-                        communityHomePath = communityHomePath,
-                        traceSpanName = traceSpanName,
-                        buildOptionsCustomizer = {
-                          buildOptionsCustomizer(it)
-                          buildArtifactsReproducibilityTest.configure(it)
-                        },
-                        onFinish = { nextIteration ->
-                          onFinish(nextIteration)
-                          nextIteration.cleanBuildOutput()
-                          buildArtifactsReproducibilityTest.compare(firstIteration, nextIteration)
-                        })
-            })
-}
-
-private fun BuildContext.cleanBuildOutput() {
-  Files.newDirectoryStream(paths.buildOutputDir).use { content ->
-    content.filter { it != paths.artifactDir }.forEach(NioFiles::deleteRecursively)
-  }
-  Files.newDirectoryStream(paths.artifactDir).use { content ->
-    content.filter { it.name == "unscrambled" || it.name == "scramble-logs" }.forEach(NioFiles::deleteRecursively)
-  }
-}
-
-private fun testBuild(
-  homePath: Path,
-  productProperties: ProductProperties,
-  buildTools: ProprietaryBuildTools,
-  communityHomePath: BuildDependenciesCommunityRoot,
-  traceSpanName: String?,
-  onFinish: suspend (context: BuildContext) -> Unit,
-  buildOptionsCustomizer: (BuildOptions) -> Unit,
-) {
-  runBlocking(Dispatchers.Default) {
-    runTestBuild(
-      context = createBuildContext(
-        homePath = homePath,
-        productProperties = productProperties,
-        buildTools = buildTools,
-        skipDependencySetup = false,
-        communityHomePath = communityHomePath,
-        buildOptionsCustomizer = buildOptionsCustomizer,
-      ),
-      traceSpanName = traceSpanName,
-      onFinish = onFinish,
-    )
+          ),
+          traceSpanName = traceSpanName?.let { "$it-#$iterationNumber" } ?: "#$iterationNumber",
+          onFinish = { build ->
+            onFinish(build)
+            reproducibilityTest.iterationFinished(iterationNumber, build)
+          },
+        )
+      }
+    }
   }
 }
 

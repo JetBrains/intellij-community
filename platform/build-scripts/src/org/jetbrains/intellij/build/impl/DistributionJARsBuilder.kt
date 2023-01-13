@@ -185,6 +185,11 @@ class DistributionJARsBuilder {
     val modules = withContext(Dispatchers.IO) {
       val ideClasspath = createIdeClassPath(context)
       NioFiles.deleteRecursively(targetDirectory)
+      // bundled maven is also downloaded during traverseUI execution in external process
+      // making it fragile to call more than one traverseUI at the same time (in reproducibility test for example)
+      // so it's pre-downloaded with proper synchronization
+      BundledMavenDownloader.downloadMavenCommonLibs(context.paths.communityHomeDirRoot)
+      BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
       // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
       // It'll process all UI elements in Settings dialog and build index for them.
       runApplicationStarter(context = context,

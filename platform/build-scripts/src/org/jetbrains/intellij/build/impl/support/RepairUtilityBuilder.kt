@@ -7,6 +7,8 @@ import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.openapi.util.SystemInfoRt
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions.Companion.REPAIR_UTILITY_BUNDLE_STEP
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -41,6 +43,7 @@ import kotlin.time.Duration.Companion.minutes
  */
 class RepairUtilityBuilder {
   companion object {
+    private val buildLock = Mutex()
     suspend fun bundle(context: BuildContext, os: OsFamily, arch: JvmArchitecture, distributionDir: Path) {
       context.executeStep(spanBuilder("bundle repair-utility").setAttribute("os", os.osName), REPAIR_UTILITY_BUNDLE_STEP) {
         val cache = getBinaryCache(context).await()
@@ -112,122 +115,123 @@ class RepairUtilityBuilder {
       checkNotNull(binary) { "Unsupported binary: $os $arch" }
       return binary
     }
-  }
-}
 
-private val binaryCache = WeakHashMap<BuildContext, Deferred<Map<Binary, Path>>>()
+    private val binaryCache = WeakHashMap<BuildContext, Deferred<Map<Binary, Path>>>()
 
-private fun getBinaryCache(context: BuildContext): Deferred<Map<Binary, Path>> {
-  synchronized(binaryCache) {
-    binaryCache.get(context)?.let {
-      return it
+    private fun getBinaryCache(context: BuildContext): Deferred<Map<Binary, Path>> {
+      synchronized(binaryCache) {
+        binaryCache.get(context)?.let {
+          return it
+        }
+
+        @Suppress("OPT_IN_USAGE")
+        val deferred = GlobalScope.async { buildBinaries(context) }
+        binaryCache.put(context, deferred)
+        return deferred
+      }
     }
 
-    @Suppress("OPT_IN_USAGE")
-    val deferred = GlobalScope.async { buildBinaries(context) }
-    binaryCache.put(context, deferred)
-    return deferred
-  }
-}
-
-private fun repairUtilityProjectHome(context: BuildContext): Path? {
-  val projectHome = context.paths.communityHomeDir.resolve("native/repair-utility")
-  if (Files.exists(projectHome)) {
-    return projectHome
-  }
-  else {
-    Span.current().addEvent("$projectHome doesn't exist")
-    return null
-  }
-}
-
-private suspend fun buildBinaries(context: BuildContext): Map<Binary, Path> {
-  return spanBuilder("build repair-utility").useWithScope2 {
-    if (SystemInfoRt.isWindows) {
-      // FIXME: Linux containers on Windows should be fine
-      Span.current().addEvent("repair-utility cannot be built on Windows yet")
-      return@useWithScope2 emptyMap()
+    private fun repairUtilityProjectHome(context: BuildContext): Path? {
+      val projectHome = context.paths.communityHomeDir.resolve("native/repair-utility")
+      if (Files.exists(projectHome)) {
+        return projectHome
+      }
+      else {
+        Span.current().addEvent("$projectHome doesn't exist")
+        return null
+      }
     }
 
-    val projectHome = repairUtilityProjectHome(context) ?: return@useWithScope2 emptyMap()
-    try {
-      val isDockerAvailable = withContext(Dispatchers.IO) {
+    private suspend fun buildBinaries(context: BuildContext): Map<Binary, Path> {
+      return spanBuilder("build repair-utility").useWithScope2 {
+        if (SystemInfoRt.isWindows) {
+          // FIXME: Linux containers on Windows should be fine
+          Span.current().addEvent("repair-utility cannot be built on Windows yet")
+          return@useWithScope2 emptyMap()
+        }
+
+        val projectHome = repairUtilityProjectHome(context) ?: return@useWithScope2 emptyMap()
         try {
-          runProcess(args = listOf("docker", "--version"), inheritOut = true)
-          true
+          val isDockerAvailable = withContext(Dispatchers.IO) {
+            try {
+              runProcess(args = listOf("docker", "--version"), inheritOut = true)
+              true
+            }
+            catch (e: Exception) {
+              Span.current().addEvent("repair-utility cannot be without Docker: ${e.message}")
+              false
+            }
+          }
+          if (!isDockerAvailable) return@useWithScope2 emptyMap()
+          val baseUrl = context.applicationInfo.patchesUrl?.removeSuffix("/") ?: error("Missing download url")
+          val baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
+          val distributionUrls = BINARIES.associate {
+            it.distributionUrlVariable to "$baseUrl/$baseName${it.distributionSuffix}"
+          }
+          for ((envVar, url) in distributionUrls) {
+            context.messages.info("$envVar=$url")
+          }
+          buildLock.withLock {
+            withContext(Dispatchers.IO) {
+              suspendingRetryWithExponentialBackOff {
+                runProcess(args = listOf("bash", "build.sh"), workingDir = projectHome,
+                           additionalEnvVariables = distributionUrls,
+                           timeout = 5.minutes,
+                           inheritOut = true)
+              }
+            }
+          }
         }
-        catch (e: Exception) {
-          Span.current().addEvent("repair-utility cannot be without Docker: ${e.message}")
-          false
+        catch (e: Throwable) {
+          if (TeamCityHelper.isUnderTeamCity) {
+            throw e
+          }
+          return@useWithScope2 emptyMap<Binary, Path>()
         }
-      }
-      if (!isDockerAvailable) return@useWithScope2 emptyMap()
-      val baseUrl = context.applicationInfo.patchesUrl?.removeSuffix("/") ?: error("Missing download url")
-      val baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
-      val distributionUrls = BINARIES.associate {
-        it.distributionUrlVariable to "$baseUrl/$baseName${it.distributionSuffix}"
-      }
-      for ((envVar, url) in distributionUrls) {
-        context.messages.info("$envVar=$url")
-      }
 
-      withContext(Dispatchers.IO) {
-        suspendingRetryWithExponentialBackOff {
-          runProcess(args = listOf("bash", "build.sh"), workingDir = projectHome,
-                     additionalEnvVariables = distributionUrls,
-                     timeout = 5.minutes,
-                     inheritOut = true)
+        val binaries = BINARIES.associateWith { projectHome.resolve(it.relativeSourcePath) }
+        val executablePermissions = setOf(
+          OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, GROUP_READ, GROUP_EXECUTE, OTHERS_READ, OTHERS_EXECUTE
+        )
+        withContext(Dispatchers.IO) {
+          for (file in binaries.values) {
+            if (Files.notExists(file)) {
+              context.messages.error("$file doesn't exist")
+            }
+            Files.setPosixFilePermissions(file, executablePermissions)
+          }
         }
+        binaries
       }
     }
-    catch (e: Throwable) {
-      if (TeamCityHelper.isUnderTeamCity) {
-        throw e
-      }
-      return@useWithScope2 emptyMap<Binary, Path>()
-    }
 
-    val binaries = BINARIES.associateWith { projectHome.resolve(it.relativeSourcePath) }
-    val executablePermissions = setOf(
-      OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, GROUP_READ, GROUP_EXECUTE, OTHERS_READ, OTHERS_EXECUTE
+    private val BINARIES: List<Binary> = listOf(
+      Binary(OsFamily.LINUX, JvmArchitecture.x64, "bin/repair-linux-amd64", "bin/repair", "linux_amd64_url"),
+      Binary(OsFamily.LINUX, JvmArchitecture.aarch64, "bin/repair-linux-arm64", "bin/repair", "linux_arm64_url"),
+      Binary(OsFamily.WINDOWS, JvmArchitecture.x64, "bin/repair.exe", "bin/repair.exe", "windows_amd64_url"),
+      Binary(OsFamily.WINDOWS, JvmArchitecture.aarch64, "bin/repair64a.exe", "bin/repair.exe", "windows_arm4_url"),
+      Binary(OsFamily.MACOS, JvmArchitecture.x64, "bin/repair-darwin-amd64", "bin/repair", "darwin_amd64_url"),
+      Binary(OsFamily.MACOS, JvmArchitecture.aarch64, "bin/repair-darwin-arm64", "bin/repair", "darwin_arm64_url"),
     )
-    withContext(Dispatchers.IO) {
-      for (file in binaries.values) {
-        if (Files.notExists(file)) {
-          context.messages.error("$file doesn't exist")
+
+    class Binary(
+      @JvmField val os: OsFamily,
+      @JvmField val arch: JvmArchitecture,
+      @JvmField val relativeSourcePath: String,
+      @JvmField val relativeTargetPath: String,
+      @JvmField val distributionUrlVariable: String
+    ) {
+      val distributionSuffix: String
+        get() {
+          return when (arch) {
+                   JvmArchitecture.x64 -> ""
+                   JvmArchitecture.aarch64 -> "-" + arch.fileSuffix
+                 } + when (os) {
+                   OsFamily.LINUX -> ".tar.gz"
+                   OsFamily.MACOS -> ".dmg"
+                   OsFamily.WINDOWS -> ".exe"
+                 }
         }
-        Files.setPosixFilePermissions(file, executablePermissions)
-      }
     }
-    binaries
   }
-}
-
-private val BINARIES: List<Binary> = listOf(
-  Binary(OsFamily.LINUX, JvmArchitecture.x64, "bin/repair-linux-amd64", "bin/repair", "linux_amd64_url"),
-  Binary(OsFamily.LINUX, JvmArchitecture.aarch64, "bin/repair-linux-arm64", "bin/repair", "linux_arm64_url"),
-  Binary(OsFamily.WINDOWS, JvmArchitecture.x64, "bin/repair.exe", "bin/repair.exe", "windows_amd64_url"),
-  Binary(OsFamily.WINDOWS, JvmArchitecture.aarch64, "bin/repair64a.exe", "bin/repair.exe", "windows_arm4_url"),
-  Binary(OsFamily.MACOS, JvmArchitecture.x64, "bin/repair-darwin-amd64", "bin/repair", "darwin_amd64_url"),
-  Binary(OsFamily.MACOS, JvmArchitecture.aarch64, "bin/repair-darwin-arm64", "bin/repair", "darwin_arm64_url"),
-)
-
-class Binary(
-  @JvmField val os: OsFamily,
-  @JvmField val arch: JvmArchitecture,
-  @JvmField val relativeSourcePath: String,
-  @JvmField val relativeTargetPath: String,
-  @JvmField val distributionUrlVariable: String
-) {
-  val distributionSuffix: String
-    get() {
-      return when (arch) {
-               JvmArchitecture.x64 -> ""
-               JvmArchitecture.aarch64 -> "-" + arch.fileSuffix
-             } + when (os) {
-               OsFamily.LINUX -> ".tar.gz"
-               OsFamily.MACOS -> ".dmg"
-               OsFamily.WINDOWS -> ".exe"
-             }
-    }
 }

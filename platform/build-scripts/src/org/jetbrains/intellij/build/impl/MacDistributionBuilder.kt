@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.diagnostic.telemetry.use
 import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.SystemProperties
@@ -13,6 +12,9 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -469,51 +471,53 @@ internal fun generateMacProductJson(builtinModule: BuiltinModulesFileData?,
     context = context)
 }
 
-private fun MacDistributionBuilder.buildMacZip(targetFile: Path,
-                                               zipRoot: String,
-                                               productJson: String,
-                                               directories: List<Path>,
-                                               extraFiles: Collection<DistFile>,
-                                               executableFilePatterns: List<String>,
-                                               compressionLevel: Int) {
-  spanBuilder("build zip archive for macOS")
-    .setAttribute("file", targetFile.toString())
-    .setAttribute("zipRoot", zipRoot)
-    .setAttribute(AttributeKey.stringArrayKey("executableFilePatterns"), executableFilePatterns)
-    .use {
-      for (dir in directories) {
-        updateExecutablePermissions(dir, executableFilePatterns)
-      }
-      val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, _ ->
-        if (SystemInfoRt.isUnix && PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions(file)) {
-          entry.unixMode = executableFileUnixMode
+private suspend fun MacDistributionBuilder.buildMacZip(targetFile: Path,
+                                                       zipRoot: String,
+                                                       productJson: String,
+                                                       directories: List<Path>,
+                                                       extraFiles: Collection<DistFile>,
+                                                       executableFilePatterns: List<String>,
+                                                       compressionLevel: Int) {
+  withContext(Dispatchers.IO) {
+    spanBuilder("build zip archive for macOS")
+      .setAttribute("file", targetFile.toString())
+      .setAttribute("zipRoot", zipRoot)
+      .setAttribute(AttributeKey.stringArrayKey("executableFilePatterns"), executableFilePatterns)
+      .useWithScope2 {
+        for (dir in directories) {
+          updateExecutablePermissions(dir, executableFilePatterns)
         }
-      }
-
-      writeNewFile(targetFile) { targetFileChannel ->
-        NoDuplicateZipArchiveOutputStream(targetFileChannel, compress = context.options.compressZipFiles).use { zipOutStream ->
-          zipOutStream.setLevel(compressionLevel)
-
-          zipOutStream.entry("$zipRoot/Resources/product-info.json", productJson.encodeToByteArray())
-
-          val fileFilter: (Path, String) -> Boolean = { sourceFile, relativePath ->
-            if (relativePath.endsWith(".txt") && !relativePath.contains('/')) {
-              zipOutStream.entry("$zipRoot/Resources/${relativePath}", sourceFile)
-              false
-            }
-            else {
-              true
-            }
-          }
-          for (dir in directories) {
-            zipOutStream.dir(dir, "$zipRoot/", fileFilter = fileFilter, entryCustomizer = entryCustomizer)
-          }
-
-          for (item in extraFiles) {
-            zipOutStream.entry(name = "$zipRoot/${item.relativePath}", file = item.file)
+        val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, _ ->
+          if (SystemInfoRt.isUnix && PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions(file)) {
+            entry.unixMode = executableFileUnixMode
           }
         }
+
+        writeNewFile(targetFile) { targetFileChannel ->
+          NoDuplicateZipArchiveOutputStream(targetFileChannel, compress = context.options.compressZipFiles).use { zipOutStream ->
+            zipOutStream.setLevel(compressionLevel)
+
+            zipOutStream.entry("$zipRoot/Resources/product-info.json", productJson.encodeToByteArray())
+
+            val fileFilter: (Path, String) -> Boolean = { sourceFile, relativePath ->
+              if (relativePath.endsWith(".txt") && !relativePath.contains('/')) {
+                zipOutStream.entry("$zipRoot/Resources/${relativePath}", sourceFile)
+                false
+              }
+              else {
+                true
+              }
+            }
+            for (dir in directories) {
+              zipOutStream.dir(dir, "$zipRoot/", fileFilter = fileFilter, entryCustomizer = entryCustomizer)
+            }
+
+            for (item in extraFiles) {
+              zipOutStream.entry(name = "$zipRoot/${item.relativePath}", file = item.file)
+            }
+          }
+        }
+        checkInArchive(archiveFile = targetFile, pathInArchive = "$zipRoot/Resources", context = context)
       }
-      checkInArchive(archiveFile = targetFile, pathInArchive = "$zipRoot/Resources", context = context)
-    }
+  }
 }

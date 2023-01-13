@@ -186,12 +186,14 @@ fun substituteTemplatePlaceholders(inputFile: Path,
 }
 
 inline fun transformFile(file: Path, task: (tempFile: Path) -> Unit) {
-  val tempFile = file.parent.resolve("${file.fileName}.tmp")
-  try {
-    task(tempFile)
-    Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING)
-  }
-  finally {
-    Files.deleteIfExists(tempFile)
+  synchronized(file.toString().intern()) {
+    val tempFile = file.parent.resolve("${file.fileName}.tmp")
+    try {
+      task(tempFile)
+      Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING)
+    }
+    finally {
+      Files.deleteIfExists(tempFile)
+    }
   }
 }

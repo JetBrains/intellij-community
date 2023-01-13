@@ -25,6 +25,7 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.PosixFilePermissions
+import java.util.UUID
 import java.util.zip.Deflater
 import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.hours
@@ -234,10 +235,11 @@ private suspend fun buildDmgLocally(tempDir: Path, targetFileName: String, custo
              StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
   val artifactDir = context.paths.artifactDir
   Files.createDirectories(artifactDir)
-  val dmgFile = artifactDir.resolve("${targetFileName}.dmg")
+  val mountName = "$targetFileName-${UUID.randomUUID().toString().substring(1..4)}"
+  val dmgFile = artifactDir.resolve("$targetFileName.dmg")
   val cleanUpExploded = true
   runProcess(
-    args = listOf("./makedmg.sh", targetFileName, context.fullBuildNumber, "$dmgFile", "${context.fullBuildNumber}.exploded", "$cleanUpExploded", "$isContentSigned"),
+    args = listOf("./makedmg.sh", mountName, context.fullBuildNumber, "$dmgFile", "${context.fullBuildNumber}.exploded", "$cleanUpExploded", "$isContentSigned"),
     additionalEnvVariables = mapOf(GlobalOptions.BUILD_DATE_IN_SECONDS to "${context.options.buildDateInSeconds}"),
     workingDir = tempDir
   )

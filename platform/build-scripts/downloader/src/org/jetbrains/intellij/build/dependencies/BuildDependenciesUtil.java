@@ -28,6 +28,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 import java.util.function.Function;
@@ -323,7 +324,7 @@ public final class BuildDependenciesUtil {
             // On Windows symlink creation is still gated by various registry keys
 
             if (Files.isRegularFile(resolvedTarget)) {
-              Files.copy(resolvedTarget, entryPath);
+              Files.copy(resolvedTarget, entryPath, StandardCopyOption.REPLACE_EXISTING);
             }
           }
           else {
@@ -332,7 +333,7 @@ public final class BuildDependenciesUtil {
         }
         else if (type == Entry.Type.FILE) {
           try (InputStream is = entry.getInputStream()) {
-            Files.copy(is, entryPath);
+            Files.copy(is, entryPath, StandardCopyOption.REPLACE_EXISTING);
           }
 
           if (isPosix && entry.isExecutable()) {

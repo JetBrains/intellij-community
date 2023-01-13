@@ -62,47 +62,45 @@ object BundledMavenDownloader {
 
     Files.list(root).use { stream ->
       stream.forEach { file: Path? ->
-        run {
-          if (!targetToSourceFiles.containsKey(file)) {
-            BuildDependenciesUtil.deleteFileOrFolder(file)
+        if (!targetToSourceFiles.containsKey(file)) {
+          BuildDependenciesUtil.deleteFileOrFolder(file)
+        }
+      }
+    }
+    synchronized(this) {
+      for (targetFile in targetToSourceFiles.keys) {
+        val sourceFile = targetToSourceFiles[targetFile]!!
+        if (!Files.exists(targetFile)) {
+          Files.copy(sourceFile, targetFile)
+        }
+        else {
+          val sourceCheckSum = fileChecksum(sourceFile)
+          val targetCheckSum = fileChecksum(targetFile)
+          if (!sourceCheckSum.equals(targetCheckSum)) {
+            Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING)
           }
         }
       }
     }
-
-    for (targetFile in targetToSourceFiles.keys) {
-      val sourceFile = targetToSourceFiles[targetFile]!!
-      if (!Files.exists(targetFile)) {
-        Files.copy(sourceFile, targetFile)
-      } else {
-        val sourceCheckSum = fileChecksum(sourceFile)
-        val targetCheckSum = fileChecksum(targetFile)
-        if (!sourceCheckSum.equals(targetCheckSum)) {
-          Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING)
-        }
-      }
-    }
-
     return root
   }
 
   fun downloadMavenDistribution(communityRoot: BuildDependenciesCommunityRoot): Path {
+    val extractDir = communityRoot.communityRoot.resolve("plugins/maven/maven36-server-impl/lib/maven3")
     val properties = BuildDependenciesDownloader.getDependenciesProperties(communityRoot)
     val bundledMavenVersion = properties.property("bundledMavenVersion")
-
-    val uri = BuildDependenciesDownloader.getUriForMavenArtifact(
-      BuildDependenciesConstants.MAVEN_CENTRAL_URL,
-      "org.apache.maven",
-      "apache-maven",
-      bundledMavenVersion,
-      "bin",
-      "zip"
-    )
-    val zipPath = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, uri)
-
-    val extractDir = communityRoot.communityRoot.resolve("plugins/maven/maven36-server-impl/lib/maven3")
-    BuildDependenciesDownloader.extractFile(zipPath, extractDir, communityRoot, BuildDependenciesExtractOptions.STRIP_ROOT)
-
+    synchronized(this) {
+      val uri = BuildDependenciesDownloader.getUriForMavenArtifact(
+        BuildDependenciesConstants.MAVEN_CENTRAL_URL,
+        "org.apache.maven",
+        "apache-maven",
+        bundledMavenVersion,
+        "bin",
+        "zip"
+      )
+      val zipPath = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, uri)
+      BuildDependenciesDownloader.extractFile(zipPath, extractDir, communityRoot, BuildDependenciesExtractOptions.STRIP_ROOT)
+    }
     return extractDir
   }
 }
