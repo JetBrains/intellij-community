@@ -72,10 +72,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
@@ -856,6 +853,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       return SwingUtilities.isDescendingFrom(component, myHint.getContent());
     }
     return false;
+  }
+
+  @ApiStatus.Experimental
+  public void selectFirst(){
+    elementsSelected(new int[]{0}, 0);
   }
 
   private void elementsSelected(int[] indexes, int modifiers) {

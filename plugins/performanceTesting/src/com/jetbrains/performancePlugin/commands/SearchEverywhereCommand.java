@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.PlaybackContext;
@@ -84,7 +85,13 @@ public class SearchEverywhereCommand extends AbstractCommand {
       result.get().get();
       if (myOptions.close) {
         ApplicationManager.getApplication()
-          .invokeLater(() -> SearchEverywhereManager.getInstance(project).getCurrentlyShownUI().closePopup());
+          .invokeAndWait(() -> SearchEverywhereManager.getInstance(project).getCurrentlyShownUI().closePopup());
+      }
+      if (myOptions.selectFirst) {
+        WriteAction.runAndWait(() -> {
+          ApplicationManager.getApplication()
+            .invokeAndWait(() -> SearchEverywhereManager.getInstance(project).getCurrentlyShownUI().selectFirst());
+        });
       }
     }
     catch (InterruptedException | ExecutionException e) {
@@ -103,5 +110,8 @@ public class SearchEverywhereCommand extends AbstractCommand {
 
     @Argument
     Boolean close = false;
+
+    @Argument
+    Boolean selectFirst = false;
   }
 }
