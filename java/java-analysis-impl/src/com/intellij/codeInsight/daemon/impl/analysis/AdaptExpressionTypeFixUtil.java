@@ -216,15 +216,23 @@ final class AdaptExpressionTypeFixUtil {
                                         @Nullable PsiType expectedType,
                                         @Nullable PsiType actualType) {
     if (actualType == null || expectedType == null) return;
+    boolean mentionsTypeArgument = mentionsTypeArgument(expression, actualType);
     expectedType = GenericsUtil.getVariableTypeByExpressionType(expectedType);
     TextRange range = expression.getTextRange();
     String role = textRange.equals(range) ? null : getRole(expression);
-    IntentionAction action3 = new WrapWithAdapterMethodCallFix(expectedType, expression, role);
-    info.registerFix(action3, null, null, null, null);
-    IntentionAction action2 = QUICK_FIX_FACTORY.createWrapWithOptionalFix(expectedType, expression);
-    info.registerFix(action2, null, null, null, null);
-    IntentionAction action1 = new WrapExpressionFix(expectedType, expression, role);
-    info.registerFix(action1, null, null, null, null);
+    if (!mentionsTypeArgument) {
+      IntentionAction action3 = new WrapWithAdapterMethodCallFix(expectedType, expression, role);
+      info.registerFix(action3, null, null, null, null);
+      IntentionAction action2 = QUICK_FIX_FACTORY.createWrapWithOptionalFix(expectedType, expression);
+      info.registerFix(action2, null, null, null, null);
+      IntentionAction action1 = new WrapExpressionFix(expectedType, expression, role);
+      info.registerFix(action1, null, null, null, null);
+      PsiType castToType = suggestCastTo(expectedType, actualType);
+      if (castToType != null) {
+        IntentionAction action = new AddTypeCastFix(castToType, expression, role);
+        info.registerFix(action, null, null, null, null);
+      }
+    }
     if (expectedType instanceof PsiArrayType) {
       PsiType erasedValueType = TypeConversionUtil.erasure(actualType);
       if (erasedValueType != null &&
@@ -234,11 +242,6 @@ final class AdaptExpressionTypeFixUtil {
       }
     }
     HighlightFixUtil.registerCollectionToArrayFixAction(info, actualType, expectedType, expression);
-    PsiType castToType = suggestCastTo(expectedType, actualType);
-    if (castToType != null) {
-      IntentionAction action = new AddTypeCastFix(castToType, expression, role);
-      info.registerFix(action, null, null, null, null);
-    }
     if (expression instanceof PsiMethodCallExpression call) {
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier != null) {
@@ -252,6 +255,13 @@ final class AdaptExpressionTypeFixUtil {
         registerPatchParametersFixes(info, textRange, call, argMethod, expectedType, actualType);
       }
     }
+  }
+
+  private static boolean mentionsTypeArgument(PsiExpression expression, PsiType type) {
+    if (!(expression instanceof PsiMethodCallExpression call)) return false;
+    PsiMethod method = call.resolveMethod();
+    if (method == null) return false;
+    return PsiTypesUtil.mentionsTypeParameters(type, Set.of(method.getTypeParameters()));
   }
 
   @Nls

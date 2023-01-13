@@ -637,7 +637,9 @@ public final class HighlightMethodUtil {
     }
     if (methodCall instanceof PsiMethodCallExpression) {
       registerMethodCallIntentions(builder, (PsiMethodCallExpression)methodCall, ((PsiMethodCallExpression)methodCall).getArgumentList(), resolveHelper);
-      registerMethodReturnFixAction(builder, resolveResult, methodCall);
+      if (!PsiTypesUtil.mentionsTypeParameters(actualType, Set.of(method.getTypeParameters()))) {
+        registerMethodReturnFixAction(builder, resolveResult, methodCall);
+      }
       registerTargetTypeFixesBasedOnApplicabilityInference((PsiMethodCallExpression)methodCall, resolveResult, method, builder);
     }
     return builder;
