@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataOutputStream;
 import java.io.*;
-import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
@@ -273,30 +272,6 @@ public final class IOUtil {
     }
 
     return ok;
-  }
-
-  public static void syncStream(@NotNull OutputStream stream) throws IOException {
-    stream.flush();
-
-    try {
-      Field outField = FilterOutputStream.class.getDeclaredField("out");
-      outField.setAccessible(true);
-      while (stream instanceof FilterOutputStream) {
-        Object o = outField.get(stream);
-        if (o instanceof OutputStream) {
-          stream = (OutputStream)o;
-        }
-        else {
-          break;
-        }
-      }
-      if (stream instanceof FileOutputStream) {
-        ((FileOutputStream)stream).getFD().sync();
-      }
-    }
-    catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public static <T> T openCleanOrResetBroken(@NotNull ThrowableComputable<T, ? extends IOException> factoryComputable,
