@@ -220,7 +220,7 @@ public class RemoteConnectionBuilder {
               }
             }
             else {
-              LOG.warn("Capture agent not found: " + agentArtifactPath);
+              LOG.error("Capture agent not found: " + agentArtifactPath);
             }
           }
           else {
