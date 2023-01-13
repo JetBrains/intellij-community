@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import javax.swing.JComboBox
 import kotlin.reflect.KMutableProperty0
 import com.intellij.openapi.observable.util.whenItemSelectedFromUi as whenItemSelectedFromUiImpl
@@ -38,6 +39,7 @@ fun <T, C : ComboBox<T>> Cell<C>.bindItem(property: ObservableMutableProperty<T>
  *     * In other cases other approaches should be used depending on desired behaviour
  */
 @Deprecated("Signature of the method is going to be changed to bindItem(prop: KMutableProperty0<T?>). See the doc for details")
+@ScheduledForRemoval
 fun <T, C : ComboBox<T>> Cell<C>.bindItem(prop: KMutableProperty0<T>): Cell<C> {
   return bindItem(prop.toMutableProperty().toNullableProperty())
 }
