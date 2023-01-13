@@ -831,6 +831,16 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         public void testTypeArgumentsFromParameters() throws Exception {
             runTest("../testData/handlers/basic/typeArgsForCall/TypeArgumentsFromParameters.kt");
         }
+
+        @TestMetadata("TypeArgumentsFromReturnType.kt")
+        public void testTypeArgumentsFromReturnType() throws Exception {
+            runTest("../testData/handlers/basic/typeArgsForCall/TypeArgumentsFromReturnType.kt");
+        }
+
+        @TestMetadata("TypeArgumentsFromReturnType2.kt")
+        public void testTypeArgumentsFromReturnType2() throws Exception {
+            runTest("../testData/handlers/basic/typeArgsForCall/TypeArgumentsFromReturnType2.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

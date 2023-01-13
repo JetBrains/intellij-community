@@ -11,8 +11,11 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.endOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.KotlinCompletionCharFilter
@@ -34,14 +37,16 @@ internal class FunctionLookupElementFactory {
         symbol: KtFunctionLikeSymbol,
         options: CallableInsertionOptions,
         substitutor: KtSubstitutor,
+        expectedType: KtType? = null,
     ): LookupElementBuilder {
         val insertEmptyLambda = insertLambdaBraces(symbol)
         val lookupObject = FunctionCallLookupObject(
-            name,
-            options,
-            renderFunctionParameters(symbol, substitutor),
-            inputValueArguments = symbol.valueParameters.isNotEmpty(),
-            insertEmptyLambda,
+          name,
+          options,
+          renderFunctionParameters(symbol, substitutor),
+          inputValueArgumentsAreRequired = symbol.valueParameters.isNotEmpty(),
+          inputTypeArgumentsAreRequired = !functionCanBeCalledWithoutExplicitTypeArguments(symbol, expectedType),
+          insertEmptyLambda,
         )
 
         val builder = LookupElementBuilder.create(lookupObject, name.asString())
@@ -82,13 +87,83 @@ internal class FunctionLookupElementFactory {
             }
         }
     }
+
+    private fun KtAnalysisSession.functionCanBeCalledWithoutExplicitTypeArguments(
+      symbol: KtFunctionLikeSymbol,
+      expectedType: KtType?
+    ): Boolean {
+        if (symbol.typeParameters.isEmpty()) return true
+
+        val typeParametersToInfer = symbol.typeParameters.toSet()
+        val potentiallyInferredTypeParameters = mutableSetOf<KtTypeParameterSymbol>()
+
+        /**
+         * Collects type arguments of [type] (or type itself in case of [KtTypeParameterType]), which are probably will be inferred.
+         *
+         * @param onlyCollectReturnTypeOfFunctionalType if true, then only the return type of functional type is considered inferred.
+         * For example, in the following case:
+         * ```
+         * fun <T1, T2> T1.foo(handler: (T2) -> Boolean) {}
+         *
+         * fun f() {
+         *     "".foo<String> { <caret> }
+         * }
+         * ```
+         * we can't rely on the inference from `handler`, because lambda input types may not be declared explicitly.
+         */
+        fun collectPotentiallyInferredTypes(type: KtType, onlyCollectReturnTypeOfFunctionalType: Boolean) {
+            when (type) {
+                is KtTypeParameterType -> {
+                    val typeParameterSymbol = type.symbol
+                    if (typeParameterSymbol !in typeParametersToInfer || typeParameterSymbol in potentiallyInferredTypeParameters) return
+
+                    potentiallyInferredTypeParameters.add(type.symbol)
+                    // Add type parameters possibly inferred by type arguments of parameter's upper-bound
+                    // e.g. <T, C: Iterable<T>>, so T is inferred from C
+                    type.symbol.upperBounds
+                        .filterIsInstance<KtNonErrorClassType>()
+                        .filter { it.ownTypeArguments.isNotEmpty() }
+                        .forEach { collectPotentiallyInferredTypes(it, onlyCollectReturnTypeOfFunctionalType = false) }
+                }
+
+                is KtFunctionalType -> {
+                    val typesToProcess = if (onlyCollectReturnTypeOfFunctionalType) {
+                        // do not rely on inference from input of functional type - use only return type of functional type
+                        listOf(type.returnType)
+                    } else {
+                        listOfNotNull(type.receiverType) + type.returnType + type.parameterTypes
+                    }
+                    typesToProcess.forEach { collectPotentiallyInferredTypes(it, onlyCollectReturnTypeOfFunctionalType) }
+                }
+
+                is KtUsualClassType -> {
+                    val typeArguments = type.ownTypeArguments.mapNotNull { it.type }
+                    typeArguments.forEach { collectPotentiallyInferredTypes(it, onlyCollectReturnTypeOfFunctionalType) }
+                }
+
+                else -> {}
+            }
+        }
+
+
+        symbol.receiverParameter?.type?.let { collectPotentiallyInferredTypes(it, onlyCollectReturnTypeOfFunctionalType = true) }
+        symbol.valueParameters.forEach { collectPotentiallyInferredTypes(it.returnType, onlyCollectReturnTypeOfFunctionalType = true) }
+
+        // check that there is an expected type and the return value of the function can potentially match it
+        if (expectedType != null && symbol.returnType isPossiblySubTypeOf expectedType) {
+            collectPotentiallyInferredTypes(symbol.returnType, onlyCollectReturnTypeOfFunctionalType = false)
+        }
+
+        return potentiallyInferredTypeParameters.containsAll(symbol.typeParameters)
+    }
 }
 
 internal data class FunctionCallLookupObject(
     override val shortName: Name,
     override val options: CallableInsertionOptions,
     override val renderedDeclaration: String,
-    val inputValueArguments: Boolean,
+    val inputValueArgumentsAreRequired: Boolean,
+    val inputTypeArgumentsAreRequired: Boolean,
     val insertEmptyLambda: Boolean,
 ) : KotlinCallableLookupObject()
 
@@ -108,6 +183,10 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
 
         val isSmartEnterCompletion = completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR
         val isReplaceCompletion = completionChar == Lookup.REPLACE_SELECT_CHAR
+        val isNormalCompletion = completionChar == Lookup.NORMAL_SELECT_CHAR
+
+        var insertTypeArguments = lookupObject.inputTypeArgumentsAreRequired &&
+                (isNormalCompletion || isReplaceCompletion || isSmartEnterCompletion)
 
         val preferParentheses = completionChar == '(' || isReplaceCompletion && chars.isCharAt(offset, '(')
         val insertLambda = !preferParentheses && lookupObject.insertEmptyLambda
@@ -123,10 +202,17 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
                         /* if type argument list is on multiple lines this is more likely wrong parsing*/
                         if (parent is KtTypeArgumentList && parent.getText().indexOf('\n') < 0) {
                             offset = parent.endOffset
+                            insertTypeArguments = false
                         }
                     }
                 }
             }
+        }
+
+        if (insertTypeArguments) {
+            document.insertString(offset, "<>")
+            editor.caretModel.moveToOffset(offset + 1)
+            offset += 2
         }
 
         var openingBracketOffset = chars.indexOfSkippingSpace(openingBracket, offset)
@@ -158,18 +244,20 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
             closeBracketOffset = document.charsSequence.indexOfSkippingSpace(closingBracket, openingBracketOffset + 1)
         }
 
-        if (shouldPlaceCaretInBrackets(completionChar, lookupObject) || closeBracketOffset == null) {
-            editor.caretModel.moveToOffset(openingBracketOffset + 1 + inBracketsShift)
-            AutoPopupController.getInstance(project)?.autoPopupParameterInfo(editor, offsetElement)
-        } else {
-            editor.caretModel.moveToOffset(closeBracketOffset + 1)
+        if (!insertTypeArguments) {
+            if (shouldPlaceCaretInBrackets(completionChar, lookupObject) || closeBracketOffset == null) {
+                editor.caretModel.moveToOffset(openingBracketOffset + 1 + inBracketsShift)
+                AutoPopupController.getInstance(project)?.autoPopupParameterInfo(editor, offsetElement)
+            } else {
+                editor.caretModel.moveToOffset(closeBracketOffset + 1)
+            }
         }
     }
 
     private fun shouldPlaceCaretInBrackets(completionChar: Char, lookupObject: FunctionCallLookupObject): Boolean {
         if (completionChar == ',' || completionChar == '.' || completionChar == '=') return false
         if (completionChar == '(') return true
-        return lookupObject.inputValueArguments || lookupObject.insertEmptyLambda
+        return lookupObject.inputValueArgumentsAreRequired || lookupObject.insertEmptyLambda
     }
 
     // FIXME Should be fetched from language settings (INSERT_WHITESPACES_IN_SIMPLE_ONE_LINE_METHOD), but we do not have them right now

@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.createWeighingContext
 import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.*
 
 internal open class FirCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
@@ -91,7 +91,6 @@ internal open class FirCallableCompletionContributor(
             else -> completeWithoutReceiver(scopesContext, weighingContext, extensionChecker, visibilityChecker)
         }
     }
-
 
     private fun KtAnalysisSession.completeWithoutReceiver(
         implicitScopesContext: KtScopeContext,

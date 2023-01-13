@@ -76,7 +76,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         // Don't offer any hidden deprecated items.
         if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return
         with(lookupElementFactory) {
-            createLookupElement(symbol, importStrategyDetector)
+            createLookupElement(symbol, importStrategyDetector, expectedType = expectedType)
                 .let(sink::addElement)
         }
     }
@@ -117,7 +117,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         // Don't offer any deprecated items that could leads to compile errors.
         if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return
         val lookup = with(lookupElementFactory) {
-            createCallableLookupElement(name, symbol, options, substitutor)
+            createCallableLookupElement(name, symbol, options, substitutor, context.expectedType)
         }
         priority?.let { lookup.priority = it }
         lookup.callableWeight = getCallableMetadata(context, symbol, substitutor)
