@@ -36,8 +36,8 @@ import java.io.PrintWriter;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -493,7 +493,7 @@ public class WSLDistribution implements AbstractWslDistribution {
         return windowsPath;
       }
     }
-    return getUNCRoot() + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
+    return getUNCRootPathString() + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
   }
 
   private static boolean containsDriveLetter(@NotNull String linuxPath) {
@@ -582,19 +582,15 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   /**
-   * @deprecated use {@link WSLDistribution#getUNCRootPath()} instead
-   */
-  @Deprecated
-  public @NotNull File getUNCRoot() {
-    return new File(WslConstants.UNC_PREFIX + myDescriptor.getMsId());
-  }
-
-  /**
    * @return UNC root for the distribution, e.g. {@code \\wsl$\Ubuntu}
    */
   @ApiStatus.Experimental
   public @NotNull Path getUNCRootPath() {
-    return Paths.get(WslConstants.UNC_PREFIX + myDescriptor.getMsId());
+    return Path.of(getUNCRootPathString());
+  }
+
+  private @NotNull String getUNCRootPathString() {
+    return WslConstants.UNC_PREFIX + myDescriptor.getMsId();
   }
 
   @Override
@@ -603,8 +599,8 @@ public class WSLDistribution implements AbstractWslDistribution {
     if (!Experiments.getInstance().isFeatureEnabled("wsl.p9.support")) {
       return null;
     }
-    File uncRoot = getUNCRoot();
-    return uncRoot.exists() ? VfsUtil.findFileByIoFile(uncRoot, refreshIfNeed) : null;
+    Path uncRoot = getUNCRootPath();
+    return Files.exists(uncRoot) ? VfsUtil.findFile(uncRoot, refreshIfNeed) : null;
   }
 
   // https://docs.microsoft.com/en-us/windows/wsl/compare-versions#accessing-windows-networking-apps-from-linux-host-ip

@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -324,12 +326,11 @@ public class GitExecutableDetector {
   private static String checkWslDistribution(@NotNull WSLDistribution distribution) {
     if (distribution.getVersion() != 2) return null;
 
-    File root = distribution.getUNCRoot();
+    Path root = distribution.getUNCRootPath();
     for (String p : UNIX_PATHS) {
-      File d = new File(root, p);
-      File f = new File(d, UNIX_EXECUTABLE);
-      if (f.exists()) {
-        return f.getPath();
+      Path f = root.resolve(p).resolve(UNIX_EXECUTABLE);
+      if (Files.exists(f)) {
+        return f.toString();
       }
     }
     return null;
