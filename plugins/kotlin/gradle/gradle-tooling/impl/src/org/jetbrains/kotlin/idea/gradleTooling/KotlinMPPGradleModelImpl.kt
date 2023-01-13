@@ -3,13 +3,12 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.tasks.Exec
-import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheAwareImpl
-import org.jetbrains.kotlin.idea.projectModel.*
-import java.io.File
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.createCachedArgsInfo
+import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.tooling.core.MutableExtras
 import org.jetbrains.kotlin.tooling.core.toMutableExtras
+import java.io.File
 
 class KotlinAndroidSourceSetInfoImpl(
     override val kotlinSourceSetName: String,
