@@ -8,20 +8,23 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.util.bindDisabled
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.collaboration.util.URIUtil
+import com.intellij.ide.DataManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.content.Content
 import com.intellij.util.childScope
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
+import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabFilesController
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowTabViewModel.NestedViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsPanelFactory
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -97,8 +100,32 @@ internal class GitLabToolWindowTabController(private val project: Project,
     }
   }
 
-  private fun createMergeRequestsComponent(project: Project, scope: CoroutineScope, vm: NestedViewModel.MergeRequests): JComponent =
-    GitLabMergeRequestsPanelFactory().create(project, scope, vm.listVm)
+  private fun createMergeRequestsComponent(project: Project, scope: CoroutineScope, vm: NestedViewModel.MergeRequests): JComponent {
+    val filesController = GitLabFilesController(project, vm.connection.repo.repository)
+    scope.launch {
+      try {
+        awaitCancellation()
+      }
+      finally {
+        withContext(NonCancellable) {
+          invokeAndWaitIfNeeded(ModalityState.defaultModalityState()) {
+            filesController.closeAllFiles()
+          }
+        }
+      }
+    }
+
+    return GitLabMergeRequestsPanelFactory().create(project, scope, vm.listVm).also { panel ->
+      DataManager.registerDataProvider(panel) {
+        if (GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(it)) {
+          filesController
+        }
+        else {
+          null
+        }
+      }
+    }
+  }
 
   private fun createLoginButtons(scope: CoroutineScope, vm: GitLabRepositoryAndAccountSelectorViewModel)
     : List<JButton> {

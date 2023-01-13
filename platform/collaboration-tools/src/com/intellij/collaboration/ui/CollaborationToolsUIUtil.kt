@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui
 
 import com.intellij.application.subscribe
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
+import com.intellij.ide.ui.AntialiasingType
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
@@ -16,13 +17,19 @@ import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.content.Content
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
+import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.HTMLEditorKitBuilder
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
+import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.Nls
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.*
 import javax.swing.event.DocumentEvent
+import javax.swing.text.DefaultCaret
 import kotlin.properties.Delegates
 
 object CollaborationToolsUIUtil {
@@ -188,6 +195,51 @@ fun HorizontalListPanel(gap: Int = 0): JPanel =
   ScrollablePanel(ListLayout.horizontal(gap)).apply {
     isOpaque = false
   }
+
+/**
+ * Scrollpane without background and borders
+ */
+@Suppress("FunctionName")
+fun TransparentScrollPane(content: JComponent): JScrollPane =
+  ScrollPaneFactory.createScrollPane(content, false).apply {
+    isOpaque = false
+    viewport.isOpaque = false
+  }
+
+/**
+ * Read-only editor pane intended to display simple HTML snippet
+ */
+@Suppress("FunctionName")
+fun SimpleHtmlPane(@Language("HTML") body: @Nls String? = null): JEditorPane =
+  JEditorPane().apply {
+    editorKit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
+
+    isEditable = false
+    isOpaque = false
+    addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+    margin = JBInsets.emptyInsets()
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
+
+    (caret as DefaultCaret).updatePolicy = DefaultCaret.NEVER_UPDATE
+
+    name = "Simple HTML Pane"
+
+    if (body != null) {
+      setHtmlBody(body)
+    }
+  }
+
+fun JEditorPane.setHtmlBody(@Language("HTML") body: @Nls String) {
+  if (body.isEmpty()) {
+    text = ""
+  }
+  else {
+    //language=HTML
+    text = "<html><body>$body</body></html>"
+  }
+  // JDK bug - need to force height recalculation (see JBR-2256)
+  setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
+}
 
 internal fun <E> ListModel<E>.findIndex(item: E): Int {
   for (i in 0 until size) {

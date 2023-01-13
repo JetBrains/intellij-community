@@ -79,7 +79,7 @@ internal class GitLabToolWindowTabViewModel(parentCs: CoroutineScope,
 
     class MergeRequests(
       scope: CoroutineScope,
-      connection: GitLabProjectConnection,
+      val connection: GitLabProjectConnection,
       accountManager: GitLabAccountManager
     ) : NestedViewModel {
       private val avatarIconsProvider: IconsProvider<GitLabUserDTO> = CachingIconsProvider(

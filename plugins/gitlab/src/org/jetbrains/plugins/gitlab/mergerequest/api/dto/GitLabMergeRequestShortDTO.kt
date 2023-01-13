@@ -3,15 +3,15 @@ package org.jetbrains.plugins.gitlab.mergerequest.api.dto
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeStatus
 import java.util.*
 
 data class GitLabMergeRequestShortDTO(
-  val id: Long,
-  val iid: String,
+  override val id: Long,
+  override val iid: String,
   val projectId: Long,
   val title: String,
   val description: String,
@@ -25,7 +25,8 @@ data class GitLabMergeRequestShortDTO(
   val createdAt: Date,
   val draft: Boolean,
   val webUrl: String
-) {
+) : GitLabMergeRequestId {
+
   val stateEnum: GitLabMergeRequestState = parseState(state)
 
   val mergeStatusEnum: GitLabMergeStatus = parseMergeStatus(mergeStatus)
