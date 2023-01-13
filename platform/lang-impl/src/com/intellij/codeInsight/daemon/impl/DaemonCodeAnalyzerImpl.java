@@ -30,11 +30,7 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.fileEditor.ClientFileEditorManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -84,7 +80,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
   private final @NotNull PsiDocumentManager myPsiDocumentManager;
-  private FileEditorManagerEx myFileEditorManager;
+  private FileEditorManager myFileEditorManager;
   private final Map<FileEditor, DaemonProgressIndicator> myUpdateProgress = new ConcurrentHashMap<>();
 
   private final UpdateRunnable myUpdateRunnable;
@@ -147,10 +143,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     myDaemonListenerPublisher = project.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC);
   }
 
-  private FileEditorManagerEx getFileEditorManager() {
+  private FileEditorManager getFileEditorManager() {
     var result = myFileEditorManager;
     if (result == null) {
-      result = FileEditorManagerEx.getInstanceEx(myProject);
+      result = FileEditorManager.getInstance(myProject);
       myFileEditorManager = result;
     }
     return result;
@@ -246,7 +242,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                                     @NotNull PsiFile psiFile) {
     assertMyFile(psiFile.getProject(), psiFile);
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
-    FileEditorManagerEx fileEditorManager = getFileEditorManager();
+    FileEditorManager fileEditorManager = getFileEditorManager();
     for (FileEditor fileEditor : fileEditorManager.getAllEditors(vFile)) {
       if (fileEditor instanceof TextEditor) {
         List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = new ArrayList<>();

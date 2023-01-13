@@ -31,7 +31,7 @@ public final class FileEditorPsiTreeChangeListener extends PsiTreeChangeAdapter 
   public void propertyChanged(@NotNull final PsiTreeChangeEvent e) {
     if (PsiTreeChangeEvent.PROP_ROOTS.equals(e.getPropertyName())) {
       ApplicationManager.getApplication().assertWriteIntentLockAcquired();
-      FileEditorManagerEx fileEditorManager = (FileEditorManagerEx)FileEditorManager.getInstance(myProject);
+      FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
       final VirtualFile[] openFiles = fileEditorManager.getOpenFiles();
       for (int i = openFiles.length - 1; i >= 0; i--) {
         final VirtualFile file = openFiles[i];
