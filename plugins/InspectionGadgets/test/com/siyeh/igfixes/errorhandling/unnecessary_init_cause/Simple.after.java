@@ -4,7 +4,7 @@ class Simple {
 
     void foo() {
         try {
-            new FileInputStream("asdf");
+            new FileInputStream("asdf").close();
         } catch (FileNotFoundException e) {
             throw (RuntimeException) new RuntimeException(e);
         }
