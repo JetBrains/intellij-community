@@ -40,7 +40,10 @@
 
   <actions>
     <group id="GitLab.Merge.Requests.List.Actions">
-      <action id="GitLab.Merge.Request.Show" class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestAction"/>
+      <action id="GitLab.Merge.Request.Show"
+              class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestAction"/>
+      <action id="GitLab.Merge.Request.Open.In.Browser"
+              class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabOpenMergeRequestInBrowserAction"/>
     </group>
   </actions>
 </idea-plugin>
