@@ -152,6 +152,27 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     assertEquals(1, features.get("USAGE: FOR"));
   }
 
+  public void testFieldFeatures() throws ExecutionException, InterruptedException {
+    try {
+      Registry.get("similarity.find.usages.add.features.for.fields").setValue(true);
+      myFixture.configureByFile("Field.java");
+      PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
+      final Bag features = getFeatures(elementAtCaret);
+      assertEquals(1, features.get("CONTEXT: FIELD: field"));
+      assertEquals(0, features.get("CONTEXT: FIELD: localVariable"));
+      assertEquals(0, features.get("CONTEXT: FIELD: forLoopVariable"));
+      assertEquals(0, features.get("CONTEXT: FIELD: nestedIfVar"));
+      assertEquals(0, features.get("CONTEXT: FIELD: whileVariable"));
+      assertEquals(0, features.get("CONTEXT: FIELD: ifVar"));
+      assertEquals(0, features.get("CONTEXT: FIELD: elseVar"));
+      assertEquals(0, features.get("CONTEXT: FIELD: list"));
+      assertEquals(0, features.get("CONTEXT: FIELD: forEachVar"));
+    }
+    finally {
+      Registry.get("similarity.find.usages.add.features.for.fields").resetToDefault();
+    }
+  }
+
   public void testBag() {
     final Bag bag = new Bag("a", "b");
     assertEquals("""

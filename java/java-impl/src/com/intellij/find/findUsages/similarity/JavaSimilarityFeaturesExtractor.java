@@ -8,8 +8,12 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesRecorder;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.HashSet;
 
 import java.util.stream.IntStream;
 
@@ -18,11 +22,13 @@ import static com.intellij.psi.JavaTokenType.FINAL_KEYWORD;
 public class JavaSimilarityFeaturesExtractor extends JavaRecursiveElementVisitor {
   private final @NotNull UsageSimilarityFeaturesRecorder myUsageSimilarityFeaturesRecorder;
   private final @NotNull PsiElement myContext;
+  private final @NotNull HashSet<String> myVariableNames;
   private final @NotNull PsiElement myUsage;
 
   public JavaSimilarityFeaturesExtractor(@NotNull PsiElement usage, @NotNull PsiElement context) {
     myUsageSimilarityFeaturesRecorder = new UsageSimilarityFeaturesRecorder(context, usage);
     myContext = context;
+    myVariableNames = collectVariableNames();
     myUsage = usage;
   }
 
@@ -135,6 +141,9 @@ public class JavaSimilarityFeaturesExtractor extends JavaRecursiveElementVisitor
 
   @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+    if (Registry.is("similarity.find.usages.add.features.for.fields") && isField(expression)) {
+      myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, "FIELD: " + expression.getReferenceName());
+    }
     if (!(expression instanceof PsiMethodReferenceExpression)) {
       if (!Registry.is("similarity.find.usages.fast.clustering")) {
         myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, getTypeRepresentation(expression));
@@ -234,6 +243,96 @@ public class JavaSimilarityFeaturesExtractor extends JavaRecursiveElementVisitor
     else {
       super.visitMethod(method);
     }
+  }
+
+  private boolean isField(@NotNull PsiReferenceExpression referenceExpression) {
+    return !isMethod(referenceExpression) &&
+           (ContainerUtil.exists(referenceExpression.getChildren(), child -> child.getText().equals(".")) ||
+            !myVariableNames.contains(referenceExpression.getReferenceName()));
+  }
+
+  private @NotNull HashSet<String> collectVariableNames() {
+    PsiMethod containingMethod = getWrappingMethodForUsage(myContext);
+    if (containingMethod == null) return new HashSet<>();
+    PsiCodeBlock body = containingMethod.getBody();
+    if (body == null) return new HashSet<>();
+    HashSet<String> allVariables = new HashSet<>();
+    allVariables.addAll(processFunctionParameters(containingMethod));
+    allVariables.addAll(processFunctionStatements(body));
+    return allVariables;
+  }
+
+  private static boolean isMethod(@NotNull PsiReferenceExpression expression) {
+    return expression.getParent() instanceof PsiMethodCallExpression &&
+           expression.getNextSibling() instanceof PsiExpressionList;
+  }
+
+  private static @Nullable PsiMethod getWrappingMethodForUsage(@NotNull PsiElement usage) {
+    while (!(usage instanceof PsiMethod)) {
+      usage = usage.getParent();
+      if(usage instanceof PsiFile || usage == null) return null;
+    }
+    return (PsiMethod)usage;
+  }
+
+  private static @NotNull HashSet<String> processFunctionParameters(@NotNull PsiMethod containingMethod) {
+    HashSet<String> variableNames = new HashSet<>();
+    Arrays.stream(containingMethod.getParameterList().getParameters())
+      .forEach(parameter -> variableNames.add(parameter.getName()));
+    return variableNames;
+  }
+
+  private static @NotNull HashSet<String> processFunctionStatements(@NotNull PsiCodeBlock body) {
+    HashSet<String> variableNames = new HashSet<>();
+    for (PsiStatement statement : body.getStatements()) {
+      if (statement instanceof PsiDeclarationStatement) {
+        variableNames.addAll(processDeclarationStatement((PsiDeclarationStatement)statement));
+        continue;
+      }
+
+      if (statement instanceof PsiLoopStatement) {
+        variableNames.addAll(processLoopStatement(statement));
+        continue;
+      }
+
+      if (statement instanceof PsiIfStatement) {
+        Arrays.stream(statement.getChildren())
+          .filter(child -> child instanceof PsiBlockStatement)
+          .forEach(blockStatement -> variableNames
+            .addAll(processFunctionStatements(((PsiBlockStatement)blockStatement).getCodeBlock())));
+      }
+    }
+    return variableNames;
+  }
+
+  private static @NotNull HashSet<String> processLoopStatement(@NotNull PsiStatement statement) {
+    HashSet<String> variableNames = new HashSet<>();
+    if (statement instanceof PsiForeachStatement) {
+      PsiParameter declaration = ((PsiForeachStatement)statement).getIterationParameter();
+      variableNames.add((declaration).getName());
+    }
+
+    if (statement instanceof PsiForStatement) {
+      PsiStatement initStatement = ((PsiForStatement)statement).getInitialization();
+      if (initStatement instanceof PsiDeclarationStatement) {
+        variableNames.addAll(processDeclarationStatement((PsiDeclarationStatement)initStatement));
+      }
+    }
+
+    PsiStatement statementBody = ((PsiLoopStatement)statement).getBody();
+    if (!(statementBody instanceof PsiBlockStatement)) return variableNames;
+    variableNames.addAll(processFunctionStatements(((PsiBlockStatement)statementBody).getCodeBlock()));
+    return variableNames;
+  }
+
+  private static @NotNull HashSet<String> processDeclarationStatement(@NotNull PsiDeclarationStatement statement) {
+    HashSet<String> variableNames = new HashSet<>();
+    Arrays.stream(statement.getDeclaredElements()).forEach(element -> {
+      if (element instanceof PsiLocalVariable) {
+        variableNames.add(((PsiLocalVariable)element).getName());
+      }
+    });
+    return variableNames;
   }
 
   private static @Nullable String viaResolve(@NotNull PsiMethodReferenceExpression expression) {
