@@ -78,7 +78,10 @@ fun Method.sortedVariablesWithLocation(): List<VariableWithLocation> {
         // any bytecode index - so the variable ends exactly one index later.
         val otherVariables = startOffsets[endOffset.codeIndex() + 1] ?: continue
         for (other in otherVariables) {
-            if (variable.name() == other.name() && variable.signature() == other.signature()) {
+            if (variable.name() == other.name() &&
+                variable.signature() == other.signature() &&
+                variable != other)
+            {
                 replacements[other] = variable
                 break
             }
@@ -89,7 +92,11 @@ fun Method.sortedVariablesWithLocation(): List<VariableWithLocation> {
         while (true) {
             alias = replacements[alias] ?: break
         }
-        replacements[variable] = alias
+
+        if (variable != alias) {
+            replacements[variable] = alias
+        }
+
         alias.getBorders()?.let {
             VariableWithLocation(variable, it.start)
         }
