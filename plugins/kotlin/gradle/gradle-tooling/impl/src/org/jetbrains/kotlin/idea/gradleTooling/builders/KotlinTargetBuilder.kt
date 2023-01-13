@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.kotlin.idea.projectModel.KotlinTestRunTask
+import org.jetbrains.kotlin.tooling.core.mutableExtrasOf
 
 object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetReflection, KotlinTarget> {
     override fun buildComponent(origin: KotlinTargetReflection, importingContext: MultiplatformModelImportingContext): KotlinTarget? {
@@ -47,6 +48,10 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
         }.orEmpty()
 
         val testRunTasks = buildTestRunTasks(importingContext.project, origin.gradleTarget)
+
+        val serializedExtras = importingContext.importReflection?.resolveExtrasSerialized(origin.gradleTarget)
+        val extras = if (serializedExtras != null) SerializedExtras.serializedExtrasOf(serializedExtras) else mutableExtrasOf()
+
         val target = KotlinTargetImpl(
             name,
             targetPresetName,
@@ -56,7 +61,8 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
             testRunTasks,
             nativeMainRunTasks,
             jar,
-            artifacts
+            artifacts,
+            extras = extras
         )
         compilations.forEach {
             it.disambiguationClassifier = target.disambiguationClassifier

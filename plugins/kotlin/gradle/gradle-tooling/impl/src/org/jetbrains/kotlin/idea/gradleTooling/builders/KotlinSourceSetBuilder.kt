@@ -5,10 +5,12 @@ import org.gradle.api.Named
 import org.gradle.api.Project
 import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.*
+import org.jetbrains.kotlin.idea.gradleTooling.SerializedExtras.Companion.serializedExtrasOf
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinAndroidSourceSetInfoBuilder.buildKotlinAndroidSourceSetInfo
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinSourceSetReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.tooling.core.mutableExtrasOf
 import org.jetbrains.kotlin.tooling.core.withClosure
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId
 import org.jetbrains.plugins.gradle.model.DefaultExternalLibraryDependency
@@ -99,6 +101,9 @@ internal class KotlinSourceSetBuilder(
             context.kotlinExtensionReflection.sourceSetsByName[sourceSetName]?.dependsOn.orEmpty().map { it.name }
         }
 
+        val serializedExtras = context.importReflection?.resolveExtrasSerialized(sourceSetReflection.instance)
+        val extras = if(serializedExtras != null) serializedExtrasOf(serializedExtras) else mutableExtrasOf()
+
         return KotlinSourceSetImpl(
             name = sourceSetReflection.name,
             languageSettings = languageSettings,
@@ -110,6 +115,7 @@ internal class KotlinSourceSetBuilder(
             allDependsOnSourceSets = allDependsOnSourceSetNames.toMutableSet(),
             additionalVisibleSourceSets = additionalVisibleSourceSets.toMutableSet(),
             androidSourceSetInfo = androidSourceSetInfo,
+            extras = extras,
         )
     }
 

@@ -8,6 +8,8 @@ import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheA
 import org.jetbrains.kotlin.idea.projectModel.*
 import java.io.File
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.createCachedArgsInfo
+import org.jetbrains.kotlin.tooling.core.MutableExtras
+import org.jetbrains.kotlin.tooling.core.toMutableExtras
 
 class KotlinAndroidSourceSetInfoImpl(
     override val kotlinSourceSetName: String,
@@ -32,6 +34,7 @@ class KotlinSourceSetImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) c
     override val allDependsOnSourceSets: Set<String>,
     override val additionalVisibleSourceSets: Set<String>,
     override val androidSourceSetInfo: KotlinAndroidSourceSetInfo?,
+    override val extras: MutableExtras,
     override val actualPlatforms: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
     override var isTestComponent: Boolean = false,
 ) : KotlinSourceSet {
@@ -51,6 +54,7 @@ class KotlinSourceSetImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) c
         allDependsOnSourceSets = kotlinSourceSet.allDependsOnSourceSets.toMutableSet(),
         additionalVisibleSourceSets = kotlinSourceSet.additionalVisibleSourceSets.toMutableSet(),
         androidSourceSetInfo = kotlinSourceSet.androidSourceSetInfo?.let(::KotlinAndroidSourceSetInfoImpl),
+        extras = kotlinSourceSet.extras.toMutableExtras(),
         actualPlatforms = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms),
         isTestComponent = kotlinSourceSet.isTestComponent
     )
@@ -139,7 +143,8 @@ data class KotlinCompilationImpl(
     override val cachedArgsInfo: CachedArgsInfo<*>,
     override val kotlinTaskProperties: KotlinTaskProperties,
     override val nativeExtensions: KotlinNativeCompilationExtensions?,
-    override val associateCompilations: Set<KotlinCompilationCoordinates>
+    override val associateCompilations: Set<KotlinCompilationCoordinates>,
+    override val extras: MutableExtras
 ) : KotlinCompilation {
 
     // create deep copy
@@ -154,7 +159,8 @@ data class KotlinCompilationImpl(
         cachedArgsInfo = createCachedArgsInfo(kotlinCompilation.cachedArgsInfo, cloningCache),
         kotlinTaskProperties = KotlinTaskPropertiesImpl(kotlinCompilation.kotlinTaskProperties),
         nativeExtensions = kotlinCompilation.nativeExtensions?.let(::KotlinNativeCompilationExtensionsImpl),
-        associateCompilations = cloneCompilationCoordinatesWithCaching(kotlinCompilation.associateCompilations, cloningCache)
+        associateCompilations = cloneCompilationCoordinatesWithCaching(kotlinCompilation.associateCompilations, cloningCache),
+        extras = kotlinCompilation.extras.toMutableExtras()
     ) {
         disambiguationClassifier = kotlinCompilation.disambiguationClassifier
         platform = kotlinCompilation.platform
@@ -205,7 +211,8 @@ data class KotlinTargetImpl(
     override val testRunTasks: Collection<KotlinTestRunTask>,
     override val nativeMainRunTasks: Collection<KotlinNativeMainRunTask>,
     override val jar: KotlinTargetJar?,
-    override val konanArtifacts: List<KonanArtifactModel>
+    override val konanArtifacts: List<KonanArtifactModel>,
+    override val extras: MutableExtras
 ) : KotlinTarget {
     override fun toString() = name
 
@@ -241,7 +248,8 @@ data class KotlinTargetImpl(
                 }
         },
         KotlinTargetJarImpl(target.jar?.archiveFile),
-        target.konanArtifacts.map { KonanArtifactModelImpl(it) }.toList()
+        target.konanArtifacts.map { KonanArtifactModelImpl(it) }.toList(),
+        target.extras.toMutableExtras()
     )
 }
 
