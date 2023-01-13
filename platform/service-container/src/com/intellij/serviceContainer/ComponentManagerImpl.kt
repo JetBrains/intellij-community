@@ -977,7 +977,7 @@ abstract class ComponentManagerImpl(
       val lookup = MethodHandles.privateLookupIn(aClass, methodLookup)
       if (parent == null) {
         val instance = lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
-                       ?: lookup.findConstructor(aClass, coroutineScopeMethodType).invoke(intersectionCoroutineScope(aClass))
+                       ?: lookup.findConstructor(aClass, coroutineScopeMethodType).invoke(instanceCoroutineScope(aClass))
         @Suppress("UNCHECKED_CAST")
         return instance as T
       }
@@ -998,10 +998,10 @@ abstract class ComponentManagerImpl(
             && it.parameterTypes[0].isAssignableFrom(javaClass)
           }?.run {
             isAccessible = true
-            newInstance(getActualContainerInstance(), intersectionCoroutineScope(aClass))
+            newInstance(getActualContainerInstance(), instanceCoroutineScope(aClass))
           }
           ?: lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
-          ?: lookup.findConstructor(aClass, coroutineScopeMethodType).invoke(intersectionCoroutineScope(aClass))
+          ?: lookup.findConstructor(aClass, coroutineScopeMethodType).invoke(instanceCoroutineScope(aClass))
         @Suppress("UNCHECKED_CAST")
         return instance as T
       }
@@ -1454,14 +1454,18 @@ abstract class ComponentManagerImpl(
    */
   private val pluginScopes: AtomicReference<PersistentMap<CoroutineScope, CoroutineScope>> = AtomicReference(persistentHashMapOf())
 
-  private fun intersectionCoroutineScope(pluginClass: Class<*>): CoroutineScope {
+  private fun instanceCoroutineScope(pluginClass: Class<*>): CoroutineScope {
     val pluginClassloader = pluginClass.classLoader
-    if (pluginClassloader is PluginAwareClassLoader) {
-      return intersectionCoroutineScope(pluginClassloader.pluginCoroutineScope)
+    val parentScope = if (pluginClassloader is PluginAwareClassLoader) {
+      intersectionCoroutineScope(pluginClassloader.pluginCoroutineScope)
     }
     else { // non-unloadable
-      return getCoroutineScope()
+      getCoroutineScope()
     }
+    // The parent scope should become cancelled only when the container is disposed, or the plugin is unloaded.
+    // Leaking the parent scope might lead to premature cancellation.
+    // Fool proofing: a fresh child scope is created per instance to avoid leaking the parent to clients.
+    return parentScope.childScope(CoroutineName(pluginClass.name))
   }
 
   private fun intersectionCoroutineScope(pluginScope: CoroutineScope): CoroutineScope {
