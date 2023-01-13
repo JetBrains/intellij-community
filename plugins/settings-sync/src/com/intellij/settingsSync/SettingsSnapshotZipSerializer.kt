@@ -3,6 +3,7 @@ package com.intellij.settingsSync
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.util.io.*
@@ -101,6 +102,7 @@ internal object SettingsSnapshotZipSerializer {
     val metaInfo = MetaInfo().apply {
       date = formattedDate
       applicationId = snapshotMetaInfo.appInfo?.applicationId.toString()
+      buildNumber = snapshotMetaInfo.appInfo?.buildNumber?.asString() ?:""
       userName = snapshotMetaInfo.appInfo?.userName.toString()
       hostName = snapshotMetaInfo.appInfo?.hostName.toString()
       configFolder = snapshotMetaInfo.appInfo?.configFolder.toString()
@@ -117,8 +119,10 @@ internal object SettingsSnapshotZipSerializer {
           .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
           .readValue(infoFile.readText(), MetaInfo::class.java)
         val date = DateTimeFormatter.ISO_INSTANT.parse(metaInfo.date, Instant::from)
-        val appInfo = SettingsSnapshot.AppInfo(UUID.fromString(metaInfo.applicationId),
-                                               metaInfo.userName, metaInfo.hostName, metaInfo.configFolder)
+        val appInfo = SettingsSnapshot.AppInfo(
+          UUID.fromString(metaInfo.applicationId),
+          BuildNumber.fromString(metaInfo.buildNumber),
+          metaInfo.userName, metaInfo.hostName, metaInfo.configFolder)
         return SettingsSnapshot.MetaInfo(date, appInfo, metaInfo.isDeleted)
       }
       else {
@@ -134,6 +138,7 @@ internal object SettingsSnapshotZipSerializer {
   private class MetaInfo {
     lateinit var date: String
     lateinit var applicationId: String
+    var buildNumber: String = ""
     var userName: String = ""
     var hostName: String = ""
     var configFolder: String = ""
