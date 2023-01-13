@@ -241,14 +241,7 @@ class ToolWindowPane internal constructor(
     setWeight(anchor, weight)
   }
 
-  fun setWeight(window: ToolWindow, weight: Float) {
-    if (window.type != ToolWindowType.DOCKED) {
-      return
-    }
-    setWeight(window.anchor, normalizeWeight(weight))
-  }
-
-  private fun setWeight(anchor: ToolWindowAnchor, weight: Float) {
+  internal fun setWeight(anchor: ToolWindowAnchor, weight: Float) {
     val size = rootPane.size
     when (anchor) {
       ToolWindowAnchor.TOP -> verticalSplitter.firstSize = (size.getHeight() * weight).toInt()

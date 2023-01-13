@@ -1295,7 +1295,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
           if (another != null && anchor.isUltrawideLayout()) { // split windows side-by-side, set weight of the entire splitter
             weight += another.new.weight
           }
-          toolWindowPane.setWeight(item.entry.toolWindow, weight)
+          toolWindowPane.setWeight(anchor, weight)
         }
         if (item.old.sideWeight != item.new.sideWeight) {
           toolWindowPane.setSideWeight(item.entry.toolWindow, item.new.sideWeight)
