@@ -1971,6 +1971,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     else {
       // docked and sliding windows
       val anchor = info.anchor
+      val dockingAreaComponent: Component
       if (source.parent is Splitter) {
         var sizeInSplit = if (anchor.isSplitVertically) source.height else source.width
         val splitter = source.parent as Splitter
@@ -1980,11 +1981,16 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         info.sideWeight = getAdjustedRatio(partSize = sizeInSplit,
                                            totalSize = if (anchor.isSplitVertically) splitter.height else splitter.width,
                                            direction = if (splitter.secondComponent === source) -1 else 1)
+        dockingAreaComponent = splitter
+      }
+      else {
+        dockingAreaComponent = source
       }
       val toolWindowPane = getToolWindowPane(toolWindow)
-      val paneWeight = getAdjustedWeight(toolWindowPane, anchor, source)
-      info.weight = paneWeight
-      layoutState.setUnifiedAnchorWeight(anchor, paneWeight)
+      val toolWindowWeight = getAdjustedWeight(toolWindowPane, anchor, source)
+      val dockingAreaWeight = getAdjustedWeight(toolWindowPane, anchor, dockingAreaComponent)
+      info.weight = toolWindowWeight
+      layoutState.setUnifiedAnchorWeight(anchor, dockingAreaWeight)
     }
     fireStateChanged(MovedOrResized, toolWindow)
   }
