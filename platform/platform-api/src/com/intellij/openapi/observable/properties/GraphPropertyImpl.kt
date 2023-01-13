@@ -9,6 +9,10 @@ import org.jetbrains.annotations.ApiStatus
 class GraphPropertyImpl<T>(private val propertyGraph: PropertyGraph, initial: () -> T)
   : GraphProperty<T>, AtomicLazyProperty<T>(initial) {
 
+  init {
+    propertyGraph.registerIfNeeded(this)
+  }
+
   override fun dependsOn(parent: ObservableProperty<*>, update: () -> T) {
     propertyGraph.dependsOn(this, parent, update = update)
   }

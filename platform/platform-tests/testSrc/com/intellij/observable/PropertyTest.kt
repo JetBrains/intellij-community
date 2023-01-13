@@ -288,4 +288,24 @@ class PropertyTest : PropertyTestCase() {
     property0.set(7)
     assertProperties(properties, 7, 5, 7)
   }
+
+  @Test
+  fun `test graph propagation event`() {
+    val property0 = property { 0 }
+    val property1 = property { 0 }
+    val property2 = property { 0 }
+
+    val propagationCounter = AtomicInteger(0)
+    afterGraphPropagation { propagationCounter.incrementAndGet() }
+
+    property1.dependsOn(property0) { property0.get() }
+
+    assertEquals(0, propagationCounter.get())
+    property0.set(1)
+    assertEquals(1, propagationCounter.get())
+    property1.set(1)
+    assertEquals(2, propagationCounter.get())
+    property2.set(1)
+    assertEquals(3, propagationCounter.get())
+  }
 }
