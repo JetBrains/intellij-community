@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.api.dto
 
+import org.jetbrains.annotations.Nls
 import java.util.*
 
 data class GitLabMilestoneDTO(
@@ -12,7 +13,7 @@ data class GitLabMilestoneDTO(
   val projectId: Int,
   val startDate: Date?,
   val state: String,
-  val title: String,
+  val title: @Nls String,
   val updatedAt: String,
   val webUrl: String
 )
