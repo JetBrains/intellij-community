@@ -10,7 +10,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.*;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -20,8 +19,6 @@ import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,7 +33,6 @@ import java.io.PrintWriter;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
@@ -584,6 +580,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * @return UNC root for the distribution, e.g. {@code \\wsl$\Ubuntu}
    */
+  @Override
   @ApiStatus.Experimental
   public @NotNull Path getUNCRootPath() {
     return Path.of(getUNCRootPathString());
@@ -591,16 +588,6 @@ public class WSLDistribution implements AbstractWslDistribution {
 
   private @NotNull String getUNCRootPathString() {
     return WslConstants.UNC_PREFIX + myDescriptor.getMsId();
-  }
-
-  @Override
-  @ApiStatus.Experimental
-  public @Nullable VirtualFile getUNCRootVirtualFile(boolean refreshIfNeed) {
-    if (!Experiments.getInstance().isFeatureEnabled("wsl.p9.support")) {
-      return null;
-    }
-    Path uncRoot = getUNCRootPath();
-    return Files.exists(uncRoot) ? VfsUtil.findFile(uncRoot, refreshIfNeed) : null;
   }
 
   // https://docs.microsoft.com/en-us/windows/wsl/compare-versions#accessing-windows-networking-apps-from-linux-host-ip
