@@ -48,7 +48,7 @@ public abstract class PackagingElementFactory {
   public abstract PackagingElement<?> createTestModuleOutput(@NotNull Module module);
 
   @NotNull
-  public abstract List<? extends PackagingElement<?>> createLibraryElements(@NotNull Library library);
+  public abstract List<PackagingElement<?>> createLibraryElements(@NotNull Library library);
 
   @NotNull
   public abstract List<? extends PackagingElement<?>> createLibraryElements(@NotNull LibraryEntity libraryEntity, String moduleName);

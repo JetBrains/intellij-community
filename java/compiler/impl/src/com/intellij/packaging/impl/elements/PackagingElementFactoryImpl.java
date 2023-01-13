@@ -221,7 +221,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
 
   @NotNull
   @Override
-  public List<? extends PackagingElement<?>> createLibraryElements(@NotNull Library library) {
+  public List<PackagingElement<?>> createLibraryElements(@NotNull Library library) {
     final LibraryTable table = library.getTable();
     final String libraryName = library.getName();
     if (table != null) {
