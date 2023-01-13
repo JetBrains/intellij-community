@@ -5,6 +5,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
@@ -20,6 +21,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.xml.util.XmlEnumeratedValueReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,7 +153,17 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
     }
 
     @Override
-    public void tokenize(@NotNull final XmlAttributeValue element, final TokenConsumer consumer) {
+    public void tokenize(@NotNull XmlAttributeValue element, TokenConsumer consumer) {
+      PsiReference[] references = element.getReferences();
+      for (PsiReference reference : references) {
+        if (reference instanceof XmlEnumeratedValueReference) {
+          if (reference.resolve() != null) {
+            // this is probably valid enumeration value from XSD/RNG schema, such as SVG
+            return;
+          }
+        }
+      }
+
       final String valueTextTrimmed = element.getValue().trim();
       // do not inspect colors like #00aaFF
       if (valueTextTrimmed.startsWith("#") && valueTextTrimmed.length() <= 9 && isHexString(valueTextTrimmed.substring(1))) {

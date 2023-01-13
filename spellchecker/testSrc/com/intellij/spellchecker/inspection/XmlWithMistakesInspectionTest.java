@@ -35,4 +35,9 @@ public class XmlWithMistakesInspectionTest extends SpellcheckerInspectionTestCas
   public void testKnownAttributes() {
     doTest("attributes.html");
   }
+
+  public void testXsdEnumerations() {
+    // "evenodd" is correct word in SVG, because it is known enumeration option in SVG
+    doTest("enumerations.svg");
+  }
 }
