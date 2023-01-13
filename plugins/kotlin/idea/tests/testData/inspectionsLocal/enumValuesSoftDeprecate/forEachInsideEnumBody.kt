@@ -7,3 +7,5 @@ enum class EnumClass {
         values<caret>().forEach {}
     }
 }
+
+// IGNORE_FIR

@@ -2,8 +2,12 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.psi.PsiElement
+import com.intellij.lang.jvm.JvmModifier
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -21,6 +25,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getLastParentOfTypeInRow
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
+import org.jetbrains.kotlin.psi.psiUtil.*
 
 fun KtContainerNode.getControlFlowElementDescription(): String? {
     when (node.elementType) {
@@ -301,5 +306,44 @@ fun createArgumentWithoutName(argument: KtValueArgument, isVararg: Boolean = fal
             argumentExpr.valueArguments.map { psiFactory.createArgument(it.getArgumentExpression()) }
 
         else -> listOf(psiFactory.createArgument(argumentExpr, name = null, isVararg))
+    }
+}
+
+/**
+ * A [KtDotQualifiedExpression] doesn't have an instance of class as a receiver if the selector is
+ *   1. A class or an object or
+ *   2. A constructor or
+ *   3. A static method or
+ *   4. A [KtCallableDeclaration] e.g., [KtNamedFunction] defined in an object when the declaration has a null receiverTypeReference.
+ *
+ * FYI, selector of [KtDotQualifiedExpression] is the right side of the dot operation e.g., `bar()` in `foo.bar()`.
+ */
+private fun KtDotQualifiedExpression.hasNoClassInstanceReceiver(): Boolean {
+    val element = getQualifiedElementSelector()?.mainReference?.resolve() ?: return false
+    return element is KtClassOrObject ||
+            element is KtConstructor<*> ||
+            element is KtCallableDeclaration && element.receiverTypeReference == null && (element.containingClassOrObject is KtObjectDeclaration?) ||
+            element is PsiMember && element.hasModifier(JvmModifier.STATIC) ||
+            element is PsiMethod && element.isConstructor
+}
+
+tailrec fun KtDotQualifiedExpression.expressionWithoutClassInstanceAsReceiver(): KtDotQualifiedExpression? =
+    if (hasNoClassInstanceReceiver()) this
+    else (receiverExpression as? KtDotQualifiedExpression)?.expressionWithoutClassInstanceAsReceiver()
+
+val ENUM_STATIC_METHODS = listOf(StandardNames.ENUM_VALUES.asString(), StandardNames.ENUM_VALUE_OF.asString())
+
+fun KtElement.isReferenceToBuiltInEnumFunction(): Boolean {
+    return when (this) {
+        /**
+         * TODO: Handle [KtTypeReference], [KtCallExpression], and [KtCallableReferenceExpression].
+         *  See [org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumFunction].
+         */
+        is KtQualifiedExpression -> {
+            var target: KtQualifiedExpression = this
+            while (target.callExpression == null) target = target.parent as? KtQualifiedExpression ?: break
+            target.callExpression?.calleeExpression?.text in ENUM_STATIC_METHODS
+        }
+        else -> false
     }
 }

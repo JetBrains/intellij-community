@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
+import org.jetbrains.kotlin.idea.codeinsight.utils.ENUM_STATIC_METHODS
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.core.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.core.setType
@@ -228,8 +229,6 @@ fun KotlinType.reflectToRegularFunctionType(): KotlinType {
 }
 
 private val KOTLIN_BUILTIN_ENUM_FUNCTIONS = listOf(FqName("kotlin.enumValues"), FqName("kotlin.enumValueOf"))
-
-private val ENUM_STATIC_METHODS = listOf("values", "valueOf")
 
 fun KtElement.isReferenceToBuiltInEnumFunction(): Boolean {
     return when (this) {

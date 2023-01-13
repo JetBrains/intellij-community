@@ -50,15 +50,6 @@ fun KtNamedDeclaration.nameIdentifierTextRangeInThis(): TextRange? = nameIdentif
 
 fun PsiElement.hasComments(): Boolean = anyDescendantOfType<PsiComment>()
 
-fun KtDotQualifiedExpression.hasNotReceiver(): Boolean {
-    val element = getQualifiedElementSelector()?.mainReference?.resolve() ?: return false
-    return element is KtClassOrObject ||
-            element is KtConstructor<*> ||
-            element is KtCallableDeclaration && element.receiverTypeReference == null && (element.containingClassOrObject is KtObjectDeclaration?) ||
-            element is PsiMember && element.hasModifier(JvmModifier.STATIC) ||
-            element is PsiMethod && element.isConstructor
-}
-
 val KtExpression.isUnitLiteral: Boolean
     get() = StandardNames.FqNames.unit.shortName() == (this as? KtNameReferenceExpression)?.getReferencedNameAsName()
 
