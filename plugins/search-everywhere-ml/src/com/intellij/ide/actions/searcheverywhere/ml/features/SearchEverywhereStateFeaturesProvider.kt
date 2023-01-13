@@ -16,13 +16,15 @@ class SearchEverywhereStateFeaturesProvider {
     internal val QUERY_CONTAINS_SPACES_DATA_KEY = EventFields.Boolean("queryContainsSpaces")
     internal val QUERY_IS_CAMEL_CASE_DATA_KEY = EventFields.Boolean("queryIsCamelCase")
     internal val QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY = EventFields.Boolean("queryContainsAbbreviations")
+    internal val QUERY_IS_ALL_UPPERCASE_DATA_KEY = EventFields.Boolean("queryIsAllUppercase")
     internal val IS_DUMB_MODE = EventFields.Boolean("isDumbMode")
 
     fun getFeaturesDefinition(): List<EventField<*>> {
       return arrayListOf(
         QUERY_LENGTH_DATA_KEY, IS_EMPTY_QUERY_DATA_KEY,
         QUERY_CONTAINS_PATH_DATA_KEY, QUERY_CONTAINS_COMMAND_CHAR_DATA_KEY,
-        QUERY_CONTAINS_SPACES_DATA_KEY, QUERY_IS_CAMEL_CASE_DATA_KEY, QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY,
+        QUERY_CONTAINS_SPACES_DATA_KEY, QUERY_IS_CAMEL_CASE_DATA_KEY,
+        QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY, QUERY_IS_ALL_UPPERCASE_DATA_KEY,
         IS_DUMB_MODE
       )
     }
@@ -34,7 +36,8 @@ class SearchEverywhereStateFeaturesProvider {
       IS_EMPTY_QUERY_DATA_KEY.with(query.isEmpty()),
       QUERY_CONTAINS_SPACES_DATA_KEY.with(query.contains(" ")),
       QUERY_IS_CAMEL_CASE_DATA_KEY.with(query.isCamelCase()),
-      QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY.with(query.containsAbbreviations())
+      QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY.with(query.containsAbbreviations()),
+      QUERY_IS_ALL_UPPERCASE_DATA_KEY.with(query.all { it.isUpperCase() }),
     )
 
     isDumb?.let {
