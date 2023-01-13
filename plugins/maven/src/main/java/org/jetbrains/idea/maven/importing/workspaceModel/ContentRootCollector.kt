@@ -7,6 +7,9 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
+private const val DEFAULT_ANNOTATION_PATH_OUTPUT = "target/generated-sources/annotations"
+private const val DEFAULT_TEST_ANNOTATION_OUTPUT = "target/generated-test-sources/test-annotations"
+
 object ContentRootCollector {
   fun collect(folders: List<ImportedFolder>): Collection<ContentRootResult> {
     class ContentRootWithFolders(val path: String, val folders: MutableList<ImportedFolder> = mutableListOf())
@@ -55,11 +58,13 @@ object ContentRootCollector {
           if (prev.rootTypeRank <= curr.rootTypeRank) {
             return@forEach
           }
-          else {
-            nearestRoot.folders.removeLast()
-          }
+          nearestRoot.folders.removeLast()
         }
         else if (prev is GeneratedSourceFolder && curr is UserOrGeneratedSourceFolder) {
+          // prefer generated folder to annotations subfolder
+          if (curr.path.endsWith(DEFAULT_ANNOTATION_PATH_OUTPUT) || curr.path.endsWith(DEFAULT_TEST_ANNOTATION_OUTPUT)) {
+            return@forEach
+          }
           // don't add generated folder when there are sub source folder
           nearestRoot.folders.removeLast()
         }
