@@ -98,6 +98,16 @@ public class KotlinProjectViewTestGenerated extends AbstractKotlinProjectViewTes
         runTest("testData/projectView/OneFileMultifileFacadeKt.test");
     }
 
+    @TestMetadata("OneFileMultifileFacadeKtWithSeveralJvmName.test")
+    public void testOneFileMultifileFacadeKtWithSeveralJvmName() throws Exception {
+        runTest("testData/projectView/OneFileMultifileFacadeKtWithSeveralJvmName.test");
+    }
+
+    @TestMetadata("OneFileMultifileFacadeKtWithSeveralJvmNameWithSources.test")
+    public void testOneFileMultifileFacadeKtWithSeveralJvmNameWithSources() throws Exception {
+        runTest("testData/projectView/OneFileMultifileFacadeKtWithSeveralJvmNameWithSources.test");
+    }
+
     @TestMetadata("OneFileMultifileFacadeKtWithSources.test")
     public void testOneFileMultifileFacadeKtWithSources() throws Exception {
         runTest("testData/projectView/OneFileMultifileFacadeKtWithSources.test");

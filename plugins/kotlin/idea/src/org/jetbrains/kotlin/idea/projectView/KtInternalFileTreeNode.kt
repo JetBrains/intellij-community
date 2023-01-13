@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.projectView
 
 import com.intellij.ide.projectView.PresentationData
@@ -34,23 +34,29 @@ class KtInternalFileTreeNode(project: Project?, lightClass: KtLightClass, viewSe
         val smartPointerManager = SmartPointerManager.getInstance(prj)
         val scope = GlobalSearchScope.union(SourceNavigationHelper.targetClassFilesToSourcesScopes(virtualFile, prj))
 
-        val jvmNameAnnotations = KotlinJvmNameAnnotationIndex[baseName.substringBefore(JvmNames.MULTIFILE_PART_NAME_DELIMITER), prj, scope]
+        val jvmNameAnnotationsOnFile = KotlinJvmNameAnnotationIndex[
+            baseName.substringBefore(JvmNames.MULTIFILE_PART_NAME_DELIMITER),
+            prj,
+            scope,
+        ].filter { it.parentOfType<KtFileAnnotationList>() != null }
+
         val partShortName = baseName.substringAfter(JvmNames.MULTIFILE_PART_NAME_DELIMITER)
         if (baseName.contains(JvmNames.MULTIFILE_PART_NAME_DELIMITER)) {
-            for (jvmNameAnnotation in jvmNameAnnotations) {
-                if (jvmNameAnnotation.parentOfType<KtFileAnnotationList>() == null) continue
+            for (jvmNameAnnotation in jvmNameAnnotationsOnFile) {
                 val ktFile = jvmNameAnnotation.containingKtFile
                 if (ktFile.isJvmMultifileClassFile && PackagePartClassUtils.getFilePartShortName(ktFile.name) == partShortName) {
                     return@lazy smartPointerManager.createSmartPsiElementPointer(ktFile)
                 }
             }
         }
+
         // do not navigate to source if it is a facade file
-        val file = jvmNameAnnotations.singleOrNull()?.containingKtFile ?: run {
+        val file = jvmNameAnnotationsOnFile.singleOrNull()?.containingKtFile ?: run {
             // top level functions and properties are located in files like `SomeClassKt.class`
             val fqName = ktClsFile.packageFqName.child(Name.identifier(baseName))
             KotlinFileFacadeFqNameIndex[fqName.asString(), prj, scope].singleOrNull()
         }
+
         file?.let(smartPointerManager::createSmartPsiElementPointer)
     }
 
