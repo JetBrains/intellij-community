@@ -9,6 +9,7 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestTimelineItem
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel.LoadingState
+import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.util.*
 import javax.swing.JComponent
@@ -95,11 +97,27 @@ object GitLabMergeRequestTimelineComponentFactory {
 
   private fun createDiscussionContent(item: GitLabMergeRequestTimelineItem.Discussion): JComponent {
     val firstNote = item.discussion.notes.first()
-    return if (firstNote.system) {
-      StatusMessageComponentFactory.create(SimpleHtmlPane(firstNote.body))
+
+    if (firstNote.system) {
+      val body = firstNote.body
+      if (body.contains("Compare with previous version")) {
+        try {
+          val lines = body.lines()
+          val title = lines[0]
+          val commits = lines[2]
+          return VerticalListPanel().apply {
+            add(SimpleHtmlPane(title))
+            add(StatusMessageComponentFactory.create(SimpleHtmlPane(commits)))
+          }
+        }
+        catch (e: Exception) {
+          thisLogger().warn("Error occurred while parsing the note with added commits", e)
+        }
+      }
+      return StatusMessageComponentFactory.create(SimpleHtmlPane(GitLabUIUtil.convertToHtml(body)))
     }
     else {
-      SimpleHtmlPane(firstNote.body)
+      return SimpleHtmlPane(GitLabUIUtil.convertToHtml(firstNote.body))
     }
   }
 
