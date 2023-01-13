@@ -162,6 +162,7 @@ open class SavedPatchesUi(project: Project,
   companion object {
     const val SAVED_PATCHES_UI_PLACE = "SavedPatchesUiPlace"
     val SAVED_PATCHES_UI = DataKey.create<SavedPatchesUi>("SavedPatchesUi")
+    val SAVED_PATCH_CHANGES = DataKey.create<Iterable<SavedPatchesProvider.ChangeObject>>("SavedPatchChanges")
     val SAVED_PATCH_SELECTED_CHANGES = DataKey.create<Iterable<SavedPatchesProvider.ChangeObject>>("SavedPatchSelectedChanges")
     val SAVED_PATCH_SELECTED_PATCH = DataKey.create<SavedPatchesProvider.PatchObject<*>>("SavedPatchSelectedPatches")
   }

@@ -179,6 +179,9 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
     else if (SavedPatchesUi.SAVED_PATCH_SELECTED_CHANGES.`is`(dataId)) {
       return VcsTreeModelData.selected(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
     }
+    else if (SavedPatchesUi.SAVED_PATCH_CHANGES.`is`(dataId)) {
+      return VcsTreeModelData.all(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
+    }
     return super.getData(dataId)
   }
 
