@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -49,7 +47,7 @@ public class JrtFileSystemImpl extends JrtFileSystem implements Disposable {
 
   @Override
   protected @Nullable String normalize(@NotNull String path) {
-    int separatorIndex = path.indexOf(SEPARATOR);
+    var separatorIndex = path.indexOf(SEPARATOR);
     return separatorIndex > 0 ? FileUtil.normalize(path.substring(0, separatorIndex)) + path.substring(separatorIndex) : null;
   }
 
@@ -65,7 +63,7 @@ public class JrtFileSystemImpl extends JrtFileSystem implements Disposable {
 
   @Override
   protected @NotNull String extractRootPath(@NotNull String normalizedPath) {
-    int separatorIndex = normalizedPath.indexOf(SEPARATOR);
+    var separatorIndex = normalizedPath.indexOf(SEPARATOR);
     return separatorIndex > 0 ? normalizedPath.substring(0, separatorIndex + SEPARATOR.length()) : "";
   }
 
@@ -93,35 +91,35 @@ public class JrtFileSystemImpl extends JrtFileSystem implements Disposable {
   private void checkSubscription() {
     if (mySubscribed.getAndSet(true)) return;
 
-    Application app = ApplicationManager.getApplication();
+    var app = ApplicationManager.getApplication();
     if (app.isDisposed()) return;  // we might perform a shutdown activity that includes visiting archives (IDEA-181620)
 
-    TrackerService tracker = app.getService(TrackerService.class);
+    var tracker = app.getService(TrackerService.class);
     Disposer.register(tracker, this);
     app.getMessageBus().connect(tracker).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         Set<VirtualFile> toRefresh = null;
 
-        for (VFileEvent e : events) {
+        for (var e : events) {
           if (e.getFileSystem() instanceof LocalFileSystem) {
             String homePath = null;
 
-            if (e instanceof VFileContentChangeEvent) {
-              VirtualFile file = ((VFileContentChangeEvent)e).getFile();
+            if (e instanceof VFileContentChangeEvent cce) {
+              var file = cce.getFile();
               if ("release".equals(file.getName())) {
                 homePath = file.getParent().getPath();
               }
             }
-            else if (e instanceof VFileDeleteEvent) {
-              homePath = ((VFileDeleteEvent)e).getFile().getPath();
+            else if (e instanceof VFileDeleteEvent de) {
+              homePath = de.getFile().getPath();
             }
 
             if (homePath != null) {
-              ArchiveHandler handler = myHandlers.remove(homePath);
+              var handler = myHandlers.remove(homePath);
               if (handler != null) {
                 handler.clearCaches();
-                VirtualFile root = findFileByPath(composeRootPath(homePath));
+                var root = findFileByPath(composeRootPath(homePath));
                 if (root != null) {
                   ((NewVirtualFile)root).markDirtyRecursively();
                   if (toRefresh == null) toRefresh = new HashSet<>();
@@ -133,8 +131,8 @@ public class JrtFileSystemImpl extends JrtFileSystem implements Disposable {
         }
 
         if (toRefresh != null) {
-          boolean async = !ApplicationManager.getApplication().isUnitTestMode();
-          RefreshQueue.getInstance().refresh(async, true, null, toRefresh);
+          var synchronous = ApplicationManager.getApplication().isUnitTestMode();
+          RefreshQueue.getInstance().refresh(!synchronous, true, null, toRefresh);
         }
       }
     });
@@ -162,14 +160,14 @@ public class JrtFileSystemImpl extends JrtFileSystem implements Disposable {
 
   @Override
   protected boolean isCorrectFileType(@NotNull VirtualFile local) {
-    Path path = local.toNioPath();
+    var path = local.toNioPath();
     return JdkUtil.isModularRuntime(path) && !JdkUtil.isExplodedModularRuntime(path);
   }
 
   @TestOnly
   public void release(@NotNull String localPath) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) throw new IllegalStateException();
-    ArchiveHandler handler = myHandlers.remove(localPath);
+    var handler = myHandlers.remove(localPath);
     if (handler == null) throw new IllegalArgumentException(localPath + " not in " + myHandlers.keySet());
     handler.clearCaches();
   }
