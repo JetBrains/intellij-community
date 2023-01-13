@@ -577,10 +577,14 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitClassBodyRaw(classBody: JKClassBody) {
             val declarations = classBody.declarations.filterNot { it is JKKtPrimaryConstructor }
+            val isAnonymousClass = (classBody.parent as? JKNewExpression)?.isAnonymousClass == true
+            if (declarations.isEmpty() && !isAnonymousClass) return
+
             printer.print(" ")
             renderTokenElement(classBody.leftBrace)
             if (declarations.isNotEmpty()) {
-                renderDeclarations(declarations, (classBody.parent as? JKClass)?.classKind == ENUM)
+                val isEnum = (classBody.parent as? JKClass)?.classKind == ENUM
+                renderDeclarations(declarations, isEnum)
             }
             renderTokenElement(classBody.rightBrace)
         }

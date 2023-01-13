@@ -183,7 +183,6 @@ private val removeRedundantElementsProcessingGroup =
             RemoveJavaStreamsCollectCallTypeArgumentsProcessing(),
             ExplicitThisInspectionBasedProcessing(),
             RemoveOpenModifierOnTopLevelDeclarationsProcessing(),
-            inspectionBasedProcessing(KotlinInspectionFacade.instance.removeEmptyClassBody)
         )
     )
 
