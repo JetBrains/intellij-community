@@ -560,7 +560,12 @@ object DynamicPlugins {
         @OptIn(DelicateCoroutinesApi::class)
         val waitForCompletion = GlobalScope.launch {
           for (classLoader in classLoaders) {
-            classLoader.pluginCoroutineScope.coroutineContext.job.join()
+            val pluginJob = classLoader.pluginCoroutineScope.coroutineContext.job
+            if (!pluginJob.isCancelled) {
+              LOG.error("Plugin scope is expected to be cancelled during unloading")
+              pluginJob.cancel()
+            }
+            pluginJob.join()
           }
         }
         while (waitForCompletion.isActive) {
