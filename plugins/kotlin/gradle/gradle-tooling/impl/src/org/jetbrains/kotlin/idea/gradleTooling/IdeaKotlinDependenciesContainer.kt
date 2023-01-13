@@ -43,7 +43,7 @@ class IdeaKotlinSerializedDependenciesContainer(
         deserializedDependencies[sourceSetName]
     }
 
-    fun deserialize(context: IdeaKotlinSerializationContext): Unit = readWriteLock.write {
+    private fun deserialize(context: IdeaKotlinSerializationContext): Unit = readWriteLock.write {
         val serializedDependencies = this.serializedDependencies
         if (serializedDependencies == null) {
             context.logger.warn("${IdeaKotlinDependenciesContainer::class.java.name} already serialized")
