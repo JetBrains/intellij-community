@@ -266,13 +266,15 @@ open class IdeRootPane internal constructor(frame: JFrame,
       }
     }
     else if (SystemInfoRt.isXWindow) {
+      val shouldMinimize = ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader()
+      val isNewToolbar = ExperimentalUI.isNewUI()
+
       if (bar != null) {
-        bar.isVisible = fullScreen || !isMenuButtonInToolbar
+        bar.isVisible = fullScreen || !isMenuButtonInToolbar || shouldMinimize && isNewToolbar
       }
       if (toolbar != null) {
         val uiSettings = UISettings.shadowInstance
-        val isNewToolbar = ExperimentalUI.isNewUI()
-        toolbar!!.isVisible = !fullScreen && ((isNewToolbar && !isToolbarInHeader(uiSettings)) || (!isNewToolbar && uiSettings.showMainToolbar))
+         toolbar!!.isVisible = !fullScreen && ((!shouldMinimize && isNewToolbar && !isToolbarInHeader(uiSettings)) || (!isNewToolbar && uiSettings.showMainToolbar))
       }
     }
   }
