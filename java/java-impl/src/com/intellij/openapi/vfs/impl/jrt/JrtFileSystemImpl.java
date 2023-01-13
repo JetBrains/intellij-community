@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -73,13 +73,20 @@ public class JrtFileSystemImpl extends JrtFileSystem implements Disposable {
   protected @NotNull ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
     checkSubscription();
 
-    String homePath = extractLocalPath(VfsUtilCore.getRootFile(entryFile).getPath());
+    var homePath = extractLocalPath(VfsUtilCore.getRootFile(entryFile).getPath());
     return myHandlers.computeIfAbsent(homePath, key -> {
-      JrtHandler handler = new JrtHandler(key);
-      ApplicationManager.getApplication().invokeLater(
-        () -> LocalFileSystem.getInstance().refreshAndFindFileByPath(key + "/release"),
-        ModalityState.defaultModalityState());
+      var handler = new JrtHandler(key);
+      loadReleaseFileIntoVfs(key);
       return handler;
+    });
+  }
+
+  private static void loadReleaseFileIntoVfs(String homePath) {
+    var releasePath = homePath + "/release";
+    VfsImplUtil.refreshAndFindFileByPath(LocalFileSystem.getInstance(), releasePath, file -> {
+      if (file == null) {
+        Logger.getInstance(JrtFileSystemImpl.class).warn("Cannot load into VFS: " + releasePath);
+      }
     });
   }
 

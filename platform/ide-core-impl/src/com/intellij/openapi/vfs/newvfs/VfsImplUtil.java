@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;
@@ -121,6 +122,57 @@ public final class VfsImplUtil {
     }
 
     return file;
+  }
+
+  /** An experimental refresh-and-find routine that does not require a write-lock (and hence EDT). */
+  @ApiStatus.Experimental
+  public static void refreshAndFindFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path, @NotNull Consumer<@Nullable NewVirtualFile> consumer) {
+    ProcessIOExecutorService.INSTANCE.execute(() -> {
+      var rootAndPath = prepare(vfs, path);
+      if (rootAndPath == null) {
+        consumer.accept(null);
+      }
+      else {
+        refreshAndFindFileByPath(rootAndPath.first, rootAndPath.second.iterator(), consumer);
+      }
+    });
+  }
+
+  private static void refreshAndFindFileByPath(@Nullable NewVirtualFile file, Iterator<String> path, Consumer<@Nullable NewVirtualFile> consumer) {
+    if (file == null || !path.hasNext()) {
+      consumer.accept(file);
+      return;
+    }
+
+    var pathElement = path.next();
+    if (pathElement.isEmpty() || ".".equals(pathElement)) {
+      refreshAndFindFileByPath(file, path, consumer);
+    }
+    else if ("..".equals(pathElement)) {
+      if (file.is(VFileProperty.SYMLINK)) {
+        var canonicalPath = file.getCanonicalPath();
+        if (canonicalPath != null) {
+          refreshAndFindFileByPath(file.getFileSystem(), canonicalPath, canonicalFile -> refreshAndFindFileByPath(canonicalFile, path, consumer));
+        }
+        else {
+          consumer.accept(null);
+        }
+      }
+      else {
+        refreshAndFindFileByPath(file.getParent(), path, consumer);
+      }
+    }
+    else {
+      var child = file.findChild(pathElement);
+      if (child != null) {
+        refreshAndFindFileByPath(child, path, consumer);
+      }
+      else {
+        file.refresh(true, false, () -> ProcessIOExecutorService.INSTANCE.execute(() -> {
+          refreshAndFindFileByPath(file.findChild(pathElement), path, consumer);
+        }));
+      }
+    }
   }
 
   private static @Nullable Pair<NewVirtualFile, Iterable<String>> prepare(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
