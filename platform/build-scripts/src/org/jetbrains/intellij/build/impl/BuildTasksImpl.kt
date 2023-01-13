@@ -129,8 +129,8 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
                                        os = currentOs,
                                        destinationDir = targetDirectory.resolve("jbr"),
                                        arch = arch)
-      updateExecutablePermissions(targetDirectory, builder.generateExecutableFilesMatchers(true))
-      builder.checkExecutablePermissions(targetDirectory, root = "")
+      updateExecutablePermissions(targetDirectory, builder.generateExecutableFilesMatchers(includeRuntime = true, arch).keys)
+      builder.checkExecutablePermissions(targetDirectory, root = "", includeRuntime = true, arch = arch)
     }
     else {
       copyDistFiles(context = context, newDir = targetDirectory, os = currentOs, arch = arch)
@@ -276,7 +276,7 @@ private fun findBrandingResource(relativePath: String, context: BuildContext): P
                          "nor in ${context.productProperties.brandingResourcePaths}")
 }
 
-private fun updateExecutablePermissions(destinationDir: Path, executableFilesMatchers: List<PathMatcher>) {
+private fun updateExecutablePermissions(destinationDir: Path, executableFilesMatchers: Collection<PathMatcher>) {
   val executable = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
                               PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_READ,
                               PosixFilePermission.GROUP_EXECUTE, PosixFilePermission.OTHERS_READ,
@@ -953,7 +953,10 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
     targetFile = targetFile,
     executableName = executableName,
     productJson = productJson.encodeToByteArray(),
-    executablePatterns = distResults.flatMap { it.builder.generateExecutableFilesMatchers(includeRuntime = false) },
+    executablePatterns = distResults.flatMap {
+      it.builder.generateExecutableFilesMatchers(includeRuntime = false, JvmArchitecture.x64).keys +
+      it.builder.generateExecutableFilesMatchers(includeRuntime = false, JvmArchitecture.aarch64).keys
+    },
     distFiles = context.getDistFiles(os = null, arch = null),
     extraFiles = mapOf("dependencies.txt" to dependenciesFile),
     distAllDir = context.paths.distAllDir,

@@ -92,7 +92,7 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
   check(Files.exists(sitFile)) {
     "$sitFile wasn't created"
   }
-  builder.checkExecutablePermissions(sitFile, zipRoot, isRuntimeBundled)
+  builder.checkExecutablePermissions(sitFile, zipRoot, isRuntimeBundled, arch)
   if (isRuntimeBundled) {
     generateIntegrityManifest(sitFile, zipRoot, context, arch)
   }

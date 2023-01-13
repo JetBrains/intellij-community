@@ -340,27 +340,8 @@ class MacDistributionBuilder(override val context: BuildContext,
     }
   }
 
-  override fun generateExecutableFilesPatterns(includeRuntime: Boolean): List<String> {
-    var executableFilePatterns = persistentListOf(
-      "bin/*.sh",
-      "plugins/**/*.sh",
-      "bin/*.py",
-      "bin/fsnotifier",
-      "bin/printenv",
-      "bin/restarter",
-      "MacOS/*"
-    )
-
-    if (!context.isStepSkipped(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
-      executableFilePatterns = executableFilePatterns.add("bin/repair")
-    }
-
-    if (includeRuntime) {
-      executableFilePatterns = executableFilePatterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS))
-    }
-    return executableFilePatterns
-      .addAll(customizer.extraExecutables)
-      .addAll(context.getExtraExecutablePattern(OsFamily.MACOS))
+  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): List<String> {
+    return customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
   }
 
   private suspend fun buildForArch(builtinModule: BuiltinModulesFileData?,

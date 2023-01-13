@@ -233,5 +233,12 @@ class RepairUtilityBuilder {
                  }
         }
     }
+
+    fun executableFilesPatterns(context: BuildContext): List<String> {
+      return if (!SystemInfoRt.isWindows && !context.isStepSkipped(REPAIR_UTILITY_BUNDLE_STEP)) {
+        listOf("bin/repair")
+      }
+      else emptyList()
+    }
   }
 }

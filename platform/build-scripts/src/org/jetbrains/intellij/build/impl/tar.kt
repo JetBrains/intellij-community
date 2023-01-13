@@ -14,7 +14,7 @@ import java.nio.file.attribute.PosixFilePermission
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.isDirectory
 
-fun tar(archive: Path, rootDir: String, directories: List<Path>, executableFileMatchers: List<PathMatcher>, buildDateInSeconds: Long) {
+fun tar(archive: Path, rootDir: String, directories: List<Path>, executableFileMatchers: Collection<PathMatcher>, buildDateInSeconds: Long) {
   val normalizedRootDir = rootDir.removeSuffix("/")
   FileSystemIndependentTarGzCompressor(archive) { entryName: String, fileSystemMode: Int ->
     val relativePath = Path.of(entryName.removePrefix(rootDir).removePrefix("/"))

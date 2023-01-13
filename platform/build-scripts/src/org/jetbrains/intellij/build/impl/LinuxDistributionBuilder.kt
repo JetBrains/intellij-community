@@ -10,7 +10,6 @@ import com.intellij.openapi.util.io.NioFiles
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
@@ -83,7 +82,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
                                      unixDistPath = osAndArchSpecificDistPath,
                                      suffix = NO_JBR_SUFFIX + suffix,
                                      arch = arch)
-          checkExecutablePermissions(tarGzPath, rootDirectoryName, includeRuntime = false)
+          checkExecutablePermissions(tarGzPath, rootDirectoryName, includeRuntime = false, arch = arch)
         }
       }
       if (customizer.buildOnlyBareTarGz) {
@@ -92,7 +91,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
 
       val runtimeDir = context.bundledRuntime.extract(getProductPrefix(context), OsFamily.LINUX, arch)
       val tarGzPath = buildTarGz(arch = arch, runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, suffix = suffix)
-      checkExecutablePermissions(tarGzPath, rootDirectoryName, includeRuntime = true)
+      checkExecutablePermissions(tarGzPath, rootDirectoryName, includeRuntime = true, arch = arch)
 
       if (arch == JvmArchitecture.x64) {
         buildSnapPackage(runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, arch = arch)
@@ -139,13 +138,8 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     ), convertToUnixLineEndings = true)
   }
 
-  override fun generateExecutableFilesPatterns(includeRuntime: Boolean): List<String> {
-    var patterns = persistentListOf("bin/*.sh", "plugins/**/*.sh", "bin/*.py", "bin/fsnotifier*")
-      .addAll(customizer.extraExecutables)
-    if (includeRuntime) {
-      patterns = patterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX))
-    }
-    return patterns.addAll(context.getExtraExecutablePattern(OsFamily.LINUX))
+  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): List<String> {
+    return customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
   }
 
   private val rootDirectoryName: String
@@ -167,11 +161,11 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     generateProductJson(targetDir = productJsonDir, arch = arch, javaExecutablePath = javaExecutablePath, context = context)
     paths.add(productJsonDir)
 
-    val executableFilesPatterns = generateExecutableFilesPatterns(runtimeDir != null)
     spanBuilder("build Linux tar.gz")
       .setAttribute("runtimeDir", runtimeDir?.toString() ?: "")
       .useWithScope2 {
-        tar(tarPath, tarRoot, paths, context.options.buildDateInSeconds)
+        val executableFileMatchers = generateExecutableFilesMatchers(runtimeDir != null, arch).keys
+        tar(tarPath, tarRoot, paths, executableFileMatchers, context.options.buildDateInSeconds)
         checkInArchive(tarPath, tarRoot, context)
         context.notifyArtifactBuilt(tarPath)
       }
