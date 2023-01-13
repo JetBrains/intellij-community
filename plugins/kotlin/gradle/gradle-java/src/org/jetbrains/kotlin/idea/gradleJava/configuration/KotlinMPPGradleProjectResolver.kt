@@ -54,6 +54,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedSerializedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.serialization.IdeaKotlinSerializationContext
+import org.jetbrains.kotlin.idea.gradleTooling.serialization.KotlinMppModelSerializationService
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
@@ -969,8 +970,8 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                     .map { dependsOnSourceSet -> getGradleModuleQualifiedName(resolverCtx, gradleModule, dependsOnSourceSet.name) }.toSet()
 
                 sourceSetInfo.additionalVisible = sourceSetInfo.additionalVisible.map {
-                getGradleModuleQualifiedName(resolverCtx, gradleModule, it)
-            }.toSet()
+                    getGradleModuleQualifiedName(resolverCtx, gradleModule, it)
+                }.toSet()
 
                 when (val cachedArgsInfo = compilation.cachedArgsInfo) {
                     is CachedExtractedArgsInfo -> {
@@ -1058,9 +1059,9 @@ fun ProjectResolverContext.getMppModel(gradleModule: IdeaModule): KotlinMPPGradl
                     KotlinMPPGradleProjectResolver.proxyObjectCloningCache[mppModel] = it
                 }
         } else mppModel
-    }.also { mppModel ->
-        @OptIn(KotlinGradlePluginVersionDependentApi::class)
-        (mppModel?.dependencies as? IdeaKotlinSerializedDependenciesContainer)
-            ?.deserializeIfNecessary(IdeaKotlinSerializationContext(KotlinMPPGradleProjectResolver::class.java.classLoader))
+    }?.also { mppModel ->
+        KotlinMppModelSerializationService.deserialize(
+            mppModel, IdeaKotlinSerializationContext(KotlinMPPGradleProjectResolver::class.java.classLoader)
+        )
     }
 }

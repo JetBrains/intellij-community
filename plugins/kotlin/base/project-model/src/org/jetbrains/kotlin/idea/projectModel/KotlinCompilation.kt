@@ -1,12 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.projectModel
 
-interface KotlinCompilation : KotlinComponent {
+import org.jetbrains.kotlin.tooling.core.HasMutableExtras
+
+interface KotlinCompilation : KotlinComponent, HasMutableExtras {
 
     @Deprecated("This property is removed in master, but still used in the KotlinAndroidMPPGradleModuleDataService", level = DeprecationLevel.ERROR)
     val sourceSets: Collection<KotlinSourceSet>
         get() = declaredSourceSets
-
     /**
      * All source sets participated in this compilation, including those available
      * via dependsOn.
