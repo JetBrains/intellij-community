@@ -367,6 +367,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     }
   }
 
+  public @NotNull String getText() {
+    return getText(getTerminalPanel());
+  }
+
   static @NotNull String getText(@NotNull TerminalPanel terminalPanel) {
     TerminalTextBuffer buffer = terminalPanel.getTerminalTextBuffer();
     buffer.lock();
