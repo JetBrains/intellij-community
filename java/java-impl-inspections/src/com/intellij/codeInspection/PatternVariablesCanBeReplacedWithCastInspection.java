@@ -238,14 +238,14 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
         addDeclarationOutsideBlock(ifStatement, variable);
       }
 
-      //typeCast - for example in Conditions
+      //typeCast - for example, in Conditions
       replaceWithCast(variable, collectedOutside.get(Boolean.FALSE));
     }
 
-    private void processReferencesForLoopStatement(PsiConditionalLoopStatement statement,
-                                                   PsiPatternVariable variable,
-                                                   PsiInstanceOfExpression psiInstanceOfExpression,
-                                                   List<PsiReferenceExpression> references) {
+    private void processReferencesForLoopStatement(@NotNull PsiConditionalLoopStatement statement,
+                                                   @NotNull PsiPatternVariable variable,
+                                                   @NotNull PsiInstanceOfExpression psiInstanceOfExpression,
+                                                   @NotNull List<PsiReferenceExpression> references) {
 
       //trivial cases
       ConditionState conditionState = getConditionIfInstanceOfTrue(psiInstanceOfExpression, statement.getCondition());
@@ -277,19 +277,19 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
       replaceWithCast(variable, unusedReferences);
     }
 
-    private static ConditionState getConditionIfInstanceOfTrue(PsiInstanceOfExpression expression, @Nullable PsiExpression condition) {
+    private static ConditionState getConditionIfInstanceOfTrue(@NotNull PsiInstanceOfExpression expression, @Nullable PsiExpression condition) {
       if (condition == null) {
         return ConditionState.UNKNOWN;
       }
-      InstanceOfUtils.InstanceOfStateWrapper state = InstanceOfUtils.getInstanceOfState(expression);
-      if (state.expression().isEquivalentTo(condition)) {
+      InstanceOfUtils.TopLevelInstanceOfState state = InstanceOfUtils.getInstanceOfState(expression);
+      if (state.topLevelExpression() == condition) {
         return state.value() ? ConditionState.TRUE : ConditionState.FALSE;
       }
       return ConditionState.UNKNOWN;
     }
 
 
-    private static void addDeclarationOutsideBlock(PsiStatement statement, PsiPatternVariable variable) {
+    private static void addDeclarationOutsideBlock(@NotNull PsiStatement statement, @NotNull PsiPatternVariable variable) {
 
       if (statement.getNextSibling() == null) {
         return;
@@ -312,7 +312,7 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
       CodeStyleManager.getInstance(project).reformat(newDeclarationStatement);
     }
 
-    private static void addDeclarationInsideBlock(PsiStatement statement, PsiPatternVariable variable) {
+    private static void addDeclarationInsideBlock(@NotNull PsiStatement statement, @NotNull PsiPatternVariable variable) {
       String text = getDeclarationStatement(variable);
       if (text == null) {
         return;
@@ -324,7 +324,7 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
     }
 
     @Nullable
-    private static String getDeclarationStatement(PsiPatternVariable variable) {
+    private static String getDeclarationStatement(@NotNull PsiPatternVariable variable) {
       String text = JavaPsiPatternUtil.getEffectiveInitializerText(variable);
       if (text == null) {
         return null;
@@ -337,7 +337,7 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
       return text;
     }
 
-    private static void deletePatternFromInstanceOf(PsiInstanceOfExpression expression) {
+    private static void deletePatternFromInstanceOf(@NotNull PsiInstanceOfExpression expression) {
       if (!(expression.getPattern() instanceof PsiTypeTestPattern typeTestPattern)) {
         return;
       }

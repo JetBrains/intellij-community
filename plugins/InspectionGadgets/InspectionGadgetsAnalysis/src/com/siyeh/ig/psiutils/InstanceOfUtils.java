@@ -40,7 +40,9 @@ public final class InstanceOfUtils {
 
   private InstanceOfUtils() {}
 
-  public static PsiInstanceOfExpression getConflictingInstanceof(PsiType castType, PsiReferenceExpression operand, PsiElement context) {
+  public static PsiInstanceOfExpression getConflictingInstanceof(@Nullable PsiType castType,
+                                                                 @NotNull PsiReferenceExpression operand,
+                                                                 @NotNull PsiElement context) {
     if (!(castType instanceof PsiClassType)) {
       return null;
     }
@@ -119,7 +121,7 @@ public final class InstanceOfUtils {
   }
 
   @Nullable
-  private static PsiElement findInterestingParent(PsiElement context) {
+  private static PsiElement findInterestingParent(@NotNull PsiElement context) {
     while (true) {
       PsiElement parent = context.getParent();
       if (parent == null) return null;
@@ -140,7 +142,7 @@ public final class InstanceOfUtils {
     }
   }
 
-  private static boolean isInstanceOfAssertionCall(InstanceofChecker checker, PsiMethodCallExpression call) {
+  private static boolean isInstanceOfAssertionCall(@NotNull InstanceofChecker checker, @Nullable PsiMethodCallExpression call) {
     if (call == null) return false;
     List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(call);
     if (contracts.isEmpty()) return false;
@@ -274,7 +276,7 @@ public final class InstanceOfUtils {
     return processParent(cast, context, parent);
   }
 
-  public static @Nullable PsiTypeElement findCheckTypeElement(PsiInstanceOfExpression expression) {
+  public static @Nullable PsiTypeElement findCheckTypeElement(@NotNull PsiInstanceOfExpression expression) {
     PsiTypeElement typeElement = expression.getCheckType();
     if (typeElement == null) {
       typeElement = JavaPsiPatternUtil.getPatternTypeElement(expression.getPattern());
@@ -282,7 +284,9 @@ public final class InstanceOfUtils {
     return typeElement;
   }
 
-  private static PsiInstanceOfExpression processParent(PsiTypeCastExpression cast, PsiElement context, PsiElement parent) {
+  private static PsiInstanceOfExpression processParent(@NotNull PsiTypeCastExpression cast,
+                                                       @NotNull PsiElement context,
+                                                       @Nullable PsiElement parent) {
     if (parent instanceof PsiIfStatement) {
       PsiIfStatement ifStatement = (PsiIfStatement)parent;
       if (ifStatement.getThenBranch() == context) {
@@ -366,33 +370,33 @@ public final class InstanceOfUtils {
   }
 
   /**
-   * @param variable a variable, which is used to check, if the scope contains variables with the same name
+   * @param variable a variable, which is used to check if the scope contains variables with the same name
    * @param instanceOf an instanceof expression that is used to calculate declaration scope
-   * @return true if another declared variables with the same name are found in the scope of instanceof with variable patterns.
-   * Patterns' names are not process
+   * @return true if other declared variables with the same name are found in the scope of instanceof with variable patterns.
+   * Pattern names are not processed
    */
-  public static boolean hasConflictingDeclaredNames(PsiLocalVariable variable, PsiInstanceOfExpression instanceOf) {
+  public static boolean hasConflictingDeclaredNames(@NotNull PsiLocalVariable variable, @NotNull PsiInstanceOfExpression instanceOf) {
     PsiIdentifier identifier = variable.getNameIdentifier();
     if (identifier == null) {
       return false;
     }
 
-    InstanceOfStateWrapper condition = getInstanceOfState(instanceOf);
-    if (isConflictingNameDeclaredInside(variable, condition.expression)) {
+    TopLevelInstanceOfState condition = getInstanceOfState(instanceOf);
+    if (isConflictingNameDeclaredInside(variable, condition.topLevelExpression)) {
       return true;
     }
-    PsiElement parent = condition.expression.getParent();
+    PsiElement parent = condition.topLevelExpression.getParent();
     if (parent == null) {
       return false;
     }
     if (parent instanceof PsiConditionalExpression conditionalExpression &&
-        condition.expression.isEquivalentTo(conditionalExpression.getCondition())) {
+        condition.topLevelExpression == conditionalExpression.getCondition()) {
       return condition.value ? isConflictingNameDeclaredInside(variable, conditionalExpression.getThenExpression()) :
              isConflictingNameDeclaredInside(variable, conditionalExpression.getElseExpression());
     }
 
     if (parent instanceof PsiConditionalLoopStatement loop &&
-        condition.expression.isEquivalentTo(loop.getCondition())) {
+        condition.topLevelExpression == loop.getCondition()) {
       if (condition.value) {
         if (loop instanceof PsiForStatement forStatement && isConflictingNameDeclaredInside(variable, forStatement.getUpdate())) {
           return true;
@@ -434,15 +438,15 @@ public final class InstanceOfUtils {
   }
 
   /**
-   * @return wrapper, which contains top level value if instanceof is true and reference to this expression.
+   * @return container, which contains top level value if instanceof is true and reference to this expression.
    */
-  public static InstanceOfStateWrapper getInstanceOfState(@NotNull PsiInstanceOfExpression instanceOfExpression) {
+  public static TopLevelInstanceOfState getInstanceOfState(@NotNull PsiInstanceOfExpression instanceOfExpression) {
     boolean condition = true;
-    @NotNull PsiElement topLevelCondition = instanceOfExpression;
+    @NotNull PsiExpression topLevelCondition = instanceOfExpression;
     while (true) {
       PsiElement parent = topLevelCondition.getParent();
-      if (parent instanceof PsiParenthesizedExpression) {
-        topLevelCondition = parent;
+      if (parent instanceof PsiParenthesizedExpression expression) {
+        topLevelCondition = expression;
         continue;
       }
       if (parent instanceof PsiPrefixExpression prefixExpression) {
@@ -450,27 +454,31 @@ public final class InstanceOfUtils {
           break;
         }
         condition = !condition;
-        topLevelCondition = parent;
+        topLevelCondition = prefixExpression;
         continue;
       }
 
       if (parent instanceof PsiPolyadicExpression polyadicExpression) {
         IElementType tokenType = polyadicExpression.getOperationTokenType();
         if (tokenType.equals(JavaTokenType.ANDAND) && condition) {
-          topLevelCondition = parent;
+          topLevelCondition = polyadicExpression;
           continue;
         }
         if (tokenType.equals(JavaTokenType.OROR) && !condition) {
-          topLevelCondition = parent;
+          topLevelCondition = polyadicExpression;
           continue;
         }
       }
       break;
     }
-    return new InstanceOfStateWrapper(condition, topLevelCondition);
+    return new TopLevelInstanceOfState(condition, topLevelCondition);
   }
 
-  public record InstanceOfStateWrapper(boolean value, @NotNull PsiElement expression) {
+  /**
+   * @param value expected value of {@link #topLevelExpression} when instanceof expression is true
+   * @param topLevelExpression the highest expression, which it is possible to calculate {@link #value} for
+   */
+  public record TopLevelInstanceOfState(boolean value, @NotNull PsiExpression topLevelExpression) {
 
   }
 
