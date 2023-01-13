@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.nj2k.printing.JKPrinterBase.ParenthesisKind
 import org.jetbrains.kotlin.nj2k.symbols.getDisplayFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
+import org.jetbrains.kotlin.nj2k.tree.Visibility.PUBLIC
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitorWithCommentsPrinting
 import org.jetbrains.kotlin.nj2k.types.JKContextType
 import org.jetbrains.kotlin.nj2k.types.isAnnotationMethod
@@ -59,12 +60,12 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
         }
 
-        private fun renderModifiersList(modifiersList: JKModifiersListOwner) {
-            val hasOverrideModifier = modifiersList
+        private fun renderModifiersList(modifiersListOwner: JKModifiersListOwner) {
+            val hasOverrideModifier = modifiersListOwner
                 .safeAs<JKOtherModifiersOwner>()
                 ?.hasOtherModifier(OtherModifier.OVERRIDE) == true
-            modifiersList.forEachModifier { modifierElement ->
-                if (modifierElement.modifier == Modality.FINAL || modifierElement.modifier == Visibility.PUBLIC) {
+            modifiersListOwner.forEachModifier { modifierElement ->
+                if (modifierElement.modifier == Modality.FINAL || modifierElement.modifier == PUBLIC) {
                     if (hasOverrideModifier) {
                         modifierElement.accept(this)
                     } else {
@@ -184,7 +185,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitClassRaw(klass: JKClass) {
             klass.annotationList.accept(this)
-            if (klass.annotationList.annotations.isNotEmpty()) {
+            if (klass.hasAnnotations) {
                 printer.println()
             }
             renderModifiersList(klass)
@@ -236,7 +237,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitFieldRaw(field: JKField) {
             field.annotationList.accept(this)
-            if (field.annotationList.annotations.isNotEmpty()) {
+            if (field.hasAnnotations) {
                 printer.println()
             }
             renderModifiersList(field)
@@ -692,7 +693,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitConstructorRaw(constructor: JKConstructor) {
             constructor.annotationList.accept(this)
-            if (constructor.annotationList.annotations.isNotEmpty()) {
+            if (constructor.hasAnnotations) {
                 printer.println()
             }
             renderModifiersList(constructor)
@@ -710,7 +711,11 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         override fun visitKtPrimaryConstructorRaw(ktPrimaryConstructor: JKKtPrimaryConstructor) {
             ktPrimaryConstructor.annotationList.accept(this)
             renderModifiersList(ktPrimaryConstructor)
-            printer.print("constructor")
+
+            if (ktPrimaryConstructor.hasAnnotations || ktPrimaryConstructor.visibility != PUBLIC) {
+                printer.print("constructor")
+            }
+
             if (ktPrimaryConstructor.parameters.isNotEmpty()) {
                 renderParameterList(ktPrimaryConstructor.parameters)
             } else {

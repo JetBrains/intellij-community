@@ -414,3 +414,6 @@ fun LanguageVersionSettings.areKotlinVersionsSufficientToUseRangeUntil(module: M
 }
 
 private val COMPILER_VERSION_WITH_RANGEUNTIL_SUPPORT = IdeKotlinVersion.get("1.7.20-Beta")
+
+val JKAnnotationListOwner.hasAnnotations: Boolean
+    get() = annotationList.annotations.isNotEmpty()
