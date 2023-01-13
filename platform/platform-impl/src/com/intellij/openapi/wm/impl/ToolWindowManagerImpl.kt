@@ -1971,29 +1971,20 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     else {
       // docked and sliding windows
       val anchor = info.anchor
-      var another: InternalDecoratorImpl? = null
       if (source.parent is Splitter) {
         var sizeInSplit = if (anchor.isSplitVertically) source.height else source.width
         val splitter = source.parent as Splitter
         if (splitter.secondComponent === source) {
           sizeInSplit += splitter.dividerWidth
-          another = splitter.firstComponent as InternalDecoratorImpl
-        }
-        else {
-          another = splitter.secondComponent as InternalDecoratorImpl
         }
         info.sideWeight = getAdjustedRatio(partSize = sizeInSplit,
                                            totalSize = if (anchor.isSplitVertically) splitter.height else splitter.width,
                                            direction = if (splitter.secondComponent === source) -1 else 1)
       }
-
       val toolWindowPane = getToolWindowPane(toolWindow)
       val paneWeight = getAdjustedWeight(toolWindowPane, anchor, source)
       info.weight = paneWeight
       layoutState.setUnifiedAnchorWeight(anchor, paneWeight)
-      if (another != null) {
-        getRegisteredMutableInfoOrLogError(another.toolWindow.id).weight = paneWeight
-      }
     }
     fireStateChanged(MovedOrResized, toolWindow)
   }
