@@ -23,6 +23,9 @@ class Directives {
         }
     }
 
+    fun getBooleanValue(key: String): Boolean =
+        contains(key) && getValue(key) == "TRUE"
+
     fun put(key: String, value: String?) {
         if (value == null) {
             directives[key] = null

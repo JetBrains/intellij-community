@@ -21,11 +21,12 @@ class KtFileTreeNode(
             ?.declarations
             ?: return emptyList()
 
-        return declarations.map {
-            if (it is KtClassOrObject)
+        return declarations.mapNotNull {
+            if (it is KtClassOrObject) {
                 KtClassOrObjectTreeNode(project, it, settings)
-            else
-                KtDeclarationTreeNode(project, it, settings)
+            } else {
+                KtDeclarationTreeNode.create(project, it, settings)
+            }
         }
     }
 }

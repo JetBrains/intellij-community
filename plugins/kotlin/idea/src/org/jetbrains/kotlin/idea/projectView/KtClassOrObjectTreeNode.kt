@@ -20,11 +20,11 @@ class KtClassOrObjectTreeNode(project: Project?, ktClassOrObject: KtClassOrObjec
 
     override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> {
         return if (value != null && settings.isShowMembers) {
-            value.getStructureDeclarations().map { declaration ->
+            value.getStructureDeclarations().mapNotNull { declaration ->
                 if (declaration is KtClassOrObject)
                     KtClassOrObjectTreeNode(project, declaration, settings)
                 else
-                    KtDeclarationTreeNode(project, declaration, settings)
+                    KtDeclarationTreeNode.create(project, declaration, settings)
             }
         } else {
             emptyList()

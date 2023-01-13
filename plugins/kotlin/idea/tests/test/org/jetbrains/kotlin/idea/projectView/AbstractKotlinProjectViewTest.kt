@@ -32,6 +32,7 @@ abstract class AbstractKotlinProjectViewTest : KotlinMultiFileHeavyProjectTestCa
         val processor = object : CommonProcessors.FindFirstProcessor<VirtualFile>() {
             override fun accept(t: VirtualFile): Boolean = Path(t.path).endsWith(path)
         }
+        treeStructure.isShowMembers = globalDirectives.getBooleanValue("SHOW_MEMBERS")
 
         FilenameIndex.processFilesByName(path.name, true, GlobalSearchScope.allScope(project), processor)
         val resultFile = processor.foundValue ?: error("$path file is not found")

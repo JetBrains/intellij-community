@@ -113,6 +113,11 @@ public class KotlinProjectViewTestGenerated extends AbstractKotlinProjectViewTes
         runTest("testData/projectView/OneFileMultifileFacadeKtWithSources.test");
     }
 
+    @TestMetadata("ScriptMembers.test")
+    public void testScriptMembers() throws Exception {
+        runTest("testData/projectView/ScriptMembers.test");
+    }
+
     @TestMetadata("_Arrays.test")
     public void test_Arrays() throws Exception {
         runTest("testData/projectView/_Arrays.test");

@@ -166,7 +166,7 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
                     PARAMETER
             }
             is KtProperty -> if (isVar) FIELD_VAR else FIELD_VAL
-            is KtScriptInitializer -> containingFile.scriptIcon()
+            is KtScriptInitializer -> LAMBDA
             is KtClassInitializer -> CLASS_INITIALIZER
             is KtTypeAlias -> TYPE_ALIAS
             is KtAnnotationEntry -> {
