@@ -46,6 +46,8 @@ public class CodeFormatterFacade {
   private final FormatterTagHandler myTagHandler;
   private final boolean myCanChangeWhitespaceOnly;
 
+  public static final ThreadLocal<Boolean> FORMATTING_CANCELLED_FLAG = ThreadLocal.withInitial(() -> false);
+
   public CodeFormatterFacade(CodeStyleSettings settings, @Nullable Language language) {
     this(settings, language, false);
   }
@@ -168,7 +170,7 @@ public class CodeFormatterFacade {
           if (doPostponedFormatting) {
             invokePostponedFormatting(file, document, textRanges);
           }
-          if (FormattingProgressTask.FORMATTING_CANCELLED_FLAG.get()) {
+          if (FORMATTING_CANCELLED_FLAG.get()) {
             return;
           }
 
@@ -181,7 +183,9 @@ public class CodeFormatterFacade {
 
           FormatterEx formatter = FormatterEx.getInstanceEx();
           if (CodeStyleManager.getInstance(project).isSequentialProcessingAllowed()) {
-            formatter.setProgressTask(new FormattingProgressTask(project, file, document));
+            ObjectUtils.consumeIfNotNull(
+              FormattingProgressCallbackFactory.getInstance().createProgressCallback(project, file, document),
+              callback -> formatter.setProgressTask(callback));
           }
 
           CommonCodeStyleSettings.IndentOptions indentOptions =
@@ -242,7 +246,7 @@ public class CodeFormatterFacade {
     }
 
     PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(file.getProject());
-    FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
+    FORMATTING_CANCELLED_FLAG.set(false);
     component.doPostponedFormatting(file.getViewProvider());
     i = 0;
     for (FormatTextRange range : textRanges) {

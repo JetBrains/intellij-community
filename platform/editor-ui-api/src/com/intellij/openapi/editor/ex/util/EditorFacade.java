@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.ex.util;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,8 +21,6 @@ public abstract class EditorFacade {
   public static EditorFacade getInstance() {
     return ApplicationManager.getApplication().getService(EditorFacade.class);
   }
-
-  public abstract void undo(@NotNull Project project, @NotNull FileEditor editor, @NotNull Document document, long modificationStamp);
 
   /**
    * @deprecated Use LineWrappingUtil.doWrapLongLinesIfNecessary()

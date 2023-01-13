@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
 import com.intellij.CodeStyleBundle;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.util.EditorFacade;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.ui.UIUtil;
@@ -22,7 +23,6 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public final class FormattingProgressTask extends SequentialModalProgressTask implements FormattingProgressCallback {
-  public static final ThreadLocal<Boolean> FORMATTING_CANCELLED_FLAG = ThreadLocal.withInitial(() -> false);
 
   private static final double MAX_PROGRESS_VALUE = 1;
   private static final double TOTAL_WEIGHT =
@@ -135,7 +135,7 @@ public final class FormattingProgressTask extends SequentialModalProgressTask im
 
   @Override
   public void cancelled() {
-    FORMATTING_CANCELLED_FLAG.set(true);
+    CodeFormatterFacade.FORMATTING_CANCELLED_FLAG.set(true);
     VirtualFile file = myFile.get();
     Document document = myDocument.get();
     if (file == null || document == null || myDocumentModificationStampBefore < 0) {
@@ -146,6 +146,9 @@ public final class FormattingProgressTask extends SequentialModalProgressTask im
       return;
     }
 
-    EditorFacade.getInstance().undo(myProject, editor, document, myDocumentModificationStampBefore);
+    UndoManager manager = UndoManager.getInstance(myProject);
+    while (manager.isUndoAvailable(editor) && document.getModificationStamp() != myDocumentModificationStampBefore) {
+      manager.undo(editor);
+    }
   }
 }
