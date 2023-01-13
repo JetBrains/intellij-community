@@ -28,6 +28,12 @@ class WslPathTest {
     checkParse("//wsl$/Ubuntu\\etc", WslPath("Ubuntu", "/etc"))
   }
 
+  @Test
+  fun wsl_localhost() {
+    checkParse("//wsl.localhost/Ubuntu/etc/hosts", WslPath("Ubuntu", "/etc/hosts"))
+    checkParse("\\\\wsl.localhost\\Ubuntu\\etc\\hosts", WslPath("Ubuntu", "/etc/hosts"))
+  }
+
   private fun checkParse(windowsPath: String, expectedWslPath: WslPath?) {
     Assert.assertEquals(expectedWslPath, WslPath.parseWindowsUncPath(windowsPath))
   }
