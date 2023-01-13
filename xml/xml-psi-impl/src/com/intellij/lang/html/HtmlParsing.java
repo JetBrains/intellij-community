@@ -166,7 +166,7 @@ public class HtmlParsing {
     assert token() == XmlTokenType.XML_START_TAG_START : "Tag start expected";
     String originalTagName;
     PsiBuilder.Marker xmlText = null;
-    while (!eof()) {
+    while (!eof() && shouldContinueParsingTag()) {
       final IElementType tt = token();
       if (tt == XmlTokenType.XML_START_TAG_START) {
         xmlText = terminateText(xmlText);
@@ -174,14 +174,7 @@ public class HtmlParsing {
 
         // Start tag header
         advance();
-        if (token() != XmlTokenType.XML_NAME) {
-          error(XmlPsiBundle.message("xml.parsing.tag.name.expected"));
-          originalTagName = "";
-        }
-        else {
-          originalTagName = Objects.requireNonNull(myBuilder.getTokenText());
-          advance();
-        }
+        originalTagName = parseOpenTagName();
 
         String tagName = StringUtil.toLowerCase(originalTagName);
         while (childTerminatesParentInStack(tagName)) {
@@ -267,8 +260,8 @@ public class HtmlParsing {
         final PsiBuilder.Marker footer = mark();
         advance();
 
-        if (token() == XmlTokenType.XML_NAME) {
-          String endName = StringUtil.toLowerCase(Objects.requireNonNull(myBuilder.getTokenText()));
+        String endName = parseEndTagName();
+        if (endName != null) {
           final String parentTagName = !myTagNamesStack.isEmpty() ? myTagNamesStack.peek() : "";
           if (!parentTagName.equals(endName) && !endName.endsWith(COMPLETION_NAME)) {
             final boolean isOptionalTagEnd = HtmlUtil.isOptionalEndForHtmlTagL(parentTagName);
@@ -282,14 +275,11 @@ public class HtmlParsing {
               doneTag();
             }
             else {
-              advance();
               if (token() == XmlTokenType.XML_TAG_END) advance();
               footer.error(XmlPsiBundle.message("xml.parsing.closing.tag.matches.nothing"));
             }
             continue;
           }
-
-          advance();
 
           while (token() != XmlTokenType.XML_TAG_END &&
                  token() != XmlTokenType.XML_START_TAG_START &&
@@ -328,6 +318,37 @@ public class HtmlParsing {
       }
     }
     terminateText(xmlText);
+  }
+
+  @NotNull
+  protected String parseOpenTagName() {
+    String originalTagName;
+    if (token() != XmlTokenType.XML_NAME) {
+      error(XmlPsiBundle.message("xml.parsing.tag.name.expected"));
+      originalTagName = "";
+    }
+    else {
+      originalTagName = Objects.requireNonNull(myBuilder.getTokenText());
+      advance();
+    }
+    return originalTagName;
+  }
+
+  @Nullable
+  protected String parseEndTagName() {
+    String endName;
+    if (token() == XmlTokenType.XML_NAME) {
+      endName = StringUtil.toLowerCase(Objects.requireNonNull(myBuilder.getTokenText()));
+      advance();
+    }
+    else {
+      endName = null;
+    }
+    return endName;
+  }
+
+  protected boolean shouldContinueParsingTag() {
+    return true;
   }
 
   protected boolean isSingleTag(@NotNull String tagName, @NotNull String originalTagName) {
@@ -371,7 +392,7 @@ public class HtmlParsing {
     return myTagNamesStack.contains(endName);
   }
 
-  private void doneTag() {
+  protected void doneTag() {
     PsiBuilder.Marker tag = myTagMarkersStack.peek();
     tag.done(getHtmlTagElementType());
     final String tagName = myTagNamesStack.peek();

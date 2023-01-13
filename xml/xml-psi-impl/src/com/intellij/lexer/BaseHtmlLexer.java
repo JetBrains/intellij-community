@@ -28,7 +28,8 @@ public abstract class BaseHtmlLexer extends DelegateLexer implements Restartable
   protected static final int BASE_STATE_SHIFT = 9;
 
 
-  protected static final TokenSet ATTRIBUTE_EMBEDMENT_TOKENS = TokenSet.create(XML_ATTRIBUTE_VALUE_TOKEN, XML_ENTITY_REF_TOKEN, XML_CHAR_ENTITY_REF);
+  protected static final TokenSet ATTRIBUTE_EMBEDMENT_TOKENS =
+    TokenSet.create(XML_ATTRIBUTE_VALUE_TOKEN, XML_ENTITY_REF_TOKEN, XML_CHAR_ENTITY_REF);
   protected static final TokenSet TAG_EMBEDMENT_START_TOKENS = TokenSet.create(
     XML_DATA_CHARACTERS, XML_CDATA_START, XML_COMMENT_START, XML_START_TAG_START, XML_REAL_WHITE_SPACE, XML_END_TAG_START,
     TokenType.WHITE_SPACE, XML_ENTITY_REF_TOKEN, XML_CHAR_ENTITY_REF
@@ -111,6 +112,10 @@ public abstract class BaseHtmlLexer extends DelegateLexer implements Restartable
 
   protected @NotNull TokenSet createAttributeEmbedmentTokenSet() {
     return ATTRIBUTE_EMBEDMENT_TOKENS;
+  }
+
+  public int getStateForRestartDuringEmbedmentScan() {
+    return 0;
   }
 
   private void broadcastToken() {
