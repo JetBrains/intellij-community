@@ -31,7 +31,7 @@ internal val CLOSE_BUTTON_POSITION: String
 
 internal fun Row.closeButtonPositionComboBox() {
   comboBox(CollectionComboBoxModel(items), listCellRenderer { text = optionName(it) })
-    .bindItem({ getCloseButtonPlacement() }, { set(it) })
+    .bindItem(::getCloseButtonPlacement, ::set)
 }
 
 internal fun closeButtonPlacementOptionDescription(): Collection<BooleanOptionDescription> = items.map { asOptionDescriptor(it) }

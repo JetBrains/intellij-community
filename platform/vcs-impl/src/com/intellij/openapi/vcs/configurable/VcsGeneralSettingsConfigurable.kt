@@ -83,7 +83,7 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
                 VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> message("radio.after.creation.do.not.add")
               }
             })
-            .bindItem({ addConfirmation.value }, { addConfirmation.value = it })
+            .bindItem(addConfirmation::getValue, addConfirmation::setValue)
             .withApplicableVcsesTooltip(addConfirmation, vcsListeners)
 
           checkBox(message("checkbox.including.files.created.outside.ide", ApplicationNamesInfo.getInstance().fullProductName))
@@ -105,14 +105,14 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
                        VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> message("radio.after.deletion.do.not.remove")
                      }
                    })
-            .bindItem({ removeConfirmation.value }, { removeConfirmation.value = it })
+            .bindItem(removeConfirmation::getValue, removeConfirmation::setValue)
             .withApplicableVcsesTooltip(removeConfirmation, vcsListeners)
         }.layout(RowLayout.PARENT_GRID)
 
         row(message("settings.general.show.options.before.command.label")) {
           for (setting in vcsManager.allOptions) {
             checkBox(setting.displayName)
-              .bindSelected({ setting.value }, { setting.value = it })
+              .bindSelected(setting::getValue, setting::setValue)
               .withApplicableVcsesTooltip(setting, vcsListeners)
               .visibleIf(OptionVisibleForVcsesPredicate(project, setting, vcsListeners))
           }
@@ -144,11 +144,11 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
         }
         row {
           val checkBox = checkBox(message("settings.checkbox.show.changed.in.last"))
-            .bindSelected({ contentAnnotationSettings.isShow }, { contentAnnotationSettings.isShow = it })
+            .bindSelected(contentAnnotationSettings::isShow, contentAnnotationSettings::setShow)
             .comment(message("settings.checkbox.show.changed.in.last.comment"))
             .gap(RightGap.SMALL)
           spinner(1..VcsContentAnnotationSettings.ourMaxDays, 1)
-            .bindIntValue({ contentAnnotationSettings.limitDays }, { contentAnnotationSettings.limitDays = it })
+            .bindIntValue(contentAnnotationSettings::getLimitDays, contentAnnotationSettings::setLimitDays)
             .enabledIf(checkBox.selected)
             .gap(RightGap.SMALL)
           @Suppress("DialogTitleCapitalization")

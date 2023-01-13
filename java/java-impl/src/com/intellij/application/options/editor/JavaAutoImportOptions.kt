@@ -34,7 +34,7 @@ class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Sim
     group(JavaLanguage.INSTANCE.displayName) {
       row(JavaBundle.message("label.show.import.popup.for")) {
         checkBox(JavaBundle.message("show.import.popup.for.classes"))
-          .bindSelected({ dcaSettings.isImportHintEnabled }, { dcaSettings.isImportHintEnabled = it })
+          .bindSelected(dcaSettings::isImportHintEnabled, dcaSettings::setImportHintEnabled)
         checkBox(JavaBundle.message("show.import.popup.for.static.methods.and.fields"))
           .bindSelected(ciSettings::ADD_MEMBER_IMPORTS_ON_THE_FLY)
       }.layout(RowLayout.INDEPENDENT)
@@ -59,7 +59,7 @@ class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Sim
       }
       row {
         checkBox(ApplicationBundle.message("checkbox.optimize.imports.on.the.fly"))
-          .bindSelected({ ciWorkspaceSettings.isOptimizeImportsOnTheFly }, { ciWorkspaceSettings.isOptimizeImportsOnTheFly = it })
+          .bindSelected(ciWorkspaceSettings::isOptimizeImportsOnTheFly, ciWorkspaceSettings::setOptimizeImportsOnTheFly)
           .also { dataContextOwner = it.component }
           .gap(RightGap.SMALL)
         cell(ContextHelpLabel.createWithLink(
