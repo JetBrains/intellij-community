@@ -144,14 +144,14 @@ class InlayPresentationList(
   fun paint(inlay: Inlay<*>, g: Graphics2D, targetRegion: Rectangle2D, textAttributes: TextAttributes) {
     val editor = inlay.editor as EditorImpl
     val storage = InlayHintsUtils.getTextMetricStorage(editor)
-    val height = if (entries.isEmpty()) 0 else entries.maxOf { it.computeHeight(storage) }
     var xOffset = 0
-    val gap = (targetRegion.height.toInt() - height) / 2
+    val metrics = storage.getFontMetrics(small = false)
+    val gap =  if (targetRegion.height.toInt() < metrics.lineHeight + 2) 1 else 2
     val attrKey = if (hasBackground) DefaultLanguageHighlighterColors.INLAY_DEFAULT else DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND
     val attrs = editor.colorsScheme.getAttributes(attrKey)
     g.withTranslated(targetRegion.x, targetRegion.y) {
       if (hasBackground) {
-        val rectHeight = height + TOP_MARGIN + BOTTOM_MARGIN
+        val rectHeight = targetRegion.height.toInt() - gap * 2
         val rectWidth = getWidthInPixels(storage)
         val config = GraphicsUtil.setupAAPainting(g)
         GraphicsUtil.paintWithAlpha(g, BACKGROUND_ALPHA)
@@ -175,7 +175,7 @@ class InlayPresentationList(
           attrs
         }
         g.withTranslated(xOffset, 0) {
-          entry.render(g, storage, finalAttrs, isDisabled, gap)
+          entry.render(g, storage, finalAttrs, isDisabled, gap, targetRegion.height.toInt(), editor)
         }
         xOffset += entry.computeWidth(storage)
       }
