@@ -33,7 +33,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
+import com.intellij.refactoring.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.refactoring.rename.inplace.SelectableInlayPresentation;
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil;
