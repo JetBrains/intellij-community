@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package icons;
 
 import com.intellij.ui.IconManager;
@@ -45,7 +45,7 @@ public final class KotlinBaseResourcesIcons {
 
   public static final class Wizard {
     /** 16x16 */ public static final @NotNull Icon Android = load("org/jetbrains/kotlin/idea/icons/wizard/android.svg", -2076954442, 0);
-    /** 16x16 */ public static final @NotNull Icon Compose = load("org/jetbrains/kotlin/idea/icons/wizard/compose.svg", -1538046842, 0);
+    /** 16x16 */ public static final @NotNull Icon Compose = load("org/jetbrains/kotlin/idea/icons/wizard/compose.svg", 1572513700, 0);
     /** 16x16 */ public static final @NotNull Icon Console = load("org/jetbrains/kotlin/idea/icons/wizard/console.svg", 1273539654, 0);
     /** 16x16 */ public static final @NotNull Icon Ios = load("org/jetbrains/kotlin/idea/icons/wizard/ios.svg", 1584045129, 0);
     /** 16x16 */ public static final @NotNull Icon JS = load("org/jetbrains/kotlin/idea/icons/wizard/js.svg", -1101134364, 0);
