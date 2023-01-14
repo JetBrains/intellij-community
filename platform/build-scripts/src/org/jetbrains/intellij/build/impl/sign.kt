@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.intellij.build.impl
 
@@ -476,20 +476,20 @@ private fun Path.copyZipReplacing(origin: Path, entries: Map<String, Path>): Pat
 
 private fun BuildContext.signingOptions(contentType: String): PersistentMap<String, String> {
   val certificateID = proprietaryBuildTools.macHostProperties?.codesignString
+  check(certificateID != null || !signMacOsBinaries) {
+    "Missing certificate ID"
+  }
   val entitlements = paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts/entitlements.xml")
   check(entitlements.exists()) {
     "Missing $entitlements file"
   }
-  val options = persistentMapOf(
+  return persistentMapOf(
     "mac_codesign_options" to "runtime",
+    "mac_codesign_identity" to "$certificateID",
     "mac_codesign_entitlements" to "$entitlements",
     "mac_codesign_force" to "true", // true if omitted
     "contentType" to contentType
   )
-  return if (!certificateID.isNullOrBlank()) {
-    options.put("mac_codesign_identity", "$certificateID")
-  }
-  else options
 }
 
 internal suspend fun signMacBinaries(context: BuildContext, files: List<Path>, additionalOptions: Map<String, String> = emptyMap()) {
