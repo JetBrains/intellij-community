@@ -34,7 +34,7 @@ class OverlaidOffsetIconsIcon(
     val bufferImage = ImageUtil.createImage(g, iconWidth, iconHeight, BufferedImage.TYPE_INT_ARGB)
     val bufferGraphics = bufferImage.createGraphics()
     try {
-      paintToBuffer(bufferGraphics)
+      paintToBuffer(c, bufferGraphics)
     }
     finally {
       bufferGraphics.dispose()
@@ -42,7 +42,7 @@ class OverlaidOffsetIconsIcon(
     StartupUiUtil.drawImage(g, bufferImage, x, y, null)
   }
 
-  private fun paintToBuffer(g: Graphics2D) {
+  private fun paintToBuffer(c: Component?, g: Graphics2D) {
     var rightEdge = iconWidth
     icons.reversed().forEachIndexed { index, icon ->
       val currentX = rightEdge - icon.iconWidth
@@ -57,14 +57,14 @@ class OverlaidOffsetIconsIcon(
           g2.translate(0, -((iconHeight * scaleY - iconHeight) / 2).roundToInt())
           g2.scale(scaleX, scaleY)
           g2.composite = AlphaComposite.DstOut
-          icon.paintIcon(null, g2, currentX, 0)
+          icon.paintIcon(c, g2, currentX, 0)
         }
         finally {
           g2.dispose()
         }
       }
 
-      icon.paintIcon(null, g, currentX, 0)
+      icon.paintIcon(c, g, currentX, 0)
       rightEdge -= (icon.iconWidth * offsetRate).roundToInt()
     }
   }
