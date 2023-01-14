@@ -5,6 +5,7 @@ import com.intellij.codeInspection.tests.ULanguage
 import com.intellij.codeInspection.tests.UastInspectionTestBase
 import com.intellij.codeInspection.tests.test.junit.addHamcrestLibrary
 import com.intellij.codeInspection.tests.test.junit.addJUnit3Library
+import com.intellij.codeInspection.tests.test.junit.addJUnit5Library
 import com.intellij.execution.TestStateStorage
 import com.intellij.execution.testframework.JavaTestLocator
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo
@@ -28,6 +29,7 @@ abstract class TestFailedLineInspectionTestBase : UastInspectionTestBase() {
       super.configureModule(module, model, contentEntry)
       model.addJUnit3Library()
       model.addHamcrestLibrary()
+      model.addJUnit5Library()
     }
   }
 
@@ -40,7 +42,6 @@ abstract class TestFailedLineInspectionTestBase : UastInspectionTestBase() {
     errorMessage: String
   ) {
     val pair = TestStackTraceParser(url, stackTrace, errorMessage, JavaTestLocator.INSTANCE, project)
-    assertEquals("assertEquals", pair.failedMethodName)
     val record = TestStateStorage.Record(
       TestStateInfo.Magnitude.FAILED_INDEX.value, Date(), 0,
       pair.failedLine, pair.failedMethodName, pair.errorMessage, pair.topLocationLine

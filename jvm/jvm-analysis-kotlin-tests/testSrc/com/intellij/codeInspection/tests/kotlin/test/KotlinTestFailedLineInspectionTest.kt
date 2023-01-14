@@ -50,4 +50,32 @@ class KotlinTestFailedLineInspectionTest : TestFailedLineInspectionTestBase() {
       """.trimMargin()
     )
   }
+
+  fun `test local method call`() {
+    doTest(
+      lang = ULanguage.KOTLIN,
+      text = """
+        class LocalFunctionTest {
+          @org.junit.jupiter.api.Test
+          fun testFoo() {
+            fun doTest() {
+              org.junit.jupiter.api.Assertions.assertEquals("expected", "actual")
+            }
+            <warning descr="org.opentest4j.AssertionFailedError:">doTest</warning>()
+          }
+        }
+      """.trimIndent(),
+      url = "java:test://LocalFunctionTest/testFoo",
+      errorMessage = "org.opentest4j.AssertionFailedError:",
+      stackTrace = """
+        |${'\t'}at org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:55)
+        |${'\t'}at org.junit.jupiter.api.AssertionUtils.failNotEqual(AssertionUtils.java:62)
+        |${'\t'}at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:182)
+        |${'\t'}at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:177)
+        |${'\t'}at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1141)
+        |${'\t'}at LocalFunctionTest.testFoo${'$'}doTest(LocalFunctionTest.kt:5)
+        |${'\t'}at LocalFunctionTest.testFoo(LocalFunctionTest.kt:7)
+      """.trimMargin()
+    )
+  }
 }
