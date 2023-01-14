@@ -2,10 +2,10 @@ Node: ArraysKt___ArraysJvmKt
 User object class: KtInternalFileTreeNode
 
 Value: KtLightClassForDecompiledDeclaration of PsiFile:ArraysKt___ArraysJvmKt.class
-Value file: ArraysKt___ArraysJvmKt.class
+Value file: kotlin-stdlib.jar!/kotlin/collections/ArraysKt___ArraysJvmKt.class
 
 Navigation item #0: KtFile: _ArraysJvm.kt
-Navigation item file #0: _ArraysJvm.kt
+Navigation item file #0: kotlin-stdlib-sources.jar!/generated/_ArraysJvm.kt
 
 
 -Project

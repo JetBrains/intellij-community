@@ -2,10 +2,10 @@ Node: AnnotationTarget
 User object class: KtClassOrObjectTreeNode
 
 Value: CLASS
-Value file: AnnotationTarget.class
+Value file: kotlin-stdlib.jar!/kotlin/annotation/AnnotationTarget.class
 
 Navigation item #0: CLASS
-Navigation item file #0: AnnotationTarget.class
+Navigation item file #0: kotlin-stdlib.jar!/kotlin/annotation/AnnotationTarget.class
 
 
 -Project

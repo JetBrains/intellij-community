@@ -2,10 +2,10 @@ Node: build.gradle.kts
 User object class: KtFileTreeNode
 
 Value: KtFile: build.gradle.kts
-Value file: build.gradle.kts
+Value file: src/build.gradle.kts
 
 Navigation item #0: KtFile: build.gradle.kts
-Navigation item file #0: build.gradle.kts
+Navigation item file #0: src/build.gradle.kts
 
 
 -Project

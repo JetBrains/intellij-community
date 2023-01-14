@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.projectView
 
 import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectView.TestProjectTreeStructure
 import com.intellij.psi.PsiElement
@@ -16,8 +17,7 @@ import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileHeavyProjectTestCase
 import java.io.File
 import javax.swing.tree.DefaultMutableTreeNode
-import kotlin.io.path.Path
-import kotlin.io.path.name
+import kotlin.io.path.*
 
 abstract class AbstractKotlinProjectViewTest : KotlinMultiFileHeavyProjectTestCase() {
     private lateinit var treeStructure: TestProjectTreeStructure
@@ -59,13 +59,30 @@ abstract class AbstractKotlinProjectViewTest : KotlinMultiFileHeavyProjectTestCa
         assertEqualsToFile(
             description = "The tree is different",
             expected = File(testDataPath.substringBeforeLast('.') + ".txt"),
-            actual = "Node: $node\n" +
-                    "User object class: ${psiBasedNode?.let { it::class.simpleName }}\n\n" +
-                    "Value: ${psiBasedNode?.value}\n" +
-                    "Value file: ${(psiBasedNode?.value as? PsiElement)?.containingFile?.name}\n\n" +
-                    deepNavigation(navigationItem) + "\n\n" +
-                    sanitizeTree(actualTree),
+            actual = sanitizeTree(
+                "Node: $node\n" +
+                        "User object class: ${psiBasedNode?.let { it::class.simpleName }}\n\n" +
+                        "Value: ${psiBasedNode?.value}\n" +
+                        "Value file: ${filePath(psiBasedNode?.value)}\n\n" +
+                        deepNavigation(navigationItem) + "\n\n" +
+                        actualTree
+            )
         )
+    }
+
+    private fun filePath(element: Any?): String? {
+        if (element !is PsiElement) return null
+
+        val virtualFile = element.containingFile.virtualFile
+        val fileSystem = virtualFile.fileSystem
+        val prefixFile = if (fileSystem is JarFileSystem) {
+            fileSystem.getVirtualFileForJar(virtualFile)?.path?.let(::Path)?.parent!!
+        } else {
+            module.moduleNioFile.parent.listDirectoryEntries().single()
+        }
+
+        val path = Path(virtualFile.path)
+        return path.relativeTo(prefixFile).pathString
     }
 
     private fun deepNavigation(element: Any?): String {
@@ -77,7 +94,8 @@ abstract class AbstractKotlinProjectViewTest : KotlinMultiFileHeavyProjectTestCa
 
     private fun StringBuilder.deepNavigation(element: Any, count: Int) {
         appendLine("Navigation item #${count}: $element")
-        appendLine("Navigation item file #${count}: ${(element as? PsiElement)?.containingFile?.name}")
+        appendLine("Navigation item file #${count}: ${filePath(element)}")
+
         if (element !is PsiElement) return
         val navigateElement = element.navigationElement
         if (navigateElement == element) return

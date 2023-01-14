@@ -2,12 +2,12 @@ Node: MyKotlinClass
 User object class: KtClassOrObjectTreeNode
 
 Value: CLASS
-Value file: MyKotlinClass.class
+Value file: kotlinMockLibrary.jar!/MyKotlinClass.class
 
 Navigation item #0: CLASS
-Navigation item file #0: MyKotlinClass.class
+Navigation item file #0: kotlinMockLibrary.jar!/MyKotlinClass.class
 Navigation item #1: CLASS
-Navigation item file #1: MyKotlinClass.kt
+Navigation item file #1: lib/sources/MyKotlinClass.kt
 
 
 -Project

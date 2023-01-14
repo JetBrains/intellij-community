@@ -2,12 +2,12 @@ Node: MyCustomFacade__FacadeKt
 User object class: KtInternalFileTreeNode
 
 Value: KtLightClassForDecompiledDeclaration of PsiFile:MyCustomFacade__FacadeKt.class
-Value file: MyCustomFacade__FacadeKt.class
+Value file: myLibraryWithFacade.jar!/MyCustomFacade__FacadeKt.class
 
 Navigation item #0: KtLightClassForDecompiledDeclaration of PsiFile:MyCustomFacade__FacadeKt.class
-Navigation item file #0: MyCustomFacade__FacadeKt.class
+Navigation item file #0: myLibraryWithFacade.jar!/MyCustomFacade__FacadeKt.class
 Navigation item #1: KtFile: MyCustomFacade__FacadeKt.class
-Navigation item file #1: MyCustomFacade__FacadeKt.class
+Navigation item file #1: myLibraryWithFacade.jar!/MyCustomFacade__FacadeKt.class
 
 
 -Project
