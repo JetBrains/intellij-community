@@ -475,11 +475,11 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         }
         myAdditionalPanels = list;
 
-        for (HectorComponentPanel p : myAdditionalPanels) {
+        for (HectorComponentPanel panel : myAdditionalPanels) {
           JComponent c;
           try {
-            p.reset();
-            c = p.createComponent();
+            panel.reset();
+            c = panel.createComponent();
           }
           catch (ProcessCanceledException e) {
             throw e;
