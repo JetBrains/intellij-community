@@ -377,7 +377,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     try {
       TerminalSelection selection = new TerminalSelection(
         new Point(0, -buffer.getHistoryLinesCount()),
-        new Point(terminalPanel.getWidth(), buffer.getScreenLinesCount()));
+        new Point(terminalPanel.getWidth(), buffer.getScreenLinesCount() - 1));
       Pair<Point, Point> points = selection.pointsForRun(terminalPanel.getColumnCount());
       return SelectionUtil.getSelectionText(points.first, points.second, buffer);
     }
