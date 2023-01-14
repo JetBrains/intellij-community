@@ -85,6 +85,36 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
       """.trimIndent())
   }
 
+  fun `test accept text block diff`() {
+    checkAcceptFullDiff("""
+        import org.junit.Assert;
+        import org.junit.Test;
+        
+        public class MyJUnitTest {
+            @Test
+            public void testFoo() {
+                Assert.assertEquals(""${'"'}
+                        expected""${'"'}, "actual");
+            }
+        }
+      """.trimIndent(), """
+        import org.junit.Assert;
+        import org.junit.Test;
+        
+        public class MyJUnitTest {
+            @Test
+            public void testFoo() {
+                Assert.assertEquals(""${'"'}
+                        actual""${'"'}, "actual");
+            }
+        }
+      """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+        at org.junit.Assert.assertEquals(Assert.java:117)
+        at org.junit.Assert.assertEquals(Assert.java:146)
+        at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+      """.trimIndent())
+  }
+
   fun `test physical string literal change sync`() {
     checkPhysicalDiff(before = """
         import org.junit.Assert;

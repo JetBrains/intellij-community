@@ -1,9 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework
 
-import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
+import com.intellij.refactoring.suggested.endOffset
+import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.asSafely
 import com.siyeh.ig.testFrameworks.AssertHint.Companion.createAssertEqualsHint
 import org.jetbrains.uast.UMethod
@@ -15,14 +17,18 @@ class JavaTestDiffProvider : JvmTestDiffProvider() {
   }
 
   override fun failedCall(file: PsiFile, startOffset: Int, endOffset: Int, method: UMethod?): PsiElement? {
-    val failedCalls = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset)
-      .filterIsInstance(PsiExpressionStatement::class.java)
-      .map { it.expression }
-      .filterIsInstance(PsiMethodCallExpression::class.java)
+    val failedCalls = findCallsInRange(file, startOffset, endOffset)
     if (failedCalls.isEmpty()) return null
     if (failedCalls.size == 1) return failedCalls.first()
     if (method == null) return null
     return failedCalls.firstOrNull { it.resolveMethod()?.isEquivalentTo(method.sourcePsi) == true }
+  }
+
+  private fun findCallsInRange(file: PsiFile, startOffset: Int, endOffset: Int): List<PsiMethodCallExpression> {
+    val element = file.findElementAt(startOffset)
+    val codeBlock = PsiTreeUtil.getParentOfType(element, PsiCodeBlock::class.java)
+    return PsiTreeUtil.findChildrenOfAnyType(codeBlock, false, PsiMethodCallExpression::class.java)
+      .filter { it.startOffset >= startOffset || it.endOffset <= endOffset }
   }
 
   override fun getExpected(call: PsiElement, param: UParameter?): PsiElement? {
