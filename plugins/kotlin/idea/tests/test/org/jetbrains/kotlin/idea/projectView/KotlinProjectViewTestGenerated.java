@@ -128,6 +128,11 @@ public class KotlinProjectViewTestGenerated extends AbstractKotlinProjectViewTes
         runTest("testData/projectView/_ArraysWithSources.test");
     }
 
+    @TestMetadata("_ArraysWithSourcesMembers.test")
+    public void test_ArraysWithSourcesMembers() throws Exception {
+        runTest("testData/projectView/_ArraysWithSourcesMembers.test");
+    }
+
     @TestMetadata("___ArraysJvm.test")
     public void test___ArraysJvm() throws Exception {
         runTest("testData/projectView/___ArraysJvm.test");

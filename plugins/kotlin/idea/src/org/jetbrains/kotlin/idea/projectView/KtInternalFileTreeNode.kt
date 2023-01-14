@@ -20,7 +20,9 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinJvmNameAnnotationIndex
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
 import org.jetbrains.kotlin.name.JvmNames
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFileAnnotationList
 
 class KtInternalFileTreeNode(project: Project?, lightClass: KtLightClass, viewSettings: ViewSettings) :
@@ -62,7 +64,22 @@ class KtInternalFileTreeNode(project: Project?, lightClass: KtLightClass, viewSe
 
     override fun extractPsiFromValue(): PsiElement? = navigatablePsiElement?.element ?: value
 
-    override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> = emptyList()
+    override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> {
+        if (!settings.isShowMembers) return emptyList()
+
+        val ktFile = extractPsiFromValue() as? KtFile ?: return emptyList()
+        val declarations = (if (ktFile.isScript()) ktFile.script else ktFile)
+            ?.declarations
+            ?: return emptyList()
+
+        return declarations.mapNotNull {
+            if (it is KtClassOrObject) {
+                KtClassOrObjectTreeNode(project, it, settings)
+            } else {
+                KtDeclarationTreeNode.create(project, it, settings)
+            }
+        }
+    }
 
     override fun canRepresent(element: Any?): Boolean {
         if (super.canRepresent(element)) return true
