@@ -188,7 +188,10 @@ public class RemoteConnectionBuilder {
           JavaSdkVersion sdkVersion = JavaSdk.getInstance().getVersion(jdk);
           if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7)) {
             Path agentArtifactPath;
-            if (PluginManagerCore.isRunningFromSources()) {
+
+            Path classesRoot = Path.of(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
+            if (Files.isDirectory(classesRoot)) {
+              // Code runs from IDEA run configuration (code from .class file in out/ directory)
               try {
                 // The agent file must have a fixed name (AGENT_JAR_NAME) which is mentioned in MANIFEST.MF inside
                 Path debuggerAgentDir =
@@ -205,7 +208,6 @@ public class RemoteConnectionBuilder {
               }
             }
             else {
-              Path classesRoot = Path.of(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
               agentArtifactPath = classesRoot.resolveSibling("rt").resolve(AGENT_JAR_NAME);
             }
 
