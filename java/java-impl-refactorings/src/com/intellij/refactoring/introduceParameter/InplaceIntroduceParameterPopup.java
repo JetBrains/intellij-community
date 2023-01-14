@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -167,11 +168,10 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
   }
 
   @Override
-  protected String[] suggestNames(PsiType defaultType, String propName) {
+  protected SuggestedNameInfo suggestNames(PsiType defaultType, String propName) {
     return IntroduceParameterHandler.createNameSuggestionGenerator(myExpr, propName, myProject, null)
-      .getSuggestedNameInfo(defaultType).names;
+      .getSuggestedNameInfo(defaultType);
   }
-
 
   @Nullable
   private PsiParameter getParameter() {
@@ -179,7 +179,6 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
     final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
     return parameters.length > myParameterIndex && myParameterIndex >= 0 ? parameters[myParameterIndex] : null;
   }
-
 
   @Override
   protected JComponent getComponent() {

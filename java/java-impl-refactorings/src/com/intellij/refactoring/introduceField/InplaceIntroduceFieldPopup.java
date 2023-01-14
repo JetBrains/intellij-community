@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.openapi.application.WriteAction;
@@ -6,6 +6,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
@@ -92,9 +93,10 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
   }
 
   @Override
-  protected String[] suggestNames(PsiType defaultType, String propName) {
-    return JavaNameSuggestionUtil.suggestFieldName(defaultType, (PsiLocalVariable)getLocalVariable(), myExpr != null && myExpr.isValid() ? myExpr : null, myStatic,
-                                                   getParentClass()).names;
+  protected SuggestedNameInfo suggestNames(PsiType defaultType, String propName) {
+    PsiExpression expression = myExpr != null && myExpr.isValid() ? myExpr : null;
+    PsiLocalVariable variable = (PsiLocalVariable)getLocalVariable();
+    return JavaNameSuggestionUtil.suggestFieldName(defaultType, variable, expression, myStatic, getParentClass());
   }
 
   @Override

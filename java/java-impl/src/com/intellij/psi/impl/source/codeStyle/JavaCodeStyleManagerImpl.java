@@ -264,11 +264,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     String[] namesArray = ArrayUtilRt.toStringArray(names);
     sortVariableNameSuggestions(namesArray, kind, _propertyName, type);
 
-    final PsiType _type = type;
+    final String _type = type == null ? null : type.getCanonicalText();
     return new SuggestedNameInfo(namesArray) {
       @Override
       public void nameChosen(String name) {
-        if (_propertyName != null || _type != null && _type.isValid()) {
+        if (_propertyName != null || _type != null) {
           JavaStatisticsManager.incVariableNameUseCount(name, kind, _propertyName, _type);
         }
       }

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntroducer<PsiVariable, PsiExpression> {
   protected TypeSelectorManagerImpl myTypeSelectorManager;
+  private SuggestedNameInfo mySuggestedNameInfo;
 
   public AbstractJavaInplaceIntroducer(final Project project,
                                        Editor editor,
@@ -42,18 +44,17 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
   }
 
   protected abstract PsiVariable createFieldToStartTemplateOn(String[] names, PsiType psiType);
-  protected abstract String[] suggestNames(PsiType defaultType, String propName);
+  protected abstract SuggestedNameInfo suggestNames(PsiType defaultType, String propName);
   protected abstract VariableKind getVariableKind();
 
-
-
   @Override
-  protected String[] suggestNames(boolean replaceAll, PsiVariable variable) {
+  protected String @NotNull [] suggestNames(boolean replaceAll, PsiVariable variable) {
     final PsiType defaultType = getType();
     final String propertyName = variable != null
                                 ? JavaCodeStyleManager.getInstance(myProject).variableNameToPropertyName(variable.getName(), VariableKind.LOCAL_VARIABLE)
                                 : null;
-    final String[] names = suggestNames(defaultType, propertyName);
+    mySuggestedNameInfo = suggestNames(defaultType, propertyName);
+    final String[] names = mySuggestedNameInfo.names;
     if (propertyName != null && names.length > 1) {
       final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
       final String paramName = javaCodeStyleManager.propertyNameToVariableName(propertyName, getVariableKind());
@@ -63,6 +64,17 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
       }
     }
     return names;
+  }
+
+  @Override
+  public void finish(boolean success) {
+    if (success) {
+      PsiVariable variable = getVariable();
+      if (variable != null) {
+        mySuggestedNameInfo.nameChosen(variable.getName());
+      }
+    }
+    super.finish(success);
   }
 
   @Override
