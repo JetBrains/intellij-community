@@ -150,7 +150,7 @@ class CommandCompletionService(
     val newList: MutableList<PreviousActionInfoContainer> = if (index != 0) {
       val previousBeforeDot = data?.firstOrNull()
       val last = data?.firstOrNull()
-      if (previousBeforeDot != null && last != null) {
+      if (previousBeforeDot != null && last != null && offset - index > 0) {
         val newString = editor.document.immutableCharSequence.substring(0, offset - index) + editor.document.immutableCharSequence.substring(offset)
         if (newString.hashCode() == previousBeforeDot.hashcode) {
           mutableListOf(previousBeforeDot)
