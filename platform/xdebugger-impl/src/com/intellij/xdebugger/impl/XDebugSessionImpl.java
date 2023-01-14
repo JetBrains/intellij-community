@@ -926,40 +926,45 @@ public final class XDebugSessionImpl implements XDebugSession {
       removeBreakpointListeners();
     }
     finally {
-      myDebugProcess.stopAsync().onSuccess(aVoid -> {
-        if (!myProject.isDisposed()) {
-          myProject.getMessageBus().syncPublisher(XDebuggerManager.TOPIC).processStopped(myDebugProcess);
-        }
+      myDebugProcess.stopAsync()
+        .onSuccess(aVoid -> {
+          processStopped();
+        });
+    }
+  }
 
-        if (mySessionTab != null) {
-          AppUIUtil.invokeOnEdt(() -> {
-            mySessionTab.getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION);
-            ((XWatchesViewImpl)mySessionTab.getWatchesView()).updateSessionData();
-            mySessionTab.detachFromSession();
-          });
-        }
-        else if (myConsoleView != null) {
-          AppUIUtil.invokeOnEdt(() -> Disposer.dispose(myConsoleView));
-        }
+  private void processStopped() {
+    if (!myProject.isDisposed()) {
+      myProject.getMessageBus().syncPublisher(XDebuggerManager.TOPIC).processStopped(myDebugProcess);
+    }
 
-        clearPausedData();
-
-        if (myValueMarkers != null) {
-          myValueMarkers.clear();
-        }
-        if (XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isUnmuteOnStop()) {
-          mySessionData.setBreakpointsMuted(false);
-        }
-        myDebuggerManager.removeSession(this);
-        myDispatcher.getMulticaster().sessionStopped();
-        myDispatcher.getListeners().clear();
-
-        myProject.putUserData(XDebuggerEditorLinePainter.CACHE, null);
-
-        synchronized (myRegisteredBreakpoints) {
-          myRegisteredBreakpoints.clear();
-        }
+    if (mySessionTab != null) {
+      AppUIUtil.invokeOnEdt(() -> {
+        mySessionTab.getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION);
+        ((XWatchesViewImpl)mySessionTab.getWatchesView()).updateSessionData();
+        mySessionTab.detachFromSession();
       });
+    }
+    else if (myConsoleView != null) {
+      AppUIUtil.invokeOnEdt(() -> Disposer.dispose(myConsoleView));
+    }
+
+    clearPausedData();
+
+    if (myValueMarkers != null) {
+      myValueMarkers.clear();
+    }
+    if (XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isUnmuteOnStop()) {
+      mySessionData.setBreakpointsMuted(false);
+    }
+    myDebuggerManager.removeSession(this);
+    myDispatcher.getMulticaster().sessionStopped();
+    myDispatcher.getListeners().clear();
+
+    myProject.putUserData(XDebuggerEditorLinePainter.CACHE, null);
+
+    synchronized (myRegisteredBreakpoints) {
+      myRegisteredBreakpoints.clear();
     }
   }
 
