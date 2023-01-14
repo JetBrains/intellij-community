@@ -14,6 +14,8 @@ import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
 import org.jetbrains.annotations.SystemIndependent
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.io.path.name
+import kotlin.io.path.pathString
 
 
 val VirtualFile.isFile: Boolean
@@ -66,7 +68,14 @@ fun VirtualFile.findPsiFile(project: Project): PsiFile? {
 }
 
 private fun VirtualFile.findFileOrDirectory(relativePath: @SystemIndependent String): VirtualFile? {
-  return fileSystem.findFileByPath(path.getResolvedPath(relativePath))
+  var virtualFile = checkNotNull(fileSystem.findFileByPath("/")) {
+    "Cannot find file system root for file: $path/$relativePath"
+  }
+  val names = path.getResolvedNioPath(relativePath).map { it.pathString }
+  for (name in names) {
+    virtualFile = virtualFile.findChild(name) ?: return null
+  }
+  return virtualFile
 }
 
 fun VirtualFile.findFile(relativePath: @SystemIndependent String): VirtualFile? {
@@ -87,7 +96,7 @@ fun VirtualFile.findDirectory(relativePath: @SystemIndependent String): VirtualF
 
 fun VirtualFile.findOrCreateFile(relativePath: @SystemIndependent String): VirtualFile {
   val directory = findOrCreateDirectory("$relativePath/..")
-  val name = path.getResolvedPath(relativePath).getFileName()
+  val name = path.getResolvedNioPath(relativePath).name
   val file = directory.findChild(name) ?: directory.createChildData(fileSystem, name)
   if (!file.isFile) {
     throw IOException("Expected file instead of directory: $path/$relativePath")
@@ -96,11 +105,11 @@ fun VirtualFile.findOrCreateFile(relativePath: @SystemIndependent String): Virtu
 }
 
 fun VirtualFile.findOrCreateDirectory(relativePath: @SystemIndependent String): VirtualFile {
-  val path = path.getResolvedPath(relativePath)
   var directory = checkNotNull(fileSystem.findFileByPath("/")) {
-    "Cannot find file system root for file: $path"
+    "Cannot find file system root for file: $path/$relativePath"
   }
-  for (name in path.removePrefix("/").split("/")) {
+  val names = NioPathPrefixTreeFactory.convertToList(path.getResolvedNioPath(relativePath))
+  for (name in names) {
     directory = directory.findChild(name) ?: directory.createChildDirectory(fileSystem, name)
     if (!directory.isDirectory) {
       throw IOException("Expected directory instead of file: ${directory.path}")

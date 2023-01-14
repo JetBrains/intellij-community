@@ -5,6 +5,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
 
+
 val Path.children: List<Path>
   get() = Files.newDirectoryStream(this).use { it.toList() }
 
@@ -23,9 +24,9 @@ fun Path.createDirectory(): Path {
 }
 
 fun Path.createFile(relativePath: String): Path {
-  return getResolvedNioPath(relativePath).createFile()
+  return getResolvedPath(relativePath).createFile()
 }
 
 fun Path.createDirectory(relativePath: String): Path {
-  return getResolvedNioPath(relativePath).createDirectory()
+  return getResolvedPath(relativePath).createDirectory()
 }

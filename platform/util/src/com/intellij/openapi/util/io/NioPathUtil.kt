@@ -8,18 +8,28 @@ import java.io.IOException
 import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.io.path.*
 
+
+private fun Path.getResolvedPathString(relativePath: String?): String {
+  val path = when (relativePath) {
+    null -> invariantSeparatorsPathString
+    else -> "$invariantSeparatorsPathString/$relativePath"
+  }
+  return FileUtil.toCanonicalPath(path, '/', true)
+}
+
 fun Path.toCanonicalPath(): String {
-  return FileUtil.toCanonicalPath(toString())
+  return getResolvedPathString(null)
 }
 
-fun Path.getResolvedNioPath(relativePath: String): Path {
-  return toCanonicalPath().getResolvedNioPath(relativePath)
+fun Path.getResolvedPath(): Path {
+  return getResolvedPathString(null).toNioPath()
 }
 
-fun Path.getRelativeNioPath(path: Path): Path? {
-  return toCanonicalPath().getRelativeNioPath(path.toCanonicalPath())
+fun Path.getResolvedPath(relativePath: String): Path {
+  return getResolvedPathString(relativePath).toNioPath()
 }
 
 fun Path.isAncestor(path: Path, strict: Boolean): Boolean {
@@ -57,24 +67,39 @@ fun Path.deleteChildrenRecursively(predicate: (Path) -> Boolean) {
 }
 
 fun Path.findOrCreateFile(relativePath: String): Path {
-  return getResolvedNioPath(relativePath).findOrCreateFile()
+  return getResolvedPath(relativePath).findOrCreateFile()
 }
 
 fun Path.findOrCreateDirectory(relativePath: String): Path {
-  return getResolvedNioPath(relativePath).findOrCreateDirectory()
+  return getResolvedPath(relativePath).findOrCreateDirectory()
 }
 
 fun Path.deleteRecursively(relativePath: String) {
-  getResolvedNioPath(relativePath).deleteRecursively()
+  getResolvedPath(relativePath).deleteRecursively()
 }
 
 fun Path.deleteChildrenRecursively(relativePath: String, predicate: (Path) -> Boolean) {
-  getResolvedNioPath(relativePath).deleteChildrenRecursively(predicate)
+  getResolvedPath(relativePath).deleteChildrenRecursively(predicate)
 }
 
 object NioPathPrefixTreeFactory : AbstractPrefixTreeFactory<Path, String>() {
 
   override fun convertToList(element: Path): List<String> {
-    return CanonicalPathPrefixTreeFactory.convertToList(element.toCanonicalPath())
+    return element.map { it.pathString }
+  }
+}
+
+fun String.toNioPath(): Path {
+  return Paths.get(FileUtil.toSystemDependentName(this))
+}
+
+fun String.getResolvedNioPath(relativePath: String): Path {
+  return toNioPath().getResolvedPath(relativePath)
+}
+
+object CanonicalPathPrefixTreeFactory : AbstractPrefixTreeFactory<String, String>() {
+
+  override fun convertToList(element: String): List<String> {
+    return NioPathPrefixTreeFactory.convertToList(element.toNioPath())
   }
 }
