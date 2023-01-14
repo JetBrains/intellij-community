@@ -84,17 +84,17 @@ internal class FileTestFixtureImpl(
 
   private fun createFixtureRoot(relativePath: String): VirtualFile {
     val systemPath = Path.of(PathManager.getSystemPath())
-    val systemDirectory = systemPath.findOrCreateVirtualDirectory()
+    val systemDirectory = systemPath.findOrCreateDirectory().getVirtualDirectory()
     val fixtureRoot = "FileTestFixture/$relativePath"
     VfsRootAccess.allowRootAccess(testRootDisposable, systemDirectory.path + "/$fixtureRoot")
     return runWriteActionAndGet {
-      systemDirectory.findOrCreateVirtualDirectory(fixtureRoot)
+      systemDirectory.findOrCreateDirectory(fixtureRoot)
     }
   }
 
   private fun createFixtureStateFile(): VirtualFile {
     return runWriteActionAndGet {
-      root.findOrCreateVirtualFile("_FileTestFixture.xml")
+      root.findOrCreateFile("_FileTestFixture.xml")
     }
   }
 
@@ -108,20 +108,20 @@ internal class FileTestFixtureImpl(
     }
     else {
       for ((path, text) in snapshots) {
-        revertFile(path, text)
+        revertFile(path.toNioPath(), text)
       }
     }
   }
 
   private fun invalidateFixtureCaches() {
     runWriteActionAndWait {
-      root.deleteVirtualChildren { it != fixtureStateFile }
+      root.deleteChildrenRecursively { it != fixtureStateFile }
     }
   }
 
   private fun dumpFixtureState() {
     val errors = errors.map { it.message ?: it.toString() }
-    val snapshots = snapshots.entries.associate { (k, v) -> getRelativePath(k) to v.orElse(null) }
+    val snapshots = snapshots.entries.associate { (k, v) -> k.toCanonicalPath() to v.orElse(null) }
     writeFixtureState(State(isInitialized, isSuppressedErrors, errors, snapshots))
   }
 
@@ -198,26 +198,19 @@ internal class FileTestFixtureImpl(
     dumpFixtureState()
   }
 
-  private fun revertFile(relativePath: String, text: String?) {
-    revertFile(root.path.getResolvedNioPath(relativePath), text)
-  }
-
   private fun revertFile(path: Path, text: String?) {
     runWriteActionAndWait {
       if (text != null) {
-        val file = path.findOrCreateVirtualFile()
+        path.findOrCreateFile()
+        val file = path.getVirtualFile()
         file.reloadDocument()
         file.writeText(text)
       }
       else {
-        path.deleteVirtualFileOrDirectory()
+        val file = path.findVirtualFile()
+        file?.deleteRecursively()
       }
     }
-  }
-
-  private fun getRelativePath(path: Path): String {
-    return root.path.getRelativePath(path.toCanonicalPath())
-           ?: path.toCanonicalPath()
   }
 
   private fun getTextContent(path: Path): String? {

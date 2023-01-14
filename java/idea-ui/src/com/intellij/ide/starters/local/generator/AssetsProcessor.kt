@@ -86,14 +86,12 @@ open class AssetsProcessorImpl : AssetsProcessor {
 
   protected open fun findOrCreateFile(outputDirectory: Path, relativePath: String): Path {
     LOG.info("Creating file $relativePath in $outputDirectory")
-    val filePath = outputDirectory.getResolvedNioPath(relativePath)
-    return filePath.findOrCreateNioFile()
+    return outputDirectory.findOrCreateFile(relativePath)
   }
 
   protected open fun findOrCreateDirectory(outputDirectory: Path, relativePath: String): Path {
     LOG.info("Creating directory $relativePath in $outputDirectory")
-    val directoryPath = outputDirectory.getResolvedNioPath(relativePath)
-    return directoryPath.findOrCreateNioDirectory()
+    return outputDirectory.findOrCreateDirectory(relativePath)
   }
 
   companion object {

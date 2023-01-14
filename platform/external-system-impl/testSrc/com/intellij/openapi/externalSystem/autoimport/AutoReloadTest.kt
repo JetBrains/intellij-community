@@ -242,8 +242,8 @@ class AutoReloadTest : AutoReloadTestCase() {
     val scriptFile1 = createFile("script1.groovy")
     val scriptFile2 = createFile("script2.groovy")
 
-    projectAware1.registerSettingsFile(scriptFile1.path)
-    projectAware2.registerSettingsFile(scriptFile2.path)
+    projectAware1.registerSettingsFile(scriptFile1)
+    projectAware2.registerSettingsFile(scriptFile2)
 
     register(projectAware1)
     register(projectAware2)
@@ -376,7 +376,7 @@ class AutoReloadTest : AutoReloadTestCase() {
   fun `test tracker store and restore`() {
     val projectAware = mockProjectAware()
     val settingsFile = findOrCreateFile(SETTINGS_FILE)
-    projectAware.registerSettingsFile(settingsFile.path)
+    projectAware.registerSettingsFile(settingsFile)
 
     var state = testProjectTrackerState(projectAware) {
       assertState(numReload = 1, notified = false, event = "register project without cache")
@@ -420,7 +420,7 @@ class AutoReloadTest : AutoReloadTestCase() {
   }
 
   fun `test move and rename settings files`() {
-    test("settings.groovy") { settingsFile ->
+    test { settingsFile ->
       registerSettingsFile("script.groovy")
       registerSettingsFile("dir/script.groovy")
       registerSettingsFile("dir1/script.groovy")
@@ -463,7 +463,7 @@ class AutoReloadTest : AutoReloadTestCase() {
 
       settingsFile.rename("configuration.groovy")
       assertState(numReload = 1, notified = true, event = "rename")
-      settingsFile.rename("settings.groovy")
+      settingsFile.rename(SETTINGS_FILE)
       assertState(numReload = 1, notified = false, event = "revert rename")
     }
   }
@@ -519,8 +519,7 @@ class AutoReloadTest : AutoReloadTestCase() {
   }
 
   fun `test files generation during refresh`() {
-    test {
-      val settingsFile = createFile(SETTINGS_FILE)
+    test { settingsFile ->
       assertState(numReload = 0, notified = false, event = "some file is created")
       onceWhenReloading {
         registerSettingsFile(settingsFile)
@@ -550,7 +549,7 @@ class AutoReloadTest : AutoReloadTestCase() {
   fun `test disabling of auto-import`() {
     val projectAware = mockProjectAware()
     val settingsFile = findOrCreateFile(SETTINGS_FILE)
-    projectAware.registerSettingsFile(settingsFile.path)
+    projectAware.registerSettingsFile(settingsFile)
 
     var state = testProjectTrackerState(projectAware) {
       assertState(numReload = 1, autoReloadType = SELECTIVE, notified = false, event = "register project without cache")
@@ -996,8 +995,8 @@ class AutoReloadTest : AutoReloadTestCase() {
     initialize()
     setAutoReloadType(ALL)
 
-    val settingsFile1 = createFile("script1.groovy").path
-    val settingsFile2 = createFile("script2.groovy").path
+    val settingsFile1 = createFile("script1.groovy")
+    val settingsFile2 = createFile("script2.groovy")
 
     val projectAware = mockProjectAware()
     projectAware.registerSettingsFile(settingsFile1)

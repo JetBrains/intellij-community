@@ -50,8 +50,8 @@ class TestAssetsProcessorImpl : AssetsProcessorImpl() {
 
   override fun findOrCreateFile(outputDirectory: Path, relativePath: String): Path {
     if (outputDirectory is TestFileSystemLocation) {
-      val vFile = outputDirectory.virtualFile.findOrCreateVirtualFile(relativePath)
-      val debugPath = outputDirectory.debugPath.getResolvedNioPath(relativePath)
+      val vFile = outputDirectory.virtualFile.findOrCreateFile(relativePath)
+      val debugPath = outputDirectory.debugPath.getResolvedPath(relativePath)
       return TestFileSystemLocation(vFile, debugPath)
     }
     return super.findOrCreateFile(outputDirectory, relativePath)
@@ -59,8 +59,8 @@ class TestAssetsProcessorImpl : AssetsProcessorImpl() {
 
   override fun findOrCreateDirectory(outputDirectory: Path, relativePath: String): Path {
     if (outputDirectory is TestFileSystemLocation) {
-      val vFile = outputDirectory.virtualFile.findOrCreateVirtualDirectory(relativePath)
-      val debugPath = outputDirectory.debugPath.getResolvedNioPath(relativePath)
+      val vFile = outputDirectory.virtualFile.findOrCreateDirectory(relativePath)
+      val debugPath = outputDirectory.debugPath.getResolvedPath(relativePath)
       return TestFileSystemLocation(vFile, debugPath)
     }
     return super.findOrCreateDirectory(outputDirectory, relativePath)

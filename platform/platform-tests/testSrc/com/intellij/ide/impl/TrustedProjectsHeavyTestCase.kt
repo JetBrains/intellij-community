@@ -13,8 +13,8 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.createVirtualDirectory
-import com.intellij.openapi.vfs.findOrCreateVirtualDirectory
+import com.intellij.openapi.vfs.createDirectory
+import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.openapi.vfs.getVirtualDirectory
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -48,8 +48,7 @@ abstract class TrustedProjectsHeavyTestCase {
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory()
       .createTempDirTestFixture()
     fileFixture.setUp()
-    testRoot = fileFixture.tempDirPath.toNioPath()
-      .getVirtualDirectory()
+    testRoot = fileFixture.tempDirPath.toNioPath().getVirtualDirectory()
   }
 
   @AfterEach
@@ -61,7 +60,7 @@ abstract class TrustedProjectsHeavyTestCase {
     relativeProjectRoot: String
   ): Project {
     val projectRoot = writeAction {
-      testRoot.createVirtualDirectory(relativeProjectRoot)
+      testRoot.createDirectory(relativeProjectRoot)
     }
     val projectManager = ProjectManagerEx.getInstanceEx()
     return closeOpenedProjectsIfFailAsync {
@@ -81,7 +80,7 @@ abstract class TrustedProjectsHeavyTestCase {
     writeAction {
       val entityStorage = MutableEntityStorage.create()
       val contentRoots = relativeContentRoots.map {
-        testRoot.findOrCreateVirtualDirectory(it)
+        testRoot.findOrCreateDirectory(it)
       }
       addModuleEntity(project, entityStorage, moduleName, contentRoots)
       WorkspaceModel.getInstance(project).updateProjectModel("Create module $moduleName") {
@@ -117,10 +116,10 @@ abstract class TrustedProjectsHeavyTestCase {
     numModules: Int,
     numContentRoots: Int
   ) {
-    val projectRoot = testRoot.findOrCreateVirtualDirectory(relativeProjectRoot)
+    val projectRoot = testRoot.findOrCreateDirectory(relativeProjectRoot)
     generateModuleAsync(project, entityStorage, projectRoot, numContentRoots)
     repeat(numModules - 1) {
-      val moduleRoot = projectRoot.createVirtualDirectory(projectRoot.name + "-module-$it")
+      val moduleRoot = projectRoot.createDirectory(projectRoot.name + "-module-$it")
       generateModuleAsync(project, entityStorage, moduleRoot, numContentRoots)
     }
   }
@@ -134,7 +133,7 @@ abstract class TrustedProjectsHeavyTestCase {
     val contentRoots = ArrayList<VirtualFile>()
     contentRoots.add(moduleRoot)
     repeat(numContentRoots - 1) {
-      contentRoots.add(moduleRoot.createVirtualDirectory("contentRoot-$it"))
+      contentRoots.add(moduleRoot.createDirectory("contentRoot-$it"))
     }
     addModuleEntity(project, entityStorage, moduleRoot.name, contentRoots)
   }

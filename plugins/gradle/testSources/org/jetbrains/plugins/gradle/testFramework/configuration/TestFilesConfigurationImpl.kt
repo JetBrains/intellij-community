@@ -34,14 +34,14 @@ open class TestFilesConfigurationImpl : TestFilesConfiguration {
 
   override fun areContentsEqual(root: VirtualFile): Boolean {
     for ((path, expectedContent) in files) {
-      val file = root.findVirtualFile(path) ?: return false
+      val file = root.findFile(path) ?: return false
       val content = file.readText()
       if (expectedContent != content) {
         return false
       }
     }
     for (path in directories) {
-      if (root.findVirtualDirectory(path) == null) {
+      if (root.findDirectory(path) == null) {
         return false
       }
     }
@@ -51,11 +51,11 @@ open class TestFilesConfigurationImpl : TestFilesConfiguration {
   override fun createFiles(root: VirtualFile) {
     runWriteActionAndWait {
       for ((path, content) in files) {
-        val file = root.createVirtualFile(path)
+        val file = root.createFile(path)
         file.writeText(content)
       }
       for (path in directories) {
-        root.createVirtualDirectory(path)
+        root.createDirectory(path)
       }
     }
     builders.forEach { it(root) }

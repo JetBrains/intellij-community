@@ -22,7 +22,7 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
   fun findOrCreateFile(relativePath: String, text: String): VirtualFile {
     gradleFixture.fileFixture.snapshot(relativePath)
     return runWriteActionAndGet {
-      val file = projectRoot.findOrCreateVirtualFile(relativePath)
+      val file = projectRoot.findOrCreateFile(relativePath)
       file.reloadDocument()
       file.writeText(text)
       file.commitDocument(project)
@@ -31,6 +31,6 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
   }
 
   fun getFile(relativePath: String): VirtualFile {
-    return projectRoot.getVirtualFile(relativePath)
+    return projectRoot.getFile(relativePath)
   }
 }

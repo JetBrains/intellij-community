@@ -7,13 +7,14 @@ import com.intellij.ide.impl.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.util.io.getResolvedNioPath
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.findOrCreateVirtualDirectory
+import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.openapi.vfs.getVirtualDirectory
+import com.intellij.openapi.vfs.getDirectory
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.SdkTestFixture
@@ -50,6 +51,8 @@ abstract class GradleUntrustedProjectTestCase {
 
   private lateinit var trustedLocations: List<Path>
 
+  private val rootPath: Path get() = testRoot.toNioPath()
+
   @BeforeEach
   fun setUp() {
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory()
@@ -81,7 +84,7 @@ abstract class GradleUntrustedProjectTestCase {
 
   suspend fun initGradleProject(relativePath: String) {
     val projectRoot = writeAction {
-      testRoot.findOrCreateVirtualDirectory(relativePath)
+      testRoot.findOrCreateDirectory(relativePath)
     }
     projectRoot.createSettingsFile {
       setProjectName(projectRoot.name)
@@ -90,14 +93,15 @@ abstract class GradleUntrustedProjectTestCase {
 
   suspend fun openProjectAsyncAndWait(relativePath: String): Project {
     val projectRoot = writeAction {
-      testRoot.getVirtualDirectory(relativePath)
+      testRoot.getDirectory(relativePath)
     }
     return openProjectAsyncAndWait(projectRoot)
   }
 
   suspend fun linkProjectAsyncAndWait(project: Project, relativePath: String) {
     val deferred = getProjectDataLoadPromise()
-    linkAndRefreshGradleProject(testRoot.path.getResolvedPath(relativePath), project)
+    val externalProjectPath = rootPath.getResolvedPath(relativePath).toCanonicalPath()
+    linkAndRefreshGradleProject(externalProjectPath, project)
     withContext(Dispatchers.EDT) {
       withTimeout(10.minutes) {
         deferred.asDeferred().join()
@@ -111,7 +115,7 @@ abstract class GradleUntrustedProjectTestCase {
 
   fun assertTrustedLocations(relativePaths: List<String>) {
     Assertions.assertEquals(
-      relativePaths.map { testRoot.path.getResolvedNioPath(it) }.toSet(),
+      relativePaths.map { rootPath.getResolvedPath(it) }.toSet(),
       trustedLocations.toSet()
     )
   }
@@ -122,7 +126,7 @@ abstract class GradleUntrustedProjectTestCase {
   ) {
     val locatedProject = LocatedProject.locateProject(project)
     Assertions.assertEquals(
-      relativePaths.map { testRoot.path.getResolvedNioPath(it) }.toSet(),
+      relativePaths.map { rootPath.getResolvedPath(it) }.toSet(),
       locatedProject.projectRoots.toSet()
     )
   }

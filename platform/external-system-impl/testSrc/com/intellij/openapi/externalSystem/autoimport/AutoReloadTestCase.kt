@@ -51,38 +51,33 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
 
   protected val projectRoot: VirtualFile get() = myProjectRoot!!
 
+  protected val projectNioPath: Path get() = projectRoot.toNioPath()
+
   private fun <R> runWriteAction(update: () -> R): R =
     WriteCommandAction.runWriteCommandAction(myProject, Computable { update() })
 
   protected fun pathsOf(vararg files: VirtualFile): Set<String> =
     files.mapTo(LinkedHashSet()) { it.path }
 
-  private fun getAbsolutePath(relativePath: String): String =
-    projectPath.getResolvedPath(relativePath)
-
-  private fun getAbsoluteNioPath(relativePath: String): Path =
-    projectPath.getResolvedNioPath(relativePath)
-
   protected fun createFile(relativePath: String): VirtualFile =
-    runWriteAction { projectRoot.createVirtualFile(relativePath) }
+    runWriteAction { projectRoot.createFile(relativePath) }
 
   protected fun findOrCreateFile(relativePath: String): VirtualFile =
-    runWriteAction { projectRoot.findOrCreateVirtualFile(relativePath) }
+    runWriteAction { projectRoot.findOrCreateFile(relativePath) }
 
   protected fun findOrCreateDirectory(relativePath: String): VirtualFile =
-    runWriteAction { projectRoot.findOrCreateVirtualDirectory(relativePath) }
+    runWriteAction { projectRoot.findOrCreateDirectory(relativePath) }
 
   protected fun getFile(relativePath: String): VirtualFile =
-    runWriteAction { projectRoot.getVirtualFile(relativePath) }
+    runWriteAction { projectRoot.getFile(relativePath) }
 
   protected fun createIoFileUnsafe(relativePath: String): Path =
-    getAbsoluteNioPath(relativePath).createNioFile()
+    projectNioPath.createFile(relativePath)
 
   protected fun createIoFile(relativePath: String): VirtualFile {
-    val path = getAbsoluteNioPath(relativePath)
-    path.refreshVfs() // ensure that file is removed from VFS
-    path.createNioFile()
-    return getFile(relativePath)
+    projectNioPath.refreshVfs(relativePath) // ensure that file is removed from VFS
+    projectNioPath.createFile(relativePath)
+    return projectNioPath.getResolvedPath(relativePath).getVirtualFile()
   }
 
   private fun VirtualFile.updateIoFile(action: (Path) -> Unit) {
@@ -104,14 +99,14 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     updateIoFile { it.writeText(it.readText().replace(old, new)) }
 
   protected fun VirtualFile.deleteIoFile() =
-    updateIoFile { it.deleteNioFileOrDirectory() }
+    updateIoFile { it.deleteRecursively() }
 
   protected fun VirtualFile.rename(name: String) =
     runWriteAction { rename(null, name) }
 
   protected fun VirtualFile.copy(name: String, parentRelativePath: String = "."): VirtualFile =
     runWriteAction {
-      val parent = projectRoot.findOrCreateVirtualDirectory(parentRelativePath)
+      val parent = projectRoot.findOrCreateDirectory(parentRelativePath)
       copy(null, parent, name)
     }
 
@@ -154,7 +149,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     runWriteAction { writeText(readText().replaceFirst(old, new)) }
 
   protected fun VirtualFile.delete() =
-    runWriteAction { deleteVirtualFileOrDirectory() }
+    runWriteAction { deleteRecursively() }
 
   protected fun VirtualFile.modify(modificationType: ExternalSystemModificationType = INTERNAL) {
     when (modificationType) {
@@ -190,7 +185,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     appendLine(SAMPLE_TEXT)
 
   protected fun registerSettingsFile(projectAware: MockProjectAware, relativePath: String) {
-    projectAware.registerSettingsFile(getAbsolutePath(relativePath))
+    projectAware.registerSettingsFile(projectNioPath.getResolvedPath(relativePath))
   }
 
   protected fun register(projectAware: ExternalSystemProjectAware, activate: Boolean = true, parentDisposable: Disposable? = null) {
@@ -325,7 +320,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
       val projectId = ExternalSystemProjectId(TEST_EXTERNAL_SYSTEM_ID, projectPath)
       val autoImportAware = object : ExternalSystemAutoImportAware {
         override fun getAffectedExternalProjectPath(changedFileOrDirPath: String, project: Project): String {
-          return getAbsolutePath(SETTINGS_FILE)
+          return projectNioPath.getResolvedPath(SETTINGS_FILE).toCanonicalPath()
         }
 
         override fun isApplicable(resolverPolicy: ProjectResolverPolicy?): Boolean {
@@ -412,15 +407,15 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
 
     fun removeProjectAware() = remove(projectAware.projectId)
 
-    fun registerSettingsFile(file: VirtualFile) = projectAware.registerSettingsFile(file.path)
+    fun registerSettingsFile(file: VirtualFile) = projectAware.registerSettingsFile(file)
 
-    fun registerSettingsFile(relativePath: String) = projectAware.registerSettingsFile(getAbsolutePath(relativePath))
+    fun registerSettingsFile(relativePath: String) = projectAware.registerSettingsFile(projectNioPath.getResolvedPath(relativePath))
 
     fun ignoreSettingsFileWhen(file: VirtualFile, condition: (ExternalSystemSettingsFilesModificationContext) -> Boolean) =
-      projectAware.ignoreSettingsFileWhen(file.path, condition)
+      projectAware.ignoreSettingsFileWhen(file, condition)
 
     fun ignoreSettingsFileWhen(relativePath: String, condition: (ExternalSystemSettingsFilesModificationContext) -> Boolean) =
-      projectAware.ignoreSettingsFileWhen(getAbsolutePath(relativePath), condition)
+      projectAware.ignoreSettingsFileWhen(projectNioPath.getResolvedPath(relativePath), condition)
 
     fun whenReloadStarted(parentDisposable: Disposable, action: () -> Unit) =
       projectAware.startReloadEventDispatcher.whenEventHappened(parentDisposable, action)
@@ -465,7 +460,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
       val projectAware = mockProjectAware(projectId)
       Disposer.newDisposable().use {
         val file = findOrCreateFile("$name/$relativePath")
-        projectAware.registerSettingsFile(file.path)
+        projectAware.registerSettingsFile(file)
         register(projectAware, parentDisposable = it)
         SimpleTestBench(projectAware).test(file)
       }
