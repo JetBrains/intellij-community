@@ -5,12 +5,14 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
+import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.fileClasses.isJvmMultifileClassFile
@@ -36,16 +38,20 @@ class KtInternalFileTreeNode(project: Project?, lightClass: KtLightClass, viewSe
         val smartPointerManager = SmartPointerManager.getInstance(prj)
         val scope = GlobalSearchScope.union(SourceNavigationHelper.targetClassFilesToSourcesScopes(virtualFile, prj))
 
-        val jvmNameAnnotationsOnFile = KotlinJvmNameAnnotationIndex[
-            baseName.substringBefore(JvmNames.MULTIFILE_PART_NAME_DELIMITER),
-            prj,
-            scope,
-        ].filter { it.parentOfType<KtFileAnnotationList>() != null }
+        val originalPackageName = ktClsFile.packageFqName
+        val filesFromFacade = SmartList<KtFile>()
+        KotlinJvmNameAnnotationIndex.processElements(baseName.substringBefore(JvmNames.MULTIFILE_PART_NAME_DELIMITER), prj, scope) {
+            ProgressManager.checkCanceled()
+            if (it.parentOfType<KtFileAnnotationList>() != null) {
+                it.containingKtFile.takeIf { ktFile -> ktFile.packageFqName == originalPackageName }?.let(filesFromFacade::add)
+            }
+
+            true
+        }
 
         val partShortName = baseName.substringAfter(JvmNames.MULTIFILE_PART_NAME_DELIMITER)
         if (baseName.contains(JvmNames.MULTIFILE_PART_NAME_DELIMITER)) {
-            for (jvmNameAnnotation in jvmNameAnnotationsOnFile) {
-                val ktFile = jvmNameAnnotation.containingKtFile
+            for (ktFile in filesFromFacade) {
                 if (ktFile.isJvmMultifileClassFile && PackagePartClassUtils.getFilePartShortName(ktFile.name) == partShortName) {
                     return@lazy smartPointerManager.createSmartPsiElementPointer(ktFile)
                 }
@@ -53,9 +59,9 @@ class KtInternalFileTreeNode(project: Project?, lightClass: KtLightClass, viewSe
         }
 
         // do not navigate to source if it is a facade file
-        val file = jvmNameAnnotationsOnFile.singleOrNull()?.containingKtFile ?: run {
+        val file = filesFromFacade.singleOrNull() ?: run {
             // top level functions and properties are located in files like `SomeClassKt.class`
-            val fqName = ktClsFile.packageFqName.child(Name.identifier(baseName))
+            val fqName = originalPackageName.child(Name.identifier(baseName))
             KotlinFileFacadeFqNameIndex[fqName.asString(), prj, scope].singleOrNull()
         }
 

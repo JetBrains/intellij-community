@@ -63,6 +63,16 @@ public class KotlinProjectViewTestGenerated extends AbstractKotlinProjectViewTes
         runTest("testData/projectView/ClassFromMyLibWithSources.test");
     }
 
+    @TestMetadata("FacadeInternalWithNameClashAndSources.test")
+    public void testFacadeInternalWithNameClashAndSources() throws Exception {
+        runTest("testData/projectView/FacadeInternalWithNameClashAndSources.test");
+    }
+
+    @TestMetadata("FacadeInternalWithNameClashAndSources2.test")
+    public void testFacadeInternalWithNameClashAndSources2() throws Exception {
+        runTest("testData/projectView/FacadeInternalWithNameClashAndSources2.test");
+    }
+
     @TestMetadata("MultifileFacadeInternalClass.test")
     public void testMultifileFacadeInternalClass() throws Exception {
         runTest("testData/projectView/MultifileFacadeInternalClass.test");
