@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.VerticalListPanel
@@ -26,7 +27,6 @@ import com.intellij.util.text.JBDateFormat
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -116,7 +116,7 @@ object GHPRReviewThreadComponent {
                                                     thread: GHPRReviewThreadModel,
                                                     onReply: () -> Unit): JComponent {
 
-    val toggleReplyLink = LinkLabel<Any>(GithubBundle.message("pull.request.review.thread.reply"), null) { _, _ ->
+    val toggleReplyLink = LinkLabel<Any>(CollaborationToolsBundle.message("review.comments.reply.action"), null) { _, _ ->
       onReply()
     }.apply {
       isFocusable = true
@@ -163,10 +163,10 @@ object GHPRReviewThreadComponent {
 
     thread.addAndInvokeStateChangeListener {
       val name = if (thread.isResolved) {
-        GithubBundle.message("pull.request.review.thread.unresolve")
+        CollaborationToolsBundle.message("review.comments.unresolve.action")
       }
       else {
-        GithubBundle.message("pull.request.review.thread.resolve")
+        CollaborationToolsBundle.message("review.comments.resolve.action")
       }
       unResolveAction.putValue(Action.NAME, name)
     }
@@ -181,7 +181,7 @@ object GHPRReviewThreadComponent {
       onDone()
     }
     val actions = CommentInputActionsComponentFactory.Config(
-      primaryAction = MutableStateFlow(textFieldModel.submitAction(GithubBundle.message("pull.request.review.thread.reply"))),
+      primaryAction = MutableStateFlow(textFieldModel.submitAction(CollaborationToolsBundle.message("review.comments.reply.action"))),
       additionalActions = MutableStateFlow(listOf(unResolveAction)),
       hintInfo = MutableStateFlow(CommentInputActionsComponentFactory.HintInfo(
         submitHint = GithubBundle.message("pull.request.review.thread.reply.hint", submitShortcutText),
@@ -230,10 +230,10 @@ object GHPRReviewThreadComponent {
 
         repliesLink.apply {
           text = if (repliesCount == 0) {
-            GithubBundle.message("pull.request.review.thread.reply")
+            CollaborationToolsBundle.message("review.comments.reply.action")
           }
           else {
-            GithubBundle.message("pull.request.review.thread.replies", repliesCount)
+            CollaborationToolsBundle.message("review.comments.replies.action", repliesCount)
           }
           isVisible = reviewDataProvider.canComment() || repliesCount > 0
         }
@@ -287,10 +287,10 @@ object GHPRReviewThreadComponent {
 
     thread.addAndInvokeStateChangeListener {
       unResolveLink.text = if (thread.isResolved) {
-        GithubBundle.message("pull.request.review.thread.unresolve")
+        CollaborationToolsBundle.message("review.comments.unresolve.action")
       }
       else {
-        GithubBundle.message("pull.request.review.thread.resolve")
+        CollaborationToolsBundle.message("review.comments.resolve.action")
       }
     }
     return unResolveLink
