@@ -4,10 +4,13 @@ package com.intellij.openapi.vfs
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.SystemIndependent
 import java.nio.file.Path
 
 
+@RequiresReadLock
 fun VirtualFile.getDocument(): Document {
   return checkNotNull(findDocument()) {
     "Cannot find document for $path"
@@ -20,24 +23,28 @@ fun Document.getVirtualFile(): VirtualFile {
   }
 }
 
+@RequiresReadLock
 fun VirtualFile.getPsiFile(project: Project): PsiFile {
   return checkNotNull(findPsiFile(project)) {
     "Cannot find PSI file for $path"
   }
 }
 
+@RequiresReadLock
 fun VirtualFile.getFile(relativePath: @SystemIndependent String): VirtualFile {
   return checkNotNull(findFile(relativePath)) {
     "File or directory doesn't exist: $path/$relativePath"
   }
 }
 
+@RequiresReadLock
 fun VirtualFile.getDirectory(relativePath: @SystemIndependent String): VirtualFile {
   return checkNotNull(findDirectory(relativePath)) {
     "File or directory doesn't exist: $path/$relativePath"
   }
 }
 
+@RequiresWriteLock
 fun VirtualFile.createFile(relativePath: @SystemIndependent String): VirtualFile {
   check(findFile(relativePath) == null) {
     "File already exists: $path/$relativePath"
@@ -45,6 +52,7 @@ fun VirtualFile.createFile(relativePath: @SystemIndependent String): VirtualFile
   return findOrCreateFile(relativePath)
 }
 
+@RequiresWriteLock
 fun VirtualFile.createDirectory(relativePath: @SystemIndependent String): VirtualFile {
   check(findDirectory(relativePath) == null) {
     "Directory already exists: $path/$relativePath"
@@ -52,12 +60,14 @@ fun VirtualFile.createDirectory(relativePath: @SystemIndependent String): Virtua
   return findOrCreateDirectory(relativePath)
 }
 
+@RequiresWriteLock
 fun Path.getVirtualFile(): VirtualFile {
   return checkNotNull(findVirtualFile()) {
     "File or directory doesn't exist: $this"
   }
 }
 
+@RequiresWriteLock
 fun Path.getVirtualDirectory(): VirtualFile {
   return checkNotNull(findVirtualDirectory()) {
     "File or directory doesn't exist: $this"

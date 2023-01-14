@@ -10,6 +10,8 @@ import com.intellij.openapi.util.io.*
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
 import org.jetbrains.annotations.SystemIndependent
 import java.io.IOException
@@ -41,15 +43,18 @@ fun VirtualFile.toNioPathOrNull(): Path? {
   return runCatching { toNioPath() }.getOrNull()
 }
 
+@RequiresReadLock
 fun VirtualFile.findDocument(): Document? {
   return FileDocumentManager.getInstance().getDocument(this)
 }
 
+@RequiresWriteLock
 fun VirtualFile.reloadDocument() {
   val document = findDocument() ?: return
   FileDocumentManager.getInstance().reloadFromDisk(document)
 }
 
+@RequiresWriteLock
 fun VirtualFile.commitDocument(project: Project) {
   val document = findDocument() ?: return
   PsiDocumentManager.getInstance(project).commitDocument(document)
@@ -59,14 +64,17 @@ fun Document.findVirtualFile(): VirtualFile? {
   return FileDocumentManager.getInstance().getFile(this)
 }
 
+@RequiresWriteLock
 fun Document.saveDocument() {
   FileDocumentManager.getInstance().saveDocument(this)
 }
 
+@RequiresReadLock
 fun VirtualFile.findPsiFile(project: Project): PsiFile? {
   return PsiManager.getInstance(project).findFile(this)
 }
 
+@RequiresReadLock
 private fun VirtualFile.findFileOrDirectory(relativePath: @SystemIndependent String): VirtualFile? {
   var virtualFile = checkNotNull(fileSystem.findFileByPath("/")) {
     "Cannot find file system root for file: $path/$relativePath"
@@ -78,6 +86,7 @@ private fun VirtualFile.findFileOrDirectory(relativePath: @SystemIndependent Str
   return virtualFile
 }
 
+@RequiresReadLock
 fun VirtualFile.findFile(relativePath: @SystemIndependent String): VirtualFile? {
   val file = findFileOrDirectory(relativePath) ?: return null
   if (!file.isFile) {
@@ -86,6 +95,7 @@ fun VirtualFile.findFile(relativePath: @SystemIndependent String): VirtualFile? 
   return file
 }
 
+@RequiresReadLock
 fun VirtualFile.findDirectory(relativePath: @SystemIndependent String): VirtualFile? {
   val file = findFileOrDirectory(relativePath) ?: return null
   if (!file.isDirectory) {
@@ -94,6 +104,7 @@ fun VirtualFile.findDirectory(relativePath: @SystemIndependent String): VirtualF
   return file
 }
 
+@RequiresWriteLock
 fun VirtualFile.findOrCreateFile(relativePath: @SystemIndependent String): VirtualFile {
   val directory = findOrCreateDirectory("$relativePath/..")
   val name = path.getResolvedNioPath(relativePath).name
@@ -104,6 +115,7 @@ fun VirtualFile.findOrCreateFile(relativePath: @SystemIndependent String): Virtu
   return file
 }
 
+@RequiresWriteLock
 fun VirtualFile.findOrCreateDirectory(relativePath: @SystemIndependent String): VirtualFile {
   var directory = checkNotNull(fileSystem.findFileByPath("/")) {
     "Cannot find file system root for file: $path/$relativePath"
@@ -118,22 +130,27 @@ fun VirtualFile.findOrCreateDirectory(relativePath: @SystemIndependent String): 
   return directory
 }
 
+@RequiresWriteLock
 fun VirtualFile.deleteRecursively() {
   delete(fileSystem)
 }
 
+@RequiresWriteLock
 fun VirtualFile.deleteChildrenRecursively(predicate: (VirtualFile) -> Boolean) {
   children.filter(predicate).forEach { it.delete(fileSystem) }
 }
 
+@RequiresWriteLock
 fun VirtualFile.deleteRecursively(relativePath: String) {
   findFileOrDirectory(relativePath)?.deleteRecursively()
 }
 
+@RequiresWriteLock
 fun VirtualFile.deleteChildrenRecursively(relativePath: String, predicate: (VirtualFile) -> Boolean) {
   findFileOrDirectory(relativePath)?.deleteChildrenRecursively(predicate)
 }
 
+@RequiresWriteLock
 fun Path.findVirtualFile(): VirtualFile? {
   val fileManager = VirtualFileManager.getInstance()
   val file = fileManager.refreshAndFindFileByNioPath(this) ?: return null
@@ -143,6 +160,7 @@ fun Path.findVirtualFile(): VirtualFile? {
   return file
 }
 
+@RequiresWriteLock
 fun Path.findVirtualDirectory(): VirtualFile? {
   val fileManager = VirtualFileManager.getInstance()
   val file = fileManager.refreshAndFindFileByNioPath(this) ?: return null
