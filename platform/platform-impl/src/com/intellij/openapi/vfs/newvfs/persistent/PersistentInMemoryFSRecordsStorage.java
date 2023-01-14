@@ -86,9 +86,10 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
     }
     this.maxRecords = maxRecords;
     //this.records = new UnsafeBuffer(maxRecords * RECORD_SIZE_IN_BYTES+ HEADER_SIZE);
-    this.records = ByteBuffer.allocate(maxRecords * RECORD_SIZE_IN_BYTES + HEADER_SIZE);
+    this.records = ByteBuffer.allocate(maxRecords * RECORD_SIZE_IN_BYTES + HEADER_SIZE)
+      .order(ByteOrder.nativeOrder());
 
-    if(Files.exists(path)) {
+    if (Files.exists(path)) {
       final long fileSize = Files.size(path);
       if (fileSize > records.capacity()) {
         final long recordsInFile = (fileSize - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
@@ -336,12 +337,13 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
       setIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET, globalModCount.get());
 
       final long actualDataLength = actualDataLength();
-      records.position(0)
-        .limit((int)actualDataLength);
+      final ByteBuffer actualRecordsToStore = records.duplicate();
+      actualRecordsToStore.position(0)
+        .limit((int)actualDataLength)
+        .order(records.order());
       try (final SeekableByteChannel channel = Files.newByteChannel(storagePath, WRITE, CREATE)) {
-        channel.write(records);
+        channel.write(actualRecordsToStore);
       }
-      records.clear();  //position <- 0, limit <- capacity
       markNotDirty();
     }
   }
