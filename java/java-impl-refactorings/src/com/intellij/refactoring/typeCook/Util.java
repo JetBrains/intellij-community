@@ -187,7 +187,7 @@ public final class Util {
     return subst;
   }
 
-  public static boolean bindsTypeParameters(PsiType t, Set<PsiTypeParameter> params) {
+  public static boolean bindsTypeParameters(PsiType t, Set<? extends PsiTypeParameter> params) {
     if (t instanceof PsiWildcardType) {
       final PsiWildcardType wct = ((PsiWildcardType)t);
       final PsiType bound = wct.getBound();
