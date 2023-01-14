@@ -2,12 +2,13 @@
 package org.jetbrains.plugins.gitlab.api.dto
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
+import java.util.*
 
 @GraphQLFragment("/graphql/fragment/note.graphql")
 data class GitLabNoteDTO(
   val author: GitLabUserDTO,
   val body: String,
-  val createdAt: String,
+  val createdAt: Date,
   val id: String,
   val position: Position?,
   val resolvable: Boolean,
