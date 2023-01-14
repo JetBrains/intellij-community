@@ -102,15 +102,15 @@ public abstract class MavenImporter {
   }
 
   @SuppressWarnings("SpellCheckingInspection")
-  public void getSupportedPackagings(Collection<String> result) { }
+  public void getSupportedPackagings(Collection<? super String> result) { }
 
-  public void getSupportedDependencyTypes(Collection<String> result, SupportedRequestType type) { }
+  public void getSupportedDependencyTypes(Collection<? super String> result, SupportedRequestType type) { }
 
   /**
    * @deprecated this API is not supported anymore, and there is no replacement
    */
   @Deprecated
-  public void getSupportedDependencyScopes(Collection<String> result) { }
+  public void getSupportedDependencyScopes(Collection<? super String> result) { }
 
   /**
    * @deprecated this API is not supported anymore, and there is no replacement
