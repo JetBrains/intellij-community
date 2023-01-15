@@ -54,7 +54,7 @@ fun buildProgressStatusComponent(progressStatus: InlayProgressStatus, editor: Ed
 }
 
 class InlayProgressBarUI(private val status: ProgressStatus) : DarculaProgressBarUI() {
-  override fun getFinishedColor(): Color {
+  override fun getFinishedColor(c: JComponent): Color {
     if (status == ProgressStatus.STOPPED_OK) {
       return JBColor.GRAY
     }
