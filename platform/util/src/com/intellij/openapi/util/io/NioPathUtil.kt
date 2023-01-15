@@ -100,6 +100,6 @@ fun String.getResolvedNioPath(relativePath: String): Path {
 object CanonicalPathPrefixTreeFactory : AbstractPrefixTreeFactory<String, String>() {
 
   override fun convertToList(element: String): List<String> {
-    return NioPathPrefixTreeFactory.convertToList(element.toNioPath())
+    return element.removeSuffix("/").split("/")
   }
 }
