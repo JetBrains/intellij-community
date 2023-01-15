@@ -443,7 +443,7 @@ public class SwitchBlockHighlightingModel {
           PsiType permittedType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, substitutor);
           if (pattern == null && (PsiUtil.getLanguageLevel(permittedClass).isLessThan(LanguageLevel.JDK_18_PREVIEW) ||
                                   TypeConversionUtil.areTypesConvertible(selectorType, permittedType)) ||
-              pattern != null && !JavaPsiPatternUtil.isTotalForType(pattern, TypeUtils.getType(permittedClass), true)) {
+              pattern != null && !JavaPsiPatternUtil.isUnconditionalForType(pattern, TypeUtils.getType(permittedClass), true)) {
             nonVisited.add(permittedClass);
           }
         }
@@ -461,7 +461,7 @@ public class SwitchBlockHighlightingModel {
   }
 
   public static class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlightingModel {
-    private final Object myTotalPattern = new Object();
+    private final Object myUnconditionalPattern = new Object();
 
     PatternsInSwitchBlockHighlightingModel(@NotNull LanguageLevel languageLevel,
                                            @NotNull PsiSwitchBlock switchBlock,
@@ -655,8 +655,8 @@ public class SwitchBlockHighlightingModel {
         }
         elements.putValue(evaluateConstant(labelElement), labelElement);
       }
-      else if (labelElement instanceof PsiPattern && JavaPsiPatternUtil.isTotalForType(labelElement, mySelectorType)) {
-        elements.putValue(myTotalPattern, labelElement);
+      else if (labelElement instanceof PsiPattern && JavaPsiPatternUtil.isUnconditionalForType(labelElement, mySelectorType)) {
+        elements.putValue(myUnconditionalPattern, labelElement);
       }
     }
 
@@ -684,7 +684,7 @@ public class SwitchBlockHighlightingModel {
           PsiElement next = switchLabels.get(j);
           if (!(next instanceof PsiCaseLabelElement nextElement)) continue;
           if (PsiUtil.getLanguageLevel(current).isAtLeast(LanguageLevel.JDK_20_PREVIEW) &&
-              !JavaPsiPatternUtil.isTotalForType(nextElement, mySelectorType) &&
+              !JavaPsiPatternUtil.isUnconditionalForType(nextElement, mySelectorType) &&
               ((!(next instanceof PsiExpression expression) || ExpressionUtils.isNullLiteral(expression)) &&
                current instanceof PsiKeyword &&
                PsiKeyword.DEFAULT.equals(current.getText()) || isInCaseNullDefaultLabel(current))) {
@@ -699,12 +699,12 @@ public class SwitchBlockHighlightingModel {
               PsiExpression constExpr = ObjectUtils.tryCast(nextElement, PsiExpression.class);
               assert constExpr != null;
               if ((PsiUtil.getLanguageLevel(constExpr).isAtLeast(LanguageLevel.JDK_18_PREVIEW) ||
-                   JavaPsiPatternUtil.isTotalForType(currentElement, mySelectorType)) &&
+                   JavaPsiPatternUtil.isUnconditionalForType(currentElement, mySelectorType)) &&
                   JavaPsiPatternUtil.dominates(currentElement, constExpr.getType())) {
                 result.put(nextElement, current);
               }
             }
-            else if (isNullType(nextElement) && JavaPsiPatternUtil.isTotalForType(currentElement, mySelectorType)
+            else if (isNullType(nextElement) && JavaPsiPatternUtil.isUnconditionalForType(currentElement, mySelectorType)
                      && PsiUtil.getLanguageLevel(nextElement).isLessThan(LanguageLevel.JDK_19_PREVIEW)) {
               result.put(nextElement, current);
             }
@@ -731,8 +731,8 @@ public class SwitchBlockHighlightingModel {
       if (duplicateKey == myDefaultValue) {
         description = JavaErrorBundle.message("duplicate.default.switch.label");
       }
-      else if (duplicateKey == myTotalPattern) {
-        description = JavaErrorBundle.message("duplicate.total.pattern.label");
+      else if (duplicateKey == myUnconditionalPattern) {
+        description = JavaErrorBundle.message("duplicate.unconditional.pattern.label");
       }
       else {
         description = JavaErrorBundle.message("duplicate.switch.label", duplicateKey);
@@ -901,9 +901,9 @@ public class SwitchBlockHighlightingModel {
      * To ensure the absence of unreachable statements, domination rules provide a possible order
      * of different case label elements.
      * <p>
-     * The dominance is based on pattern totality and dominance (14.30.3).
+     * The dominance is based on Properties of Patterns (14.30.3).
      *
-     * @see JavaPsiPatternUtil#isTotalForType(PsiCaseLabelElement, PsiType)
+     * @see JavaPsiPatternUtil#isUnconditionalForType(PsiCaseLabelElement, PsiType)
      * @see JavaPsiPatternUtil#dominates(PsiCaseLabelElement, PsiCaseLabelElement)
      */
     private void checkDominance(@NotNull List<? extends PsiElement> switchLabels, @NotNull HighlightInfoHolder results) {
@@ -937,22 +937,21 @@ public class SwitchBlockHighlightingModel {
      * 14.11.1 Switch Blocks
      * To ensure completeness and the absence of undescribed statements, different rules are provided
      * for enums, sealed and plain classes.
-     * <p>
-     * The completeness is based on pattern totality (14.30.3).
      *
-     * @see JavaPsiPatternUtil#isTotalForType(PsiCaseLabelElement, PsiType)
+     * @see JavaPsiPatternUtil#isUnconditionalForType(PsiCaseLabelElement, PsiType)
      */
     private void checkCompleteness(@NotNull List<? extends PsiCaseLabelElement> elements, @NotNull HighlightInfoHolder results,
-                                   boolean inclusiveTotalAndDefault) {
-      if (inclusiveTotalAndDefault) {
-        PsiCaseLabelElement elementCoversType = findTotalPatternForType(elements, mySelectorType);
+                                   boolean inclusiveUnconditionalAndDefault) {
+      if (inclusiveUnconditionalAndDefault) {
+        PsiCaseLabelElement elementCoversType = findUnconditionalPatternForType(elements, mySelectorType);
         PsiElement defaultElement = SwitchUtils.findDefaultElement(myBlock);
         if (defaultElement != null && elementCoversType != null) {
           HighlightInfo.Builder defaultInfo =
-            createError(defaultElement.getFirstChild(), JavaErrorBundle.message("switch.total.pattern.and.default.exist"));
+            createError(defaultElement.getFirstChild(), JavaErrorBundle.message("switch.unconditional.pattern.and.default.exist"));
           registerDeleteFixForDefaultElement(defaultInfo, defaultElement, defaultElement.getFirstChild());
           results.add(defaultInfo.create());
-          HighlightInfo.Builder patternInfo = createError(elementCoversType, JavaErrorBundle.message("switch.total.pattern.and.default.exist"));
+          HighlightInfo.Builder patternInfo = createError(elementCoversType, JavaErrorBundle.message(
+            "switch.unconditional.pattern.and.default.exist"));
           IntentionAction action = getFixFactory().createDeleteSwitchLabelFix(elementCoversType);
           patternInfo.registerFix(action, null, null, null, null);
           results.add(patternInfo.create());
@@ -1109,7 +1108,7 @@ public class SwitchBlockHighlightingModel {
 
       if (exhaustiveGroups.isEmpty()) return false;
       List<PsiPattern> patterns = ContainerUtil.map(exhaustiveGroups, it -> it.getValue().iterator().next().get(0));
-      if (ContainerUtil.exists(patterns, pattern -> JavaPsiPatternUtil.isTotalForType(pattern, typeToCheck, true))) {
+      if (ContainerUtil.exists(patterns, pattern -> JavaPsiPatternUtil.isUnconditionalForType(pattern, typeToCheck, true))) {
         return true;
       }
       LinkedHashMap<PsiClass, PsiPattern> patternClasses = SwitchBlockHighlightingModel.findPatternClasses(patterns);
@@ -1128,7 +1127,8 @@ public class SwitchBlockHighlightingModel {
           result.add(result.lastIndexOf(pattern.getText()) + 1, className);
         }
         else {
-          pattern = ContainerUtil.find(patternClasses.values(), who -> JavaPsiPatternUtil.isTotalForType(who, TypeUtils.getType(aClass)));
+          pattern =
+            ContainerUtil.find(patternClasses.values(), who -> JavaPsiPatternUtil.isUnconditionalForType(who, TypeUtils.getType(aClass)));
           if (pattern != null) {
             result.add(result.indexOf(pattern.getText()), aClass.getQualifiedName());
           }
@@ -1154,8 +1154,9 @@ public class SwitchBlockHighlightingModel {
     }
 
     @Nullable
-    private static PsiCaseLabelElement findTotalPatternForType(@NotNull List<? extends PsiCaseLabelElement> labelElements, @NotNull PsiType type) {
-      return ContainerUtil.find(labelElements, element -> JavaPsiPatternUtil.isTotalForType(element, type));
+    private static PsiCaseLabelElement findUnconditionalPatternForType(@NotNull List<? extends PsiCaseLabelElement> labelElements,
+                                                                       @NotNull PsiType type) {
+      return ContainerUtil.find(labelElements, element -> JavaPsiPatternUtil.isUnconditionalForType(element, type));
     }
 
     private static boolean isConstantLabelElement(@NotNull PsiCaseLabelElement labelElement) {
@@ -1175,8 +1176,8 @@ public class SwitchBlockHighlightingModel {
      * @return {@link CompletenessResult#UNEVALUATED}, if switch is incomplete, and it produces a compilation error
      * (this is already covered by highlighting)
      * <p>{@link CompletenessResult#INCOMPLETE}, if selector type is not enum or reference type(except boxing primitives and String) or switch is incomplete
-     * <p>{@link CompletenessResult#COMPLETE_WITH_TOTAL}, if switch is complete because a total pattern exists
-     * <p>{@link CompletenessResult#COMPLETE_WITHOUT_TOTAL}, if switch is complete and doesn't contain a total pattern
+     * <p>{@link CompletenessResult#COMPLETE_WITH_UNCONDITIONAL}, if switch is complete because an unconditional pattern exists
+     * <p>{@link CompletenessResult#COMPLETE_WITHOUT_UNCONDITIONAL}, if switch is complete and doesn't contain an unconditional pattern
      */
     @NotNull
     public static CompletenessResult evaluateSwitchCompleteness(@NotNull PsiSwitchBlock switchBlock) {
@@ -1192,7 +1193,7 @@ public class SwitchBlockHighlightingModel {
       boolean isEnumSelector = switchModel.getSwitchSelectorKind() == SelectorKind.ENUM;
       HighlightInfoHolder holder = new HighlightInfoHolder(switchBlock.getContainingFile());
       if (switchModel instanceof PatternsInSwitchBlockHighlightingModel patternsInSwitchModel) {
-        if (findTotalPatternForType(labelElements, switchModel.mySelectorType) != null) return COMPLETE_WITH_TOTAL;
+        if (findUnconditionalPatternForType(labelElements, switchModel.mySelectorType) != null) return COMPLETE_WITH_UNCONDITIONAL;
         if (!needToCheckCompleteness && !isEnumSelector) return INCOMPLETE;
         patternsInSwitchModel.checkCompleteness(labelElements, holder, false);
       }
@@ -1206,15 +1207,15 @@ public class SwitchBlockHighlightingModel {
         switchModel.checkEnumCompleteness(selectorClass, enumConstants, holder);
       }
       // if switch block is needed to check completeness and switch is incomplete, we let highlighting to inform about it as it's a compilation error
-      if (needToCheckCompleteness) return holder.size() == 0 ? COMPLETE_WITHOUT_TOTAL : UNEVALUATED;
-      return holder.size() == 0 ? COMPLETE_WITHOUT_TOTAL : INCOMPLETE;
+      if (needToCheckCompleteness) return holder.size() == 0 ? COMPLETE_WITHOUT_UNCONDITIONAL : UNEVALUATED;
+      return holder.size() == 0 ? COMPLETE_WITHOUT_UNCONDITIONAL : INCOMPLETE;
     }
 
     public enum CompletenessResult {
       UNEVALUATED,
       INCOMPLETE,
-      COMPLETE_WITH_TOTAL,
-      COMPLETE_WITHOUT_TOTAL
+      COMPLETE_WITH_UNCONDITIONAL,
+      COMPLETE_WITHOUT_UNCONDITIONAL
     }
   }
 

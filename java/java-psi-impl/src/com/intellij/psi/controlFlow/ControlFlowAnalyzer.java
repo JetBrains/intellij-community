@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -971,7 +971,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
         if (labelElementList != null) {
           for (PsiCaseLabelElement element : labelElementList.getElements()) {
             if (element instanceof PsiDefaultCaseLabelElement ||
-                element instanceof PsiPattern && exprType != null && JavaPsiPatternUtil.isTotalForType(element, exprType)) {
+                element instanceof PsiPattern && exprType != null && JavaPsiPatternUtil.isUnconditionalForType(element, exprType)) {
               needToCreateDefault = true;
               break;
             }

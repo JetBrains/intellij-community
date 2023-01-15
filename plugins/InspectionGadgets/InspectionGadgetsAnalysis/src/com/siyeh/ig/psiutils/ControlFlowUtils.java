@@ -196,13 +196,13 @@ public final class ControlFlowUtils {
       return true;
     }
     int numCases = 0;
-    boolean hasDefaultCase = false, hasTotalPattern = false;
+    boolean hasDefaultCase = false, hasUnconditionalPattern = false;
     for (PsiStatement statement : statements) {
       if (statement instanceof PsiSwitchLabelStatementBase switchLabelStatement) {
         if (statement instanceof PsiSwitchLabelStatement) {
           numCases++;
         }
-        if (hasDefaultCase || hasTotalPattern) {
+        if (hasDefaultCase || hasUnconditionalPattern) {
           continue;
         }
         if (switchLabelStatement.isDefaultCase()) {
@@ -210,7 +210,7 @@ public final class ControlFlowUtils {
           continue;
         }
         // this information doesn't exist in spec draft (14.22) for pattern in switch as expected
-        // but for now javac considers the switch statement containing at least either case default label element or total pattern "incomplete normally"
+        // but for now javac considers the switch statement containing at least either case default label element or an unconditional pattern "incomplete normally"
         PsiCaseLabelElementList labelElementList = switchLabelStatement.getCaseLabelElementList();
         if (labelElementList == null) {
           continue;
@@ -220,7 +220,7 @@ public final class ControlFlowUtils {
             hasDefaultCase = true;
           }
           else if (labelElement instanceof PsiPattern) {
-            hasTotalPattern = JavaPsiPatternUtil.isTotalForType(labelElement, selectorType);
+            hasUnconditionalPattern = JavaPsiPatternUtil.isUnconditionalForType(labelElement, selectorType);
           }
         }
       }
@@ -231,10 +231,10 @@ public final class ControlFlowUtils {
     // todo actually there is no information about an impact of enum constants on switch statements being complete normally in spec (Unreachable statements)
     // todo comparing to javac that produces some false-negative highlighting in enum switch statements containing all possible constants
     final boolean isEnum = isEnumSwitch(switchStatement);
-    if (!hasDefaultCase && !hasTotalPattern && !isEnum) {
+    if (!hasDefaultCase && !hasUnconditionalPattern && !isEnum) {
       return true;
     }
-    if (!hasDefaultCase && !hasTotalPattern) {
+    if (!hasDefaultCase && !hasUnconditionalPattern) {
       final PsiClass aClass = ((PsiClassType)selectorType).resolve();
       if (aClass == null) {
         return true;

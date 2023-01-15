@@ -836,7 +836,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) add(GenericsHighlightUtil.checkInstanceOfGenericType(myLanguageLevel, expression));
     if (!myHolder.hasErrorResults() &&
         myLanguageLevel.isAtLeast(LanguageLevel.JDK_16) &&
-        // 5.20.2 Removed restriction on pattern instanceof for total patterns (JEP 427)
+        // 5.20.2 Removed restriction on pattern instanceof for unconditional patterns (JEP 427)
         myLanguageLevel.isLessThan(LanguageLevel.JDK_19_PREVIEW)) {
       add(HighlightUtil.checkInstanceOfPatternSupertype(expression));
     }

@@ -33,8 +33,8 @@ class X {
 
   void test(String s) {
     switch (s) {
-      case null, <error descr="'switch' has both a total pattern and a default label">default</error> -> System.out.println("null, default");
-      case <error descr="'switch' has both a total pattern and a default label">String str</error> -> System.out.println("String");
+      case null, <error descr="'switch' has both an unconditional pattern and a default label">default</error> -> System.out.println("null, default");
+      case <error descr="'switch' has both an unconditional pattern and a default label">String str</error> -> System.out.println("String");
     }
   }
 }

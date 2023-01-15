@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.Nullability;
@@ -237,7 +237,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
     if (SwitchUtils.canBePatternSwitchCase(ifStatement.getCondition(), switchExpression)) {
       final boolean hasDefaultElse = ContainerUtil.exists(branches, (branch) -> branch.isElse());
-      if (!hasDefaultElse && !hasTotalPatternCheck(ifStatement, switchExpression)) {
+      if (!hasDefaultElse && !hasUnconditionalPatternCheck(ifStatement, switchExpression)) {
         branches.add(new IfStatementBranch(new PsiEmptyStatementImpl(), true));
       }
     }
@@ -567,7 +567,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         }
         Nullability nullability = getNullability(switchExpression);
         if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(switchExpression) && !ClassUtils.isPrimitive(switchExpression.getType())) {
-          if (hasDefaultElse(ifStatement) || findNullCheckedOperand(ifStatement) != null || hasTotalPatternCheck(ifStatement, switchExpression)) {
+          if (hasDefaultElse(ifStatement) || findNullCheckedOperand(ifStatement) != null || hasUnconditionalPatternCheck(ifStatement, switchExpression)) {
             nullability = Nullability.NOT_NULL;
           }
         }
@@ -582,7 +582,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     }
   }
 
-  private static boolean hasTotalPatternCheck(PsiIfStatement ifStatement, PsiExpression switchExpression){
+  private static boolean hasUnconditionalPatternCheck(PsiIfStatement ifStatement, PsiExpression switchExpression){
     final PsiType type = switchExpression.getType();
     if (type == null) return false;
 
@@ -592,12 +592,12 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       if (condition instanceof PsiPolyadicExpression) {
         final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
         if (JavaTokenType.OROR.equals(polyadicExpression.getOperationTokenType())) {
-          if (ContainerUtil.exists(polyadicExpression.getOperands(), (operand) -> hasTotalPatternCheck(type, operand))) {
+          if (ContainerUtil.exists(polyadicExpression.getOperands(), (operand) -> hasUnconditionalPatternCheck(type, operand))) {
             return true;
           }
         }
       }
-      if (hasTotalPatternCheck(type, condition)) {
+      if (hasUnconditionalPatternCheck(type, condition)) {
         return true;
       }
       final PsiStatement elseBranch = currentIfInChain.getElseBranch();
@@ -611,10 +611,10 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     return false;
   }
 
-  private static boolean hasTotalPatternCheck(PsiType type, PsiExpression check) {
+  private static boolean hasUnconditionalPatternCheck(PsiType type, PsiExpression check) {
     final PsiPattern pattern = SwitchUtils.createPatternFromExpression(check);
     if (pattern == null) return false;
-    return JavaPsiPatternUtil.isTotalForType(pattern, type);
+    return JavaPsiPatternUtil.isUnconditionalForType(pattern, type);
   }
 
   private static Nullability getNullability(PsiExpression expression) {

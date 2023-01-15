@@ -602,10 +602,10 @@ public final class SwitchUtils {
   }
 
   /**
-   * Checks if the given switch label statement contains a {@code default} case or a total pattern
+   * Checks if the given switch label statement contains a {@code default} case or an unconditional pattern
    *
    * @param label a switch label statement to test
-   * @return {@code true} if the given switch label statement contains a {@code default} case or a total pattern,
+   * @return {@code true} if the given switch label statement contains a {@code default} case or an unconditional pattern,
    * {@code false} otherwise.
    */
   public static boolean isTotalLabel(@Nullable PsiSwitchLabelStatementBase label) {
@@ -620,7 +620,7 @@ public final class SwitchUtils {
     PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
     if (labelElementList == null) return false;
     return StreamEx.of(labelElementList.getElements()).select(PsiPattern.class)
-      .anyMatch(pattern -> JavaPsiPatternUtil.isTotalForType(pattern, type));
+      .anyMatch(pattern -> JavaPsiPatternUtil.isUnconditionalForType(pattern, type));
   }
 
   private static class LabelSearchVisitor extends JavaRecursiveElementWalkingVisitor {

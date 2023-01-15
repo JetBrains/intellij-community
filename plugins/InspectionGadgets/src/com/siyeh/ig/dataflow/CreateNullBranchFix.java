@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
@@ -57,9 +57,9 @@ public final class CreateNullBranchFix extends BaseSwitchFix {
     if (selectorType == null) return;
     List<PsiElement> branches = SwitchUtils.getSwitchBranches(switchBlock);
     for (PsiElement branch : branches) {
-      // just for the case if we already contain null or total pattern, there is no need to apply the fix
+      // just for the case if we already contain null or an unconditional pattern, there is no need to apply the fix
       if (branch instanceof PsiExpression expression && TypeConversionUtil.isNullType(expression.getType())) return;
-      if (branch instanceof PsiPattern && JavaPsiPatternUtil.isTotalForType(((PsiPattern)branch), selectorType)) return;
+      if (branch instanceof PsiPattern && JavaPsiPatternUtil.isUnconditionalForType(((PsiPattern)branch), selectorType)) return;
     }
     PsiElement defaultElement = SwitchUtils.findDefaultElement(switchBlock);
     PsiElement anchor;
