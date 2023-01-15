@@ -21,6 +21,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestDiscussionResolveViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestNoteViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
 import javax.swing.JComponent
@@ -121,12 +122,38 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       })
     }
 
-    return HorizontalListPanel(Replies.ActionsFolded.HORIZONTAL_GAP).apply {
+    val repliesActions = HorizontalListPanel(Replies.ActionsFolded.HORIZONTAL_GAP).apply {
       add(authorsLabel)
       add(repliesLink)
       add(lastReplyDateLabel)
+    }.apply {
+      bindVisibility(cs, item.replies.map { it.isNotEmpty() })
+    }
+    return HorizontalListPanel(Replies.ActionsFolded.HORIZONTAL_GROUP_GAP).apply {
+      add(repliesActions)
+
+      item.resolvedVm?.let {
+        createUnResolveLink(cs, it).also(::add)
+      }
     }
   }
+
+  private fun createUnResolveLink(cs: CoroutineScope,
+                                  vm: GitLabMergeRequestDiscussionResolveViewModel): LinkLabel<Any> =
+    LinkLabel<Any>("", null) { _, _ ->
+      vm.changeResolvedState()
+    }.apply {
+      isFocusable = true
+      bindDisabled(cs, vm.busy)
+      bindText(cs, vm.resolved.map { resolved ->
+        if (resolved) {
+          CollaborationToolsBundle.message("review.comments.unresolve.action")
+        }
+        else {
+          CollaborationToolsBundle.message("review.comments.resolve.action")
+        }
+      })
+    }
 
   private fun createNoteItem(cs: CoroutineScope,
                              avatarIconsProvider: IconsProvider<GitLabUserDTO>,

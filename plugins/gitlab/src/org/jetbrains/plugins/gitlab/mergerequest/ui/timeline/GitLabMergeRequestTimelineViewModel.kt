@@ -85,7 +85,7 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
                 GitLabMergeRequestTimelineItemViewModel.SystemDiscussion(it)
               }
               else {
-                GitLabMergeRequestTimelineItemViewModel.Discussion(cs, LoadedGitLabDiscussion(it))
+                GitLabMergeRequestTimelineItemViewModel.Discussion(cs, LoadedGitLabDiscussion(cs, connection, it))
               }
             })
           }

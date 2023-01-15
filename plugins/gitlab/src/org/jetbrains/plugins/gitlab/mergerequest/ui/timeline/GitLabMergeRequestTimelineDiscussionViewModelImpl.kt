@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestDiscussionResolveViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestDiscussionResolveViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestNoteViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.LoadedGitLabMergeRequestNoteViewModel
 
@@ -19,12 +21,14 @@ interface GitLabMergeRequestTimelineDiscussionViewModel {
 
   val repliesFolded: Flow<Boolean>
 
+  val resolvedVm: GitLabMergeRequestDiscussionResolveViewModel?
+
   fun setRepliesFolded(folded: Boolean)
 }
 
 class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   parentCs: CoroutineScope,
-  discussion: GitLabDiscussion
+  private val discussion: GitLabDiscussion
 ) : GitLabMergeRequestTimelineDiscussionViewModel {
 
   private val cs = parentCs.childScope()
@@ -42,6 +46,9 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     }.share()
 
   override val author: Flow<GitLabUserDTO> = mainNote.map { it.author }
+
+  override val resolvedVm: GitLabMergeRequestDiscussionResolveViewModel? =
+    if (discussion.canResolve) GitLabMergeRequestDiscussionResolveViewModelImpl(cs, discussion) else null
 
   override fun setRepliesFolded(folded: Boolean) {
     _repliesFolded.value = folded
