@@ -584,7 +584,10 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
       launch {
         unsignedFiles.get(OsFamily.WINDOWS)?.let {
           @Suppress("SpellCheckingInspection")
-          context.signFiles(it, BuildOptions.WIN_SIGN_OPTIONS + versionOption + persistentMapOf("jsign_replace" to "true"))
+          context.signFiles(it, BuildOptions.WIN_SIGN_OPTIONS + versionOption + persistentMapOf(
+            "contentType" to "application/x-exe",
+            "jsign_replace" to "true"
+          ))
         }
       }
     }
