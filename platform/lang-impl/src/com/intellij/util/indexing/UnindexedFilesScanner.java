@@ -362,39 +362,12 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
       IndexableFilesDeduplicateFilter thisProviderDeduplicateFilter =
         IndexableFilesDeduplicateFilter.createDelegatingTo(indexableFilesDeduplicateFilter);
 
-      List<FilePropertyPusher<?>> pushers;
-      List<FilePropertyPusherEx<?>> pusherExs;
-      Object[] moduleValues;
-      if (origin instanceof ModuleRootOrigin && !((ModuleRootOrigin)origin).getModule().isDisposed()) {
-        pushers = FilePropertyPusher.EP_NAME.getExtensionList();
-        pusherExs = null;
-        moduleValues = ReadAction.compute(() -> getModuleImmediateValues(pushers, ((ModuleRootOrigin)origin).getModule()));
-      }
-      else {
-        pushers = null;
-        List<FilePropertyPusherEx<?>> extendedPushers = new SmartList<>();
-        for (FilePropertyPusher<?> pusher : FilePropertyPusher.EP_NAME.getExtensionList()) {
-          if (pusher instanceof FilePropertyPusherEx && ((FilePropertyPusherEx<?>)pusher).acceptsOrigin(project, origin)) {
-            extendedPushers.add((FilePropertyPusherEx<?>)pusher);
-          }
-        }
-        if (extendedPushers.isEmpty()) {
-          pusherExs = null;
-          moduleValues = null;
-        }
-        else {
-          pusherExs = extendedPushers;
-          moduleValues = ReadAction.compute(() -> getImmediateValuesEx(extendedPushers, origin));
-        }
-      }
-
       ProgressManager.checkCanceled(); // give a chance to suspend indexing
 
       return () -> {
         subTaskIndicator.setText(provider.getRootsScanningProgressText());
         CollectingIterator collectingIterator = new CollectingIterator(project, subTaskIndicator, provider, fileScannerVisitors,
-                                                                       pushers, pusherExs, moduleValues, unindexedFileFinder,
-                                                                       scanningStatistics);
+                                                                       unindexedFileFinder, scanningStatistics);
         try {
           provider.iterateFiles(project, collectingIterator, thisProviderDeduplicateFilter);
         }
@@ -437,18 +410,38 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
 
     CollectingIterator(Project project, SubTaskProgressIndicator subTaskIndicator, IndexableFilesIterator provider,
                        List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors,
-                       List<FilePropertyPusher<?>> pushers, List<FilePropertyPusherEx<?>> pusherExs, Object[] moduleValues,
                        UnindexedFilesFinder unindexedFileFinder, ScanningStatistics scanningStatistics) {
       this.project = project;
       this.subTaskIndicator = subTaskIndicator;
       this.fileScannerVisitors = fileScannerVisitors;
-      this.pushers = pushers;
-      this.pusherExs = pusherExs;
-      this.moduleValues = moduleValues;
       this.unindexedFileFinder = unindexedFileFinder;
       this.scanningStatistics = scanningStatistics;
 
       perProviderSink = project.getService(PerProjectIndexingQueue.class).getSink(provider);
+
+      IndexableSetOrigin origin = provider.getOrigin();
+      if (origin instanceof ModuleRootOrigin && !((ModuleRootOrigin)origin).getModule().isDisposed()) {
+        pushers = FilePropertyPusher.EP_NAME.getExtensionList();
+        pusherExs = null;
+        moduleValues = ReadAction.compute(() -> getModuleImmediateValues(pushers, ((ModuleRootOrigin)origin).getModule()));
+      }
+      else {
+        pushers = null;
+        List<FilePropertyPusherEx<?>> extendedPushers = new SmartList<>();
+        for (FilePropertyPusher<?> pusher : FilePropertyPusher.EP_NAME.getExtensionList()) {
+          if (pusher instanceof FilePropertyPusherEx && ((FilePropertyPusherEx<?>)pusher).acceptsOrigin(project, origin)) {
+            extendedPushers.add((FilePropertyPusherEx<?>)pusher);
+          }
+        }
+        if (extendedPushers.isEmpty()) {
+          pusherExs = null;
+          moduleValues = null;
+        }
+        else {
+          pusherExs = extendedPushers;
+          moduleValues = ReadAction.compute(() -> getImmediateValuesEx(extendedPushers, origin));
+        }
+      }
     }
 
     @Override
