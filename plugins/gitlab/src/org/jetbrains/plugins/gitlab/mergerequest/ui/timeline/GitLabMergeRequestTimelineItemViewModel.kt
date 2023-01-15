@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.api.dto.*
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import java.util.*
 
 sealed interface GitLabMergeRequestTimelineItemViewModel {
@@ -47,9 +48,10 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
 
   class Discussion(
     parentCs: CoroutineScope,
-    discussion: GitLabDiscussionDTO
+    discussion: GitLabDiscussion
   ) : GitLabMergeRequestTimelineItemViewModel,
-      GitLabMergeRequestTimelineDiscussionViewModel by GitLabMergeRequestTimelineDiscussionViewModelImpl(parentCs, discussion) {
+      GitLabMergeRequestTimelineDiscussionViewModel
+      by GitLabMergeRequestTimelineDiscussionViewModelImpl(parentCs, discussion) {
     override val date: Date = discussion.createdAt
   }
 }

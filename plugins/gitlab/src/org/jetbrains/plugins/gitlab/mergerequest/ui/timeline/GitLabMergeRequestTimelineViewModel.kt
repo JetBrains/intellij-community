@@ -14,6 +14,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestLab
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestMilestoneEvents
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestStateEvents
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
+import org.jetbrains.plugins.gitlab.mergerequest.data.LoadedGitLabDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel.LoadingState
 import java.util.concurrent.ConcurrentSkipListSet
 
@@ -84,7 +85,7 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
                 GitLabMergeRequestTimelineItemViewModel.SystemDiscussion(it)
               }
               else {
-                GitLabMergeRequestTimelineItemViewModel.Discussion(cs, it)
+                GitLabMergeRequestTimelineItemViewModel.Discussion(cs, LoadedGitLabDiscussion(it))
               }
             })
           }

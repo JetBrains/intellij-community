@@ -4,12 +4,10 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestNoteViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.LoadedGitLabMergeRequestNoteViewModel
 
@@ -26,19 +24,12 @@ interface GitLabMergeRequestTimelineDiscussionViewModel {
 
 class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   parentCs: CoroutineScope,
-  discussion: GitLabDiscussionDTO
+  discussion: GitLabDiscussion
 ) : GitLabMergeRequestTimelineDiscussionViewModel {
 
-  init {
-    require(discussion.notes.isNotEmpty()) { "Discussion with empty notes" }
-  }
+  private val cs = parentCs.childScope()
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private val cs = parentCs.childScope(Dispatchers.Default.limitedParallelism(1))
-
-  private val notesState = MutableStateFlow(discussion.notes)
-
-  override val mainNote: Flow<GitLabMergeRequestNoteViewModel> = notesState.mapScoped {
+  override val mainNote: Flow<GitLabMergeRequestNoteViewModel> = discussion.notes.mapScoped {
     createNoteVm(this, it.first())
   }.share()
 
@@ -46,7 +37,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val repliesFolded: Flow<Boolean> = _repliesFolded.asStateFlow()
 
   override val replies: Flow<List<GitLabMergeRequestNoteViewModel>> =
-    notesState.mapScoped { notesList ->
+    discussion.notes.mapScoped { notesList ->
       notesList.asSequence().drop(1).map { createNoteVm(this, it) }.toList()
     }.share()
 
