@@ -91,6 +91,10 @@ internal class ImporterModifiableArtifact(private val project: Project,
     artifactType = selected
   }
 
+  override fun toString(): String {
+    return "ImporterModifiableArtifact(name='$name')"
+  }
+
 }
 
 internal class ImporterModifiableArtifactModel(private val project: Project,
