@@ -19,7 +19,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -579,6 +582,26 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       return fileEditorManager.openTextEditor(descriptor, isEditorAreaFocused);
     }
     return null;
+  }
+
+  /**
+   * The returned Navigatable overrides requesting focus based on whether the editor area is focused or not.
+   */
+  public static @NotNull Navigatable wrapKeepEditorAreaFocusNavigatable(@NotNull Project project, @NotNull Navigatable navigatable) {
+    return new Navigatable() {
+      @Override
+      public void navigate(boolean requestFocus) {
+        FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
+        boolean isEditorAreaFocused = IJSwingUtilities.hasFocus(fileEditorManager.getComponent());
+        navigatable.navigate(isEditorAreaFocused);
+      }
+
+      @Override
+      public boolean canNavigate() { return navigatable.canNavigate(); }
+
+      @Override
+      public boolean canNavigateToSource() { return navigatable.canNavigateToSource(); }
+    };
   }
 
   public static void rebuildAllSessionsViews(@Nullable Project project) {
