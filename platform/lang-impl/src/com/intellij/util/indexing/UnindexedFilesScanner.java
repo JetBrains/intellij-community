@@ -397,7 +397,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     }
   }
 
-  class CollectingIterator implements ContentIterator {
+  private static final class CollectingIterator implements ContentIterator {
     private final Project project;
     private final PerProjectIndexingQueue.PerProviderSink perProviderSink;
     private final SubTaskProgressIndicator subTaskIndicator;
@@ -407,6 +407,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     private final Object[] moduleValues;
     private final UnindexedFilesFinder unindexedFileFinder;
     private final ScanningStatistics scanningStatistics;
+    private final PushedFilePropertiesUpdater pushedFilePropertiesUpdater;
 
     CollectingIterator(Project project, SubTaskProgressIndicator subTaskIndicator, IndexableFilesIterator provider,
                        List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors,
@@ -417,6 +418,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
       this.unindexedFileFinder = unindexedFileFinder;
       this.scanningStatistics = scanningStatistics;
 
+      pushedFilePropertiesUpdater = PushedFilePropertiesUpdater.getInstance(project);
       perProviderSink = project.getService(PerProjectIndexingQueue.class).getSink(provider);
 
       IndexableSetOrigin origin = provider.getOrigin();
@@ -452,11 +454,11 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
       }
       long scanningStart = System.nanoTime();
       PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors);
-      if (pushers != null && myPusher instanceof PushedFilePropertiesUpdaterImpl) {
-        ((PushedFilePropertiesUpdaterImpl)myPusher).applyPushersToFile(fileOrDir, pushers, moduleValues);
+      if (pushers != null && pushedFilePropertiesUpdater instanceof PushedFilePropertiesUpdaterImpl) {
+        ((PushedFilePropertiesUpdaterImpl)pushedFilePropertiesUpdater).applyPushersToFile(fileOrDir, pushers, moduleValues);
       }
-      else if (pusherExs != null && myPusher instanceof PushedFilePropertiesUpdaterImpl) {
-        ((PushedFilePropertiesUpdaterImpl)myPusher).applyPushersToFile(fileOrDir, pusherExs, moduleValues);
+      else if (pusherExs != null && pushedFilePropertiesUpdater instanceof PushedFilePropertiesUpdaterImpl) {
+        ((PushedFilePropertiesUpdaterImpl)pushedFilePropertiesUpdater).applyPushersToFile(fileOrDir, pusherExs, moduleValues);
       }
 
       UnindexedFileStatus status;
