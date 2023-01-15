@@ -34,7 +34,6 @@ import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -75,10 +74,10 @@ public class ExecutionPointHighlighter {
     show(position, notTopFrame, gutterIconRenderer, true);
   }
 
-  public @NotNull Promise<?> show(@NotNull XSourcePosition position, boolean notTopFrame,
-                                  @Nullable GutterIconRenderer gutterIconRenderer, boolean navigate) {
+  public void show(@NotNull XSourcePosition position, boolean notTopFrame,
+                   @Nullable GutterIconRenderer gutterIconRenderer, boolean navigate) {
     updateRequested.set(false);
-    return AppUIExecutor
+    AppUIExecutor
       .onWriteThread(ModalityState.NON_MODAL)
       .expireWith(myProject)
       .submit(() -> {
