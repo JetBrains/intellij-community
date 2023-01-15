@@ -36,10 +36,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
-import com.intellij.xdebugger.frame.XExecutionStack;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.xdebugger.frame.XValueMarkerProvider;
+import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
@@ -78,6 +75,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private XSuspendContext mySuspendContext;
   private XExecutionStack myCurrentExecutionStack;
   private XStackFrame myCurrentStackFrame;
+  private @NotNull XSourceKind myCurrentSourceKind = XSourceKind.MAIN;
   private boolean myIsTopFrame;
   private volatile XStackFrame myTopStackFrame;
   private final AtomicBoolean myPaused = new AtomicBoolean();
@@ -249,30 +247,52 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   @Override
-  @Nullable
-  public XStackFrame getCurrentStackFrame() {
+  public @Nullable XStackFrame getCurrentStackFrame() {
     return myCurrentStackFrame;
   }
 
-  public XExecutionStack getCurrentExecutionStack() {
+  public @Nullable XExecutionStack getCurrentExecutionStack() {
     return myCurrentExecutionStack;
   }
 
   @Override
-  public XSuspendContext getSuspendContext() {
+  public @Nullable XSuspendContext getSuspendContext() {
     return mySuspendContext;
   }
 
   @Override
-  @Nullable
-  public XSourcePosition getCurrentPosition() {
-    return myCurrentStackFrame != null ? myCurrentStackFrame.getSourcePosition() : null;
+  public @Nullable XSourcePosition getCurrentPosition() {
+    return getFrameSourcePosition(myCurrentStackFrame);
   }
 
-  @Nullable
   @Override
-  public XSourcePosition getTopFramePosition() {
-    return myTopStackFrame.getSourcePosition();
+  public @Nullable XSourcePosition getTopFramePosition() {
+    return getFrameSourcePosition(myTopStackFrame);
+  }
+
+  public @Nullable XSourcePosition getFrameSourcePosition(@Nullable XStackFrame frame) {
+    return getFrameSourcePosition(frame, myCurrentSourceKind);
+  }
+
+  public @Nullable XSourcePosition getFrameSourcePosition(@Nullable XStackFrame frame, @NotNull XSourceKind sourceKind) {
+    if (frame == null) return null;
+    return switch (sourceKind) {
+      case MAIN -> frame.getSourcePosition();
+      case ALTERNATIVE -> {
+        XAlternativeSourceHandler handler = myDebugProcess.getAlternativeSourceHandler();
+        yield handler != null ? handler.getAlternativePosition(frame) : null;
+      }
+    };
+  }
+
+  public @NotNull XSourceKind getCurrentSourceKind() {
+    return myCurrentSourceKind;
+  }
+
+  public void setCurrentSourceKind(@NotNull XSourceKind currentSourceKind) {
+    if (myCurrentSourceKind == currentSourceKind) return;
+    myCurrentSourceKind = currentSourceKind;
+    updateExecutionPosition();
   }
 
   void init(@NotNull XDebugProcess process, @Nullable RunContentDescriptor contentToReuse) {
@@ -626,8 +646,12 @@ public final class XDebugSessionImpl implements XDebugSession {
     // allowed only for the active session
     if (myDebuggerManager.getCurrentSession() == this) {
       boolean isTopFrame = isTopFrameSelected();
-
-      myDebuggerManager.updateExecutionPoint(getCurrentPosition(), isTopFrame, getPositionIconRenderer(isTopFrame));
+      GutterIconRenderer iconRenderer = getPositionIconRenderer(isTopFrame);
+      for (XSourceKind sourceKind : XSourceKind.values()) {
+        XSourcePosition position = getFrameSourcePosition(myCurrentStackFrame, sourceKind);
+        boolean isActiveSourceKind = sourceKind == myCurrentSourceKind;
+        myDebuggerManager.updateExecutionPoint(sourceKind, position, iconRenderer, isTopFrame, isActiveSourceKind);
+      }
     }
   }
 
@@ -644,7 +668,7 @@ public final class XDebugSessionImpl implements XDebugSession {
         XStackFrame topFrame = executionStack.getTopFrame();
         if (topFrame != null) {
           setCurrentStackFrame(executionStack, topFrame, true);
-          myDebuggerManager.showExecutionPosition();
+          myDebuggerManager.showExecutionPosition(myCurrentSourceKind);
         }
       }
     }
@@ -735,6 +759,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     updateBreakpointPresentation(breakpoint, AllIcons.Debugger.Db_invalid_breakpoint, errorMessage);
   }
 
+  @SuppressWarnings("removal")
   @Override
   public boolean breakpointReached(@NotNull final XBreakpoint<?> breakpoint, @Nullable String evaluatedLogExpression,
                                    @NotNull XSuspendContext suspendContext) {

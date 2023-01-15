@@ -36,10 +36,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,6 +52,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
@@ -90,7 +88,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   private final XBreakpointManagerImpl myBreakpointManager;
   private final XDebuggerWatchesManager myWatchesManager;
   private final XDebuggerPinToTopManager myPinToTopManager;
-  private final ExecutionPointHighlighter myExecutionPointHighlighter;
+  private final ExecutionPointHighlighter myMainExecutionPointHighlighter;
+  private final ExecutionPointHighlighter myAlternativeExecutionPointHighlighter;
   private final Map<ProcessHandler, XDebugSessionImpl> mySessions = Collections.synchronizedMap(new LinkedHashMap<>());
   private final AtomicReference<XDebugSessionImpl> myActiveSession = new AtomicReference<>();
 
@@ -104,7 +103,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     myBreakpointManager = new XBreakpointManagerImpl(project, this, messageBusConnection);
     myWatchesManager = new XDebuggerWatchesManager(project);
     myPinToTopManager = new XDebuggerPinToTopManager();
-    myExecutionPointHighlighter = new ExecutionPointHighlighter(project, messageBusConnection);
+    myMainExecutionPointHighlighter = new ExecutionPointHighlighter(project, messageBusConnection);
+    myAlternativeExecutionPointHighlighter = new ExecutionPointHighlighter(project, messageBusConnection);
 
     messageBusConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
@@ -131,7 +131,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
           if (session != null && breakpoint.equals(session.getActiveNonLineBreakpoint())) {
             var breakpointBase = (XBreakpointBase<?, ?, ?>)breakpoint;
             breakpointBase.clearIcon();
-            myExecutionPointHighlighter.updateGutterIcon(breakpointBase.createGutterIconRenderer());
+            updateExecutionPoint(breakpointBase.createGutterIconRenderer());
           }
         }
       }
@@ -140,7 +140,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       public void breakpointRemoved(@NotNull XBreakpoint<?> breakpoint) {
         XDebugSessionImpl session = getCurrentSession();
         if (session != null && breakpoint == session.getActiveNonLineBreakpoint()) {
-          myExecutionPointHighlighter.updateGutterIcon(null);
+          updateExecutionPoint(null);
         }
       }
     });
@@ -164,6 +164,24 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         if (descriptor != null && ToolWindowId.DEBUG.equals(executor.getToolWindowId())) {
           mySessions.remove(descriptor.getProcessHandler());
         }
+      }
+    });
+
+    messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+      @Override
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+        XDebugSessionImpl session = getCurrentSession();
+        if (session == null) return;
+
+        XStackFrame currentFrame = session.getCurrentStackFrame();
+        if (currentFrame == null) return;
+
+        XSourcePosition alternativePosition = session.getFrameSourcePosition(currentFrame, XSourceKind.ALTERNATIVE);
+        boolean isAlternativeSourceSelected = alternativePosition != null && alternativePosition.getFile().equals(event.getNewFile());
+        boolean isAlternativeSourceDeselected = alternativePosition != null && alternativePosition.getFile().equals(event.getOldFile());
+
+        session.setCurrentSourceKind(!isAlternativeSourceSelected || isAlternativeSourceDeselected
+                                     ? XSourceKind.MAIN : XSourceKind.ALTERNATIVE);
       }
     });
 
@@ -198,13 +216,17 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   }
 
   private void updateExecutionPoint(@NotNull VirtualFile file, boolean navigate) {
-    if (file.equals(myExecutionPointHighlighter.getCurrentFile())) {
-      myExecutionPointHighlighter.update(navigate);
+    if (file.equals(myMainExecutionPointHighlighter.getCurrentFile())) {
+      myMainExecutionPointHighlighter.update(navigate);
+    }
+    if (file.equals(myAlternativeExecutionPointHighlighter.getCurrentFile())) {
+      myAlternativeExecutionPointHighlighter.update(navigate);
     }
   }
 
   void updateExecutionPoint(GutterIconRenderer renderer) {
-    myExecutionPointHighlighter.updateGutterIcon(renderer);
+    myMainExecutionPointHighlighter.updateGutterIcon(renderer);
+    myAlternativeExecutionPointHighlighter.updateGutterIcon(renderer);
   }
 
   @Override
@@ -308,20 +330,32 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         !ApplicationManager.getApplication().isUnitTestMode() &&
         XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isHideDebuggerOnProcessTermination()) {
       RunContentManager.getInstance(myProject).hideRunContent(DefaultDebugExecutor.getDebugExecutorInstance(),
-                                                                                 sessionTab.getRunContentDescriptor());
+                                                              sessionTab.getRunContentDescriptor());
     }
     if (myActiveSession.compareAndSet(session, null)) {
       onActiveSessionChanged(session, null);
     }
   }
 
-  void updateExecutionPoint(@Nullable XSourcePosition position, boolean isTopFrame, @Nullable GutterIconRenderer gutterIconRenderer) {
+  void updateExecutionPoint(@NotNull XSourceKind sourceKind,
+                            @Nullable XSourcePosition position,
+                            @Nullable GutterIconRenderer gutterIconRenderer,
+                            boolean isTopFrame,
+                            boolean isActiveSourceKind) {
+    ExecutionPointHighlighter executionPointHighlighter = getExecutionPointHighlighter(sourceKind);
     if (position != null) {
-      myExecutionPointHighlighter.show(position, !isTopFrame, gutterIconRenderer);
+      executionPointHighlighter.show(position, !isTopFrame, gutterIconRenderer);
     }
     else {
-      myExecutionPointHighlighter.hide();
+      executionPointHighlighter.hide();
     }
+  }
+
+  private @NotNull ExecutionPointHighlighter getExecutionPointHighlighter(@NotNull XSourceKind sourceKind) {
+    return switch (sourceKind) {
+      case MAIN -> myMainExecutionPointHighlighter;
+      case ALTERNATIVE -> myAlternativeExecutionPointHighlighter;
+    };
   }
 
   private void onActiveSessionChanged(@Nullable XDebugSession previousSession, @Nullable XDebugSession currentSession) {
@@ -385,7 +419,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         }
       }
       else {
-        myExecutionPointHighlighter.hide();
+        myMainExecutionPointHighlighter.hide();
+        myAlternativeExecutionPointHighlighter.hide();
       }
       onActiveSessionChanged(previousSession, session);
     }
@@ -401,7 +436,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   }
 
   public boolean isFullLineHighlighter() {
-    return myExecutionPointHighlighter.isFullLineHighlighter();
+    return myMainExecutionPointHighlighter.isFullLineHighlighter();
   }
 
   @Override
@@ -417,8 +452,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     myBreakpointManager.noStateLoaded();
   }
 
-  public void showExecutionPosition() {
-    myExecutionPointHighlighter.navigateTo();
+  void showExecutionPosition(@NotNull XSourceKind sourceKind) {
+    getExecutionPointHighlighter(sourceKind).navigateTo();
   }
 
   private static final TooltipGroup RUN_TO_CURSOR_TOOLTIP_GROUP = new TooltipGroup("RUN_TO_CURSOR_TOOLTIP_GROUP", 0);
