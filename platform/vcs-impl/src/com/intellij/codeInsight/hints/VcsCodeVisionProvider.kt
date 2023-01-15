@@ -68,14 +68,14 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
       if (ProjectFileIndex.getInstance(project).isInLibrarySource(virtualFile)) return@runReadAction READY_EMPTY
 
       val fileLanguage = file.language
-      val fileContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(fileLanguage)
+      val fileContexts = VcsCodeVisionLanguageContext.providersExtensionPoint.allForLanguage(fileLanguage)
       val additionalContexts: List<VcsCodeVisionLanguageContext> =
-        if (fileContext == null)
+        if (fileContexts.isEmpty())
           VcsCodeVisionLanguageContext.providersExtensionPoint.point?.extensionList?.map { it.instance }?.filter {
             it.isCustomFileAccepted(file)
           } ?: emptyList()
         else emptyList()
-      if (fileContext == null && additionalContexts.isEmpty()) return@runReadAction READY_EMPTY
+      if (fileContexts.isEmpty() && additionalContexts.isEmpty()) return@runReadAction READY_EMPTY
 
       val aspect = when (val aspectResult = getAspect(file, editor)) {
         AnnotationResult.NoAnnotation -> return@runReadAction CodeVisionState.Ready(emptyList())
@@ -87,31 +87,34 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
 
       val traverser = SyntaxTraverser.psiTraverser(file)
       for (element in traverser.preOrderDfsTraversal()) {
-        val elementContext: VcsCodeVisionLanguageContext?
+        val elementContexts: List<VcsCodeVisionLanguageContext>
         val language: Language
-        if (fileContext != null) {
-          elementContext = fileContext
+        if (fileContexts.isNotEmpty()) {
+          elementContexts = fileContexts
           language = fileLanguage
         }
         else {
           language = element.language
-          elementContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language)
-          if (!additionalContexts.contains(elementContext)) {
+          elementContexts = VcsCodeVisionLanguageContext.providersExtensionPoint.allForLanguage(language)
+            .filter { additionalContexts.contains(it) }
+          if (elementContexts.isEmpty()) {
             continue
           }
         }
 
-        if (elementContext != null && elementContext.isAccepted(element)) {
-          val textRange = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
-          val length = editor.document.textLength
-          val adjustedRange = TextRange(min(textRange.startOffset, length), min(textRange.endOffset, length))
-          val codeAuthorInfo = PREVIEW_INFO_KEY.get(editor) ?: getCodeAuthorInfo(element.project, adjustedRange, editor, aspect)
-          val text = codeAuthorInfo.getText()
-          val icon = if (codeAuthorInfo.mainAuthor != null) AllIcons.Vcs.Author else null
-          val clickHandler = CodeAuthorClickHandler(element, language)
-          val entry = ClickableTextCodeVisionEntry(text, id, onClick = clickHandler, icon, text, text, emptyList())
-          entry.showInMorePopup = false
-          lenses.add(adjustedRange to entry)
+        for (elementContext in elementContexts) {
+          if (elementContext.isAccepted(element)) {
+            val textRange = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
+            val length = editor.document.textLength
+            val adjustedRange = TextRange(min(textRange.startOffset, length), min(textRange.endOffset, length))
+            val codeAuthorInfo = PREVIEW_INFO_KEY.get(editor) ?: getCodeAuthorInfo(element.project, adjustedRange, editor, aspect)
+            val text = codeAuthorInfo.getText()
+            val icon = if (codeAuthorInfo.mainAuthor != null) AllIcons.Vcs.Author else null
+            val clickHandler = CodeAuthorClickHandler(element, language)
+            val entry = ClickableTextCodeVisionEntry(text, id, onClick = clickHandler, icon, text, text, emptyList())
+            entry.showInMorePopup = false
+            lenses.add(adjustedRange to entry)
+          }
         }
       }
       return@runReadAction CodeVisionState.Ready(lenses)
@@ -130,7 +133,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
     if (psiFile == null) return null
     val language = psiFile.language
     val project = editor.project ?: return null
-    val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language) ?: return null
+    val visionLanguageContexts = VcsCodeVisionLanguageContext.providersExtensionPoint.allForLanguage(language) ?: return null
     val virtualFile = psiFile.virtualFile
     if (virtualFile == null) return null
     val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(virtualFile) ?: return null
@@ -141,8 +144,10 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
     return object : BypassBasedPlaceholderCollector {
       override fun collectPlaceholders(element: PsiElement, editor: Editor): List<TextRange> {
         val ranges = ArrayList<TextRange>()
-        if (visionLanguageContext.isAccepted(element)) {
-          ranges.add(InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element))
+        for (visionLanguageContext in visionLanguageContexts) {
+          if (visionLanguageContext.isAccepted(element)) {
+            ranges.add(InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element))
+          }
         }
         return ranges
       }
@@ -168,8 +173,10 @@ private class CodeAuthorClickHandler(element: PsiElement, private val language: 
     val component = event.component as? JComponent ?: return
     invokeAnnotateAction(event, component)
     val element = elementPointer.element ?: return
-    val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language)
-    visionLanguageContext.handleClick(event, editor, element)
+    val visionLanguageContexts = VcsCodeVisionLanguageContext.providersExtensionPoint.allForLanguage(language)
+    for (visionLanguageContext in visionLanguageContexts) {
+      visionLanguageContext.handleClick(event, editor, element)
+    }
   }
 }
 
