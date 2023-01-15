@@ -213,7 +213,7 @@ object CommunityRepositoryModules {
     plugin("intellij.terminal") { spec ->
       spec.withResource("resources/.zshenv", "")
       spec.withResource("resources/jediterm-bash.in", "")
-      spec.withResource("resources/fish/config.fish", "fish")
+      spec.withResource("resources/fish/init.fish", "fish")
     },
     plugin("intellij.emojipicker") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.LINUX)

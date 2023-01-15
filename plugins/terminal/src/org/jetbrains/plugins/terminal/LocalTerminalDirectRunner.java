@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.process.*;
@@ -51,7 +52,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
   private static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
   private static final String ZDOTDIR = "ZDOTDIR";
-  private static final String XDG_CONFIG_HOME = "XDG_CONFIG_HOME";
   private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
   private static final String LOGIN_SHELL = "LOGIN_SHELL";
   private static final String LOGIN_CLI_OPTION = "--login";
@@ -79,7 +79,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       rcfile = ".zshenv";
     }
     else if (FISH_NAME.equals(shellName)) {
-      rcfile = "fish/config.fish";
+      rcfile = "fish/init.fish";
     }
     if (rcfile != null) {
       try {
@@ -357,16 +357,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         envs.put(ZDOTDIR, PathUtil.getParentPath(rcFilePath));
       }
       else if (shellName.equals(FISH_NAME)) {
-        String xdgConfig = EnvironmentUtil.getEnvironmentMap().get(XDG_CONFIG_HOME);
-        if (StringUtil.isNotEmpty(xdgConfig)) {
-          File fishConfig = new File(new File(FileUtil.expandUserHome(xdgConfig), "fish"), "config.fish");
-          if (fishConfig.exists()) {
-            envs.put(JEDITERM_USER_RCFILE, fishConfig.getAbsolutePath());
-          }
-          envs.put("OLD_" + XDG_CONFIG_HOME, xdgConfig);
-        }
-
-        envs.put(XDG_CONFIG_HOME, new File(rcFilePath).getParentFile().getParent());
+        // `--init-command=COMMANDS` is available since Fish 2.7.0 (released November 23, 2017)
+        // Multiple `--init-command=COMMANDS` are supported.
+        result.add("--init-command=source " + CommandLineUtil.posixQuote(rcFilePath));
       }
     }
 
