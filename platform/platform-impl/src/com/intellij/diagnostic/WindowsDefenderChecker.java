@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.execution.ExecutionException;
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -180,7 +181,8 @@ public class WindowsDefenderChecker {
           Stream.of(psh.getPath(), "-ExecutionPolicy", "Bypass", "-NonInteractive", "-File", script.toString()),
           paths.stream().map(Path::toString)
         ).toList()),
-        "");
+        ""
+      ).withCharset(StandardCharsets.UTF_8);
       output = run(command);
       if (output.getExitCode() != 0) {
         LOG.info("script failed:\n[" + output.getExitCode() + "] " + command + "\noutput: " + output.getStdout().trim());
