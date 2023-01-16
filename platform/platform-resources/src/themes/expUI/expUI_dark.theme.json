@@ -249,7 +249,8 @@
       "hoverForeground": "Blue9",
       "pressedForeground": "Blue9",
       "visitedForeground": "Blue9",
-      "secondaryForeground": "Blue9"
+      "secondaryForeground": "Blue9",
+      "focusedBorderColor": "Blue7"
     },
 
     "List": {

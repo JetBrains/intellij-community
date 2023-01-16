@@ -187,6 +187,7 @@
     },
 
     "TextField.background": "Grey13",
+    "PasswordField.background": "Grey13",
 
     "Component": {
       "borderColor": "Grey9",
@@ -256,7 +257,8 @@
       "hoverForeground": "Blue4",
       "pressedForeground": "Blue4",
       "visitedForeground": "Blue4",
-      "secondaryForeground": "Blue4"
+      "secondaryForeground": "Blue4",
+      "focusedBorderColor": "Blue7"
     },
 
     "List": {
