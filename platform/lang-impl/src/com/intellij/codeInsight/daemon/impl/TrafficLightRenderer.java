@@ -90,7 +90,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     myUIController = editor == null ? createUIController() : createUIController(editor);
     record Stuff(@NotNull Map<Language, FileHighlightingSetting> fileHighlightingSettings,
                  boolean inLibrary,
-                 boolean shouldHighlight){};
+                 boolean shouldHighlight){}
     Stuff info = ReadAction.compute(() -> {
       PsiFile psiFile = getPsiFile();
       if (psiFile == null) {
