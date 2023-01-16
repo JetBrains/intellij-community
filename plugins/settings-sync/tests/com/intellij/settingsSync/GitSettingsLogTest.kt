@@ -8,6 +8,7 @@ import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.createFile
 import com.intellij.util.io.readText
+import com.intellij.util.io.write
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
@@ -250,41 +251,44 @@ internal class GitSettingsLogTest {
     }
   }
 
-  //@Test
-  // todo requires a more previse merge conflict strategy implementation
-  @Suppress("unused")
+  @Test
   fun `merge conflict should be resolved as last modified for the particular file`() {
-    val editorXml = (configDir / "options" / "editor.xml").createFile()
-    editorXml.writeText("editorContent")
-    val lafXml = (configDir / "options" / "laf.xml").createFile()
-    editorXml.writeText("lafContent")
-    val settingsLog = initializeGitSettingsLog(lafXml, editorXml)
+    val editorXml = (configDir / "options" / "editor.xml").write("Editor Initial")
+    val lafXml = (configDir / "options" / "laf.xml").write("LaF Initial")
+    val generalXml = (configDir / "options" / "ide.general.xml").write("General Initial")
+    val diffXml = (configDir / "options" / "diff.xml").write("Diff Initial")
+
+    val settingsLog = initializeGitSettingsLog(lafXml, editorXml, generalXml)
 
     settingsLog.applyIdeState(
       settingsSnapshot {
-        fileState("editor.xml", "ideEditorContent")
+        fileState("options/editor.xml", "Editor Ide")
+        fileState("options/ide.general.xml", "General Ide")
       }, "Local changes"
     )
     settingsLog.applyCloudState(
       settingsSnapshot {
-        fileState("laf.xml", "cloudLafContent")
+        fileState("options/laf.xml", "LaF Cloud")
+        fileState("options/diff.xml", "Diff Cloud")
       }, "Remote changes"
     )
     settingsLog.applyCloudState(
       settingsSnapshot {
-        fileState("editor.xml", "cloudEditorContent")
+        fileState("options/editor.xml", "Editor Cloud")
       }, "Remote changes"
     )
     settingsLog.applyIdeState(
       settingsSnapshot {
-        fileState("laf.xml", "ideEditorContent")
+        fileState("options/laf.xml", "LaF Ide")
       }, "Local changes"
     )
 
     settingsLog.advanceMaster()
 
-    assertEquals("Incorrect content", "cloudEditorContent", editorXml.readText())
-    assertEquals("Incorrect content", "ideLafContent", lafXml.readText())
+    assertEquals("Incorrect content", "Editor Cloud", (settingsSyncStorage / "options" / "editor.xml").readText())
+    assertEquals("Incorrect content", "LaF Ide", (settingsSyncStorage / "options" / "laf.xml").readText())
+    assertEquals("Incorrect content", "Diff Cloud", (settingsSyncStorage / "options" / "diff.xml").readText())
+    assertEquals("Incorrect content", "General Ide", (settingsSyncStorage / "options" / "ide.general.xml").readText())
     assertMasterIsMergeOfIdeAndCloud()
   }
 
