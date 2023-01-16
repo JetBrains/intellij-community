@@ -943,20 +943,24 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       addManagedFiles(collectAllAvailablePomFiles());
     }
     if (MavenUtil.isLinearImportEnabled()) {
+      MavenLog.LOG.warn("forceUpdateAllProjectsOrFindAllAvailablePomFiles: Linear Import is enabled");
       MavenImportingManager.getInstance(myProject)
         .openProjectAndImport(new FilesList(myProjectsTree.getExistingManagedFiles()), getImportingSettings(), getGeneralSettings(), spec);
       return;
     }
+    MavenLog.LOG.warn("forceUpdateAllProjectsOrFindAllAvailablePomFiles: Linear Import is disabled");
     doScheduleUpdateProjects(List.of(), spec);
   }
 
   private Promise<Void> doScheduleUpdateProjects(@NotNull final Collection<MavenProject> projects,
                                                  final MavenImportSpec spec) {
     if (MavenUtil.isLinearImportEnabled()) {
+      MavenLog.LOG.warn("doScheduleUpdateProjects: Linear Import is enabled");
       return MavenImportingManager.getInstance(myProject)
         .openProjectAndImport(new FilesList(ContainerUtil.map(projects, MavenProject::getFile)), getImportingSettings(),
                               getGeneralSettings(), spec).getFinishPromise().then(it -> null);
     }
+    MavenLog.LOG.warn("doScheduleUpdateProjects: Linear Import is disabled");
     MavenDistributionsCache.getInstance(myProject).cleanCaches();
     MavenWslCache.getInstance().clearCache();
     final AsyncPromise<Void> promise = new AsyncPromise<>();
