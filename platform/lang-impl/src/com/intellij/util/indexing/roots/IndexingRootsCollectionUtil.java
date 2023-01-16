@@ -66,21 +66,31 @@ public class IndexingRootsCollectionUtil {
     }
   }
 
+  public static class IndexingRootsCollectionSettings {
+    public @Nullable Condition<? super WorkspaceFileIndexContributor<?>> retainCondition = null;
+    public boolean collectModuleAwareContent = true;
+    public @Nullable Condition<ModuleContentOrSourceRootData> retainModuleContentCondition = null;
+    public boolean collectModuleUnawareContent = true;
+    public boolean collectExternalEntities = true;
+    public boolean collectExternalSourceEntities = true;
+  }
+
   @NotNull
   public static IndexingRootsDescriptions collectRootsFromWorkspaceFileIndexContributors(@NotNull Project project,
-                                                                                         @Nullable Condition<? super WorkspaceFileIndexContributor<?>> retainCondition,
-                                                                                         @NotNull EntityStorage entityStorage) {
+                                                                                         @NotNull EntityStorage entityStorage,
+                                                                                         @Nullable IndexingRootsCollectionSettings settings) {
     List<WorkspaceFileIndexContributor<?>> contributors =
       ((WorkspaceFileIndexImpl)WorkspaceFileIndex.getInstance(project)).getContributors();
 
+    settings = ObjectUtils.notNull(settings, new IndexingRootsCollectionSettings());
     IndexingRootsDescriptions roots = new IndexingRootsDescriptions();
-    MyRegistrar registrar = new MyRegistrar();
+    MyRegistrar registrar = new MyRegistrar(settings);
     for (WorkspaceFileIndexContributor<?> contributor : contributors) {
       if (contributor.getStorageKind() != EntityStorageKind.MAIN) {
         continue;
       }
       ProgressManager.checkCanceled();
-      if (retainCondition != null && !retainCondition.value(contributor)) {
+      if (settings.retainCondition != null && !settings.retainCondition.value(contributor)) {
         continue;
       }
       handleContributor(contributor, roots, registrar, entityStorage);
@@ -171,19 +181,41 @@ public class IndexingRootsCollectionUtil {
 
   private static class MyRegistrar implements WorkspaceFileSetRegistrar {
     final MultiMap<Module, VirtualFile> myContents = MultiMap.create();
-    MultiMap<WorkspaceEntity, VirtualFile> myContentRoots;
-    MultiMap<WorkspaceEntity, VirtualFile> myExternalRoots;
-    MultiMap<WorkspaceEntity, VirtualFile> myExternalSourceRoots;
+    private final IndexingRootsCollectionSettings mySettings;
+    private MultiMap<WorkspaceEntity, VirtualFile> myContentRoots;
+    private MultiMap<WorkspaceEntity, VirtualFile> myExternalRoots;
+    private MultiMap<WorkspaceEntity, VirtualFile> myExternalSourceRoots;
+
+    private MyRegistrar(IndexingRootsCollectionSettings settings) {
+      mySettings = settings;
+    }
 
     @Override
     public void registerFileSet(@NotNull VirtualFileUrl root,
                                 @NotNull WorkspaceFileKind kind,
                                 @NotNull WorkspaceEntity entity,
                                 @Nullable WorkspaceFileSetData customData) {
+      if (shouldIgnore(kind, customData)) return;
       VirtualFile file = UtilsKt.getVirtualFile(root);
       if (file != null) {
         registerFileSet(file, kind, entity, customData);
       }
+    }
+
+    private boolean shouldIgnore(@NotNull WorkspaceFileKind kind, @Nullable WorkspaceFileSetData data) {
+      if (data instanceof ModuleContentOrSourceRootData) {
+        if (!mySettings.collectModuleAwareContent) return true;
+
+        if (mySettings.retainModuleContentCondition != null &&
+            !mySettings.retainModuleContentCondition.value((ModuleContentOrSourceRootData)data)) {
+          return true;
+        }
+      }
+      return switch (kind) {
+        case CONTENT, TEST_CONTENT -> !mySettings.collectModuleUnawareContent;
+        case EXTERNAL -> !mySettings.collectExternalEntities;
+        case EXTERNAL_SOURCE -> !mySettings.collectExternalSourceEntities;
+      };
     }
 
     @Override
@@ -191,6 +223,7 @@ public class IndexingRootsCollectionUtil {
                                 @NotNull WorkspaceFileKind kind,
                                 @NotNull WorkspaceEntity entity,
                                 @Nullable WorkspaceFileSetData customData) {
+      if (shouldIgnore(kind, customData)) return;
       if (customData instanceof ModuleContentOrSourceRootData) {
         myContents.putValue(((ModuleContentOrSourceRootData)customData).getModule(), root);
       }

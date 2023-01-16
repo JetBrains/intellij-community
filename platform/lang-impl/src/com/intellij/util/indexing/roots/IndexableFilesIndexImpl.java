@@ -79,7 +79,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     List<IndexableFilesIterator> iterators = new ArrayList<>();
 
     IndexingRootsCollectionUtil.IndexingRootsDescriptions descriptions =
-      IndexingRootsCollectionUtil.collectRootsFromWorkspaceFileIndexContributors(project, null, entityStorage);
+      IndexingRootsCollectionUtil.collectRootsFromWorkspaceFileIndexContributors(project, entityStorage, null);
 
     for (IndexingRootsCollectionUtil.ModuleRootsDescription moduleRootsDescription : descriptions.moduleRoots()) {
       iterators.add(new ModuleIndexableFilesIteratorImpl(moduleRootsDescription.module(), moduleRootsDescription.roots(), true));
