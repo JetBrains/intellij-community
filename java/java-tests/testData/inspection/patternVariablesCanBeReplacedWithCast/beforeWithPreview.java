@@ -1,4 +1,4 @@
-// "Replace 'final String txt' with casts and delete" "true-preview"
+// "Replace 'final String txt' with casts" "true-preview"
 import java.util.Map;
 
 public class WithPreview {
