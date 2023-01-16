@@ -55,14 +55,17 @@ interface RowBuilder : BaseBuilder {
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun checkBoxGroup(@Nls title: String?, body: () -> Unit)
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
     return createChildRow(label = label, isSeparated = separated).apply(init)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun row(label: @Nls String?, separated: Boolean = false, init: Row.() -> Unit): Row {
     return row(label?.let { Label(it) }, separated = separated, init)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun titledRow(@NlsContexts.BorderTitle title: String, init: Row.() -> Unit): Row
 
   /**
@@ -120,8 +123,10 @@ interface RowBuilder : BaseBuilder {
 
 @Deprecated("Use Kotlin UI DSL Version 2")
 abstract class Row : Cell(), RowBuilder {
+  @Deprecated("Use Kotlin UI DSL Version 2")
   abstract var enabled: Boolean
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   abstract var visible: Boolean
 
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -178,7 +183,10 @@ abstract class Row : Cell(), RowBuilder {
 
 @Deprecated("Use Kotlin UI DSL Version 2")
 enum class GrowPolicy {
-  SHORT_TEXT, MEDIUM_TEXT
+  @Deprecated("Use Kotlin UI DSL Version 2")
+  SHORT_TEXT,
+  @Deprecated("Use Kotlin UI DSL Version 2")
+  MEDIUM_TEXT
 }
 
 @Deprecated("Use Kotlin UI DSL Version 2")
