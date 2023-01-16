@@ -11,6 +11,7 @@ import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
+import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.Replies.ActionsFolded
 import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
@@ -124,7 +125,7 @@ object GHPRReviewThreadComponent {
 
     val unResolveLink = createUnResolveLink(reviewDataProvider, thread)
 
-    return HorizontalListPanel(8).apply {
+    return HorizontalListPanel(ActionsFolded.HORIZONTAL_GAP).apply {
       border = JBUI.Borders.emptyLeft(INLAY_COMPONENT_TYPE.contentLeftShift)
 
       add(toggleReplyLink)
@@ -253,7 +254,7 @@ object GHPRReviewThreadComponent {
       override fun contentsChanged(e: ListDataEvent) = Unit
     })
 
-    val repliesPanel = HorizontalListPanel(8).apply {
+    val repliesPanel = HorizontalListPanel(ActionsFolded.HORIZONTAL_GAP).apply {
       add(authorsLabel)
       add(repliesLink)
       add(lastReplyDateLabel)
@@ -261,11 +262,9 @@ object GHPRReviewThreadComponent {
 
     val unResolveLink = createUnResolveLink(reviewDataProvider, thread)
 
-    return HorizontalListPanel(14).apply {
+    return HorizontalListPanel(ActionsFolded.HORIZONTAL_GROUP_GAP).apply {
       add(repliesPanel)
-      unResolveLink?.also {
-        add(it)
-      }
+      unResolveLink?.also(::add)
     }
   }
 

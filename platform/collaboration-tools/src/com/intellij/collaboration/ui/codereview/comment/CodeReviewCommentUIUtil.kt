@@ -34,4 +34,8 @@ object CodeReviewCommentUIUtil {
       })
     }
   }
+
+  object Actions {
+    const val HORIZONTAL_GAP = 8
+  }
 }

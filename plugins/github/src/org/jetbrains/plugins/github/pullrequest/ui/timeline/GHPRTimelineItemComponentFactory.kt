@@ -11,6 +11,8 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.onHyperlinkActivated
 import com.intellij.collaboration.ui.codereview.setHtmlBody
+import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
@@ -195,7 +197,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
           .successOnEdt { textPane.updateText(it.body) }
       }
       contentPanel = panelHandle.panel
-      actionsPanel = if (details.viewerCanUpdate) HorizontalListPanel(8).apply {
+      actionsPanel = if (details.viewerCanUpdate) HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
         add(GHTextActions.createEditButton(panelHandle))
       }
       else null
@@ -216,7 +218,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       commentsDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText)
         .successOnEdt { textPane.setHtmlBody(it.convertToHtml(project)) }
     }
-    val actionsPanel = HorizontalListPanel(8).apply {
+    val actionsPanel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
       if (comment.viewerCanUpdate) add(GHTextActions.createEditButton(panelHandle))
       if (comment.viewerCanDelete) add(GHTextActions.createDeleteButton {
         commentsDataProvider.deleteComment(EmptyProgressIndicator(), comment.id)
@@ -286,7 +288,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       maxEditorWidth = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH
     }
 
-    val actionsPanel = HorizontalListPanel(8).apply {
+    val actionsPanel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
       if (firstComment.canBeUpdated) add(GHTextActions.createEditButton(panelHandle))
       if (firstComment.canBeDeleted) add(GHTextActions.createDeleteButton {
         reviewDataProvider.deleteComment(EmptyProgressIndicator(), firstComment.id)
@@ -350,10 +352,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       .getCollapsedThreadActionsComponent(reviewDataProvider, avatarIconsProvider, thread, ghostUser) {
         repliesCollapsedState.update { !it }
         CollaborationToolsUIUtil.focusPanel(commentsPanel)
-      }.let {
-        CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
       }.apply {
-        border = JBUI.Borders.empty(3, 0, 7, 0)
+        border = JBUI.Borders.empty(Thread.Replies.ActionsFolded.VERTICAL_PADDING, 0)
       }
 
     coroutineScopeProvider.launchInScope {
@@ -363,7 +363,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       }
     }
 
-    val content = VerticalListPanel(6).apply {
+    val diffAndText = VerticalListPanel(Thread.DIFF_TEXT_GAP).apply {
       coroutineScopeProvider.launchInScope {
         combineAndCollect(thread.collapsedState, textFlow) { collapsed, text ->
           removeAll()
@@ -378,7 +378,6 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
             bodyPanel.setContent(textPane)
             add(panelHandle.panel)
             add(diff)
-            add(collapsedThreadActionsComponent)
           }
           else {
             val commentComponent = GHPRReviewCommentComponent
@@ -386,14 +385,15 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
             bodyPanel.setContent(commentComponent)
             add(diff)
             add(panelHandle.panel)
-            add(collapsedThreadActionsComponent)
           }
           revalidate()
           repaint()
         }
       }
-    }.also {
-      coroutineScopeProvider.activateWith(it)
+    }
+    val content = VerticalListPanel().apply {
+      add(diffAndText)
+      add(collapsedThreadActionsComponent)
     }
 
     val actor = firstComment.author ?: ghostUser
@@ -401,6 +401,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val mainItem = buildTimelineItem(avatarIconsProvider, actor, content) {
       withHeader(titlePanel, actionsPanel)
       maxContentWidth = null
+    }.also {
+      coroutineScopeProvider.activateWith(it)
     }
 
     return VerticalListPanel().apply {
