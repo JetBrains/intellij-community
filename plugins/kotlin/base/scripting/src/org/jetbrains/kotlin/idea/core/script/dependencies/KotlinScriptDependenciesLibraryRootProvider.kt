@@ -20,7 +20,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRootTypeId
 import org.jetbrains.kotlin.idea.core.script.ucache.scriptsAsEntities
 import javax.swing.Icon
@@ -29,47 +29,47 @@ import javax.swing.Icon
  * See recommendations for custom entities indexing
  * [here](https://youtrack.jetbrains.com/articles/IDEA-A-239/Integration-of-custom-workspace-entities-with-platform-functionality)
  */
-class KotlinScriptProjectModelInfoProvider : CustomEntityProjectModelInfoProvider<KotlinScriptEntity> {
-    override fun getEntityClass(): Class<KotlinScriptEntity> = KotlinScriptEntity::class.java
+
+fun indexSourceRootsEagerly() = Registry.`is`("kotlin.scripting.index.dependencies.sources", false)
+
+class KotlinScriptProjectModelInfoProvider : CustomEntityProjectModelInfoProvider<KotlinScriptLibraryEntity> {
+    override fun getEntityClass(): Class<KotlinScriptLibraryEntity> = KotlinScriptLibraryEntity::class.java
 
     override fun getLibraryRoots(
-        entities: Sequence<KotlinScriptEntity>,
+        entities: Sequence<KotlinScriptLibraryEntity>,
         entityStorage: EntityStorage
-    ): Sequence<LibraryRoots<KotlinScriptEntity>> =
+    ): Sequence<LibraryRoots<KotlinScriptLibraryEntity>> =
         if (!scriptsAsEntities || useWorkspaceFileContributor()) { // see KotlinScriptDependenciesLibraryRootProvider
             emptySequence()
         } else {
-            entities.flatMap { scriptEntity ->
-                scriptEntity.dependencies
-                    .map { entityStorage.resolve(it) ?: error("Unresolvable library: ${it.name}, script=${scriptEntity.path} ") }
-                    .map { libEntity ->
-                        val (classes, sources) = libEntity.roots.partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
-                        val classFiles = classes.mapNotNull { it.url.virtualFile }
-                        val sourceFiles = sources.mapNotNull { it.url.virtualFile }
-                        LibraryRoots(scriptEntity, sourceFiles, classFiles, emptyList(), null)
-                    }
+            entities.map { libEntity ->
+                val (classes, sources) = libEntity.roots.partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
+                val classFiles = classes.mapNotNull { it.url.virtualFile }
+                val sourceFiles = sources.mapNotNull { it.url.virtualFile }
+                val includeSources = indexSourceRootsEagerly() || libEntity.indexSourceRoots
+                LibraryRoots(libEntity, if (includeSources) sourceFiles else emptyList(), classFiles, emptyList(), null)
             }
         }
 }
 
 fun useWorkspaceFileContributor() = Registry.`is`("kotlin.script.use.workspace.file.index.contributor.api")
 
-class KotlinScriptWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<KotlinScriptEntity> {
-    override val entityClass: Class<KotlinScriptEntity>
-        get() = KotlinScriptEntity::class.java
+class KotlinScriptWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<KotlinScriptLibraryEntity> {
+    override val entityClass: Class<KotlinScriptLibraryEntity>
+        get() = KotlinScriptLibraryEntity::class.java
 
-    override fun registerFileSets(entity: KotlinScriptEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+    override fun registerFileSets(entity: KotlinScriptLibraryEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
         if (!scriptsAsEntities || !useWorkspaceFileContributor()) return // see KotlinScriptDependenciesLibraryRootProvider
-        entity.dependencies.map { storage.resolve(it) ?: error("Unresolvable library: ${it.name}, script=${entity.path} ") }
-            .forEach { libEntity ->
-                val (classes, sources) = libEntity.roots.partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
-                classes.mapNotNull { it.url.virtualFile }.forEach {
-                    registrar.registerFileSet(it, WorkspaceFileKind.EXTERNAL, entity, RootData)
-                }
-                sources.mapNotNull { it.url.virtualFile }.forEach {
-                    registrar.registerFileSet(it, WorkspaceFileKind.EXTERNAL_SOURCE, entity, RootSourceData)
-                }
+        val (classes, sources) = entity.roots.partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
+        classes.mapNotNull { it.url.virtualFile }.forEach {
+            registrar.registerFileSet(it, WorkspaceFileKind.EXTERNAL, entity, RootData)
+        }
+
+        if (indexSourceRootsEagerly() || entity.indexSourceRoots) {
+            sources.mapNotNull { it.url.virtualFile }.forEach {
+                registrar.registerFileSet(it, WorkspaceFileKind.EXTERNAL_SOURCE, entity, RootSourceData)
             }
+        }
     }
 
     private object RootData : JvmPackageRootData
@@ -106,7 +106,11 @@ class KotlinScriptDependenciesLibraryRootProvider : AdditionalLibraryRootsProvid
         ScriptConfigurationManager.allExtraRoots(project).filterValid()
     }
 
-    abstract class AbstractDependenciesLibrary(private val id: String, val classes: Collection<VirtualFile>, val sources: Collection<VirtualFile>) :
+    abstract class AbstractDependenciesLibrary(
+        private val id: String,
+        val classes: Collection<VirtualFile>,
+        val sources: Collection<VirtualFile>
+    ) :
         SyntheticLibrary(id, null), ItemPresentation {
 
         protected val gradle: Boolean by lazy { classes.hasGradleDependency() }

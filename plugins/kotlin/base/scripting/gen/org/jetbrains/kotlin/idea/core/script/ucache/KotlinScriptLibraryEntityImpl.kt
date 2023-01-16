@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.workspaceModel.storage.EntityInformation
@@ -46,6 +46,9 @@ open class KotlinScriptLibraryEntityImpl(val dataSource: KotlinScriptLibraryEnti
 
     override val roots: List<KotlinScriptLibraryRoot>
         get() = dataSource.roots
+
+    override var indexSourceRoots: Boolean = false
+        get() = dataSource.indexSourceRoots
 
     override val usedInScripts: Set<KotlinScriptId>
         get() = dataSource.usedInScripts
@@ -121,6 +124,7 @@ open class KotlinScriptLibraryEntityImpl(val dataSource: KotlinScriptLibraryEnti
             if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
             if (this.name != dataSource.name) this.name = dataSource.name
             if (this.roots != dataSource.roots) this.roots = dataSource.roots.toMutableList()
+            if (this.indexSourceRoots != dataSource.indexSourceRoots) this.indexSourceRoots = dataSource.indexSourceRoots
             if (this.usedInScripts != dataSource.usedInScripts) this.usedInScripts = dataSource.usedInScripts.toMutableSet()
             updateChildToParentReferences(parents)
         }
@@ -164,6 +168,14 @@ open class KotlinScriptLibraryEntityImpl(val dataSource: KotlinScriptLibraryEnti
                 rootsUpdater.invoke(value)
             }
 
+        override var indexSourceRoots: Boolean
+            get() = getEntityData().indexSourceRoots
+            set(value) {
+                checkModificationAllowed()
+                getEntityData(true).indexSourceRoots = value
+                changedProperty.add("indexSourceRoots")
+            }
+
         private val usedInScriptsUpdater: (value: Set<KotlinScriptId>) -> Unit = { value ->
 
             changedProperty.add("usedInScripts")
@@ -192,6 +204,7 @@ open class KotlinScriptLibraryEntityImpl(val dataSource: KotlinScriptLibraryEnti
 class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<KotlinScriptLibraryEntity>(), SoftLinkable {
     lateinit var name: String
     lateinit var roots: MutableList<KotlinScriptLibraryRoot>
+    var indexSourceRoots: Boolean = false
     lateinit var usedInScripts: MutableSet<KotlinScriptId>
 
     fun isNameInitialized(): Boolean = ::name.isInitialized
@@ -293,7 +306,7 @@ class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolic
     }
 
     override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-        return KotlinScriptLibraryEntity(name, roots, usedInScripts, entitySource) {
+        return KotlinScriptLibraryEntity(name, roots, indexSourceRoots, usedInScripts, entitySource) {
         }
     }
 
@@ -311,6 +324,7 @@ class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolic
         if (this.entitySource != other.entitySource) return false
         if (this.name != other.name) return false
         if (this.roots != other.roots) return false
+        if (this.indexSourceRoots != other.indexSourceRoots) return false
         if (this.usedInScripts != other.usedInScripts) return false
         return true
     }
@@ -323,6 +337,7 @@ class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolic
 
         if (this.name != other.name) return false
         if (this.roots != other.roots) return false
+        if (this.indexSourceRoots != other.indexSourceRoots) return false
         if (this.usedInScripts != other.usedInScripts) return false
         return true
     }
@@ -331,6 +346,7 @@ class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolic
         var result = entitySource.hashCode()
         result = 31 * result + name.hashCode()
         result = 31 * result + roots.hashCode()
+        result = 31 * result + indexSourceRoots.hashCode()
         result = 31 * result + usedInScripts.hashCode()
         return result
     }
@@ -339,6 +355,7 @@ class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolic
         var result = javaClass.hashCode()
         result = 31 * result + name.hashCode()
         result = 31 * result + roots.hashCode()
+        result = 31 * result + indexSourceRoots.hashCode()
         result = 31 * result + usedInScripts.hashCode()
         return result
     }
