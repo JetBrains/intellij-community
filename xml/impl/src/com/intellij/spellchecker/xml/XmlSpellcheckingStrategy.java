@@ -3,10 +3,7 @@ package com.intellij.spellchecker.xml;
 import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.XmlElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.tree.IElementType;
@@ -26,6 +23,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy {
 
@@ -153,6 +153,16 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
     }
 
     @Override
+    protected @NotNull List<@NotNull SpellcheckRange> getSpellcheckRanges(@NotNull XmlAttributeValue element) {
+      TextRange range = ElementManipulators.getValueTextRange(element);
+      if (range.isEmpty()) return emptyList();
+
+      String text = ElementManipulators.getValueText(element);
+
+      return singletonList(new SpellcheckRange(text, false, range.getStartOffset(), TextRange.allOf(text)));
+    }
+
+    @Override
     public void tokenize(@NotNull XmlAttributeValue element, TokenConsumer consumer) {
       PsiReference[] references = element.getReferences();
       for (PsiReference reference : references) {
@@ -169,6 +179,7 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
       if (valueTextTrimmed.startsWith("#") && valueTextTrimmed.length() <= 9 && isHexString(valueTextTrimmed.substring(1))) {
         return;
       }
+
       super.tokenize(element, consumer);
     }
 

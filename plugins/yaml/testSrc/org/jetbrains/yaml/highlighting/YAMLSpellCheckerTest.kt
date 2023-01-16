@@ -26,4 +26,34 @@ class YAMLSpellCheckerTest : BasePlatformTestCase() {
     """.trimIndent())
     myFixture.checkHighlighting(true, false, true)
   }
+
+  fun testHashesQuotedSpelling() {
+    myFixture.enableInspections(SpellCheckingInspection::class.java)
+    myFixture.configureByText("hashes.yaml", """
+      data:
+        typo: '<TYPO>hereistheerror</TYPO>'
+        uuid: 'f19c4bd2-4c11-4725-a613-06aaead4325e'
+        md5: '79054025255fb1a26e4bc422adfebeed'
+        sha1: "c3499c2729730aaff07efb8676a92dcb6f8a3f8f"
+        sha256: "50d858e0985ecc7f60418aaf0cc5ab587f42c2570a884095a9e8ccacd0f6545c"
+        jwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.dyt0CoTl4WoVjAHI9Q_CwSKhl6d_9rhM3NrXuJttkao'
+    """.trimIndent())
+
+    myFixture.checkHighlighting(true, false, true)
+  }
+
+  fun testHashesUnquotedSpelling() {
+    myFixture.enableInspections(SpellCheckingInspection::class.java)
+    myFixture.configureByText("hashes.yaml", """
+      data:
+        typo: <TYPO>hereistheerror</TYPO>
+        uuid: f19c4bd2-4c11-4725-a613-06aaead4325e
+        md5: 79054025255fb1a26e4bc422adfebeed
+        sha1: c3499c2729730aaff07efb8676a92dcb6f8a3f8f
+        sha256: 50d858e0985ecc7f60418aaf0cc5ab587f42c2570a884095a9e8ccacd0f6545c
+        jwt: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.dyt0CoTl4WoVjAHI9Q_CwSKhl6d_9rhM3NrXuJttkao
+    """.trimIndent())
+
+    myFixture.checkHighlighting(true, false, true)
+  }
 }
