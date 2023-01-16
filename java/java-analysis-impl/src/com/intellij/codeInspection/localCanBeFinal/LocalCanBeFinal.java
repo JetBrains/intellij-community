@@ -192,8 +192,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
       @Override public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
         super.visitForeachStatement(statement);
         if (!REPORT_FOREACH_PARAMETERS) return;
-        final PsiForeachDeclarationElement iterationDeclaration = statement.getIterationDeclaration();
-        if (!(iterationDeclaration instanceof PsiParameter param)) return;
+        final PsiParameter param = statement.getIterationParameter();
         if (PsiTreeUtil.getParentOfType(param, PsiClass.class) != PsiTreeUtil.getParentOfType(body, PsiClass.class)) {
           return;
         }

@@ -213,19 +213,18 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection imp
         else if (scope instanceof PsiLambdaExpression) {
           return true;
         }
-        else if (scope instanceof PsiForeachStatement foreachStatement) {
+        else if (scope instanceof PsiForeachStatementBase foreachStatement) {
           final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
           if (iteratedValue == null) {
             return true; // incomplete code
           }
-          PsiForeachDeclarationElement declaration = foreachStatement.getIterationDeclaration();
-          //patterns check before
-          if (declaration instanceof PsiParameter iterationParameter) {
+
+          if (scope instanceof PsiForeachStatement normalForeach) {
+            PsiParameter iterationParameter = normalForeach.getIterationParameter();
             final PsiTypeElement foreachTypeElement = iterationParameter.getTypeElement();
             assert foreachTypeElement != null;
             return isWildcardRequired(typeElement, foreachTypeElement, JavaGenericsUtil.getCollectionItemType(iteratedValue));
-          }
-          else if (ancestor instanceof PsiPatternVariable patternVariable) {
+          } else if (ancestor instanceof PsiPatternVariable patternVariable) {
             PsiType type = JavaPsiPatternUtil.getDeconstructedImplicitPatternVariableType(patternVariable);
             if (type == null) {
               return true;

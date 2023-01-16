@@ -180,8 +180,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
       if (onlyWarnOnAbstractMethods || !reportParameters) {
         return;
       }
-      PsiForeachDeclarationElement iterationDeclaration = statement.getIterationDeclaration();
-      if (!(iterationDeclaration instanceof PsiParameter parameter)) return;
+      PsiParameter parameter = statement.getIterationParameter();
       if (!parameter.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
