@@ -81,12 +81,7 @@ private fun getProcessPredicate(): (ProcessInfo) -> Boolean {
   val settingsGroup = ActionManager.getInstance().getAction("XDebugger.Attach.Dialog.Settings") as? DefaultActionGroup
   val settingsActions = settingsGroup?.getChildren(null)
   val processPredicates = settingsActions?.mapNotNull { (it as? ProcessPredicate)?.get() } ?: emptyList()
-  return if (processPredicates.isEmpty()) {
-    { true }
-  }
-  else {
-    { process -> processPredicates.all { it.test(process) } }
-  }
+  return { process -> processPredicates.all { it.test(process) } }
 }
 
 private fun getRecentItems(currentItems: List<AttachToProcessItem>,
