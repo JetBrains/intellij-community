@@ -220,7 +220,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     }
     val actionsPanel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
       if (comment.viewerCanUpdate) add(GHTextActions.createEditButton(panelHandle))
-      if (comment.viewerCanDelete) add(GHTextActions.createDeleteButton {
+      if (comment.viewerCanDelete) add(CodeReviewCommentUIUtil.createDeleteCommentIconButton {
         commentsDataProvider.deleteComment(EmptyProgressIndicator(), comment.id)
       })
     }
@@ -290,7 +290,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
 
     val actionsPanel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
       if (firstComment.canBeUpdated) add(GHTextActions.createEditButton(panelHandle))
-      if (firstComment.canBeDeleted) add(GHTextActions.createDeleteButton {
+      if (firstComment.canBeDeleted) add(CodeReviewCommentUIUtil.createDeleteCommentIconButton {
         reviewDataProvider.deleteComment(EmptyProgressIndicator(), firstComment.id)
       })
     }

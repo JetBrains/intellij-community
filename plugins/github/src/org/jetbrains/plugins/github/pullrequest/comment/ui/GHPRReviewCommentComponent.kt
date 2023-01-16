@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBLabel
@@ -72,7 +73,7 @@ object GHPRReviewCommentComponent {
     val editButton = GHTextActions.createEditButton(editablePaneHandle).apply {
       isVisible = comment.canBeUpdated
     }
-    val deleteButton = GHTextActions.createDeleteButton {
+    val deleteButton = CodeReviewCommentUIUtil.createDeleteCommentIconButton {
       reviewDataProvider.deleteComment(EmptyProgressIndicator(), comment.id)
     }.apply {
       isVisible = comment.canBeDeleted
