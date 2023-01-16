@@ -3,10 +3,7 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -193,6 +190,11 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
       if (myElement instanceof Navigatable) {
         ((Navigatable) myElement).navigate(true);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override public void update(@NotNull AnActionEvent e) {
