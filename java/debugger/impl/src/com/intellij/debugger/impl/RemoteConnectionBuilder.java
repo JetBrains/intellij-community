@@ -28,8 +28,7 @@ import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
-import org.jetbrains.intellij.build.impl.DebuggerAgentDownloader;
+import org.jetbrains.intellij.build.BuildDependenciesJps;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -198,9 +197,10 @@ public class RemoteConnectionBuilder {
                   FileUtil.createTempDirectory(new File(PathManager.getTempPath()), "debugger-agent", "", true).toPath();
                 agentArtifactPath = debuggerAgentDir.resolve(AGENT_JAR_NAME);
 
-                BuildDependenciesCommunityRoot communityRoot =
-                  new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
-                Path downloadedAgent = DebuggerAgentDownloader.INSTANCE.downloadDebuggerAgent(communityRoot);
+                Path communityRoot = Path.of(PathManager.getCommunityHomePath());
+                Path iml = BuildDependenciesJps.getProjectModule(communityRoot, "intellij.java.debugger.agent.holder");
+                Path downloadedAgent = BuildDependenciesJps.getModuleLibrarySingleRoot(iml, "debugger-agent");
+
                 Files.copy(downloadedAgent, agentArtifactPath);
               }
               catch (IOException e) {

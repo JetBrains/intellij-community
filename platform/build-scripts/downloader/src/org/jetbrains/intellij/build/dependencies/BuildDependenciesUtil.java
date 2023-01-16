@@ -96,7 +96,7 @@ public final class BuildDependenciesUtil {
     }
   }
 
-  private static List<Element> getChildElements(Element parent, String tagName) {
+  public static List<Element> getChildElements(Element parent, String tagName) {
     NodeList childNodes = parent.getChildNodes();
 
     ArrayList<Element> result = new ArrayList<>();
@@ -111,6 +111,20 @@ public final class BuildDependenciesUtil {
     }
 
     return result;
+  }
+
+  public static Element getComponentElement(Element root, String componentName) {
+    //noinspection SSBasedInspection
+    List<Element> elements = getChildElements(root, "component")
+      .stream()
+      .filter(x -> componentName.equals(x.getAttribute("name")))
+      .collect(Collectors.toList());
+
+    if (elements.size() != 1) {
+      throw new IllegalStateException("Expected one and only one component with name '" + componentName + "'");
+    }
+
+    return elements.get(0);
   }
 
   public static Element getSingleChildElement(Element parent, String tagName) {

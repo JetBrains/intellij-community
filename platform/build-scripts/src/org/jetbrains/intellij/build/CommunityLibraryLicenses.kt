@@ -906,6 +906,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("completion-ranking-scala-exp"),
     jetbrainsLibrary("completion-ranking-swift-exp"),
     jetbrainsLibrary("completion-ranking-typescript-exp"),
+    jetbrainsLibrary("debugger-agent"),
     jetbrainsLibrary("debugger-memory-agent"),
     jetbrainsLibrary("file-prediction-model"),
     jetbrainsLibrary("find-action-model"),
