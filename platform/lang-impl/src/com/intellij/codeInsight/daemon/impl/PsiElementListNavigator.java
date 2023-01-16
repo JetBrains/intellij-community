@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GenericListComponentUpdater;
-import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -274,7 +273,7 @@ public final class PsiElementListNavigator {
 
       if (myListUpdaterTask != null) {
         GenericListComponentUpdater<T> popupUpdater = builder.getBackgroundUpdater();
-        myListUpdaterTask.init(popup, new ListComponentUpdater() {
+        myListUpdaterTask.init(popup, new GenericListComponentUpdater<PsiElement>() {
           @Override
           public void replaceModel(@NotNull List<? extends PsiElement> data) {
             T[] array = (T[])data.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY);

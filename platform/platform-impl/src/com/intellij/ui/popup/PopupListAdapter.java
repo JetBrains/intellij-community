@@ -4,7 +4,6 @@ package com.intellij.ui.popup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ui.GenericListComponentUpdater;
 import com.intellij.openapi.ui.JBListUpdater;
-import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ListUtil;
