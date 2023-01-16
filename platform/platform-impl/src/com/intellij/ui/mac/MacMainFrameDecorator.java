@@ -111,6 +111,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           }
           enterFullScreen();
           frame.validate();
+          notifyFrameComponents(true);
         }
 
         @Override
@@ -128,6 +129,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           exitFullScreen();
           ActiveWindowsWatcher.addActiveWindow(frame);
           frame.validate();
+          notifyFrameComponents(false);
         }
       });
     }
@@ -253,7 +255,6 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
             if (LOG.isDebugEnabled()) {
               LOG.debug("exited full screen: " + frame);
             }
-            notifyFrameComponents(false);
             promise.complete(false);
           }
 
@@ -290,7 +291,6 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
               if (LOG.isDebugEnabled()) {
                 LOG.debug("pre-transitioning event not received for: " + frame);
               }
-              notifyFrameComponents(myInFullScreen);
               promise.complete(myInFullScreen);
             }
           });
