@@ -54,8 +54,9 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
   public static final String[] LANGUAGE =
     {"JavaScript", "VBScript", "JScript", "JavaScript1.2", "JavaScript1.3", "JavaScript1.4", "JavaScript1.5"};
   public static final String[] TYPE = {"text/css", "text/html", "text/plain", "text/xml"};
-  public static final String[] SANDBOX = {"allow-forms", "allow-pointer-lock", "allow-popups", "allow-same-origin",
-    "allow-scripts", "allow-top-navigation"};
+  public static final String[] SANDBOX = {"allow-downloads", "allow-forms", "allow-modals", "allow-orientation-lock", "allow-pointer-lock",
+      "allow-popups", "allow-popups-to-escape-sandbox", "allow-presentation", "allow-same-origin", "allow-scripts", "allow-top-navigation",
+      "allow-top-navigation-by-user-activation", "allow-top-navigation-to-custom-protocols"};
   public static final String[] LANG =
     {"aa", "ab", "ae", "af", "ak", "am", "an", "ar", "as", "av", "ay", "az", "ba", "be", "bg", "bh", "bi", "bm", "bn", "bo", "br", "bs",
       "ca", "ce", "ch", "co", "cr", "cs", "cu", "cv", "cy", "da", "de", "dv", "dz", "ee", "el", "en", "eo", "es", "et", "eu", "fa", "ff",
