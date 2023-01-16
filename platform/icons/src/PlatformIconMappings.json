@@ -662,6 +662,7 @@
       "currentBranch.svg": "icons/currentBranchLabel.svg",
       "currentBranchFavorite.svg": "icons/currentBranchFavoriteLabel.svg",
       "diff.svg": "actions/diff.svg",
+      "fetch.svg": "vcs/fetch.svg",
       "intelliSort.svg": "icons/IntelliSort.svg",
       "merge.svg": "vcs/merge.svg",
       "patch.svg": "vcs/patch.svg",
