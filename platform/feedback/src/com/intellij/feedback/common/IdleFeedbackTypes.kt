@@ -4,9 +4,6 @@ package com.intellij.feedback.common
 import com.intellij.feedback.common.IdleFeedbackTypeResolver.isFeedbackNotificationDisabled
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.notification.RequestFeedbackNotification
-import com.intellij.feedback.common.statistics.FeedbackDialogCountCollector.Companion.logDialogCancelAction
-import com.intellij.feedback.common.statistics.FeedbackDialogCountCollector.Companion.logDialogOkAction
-import com.intellij.feedback.common.statistics.FeedbackDialogCountCollector.Companion.logDialogShown
 import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.Companion.logDisableNotificationActionInvoked
 import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.Companion.logRequestNotificationShown
 import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.Companion.logRespondNotificationActionInvoked
@@ -24,8 +21,6 @@ import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.DialogWrapper.CANCEL_EXIT_CODE
-import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.*
@@ -194,14 +189,6 @@ enum class IdleFeedbackTypes {
         }
         val dialog = createFeedbackDialog(project, forTest)
         dialog.show()
-        if (!forTest) {
-          logDialogShown(fusFeedbackId)
-          when (dialog.exitCode) {
-            OK_EXIT_CODE -> logDialogOkAction(fusFeedbackId)
-            CANCEL_EXIT_CODE -> logDialogCancelAction(fusFeedbackId)
-            else -> {}
-          }
-        }
       }
     )
     notification.addAction(
