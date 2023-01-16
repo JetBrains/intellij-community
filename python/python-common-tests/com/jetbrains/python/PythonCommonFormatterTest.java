@@ -485,7 +485,11 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
   }
 
   private void doTest(final boolean reformatText) {
-    myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
+    doTest(reformatText, "formatter/", ".py");
+  }
+
+  private void doTest(final boolean reformatText, final String filePath, final String fileExtension) {
+    myFixture.configureByFile(filePath + getTestName(true) + fileExtension);
     WriteCommandAction.runWriteCommandAction(null, () -> {
       CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myFixture.getProject());
       PsiFile file = myFixture.getFile();
@@ -496,7 +500,7 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
         codeStyleManager.reformat(file);
       }
     });
-    myFixture.checkResultByFile("formatter/" + getTestName(true) + "_after.py");
+    myFixture.checkResultByFile(filePath + getTestName(true) + "_after" + fileExtension);
   }
 
   // PY-12861
@@ -587,6 +591,14 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
   public void testWhitespaceInsertedAfterHashSignInMultilineComment() {
     doTest();
   }
+
+  //DS-1584
+  public void testSpaceIPythonMagicCommands() { doTest(); }
+
+  public void testSpaceIPythonMagicCommandsJupyter() { doTest(false, "formatter/jupyter/", ".ipynb"); }
+
+  //DS-2583
+  public void testSpaceShellCommandsJupyter() { doTest(false, "formatter/jupyter/", ".ipynb"); }
 
   /**
    * This test merely checks that call to {@link com.intellij.psi.codeStyle.CodeStyleManager#reformat(com.intellij.psi.PsiElement)}
