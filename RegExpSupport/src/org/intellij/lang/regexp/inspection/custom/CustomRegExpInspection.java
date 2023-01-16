@@ -83,6 +83,7 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
 
   @Override
   public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    if (myConfigurations.isEmpty()) return null;
     final Document document = file.getViewProvider().getDocument();
     final CharSequence text = document.getCharsSequence();
     final FindManager findManager = FindManager.getInstance(file.getProject());
