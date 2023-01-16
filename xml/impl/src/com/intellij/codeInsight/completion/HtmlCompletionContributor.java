@@ -46,7 +46,6 @@ import static com.intellij.util.ObjectUtils.doIfNotNull;
 public class HtmlCompletionContributor extends CompletionContributor implements DumbAware {
 
   public static final String[] TARGET = {"_blank", "_top", "_self", "_parent"};
-  public static final String[] ENCTYPE = {"multipart/form-data", "application/x-www-form-urlencoded"};
   public static final String[] REL = {"alternate", "author", "bookmark", "help", "icon", "license", "next", "nofollow",
     "noreferrer", "noopener", "prefetch", "prev", "search", "stylesheet", "tag", "start", "contents", "index",
     "glossary", "copyright", "chapter", "section", "subsection", "appendix", "script", "import",
@@ -118,9 +117,6 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
       }
       else if (("lang".equals(name) || "xml:lang".equals(name)) && tagName.equalsIgnoreCase("html")) {
         return LANG;
-      }
-      else if ("enctype".equals(name)) {
-        return ENCTYPE;
       }
       else if ("rel".equals(name) || "rev".equals(name)) {
         return REL;
