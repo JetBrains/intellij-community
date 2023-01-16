@@ -14,13 +14,14 @@ import com.intellij.openapi.wm.impl.SquareStripeButtonLook
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.util.PopupImplUtil
+import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.MouseEvent
 
 internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowLeftToolbar) :
   ActionButton(createAction(toolWindowToolbar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR,
-               { ActionToolbar.experimentalToolbarMinimumButtonSize() }) {
+               { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
 
   init {
     setLook(SquareStripeButtonLook(this))

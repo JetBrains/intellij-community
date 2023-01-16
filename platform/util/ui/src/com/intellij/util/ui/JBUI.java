@@ -845,11 +845,24 @@ public final class JBUI {
       }
 
       public @NotNull static String experimentalToolbarButtonSizeKey() {
-        return "ActionToolbar.large.buttonSize";
+        return "MainToolbar.Button.size";
       }
 
       @NotNull
       public static JBDimension defaultExperimentalToolbarButtonSize() {
+        return size(40, 40);
+      }
+
+      public static @NotNull Dimension stripeToolbarButtonSize() {
+        return size(stripeToolbarButtonSizeKey(), defaultStripeToolbarButtonSize());
+      }
+
+      public @NotNull static String stripeToolbarButtonSizeKey() {
+        return "StripeToolbar.Button.size";
+      }
+
+      @NotNull
+      public static JBDimension defaultStripeToolbarButtonSize() {
         return size(40, 40);
       }
     }
@@ -1636,7 +1649,7 @@ public final class JBUI {
       }
 
       @NotNull
-      private static JBDimension defaultButtonPreferredSize() {
+      public static JBDimension defaultButtonPreferredSize() {
         return size(47, 28);
       }
     }

@@ -78,7 +78,6 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
-import java.util.*
 import java.util.function.BooleanSupplier
 import java.util.function.Supplier
 import javax.swing.*
@@ -650,21 +649,26 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   }
 
   private fun applyDensity(defaults: UIDefaults) {
-    // main toolbar and stripes action buttons
+    // main toolbar
     defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.CurrentTheme.Toolbar.defaultExperimentalToolbarButtonSize())
+    // tool window stripes
+    defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), JBUI.CurrentTheme.Toolbar.defaultStripeToolbarButtonSize())
     // Run Widget
     defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), JBUI.CurrentTheme.RunWidget.defaultToolbarHeight())
     defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), JBUI.CurrentTheme.RunWidget.defaultToolbarBorderHeight())
     defaults.put(JBUI.CurrentTheme.RunWidget.actionButtonWidthKey(), JBUI.CurrentTheme.RunWidget.defaultActionButtonWidth())
     defaults.put(JBUI.CurrentTheme.RunWidget.configurationSelectorWidthKey(), JBUI.CurrentTheme.RunWidget.defaultConfigurationSelectorWidth())
+    // minimize/maximize/close buttons
+    defaults.put(JBUI.CurrentTheme.TitlePane.buttonPreferredSizeKey(), JBUI.CurrentTheme.TitlePane.defaultButtonPreferredSize())
     if (density == UIDensity.COMPACT) {
-      // main toolbar and stripes action buttons
-      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(32, 32))
+      // main toolbar
+      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(34, 34))
+      // tool window stripes
+      defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), JBUI.size(32, 32))
       // Run Widget
-      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(30, 30))
+      defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), 30)
       defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 1)
-      // minimize/maximize/close buttons
-      defaults.put(JBUI.CurrentTheme.TitlePane.buttonPreferredSizeKey(), JBUI.size(32, 32))
+      // minimize/maximize/close buttons are fine as they are (emulating native Windows 11 buttons)
       // trees
       defaults.put("Tree.rowHeight", 20)
       // editor tabs
