@@ -10,9 +10,11 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AddMissingDeconstructionCom
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiClassType.ClassResolveResult;
 import com.intellij.psi.util.JavaPsiPatternUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +39,15 @@ final class PatternHighlightingModel {
       holder.add(info);
       return;
     }
-    if (recordClass.hasTypeParameters() && recordType instanceof PsiClassType classType && !classType.hasParameters()) {
+    if (resolveResult.getInferenceError() != null) {
+      String message = JavaErrorBundle.message("error.cannot.infer.pattern.type", resolveResult.getInferenceError());
+      var info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message).create();
+      holder.add(info);
+      return;
+    }
+    PsiJavaCodeReferenceElement ref = typeElement.getInnermostComponentReferenceElement();
+    if (recordClass.hasTypeParameters() && ref != null && ref.getTypeParameterCount() == 0 &&
+        PsiUtil.getLanguageLevel(deconstructionPattern).isLessThan(LanguageLevel.JDK_20_PREVIEW)) {
       String message = JavaErrorBundle.message("error.raw.deconstruction", typeElement.getText());
       var info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message).create();
       holder.add(info);

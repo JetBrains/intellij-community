@@ -377,25 +377,11 @@ public final class JavaPsiPatternUtil {
       PsiDeconstructionList deconstructionList = ObjectUtils.tryCast(pattern.getParent(), PsiDeconstructionList.class);
       if (deconstructionList == null) return null;
       PsiDeconstructionPattern deconstructionPattern = (PsiDeconstructionPattern)deconstructionList.getParent();
-      PsiTypeElement typeElement = deconstructionPattern.getTypeElement();
-      PsiClassType patternType = (PsiClassType)typeElement.getType();
-      PsiType[] parameters = patternType.getParameters();
-      PsiType recordComponentType = recordComponent.getType();
-      PsiClass recordClass = recordComponent.getContainingClass();
-      if (recordClass != null) {
-        PsiTypeParameter[] typeParameters = recordClass.getTypeParameters();
-        HashMap<PsiTypeParameter, PsiType> substitutor = new HashMap<>();
-        int index = Math.min(typeParameters.length, parameters.length);
-        for (int i = 0; i < index; i++) {
-          PsiTypeParameter typeParameter = typeParameters[i];
-          PsiType param = parameters[i];
-          substitutor.put(typeParameter, param);
-        }
-        for (int i = index; i < typeParameters.length; i++) {
-          PsiTypeParameter typeParam = typeParameters[i];
-          substitutor.put(typeParam, null);
-        }
-        return PsiSubstitutor.createSubstitutor(substitutor).substitute(recordComponentType);
+      PsiType patternType = deconstructionPattern.getTypeElement().getType();
+      if (patternType instanceof PsiClassType) {
+        PsiSubstitutor substitutor = ((PsiClassType)patternType).resolveGenerics().getSubstitutor();
+        PsiType recordComponentType = recordComponent.getType();
+        return GenericsUtil.getVariableTypeByExpressionType(substitutor.substitute(recordComponentType));
       }
     }
     return null;
