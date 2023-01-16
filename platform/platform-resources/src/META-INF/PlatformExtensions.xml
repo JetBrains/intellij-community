@@ -286,7 +286,7 @@
                              key="configurable.trusted.hosts.display.name"
                              instance="com.intellij.ide.impl.TrustedHostsConfigurable"
                              groupId="build" />
-    <projectLocator implementation="com.intellij.ide.impl.trustedProjects.DefaultProjectLocator"/>
+    <trustedProjectsLocator implementation="com.intellij.ide.impl.trustedProjects.DefaultTrustedProjectsLocator"/>
 
     <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>

@@ -8,7 +8,7 @@ import java.nio.file.Path
 /**
  * Locates project roots for `Trust Project` check.
  */
-interface ProjectLocator {
+interface TrustedProjectsLocator {
 
   /**
    * Locates project roots for [project].
@@ -29,6 +29,6 @@ interface ProjectLocator {
 
   companion object {
 
-    val EP_NAME = ExtensionPointName<ProjectLocator>("com.intellij.projectLocator")
+    val EP_NAME = ExtensionPointName<TrustedProjectsLocator>("com.intellij.trustedProjectsLocator")
   }
 }

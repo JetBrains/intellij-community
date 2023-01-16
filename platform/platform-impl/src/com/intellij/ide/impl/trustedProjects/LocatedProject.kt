@@ -20,10 +20,10 @@ class LocatedProject(
 
     private fun locateProject(
       project: Project?,
-      getProjectRoots: ProjectLocator.() -> List<Path>
+      getProjectRoots: TrustedProjectsLocator.() -> List<Path>
     ): LocatedProject {
       val projectRoots = LinkedHashSet<Path>()
-      ProjectLocator.EP_NAME.forEachExtensionSafe { locator ->
+      TrustedProjectsLocator.EP_NAME.forEachExtensionSafe { locator ->
         projectRoots.addAll(locator.getProjectRoots())
       }
       return LocatedProject(projectRoots.toList(), project)

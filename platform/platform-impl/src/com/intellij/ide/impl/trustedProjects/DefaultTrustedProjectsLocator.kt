@@ -5,7 +5,7 @@ import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.project.Project
 import java.nio.file.Path
 
-class DefaultProjectLocator : ProjectLocator {
+class DefaultTrustedProjectsLocator : TrustedProjectsLocator {
 
   override fun getProjectRoots(project: Project): List<Path> {
     return listOfNotNull(project.basePath?.toNioPath())

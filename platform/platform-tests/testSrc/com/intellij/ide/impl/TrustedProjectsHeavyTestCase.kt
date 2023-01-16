@@ -2,7 +2,7 @@
 package com.intellij.ide.impl
 
 import com.intellij.ide.impl.trustedProjects.LocatedProject
-import com.intellij.ide.impl.trustedProjects.ProjectLocator
+import com.intellij.ide.impl.trustedProjects.TrustedProjectsLocator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.util.io.getResolvedNioPath
@@ -177,7 +177,7 @@ abstract class TrustedProjectsHeavyTestCase {
     return result
   }
 
-  class TestProjectLocator : ProjectLocator {
+  class TestTrustedProjectsLocator : TrustedProjectsLocator {
 
     override fun getProjectRoots(project: Project): List<Path> {
       val index = NioPathPrefixTreeFactory.createSet()

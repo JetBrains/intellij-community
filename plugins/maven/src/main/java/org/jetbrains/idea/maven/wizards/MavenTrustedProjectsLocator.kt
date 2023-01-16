@@ -1,14 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards
 
-import com.intellij.ide.impl.trustedProjects.ProjectLocator
+import com.intellij.ide.impl.trustedProjects.TrustedProjectsLocator
 import com.intellij.openapi.vfs.VirtualFilePrefixTreeFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.toNioPathOrNull
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import java.nio.file.Path
 
-class MavenProjectLocator : ProjectLocator {
+class MavenTrustedProjectsLocator : TrustedProjectsLocator {
 
   override fun getProjectRoots(project: Project): List<Path> {
     val projectRoots = VirtualFilePrefixTreeFactory.createSet()
