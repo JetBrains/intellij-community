@@ -1,21 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use log::info;
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, Result};
 
 #[cfg(target_os = "windows")] use {
-    windows::core::HSTRING,
-    windows::core::PCWSTR,
-    windows::Win32::System::Services::OpenSCManagerW,
-    windows::Win32::System::Services::OpenServiceW,
-    windows::Win32::System::Services::CloseServiceHandle,
-    windows::Win32::System::Services::SC_MANAGER_CONNECT,
-
-    windows::Win32::Foundation::GetLastError,
-    windows::Win32::Foundation::ERROR_SERVICE_DOES_NOT_EXIST,
+    windows::core::{HSTRING,PCWSTR},
+    windows::Win32::Foundation::{GetLastError, ERROR_SERVICE_DOES_NOT_EXIST},
+    windows::Win32::System::Services::{OpenSCManagerW, OpenServiceW, CloseServiceHandle, SC_MANAGER_CONNECT}
 };
 
 #[cfg(target_os = "linux")] use {
+    anyhow::Context,
     log::debug,
     std::path::PathBuf,
     utils::read_file_to_end
