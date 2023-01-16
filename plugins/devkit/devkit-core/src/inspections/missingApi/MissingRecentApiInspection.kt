@@ -77,15 +77,10 @@ class MissingRecentApiInspection : LocalInspectionTool() {
     )
   }
 
-  override fun getOptionsPane(): OptPane {
-    return pane(
-      group(DevKitBundle.message("inspections.missing.recent.api.settings.range"),
-            string("sinceBuildString", DevKitBundle.message("inspections.missing.recent.api.settings.since"), BuildNumberValidator())
-              .description(DevKitBundle.message("inspections.missing.recent.api.settings.since.description")),
-            string("untilBuildString", DevKitBundle.message("inspections.missing.recent.api.settings.until"), BuildNumberValidator())
-              .description(DevKitBundle.message("inspections.missing.recent.api.settings.until.description")))
-    )
-  }
+  override fun getOptionsPane(): OptPane = pane(
+    group(DevKitBundle.message("inspections.missing.recent.api.settings.range"),
+          string("sinceBuildString", DevKitBundle.message("inspections.missing.recent.api.settings.since"), BuildNumberValidator()),
+          string("untilBuildString", DevKitBundle.message("inspections.missing.recent.api.settings.until"), BuildNumberValidator())))
 
   private fun getTargetedSinceUntilRanges(module: Module): List<SinceUntilRange> {
     if (sinceBuild == null && untilBuild == null) {
