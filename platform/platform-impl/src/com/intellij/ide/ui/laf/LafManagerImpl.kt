@@ -666,8 +666,8 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       // tool window stripes
       defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), JBUI.size(32, 32))
       // Run Widget
-      defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), 30)
-      defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 1)
+      defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), 26)
+      defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 4)
       // minimize/maximize/close buttons are fine as they are (emulating native Windows 11 buttons)
       // trees
       defaults.put("Tree.rowHeight", 20)
