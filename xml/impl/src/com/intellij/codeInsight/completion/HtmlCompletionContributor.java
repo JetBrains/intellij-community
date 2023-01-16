@@ -46,10 +46,13 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
 
   public static final String[] TARGET = {"_blank", "_top", "_self", "_parent"};
   public static final String[] ENCTYPE = {"multipart/form-data", "application/x-www-form-urlencoded"};
-  public static final String[] REL = {"alternate", "author", "bookmark", "help", "icon", "license", "next", "nofollow",
-    "noreferrer", "noopener", "prefetch", "prev", "search", "stylesheet", "tag", "start", "contents", "index",
-    "glossary", "copyright", "chapter", "section", "subsection", "appendix", "script", "import",
-    "apple-touch-icon", "apple-touch-icon-precomposed", "apple-touch-startup-image"};
+  public static final String[] REL_LINK = {"alternate", "canonical", "author", "dns-prefetch", "help",
+    "icon", "manifest", "modulepreload", "license", "next", "pingback", "preconnect", "prefetch", "preload",
+    "prerender", "prev", "stylesheet", "apple-touch-icon", "apple-touch-icon-precomposed", "apple-touch-startup-image"};
+  public static final String[] REL_A_AREA = {"bookmark", "external", "help", "license", "next", "nofollow", "noopener",
+    "noreferrer", "opener", "prev", "search", "tag", "sponsored", "ugc"};
+  public static final String[] REL_FORM = {"external", "help", "license", "next", "nofollow", "noopener", "noreferrer",
+    "opener", "prev", "search"}
   public static final String[] MEDIA = {"all", "braille", "embossed", "handheld", "print", "projection", "screen", "speech", "tty", "tv"};
   public static final String[] LANGUAGE =
     {"JavaScript", "VBScript", "JScript", "JavaScript1.2", "JavaScript1.3", "JavaScript1.4", "JavaScript1.5"};
@@ -121,8 +124,14 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
       else if ("enctype".equals(name)) {
         return ENCTYPE;
       }
-      else if ("rel".equals(name) || "rev".equals(name)) {
-        return REL;
+      else if ("rel".equals(name) && tagName.equalsIgnoreCase("link")) {
+        return REL_LINK;
+      }
+      else if (("rel".equals(name) || "rev".equals(name)) && (tagName.equalsIgnoreCase("a") || tagName.equalsIgnoreCase("area"))) {
+        return REL_A_AREA;
+      }
+      else if ("rel".equals(name) && tagName.equalsIgnoreCase("form")) {
+        return REL_FORM;
       }
       else if ("media".equals(name)) {
         return MEDIA;
