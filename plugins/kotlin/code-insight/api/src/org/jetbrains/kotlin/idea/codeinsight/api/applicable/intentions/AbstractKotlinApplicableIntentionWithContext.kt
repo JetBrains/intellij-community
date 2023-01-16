@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.prepareContextWithAnalyzeAllowEdt
-import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
+import org.jetbrains.kotlin.idea.util.application.runWriteActionIfNeeded
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
@@ -27,7 +27,7 @@ abstract class AbstractKotlinApplicableIntentionWithContext<ELEMENT : KtElement,
 
     final override fun applyTo(element: ELEMENT, project: Project, editor: Editor?) {
         val context = prepareContextWithAnalyzeAllowEdt(element, needsReadAction = true) ?: return
-        runWriteActionIfPhysical(element) {
+        runWriteActionIfNeeded(shouldApplyInWriteAction() && element.isPhysical) {
             apply(element, context, project, editor)
         }
     }

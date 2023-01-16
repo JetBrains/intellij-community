@@ -45,6 +45,7 @@ abstract class AbstractKotlinApplicableInspection<ELEMENT : KtElement>(
                 apply(element, element.project, element.findExistingEditor())
             }
 
+            override fun shouldApplyInWriteAction(): Boolean = this@AbstractKotlinApplicableInspection.shouldApplyInWriteAction()
             override fun getFamilyName(): String = this@AbstractKotlinApplicableInspection.getActionFamilyName()
             override fun getName(): String = elementPointer.element?.let { getActionName(element) } ?: familyName
         }
