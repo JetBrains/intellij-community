@@ -50,6 +50,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
@@ -57,6 +58,8 @@ import java.util.function.Consumer;
 public final class XFramesView extends XDebugView {
   private static final Logger LOG = Logger.getInstance(XFramesView.class);
 
+  private final Project myProject;
+  private final @NotNull WeakReference<XDebugSessionImpl> mySessionRef;
   private final JPanel myMainPanel;
   private final XDebuggerFramesList myFramesList;
   private final ComboBox<XExecutionStack> myThreadComboBox;
@@ -71,7 +74,9 @@ public final class XFramesView extends XDebugView {
   private boolean myThreadsCalculated;
   private boolean myRefresh;
 
-  public XFramesView(@NotNull Project project) {
+  public XFramesView(@NotNull XDebugSessionImpl session) {
+    myProject = session.getProject();
+    mySessionRef = new WeakReference<>(session);
     myMainPanel = new JPanel(new BorderLayout());
 
     myFrameSelectionHandler = new AutoScrollToSourceHandler() {
@@ -88,11 +93,11 @@ public final class XFramesView extends XDebugView {
       @Override
       protected void scrollToSource(@NotNull Component list) {
         if (myListenersEnabled) {
-          processFrameSelection(getSession(list), true);
+          processFrameSelection(getSession(), true);
         }
       }
     };
-    myFramesList = new XDebuggerFramesList(project) {
+    myFramesList = new XDebuggerFramesList(myProject) {
       @Override
       protected @NotNull OccurenceInfo goOccurrence(int step) {
         OccurenceInfo info = super.goOccurrence(step);
@@ -150,7 +155,7 @@ public final class XFramesView extends XDebugView {
         if (e.getStateChange() == ItemEvent.SELECTED) {
           Object item = e.getItem();
           if (item != mySelectedStack && item instanceof XExecutionStack) {
-            XDebugSession session = getSession(e);
+            XDebugSession session = getSession();
             if (session != null) {
               myRefresh = false;
               updateFrames((XExecutionStack)item, session, null, false);
@@ -182,7 +187,7 @@ public final class XFramesView extends XDebugView {
 
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-        XDebugSession session = getSession(e);
+        XDebugSession session = getSession();
         XSuspendContext context = session == null ? null : session.getSuspendContext();
         if (context != null && !myThreadsCalculated) {
           myBuilder = new ThreadsBuilder();
@@ -461,6 +466,10 @@ public final class XFramesView extends XDebugView {
 
   @Override
   public void dispose() {
+  }
+
+  private @Nullable XDebugSessionImpl getSession() {
+    return mySessionRef.get();
   }
 
   public JPanel getMainPanel() {

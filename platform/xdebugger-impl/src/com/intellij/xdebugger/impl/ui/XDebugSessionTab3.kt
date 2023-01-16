@@ -88,7 +88,7 @@ class XDebugSessionTab3(
     else
       null
 
-    val framesView = (customLayoutOptions?.getCurrentOption() as? FramesAndThreadsLayoutOptionBase)?.createView() ?: XFramesView(myProject)
+    val framesView = (customLayoutOptions?.getCurrentOption() as? FramesAndThreadsLayoutOptionBase)?.createView() ?: XFramesView(session)
     registerThreadsView(session, content, framesView, true)
     framesView.mainComponent?.isVisible = customLayoutOptions?.isHidden?.not() ?: true
     addVariablesAndWatches(session)
