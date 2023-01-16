@@ -98,6 +98,11 @@ public class KotlinProjectViewTestGenerated extends AbstractKotlinProjectViewTes
         runTest("testData/projectView/OneFileMultifileFacadeInternalClass.test");
     }
 
+    @TestMetadata("OneFileMultifileFacadeInternalClassAnnotationListWithSources.test")
+    public void testOneFileMultifileFacadeInternalClassAnnotationListWithSources() throws Exception {
+        runTest("testData/projectView/OneFileMultifileFacadeInternalClassAnnotationListWithSources.test");
+    }
+
     @TestMetadata("OneFileMultifileFacadeInternalClassWithSources.test")
     public void testOneFileMultifileFacadeInternalClassWithSources() throws Exception {
         runTest("testData/projectView/OneFileMultifileFacadeInternalClassWithSources.test");
