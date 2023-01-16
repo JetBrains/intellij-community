@@ -1,17 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use log::info;
-use anyhow::{bail, Result};
+use anyhow::Result;
 
 #[cfg(target_os = "windows")] use {
+    anyhow::bail,
+    log::info,
     windows::core::{HSTRING,PCWSTR},
     windows::Win32::Foundation::{GetLastError, ERROR_SERVICE_DOES_NOT_EXIST},
     windows::Win32::System::Services::{OpenSCManagerW, OpenServiceW, CloseServiceHandle, SC_MANAGER_CONNECT}
 };
 
 #[cfg(target_os = "linux")] use {
-    anyhow::Context,
-    log::debug,
+    anyhow::{bail, Context},
+    log::{debug, info},
     std::path::PathBuf,
     utils::read_file_to_end
 };
@@ -29,9 +30,9 @@ pub fn is_running_in_docker() -> Result<bool> {
     is_service_present("cexecsvc")
 }
 
-#[cfg(any(target_os = "mac"))]
+#[cfg(any(target_os = "macos"))]
 pub fn is_running_in_docker() -> Result<bool> {
-    bail!("Unsupported Mac OS for Docker containers.")
+    Ok(false)
 }
 
 /**

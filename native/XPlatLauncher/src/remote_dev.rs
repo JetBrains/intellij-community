@@ -8,7 +8,8 @@ use log::{debug, info};
 use path_absolutize::Absolutize;
 use anyhow::{bail, Context, Result};
 use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, PathExt, read_file_to_end};
-use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_logs_home, is_running_in_docker, LaunchConfiguration};
+use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_logs_home, LaunchConfiguration};
+use crate::docker::is_running_in_docker;
 
 pub struct RemoteDevLaunchConfiguration {
     default: DefaultLaunchConfiguration,
