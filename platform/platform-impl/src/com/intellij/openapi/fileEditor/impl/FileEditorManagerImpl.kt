@@ -1714,6 +1714,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   private inner class MyEditorPropertyChangeListener : PropertyChangeListener {
     @RequiresEdt
     override fun propertyChange(e: PropertyChangeEvent) {
+      if (project.isDisposed) return
       val propertyName = e.propertyName
       if (FileEditor.PROP_MODIFIED == propertyName) {
         val editor = e.source as FileEditor
