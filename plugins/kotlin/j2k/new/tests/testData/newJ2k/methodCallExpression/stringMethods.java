@@ -2,9 +2,13 @@ import java.nio.charset.Charset;
 import java.util.*;
 
 class A {
-    void constructors() throws Exception {
+    void constructors(String s) throws Exception {
         new String();
-        // TODO: new String("original");
+
+        new String("original");
+        new String(s);
+        new String(s).length();
+
         new String(new char[] {'a', 'b', 'c'});
         new String(new char[] {'b', 'd'}, 1, 1);
         new String(new int[] {32, 65, 127}, 0, 3);

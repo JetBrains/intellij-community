@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedField
 import org.jetbrains.kotlin.nj2k.symbols.deepestFqName
 import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType.STRING
 import org.jetbrains.kotlin.nj2k.types.isArrayType
 import org.jetbrains.kotlin.nj2k.types.isNull
 import org.jetbrains.kotlin.nj2k.types.isStringType
@@ -79,6 +80,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
             conversions[classSymbol.deepestFqName()]?.firstOrNull { conversion ->
                 if (conversion.from !is NewExpression) return@firstOrNull false
                 if (conversion.filter?.invoke(this) == false) return@firstOrNull false
+                if (conversion.byArgumentsFilter?.invoke(arguments.arguments.map { it.value }) == false) return@firstOrNull false
                 true
             }
 
@@ -582,9 +584,38 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                 )
             } withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
 
-            NewExpression("java.lang.String")
-                    convertTo Method("kotlin.text.String")
-                    withByArgumentsFilter { it.isNotEmpty() },
+            // It is the constructor of "kotlin.String" and not "java.lang.String" because
+            // java.lang.String was already converted to kotlin.String in a previous TypeMappingConversion
+            NewExpression("kotlin.String") convertTo CustomExpression { newExpression ->
+                val arguments = (newExpression as JKNewExpression).arguments.arguments
+                return@CustomExpression when (arguments.size) {
+                    // `new String()` is the same as a literal empty string ""
+                    0 -> JKLiteralExpression("\"\"", type = STRING)
+
+                    1 -> {
+                        val first = arguments.first().value
+                        if (first.calculateType(typeFactory)?.isStringType() == true) {
+                            first.detach(arguments.first())
+                            if (first is JKLiteralExpression) {
+                                // `new String("str")` is the same a literal string "str"
+                                first
+                            } else {
+                                // Explicit String copy constructor call may be needed to optimize memory consumption
+                                // See https://stackoverflow.com/a/1803312/992380
+                                JKTypeCastExpression(
+                                    JKNewExpression(symbolProvider.provideClassSymbol("java.lang.String"), JKArgumentList(first)),
+                                    JKTypeElement(typeFactory.types.string)
+                                ).parenthesize()
+                            }
+                        } else {
+                            newExpression
+                        }
+                    }
+
+                    else -> newExpression
+                }
+            },
+
             Method("java.util.Arrays.asList")
                     convertTo Method("kotlin.collections.mutableListOf")
                     withByArgumentsFilter { containsOnlyLiterals(it) && (it.size > 1 || !containsNull(it.cast())) }
