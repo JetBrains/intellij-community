@@ -180,7 +180,7 @@ class ModuleInfoProvider(private val project: Project) {
         collectByUserData(UserDataModuleContainer.ForVirtualFile(virtualFile, project))
         collectSourceRelatedByFile(virtualFile)
 
-        for (orderEntry in fileIndex.getOrderEntriesForFile(virtualFile)) {
+        for (orderEntry in runReadAction { fileIndex.getOrderEntriesForFile(virtualFile) }) {
             collectByOrderEntry(virtualFile, orderEntry, isLibrarySource)
         }
 
