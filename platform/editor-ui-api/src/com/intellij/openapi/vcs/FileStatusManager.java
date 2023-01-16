@@ -50,21 +50,7 @@ public abstract class FileStatusManager {
   @CalledInAny
   public abstract void fileStatusChanged(@Nullable VirtualFile file);
 
-  /**
-   * @deprecated Please use {@link #addFileStatusListener(FileStatusListener, Disposable)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void addFileStatusListener(@NotNull FileStatusListener listener) {
-  }
-
   public void addFileStatusListener(@NotNull FileStatusListener listener, @NotNull Disposable parentDisposable) {
-  }
-
-  /**
-   * @deprecated Please use {@link #addFileStatusListener(FileStatusListener, Disposable)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void removeFileStatusListener(@NotNull FileStatusListener listener) {
   }
 
   @Nullable

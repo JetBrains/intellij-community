@@ -7,13 +7,15 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.impl.pumpEventsUntilJobIsCompleted
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Internal
 
 private val LOG = Logger.getInstance("#com.intellij.ide.shutdown")
 
-@Internal
-fun ApplicationImpl.joinBlocking() {
+// todo convert ApplicationImpl and IdeEventQueue to kotlin
+
+internal fun ApplicationImpl.joinBlocking() {
   EDT.assertIsEdt()
   LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed)
   if (!Registry.`is`("ide.await.scope.completion")) {
@@ -31,4 +33,11 @@ fun ApplicationImpl.joinBlocking() {
   LOG.trace("$this: waiting for application scope completion")
   IdeEventQueue.getInstance().pumpEventsUntilJobIsCompleted(containerJob)
   LOG.trace("$this: application scope was completed")
+}
+
+@Internal
+internal fun <T> removeListenerOnCompletion(coroutineScope: CoroutineScope, listener: T, listeners: MutableList<T>) {
+  coroutineScope.coroutineContext.job.invokeOnCompletion {
+    listeners.remove(listener)
+  }
 }

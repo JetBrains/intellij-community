@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("removal", "ReplaceGetOrSet", "ReplacePutWithAssignment", "OVERRIDE_DEPRECATION")
+@file:Suppress("removal", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.vcs.impl
 
@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.ChangeList
@@ -35,7 +34,6 @@ import com.intellij.util.Alarm
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap
@@ -47,7 +45,6 @@ import java.util.concurrent.TimeUnit
 class FileStatusManagerImpl(private val project: Project) : FileStatusManager(), Disposable {
   private val queue = MergingUpdateQueue("FileStatusManagerImpl", 100, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
 
-  private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<FileStatusListener>()
   private val dirtyLock = Any()
   private val dirtyStatuses = HashSet<VirtualFile>()
   private val dirtyDocuments = Object2BooleanOpenHashMap<VirtualFile>()
@@ -180,13 +177,8 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
     cachedStatuses.clear()
   }
 
-  override fun addFileStatusListener(listener: FileStatusListener) {
-    listeners.add(listener)
-  }
-
   override fun addFileStatusListener(listener: FileStatusListener, parentDisposable: Disposable) {
-    listeners.add(listener)
-    Disposer.register(parentDisposable) { listeners.remove(listener) }
+    project.messageBus.connect(parentDisposable).subscribe(FileStatusListener.TOPIC, listener)
   }
 
   override fun fileStatusesChanged() {
@@ -195,12 +187,9 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
       whetherExactlyParentToChanged.clear()
       dirtyStatuses.clear()
     }
-    ApplicationManager.getApplication().invokeLater(
-      {
-        for (listener in listeners) {
-          listener.fileStatusesChanged()
-        }
-      }, ModalityState.any())
+    ApplicationManager.getApplication().invokeLater({ project.messageBus.syncPublisher(FileStatusListener.TOPIC).fileStatusesChanged() },
+                                                    ModalityState.any(),
+                                                    project.disposed)
   }
 
   override fun fileStatusChanged(file: VirtualFile?) {
@@ -238,13 +227,14 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
         updatedFiles.add(file)
       }
     }
-    ApplicationManager.getApplication().invokeLater({
-                                                      for (file in updatedFiles) {
-                                                        for (listener in listeners) {
-                                                          listener.fileStatusChanged(file)
-                                                        }
-                                                      }
-                                                    }, ModalityState.any(), project.disposed)
+    ApplicationManager.getApplication().invokeLater(
+      {
+        val publisher = project.messageBus.syncPublisher(FileStatusListener.TOPIC)
+        for (file in updatedFiles) {
+          publisher.fileStatusChanged(file)
+        }
+      }, ModalityState.any(), project.disposed
+    )
   }
 
   private fun updateFileStatusFor(file: VirtualFile): Boolean {
@@ -346,10 +336,6 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
         VcsDirtyScopeManager.getInstance(project).fileDirty(file)
       }
     }
-  }
-
-  override fun removeFileStatusListener(listener: FileStatusListener) {
-    listeners.remove(listener)
   }
 
   @TestOnly

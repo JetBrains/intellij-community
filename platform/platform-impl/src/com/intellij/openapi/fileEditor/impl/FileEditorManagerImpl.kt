@@ -263,7 +263,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     // connect after we set mainSplitters
     if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
       val connection = project.messageBus.connect(coroutineScope)
-      FileStatusManager.getInstance(project)?.addFileStatusListener(MyFileStatusListener(), project)
+      connection.subscribe(FileStatusListener.TOPIC, MyFileStatusListener())
       connection.subscribe(FileTypeManager.TOPIC, MyFileTypeListener())
       if (!LightEdit.owns(project)) {
         connection.subscribe(ProjectTopics.PROJECT_ROOTS, MyRootListener())
@@ -331,8 +331,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     val OPEN_FILE_SET_MODIFICATION_COUNT = ModificationTracker { openFileSetModificationCount.sum() }
 
     fun isDumbAware(editor: FileEditor): Boolean {
-      return java.lang.Boolean.TRUE == editor.getUserData(DUMB_AWARE) &&
-             (editor !is PossiblyDumbAware || (editor as PossiblyDumbAware).isDumbAware)
+      return true == editor.getUserData(DUMB_AWARE) && (editor !is PossiblyDumbAware || (editor as PossiblyDumbAware).isDumbAware)
     }
 
     private fun isFileOpenInWindow(file: VirtualFile, window: EditorWindow): Boolean {
@@ -815,7 +814,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     val currentWindow = splitters.currentWindow
 
     // If the selected editor is a singleton in a split window, prefer the sibling of that split window.
-    // When navigating from a diff view opened in a vertical split,
+    // When navigating from a diff view, opened in a vertical split,
     // this makes a new tab open below/above the diff view, still keeping the diff in sight.
     if (isSingletonEditor && currentWindow != null && currentWindow.inSplitter() &&
         currentWindow.tabCount == 1 && currentWindow.selectedComposite?.selectedEditor === currentEditor) {

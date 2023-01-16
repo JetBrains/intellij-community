@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ide
 
 import com.intellij.ide.navbar.vm.NavBarVm
@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 
 internal class StaticNavBarVmImpl(
-  cs: CoroutineScope,
+  coroutineScope: CoroutineScope,
   project: Project,
   initiallyVisible: Boolean,
 ) : StaticNavBarVm {
@@ -33,7 +33,7 @@ internal class StaticNavBarVmImpl(
   override val vm: StateFlow<NavBarVm?> = _vm.asStateFlow()
 
   init {
-    cs.launch {
+    coroutineScope.launch {
       _isVisible.collectLatest { visible ->
         if (!visible) {
           _vm.value = null
