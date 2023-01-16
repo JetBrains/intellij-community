@@ -2,7 +2,7 @@
 package com.intellij.openapi.externalSystem.service.project.trusted
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.impl.trustedProjects.TrustedProjectsDialog
+import com.intellij.ide.trustedProjects.TrustedProjectsDialog
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil

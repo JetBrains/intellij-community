@@ -357,10 +357,10 @@
     <listener class="com.intellij.openapi.vcs.impl.VcsInitialization$ShutDownProjectListener"
               topic="com.intellij.openapi.project.ProjectCloseListener"/>
     <listener class="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$TrustListener"
-              topic="com.intellij.ide.impl.trustedProjects.TrustedProjectsListener"
+              topic="com.intellij.ide.trustedProjects.TrustedProjectsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="com.intellij.openapi.vcs.roots.VcsRootScanner$TrustListener"
-              topic="com.intellij.ide.impl.trustedProjects.TrustedProjectsListener"
+              topic="com.intellij.ide.trustedProjects.TrustedProjectsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="com.intellij.vcs.commit.CommitSessionCollector$MyAnActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>

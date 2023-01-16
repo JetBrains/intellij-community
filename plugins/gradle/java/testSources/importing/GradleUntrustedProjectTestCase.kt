@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.application.subscribe
-import com.intellij.ide.impl.trustedProjects.TrustedProjectsListener
-import com.intellij.ide.impl.trustedProjects.TrustedProjectsLocator
-import com.intellij.ide.impl.trustedProjects.TrustedProjectsLocator.LocatedProject
+import com.intellij.ide.trustedProjects.TrustedProjectsListener
+import com.intellij.ide.trustedProjects.TrustedProjectsLocator
+import com.intellij.ide.trustedProjects.TrustedProjectsLocator.LocatedProject
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction

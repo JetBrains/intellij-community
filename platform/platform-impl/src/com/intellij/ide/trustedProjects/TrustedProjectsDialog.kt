@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DuplicatedCode")
 
-package com.intellij.ide.impl.trustedProjects
+package com.intellij.ide.trustedProjects
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.*
@@ -50,7 +50,7 @@ object TrustedProjectsDialog {
       return true
     }
 
-    val doNotAskOption = projectRoot.parent?.let(::createDoNotAskOptionForLocation)
+    val doNotAskOption = projectRoot.parent?.let(TrustedProjectsDialog::createDoNotAskOptionForLocation)
     val choice = withContext(Dispatchers.EDT) {
       MessageDialogBuilder.Message(title, message)
         .buttons(trustButtonText, distrustButtonText, cancelButtonText)
@@ -149,7 +149,7 @@ object TrustedProjectsDialog {
       return true
     }
 
-    val doNotAskOption = projectRoot.parent?.let(::createDoNotAskOptionForLocation)
+    val doNotAskOption = projectRoot.parent?.let(TrustedProjectsDialog::createDoNotAskOptionForLocation)
     val choice = invokeAndWaitIfNeeded {
       MessageDialogBuilder.Message(title, message)
         .buttons(trustButtonText, distrustButtonText, cancelButtonText)

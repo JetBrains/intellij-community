@@ -4,10 +4,10 @@
 
 package com.intellij.ide.impl
 
-import com.intellij.ide.impl.trustedProjects.TrustedProjects
-import com.intellij.ide.impl.trustedProjects.TrustedProjectsDialog
-import com.intellij.ide.impl.trustedProjects.TrustedProjectsListener
-import com.intellij.ide.impl.trustedProjects.TrustedProjectsLocator
+import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.ide.trustedProjects.TrustedProjectsDialog
+import com.intellij.ide.trustedProjects.TrustedProjectsListener
+import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*

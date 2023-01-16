@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.impl.TrustedProjects;
-import com.intellij.ide.impl.trustedProjects.TrustedProjectsListener;
+import com.intellij.ide.trustedProjects.TrustedProjectsListener;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
