@@ -14,7 +14,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestLab
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestMilestoneEvents
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestStateEvents
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestTimelineItem
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel.LoadingState
 import java.util.concurrent.ConcurrentSkipListSet
 
@@ -27,7 +26,7 @@ interface GitLabMergeRequestTimelineViewModel {
   sealed interface LoadingState {
     object Loading : LoadingState
     class Error(val exception: Throwable) : LoadingState
-    class Result(val items: List<GitLabMergeRequestTimelineItem>) : LoadingState
+    class Result(val items: List<GitLabMergeRequestTimelineItemViewModel>) : LoadingState
   }
 }
 
@@ -38,7 +37,7 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
 ) : GitLabMergeRequestTimelineViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default)
-  private var loadingRequestState = MutableStateFlow<Deferred<List<GitLabMergeRequestTimelineItem>>?>(null)
+  private var loadingRequestState = MutableStateFlow<Deferred<List<GitLabMergeRequestTimelineItemViewModel>>?>(null)
 
   override val timelineLoadingFlow: Flow<LoadingState?> =
     loadingRequestState.transform {
@@ -68,35 +67,44 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
     }
   }
 
-  private fun requestItemsAsync(): Deferred<List<GitLabMergeRequestTimelineItem>> =
+  private fun requestItemsAsync(): Deferred<List<GitLabMergeRequestTimelineItemViewModel>> =
     cs.async {
       val api = connection.apiClient
       val project = connection.repo.repository
 
-      val result = ConcurrentSkipListSet(Comparator.comparing(GitLabMergeRequestTimelineItem::date))
+      val result = ConcurrentSkipListSet(Comparator.comparing(GitLabMergeRequestTimelineItemViewModel::date))
 
       launch {
         launch {
           api.loadAllMergeRequestDiscussions(project, mr).collect { discussions ->
-            result.addAll(discussions.map { GitLabMergeRequestTimelineItem.Discussion(it) })
+            result.addAll(discussions.filter {
+              it.notes.isNotEmpty()
+            }.map {
+              if (it.notes.first().system) {
+                GitLabMergeRequestTimelineItemViewModel.SystemDiscussion(it)
+              }
+              else {
+                GitLabMergeRequestTimelineItemViewModel.Discussion(cs, it)
+              }
+            })
           }
         }
 
         launch {
           api.loadMergeRequestStateEvents(project, mr).body().let { events ->
-            result.addAll(events.map { GitLabMergeRequestTimelineItem.StateEvent(it) })
+            result.addAll(events.map { GitLabMergeRequestTimelineItemViewModel.StateEvent(it) })
           }
         }
 
         launch {
           api.loadMergeRequestLabelEvents(project, mr).body().let { events ->
-            result.addAll(events.map { GitLabMergeRequestTimelineItem.LabelEvent(it) })
+            result.addAll(events.map { GitLabMergeRequestTimelineItemViewModel.LabelEvent(it) })
           }
         }
 
         launch {
           api.loadMergeRequestMilestoneEvents(project, mr).body().let { events ->
-            result.addAll(events.map { GitLabMergeRequestTimelineItem.MilestoneEvent(it) })
+            result.addAll(events.map { GitLabMergeRequestTimelineItemViewModel.MilestoneEvent(it) })
           }
         }
       }.join()

@@ -93,6 +93,8 @@ suspend fun <T1, T2, T3> combineAndCollect(
   }
 }
 
+fun Flow<Boolean>.inverted() = map { !it }
+
 @ApiStatus.Experimental
 fun <T, M> StateFlow<T>.mapState(
   scope: CoroutineScope,
@@ -112,6 +114,17 @@ fun <T, R> StateFlow<T>.mapStateScoped(scope: CoroutineScope,
     val mapped = mapper(nestedScope, newValue)
     emit(mapped)
   }.stateIn(scope, sharingStart, mapper(nestedScope, originalState.value))
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+@ApiStatus.Experimental
+fun <T, R> Flow<T>.mapScoped(mapper: suspend CoroutineScope.(T) -> R): Flow<R> {
+  return transformLatest { newValue ->
+    coroutineScope {
+      emit(mapper(newValue))
+      awaitCancellation()
+    }
+  }
 }
 
 @ApiStatus.Experimental

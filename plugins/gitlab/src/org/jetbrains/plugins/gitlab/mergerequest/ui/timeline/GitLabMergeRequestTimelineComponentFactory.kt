@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
+import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.TransparentScrollPane
@@ -11,24 +12,19 @@ import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.text.JBDateFormat
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.*
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestTimelineItem
+import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel.LoadingState
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -44,7 +40,7 @@ object GitLabMergeRequestTimelineComponentFactory {
     }
 
     cs.launch {
-      vm.timelineLoadingFlow.map { state ->
+      vm.timelineLoadingFlow.mapScoped { state ->
         when (state) {
           LoadingState.Loading -> {
             JLabel(AnimatedIcon.Default())
@@ -53,9 +49,10 @@ object GitLabMergeRequestTimelineComponentFactory {
             SimpleHtmlPane(state.exception.localizedMessage)
           }
           is LoadingState.Result -> {
+            val itemScope = this
             VerticalListPanel(0).apply {
               for (item in state.items) {
-                add(createItemComponent(avatarIconsProvider, item))
+                add(createItemComponent(itemScope, avatarIconsProvider, item))
               }
             }.let {
               TransparentScrollPane(it)
@@ -76,52 +73,52 @@ object GitLabMergeRequestTimelineComponentFactory {
     }
   }
 
-  private fun createItemComponent(avatarIconsProvider: IconsProvider<GitLabUserDTO>, item: GitLabMergeRequestTimelineItem): JComponent {
-    val content = createContent(item)
+  private suspend fun createItemComponent(cs: CoroutineScope,
+                                          avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+                                          item: GitLabMergeRequestTimelineItemViewModel): JComponent =
+    when (item) {
+      is GitLabMergeRequestTimelineItemViewModel.Immutable -> {
+        val content = createContent(item)
 
-    return CodeReviewChatItemUIUtil.build(CodeReviewChatItemUIUtil.ComponentType.FULL,
-                                          { avatarIconsProvider.getIcon(item.actor, it) },
-                                          content) {
-      withHeader(createTitleTextPane(item.actor, item.date))
-    }
-  }
-
-  private fun createContent(item: GitLabMergeRequestTimelineItem): JComponent {
-    return when (item) {
-      is GitLabMergeRequestTimelineItem.Discussion -> createDiscussionContent(item)
-      is GitLabMergeRequestTimelineItem.LabelEvent -> createLabeledEventContent(item)
-      is GitLabMergeRequestTimelineItem.MilestoneEvent -> createMilestonedEventContent(item)
-      is GitLabMergeRequestTimelineItem.StateEvent -> createStateChangeContent(item)
-    }
-  }
-
-  private fun createDiscussionContent(item: GitLabMergeRequestTimelineItem.Discussion): JComponent {
-    val firstNote = item.discussion.notes.first()
-
-    if (firstNote.system) {
-      val body = firstNote.body
-      if (body.contains("Compare with previous version")) {
-        try {
-          val lines = body.lines()
-          val title = lines[0]
-          val commits = lines[2]
-          return VerticalListPanel().apply {
-            add(SimpleHtmlPane(title))
-            add(StatusMessageComponentFactory.create(SimpleHtmlPane(commits)))
-          }
-        }
-        catch (e: Exception) {
-          thisLogger().warn("Error occurred while parsing the note with added commits", e)
+        CodeReviewChatItemUIUtil.build(CodeReviewChatItemUIUtil.ComponentType.FULL,
+                                       { avatarIconsProvider.getIcon(item.actor, it) },
+                                       content) {
+          withHeader(createTitleTextPane(item.actor, item.date))
         }
       }
-      return StatusMessageComponentFactory.create(SimpleHtmlPane(GitLabUIUtil.convertToHtml(body)))
+      is GitLabMergeRequestTimelineItemViewModel.Discussion -> {
+        GitLabMergeRequestTimelineDiscussionComponentFactory.create(cs, avatarIconsProvider, item)
+      }
     }
-    else {
-      return SimpleHtmlPane(GitLabUIUtil.convertToHtml(firstNote.body))
+
+  private fun createContent(item: GitLabMergeRequestTimelineItemViewModel.Immutable): JComponent =
+    when (item) {
+      is GitLabMergeRequestTimelineItemViewModel.SystemDiscussion -> createSystemDiscussionContent(item)
+      is GitLabMergeRequestTimelineItemViewModel.LabelEvent -> createLabeledEventContent(item)
+      is GitLabMergeRequestTimelineItemViewModel.MilestoneEvent -> createMilestonedEventContent(item)
+      is GitLabMergeRequestTimelineItemViewModel.StateEvent -> createStateChangeContent(item)
     }
+
+  private fun createSystemDiscussionContent(item: GitLabMergeRequestTimelineItemViewModel.SystemDiscussion): JComponent {
+    val content = item.content
+    if (content.contains("Compare with previous version")) {
+      try {
+        val lines = content.lines()
+        val title = lines[0]
+        val commits = lines[2]
+        return VerticalListPanel().apply {
+          add(SimpleHtmlPane(title))
+          add(StatusMessageComponentFactory.create(SimpleHtmlPane(commits)))
+        }
+      }
+      catch (e: Exception) {
+        thisLogger().warn("Error occurred while parsing the note with added commits", e)
+      }
+    }
+    return StatusMessageComponentFactory.create(SimpleHtmlPane(GitLabUIUtil.convertToHtml(content)))
   }
 
-  private fun createLabeledEventContent(item: GitLabMergeRequestTimelineItem.LabelEvent): JComponent {
+  private fun createLabeledEventContent(item: GitLabMergeRequestTimelineItemViewModel.LabelEvent): JComponent {
     val text = when (item.event.actionEnum) {
       GitLabResourceLabelEventDTO.Action.ADD -> GitLabBundle.message("merge.request.event.label.added", item.event.label.toHtml())
       GitLabResourceLabelEventDTO.Action.REMOVE -> GitLabBundle.message("merge.request.event.label.removed", item.event.label.toHtml())
@@ -130,7 +127,7 @@ object GitLabMergeRequestTimelineComponentFactory {
     return StatusMessageComponentFactory.create(textPane)
   }
 
-  private fun createMilestonedEventContent(item: GitLabMergeRequestTimelineItem.MilestoneEvent): JComponent {
+  private fun createMilestonedEventContent(item: GitLabMergeRequestTimelineItemViewModel.MilestoneEvent): JComponent {
     val text = when (item.event.actionEnum) {
       GitLabResourceMilestoneEventDTO.Action.ADD ->
         GitLabBundle.message("merge.request.event.milestone.changed", item.event.milestone.toHtml())
@@ -141,7 +138,7 @@ object GitLabMergeRequestTimelineComponentFactory {
     return StatusMessageComponentFactory.create(textPane)
   }
 
-  private fun createStateChangeContent(item: GitLabMergeRequestTimelineItem.StateEvent): JComponent {
+  private fun createStateChangeContent(item: GitLabMergeRequestTimelineItemViewModel.StateEvent): JComponent {
     val text = when (item.event.stateEnum) {
       GitLabResourceStateEventDTO.State.CLOSED -> GitLabBundle.message("merge.request.event.closed")
       GitLabResourceStateEventDTO.State.REOPENED -> GitLabBundle.message("merge.request.event.reopened")
@@ -154,25 +151,6 @@ object GitLabMergeRequestTimelineComponentFactory {
     }
     val textPane = SimpleHtmlPane(text)
     return StatusMessageComponentFactory.create(textPane, type)
-  }
-
-
-  private fun createTitleTextPane(actor: GitLabUserDTO, date: Date?): JComponent {
-    val userNameLink = HtmlChunk.link(actor.webUrl, actor.name)
-      .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(UIUtil.getLabelForeground())))
-      .bold()
-    val titleText = HtmlBuilder()
-      .append(userNameLink)
-      .append(HtmlChunk.nbsp())
-      .apply {
-        if (date != null) {
-          append(JBDateFormat.getFormatter().formatPrettyDateTime(date))
-        }
-      }.toString()
-    val titleTextPane = SimpleHtmlPane(titleText).apply {
-      foreground = UIUtil.getContextHelpForeground()
-    }
-    return titleTextPane
   }
 }
 
