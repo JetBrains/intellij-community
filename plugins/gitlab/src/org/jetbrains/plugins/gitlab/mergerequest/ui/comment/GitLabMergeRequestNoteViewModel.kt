@@ -4,10 +4,13 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.comment
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import java.util.*
 
@@ -18,9 +21,9 @@ interface GitLabMergeRequestNoteViewModel {
   val htmlBody: Flow<@Nls String>
 }
 
-class LoadedGitLabMergeRequestNoteViewModel(
+class GitLabMergeRequestNoteViewModelImpl(
   parentCs: CoroutineScope,
-  note: GitLabNoteDTO
+  note: GitLabNote
 ) : GitLabMergeRequestNoteViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default)
@@ -28,7 +31,7 @@ class LoadedGitLabMergeRequestNoteViewModel(
   override val author: GitLabUserDTO = note.author
   override val createdAt: Date = note.createdAt
 
-  private val body = MutableStateFlow(note.body)
+  private val body: Flow<String> = note.body
   override val htmlBody: Flow<String> = body.map { GitLabUIUtil.convertToHtml(it) }
     .shareIn(cs, SharingStarted.Lazily, 1)
 }

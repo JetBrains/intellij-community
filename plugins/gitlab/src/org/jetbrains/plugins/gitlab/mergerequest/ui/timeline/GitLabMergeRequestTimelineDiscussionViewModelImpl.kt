@@ -5,13 +5,13 @@ import com.intellij.collaboration.async.mapScoped
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestDiscussionResolveViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestDiscussionResolveViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestNoteViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.LoadedGitLabMergeRequestNoteViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestNoteViewModelImpl
 
 interface GitLabMergeRequestTimelineDiscussionViewModel {
   val author: Flow<GitLabUserDTO>
@@ -28,7 +28,7 @@ interface GitLabMergeRequestTimelineDiscussionViewModel {
 
 class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   parentCs: CoroutineScope,
-  private val discussion: GitLabDiscussion
+  discussion: GitLabDiscussion
 ) : GitLabMergeRequestTimelineDiscussionViewModel {
 
   private val cs = parentCs.childScope()
@@ -54,8 +54,8 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     _repliesFolded.value = folded
   }
 
-  private fun createNoteVm(parentCs: CoroutineScope, note: GitLabNoteDTO): GitLabMergeRequestNoteViewModel =
-    LoadedGitLabMergeRequestNoteViewModel(parentCs, note)
+  private fun createNoteVm(parentCs: CoroutineScope, note: GitLabNote): GitLabMergeRequestNoteViewModel =
+    GitLabMergeRequestNoteViewModelImpl(parentCs, note)
 
   private fun <T> Flow<T>.share() = shareIn(cs, SharingStarted.Lazily, 1)
 }

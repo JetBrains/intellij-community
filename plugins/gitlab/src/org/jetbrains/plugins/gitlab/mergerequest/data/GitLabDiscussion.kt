@@ -12,13 +12,12 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.changeMergeRequestDiscussionResolve
 import java.util.*
 
 interface GitLabDiscussion {
   val createdAt: Date
-  val notes: Flow<List<GitLabNoteDTO>>
+  val notes: Flow<List<GitLabNote>>
 
   val canResolve: Boolean
   val resolved: Flow<Boolean>
@@ -43,10 +42,12 @@ class LoadedGitLabDiscussion(
 
   private val operationsGuard = Mutex()
 
-  private val _notes = MutableStateFlow(discussion.notes)
-  override val notes: Flow<List<GitLabNoteDTO>> = _notes.asStateFlow()
+  private val loadedNotes = MutableStateFlow(discussion.notes)
+  override val notes: Flow<List<GitLabNote>> = loadedNotes.map { notes ->
+    notes.map { LoadedGitLabNote(it) }
+  }.shareIn(cs, SharingStarted.Lazily, 1)
 
-  private val firstNote = notes.map { it.first() }
+  private val firstNote = loadedNotes.map { it.first() }
 
   // a little cheat that greatly simplifies the implementation
   override val canResolve: Boolean = discussion.notes.first().let { it.resolvable && it.userPermissions.resolveNote }
@@ -60,7 +61,7 @@ class LoadedGitLabDiscussion(
           connection.apiClient
             .changeMergeRequestDiscussionResolve(connection.repo.repository, discussion.id, !resolved).body()!!
         }
-        _notes.value = result.notes
+        loadedNotes.value = result.notes
       }
     }
   }
