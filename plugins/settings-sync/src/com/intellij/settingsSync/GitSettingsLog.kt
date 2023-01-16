@@ -17,9 +17,9 @@ import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.api.errors.EmptyCommitException
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.lib.Constants.R_HEADS
-import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.eclipse.jgit.treewalk.TreeWalk
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.time.Instant
@@ -99,7 +99,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
     val git = Git(repository)
     git.add().addFilepattern(".gitignore").call()
-    commit("Initial")
+    commit("Initial", allowEmpty = false)
   }
 
   override fun applyIdeState(snapshot: SettingsSnapshot, message: String) {
@@ -165,7 +165,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     else {
       ""
     }
-    commit("$message$body", snapshot.metaInfo.dateCreated)
+    commit("$message$body", snapshot.metaInfo.dateCreated, allowEmpty = false)
   }
 
   private fun writeFileStateContent(fileState: FileState, fileToWrite: Path) {
@@ -175,13 +175,13 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     }
   }
 
-  private fun commit(message: String, dateCreated: Instant? = null) {
+  private fun commit(message: String, dateCreated: Instant? = null, allowEmpty: Boolean) {
     try {
       // Don't allow empty commit: sometimes the stream provider can notify about changes but there are no actual changes on disk
       val mockGpgConfig = GpgConfig("", GpgConfig.GpgFormat.OPENPGP, "")
       val commit = git.commit()
         .setMessage(message)
-        .setAllowEmpty(false)
+        .setAllowEmpty(allowEmpty)
         .setNoVerify(true)
         .setSign(false)
         .setGpgConfig(mockGpgConfig)
@@ -302,24 +302,71 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     val mergeResult = git.merge().include(cloud).call()
     LOG.info("Merge of master&ide@${master.objectId.short} with cloud@${cloud.objectId.short}: $mergeResult")
     if (mergeResult.mergeStatus == CONFLICTING) {
-      LOG.info("Merge of master&ide with cloud failed with conflicts. Aborting and merging with simplified last-modified strategy...")
-      abortMerge()
+      val conflictingFiles = mergeResult.conflicts.keys.toMutableList()
+      LOG.info("Merge of master&ide with cloud failed with conflicts in files: ${conflictingFiles}")
 
-      // todo implement more precise last-modified-per-file-strategy: use the version of the file which was
-      // current implementation take the whole YOURS or OTHERS subtree based on the date of the latest commit in ide and cloud branches:
-      // e.g. if the latest commit was made to 'cloud', then 'cloud' (which is OTHERS for this merge) will be used as the source of truth.
-      mergeUsingSimplifiedLastModifiedStrategy()
+      val addCommand = git.add()
+      mergeFilesOneByOne(conflictingFiles)
+      for (file in conflictingFiles) {
+        addCommand.addFilepattern(file)
+      }
+      addCommand.call()
+
+      commit("Merge with conflicts", allowEmpty = true)
     }
     // todo check other statuses and force consistency if needed
     return getPosition(master)
   }
 
-  private fun mergeUsingSimplifiedLastModifiedStrategy() {
-    val ideLastDate = getDate(getBranchTip(ide))
-    val cloudLastDate = getDate(getBranchTip(cloud))
-    val mergeStrategy = if (ideLastDate >= cloudLastDate) MergeStrategy.OURS else MergeStrategy.THEIRS
-    val mergeResult = git.merge().include(cloud).setStrategy(mergeStrategy).call()
-    LOG.info("Merging with the last-modified strategy completed with result: $mergeResult")
+  private fun getFileContentInBranch(file: String, branchTip: RevCommit): String {
+    TreeWalk.forPath(repository, file, branchTip.tree).use { treeWalk ->
+      val blobId = treeWalk.getObjectId(0)
+      repository.newObjectReader().use { objectReader ->
+        val objectLoader = objectReader.open(blobId)
+        return String(objectLoader.bytes, StandardCharsets.UTF_8)
+      }
+    }
+  }
+
+  private fun mergeFilesOneByOne(conflictingFiles: Collection<String>) {
+    if (conflictingFiles.isEmpty()) {
+      return
+    }
+
+    val ideTip = getBranchTip(ide)
+    val ideTipDate = getDate(ideTip)
+    val cloudTip = getBranchTip(cloud)
+    val cloudTipDate = getDate(cloudTip)
+    for (file in conflictingFiles) {
+      val ideTipForFile = getLatestCommitForFile(file, ide)
+      val ideDateForFile = if (ideTipForFile != null) getDate(ideTipForFile) else ideTipDate
+      val cloudTipForFile = getLatestCommitForFile(file, cloud)
+      val cloudDateForFile = if (cloudTipForFile != null) getDate(cloudTipForFile) else cloudTipDate
+
+      val content = if (ideDateForFile >= cloudDateForFile) {
+        LOG.info("File $file was modified later in 'ide' in ${ideTipForFile?.short ?: ideTip.short}")
+        getFileContentInBranch(file, ideTip)
+      } else {
+        LOG.info("File $file was modified later in 'cloud' in ${cloudTipForFile?.short ?: cloudTip.short}")
+        getFileContentInBranch(file, cloudTip)
+      }
+
+      settingsSyncStorage.resolve(file).write(content)
+    }
+  }
+
+  private fun getLatestCommitForFile(filePath: String, branch: Ref): RevCommit? {
+    val commit = git.log()
+      .add(branch.objectId)
+      .setMaxCount(1)
+      .addPath(filePath)
+      .call()
+      .firstOrNull()
+
+    if (commit == null) {
+      LOG.warn("Could not find latest commit for file $filePath in branch $branch")
+    }
+    return commit
   }
 
   private fun getBranchTip(ref: Ref): RevCommit = git.log().add(ref.objectId).setMaxCount(1).call().first()
