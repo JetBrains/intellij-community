@@ -150,8 +150,8 @@ tasks {
        // Extract the <!-- Plugin description --> section from README.md and provide for the plugin's manifest
        pluginDescription.set(
            readme.readText().lines().run {
-               val start = "<!-- Plugin description -->"
-               val end = "<!-- Plugin description end -->"
+               val start = "[//]: # (Plugin description)"
+               val end = "[//]: # (Plugin description end)"
 
                if (!containsAll(listOf(start, end))) {
                    throw GradleException("Plugin description section not found in README.md:\n$start ... $end")
