@@ -266,13 +266,6 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     return true;
   }
 
-  @NotNull
-  @Override
-  public List<EntityReference<WorkspaceEntity>> getReferencesToEntitiesWithChangedRoots(@NotNull List<? extends RootsChangeRescanningInfo> infos) {
-    return infos.stream().filter(info -> info instanceof WorkspaceEntitiesRootsChangedRescanningInfo).
-      flatMap(info -> ((WorkspaceEntitiesRootsChangedRescanningInfo)info).references.stream()).collect(Collectors.toList());
-  }
-
   @Override
   public boolean shouldCauseRescan(@NotNull WorkspaceEntity entity, @NotNull Project project) {
     return tracker.shouldRescan(entity, project);

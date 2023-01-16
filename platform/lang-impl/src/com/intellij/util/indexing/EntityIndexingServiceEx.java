@@ -26,8 +26,5 @@ public interface EntityIndexingServiceEx extends EntityIndexingService {
   @NotNull
   RootsChangeRescanningInfo createWorkspaceEntitiesRootsChangedInfo(@NotNull List<EntityReference<WorkspaceEntity>> references);
 
-  @NotNull
-  List<EntityReference<WorkspaceEntity>> getReferencesToEntitiesWithChangedRoots(@NotNull List<? extends RootsChangeRescanningInfo> infos);
-
   boolean shouldCauseRescan(@NotNull WorkspaceEntity entity, @NotNull Project project);
 }
