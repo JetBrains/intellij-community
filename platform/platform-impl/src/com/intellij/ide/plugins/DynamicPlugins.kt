@@ -556,23 +556,7 @@ object DynamicPlugins {
     }
     finally {
       IdeEventQueue.getInstance().flushQueue()
-      if (Registry.`is`("ide.await.scope.completion")) {
-        @OptIn(DelicateCoroutinesApi::class)
-        val waitForCompletion = GlobalScope.launch {
-          for (classLoader in classLoaders) {
-            val pluginJob = classLoader.pluginCoroutineScope.coroutineContext.job
-            if (!pluginJob.isCancelled) {
-              LOG.error("Plugin scope is expected to be cancelled during unloading")
-              pluginJob.cancel()
-            }
-            pluginJob.join()
-          }
-        }
-        while (waitForCompletion.isActive) {
-          ProgressManager.checkCanceled()
-          IdeEventQueue.getInstance().flushQueue()
-        }
-      }
+      joinPluginScopes(classLoaders)
 
       // do it after IdeEventQueue.flushQueue() to ensure that Disposer.isDisposed(...) works as expected in flushed tasks.
       Disposer.clearDisposalTraces()   // ensure we don't have references to plugin classes in disposal backtraces
@@ -974,6 +958,27 @@ private fun clearNewFocusOwner() {
     catch (e: Throwable) {
       LOG.info(e)
     }
+  }
+}
+
+private fun joinPluginScopes(classLoaders: WeakList<PluginClassLoader>) {
+  if (!Registry.`is`("ide.await.scope.completion")) {
+    return
+  }
+  @OptIn(DelicateCoroutinesApi::class)
+  val waitForCompletion = GlobalScope.launch {
+    for (classLoader in classLoaders) {
+      val pluginJob = classLoader.pluginCoroutineScope.coroutineContext.job
+      if (!pluginJob.isCancelled) {
+        LOG.error("Plugin scope is expected to be cancelled during unloading")
+        pluginJob.cancel()
+      }
+      pluginJob.join()
+    }
+  }
+  while (waitForCompletion.isActive) {
+    ProgressManager.checkCanceled()
+    IdeEventQueue.getInstance().flushQueue()
   }
 }
 
