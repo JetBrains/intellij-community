@@ -853,6 +853,18 @@ public final class JBUI {
         return size(40, 40);
       }
 
+      public static int experimentalToolbarButtonIconSize() {
+        return getInt(experimentalToolbarButtonIconSizeKey(), defaultExperimentalToolbarButtonIconSize());
+      }
+
+      public @NotNull static String experimentalToolbarButtonIconSizeKey() {
+        return "MainToolbar.Button.iconSize";
+      }
+
+      public static int defaultExperimentalToolbarButtonIconSize() {
+        return 20;
+      }
+
       public static @NotNull Dimension stripeToolbarButtonSize() {
         return size(stripeToolbarButtonSizeKey(), defaultStripeToolbarButtonSize());
       }

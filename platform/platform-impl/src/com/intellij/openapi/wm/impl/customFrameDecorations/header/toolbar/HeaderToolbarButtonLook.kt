@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.impl.headertoolbar.isDarkHeader
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
 import java.awt.Color
@@ -15,8 +16,6 @@ import java.awt.image.RGBImageFilter
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.UIManager
-
-private const val iconSize = 20
 
 private val lightThemeDarkHeaderDisableFilter: () -> RGBImageFilter =  {
   if (isDarkHeader()) UIUtil.GrayFilter(-70, -70, 100) else UIUtil.getGrayFilter()
@@ -60,7 +59,7 @@ internal class HeaderToolbarButtonLook : IdeaActionButtonLook() {
 
   private fun scaleIcon(icon: Icon) : Icon {
     if (icon is ScalableIcon) {
-      return IconLoader.loadCustomVersionOrScale(icon, iconSize)
+      return IconLoader.loadCustomVersionOrScale(icon, JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSize())
     }
 
     return icon

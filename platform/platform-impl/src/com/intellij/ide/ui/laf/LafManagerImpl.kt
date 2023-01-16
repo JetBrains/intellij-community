@@ -651,6 +651,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private fun applyDensity(defaults: UIDefaults) {
     // main toolbar
     defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.CurrentTheme.Toolbar.defaultExperimentalToolbarButtonSize())
+    defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSizeKey(), JBUI.CurrentTheme.Toolbar.defaultExperimentalToolbarButtonIconSize())
     // tool window stripes
     defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), JBUI.CurrentTheme.Toolbar.defaultStripeToolbarButtonSize())
     // Run Widget
@@ -663,6 +664,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     if (density == UIDensity.COMPACT) {
       // main toolbar
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(34, 34))
+      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSizeKey(), 16)
       // tool window stripes
       defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), JBUI.size(32, 32))
       // Run Widget
