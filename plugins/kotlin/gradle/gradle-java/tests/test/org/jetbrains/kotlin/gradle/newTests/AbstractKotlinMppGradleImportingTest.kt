@@ -22,11 +22,10 @@ import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.runner.RunWith
-import org.junit.runners.BlockJUnit4ClassRunner
 import java.io.File
 import java.io.PrintStream
 
-@RunWith(BlockJUnit4ClassRunner::class)
+@RunWith(KotlinMppTestsJUnit4Runner::class)
 @TestDataPath("\$PROJECT_ROOT/community/plugins/kotlin/idea/tests/testData/gradle")
 abstract class AbstractKotlinMppGradleImportingTest :
     GradleImportingTestCase(), WorkspaceFilteringDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl,HighlightingCheckDsl,
