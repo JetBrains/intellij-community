@@ -107,7 +107,7 @@ internal fun JComponent.registerBookmarkTypeAction(parent: Disposable, type: Boo
  * Creates an action that navigates to a selected bookmark by the EditSource shortcut.
  */
 internal fun JComponent.registerEditSourceAction(parent: Disposable) = LightEditActionFactory
-  .create { OpenSourceUtil.navigate(*it.getData(CommonDataKeys.NAVIGATABLE_ARRAY)) }
+  .create { OpenSourceUtil.navigate(*it.getData(CommonDataKeys.NAVIGATABLE_ARRAY).orEmpty()) }
   .registerCustomShortcutSet(CommonShortcuts.getEditSource(), this, parent)
 
 internal fun JTree.registerNavigateOnEnterAction(whenPerformed: () -> Unit = {}) {
