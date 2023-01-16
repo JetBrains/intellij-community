@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.module.Module
@@ -10,7 +10,7 @@ import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 
-class ContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRootEntity> {
+class ContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRootEntity>, PlatformInternalWorkspaceFileIndexContributor {
   override val entityClass: Class<ContentRootEntity>
     get() = ContentRootEntity::class.java
 
@@ -23,7 +23,7 @@ class ContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRoo
   }
 }
 
-class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootEntity> {
+class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootEntity>, PlatformInternalWorkspaceFileIndexContributor {
   override val entityClass: Class<SourceRootEntity>
     get() = SourceRootEntity::class.java
 

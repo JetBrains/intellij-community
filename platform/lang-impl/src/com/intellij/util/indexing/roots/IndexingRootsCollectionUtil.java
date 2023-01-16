@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.core.fileIndex.*;
 import com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRootData;
@@ -28,6 +29,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;
+
+import static com.intellij.util.indexing.roots.IndexableEntityProviderMethods.INSTANCE;
+import static com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl.createIterator;
 
 public class IndexingRootsCollectionUtil {
 
@@ -99,6 +103,31 @@ public class IndexingRootsCollectionUtil {
                                                                     @NotNull EntityStorage entityStorage) {
     registrar.registerAndCollectNonModuleAwareRoots(roots, contributor, entityStorage.entities(contributor.getEntityClass()),
                                                     entityStorage);
+  }
+
+  public static void addIteratorsFromRootsDescriptions(@NotNull IndexingRootsDescriptions descriptions,
+                                                       @NotNull List<IndexableFilesIterator> iterators,
+                                                       @NotNull Set<IndexableSetOrigin> libraryOrigins) {
+    ArrayList<IndexableFilesIterator> initialIterators = new ArrayList<>();
+    for (IndexingRootsCollectionUtil.ModuleRootsDescription moduleRootsDescription : descriptions.moduleRoots()) {
+      initialIterators.add(new ModuleIndexableFilesIteratorImpl(moduleRootsDescription.module(), moduleRootsDescription.roots(), true));
+    }
+    for (IndexingRootsCollectionUtil.LibraryRootsDescription root : descriptions.libraryRoots()) {
+      LibraryIndexableFilesIteratorImpl iterator = createIterator(root.library(), root.classRoots(), root.sourceRoots());
+      if (libraryOrigins.add(iterator.getOrigin())) {
+        initialIterators.add(iterator);
+      }
+    }
+
+    iterators.addAll(0, initialIterators);
+
+    for (IndexingRootsCollectionUtil.EntityContentRootsDescription description : descriptions.contentEntityRoots()) {
+      iterators.addAll(INSTANCE.createModuleUnawareContentEntityIterators(description.entityReference(), description.roots()));
+    }
+    for (IndexingRootsCollectionUtil.EntityRootsDescription description : descriptions.externalEntityRoots()) {
+      iterators.addAll(
+        INSTANCE.createExternalEntityIterators(description.entityReference(), description.roots(), description.sourceRoots()));
+    }
   }
 
   public static List<VirtualFile> optimizeRoots(@NotNull Collection<VirtualFile> roots) {

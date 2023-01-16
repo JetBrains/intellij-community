@@ -42,7 +42,6 @@ import java.util.*;
 
 import static com.intellij.util.indexing.roots.IndexableEntityProviderMethods.INSTANCE;
 import static com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl.Companion;
-import static com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl.createIterator;
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
@@ -78,20 +77,6 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     EntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
     List<IndexableFilesIterator> iterators = new ArrayList<>();
 
-    IndexingRootsCollectionUtil.IndexingRootsDescriptions descriptions =
-      IndexingRootsCollectionUtil.collectRootsFromWorkspaceFileIndexContributors(project, entityStorage, null);
-
-    for (IndexingRootsCollectionUtil.ModuleRootsDescription moduleRootsDescription : descriptions.moduleRoots()) {
-      iterators.add(new ModuleIndexableFilesIteratorImpl(moduleRootsDescription.module(), moduleRootsDescription.roots(), true));
-    }
-    Set<IndexableSetOrigin> libraryOrigins = new HashSet<>();
-    for (IndexingRootsCollectionUtil.LibraryRootsDescription root : descriptions.libraryRoots()) {
-      LibraryIndexableFilesIteratorImpl iterator = createIterator(root.library(), root.classRoots(), root.sourceRoots());
-      if (libraryOrigins.add(iterator.getOrigin())) {
-        iterators.add(iterator);
-      }
-    }
-
     List<Sdk> sdks = new ArrayList<>();
     ModuleDependencyIndex moduleDependencyIndex = ModuleDependencyIndex.getInstance(project);
     for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
@@ -110,6 +95,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       iterators.addAll(INSTANCE.createIterators(sdk));
     }
 
+    Set<IndexableSetOrigin> libraryOrigins = new HashSet<>();
     LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
     Sequence<LibraryTable> libs = SequencesKt.asSequence(tablesRegistrar.getCustomLibraryTables().iterator());
     libs = SequencesKt.plus(libs, tablesRegistrar.getLibraryTable());
@@ -126,13 +112,9 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       }
     }
 
-    for (IndexingRootsCollectionUtil.EntityContentRootsDescription description : descriptions.contentEntityRoots()) {
-      iterators.addAll(INSTANCE.createModuleUnawareContentEntityIterators(description.entityReference(), description.roots()));
-    }
-    for (IndexingRootsCollectionUtil.EntityRootsDescription description : descriptions.externalEntityRoots()) {
-      iterators.addAll(
-        INSTANCE.createExternalEntityIterators(description.entityReference(), description.roots(), description.sourceRoots()));
-    }
+    IndexingRootsCollectionUtil.IndexingRootsDescriptions descriptions =
+      IndexingRootsCollectionUtil.collectRootsFromWorkspaceFileIndexContributors(project, entityStorage, null);
+    IndexingRootsCollectionUtil.addIteratorsFromRootsDescriptions(descriptions, iterators, libraryOrigins);
 
     boolean addedFromDependenciesIndexedStatusService = false;
     if (DependenciesIndexedStatusService.shouldBeUsed()) {

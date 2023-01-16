@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
+import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
@@ -61,20 +62,16 @@ class CustomEntitiesCausingReindexTracker {
   private Set<Class<? extends WorkspaceEntity>> listCustomEntitiesCausingRescan() {
     Stream<Class<? extends WorkspaceEntity>> allClasses =
       CustomEntityProjectModelInfoProvider.EP.getExtensionList().stream().map(provider -> provider.getEntityClass());
-    if (useWorkspaceFileIndexContributors) {
-      allClasses = Stream.concat(allClasses,
-                                 WorkspaceFileIndexImpl.Companion.getEP_NAME().getExtensionList().stream()
-                                   .flatMap(contributor -> getEntityClassesToCauseReindexing(contributor)));
-      allClasses = Stream.concat(allClasses,
-                                 IndexableEntityProvider.EP_NAME.getExtensionList().stream()
-                                   .filter(provider -> provider instanceof IndexableEntityProvider.Enforced<? extends WorkspaceEntity>)
-                                   .map(provider -> provider.getEntityClass()));
-    }
-    else {
-      allClasses = Stream.concat(allClasses,
-                                 IndexableEntityProvider.EP_NAME.getExtensionList().stream().map(provider -> provider.getEntityClass()));
-      //todo[lene] add custom WorkspaceFileIndexContributors later, filtering out all platform ones
-    }
+    allClasses = Stream.concat(allClasses,
+                               WorkspaceFileIndexImpl.Companion.getEP_NAME().getExtensionList().stream()
+                                 .filter(contributor -> useWorkspaceFileIndexContributors ||
+                                                        !(contributor instanceof PlatformInternalWorkspaceFileIndexContributor))
+                                 .flatMap(contributor -> getEntityClassesToCauseReindexing(contributor)));
+    allClasses = Stream.concat(allClasses,
+                               IndexableEntityProvider.EP_NAME.getExtensionList().stream()
+                                 .filter(provider -> !useWorkspaceFileIndexContributors ||
+                                                     provider instanceof IndexableEntityProvider.Enforced<? extends WorkspaceEntity>)
+                                 .map(provider -> provider.getEntityClass()));
     return Set.copyOf(allClasses.filter(aClass -> !isEntityReindexingCustomised(aClass)).collect(Collectors.toSet()));
   }
 

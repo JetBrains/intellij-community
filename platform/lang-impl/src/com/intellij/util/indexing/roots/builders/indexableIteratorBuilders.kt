@@ -21,6 +21,9 @@ object IndexableIteratorBuilders {
   fun forModuleRoots(moduleId: ModuleId, urls: Collection<VirtualFileUrl>): Collection<IndexableIteratorBuilder> =
     if (urls.isEmpty()) emptyList() else listOf(ModuleRootsIteratorBuilder(moduleId, urls))
 
+  fun forModuleRootsFileBased(moduleId: ModuleId, files: Collection<VirtualFile>): Collection<IndexableIteratorBuilder> =
+    if (files.isEmpty()) emptyList() else listOf(ModuleRootsFileBasedIteratorBuilder(moduleId, files))
+
   fun forModuleRoots(moduleId: ModuleId, url: VirtualFileUrl): Collection<IndexableIteratorBuilder> =
     listOf(ModuleRootsIteratorBuilder(moduleId, url))
 
@@ -86,6 +89,8 @@ internal data class FullModuleContentIteratorBuilder(val moduleId: ModuleId) : I
 internal class ModuleRootsIteratorBuilder(val moduleId: ModuleId, val urls: Collection<VirtualFileUrl>) : IndexableIteratorBuilder {
   constructor(moduleId: ModuleId, url: VirtualFileUrl) : this(moduleId, listOf(url))
 }
+
+internal class ModuleRootsFileBasedIteratorBuilder(val moduleId: ModuleId, val files: Collection<VirtualFile>) : IndexableIteratorBuilder
 
 internal data class SyntheticLibraryIteratorBuilder(val syntheticLibrary: SyntheticLibrary,
                                                     val name: String?,

@@ -1613,8 +1613,11 @@
     <indexableFilesContributor implementation="com.intellij.util.indexing.roots.DefaultProjectIndexableFilesContributor" order="first"/>
     <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalFilesContributor" order="last"
                                id="additionalFiles"/>
-    <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor"
+    <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor" id="indexableSets"
                                order="last, after additionalFiles"/>
+    <indexableFilesContributor implementation="com.intellij.util.indexing.roots.WorkspaceFileIndexContributorBasedContributor"
+                               order="last, after indexableSets"/>
+
     <psi.treeChangePreprocessor implementation="com.intellij.util.indexing.events.FileBasedIndexTreeChangePreprocessor"/>
 
     <registryKey defaultValue="true" description="Use IndexableEntityProviders to iterate project for indexing"
