@@ -6,15 +6,16 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.BuildNumber
+import kotlinx.coroutines.launch
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
 
 /**
  * Startup activity that updates external annotations of IDEA JDKs configured in the project.
  */
-internal class IntelliJSdkExternalAnnotationsUpdateStartupActivity : StartupActivity {
-  override fun runActivity(project: Project) {
+internal class IntelliJSdkExternalAnnotationsUpdateStartupActivity : ProjectPostStartupActivity {
+  override suspend fun execute(project: Project) {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode) {
       return
@@ -40,13 +41,17 @@ internal class IntelliJSdkExternalAnnotationsUpdateStartupActivity : StartupActi
     connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, object : ProjectJdkTable.Listener {
       override fun jdkAdded(jdk: Sdk) {
         if (jdk.sdkType == IdeaJdk.getInstance()) {
-          updateAnnotationsLaterIfNecessary(project, jdk)
+          project.coroutineScope.launch {
+            updateAnnotationsLaterIfNecessary(project, jdk)
+          }
         }
       }
 
       override fun jdkNameChanged(jdk: Sdk, previousName: String) {
         if (jdk.sdkType == IdeaJdk.getInstance()) {
-          updateAnnotationsLaterIfNecessary(project, jdk)
+          project.coroutineScope.launch {
+            updateAnnotationsLaterIfNecessary(project, jdk)
+          }
         }
       }
     })

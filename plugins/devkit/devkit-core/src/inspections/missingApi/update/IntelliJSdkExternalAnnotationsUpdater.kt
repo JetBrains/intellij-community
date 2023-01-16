@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -28,6 +29,7 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * Utility class that updates external annotations of IntelliJ SDK.
  */
+@Service
 class IntelliJSdkExternalAnnotationsUpdater {
 
   companion object {
