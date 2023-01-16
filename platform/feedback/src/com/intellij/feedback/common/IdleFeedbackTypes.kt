@@ -115,7 +115,9 @@ enum class IdleFeedbackTypes {
     }
 
     private fun checkIdeIsSuitable(): Boolean {
-      return PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaUltimate();
+      return PlatformUtils.isPhpStorm() || PlatformUtils.isWebStorm() || PlatformUtils.isGoIde() ||
+             PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaUltimate() || PlatformUtils.isPyCharm() ||
+             PlatformUtils.isCLion();
     }
 
     private fun checkIsNoDeadline(): Boolean {
