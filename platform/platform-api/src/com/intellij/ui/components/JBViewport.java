@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.components.JBScrollPane.Alignment;
@@ -247,7 +248,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   @Nullable
   @Override
   public Magnificator getMagnificator() {
-    return UIUtil.getClientProperty(getView(), Magnificator.CLIENT_PROPERTY_KEY);
+    return ClientProperty.get(getView(), Magnificator.CLIENT_PROPERTY_KEY);
   }
 
   @Override
@@ -485,7 +486,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
               boolean opaque = vsb.isOpaque();
               if (viewport == pane.getColumnHeader()
                   ? (!opaque || ScrollSettings.isHeaderOverCorner(pane.getViewport()))
-                  : (!opaque && viewport == pane.getViewport() && !UIUtil.isClientPropertyTrue(vsb, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS))) {
+                  : (!opaque && viewport == pane.getViewport() && !ClientProperty.isTrue(vsb, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS))) {
                 Alignment va = Alignment.get(vsb);
                 if (va == Alignment.LEFT) {
                   insets.left += vsb.getWidth();
@@ -501,7 +502,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
               boolean opaque = hsb.isOpaque();
               if (viewport == pane.getRowHeader()
                   ? (!opaque || ScrollSettings.isHeaderOverCorner(pane.getViewport()))
-                  : (!opaque && viewport == pane.getViewport() && !UIUtil.isClientPropertyTrue(hsb, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS))) {
+                  : (!opaque && viewport == pane.getViewport() && !ClientProperty.isTrue(hsb, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS))) {
                 Alignment ha = Alignment.get(hsb);
                 if (ha == Alignment.TOP) {
                   insets.top += hsb.getHeight();
@@ -551,7 +552,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     ListModel<?> model = list.getModel();
     int modelRows = model == null ? 0 : model.getSize();
     int visibleRows = list.getVisibleRowCount();
-    boolean forceVisibleRowCount = Boolean.TRUE.equals(UIUtil.getClientProperty(list, FORCE_VISIBLE_ROW_COUNT_KEY));
+    boolean forceVisibleRowCount = Boolean.TRUE.equals(ClientProperty.get(list, FORCE_VISIBLE_ROW_COUNT_KEY));
     if (!forceVisibleRowCount && visibleRows > 0) {
       visibleRows = Math.min(modelRows, visibleRows);
     }
