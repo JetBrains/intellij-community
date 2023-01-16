@@ -10,10 +10,7 @@ import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier
 import com.intellij.diagnostic.hprof.analysis.AnalyzeClassloaderReferencesGraph
 import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
-import com.intellij.ide.DataManager
-import com.intellij.ide.IdeBundle
-import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.ide.*
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.runBlockingUnderModalProgress
@@ -78,10 +75,6 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.containers.WeakList
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.ref.GCWatcher
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
 import net.sf.cglib.core.ClassNameReader
 import java.awt.KeyboardFocusManager
 import java.awt.Window
@@ -965,20 +958,13 @@ private fun joinPluginScopes(classLoaders: WeakList<PluginClassLoader>) {
   if (!Registry.`is`("ide.await.scope.completion")) {
     return
   }
-  @OptIn(DelicateCoroutinesApi::class)
-  val waitForCompletion = GlobalScope.launch {
-    for (classLoader in classLoaders) {
-      val pluginJob = classLoader.pluginCoroutineScope.coroutineContext.job
-      if (!pluginJob.isCancelled) {
-        LOG.error("Plugin scope is expected to be cancelled during unloading")
-        pluginJob.cancel()
+  for (classLoader in classLoaders) {
+    joinBlocking(classLoader.pluginCoroutineScope, "Plugin ${classLoader.pluginId}") { job ->
+      while (job.isActive) {
+        ProgressManager.checkCanceled()
+        IdeEventQueue.getInstance().flushQueue()
       }
-      pluginJob.join()
     }
-  }
-  while (waitForCompletion.isActive) {
-    ProgressManager.checkCanceled()
-    IdeEventQueue.getInstance().flushQueue()
   }
 }
 

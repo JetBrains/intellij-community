@@ -14,15 +14,15 @@ import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
 import com.intellij.ide.impl.*
-import com.intellij.ide.trustedProjects.TrustedProjects
-import com.intellij.ide.trustedProjects.TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProjectAsync
-import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.impl.StartupManagerImpl
+import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.ide.trustedProjects.TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProjectAsync
+import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
@@ -40,8 +40,11 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.LowLevelProjectOpenProcessor
 import com.intellij.openapi.project.ex.PerProjectInstancePaths
@@ -53,7 +56,6 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.ZipHandler
 import com.intellij.openapi.wm.IdeFocusManager
@@ -389,17 +391,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         Disposer.dispose(project)
       }
     }
-    if (project is ProjectImpl && Registry.`is`("ide.await.scope.completion")) {
-      val containerJob = project.coroutineScope.coroutineContext.job
-      if (!containerJob.isCancelled) {
-        LOG.error("Project container scope is expected to be cancelled during disposal")
-        containerJob.cancel()
-      }
-      if (!containerJob.isCompleted) {
-        runBlockingModal(ModalTaskOwner.guess(), IdeBundle.message("progress.closing.project"), TaskCancellation.nonCancellable()) {
-          containerJob.join()
-        }
-      }
+    if (project is ProjectImpl) {
+      joinBlocking(project)
     }
     return true
   }
