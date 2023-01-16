@@ -11,6 +11,8 @@ import com.intellij.find.FindResult;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -102,7 +104,8 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
       register(configuration);
 
       for (RegExpInspectionConfiguration.InspectionPattern pattern : configuration.getPatterns()) {
-        if (file.getFileType() != pattern.fileType()) continue;
+        FileType fileType = pattern.fileType();
+        if (UnknownFileType.INSTANCE != fileType && file.getFileType() != fileType) continue;
         final FindModel model = new FindModel();
         model.setRegularExpressions(true);
         model.setStringToFind(pattern.regExp());
