@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.notification.ActionCenter;
@@ -28,7 +28,7 @@ import java.awt.event.ComponentEvent;
 import java.util.List;
 import java.util.*;
 
-public class BalloonLayoutImpl implements BalloonLayout, Disposable {
+public class BalloonLayoutImpl implements BalloonLayout {
   private final ComponentAdapter myResizeListener = new ComponentAdapter() {
     @Override
     public void componentResized(@NotNull ComponentEvent e) {
@@ -78,7 +78,6 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
     myLayeredPane.addComponentListener(myResizeListener);
   }
 
-  @Override
   public void dispose() {
     myLayeredPane.removeComponentListener(myResizeListener);
     for (Balloon balloon : new ArrayList<>(myBalloons)) {
