@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
@@ -8,7 +8,7 @@ import java.awt.Point
 import java.awt.event.MouseEvent
 import javax.swing.Icon
 
-
+@JvmDefaultWithCompatibility
 interface InlayPresentationFactory {
   /**
    * Text that can be used for elements that ARE valid syntax if they are pasted into file.
