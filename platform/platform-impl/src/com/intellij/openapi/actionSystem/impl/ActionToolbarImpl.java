@@ -498,7 +498,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action,
-                                                      final ActionButtonLook look,
+                                                      @Nullable ActionButtonLook look,
                                                       @NotNull String place,
                                                       @NotNull Presentation presentation,
                                                       @NotNull Dimension minimumSize) {
