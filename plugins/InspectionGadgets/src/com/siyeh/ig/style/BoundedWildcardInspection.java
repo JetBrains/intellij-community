@@ -119,7 +119,6 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       if (candidate == null) return;
       PsiMethod method = candidate.method;
 
-      PsiClassReferenceType clone = suggestMethodParameterType(candidate, isExtends);
 
       if (!isOverriddenOrOverrides) {
         PsiField field = findFieldAssignedFromMethodParameter(candidate.methodParameter, method);
@@ -128,15 +127,11 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         }
 
         PsiTypeElement methodParameterTypeElement = candidate.methodParameter.getTypeElement();
+        PsiClassReferenceType clone = suggestMethodParameterType(candidate, isExtends);
         replaceType(project, methodParameterTypeElement, clone);
         return;
       }
 
-      int[] i = {0};
-      List<ParameterInfoImpl> parameterInfos = ContainerUtil.map(method.getParameterList().getParameters(),
-                                                                 p -> ParameterInfoImpl.create(i[0]++)
-                                                                   .withName(p.getName())
-                                                                   .withType(p.getType()));
       int index = method.getParameterList().getParameterIndex(candidate.methodParameter);
       if (index == -1) return;
 
@@ -145,13 +140,17 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       if (superMethod != method) {
         method = superMethod;
         candidate = candidate.getSuperMethodVarianceCandidate(superMethod);
-        clone = suggestMethodParameterType(candidate, isExtends);
-        i[0] = 0;
-        parameterInfos = ContainerUtil.map(superMethod.getParameterList().getParameters(), 
-                                           p -> ParameterInfoImpl.create(i[0]++).withName(p.getName()).withType(p.getType()));
       }
-      parameterInfos.set(index, ParameterInfoImpl.create(index).withName(candidate.methodParameter.getName()).withType(clone));
-
+      PsiClassReferenceType clone = suggestMethodParameterType(candidate, isExtends);
+      int[] i = {0};
+      String candidateName = candidate.methodParameter.getName();
+      List<ParameterInfoImpl> parameterInfos = ContainerUtil.map(superMethod.getParameterList().getParameters(),
+                                                                 p -> {
+                                                                   int i1 = i[0]++;
+                                                                   return ParameterInfoImpl.create(i1)
+                                                                     .withName(i1 == index ? candidateName : p.getName())
+                                                                     .withType(i1 == index ? clone : p.getType());
+                                                                 });
       JavaChangeSignatureDialog
         dialog = JavaChangeSignatureDialog.createAndPreselectNew(project, method, parameterInfos, false, null/*todo?*/);
       dialog.setParameterInfos(parameterInfos);
