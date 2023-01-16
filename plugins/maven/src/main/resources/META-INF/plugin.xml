@@ -533,6 +533,8 @@
     <importer implementation="org.jetbrains.idea.maven.importing.MavenWslTargetConfigurator"/>
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenWslTargetConfigurator"/>
 
+    <importing.afterImportConfigurator implementation="org.jetbrains.idea.maven.importing.MavenPostTaskConfigurator"/>
+
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerJavacExtension"/>
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerEclipseExtension"/>
     <executionEnvironmentProvider

@@ -602,6 +602,7 @@ private class AfterImportConfiguratorsTask(private val contextData: UserDataHold
     val context = object : MavenAfterImportConfigurator.Context, UserDataHolder by contextData {
       override val project = project
       override val mavenProjectsWithModules = appliedProjectsWithModules.asSequence()
+      override val mavenProgressIndicator = indicator
     }
     for (configurator in AFTER_IMPORT_CONFIGURATOR_EP.extensionList) {
       indicator.checkCanceled()

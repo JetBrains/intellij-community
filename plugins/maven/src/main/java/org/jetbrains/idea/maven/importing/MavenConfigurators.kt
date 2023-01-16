@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.util.stream.Stream
 
 @ApiStatus.Experimental
@@ -159,6 +160,7 @@ interface MavenAfterImportConfigurator {
   interface Context : UserDataHolder {
     val project: Project
     val mavenProjectsWithModules: Sequence<MavenWorkspaceConfigurator.MavenProjectWithModules<Module>>
+    val mavenProgressIndicator: MavenProgressIndicator
   }
 }
 
