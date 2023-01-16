@@ -48,7 +48,7 @@ class WorkspaceFileIndexContributorDynamicRegistrationTest {
     assertTrue(fileIndex.isInContent(excludedFile))
     Disposer.register(testDisposable, contributorDisposable)
     
-    WorkspaceFileIndexImpl.getEpName().point.registerExtension(ExcludeSpecialFileContributor(), contributorDisposable)
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(ExcludeSpecialFileContributor(), contributorDisposable)
     assertFalse(fileIndex.isInContent(excludedFile))
     assertTrue(fileIndex.isInContent(file))
 

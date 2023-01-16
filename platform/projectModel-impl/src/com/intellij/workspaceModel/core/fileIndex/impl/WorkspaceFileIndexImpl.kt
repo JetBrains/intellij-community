@@ -24,15 +24,12 @@ import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import org.jetbrains.annotations.TestOnly
 
 class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexEx, Disposable.Default {
   companion object {
-    private val EP_NAME = ExtensionPointName<WorkspaceFileIndexContributor<*>>("com.intellij.workspaceModel.fileIndexContributor")
+    @JvmStatic
+    val EP_NAME = ExtensionPointName<WorkspaceFileIndexContributor<*>>("com.intellij.workspaceModel.fileIndexContributor")
     private val BRANCH_INDEX_DATA_KEY = Key.create<Pair<Long, WorkspaceFileIndexData>>("BRANCH_WORKSPACE_FILE_INDEX")
-    
-    @TestOnly
-    fun getEpName(): ExtensionPointName<WorkspaceFileIndexContributor<*>> = EP_NAME
   }
 
   @Volatile
