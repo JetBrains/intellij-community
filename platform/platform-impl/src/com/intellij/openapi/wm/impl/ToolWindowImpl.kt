@@ -562,7 +562,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   @JvmOverloads
   fun createPopupGroup(skipHideAction: Boolean = false): ActionGroup {
-    val group = GearActionGroup(this)
+    val group = GearActionGroup()
     if (!skipHideAction) {
       group.addSeparator()
       group.add(HideAction())
@@ -602,7 +602,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     decorator?.background = color
   }
 
-  private inner class GearActionGroup(toolWindow: ToolWindowImpl) : DefaultActionGroup(), DumbAware {
+  private inner class GearActionGroup : DefaultActionGroup(), DumbAware {
     init {
       templatePresentation.icon = AllIcons.General.GearPlain
       if (toolWindowManager.isNewUi) {
@@ -628,7 +628,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       addAction(toggleToolbarGroup).setAsSecondary(true)
       add(ActionManager.getInstance().getAction("TW.ViewModeGroup"))
       if (toolWindowManager.isNewUi) {
-        add(SquareStripeButton.createMoveGroup(toolWindow))
+        add(SquareStripeButton.createMoveGroup())
       }
       else {
         add(ToolWindowMoveAction.Group())

@@ -367,11 +367,11 @@ public final class JBUI {
       }
 
       public static @NotNull Insets mnemonicInsets() {
-        return insets("ActionsList.mnemonicsInsets", insets(0, 0, 0, 8));
+        return insets("ActionsList.mnemonicsInsets", insetsRight(8));
       }
 
       public static @NotNull Insets cellPadding() {
-        return insets("ActionsList.cellBorderInsets", insets(1, 12, 1, 12));
+        return insets("ActionsList.cellBorderInsets", insets(1, 12));
       }
 
       public static int elementIconGap() {
@@ -745,16 +745,12 @@ public final class JBUI {
         return JBColor.namedColor("ToolWindow.HeaderTab.underlinedTabInactiveForeground", underlinedTabForeground());
       }
 
-      public static @NotNull Insets headerTabInsets() {
-        return insets("ToolWindow.HeaderTab.insets", insets(0, 12, 0, 12));
-      }
-
       public static int headerTabUnderlineArc() {
         return getInt("ToolWindow.HeaderTab.underlineArc", 4);
       }
 
       public static JBInsets headerTabLeftRightInsets() {
-        return insets("ToolWindow.HeaderTab.leftRightInsets", insets(0, 8, 0, 8));
+        return insets("ToolWindow.HeaderTab.leftRightInsets", insets(0, 8));
       }
 
       public interface DragAndDrop {
@@ -777,10 +773,6 @@ public final class JBUI {
 
       public static @NotNull Color headerActiveBackground() {
         return JBColor.namedColor("ToolWindow.Header.background", JBColor.namedColor("ToolWindow.header.active.background", 0xE2E6EC));
-      }
-
-      public static @NotNull Insets headerInsets() {
-        return insets("ToolWindow.Header.insets", insets(4, 8, 4, 8));
       }
 
       public static int headerHeight() {
@@ -819,10 +811,6 @@ public final class JBUI {
         }
 
         return 0;
-      }
-
-      public static @NotNull Color hoveredIconBackground() {
-        return JBColor.namedColor("ToolWindow.HeaderCloseButton.background", JBColor.namedColor("ToolWindow.header.closeButton.background", 0xB9B9B9));
       }
 
       public static @NotNull Icon closeTabIcon(boolean hovered) {
@@ -974,7 +962,7 @@ public final class JBUI {
       }
 
       public static Insets searchFieldBorderInsets() {
-        return insets("Popup.SearchField.borderInsets", insets(4, 12, 4, 12));
+        return insets("Popup.SearchField.borderInsets", insets(4, 12));
       }
 
       public static Insets searchFieldInputInsets() {
@@ -998,7 +986,7 @@ public final class JBUI {
       }
 
       public static Insets separatorInsets() {
-        return insets("Popup.separatorInsets", insets(4, 12, 4, 12));
+        return insets("Popup.separatorInsets", insets(4, 12));
       }
 
       public static Insets separatorLabelInsets() {
@@ -1036,7 +1024,7 @@ public final class JBUI {
 
       public static final class Selection {
         public static @NotNull JBInsets innerInsets() {
-          return insets("Menu.Selection.innerInsets", insets(2, 2));
+          return insets("Menu.Selection.innerInsets", insets(2));
         }
 
         public static @NotNull JBInsets outerInsets() {
@@ -1435,10 +1423,6 @@ public final class JBUI {
 
       static int buttonSeparatorInset() {
         return getInt("List.Button.separatorInset", 4);
-      }
-
-      static Color lineHoverBackground(boolean focused) {
-        return JBColor.namedColor("List.Line.hoverBackground", Selection.background(focused));
       }
 
       final class Selection {

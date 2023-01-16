@@ -598,7 +598,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
           // avoid loading MetalLookAndFeel class here - check for UIThemeBasedLookAndFeelInfo first
           if (lookAndFeelInfo is UIThemeBasedLookAndFeelInfo) {
             if (laf is UserDataHolder) {
-              (laf as UserDataHolder).putUserData(UIUtil.LAF_WITH_THEME_KEY, java.lang.Boolean.TRUE)
+              (laf as UserDataHolder).putUserData(UIUtil.LAF_WITH_THEME_KEY, true)
             }
             //if (lafNameOrder.containsKey(lookAndFeelInfo.getName()) && lookAndFeelInfo.getName().endsWith("Light")) {
             //  updateIconsUnderSelection(false);
@@ -718,7 +718,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     fixPopupWeight()
     fixMenuIssues(uiDefaults)
     StartupUiUtil.initInputMapDefaults(uiDefaults)
-    uiDefaults.put("Button.defaultButtonFollowsFocus", java.lang.Boolean.FALSE)
+    uiDefaults.put("Button.defaultButtonFollowsFocus", false)
     uiDefaults.put("Balloon.error.textInsets", JBInsets(3, 8, 3, 8).asUIResource())
     patchFileChooserStrings(uiDefaults)
     patchLafFonts(uiDefaults)
