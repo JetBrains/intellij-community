@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -110,7 +111,8 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
           model.setStringToReplace(replacement);
         }
         model.setSearchContext(pattern.searchContext());
-        FindResult result = findManager.findString(text, 0, model);
+        VirtualFile vFile = file.getVirtualFile();
+        FindResult result = findManager.findString(text, 0, model, vFile);
         while (result.isStringFound()) {
           final TextRange range = new TextRange(result.getStartOffset(), result.getEndOffset());
           PsiElement element = file.findElementAt(result.getStartOffset());
@@ -126,7 +128,7 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
           final ProblemDescriptor descriptor =
             manager.createProblemDescriptor(element, warningRange, problemDescriptor, GENERIC_ERROR_OR_WARNING, isOnTheFly, fix);
           descriptors.add(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, uuid));
-          result = findManager.findString(text, result.getEndOffset(), model);
+          result = findManager.findString(text, result.getEndOffset(), model, vFile);
         }
       }
     }
