@@ -17,6 +17,7 @@ package com.intellij.designer.propertyTable.actions;
 
 import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.propertyTable.RadPropertyTable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -35,6 +36,11 @@ public class ShowColumns extends ToggleAction {
     String text = DesignerBundle.message("designer.properties.show.columns");
     presentation.setText(text);
     presentation.setDescription(text);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
