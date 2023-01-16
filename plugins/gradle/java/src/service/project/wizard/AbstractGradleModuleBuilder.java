@@ -600,7 +600,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     }
 
     private void configureModulesSdk(@NotNull DataNode<ProjectData> projectNode) {
-      DataNode<ModuleData> moduleNode = ExternalSystemApiUtil.find(projectNode, ProjectKeys.MODULE, this::isTargetModule);
+      DataNode<ModuleData> moduleNode = ExternalSystemApiUtil.findChild(projectNode, ProjectKeys.MODULE, this::isTargetModule);
       if (moduleNode == null) return;
       configureModuleSdk(moduleNode);
       Collection<DataNode<GradleSourceSetData>> sourceSetsNodes = ExternalSystemApiUtil.getChildren(moduleNode, GradleSourceSetData.KEY);
