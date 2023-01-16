@@ -12,14 +12,6 @@ import java.nio.file.Paths
 import kotlin.io.path.*
 
 
-private fun Path.getResolvedPathString(relativePath: String?): String {
-  val path = when (relativePath) {
-    null -> invariantSeparatorsPathString
-    else -> "$invariantSeparatorsPathString/$relativePath"
-  }
-  return FileUtil.toCanonicalPath(path, '/', true)
-}
-
 fun Path.toCanonicalPath(): String {
   return getResolvedPathString(null)
 }
@@ -82,19 +74,31 @@ fun Path.deleteChildrenRecursively(relativePath: String, predicate: (Path) -> Bo
   getResolvedPath(relativePath).deleteChildrenRecursively(predicate)
 }
 
-object NioPathPrefixTreeFactory : AbstractPrefixTreeFactory<Path, String>() {
-
-  override fun convertToList(element: Path): List<String> {
-    return element.map { it.pathString }
-  }
-}
-
 fun String.toNioPath(): Path {
   return Paths.get(FileUtil.toSystemDependentName(this))
 }
 
 fun String.getResolvedNioPath(relativePath: String): Path {
-  return toNioPath().getResolvedPath(relativePath)
+  return getResolvedPathString(relativePath).toNioPath()
+}
+
+private fun Path.getResolvedPathString(relativePath: String?): String {
+  return invariantSeparatorsPathString.getResolvedPathString(relativePath)
+}
+
+private fun String.getResolvedPathString(relativePath: String?): String {
+  val path = when (relativePath) {
+    null -> this
+    else -> "$this/$relativePath"
+  }
+  return FileUtil.toCanonicalPath(path, '/', true)
+}
+
+object NioPathPrefixTreeFactory : AbstractPrefixTreeFactory<Path, String>() {
+
+  override fun convertToList(element: Path): List<String> {
+    return element.map { it.pathString }
+  }
 }
 
 object CanonicalPathPrefixTreeFactory : AbstractPrefixTreeFactory<String, String>() {
