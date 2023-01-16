@@ -518,6 +518,10 @@
       ],
       "phpWeb.svg": "icons/run_web_app.svg"
     },
+    "profiler": {
+      "collapseNode.svg": "profiler/collapseNode.svg",
+      "expandNode.svg": "profiler/expandNode.svg"
+    },
     "progress": {
       "pause.svg": [
         "process/progressPause.svg",
