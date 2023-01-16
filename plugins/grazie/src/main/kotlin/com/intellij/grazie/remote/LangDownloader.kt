@@ -4,17 +4,15 @@ package com.intellij.grazie.remote
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.GraziePlugin
-import com.intellij.grazie.ide.notification.GrazieToastNotifications.MISSED_LANGUAGES_GROUP
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.jlanguage.Lang
-import com.intellij.notification.NotificationType
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
+import kotlin.io.path.copyTo
 
 internal object LangDownloader {
   fun download(lang: Lang, project: Project?): Boolean {
@@ -51,14 +49,15 @@ internal object LangDownloader {
         project
       )
     } catch (exception: Throwable) {
-      thisLogger().error(exception)
-      val notification = MISSED_LANGUAGES_GROUP.createNotification(
-        msg("grazie.notification.missing-languages.download.failed.message", lang.nativeName),
-        NotificationType.ERROR
-      )
-      notification.notify(project)
-      return null
+      return promptToSelectLanguageBundleManually(project, lang)
     }
+  }
+
+  private fun promptToSelectLanguageBundleManually(project: Project?, language: Lang): List<Path> {
+    val selectedFile = OfflineLanguageBundleSelectionDialog.show(project, language) ?: return emptyList()
+    val targetPath = GrazieDynamic.dynamicFolder.resolve(language.remote.fileName)
+    selectedFile.copyTo(targetPath, overwrite = true)
+    return listOf(targetPath)
   }
 
   private fun doDownload(lang: Lang, presentableName: @Nls String): List<Path> {
