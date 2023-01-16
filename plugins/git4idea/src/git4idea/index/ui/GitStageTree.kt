@@ -7,6 +7,8 @@ import com.intellij.ide.dnd.DnDEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -109,13 +111,23 @@ abstract class GitStageTree(project: Project,
       GitStageDataKeys.GIT_STAGE_UI_SETTINGS.`is`(dataId) -> settings
       GitStageDataKeys.GIT_FILE_STATUS_NODES.`is`(dataId) -> selectedStatusNodes()
       VcsDataKeys.FILE_PATHS.`is`(dataId) -> selectedStatusNodes().map { it.filePath }
-      VcsDataKeys.VIRTUAL_FILES.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
-      CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
-        .toList().toTypedArray()
-      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
-        .map { OpenFileDescriptor(project, it!!) }.toList().toTypedArray()
       PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> if (!selectedStatusNodes().isEmpty) VirtualFileDeleteProvider() else null
+      PlatformCoreDataKeys.BGT_DATA_PROVIDER.`is`(dataId) -> {
+        val selectedNodes = selectedStatusNodes()
+        return DataProvider { slowId -> getSlowData(selectedNodes, slowId) }
+      }
       else -> super.getData(dataId)
+    }
+  }
+
+  private fun getSlowData(selectedNodes: JBIterable<GitFileStatusNode>, slowId: String): Any? {
+    return when {
+      VcsDataKeys.VIRTUAL_FILES.`is`(slowId) -> selectedNodes.map { it.filePath.virtualFile }.filterNotNull()
+      CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(slowId) -> selectedNodes.map { it.filePath.virtualFile }.filterNotNull()
+        .toList().toTypedArray()
+      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(slowId) -> selectedNodes.map { it.filePath.virtualFile }.filterNotNull()
+        .map { OpenFileDescriptor(project, it) }.toList().toTypedArray()
+      else -> null
     }
   }
 
@@ -275,7 +287,7 @@ abstract class GitStageTree(project: Project,
                         Runnable {
                           val conflictedFiles = traverseObjectsUnder().filter(GitFileStatusNode::class.java).map {
                             it.filePath.virtualFile
-                          }.filter { it != null }.toList() as List<VirtualFile>
+                          }.filterNotNull().toList()
                           showMergeDialog(conflictedFiles)
                         })
       }
