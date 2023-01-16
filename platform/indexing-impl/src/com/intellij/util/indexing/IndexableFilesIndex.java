@@ -25,20 +25,16 @@ public interface IndexableFilesIndex {
   /**
    * See {@link com.intellij.util.indexing.roots.StandardContributorsKt#shouldIndexProjectBasedOnIndexableEntityProviders()}
    */
-  static boolean shouldBeUsed() {
+  static boolean isEnabled() {
    return (Registry.is("indexing.use.indexable.files.index") ||
            (ApplicationManager.getApplication().isUnitTestMode() && TestModeFlags.is(ENABLE_IN_TESTS))) &&
           WorkspaceFileIndexEx.IS_ENABLED &&
           Registry.is("indexing.enable.entity.provider.based.indexing");
   }
 
-  static boolean isIntegrationFullyEnabled(){
-    return shouldBeUsed() && Registry.is("indexing.fully.use.indexable.files.index");
-  }
-
   @NotNull
   static IndexableFilesIndex getInstance(@NotNull Project project) {
-    assert shouldBeUsed();
+    assert isEnabled();
     return project.getService(IndexableFilesIndex.class);
   }
 

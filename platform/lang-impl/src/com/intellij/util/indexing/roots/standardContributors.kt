@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.ide.lightEdit.LightEdit
@@ -26,7 +26,7 @@ import java.util.function.Predicate
 
 internal class DefaultProjectIndexableFilesContributor : IndexableFilesContributor {
   override fun getIndexableFiles(project: Project): List<IndexableFilesIterator> {
-    assert(!IndexableFilesIndex.isIntegrationFullyEnabled()) { "Shouldn't be used with IndexableFilesIndex fully enabled" }
+    assert(!IndexableFilesIndex.isEnabled()) { "Shouldn't be used with IndexableFilesIndex fully enabled" }
     val providers: List<IndexableFilesIterator>
     if (shouldIndexProjectBasedOnIndexableEntityProviders()) {
       val builders: MutableList<IndexableEntityProvider.IndexableIteratorBuilder> = mutableListOf()
@@ -79,7 +79,7 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
 
   override fun getOwnFilePredicate(project: Project): Predicate<VirtualFile> {
     val projectFileIndex: ProjectFileIndex = ProjectFileIndex.getInstance(project)
-    val indexableFilesIndex: IndexableFilesIndex? = if (IndexableFilesIndex.isIntegrationFullyEnabled())
+    val indexableFilesIndex: IndexableFilesIndex? = if (IndexableFilesIndex.isEnabled())
       IndexableFilesIndex.getInstance(project)
     else null
 

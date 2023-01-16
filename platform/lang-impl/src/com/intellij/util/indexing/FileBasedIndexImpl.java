@@ -272,7 +272,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Override
   public void registerProjectFileSets(@NotNull Project project) {
-    if (IndexableFilesIndex.isIntegrationFullyEnabled()) {
+    if (IndexableFilesIndex.isEnabled()) {
       registerIndexableSet(new IndexableFileSet() {
         @Override
         public boolean isInSet(@NotNull VirtualFile file) {

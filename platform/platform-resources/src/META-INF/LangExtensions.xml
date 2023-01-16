@@ -120,8 +120,6 @@
                     serviceImplementation="com.intellij.util.indexing.roots.IndexableFilesIndexImpl"/>
     <registryKey defaultValue="false" key="indexing.use.indexable.files.index" restartRequired="true"
                  description="Create separate index to determine fileset to index; needs `indexing.enable.entity.provider.based.indexing` and `platform.projectModel.workspace.model.file.index` enabled to become enabled"/>
-    <registryKey defaultValue="false" key="indexing.fully.use.indexable.files.index" restartRequired="true"
-                 description="Always use IndexableFilesIndex when indexing; needs `indexing.use.indexable.files.index` enabled to become enabled"/>
 
     <applicationService serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
 
