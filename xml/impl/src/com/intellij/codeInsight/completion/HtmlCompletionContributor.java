@@ -52,7 +52,7 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
   public static final String[] REL_A_AREA = {"bookmark", "external", "help", "license", "next", "nofollow", "noopener",
     "noreferrer", "opener", "prev", "search", "tag", "sponsored", "ugc"};
   public static final String[] REL_FORM = {"external", "help", "license", "next", "nofollow", "noopener", "noreferrer",
-    "opener", "prev", "search"}
+    "opener", "prev", "search"};
   public static final String[] MEDIA = {"all", "braille", "embossed", "handheld", "print", "projection", "screen", "speech", "tty", "tv"};
   public static final String[] LANGUAGE =
     {"JavaScript", "VBScript", "JScript", "JavaScript1.2", "JavaScript1.3", "JavaScript1.4", "JavaScript1.5"};
