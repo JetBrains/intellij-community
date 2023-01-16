@@ -588,6 +588,13 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
             // java.lang.String was already converted to kotlin.String in a previous TypeMappingConversion
             NewExpression("kotlin.String") convertTo CustomExpression { newExpression ->
                 val arguments = (newExpression as JKNewExpression).arguments.arguments
+                val stringFactoryFunctionCall = {
+                    JKCallExpressionImpl(
+                        symbolProvider.provideMethodSymbol("kotlin.text.String"),
+                        JKArgumentList(newExpression.arguments::arguments.detached())
+                    )
+                }
+
                 return@CustomExpression when (arguments.size) {
                     // `new String()` is the same as a literal empty string ""
                     0 -> JKLiteralExpression("\"\"", type = STRING)
@@ -608,11 +615,11 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                                 ).parenthesize()
                             }
                         } else {
-                            newExpression
+                            stringFactoryFunctionCall()
                         }
                     }
 
-                    else -> newExpression
+                    else -> stringFactoryFunctionCall()
                 }
             },
 
