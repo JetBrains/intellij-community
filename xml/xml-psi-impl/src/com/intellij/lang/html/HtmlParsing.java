@@ -131,11 +131,11 @@ public class HtmlParsing {
     return xmlText;
   }
 
-  protected boolean hasCustomHeaderContent() {
+  protected boolean hasCustomTagHeaderContent() {
     return false;
   }
 
-  protected void parseCustomHeaderContent() {
+  protected void parseCustomTagHeaderContent() {
   }
 
   @Nullable
@@ -188,7 +188,7 @@ public class HtmlParsing {
 
         pushTag(tag, tagName, originalTagName);
 
-        parseHeader(tagName);
+        parseTagHeader(tagName);
 
         if (token() == XmlTokenType.XML_EMPTY_ELEMENT_END) {
           advance();
@@ -420,7 +420,7 @@ public class HtmlParsing {
     return XmlElementType.HTML_TAG;
   }
 
-  private void parseHeader(String tagName) {
+  private void parseTagHeader(String tagName) {
     boolean freeMakerTag = !tagName.isEmpty() && '#' == tagName.charAt(0);
 
     do {
@@ -441,8 +441,8 @@ public class HtmlParsing {
         else if (tt == XmlTokenType.XML_CHAR_ENTITY_REF || tt == XmlTokenType.XML_ENTITY_REF_TOKEN) {
           parseReference();
         }
-        else if (hasCustomHeaderContent()) {
-          parseCustomHeaderContent();
+        else if (hasCustomTagHeaderContent()) {
+          parseCustomTagHeaderContent();
         }
         else {
           break;
@@ -586,7 +586,11 @@ public class HtmlParsing {
       advance();
       parseAttributeValue();
     }
-    att.done(XmlElementType.XML_ATTRIBUTE);
+    att.done(getHtmlAttributeElementType());
+  }
+
+  protected IElementType getHtmlAttributeElementType() {
+    return XmlElementType.XML_ATTRIBUTE;
   }
 
   protected void parseAttributeValue() {
@@ -594,9 +598,11 @@ public class HtmlParsing {
     if (token() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
       while (true) {
         final IElementType tt = token();
-        if (tt == null || tt == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER || tt == XmlTokenType.XML_END_TAG_START || tt == XmlTokenType
-          .XML_EMPTY_ELEMENT_END ||
-            tt == XmlTokenType.XML_START_TAG_START) {
+        if (tt == null
+            || tt == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER
+            || tt == XmlTokenType.XML_END_TAG_START
+            || tt == XmlTokenType.XML_EMPTY_ELEMENT_END
+            || tt == XmlTokenType.XML_START_TAG_START) {
           break;
         }
 
@@ -621,6 +627,9 @@ public class HtmlParsing {
         error(XmlPsiBundle.message("xml.parsing.unclosed.attribute.value"));
       }
     }
+    else if (hasCustomAttributeValue()) {
+      parseCustomAttributeValue();
+    }
     else {
       IElementType tt = token();
       if (tt != XmlTokenType.XML_TAG_END && tt != XmlTokenType.XML_EMPTY_ELEMENT_END) {
@@ -629,7 +638,19 @@ public class HtmlParsing {
       }
     }
 
-    attValue.done(XmlElementType.XML_ATTRIBUTE_VALUE);
+    attValue.done(getHtmlAttributeValueElementType());
+  }
+
+  protected IElementType getHtmlAttributeValueElementType() {
+    return XmlElementType.XML_ATTRIBUTE_VALUE;
+  }
+
+  protected boolean hasCustomAttributeValue() {
+    return false;
+  }
+
+  protected void parseCustomAttributeValue() {
+
   }
 
   protected void parseProlog() {
