@@ -20,7 +20,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
@@ -616,7 +615,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
         fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height", 0);
       }
       if (fixedHeight <= 0) {
-        fixedHeight = UIManager.getInt("Tree.rowHeight");
+        fixedHeight = UIManager.getInt(JBUI.CurrentTheme.Tree.rowHeightKey());
       }
       if (fixedHeight <= 0) {
         fixedHeight = JBUIScale.scale(16);

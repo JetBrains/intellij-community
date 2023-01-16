@@ -35,6 +35,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.commit.CommitSessionCollector;
 import com.intellij.vcsUtil.VcsUtil;
@@ -146,7 +147,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   private void updateFixedRowHeight() {
     if (!isLargeModel()) return;
 
-    int fixedRowHeight = UIManager.getInt("Tree.rowHeight");
+    int fixedRowHeight = UIManager.getInt(JBUI.CurrentTheme.Tree.rowHeightKey());
     if (fixedRowHeight > 0) return; // leave hardcoded value from BasicTreeUI.installDefaults
 
     TreeCellRenderer renderer = getCellRenderer();

@@ -663,6 +663,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     defaults.put(JBUI.CurrentTheme.RunWidget.configurationSelectorWidthKey(), JBUI.CurrentTheme.RunWidget.defaultConfigurationSelectorWidth())
     // minimize/maximize/close buttons
     defaults.put(JBUI.CurrentTheme.TitlePane.buttonPreferredSizeKey(), JBUI.CurrentTheme.TitlePane.defaultButtonPreferredSize())
+    // Trees defaults are already in the theme, don't overwrite them here unless Compact Mode is on!
     if (density == UIDensity.COMPACT) {
       // main toolbar
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(34, 34))
@@ -676,7 +677,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 4)
       // minimize/maximize/close buttons are fine as they are (emulating native Windows 11 buttons)
       // trees
-      defaults.put("Tree.rowHeight", 20)
+      defaults.put(JBUI.CurrentTheme.Tree.rowHeightKey(), JBUI.scale(22))
       // editor tabs
       defaults.put("EditorTabs.tabInsets", JBInsets.create(0, 2).asUIResource())
       // toolwindows
@@ -1275,7 +1276,7 @@ private fun patchHiDPI(defaults: UIDefaults) {
   val prevRowHeightScale = if (prevScaleVal != null || SystemInfoRt.isMac || SystemInfoRt.isWindows) prevScale else getFontScale(12f)
   patchRowHeight(defaults, "List.rowHeight", prevRowHeightScale)
   patchRowHeight(defaults, "Table.rowHeight", prevRowHeightScale)
-  patchRowHeight(defaults, "Tree.rowHeight", prevRowHeightScale)
+  patchRowHeight(defaults, JBUI.CurrentTheme.Tree.rowHeightKey(), prevRowHeightScale)
   if (prevScale == scale(1f) && prevScaleVal != null) {
     return
   }

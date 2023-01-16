@@ -1574,10 +1574,19 @@ public final class JBUI {
       }
 
       static int rowHeight() {
-        int defaultHeight = JBUIScale.scale(24);
-        int result = getInt("Tree.rowHeight", defaultHeight);
+        int defaultHeight = defaultRowHeight();
+        int result = getInt(rowHeightKey(), defaultHeight);
         // Linux doesn't support rowHeight now, use default value. See IDEA-234112
         return result <= 0 ? defaultHeight : result;
+      }
+
+      @NotNull
+      public static String rowHeightKey() {
+        return "Tree.rowHeight";
+      }
+
+      static int defaultRowHeight() {
+        return JBUIScale.scale(24);
       }
 
       final class Selection {
