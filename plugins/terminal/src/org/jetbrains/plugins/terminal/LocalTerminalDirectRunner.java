@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
-import com.google.common.collect.ImmutableList;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.process.*;
@@ -56,7 +55,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
   private static final String LOGIN_SHELL = "LOGIN_SHELL";
   private static final String LOGIN_CLI_OPTION = "--login";
-  private static final ImmutableList<String> LOGIN_CLI_OPTIONS = ImmutableList.of(LOGIN_CLI_OPTION, "-l");
+  private static final List<String> LOGIN_CLI_OPTIONS = List.of(LOGIN_CLI_OPTION, "-l");
   private static final String INTERACTIVE_CLI_OPTION = "-i";
   private static final String BASH_NAME = "bash";
   private static final String SH_NAME = "sh";
@@ -369,7 +368,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
         envs.put(XDG_CONFIG_HOME, new File(rcFilePath).getParentFile().getParent());
       }
-      setLoginShellEnv(envs, isLogin(command));
     }
 
     result.addAll(command);
@@ -416,7 +414,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private static boolean isLogin(@NotNull List<String> command) {
-    return command.stream().anyMatch(LOGIN_CLI_OPTIONS::contains);
+    return ContainerUtil.exists(command, LOGIN_CLI_OPTIONS::contains);
   }
 
   private static class PtyProcessHandler extends ProcessHandler implements TaskExecutor {
