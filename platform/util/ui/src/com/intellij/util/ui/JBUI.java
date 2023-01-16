@@ -889,6 +889,20 @@ public final class JBUI {
       public static int defaultStripeToolbarButtonIconSize() {
         return 20;
       }
+
+      @NotNull
+      public static Insets stripeToolbarButtonIconPadding() {
+        return insets(stripeToolbarButtonIconPaddingKey(), defaultStripeToolbarButtonIconPadding());
+      }
+
+      public @NotNull static String stripeToolbarButtonIconPaddingKey() {
+        return "StripeToolbar.Button.iconPadding";
+      }
+
+      @NotNull
+      public static JBInsets defaultStripeToolbarButtonIconPadding() {
+        return insets(5);
+      }
     }
 
     public static final class Label {

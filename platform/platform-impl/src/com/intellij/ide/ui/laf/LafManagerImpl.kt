@@ -655,6 +655,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     // tool window stripes
     defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), JBUI.CurrentTheme.Toolbar.defaultStripeToolbarButtonSize())
     defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSizeKey(), JBUI.CurrentTheme.Toolbar.defaultStripeToolbarButtonIconSize())
+    defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPaddingKey(), JBUI.CurrentTheme.Toolbar.defaultStripeToolbarButtonIconPadding())
     // Run Widget
     defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), JBUI.CurrentTheme.RunWidget.defaultToolbarHeight())
     defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), JBUI.CurrentTheme.RunWidget.defaultToolbarBorderHeight())
@@ -669,6 +670,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       // tool window stripes
       defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), JBUI.size(32, 32))
       defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSizeKey(), 16)
+      defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPaddingKey(), JBUI.insets(4))
       // Run Widget
       defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), 26)
       defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 4)
