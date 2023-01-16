@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.EntityReference;
@@ -27,4 +28,6 @@ public interface EntityIndexingServiceEx extends EntityIndexingService {
 
   @NotNull
   List<EntityReference<WorkspaceEntity>> getReferencesToEntitiesWithChangedRoots(@NotNull List<? extends RootsChangeRescanningInfo> infos);
+
+  boolean shouldCauseRescan(@NotNull WorkspaceEntity entity, @NotNull Project project);
 }

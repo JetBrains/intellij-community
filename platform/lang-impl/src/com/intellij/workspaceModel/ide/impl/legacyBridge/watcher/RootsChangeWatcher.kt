@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.watcher
 
 import com.google.common.io.Files
@@ -32,7 +32,6 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener.Companion.shouldFireRootsChanged
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher.Companion.calculateAffectedEntities
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
@@ -199,7 +198,8 @@ private class RootsChangeWatcher(private val project: Project) {
       }
     }
 
-    if (affectedEntities.any { it.propertyName != "entitySource" && shouldFireRootsChanged(it.entity, project) }
+    val indexingServiceEx = EntityIndexingServiceEx.getInstanceEx()
+    if (affectedEntities.any { it.propertyName != "entitySource" && indexingServiceEx.shouldCauseRescan(it.entity, project) }
         || virtualFileUrl.url in projectFilePaths) {
       entityChanges.addAffectedEntities(affectedEntities.map { it.entity.createReference() }, allRootsWereRemoved)
     }
