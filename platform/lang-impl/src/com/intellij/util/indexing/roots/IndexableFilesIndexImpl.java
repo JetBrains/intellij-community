@@ -13,37 +13,32 @@ import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
 import com.intellij.util.indexing.IndexableFilesIndex;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
-import com.intellij.workspaceModel.core.fileIndex.*;
-import com.intellij.workspaceModel.core.fileIndex.impl.*;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRootData;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetVisitor;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.ide.impl.UtilsKt;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex;
 import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
-import kotlin.jvm.functions.Function1;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 import static com.intellij.util.indexing.roots.IndexableEntityProviderMethods.INSTANCE;
 import static com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl.Companion;
@@ -52,11 +47,6 @@ import static com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
 @ApiStatus.Experimental
 @ApiStatus.Internal
 public class IndexableFilesIndexImpl implements IndexableFilesIndex {
-  /**
-   * Usually it makes sense to deduplicate roots, for content root and source roots may share them.
-   * But there may be too many of them, resulting in a freeze, especially for Rider or CLion who add each file as a root.
-   */
-  private static final int ROOTS_SIZE_OPTIMISING_LIMIT = 1000;
   @NotNull
   private final Project project;
   private final AdditionalIndexableFileSet filesFromIndexableSetContributors;
@@ -86,17 +76,20 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
   @NotNull
   private List<IndexableFilesIterator> doGetIndexingIterators() {
     EntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
-    List<WorkspaceFileIndexContributor<?>> contributors =
-      ((WorkspaceFileIndexImpl)WorkspaceFileIndex.getInstance(project)).getContributors();
     List<IndexableFilesIterator> iterators = new ArrayList<>();
 
-    MyRegistrar registrar = new MyRegistrar();
-    for (WorkspaceFileIndexContributor<?> contributor : contributors) {
-      if (contributor.getStorageKind() != EntityStorageKind.MAIN) {
-        continue;
+    IndexingRootsCollectionUtil.IndexingRootsDescriptions descriptions =
+      IndexingRootsCollectionUtil.collectRootsFromWorkspaceFileIndexContributors(project, null, entityStorage);
+
+    for (IndexingRootsCollectionUtil.ModuleRootsDescription moduleRootsDescription : descriptions.moduleRoots()) {
+      iterators.add(new ModuleIndexableFilesIteratorImpl(moduleRootsDescription.module(), moduleRootsDescription.roots(), true));
+    }
+    Set<IndexableSetOrigin> libraryOrigins = new HashSet<>();
+    for (IndexingRootsCollectionUtil.LibraryRootsDescription root : descriptions.libraryRoots()) {
+      LibraryIndexableFilesIteratorImpl iterator = createIterator(root.library(), root.classRoots(), root.sourceRoots());
+      if (libraryOrigins.add(iterator.getOrigin())) {
+        iterators.add(iterator);
       }
-      ProgressManager.checkCanceled();
-      handleContributor(entityStorage, registrar, contributor, iterators);
     }
 
     List<Sdk> sdks = new ArrayList<>();
@@ -124,19 +117,22 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       for (Library library : libraryTable.getLibraries()) {
         ProgressManager.checkCanceled();
         if (moduleDependencyIndex.hasDependencyOn(library)) {
-          iterators.addAll(Companion.createIteratorList(library));
+          for (IndexableFilesIterator iterator : Companion.createIteratorList(library)) {
+            if (libraryOrigins.add(iterator.getOrigin())) {
+              iterators.add(iterator);
+            }
+          }
         }
       }
     }
 
-    ProgressManager.checkCanceled();
-    List<IndexableFilesIterator> contentIterators = new ArrayList<>(registrar.myContents.size());
-    for (Map.Entry<Module, Collection<VirtualFile>> entry : registrar.myContents.entrySet()) {
-      if (!entry.getValue().isEmpty()) {
-        contentIterators.add(new ModuleIndexableFilesIteratorImpl(entry.getKey(), optimizeRoots(entry.getValue()), true));
-      }
+    for (IndexingRootsCollectionUtil.EntityContentRootsDescription description : descriptions.contentEntityRoots()) {
+      iterators.addAll(INSTANCE.createModuleUnawareContentEntityIterators(description.entityReference(), description.roots()));
     }
-    iterators.addAll(0, contentIterators);
+    for (IndexingRootsCollectionUtil.EntityRootsDescription description : descriptions.externalEntityRoots()) {
+      iterators.addAll(
+        INSTANCE.createExternalEntityIterators(description.entityReference(), description.roots(), description.sourceRoots()));
+    }
 
     boolean addedFromDependenciesIndexedStatusService = false;
     if (DependenciesIndexedStatusService.shouldBeUsed()) {
@@ -164,56 +160,6 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       }
     }
     return iterators;
-  }
-
-  private static <E extends WorkspaceEntity> void handleContributor(EntityStorage entityStorage,
-                                                                    MyRegistrar registrar,
-                                                                    WorkspaceFileIndexContributor<E> contributor,
-                                                                    List<IndexableFilesIterator> iterators) {
-    registrar.initEntityMaps();
-    Sequence<E> entities = entityStorage.entities(contributor.getEntityClass());
-    for (E entity : SequencesKt.asIterable(entities)) {
-      contributor.registerFileSets(entity, registrar, entityStorage);
-    }
-    if (contributor instanceof LibraryRootFileIndexContributor) {
-      Set<IndexableSetOrigin> origins = new HashSet<>();
-      for (Map.Entry<WorkspaceEntity, Collection<VirtualFile>> entry : registrar.myExternalRoots.entrySet()) {
-        WorkspaceEntity entity = entry.getKey();
-        Collection<VirtualFile> sourceRoots = ObjectUtils.notNull(registrar.myExternalSourceRoots.remove(entity), Collections.emptyList());
-        LibraryIndexableFilesIteratorImpl iterator = createIterator(entity, toList(entry.getValue()), toList(sourceRoots));
-        if (origins.add(iterator.getOrigin())) {
-          iterators.add(iterator);
-        }
-      }
-      for (Map.Entry<WorkspaceEntity, Collection<VirtualFile>> entry : registrar.myExternalSourceRoots.entrySet()) {
-        LibraryIndexableFilesIteratorImpl iterator = createIterator(entry.getKey(), Collections.emptyList(), toList(entry.getValue()));
-        if (origins.add(iterator.getOrigin())) {
-          iterators.add(iterator);
-        }
-      }
-    }
-    else {
-      for (Map.Entry<WorkspaceEntity, Collection<VirtualFile>> entry : registrar.myContentRoots.entrySet()) {
-        iterators.addAll(INSTANCE.createModuleUnawareContentEntityIterators(entry.getKey().createReference(), entry.getValue()));
-      }
-      for (Map.Entry<WorkspaceEntity, Collection<VirtualFile>> entry : registrar.myExternalRoots.entrySet()) {
-        WorkspaceEntity entity = entry.getKey();
-        Collection<VirtualFile> sourceRoots = registrar.myExternalSourceRoots.remove(entity);
-        sourceRoots = ObjectUtils.notNull(sourceRoots, Collections.emptyList());
-        iterators.addAll(INSTANCE.createExternalEntityIterators(entity.createReference(), entry.getValue(), sourceRoots));
-      }
-      for (Map.Entry<WorkspaceEntity, Collection<VirtualFile>> entry : registrar.myExternalSourceRoots.entrySet()) {
-        WorkspaceEntity entity = entry.getKey();
-        iterators.addAll(INSTANCE.createExternalEntityIterators(entity.createReference(), Collections.emptyList(), entry.getValue()));
-      }
-    }
-    registrar.cleanEntityMaps();
-  }
-
-  private static <T> List<? extends T> toList(Collection<T> value) {
-    if (value instanceof List<T>) return (List<? extends T>)value;
-    if (value.isEmpty()) return Collections.emptyList();
-    return new ArrayList<>(value);
   }
 
   @Override
@@ -247,107 +193,6 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       });
       return files;
     }).executeSynchronously();
-    return optimizeRoots(roots);
-  }
-
-  private static List<VirtualFile> optimizeRoots(@NotNull Collection<VirtualFile> roots) {
-    int size = roots.size();
-    if (size == 0) {
-      return Collections.emptyList();
-    }
-    else if (size == 1) {
-      return new SmartList<>(roots.iterator().next());
-    }
-    else if (size > ROOTS_SIZE_OPTIMISING_LIMIT) {
-      return new ArrayList<>(roots);
-    }
-    else {
-      List<VirtualFile> filteredList = new ArrayList<>();
-      Consumer<VirtualFile> consumer = new Consumer<>() {
-        private String previousPath = null;
-
-        @Override
-        public void accept(VirtualFile file) {
-          String path = file.getPath();
-          if (previousPath == null || !FileUtil.startsWith(path, previousPath)) {
-            filteredList.add(file);
-            previousPath = path;
-          }
-        }
-      };
-      roots.stream().sorted((o1, o2) -> StringUtil.compare(o1.getPath(), o2.getPath(), false)).forEachOrdered(consumer);
-      return filteredList;
-    }
-  }
-
-  private static class MyRegistrar implements WorkspaceFileSetRegistrar {
-    final MultiMap<Module, VirtualFile> myContents = MultiMap.create();
-    MultiMap<WorkspaceEntity, VirtualFile> myContentRoots;
-    MultiMap<WorkspaceEntity, VirtualFile> myExternalRoots;
-    MultiMap<WorkspaceEntity, VirtualFile> myExternalSourceRoots;
-
-    @Override
-    public void registerFileSet(@NotNull VirtualFileUrl root,
-                                @NotNull WorkspaceFileKind kind,
-                                @NotNull WorkspaceEntity entity,
-                                @Nullable WorkspaceFileSetData customData) {
-      VirtualFile file = UtilsKt.getVirtualFile(root);
-      if (file != null) {
-        registerFileSet(file, kind, entity, customData);
-      }
-    }
-
-    @Override
-    public void registerFileSet(@NotNull VirtualFile root,
-                                @NotNull WorkspaceFileKind kind,
-                                @NotNull WorkspaceEntity entity,
-                                @Nullable WorkspaceFileSetData customData) {
-      if (customData instanceof ModuleContentOrSourceRootData) {
-        myContents.putValue(((ModuleContentOrSourceRootData)customData).getModule(), root);
-      }
-      else if (kind == WorkspaceFileKind.CONTENT || kind == WorkspaceFileKind.TEST_CONTENT) {
-        myContentRoots.putValue(entity, root);
-      }
-      else if (kind == WorkspaceFileKind.EXTERNAL) {
-        myExternalRoots.putValue(entity, root);
-      }
-      else {
-        myExternalSourceRoots.putValue(entity, root);
-      }
-    }
-
-    @Override
-    public void registerExcludedRoot(@NotNull VirtualFileUrl excludedRoot, @NotNull WorkspaceEntity entity) {
-    }
-
-    @Override
-    public void registerExcludedRoot(@NotNull VirtualFile excludedRoot,
-                                     @NotNull WorkspaceFileKind excludedFrom,
-                                     @NotNull WorkspaceEntity entity) {
-    }
-
-    @Override
-    public void registerExclusionPatterns(@NotNull VirtualFileUrl root,
-                                          @NotNull List<String> patterns,
-                                          @NotNull WorkspaceEntity entity) {
-    }
-
-    @Override
-    public void registerExclusionCondition(@NotNull VirtualFile root,
-                                           @NotNull Function1<? super VirtualFile, Boolean> condition,
-                                           @NotNull WorkspaceEntity entity) {
-    }
-
-    public void initEntityMaps() {
-      myContentRoots = MultiMap.createSet();
-      myExternalRoots = MultiMap.createSet();
-      myExternalSourceRoots = MultiMap.createSet();
-    }
-
-    public void cleanEntityMaps() {
-      myContentRoots = null;
-      myExternalRoots = null;
-      myExternalSourceRoots = null;
-    }
+    return IndexingRootsCollectionUtil.optimizeRoots(roots);
   }
 }
