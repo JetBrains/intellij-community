@@ -3,6 +3,8 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -360,19 +362,27 @@ public abstract class VcsTreeModelData {
     else if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
       return mapToChange(exactlySelected(tree)).toArray(Change.EMPTY_CHANGE_ARRAY);
     }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      return mapToVirtualFile(selected(tree)).toArray(VirtualFile.EMPTY_ARRAY);
-    }
-    else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      if (project == null) return null;
-      return ChangesUtil.getNavigatableArray(project, mapToNavigatableFile(selected(tree)));
-    }
-    else if (VcsDataKeys.IO_FILE_ARRAY.is(dataId)) {
-      return mapToIoFile(selected(tree)).toArray(ArrayUtil.EMPTY_FILE_ARRAY);
+    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      VcsTreeModelData treeSelection = selected(tree);
+      return (DataProvider)slowId -> getSlowData(project, treeSelection, slowId);
     }
     return null;
   }
 
+  @Nullable
+  private static Object getSlowData(@Nullable Project project, @NotNull VcsTreeModelData treeSelection, @NotNull String slowId) {
+    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(slowId)) {
+      return mapToVirtualFile(treeSelection).toArray(VirtualFile.EMPTY_ARRAY);
+    }
+    else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(slowId)) {
+      if (project == null) return null;
+      return ChangesUtil.getNavigatableArray(project, mapToNavigatableFile(treeSelection));
+    }
+    else if (VcsDataKeys.IO_FILE_ARRAY.is(slowId)) {
+      return mapToIoFile(treeSelection).toArray(ArrayUtil.EMPTY_FILE_ARRAY);
+    }
+    return null;
+  }
 
   @NotNull
   private static JBIterable<Change> mapToChange(@NotNull VcsTreeModelData data) {
