@@ -116,7 +116,7 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
       if ("target".equals(name) || "formtarget".equals(name)) {
         return TARGET;
       }
-      else if (("lang".equals(name) || "xml:lang".equals(name)) && tagName.equalsIgnoreCase("html")) {
+      else if (("lang".equals(name) || "xml:lang".equals(name)) && tagName.equalsIgnoreCase("html") || "hreflang".equals(name)) {
         return LANG;
       }
       else if ("rel".equals(name) || "rev".equals(name)) {
