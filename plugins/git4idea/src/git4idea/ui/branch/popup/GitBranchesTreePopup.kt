@@ -450,6 +450,30 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     }
   }
 
+  override fun processKeyEvent(e: KeyEvent) {
+    when {
+      Character.isWhitespace(e.keyChar) -> {
+        e.consume()
+      }
+      e.keyCode == KeyEvent.VK_DOWN || e.keyCode == KeyEvent.VK_UP -> {
+        tree.requestFocus()
+        tree.dispatchEvent(e)
+      }
+      findKeyStroke == KeyStroke.getKeyStroke(e.keyCode, e.modifiersEx, e.id == KeyEvent.KEY_RELEASED) -> {
+        mySpeedSearchPatternField.textEditor.requestFocus()
+        e.consume()
+      }
+      mySpeedSearchPatternField.isShowing && mySpeedSearchPatternField.textEditor.hasFocus() && !e.isConsumed -> {
+        mySpeedSearchPatternField.dispatchEvent(e)
+        if (e.isConsumed) {
+          mySpeedSearch.updatePattern(mySpeedSearchPatternField.text)
+          mySpeedSearch.update()
+        }
+      }
+      else -> mySpeedSearch.processKeyEvent(e)
+    }
+  }
+
   private fun addTreeListeners(tree: JTree) = with(tree) {
     addMouseMotionListener(SelectionMouseMotionListener())
     addMouseListener(SelectOnClickListener())
@@ -469,6 +493,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   override fun getInputMap(): InputMap = tree.inputMap
 
   private val selectAllKeyStroke = KeymapUtil.getKeyStroke(am.getAction(IdeActions.ACTION_SELECT_ALL).shortcutSet)
+  private val findKeyStroke = KeymapUtil.getKeyStroke(am.getAction("Find").shortcutSet)
 
   override fun process(e: KeyEvent?) {
     if (e == null) return
