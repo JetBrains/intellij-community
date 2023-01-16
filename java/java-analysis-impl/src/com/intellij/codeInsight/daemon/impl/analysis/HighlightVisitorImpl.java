@@ -194,7 +194,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         if (progress == null) throw new IllegalStateException("Must be run under progress");
         Project project = file.getProject();
         Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-        TextRange dirtyScope = document == null ? null : DaemonCodeAnalyzerEx.getInstanceEx(project).getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
+        TextRange dirtyScope = document == null ? null : DaemonCodeAnalyzerEx.getInstanceEx(project).getFileStatusMap().getFileDirtyScope(document, file, Pass.UPDATE_ALL);
         if (dirtyScope == null) dirtyScope = file.getTextRange();
         RefCountHolder refCountHolder = RefCountHolder.get(file, dirtyScope);
         if (refCountHolder == null) {

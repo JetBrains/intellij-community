@@ -209,10 +209,19 @@ public final class FileStatusMap implements Disposable {
   }
 
   /**
+   * @deprecated use {@link #getFileDirtyScope(Document, PsiFile, int)}
+   */
+  @Deprecated
+  @Nullable
+  public TextRange getFileDirtyScope(@NotNull Document document, int passId) {
+    return getFileDirtyScope(document, PsiDocumentManager.getInstance(myProject).getPsiFile(document), passId);
+  }
+
+  /**
    * @return null for up-to-date file, whole file for untouched or entirely dirty file, range(usually code block) for dirty region (optimization)
    */
   @Nullable
-  public TextRange getFileDirtyScope(@NotNull Document document, int passId) {
+  public TextRange getFileDirtyScope(@NotNull Document document, @Nullable PsiFile file, int passId) {
     RangeMarker marker;
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
@@ -232,7 +241,6 @@ public final class FileStatusMap implements Disposable {
       return null;
     }
     if (marker == WHOLE_FILE_DIRTY_MARKER) {
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
       return file == null ? null : file.getTextRange();
     }
     return marker.isValid() ? TextRange.create(marker) : new TextRange(0, document.getTextLength());
