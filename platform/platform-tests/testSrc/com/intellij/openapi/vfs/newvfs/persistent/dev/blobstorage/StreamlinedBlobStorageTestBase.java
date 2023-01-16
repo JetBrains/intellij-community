@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage.NULL_ID;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static org.junit.Assert.*;
@@ -69,7 +68,7 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   @Test
   public void emptyStorageHasNoRecords() throws Exception {
     final IntArrayList nonExistentIds = new IntArrayList();
-    nonExistentIds.add(NON_EXISTENT_ATTR_RECORD_ID);
+    nonExistentIds.add(NULL_ID);
     nonExistentIds.add(Integer.MAX_VALUE);
     ThreadLocalRandom.current().ints()
       .filter(i -> i > 0)

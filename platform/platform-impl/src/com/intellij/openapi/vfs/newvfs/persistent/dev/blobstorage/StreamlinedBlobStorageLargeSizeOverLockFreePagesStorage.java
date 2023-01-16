@@ -304,7 +304,7 @@ public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage implements 
           final int packedCapacity = capacityOverFirstBucket >> OFFSET_BUCKET_BITS;
           final byte headerByte0 = (byte)(RECORD_TYPE_ACTUAL | RECORD_SIZE_TYPE_SMALL | packedCapacity);
           final byte headerByte1 = (byte)length;
-          target.put(offset + 0, headerByte0);
+          target.put(offset, headerByte0);
           target.put(offset + 1, headerByte1);
           target.put(offset + HEADER_SIZE, payload, payload.position(), length);
         }
@@ -424,7 +424,7 @@ public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage implements 
           final int headerBytes1_4 = Integer.rotateRight(packedCapacity & CAPACITY_MASK_1, CAPACITY_BITS_1)
                                      | (length & LENGTH_MASK);
 
-          target.put(offset + 0, headerByte0);
+          target.put(offset, headerByte0);
           target.putInt(offset + 1, headerBytes1_4);
           target.put(offset + HEADER_SIZE, payload, payload.position(), length);
         }
@@ -527,7 +527,7 @@ public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage implements 
         final short headerBytes1_2 = (short)(packedCapacity & CAPACITY_MASK_1_2);
 
 
-        target.put(offset + 0, headerByte0);
+        target.put(offset, headerByte0);
         target.putShort(offset + 1, headerBytes1_2);
         target.putInt(offset + REDIRECT_TO_OFFSET, redirectToId);
       }
@@ -638,7 +638,7 @@ public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage implements 
    * start as 'ACTUAL' record type, hence actual LargeRecord capacity is used as 'common denominator'
    * here.
    */
-  private static final int MAX_CAPACITY = LargeRecord.MAX_CAPACITY;
+  public static final int MAX_CAPACITY = LargeRecord.MAX_CAPACITY;
 
   /**
    * Max length of .redirectTo chain.

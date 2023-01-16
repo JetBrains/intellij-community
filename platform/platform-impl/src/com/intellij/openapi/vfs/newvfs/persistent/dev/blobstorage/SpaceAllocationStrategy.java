@@ -24,9 +24,13 @@ public interface SpaceAllocationStrategy {
     private final int defaultCapacity;
 
     public WriterDecidesStrategy(final int defaultCapacity) {
-      if (defaultCapacity <= 0 || defaultCapacity >= StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY) {
+      if (defaultCapacity <= 0 || defaultCapacity >= StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage.MAX_CAPACITY) {
         throw new IllegalArgumentException(
-          "defaultCapacity(" + defaultCapacity + ") must be in [1," + StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY + "]");
+          "defaultCapacity(" +
+          defaultCapacity +
+          ") must be in [1," +
+          StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage.MAX_CAPACITY +
+          "]");
       }
       this.defaultCapacity = defaultCapacity;
     }
@@ -62,9 +66,13 @@ public interface SpaceAllocationStrategy {
     public DataLengthPlusFixedPercentStrategy(final int defaultCapacity,
                                               final int minCapacity,
                                               final int percentOnTheTop) {
-      if (defaultCapacity <= 0 || defaultCapacity > StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY) {
+      if (defaultCapacity <= 0 || defaultCapacity > StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage.MAX_CAPACITY) {
         throw new IllegalArgumentException(
-          "defaultCapacity(" + defaultCapacity + ") must be in [1," + StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY + "]");
+          "defaultCapacity(" +
+          defaultCapacity +
+          ") must be in [1," +
+          StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage.MAX_CAPACITY +
+          "]");
       }
       if (minCapacity <= 0 || minCapacity > defaultCapacity) {
         throw new IllegalArgumentException("minCapacity(" + minCapacity + ") must be > 0 && <= defaultCapacity(" + defaultCapacity + ")");
@@ -91,10 +99,10 @@ public interface SpaceAllocationStrategy {
       if (currentCapacity < actualLength) {
         throw new IllegalArgumentException("currentCapacity(=" + currentCapacity + ") should be >= actualLength(=" + actualLength + ")");
       }
-      final double capacity = actualLength * (1.0 + percentOnTheTop / 100.0);
-      final int advisedCapacity = (int)Math.max(minCapacity, capacity + 1);
-      if (advisedCapacity < 0 || advisedCapacity > StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY) {
-        return StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY;
+      final double capacity = Math.ceil(actualLength * (1.0 + percentOnTheTop / 100.0));
+      final int advisedCapacity = (int)Math.max(minCapacity, capacity);
+      if (advisedCapacity < 0 || advisedCapacity > StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage.MAX_CAPACITY) {
+        return StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage.MAX_CAPACITY;
       }
       return advisedCapacity;
     }
