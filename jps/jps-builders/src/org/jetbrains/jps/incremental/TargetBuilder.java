@@ -38,6 +38,17 @@ public abstract class TargetBuilder<R extends BuildRootDescriptor, T extends Bui
   }
 
   /**
+   * @deprecated Implement {@link TargetBuilder#buildTarget(BuildTarget, DirtyFilesHolder, BuildOutputConsumer, CompileContext)} instead
+   */
+  public void build(@NotNull T target, @NotNull DirtyFilesHolder<R, T> holder, @NotNull BuildOutputConsumer outputConsumer, @NotNull CompileContext context)
+    throws ProjectBuildException, IOException {
+  }
+
+  public enum ExitCode {
+    NOTHING_DONE, OK, ABORT
+  }
+
+  /**
    * Builds a single build target.
    *
    * @param target         target to build.
@@ -47,8 +58,12 @@ public abstract class TargetBuilder<R extends BuildRootDescriptor, T extends Bui
    *                       to be reported here.)
    * @param context        compilation context (can be used to report compiler errors/warnings and to check whether the build
    *                       has been cancelled and needs to be stopped).
+   * @return exit code describing the builder execution status
    */
-  public abstract void build(@NotNull T target, @NotNull DirtyFilesHolder<R, T> holder, @NotNull BuildOutputConsumer outputConsumer,
-                             @NotNull CompileContext context) throws ProjectBuildException, IOException;
+  public ExitCode buildTarget(@NotNull T target, @NotNull DirtyFilesHolder<R, T> holder, @NotNull BuildOutputConsumer outputConsumer, @NotNull CompileContext context) throws ProjectBuildException, IOException {
+    // default implementation to make third-party implementations of the older API work
+    build(target, holder, outputConsumer, context);
+    return ExitCode.OK;
+  }
 
 }

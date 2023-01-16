@@ -8,7 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
-import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.builders.impl.OutputTracker;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.gradle.GradleJpsBundle;
 import org.jetbrains.jps.gradle.model.JpsGradleExtensionService;
@@ -21,7 +21,6 @@ import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
 
@@ -36,36 +35,26 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
   }
 
   @Override
-  public void build(@NotNull final GradleResourcesTarget target,
-                    @NotNull final DirtyFilesHolder<GradleResourceRootDescriptor, GradleResourcesTarget> holder,
-                    @NotNull final BuildOutputConsumer outputConsumer,
-                    @NotNull final CompileContext context) throws ProjectBuildException, IOException {
+  public ExitCode buildTarget(@NotNull final GradleResourcesTarget target,
+                              @NotNull final DirtyFilesHolder<GradleResourceRootDescriptor, GradleResourcesTarget> holder,
+                              @NotNull final BuildOutputConsumer outputConsumer,
+                              @NotNull final CompileContext context) throws ProjectBuildException, IOException {
     if (!JavaBuilder.IS_ENABLED.get(context, Boolean.TRUE)) {
-      return;
+      return ExitCode.NOTHING_DONE;
     }
 
     final BuildDataPaths dataPaths = context.getProjectDescriptor().dataManager.getDataPaths();
     final GradleProjectConfiguration projectConfig = JpsGradleExtensionService.getInstance().getGradleProjectConfiguration(dataPaths);
     final GradleModuleResourceConfiguration config = target.getModuleResourcesConfiguration(dataPaths);
-    if (config == null) return;
+    if (config == null) {
+      return ExitCode.NOTHING_DONE;
+    }
 
     final Map<GradleResourceRootDescriptor, List<File>> files = new HashMap<>();
-
-    holder.processDirtyFiles(new FileProcessor<GradleResourceRootDescriptor, GradleResourcesTarget>() {
-
-      @Override
-      public boolean apply(GradleResourcesTarget t, File file, GradleResourceRootDescriptor rd) throws IOException {
-        assert target == t;
-
-        List<File> fileList = files.get(rd);
-        if (fileList == null) {
-          fileList = new ArrayList<>();
-          files.put(rd, fileList);
-        }
-
-        fileList.add(file);
-        return true;
-      }
+    holder.processDirtyFiles((t, file, rd) -> {
+      assert target == t;
+      files.computeIfAbsent(rd, k -> new ArrayList<>()).add(file);
+      return true;
     });
 
     GradleResourceRootDescriptor[] roots = files.keySet().toArray(new GradleResourceRootDescriptor[0]);
@@ -92,18 +81,10 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
     }
     catch (Throwable t) {
       LOG.warn("Can not create resource file processor", t);
-      fileProcessor = new ResourceFileProcessor() {
-        @Override
-        public void copyFile(File file,
-                             Ref<File> targetFileRef,
-                             ResourceRootConfiguration rootConfiguration,
-                             CompileContext context,
-                             FileFilter filteringFilter) throws IOException {
-          FSOperations.copy(file, targetFileRef.get());
-        }
-      };
+      fileProcessor = (file, targetFileRef, rootConfiguration, ctx, filteringFilter) -> FSOperations.copy(file, targetFileRef.get());
     }
 
+    final OutputTracker out = OutputTracker.create(outputConsumer);
     for (GradleResourceRootDescriptor rd : roots) {
       for (File file : files.get(rd)) {
 
@@ -118,14 +99,17 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
 
         final Ref<File> fileRef = Ref.create(new File(outputDir, relPath));
         fileProcessor.copyFile(file, fileRef, rd.getConfiguration(), context, FileFilters.EVERYTHING);
-        outputConsumer.registerOutputFile(fileRef.get(), Collections.singleton(file.getPath()));
+        out.registerOutputFile(fileRef.get(), Collections.singleton(file.getPath()));
 
-        if (context.getCancelStatus().isCanceled()) return;
+        if (context.getCancelStatus().isCanceled()) {
+          return ExitCode.OK;
+        }
       }
     }
 
     context.checkCanceled();
     context.processMessage(new ProgressMessage(""));
+    return out.isOutputGenerated()? ExitCode.OK : ExitCode.NOTHING_DONE;
   }
 
   @Override

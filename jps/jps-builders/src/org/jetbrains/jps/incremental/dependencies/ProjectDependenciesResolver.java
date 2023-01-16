@@ -32,18 +32,18 @@ public final class ProjectDependenciesResolver extends TargetBuilder<BuildRootDe
   }
 
   @Override
-  public void build(@NotNull ProjectDependenciesResolvingTarget target,
-                    @NotNull DirtyFilesHolder<BuildRootDescriptor, ProjectDependenciesResolvingTarget> holder,
-                    @NotNull BuildOutputConsumer outputConsumer,
-                    @NotNull CompileContext context) {
+  public ExitCode buildTarget(@NotNull ProjectDependenciesResolvingTarget target,
+                              @NotNull DirtyFilesHolder<BuildRootDescriptor, ProjectDependenciesResolvingTarget> holder,
+                              @NotNull BuildOutputConsumer outputConsumer,
+                              @NotNull CompileContext context) {
     context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.resolving.repository.libraries.in.the.project")));
     try {
-      DependencyResolvingBuilder.resolveMissingDependencies(context, context.getProjectDescriptor().getProject().getModules(),
-                                                            BuildTargetChunk.forSingleTarget(target));
+      DependencyResolvingBuilder.resolveMissingDependencies(context, context.getProjectDescriptor().getProject().getModules(), BuildTargetChunk.forSingleTarget(target));
     }
     catch (Exception e) {
       DependencyResolvingBuilder.reportError(context, "project", e);
     }
+    return ExitCode.OK;
   }
 
   @NotNull

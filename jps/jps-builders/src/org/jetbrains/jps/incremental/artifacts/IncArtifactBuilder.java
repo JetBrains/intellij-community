@@ -42,14 +42,17 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
   }
 
   @Override
-  public void build(@NotNull ArtifactBuildTarget target,
-                    @NotNull DirtyFilesHolder<ArtifactRootDescriptor, ArtifactBuildTarget> holder,
-                    @NotNull BuildOutputConsumer outputConsumer, @NotNull final CompileContext context) throws ProjectBuildException {
+  public ExitCode buildTarget(@NotNull ArtifactBuildTarget target,
+                              @NotNull DirtyFilesHolder<ArtifactRootDescriptor, ArtifactBuildTarget> holder,
+                              @NotNull BuildOutputConsumer outputConsumer, @NotNull final CompileContext context) throws ProjectBuildException {
+    final boolean doneSomething;
     try {
-      new IncArtifactBuilderHelper(target, outputConsumer, context).build(holder);
-    } catch (IOException e) {
+      doneSomething = new IncArtifactBuilderHelper(target, outputConsumer, context).build(holder);
+    }
+    catch (IOException e) {
       throw new ProjectBuildException(e);
     }
+    return doneSomething? ExitCode.OK : ExitCode.NOTHING_DONE;
   }
 
   @NotNull
@@ -84,7 +87,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       this.outSrcMapping = pd.dataManager.getStorage(target, ArtifactOutToSourceStorageProvider.INSTANCE);
     }
 
-    public void build(DirtyFilesHolder<ArtifactRootDescriptor, ArtifactBuildTarget> holder) throws ProjectBuildException, IOException {
+    public boolean build(DirtyFilesHolder<ArtifactRootDescriptor, ArtifactBuildTarget> holder) throws ProjectBuildException, IOException {
       if (startBuild()) {
         createAndRunArtifactTasks(ArtifactBuildTaskProvider.ArtifactBuildPhase.PRE_PROCESSING);
 
@@ -98,7 +101,9 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
 
         createAndRunArtifactTasks(ArtifactBuildTaskProvider.ArtifactBuildPhase.FINISHING_BUILD);
         createAndRunArtifactTasks(ArtifactBuildTaskProvider.ArtifactBuildPhase.POST_PROCESSING);
+        return true;
       }
+      return false;
     }
 
     private boolean startBuild() {

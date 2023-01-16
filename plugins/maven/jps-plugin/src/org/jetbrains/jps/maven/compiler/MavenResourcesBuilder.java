@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.builders.impl.OutputTracker;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
@@ -36,7 +37,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
   }
 
   @Override
-  public void build(@NotNull final MavenResourcesTarget target, @NotNull final DirtyFilesHolder<MavenResourceRootDescriptor, MavenResourcesTarget> holder, @NotNull final BuildOutputConsumer outputConsumer, @NotNull final CompileContext context) throws ProjectBuildException, IOException {
+  public ExitCode buildTarget(@NotNull final MavenResourcesTarget target, @NotNull final DirtyFilesHolder<MavenResourceRootDescriptor, MavenResourcesTarget> holder, @NotNull final BuildOutputConsumer outputConsumer, @NotNull final CompileContext context) throws ProjectBuildException, IOException {
     final BuildDataPaths dataPaths = context.getProjectDescriptor().dataManager.getDataPaths();
     final MavenProjectConfiguration projectConfig = JpsMavenExtensionService.getInstance().getMavenProjectConfiguration(dataPaths);
     if (projectConfig == null) {
@@ -47,12 +48,12 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
 
     final MavenModuleResourceConfiguration config = target.getModuleResourcesConfiguration(dataPaths);
     if (config == null) {
-      return;
+      return ExitCode.NOTHING_DONE;
     }
 
     final Map<MavenResourceRootDescriptor, List<File>> files = new HashMap<>();
 
-    holder.processDirtyFiles(new FileProcessor<MavenResourceRootDescriptor, MavenResourcesTarget>() {
+    holder.processDirtyFiles(new FileProcessor<>() {
 
       @Override
       public boolean apply(MavenResourcesTarget t, File file, MavenResourceRootDescriptor rd) throws IOException {
@@ -89,7 +90,8 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
       return res;
     });
 
-    MavenResourceFileProcessor fileProcessor = new MavenResourceFileProcessor(projectConfig, target.getModule().getProject(), config);
+    final MavenResourceFileProcessor fileProcessor = new MavenResourceFileProcessor(projectConfig, target.getModule().getProject(), config);
+    final OutputTracker out = OutputTracker.create(outputConsumer);
 
     context.processMessage(new ProgressMessage(MavenJpsBundle.message("copying.resources", target.getModule().getName())));
     for (MavenResourceRootDescriptor rd : roots) {
@@ -108,7 +110,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
         String sourcePath = file.getPath();
         try {
           fileProcessor.copyFile(file, outputFile, rd.getConfiguration(), context, FileFilters.EVERYTHING);
-          outputConsumer.registerOutputFile(outputFile, Collections.singleton(sourcePath));
+          out.registerOutputFile(outputFile, Collections.singleton(sourcePath));
         }
         catch (UnsupportedEncodingException e) {
           context.processMessage(
@@ -122,14 +124,15 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
         }
 
         if (context.getCancelStatus().isCanceled()) {
-          return;
+          return out.isOutputGenerated()? ExitCode.OK : ExitCode.NOTHING_DONE;
         }
       }
     }
 
     context.checkCanceled();
-
     context.processMessage(new ProgressMessage(""));
+    
+    return out.isOutputGenerated()? ExitCode.OK : ExitCode.NOTHING_DONE;
   }
 
   @Override

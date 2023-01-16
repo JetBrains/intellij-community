@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.JpsBuildBundle;
+import org.jetbrains.jps.builders.impl.OutputTracker;
 import org.jetbrains.jps.builders.java.ResourceRootDescriptor;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
@@ -43,14 +44,14 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
   }
 
   @Override
-  public void build(@NotNull ResourcesTarget target,
-                    @NotNull DirtyFilesHolder<ResourceRootDescriptor, ResourcesTarget> holder,
-                    @NotNull BuildOutputConsumer outputConsumer,
-                    @NotNull CompileContext context) throws ProjectBuildException, IOException {
+  public ExitCode buildTarget(@NotNull ResourcesTarget target,
+                              @NotNull DirtyFilesHolder<ResourceRootDescriptor, ResourcesTarget> holder,
+                              @NotNull BuildOutputConsumer outputConsumer,
+                              @NotNull CompileContext context) throws ProjectBuildException, IOException {
     if (!isResourceProcessingEnabled(target.getModule())) {
-      return;
+      return ExitCode.NOTHING_DONE;
     }
-
+    final OutputTracker out = OutputTracker.create(outputConsumer);
     try {
       final Map<ResourceRootDescriptor, Boolean> skippedRoots = new HashMap<>();
       holder.processDirtyFiles((t, f, srcRoot) -> {
@@ -64,7 +65,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
           return true;
         }
         try {
-          copyResource(context, srcRoot, f, outputConsumer);
+          copyResource(context, srcRoot, f, out);
           return !context.getCancelStatus().isCanceled();
         }
         catch (IOException e) {
@@ -86,6 +87,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
     catch (Exception e) {
       throw new ProjectBuildException(e.getMessage(), e);
     }
+    return out.isOutputGenerated()? ExitCode.OK : ExitCode.NOTHING_DONE;
   }
 
   private static boolean isResourceProcessingEnabled(JpsModule module) {
