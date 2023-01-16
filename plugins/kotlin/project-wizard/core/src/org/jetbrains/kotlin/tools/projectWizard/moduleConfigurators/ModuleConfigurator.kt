@@ -308,7 +308,7 @@ interface ModuleConfigurator : DisplayableSettingItem, EntitiesOwnerDescriptor {
                 +AndroidTargetConfigurator
                 +MppModuleConfigurator
                 +JvmSinglePlatformModuleConfigurator
-                +AndroidSinglePlatformModuleConfigurator
+                +AndroidWithoutComposeSinglePlatformModuleConfigurator
                 +IOSSinglePlatformModuleConfigurator
                 +BrowserJsSinglePlatformModuleConfigurator
                 +NodeJsSinglePlatformModuleConfigurator

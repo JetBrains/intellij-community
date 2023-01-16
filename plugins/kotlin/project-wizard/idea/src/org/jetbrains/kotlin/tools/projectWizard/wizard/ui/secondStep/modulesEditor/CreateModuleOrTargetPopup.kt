@@ -43,7 +43,7 @@ class CreateModuleOrTargetPopup private constructor(
         buildList {
             if (allowMultiplatform) +MppModuleConfigurator
             +JvmSinglePlatformModuleConfigurator
-            if (allowAndroid) +AndroidSinglePlatformModuleConfigurator
+            if (allowAndroid) +AndroidWithoutComposeSinglePlatformModuleConfigurator
             if (allowSinglePlatformJsBrowser) +BrowserJsSinglePlatformModuleConfigurator
             if (allowSinglePlatformJsNode) +NodeJsSinglePlatformModuleConfigurator
             if (allowIos) +IOSSinglePlatformModuleConfigurator
