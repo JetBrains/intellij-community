@@ -2,7 +2,6 @@
 package com.intellij.junit5;
 
 import org.junit.platform.commons.support.ReflectionSupport;
-import org.junit.platform.commons.util.ReflectionUtils;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.FilterResult;
 import org.junit.platform.engine.TestDescriptor;
@@ -219,12 +218,11 @@ public final class JUnit5TestRunnerUtil {
     int nestedClassIdx = line.lastIndexOf("$");
     if (nestedClassIdx > 0) {
       AtomicReference<DiscoverySelector> nestedClassSelector = new AtomicReference<>();
-      ReflectionUtils.tryToLoadClass(line).ifFailure(__ -> {
+      ReflectionSupport.tryToLoadClass(line).ifFailure(__ -> {
         nestedClassSelector.set(getNestedSelector(line, nestedClassIdx));
       });
       if (nestedClassSelector.get() != null) return nestedClassSelector.get();
     }
-
     return DiscoverySelectors.selectClass(line);
   }
 
@@ -251,8 +249,7 @@ public final class JUnit5TestRunnerUtil {
     }
     return null;
   }
-  private static NestedClassSelector getNestedSelector(String line,
-                                                       int nestedClassIdx) {
+  private static NestedClassSelector getNestedSelector(String line, int nestedClassIdx) {
     String enclosingClass = line.substring(0, nestedClassIdx);
     String nestedClassName = line.substring(nestedClassIdx + 1);
     DiscoverySelector enclosingClassSelector = createClassSelector(enclosingClass);
