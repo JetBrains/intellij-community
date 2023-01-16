@@ -877,6 +877,18 @@ public final class JBUI {
       public static JBDimension defaultStripeToolbarButtonSize() {
         return size(40, 40);
       }
+
+      public static int stripeToolbarButtonIconSize() {
+        return getInt(stripeToolbarButtonIconSizeKey(), defaultStripeToolbarButtonIconSize());
+      }
+
+      public @NotNull static String stripeToolbarButtonIconSizeKey() {
+        return "StripeToolbar.Button.iconSize";
+      }
+
+      public static int defaultStripeToolbarButtonIconSize() {
+        return 20;
+      }
     }
 
     public static final class Label {

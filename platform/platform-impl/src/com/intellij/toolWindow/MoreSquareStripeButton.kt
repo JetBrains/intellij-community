@@ -37,13 +37,23 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowLeftToolbar) 
 
   override fun checkSkipPressForEvent(e: MouseEvent) = e.button != MouseEvent.BUTTON1
 
+  override fun updateUI() {
+    super.updateUI()
+    myPresentation.icon = scaleIcon()
+  }
+
   companion object {
     private fun createPresentation(): Presentation {
       val presentation = Presentation()
-      presentation.icon = IconLoader.loadCustomVersionOrScale(AllIcons.Actions.MoreHorizontal as ScalableIcon, 20)
+      presentation.icon = scaleIcon()
       presentation.isEnabledAndVisible = true
       return presentation
     }
+
+    private fun scaleIcon() = IconLoader.loadCustomVersionOrScale(
+      AllIcons.Actions.MoreHorizontal as ScalableIcon,
+      JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSize()
+    )
 
     private fun createAction(toolWindowToolbar: ToolWindowLeftToolbar): DumbAwareAction {
       return object : DumbAwareAction() {
