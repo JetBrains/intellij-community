@@ -290,7 +290,7 @@ abstract class PropertyNameInspectionBase protected constructor(
 
             private && containingClassOrObject is KtObjectDeclaration -> PropertyKind.OBJECT_PRIVATE
 
-            !private && (containingClassOrObject is KtObjectDeclaration || isTopLevel) -> PropertyKind.OBJECT_OR_TOP_LEVEL
+            !private && (containingClassOrObject is KtObjectDeclaration) || isTopLevel -> PropertyKind.OBJECT_OR_TOP_LEVEL
 
             hasModifier(KtTokens.CONST_KEYWORD) -> PropertyKind.CONST
 
