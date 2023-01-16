@@ -46,6 +46,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.ex.RangesBuilder;
 import com.intellij.openapi.vfs.*;
+import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -759,7 +760,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       public @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) {
         InspectionProfileImpl inspectionProfileFromYaml = tryLoadProfileFromYaml(profilePath,
                                                                                  InspectionToolRegistrar.getInstance(),
-                                                                                 InspectionProjectProfileManager.getInstance(project));
+                                                                                 (BaseInspectionProfileManager)InspectionProjectProfileManager.getInstance(project));
         if (inspectionProfileFromYaml != null) return inspectionProfileFromYaml;
 
         try {

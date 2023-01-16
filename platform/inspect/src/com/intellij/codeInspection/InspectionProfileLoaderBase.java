@@ -5,7 +5,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolsSupplier;
 import com.intellij.codeInspection.inspectionProfile.YamlInspectionProfileImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.parser.ParserException;
@@ -22,7 +22,7 @@ public abstract class InspectionProfileLoaderBase<T extends InspectionProfileImp
   @Nullable
   protected InspectionProfileImpl tryLoadProfileFromYaml(@NotNull String profilePath,
                                                          @NotNull InspectionToolsSupplier inspectionToolsSupplier,
-                                                         @NotNull InspectionProfileManager profileManager) {
+                                                         @NotNull BaseInspectionProfileManager profileManager) {
     if (!YamlInspectionProfileImpl.isYamlFile(profilePath)) {
       return null;
     }
