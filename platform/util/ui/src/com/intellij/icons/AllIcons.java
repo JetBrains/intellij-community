@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.icons;
 
 import com.intellij.ui.IconManager;
@@ -1109,6 +1109,10 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Production = load("scope/production.svg", -531705307, 0);
     /** 16x16 */ public static final @NotNull Icon Scratches = load("scope/scratches.svg", 746266347, 0);
     /** 16x16 */ public static final @NotNull Icon Tests = load("scope/tests.svg", 483983235, 0);
+  }
+
+  public static final class Status {
+    /** 16x16 */ public static final @NotNull Icon FailedInProgress = load("status/failedInProgress.svg", -1938290202, 0);
   }
 
   public static final class Toolbar {

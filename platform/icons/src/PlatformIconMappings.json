@@ -607,6 +607,7 @@
         "ide/fatalError.svg"
       ],
       "errorOutline.svg": "ide/fatalError-read.svg",
+      "failedInProgress.svg": "status/failedInProgress.svg",
       "info.svg": "general/balloonInformation.svg",
       "warning.svg": "general/balloonWarning.svg",
       "warningOutline.svg": "general/showWarning.svg"
