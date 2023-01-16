@@ -23,10 +23,10 @@ import com.intellij.testFramework.observable.waitForPromise
 import com.intellij.testFramework.openProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
-import org.jetbrains.plugins.gradle.testFramework.util.generateWrapper
 import org.jetbrains.plugins.gradle.testFramework.util.openProjectAsyncAndWait
 import org.jetbrains.plugins.gradle.testFramework.util.withSuppressedErrors
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -58,7 +58,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
     GradleTestFixtureFactory.getFixtureFactory().createFileTestFixture("GradleTestFixture/$gradleVersion/$projectName") {
       configureProject()
       excludeFiles(".gradle", "build")
-      withFiles { generateWrapper(it, gradleVersion) }
+      withFiles { generateGradleWrapper(it.toNioPath(), gradleVersion) }
       withFiles { runBlocking { createProjectCaches(it) } }
     }
   )

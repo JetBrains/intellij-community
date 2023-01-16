@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.*
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
@@ -17,6 +18,7 @@ import kotlin.io.path.writeText
 @ApiStatus.NonExtendable
 interface AssetsProcessor {
 
+  @RequiresWriteLock
   fun generateSources(
     outputDirectory: Path,
     assets: List<GeneratorAsset>,
@@ -25,6 +27,7 @@ interface AssetsProcessor {
 
   companion object {
 
+    @JvmStatic
     fun getInstance(): AssetsProcessor = service()
   }
 }

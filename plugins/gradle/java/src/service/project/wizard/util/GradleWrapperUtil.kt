@@ -1,38 +1,36 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.testFramework.util
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("GradleWrapperUtil")
+
+package org.jetbrains.plugins.gradle.service.project.wizard.util
 
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.starters.local.generator.AssetsProcessor
-import com.intellij.ide.starters.local.generator.TestFileSystemLocation
-import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.createFile
-import com.intellij.openapi.vfs.writeText
+import com.intellij.openapi.util.io.findOrCreateFile
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.WrapperConfiguration
 import org.gradle.wrapper.WrapperExecutor.*
+import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayOutputStream
 import java.net.URI
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.writeText
 
-fun generateWrapper(root: VirtualFile, gradleVersion: GradleVersion) {
-  generateWrapper(root, defaultWrapperConfiguration(gradleVersion))
+@ApiStatus.Internal
+fun generateGradleWrapper(root: Path, gradleVersion: GradleVersion) {
+  generateGradleWrapper(root, generateGradleWrapperConfiguration(gradleVersion))
 }
 
-fun generateWrapper(root: VirtualFile, configuration: WrapperConfiguration) {
-  runWriteActionAndWait {
-    val propertiesLocation = StandardAssetsProvider().gradleWrapperPropertiesLocation
-    val propertiesFile = root.createFile(propertiesLocation)
-    val propertiesContent = getWrapperPropertiesContent(configuration)
-    propertiesFile.writeText(propertiesContent)
-    val assets = StandardAssetsProvider().getGradlewAssets()
-
-    AssetsProcessor.getInstance().generateSources(TestFileSystemLocation(root, Path.of(root.name)), assets, emptyMap())
-  }
+private fun generateGradleWrapper(root: Path, configuration: WrapperConfiguration) {
+  val propertiesLocation = StandardAssetsProvider().gradleWrapperPropertiesLocation
+  val propertiesFile = root.findOrCreateFile(propertiesLocation)
+  val propertiesContent = getWrapperPropertiesContent(configuration)
+  propertiesFile.writeText(propertiesContent)
+  val assets = StandardAssetsProvider().getGradlewAssets()
+  AssetsProcessor.getInstance().generateSources(root, assets, emptyMap())
 }
 
-private fun defaultWrapperConfiguration(gradleVersion: GradleVersion): WrapperConfiguration {
+private fun generateGradleWrapperConfiguration(gradleVersion: GradleVersion): WrapperConfiguration {
   return WrapperConfiguration().apply {
     distribution = URI("https://services.gradle.org/distributions/gradle-${gradleVersion.version}-bin.zip")
   }

@@ -8,7 +8,6 @@ import com.intellij.ide.projectWizard.ProjectSettingsStep;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.GitSilentFileAdder;
 import com.intellij.openapi.GitSilentFileAdderProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -62,7 +61,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScri
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.KotlinDslGradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionUtil;
+import org.jetbrains.plugins.gradle.service.project.wizard.util.GradleWrapperUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -229,13 +228,9 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       }
       openBuildScriptFile(project, buildScriptFile);
       if (isCreatingNewLinkedProject() && gradleDistributionType.isWrapped()) {
-        createWrapper(project, () -> {
-          reloadProject(project);
-        });
+        generateGradleWrapper(project);
       }
-      else {
-        reloadProject(project);
-      }
+      reloadProject(project);
     }, ModalityState.NON_MODAL, project.getDisposed());
   }
 
@@ -256,15 +251,13 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     });
   }
 
-  private void createWrapper(@NotNull Project project, @NotNull Runnable callback) {
-    GitSilentFileAdder vcsFileAdder = GitSilentFileAdderProvider.create(project);
-    vcsFileAdder.markFileForAdding(rootProjectPath.resolve("gradle"), true);
-    vcsFileAdder.markFileForAdding(rootProjectPath.resolve("gradlew"), false);
-    vcsFileAdder.markFileForAdding(rootProjectPath.resolve("gradlew.bat"), false);
-    GradleExecutionUtil.ensureInstalledWrapper(project, rootProjectPath, gradleVersion, () -> {
-      vcsFileAdder.finish();
-      callback.run();
-    });
+  private void generateGradleWrapper(@NotNull Project project) {
+    var vcs = GitSilentFileAdderProvider.create(project);
+    vcs.markFileForAdding(rootProjectPath.resolve("gradle"), true);
+    vcs.markFileForAdding(rootProjectPath.resolve("gradlew"), false);
+    vcs.markFileForAdding(rootProjectPath.resolve("gradlew.bat"), false);
+    GradleWrapperUtil.generateGradleWrapper(rootProjectPath, gradleVersion);
+    vcs.finish();
   }
 
   public void configureBuildScript(@NotNull Consumer<GradleBuildScriptBuilder<?>> configure) {
