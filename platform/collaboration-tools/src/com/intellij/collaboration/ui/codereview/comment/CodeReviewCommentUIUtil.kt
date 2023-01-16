@@ -12,7 +12,7 @@ import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-object ReviewUIUtil {
+object CodeReviewCommentUIUtil {
 
   const val INLAY_PADDING = 10
   private const val EDITOR_INLAY_PANEL_ARC = 10

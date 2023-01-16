@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
-import com.intellij.collaboration.ui.codereview.comment.ReviewUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.diff.util.Side
@@ -40,11 +40,11 @@ internal constructor(private val project: Project,
     GHPRReviewThreadComponent.createForInlay(project, thread, reviewDataProvider,
                                              avatarIconsProvider, suggestedChangeHelper,
                                              ghostUser, currentUser).apply {
-      border = JBUI.Borders.empty(ReviewUIUtil.INLAY_PADDING - GHPRReviewThreadComponent.INLAY_COMPONENT_TYPE.paddingInsets.top,
+      border = JBUI.Borders.empty(CodeReviewCommentUIUtil.INLAY_PADDING - GHPRReviewThreadComponent.INLAY_COMPONENT_TYPE.paddingInsets.top,
                                   0,
-                                  ReviewUIUtil.INLAY_PADDING - GHPRReviewThreadComponent.INLAY_COMPONENT_TYPE.paddingInsets.bottom,
+                                  CodeReviewCommentUIUtil.INLAY_PADDING - GHPRReviewThreadComponent.INLAY_COMPONENT_TYPE.paddingInsets.bottom,
                                   0)
-    }.let { ReviewUIUtil.createEditorInlayPanel(it) }
+    }.let { CodeReviewCommentUIUtil.createEditorInlayPanel(it) }
 
   override fun createSingleCommentComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
     val textFieldModel = GHCommentTextFieldModel(project) {
@@ -145,6 +145,6 @@ internal constructor(private val project: Project,
       GHCommentTextFieldFactory.AvatarConfig(avatarIconsProvider, currentUser)
     ).apply {
       border = JBUI.Borders.empty(8)
-    }.let { ReviewUIUtil.createEditorInlayPanel(it) }
+    }.let { CodeReviewCommentUIUtil.createEditorInlayPanel(it) }
   }
 }

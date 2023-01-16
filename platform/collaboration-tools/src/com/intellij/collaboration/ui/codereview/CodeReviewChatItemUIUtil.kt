@@ -4,7 +4,7 @@ package com.intellij.collaboration.ui.codereview
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.wrapWithLimitedSize
 import com.intellij.collaboration.ui.JPanelWithBackground
 import com.intellij.collaboration.ui.VerticalListPanel
-import com.intellij.collaboration.ui.codereview.comment.ReviewUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.hover.HoverStateListener
@@ -65,8 +65,8 @@ object CodeReviewChatItemUIUtil {
     COMPACT {
       override val iconSize: Int = 20
       override val iconGap: Int = 10
-      override val paddingInsets: Insets = Insets(4, ReviewUIUtil.INLAY_PADDING, 4, ReviewUIUtil.INLAY_PADDING)
-      override val inputPaddingInsets: Insets = Insets(6, ReviewUIUtil.INLAY_PADDING, 6, ReviewUIUtil.INLAY_PADDING)
+      override val paddingInsets: Insets = Insets(4, CodeReviewCommentUIUtil.INLAY_PADDING, 4, CodeReviewCommentUIUtil.INLAY_PADDING)
+      override val inputPaddingInsets: Insets = Insets(6, CodeReviewCommentUIUtil.INLAY_PADDING, 6, CodeReviewCommentUIUtil.INLAY_PADDING)
     };
 
     /**
