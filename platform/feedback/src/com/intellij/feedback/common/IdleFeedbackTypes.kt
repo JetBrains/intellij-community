@@ -101,7 +101,7 @@ enum class IdleFeedbackTypes {
   PRODUCTIVITY_METRIC_FEEDBACK {
     override val fusFeedbackId: String = "productivity_metric_feedback"
     override val suitableIdeVersion: String = "2023.1"
-    private val lastDayCollectFeedback = LocalDate(2022, 12, 6)
+    private val lastDayCollectFeedback = LocalDate(2023, 2, 28)
     private val maxNumberNotificationShowed = 1
 
     override fun isSuitable(): Boolean {
