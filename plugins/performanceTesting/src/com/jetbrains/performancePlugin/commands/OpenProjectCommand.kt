@@ -44,7 +44,7 @@ class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
     private val LOG = Logger.getInstance(OpenProjectCommand::class.java)
 
     fun shouldOpenInSmartMode(project: Project): Boolean {
-      return (!SystemProperties.getBooleanProperty("performance.execute.script.after.project.opened", false)
+      return (!SystemProperties.getBooleanProperty("performance.execute.script.right.after.ide.opened", false)
               && !LightEdit.owns(project)
               && !SystemProperties.getBooleanProperty("performance.execute.script.after.scanning", false))
     }
