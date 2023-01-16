@@ -371,18 +371,18 @@ public class StatementParser {
     if (isRecordPatternInForEach(builder)) {
       myParser.getPatternParser().parsePattern(builder);
       if (builder.getTokenType() == JavaTokenType.COLON) {
-        return parseForEachFromColon(builder, statement);
+        return parseForEachFromColon(builder, statement, JavaElementType.FOREACH_PATTERN_STATEMENT);
       }
       error(builder, JavaPsiBundle.message("expected.colon"));
       // recovery: just skip everything until ')'
       while (true) {
         IElementType tokenType = builder.getTokenType();
         if (tokenType == null) {
-          done(statement, JavaElementType.FOREACH_STATEMENT);
+          done(statement, JavaElementType.FOREACH_PATTERN_STATEMENT);
           return statement;
         }
         if (tokenType == JavaTokenType.RPARENTH) {
-          return parserForEachFromRparenth(builder, statement);
+          return parserForEachFromRparenth(builder, statement, JavaElementType.FOREACH_PATTERN_STATEMENT);
         }
         builder.advanceLexer();
       }
@@ -396,7 +396,7 @@ public class StatementParser {
     }
     else {
       afterParenth.drop();
-      return parseForEachFromColon(builder, statement);
+      return parseForEachFromColon(builder, statement, JavaElementType.FOREACH_STATEMENT);
     }
   }
 
@@ -483,22 +483,22 @@ public class StatementParser {
   }
 
   @NotNull
-  private PsiBuilder.Marker parseForEachFromColon(PsiBuilder builder, PsiBuilder.Marker statement) {
+  private PsiBuilder.Marker parseForEachFromColon(PsiBuilder builder, PsiBuilder.Marker statement, IElementType foreachStatement) {
     builder.advanceLexer();
 
     if (myParser.getExpressionParser().parse(builder) == null) {
       error(builder, JavaPsiBundle.message("expected.expression"));
     }
 
-    return parserForEachFromRparenth(builder, statement);
+    return parserForEachFromRparenth(builder, statement, foreachStatement);
   }
 
-  private PsiBuilder.Marker parserForEachFromRparenth(PsiBuilder builder, PsiBuilder.Marker statement) {
+  private PsiBuilder.Marker parserForEachFromRparenth(PsiBuilder builder, PsiBuilder.Marker statement, IElementType forEachType) {
     if (expectOrError(builder, JavaTokenType.RPARENTH, "expected.rparen") && parseStatement(builder) == null) {
       error(builder, JavaPsiBundle.message("expected.statement"));
     }
 
-    done(statement, JavaElementType.FOREACH_STATEMENT);
+    done(statement, forEachType);
     return statement;
   }
 

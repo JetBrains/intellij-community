@@ -18,16 +18,12 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a Java enhanced {@code for}   statement.
- *
- * @author dsl
+ * Represents a Java  {@code for} statement with a pattern.
  */
-public interface PsiForeachStatement extends PsiForeachStatementBase {
+public interface PsiForeachPatternStatement extends PsiForeachStatementBase {
   /**
-   * Returns the variable containing the iteration parameter of the statement.
-   *
-   * @return the iteration parameter instance.
+   * @return pattern used in the foreach, e. g. {@code for (Rec(var x): recs) }
    */
   @NotNull
-  PsiParameter getIterationParameter();
+  PsiPattern getIterationPattern();
 }

@@ -5,7 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.light.LightParameter;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -13,23 +12,13 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author dsl
- */
-public class PsiForeachStatementImpl extends PsiLoopStatementImpl implements PsiForeachStatement, Constants {
-  private static final Logger LOG = Logger.getInstance(PsiForeachStatementImpl.class);
-  public PsiForeachStatementImpl() {
-    super(FOREACH_STATEMENT);
-  }
-
-  @Override
-  @NotNull
-  public PsiParameter getIterationParameter() {
-    return (PsiParameter)Objects.requireNonNull(findChildByRoleAsPsiElement(ChildRole.FOR_ITERATION_PARAMETER));
+public class PsiForeachPatternStatementImpl extends PsiLoopStatementImpl implements PsiForeachPatternStatement, Constants {
+  private static final Logger LOG = Logger.getInstance(PsiForeachPatternStatementImpl.class);
+  public PsiForeachPatternStatementImpl() {
+    super(FOREACH_PATTERN_STATEMENT);
   }
 
   @Override
@@ -73,9 +62,6 @@ public class PsiForeachStatementImpl extends PsiLoopStatementImpl implements Psi
       case ChildRole.RPARENTH:
         return findChildByType(RPARENTH);
 
-      case ChildRole.FOR_ITERATION_PARAMETER:
-        return findChildByType(PARAMETER);
-
       case ChildRole.COLON:
         return findChildByType(COLON);
 
@@ -98,9 +84,6 @@ public class PsiForeachStatementImpl extends PsiLoopStatementImpl implements Psi
     else if (i == RPARENTH) {
       return ChildRole.RPARENTH;
     }
-    else if (i == PARAMETER) {
-      return ChildRole.FOR_ITERATION_PARAMETER;
-    }
     else if (i == COLON) {
       return ChildRole.COLON;
     }
@@ -119,7 +102,7 @@ public class PsiForeachStatementImpl extends PsiLoopStatementImpl implements Psi
 
   @Override
   public String toString() {
-    return "PsiForeachStatement";
+    return "PsiForeachPatternStatement";
   }
 
   @Override
@@ -129,16 +112,26 @@ public class PsiForeachStatementImpl extends PsiLoopStatementImpl implements Psi
       // Parent element should not see our vars
       return true;
 
-    return processor.execute(getIterationParameter(), state);
+    PsiPattern pattern = getIterationPattern();
+    if (pattern instanceof PsiDeconstructionPattern) {
+      PsiDeconstructionPattern deconstructionPattern = (PsiDeconstructionPattern)pattern;
+      return deconstructionPattern.processDeclarations(processor, state, lastParent, place);
+    }
+    return false;
   }
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor)visitor).visitForeachStatement(this);
+      ((JavaElementVisitor)visitor).visitForeachPatternStatement(this);
     }
     else {
       visitor.visitElement(this);
     }
+  }
+
+  @Override
+  public @NotNull PsiPattern getIterationPattern() {
+    return Objects.requireNonNull(PsiTreeUtil.getChildOfType(this, PsiPattern.class));
   }
 }

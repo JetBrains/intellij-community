@@ -1,5 +1,5 @@
 PsiJavaFile:ForEachIncomplete2.java
-  PsiForeachStatement
+  PsiForeachPatternStatement
     PsiKeyword:for('for')
     PsiWhiteSpace(' ')
     PsiJavaToken:LPARENTH('(')

@@ -713,6 +713,15 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override
   public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
+    handleForeach(statement);
+  }
+
+  @Override
+  public void visitForeachPatternStatement(@NotNull PsiForeachPatternStatement statement) {
+    handleForeach(statement);
+  }
+
+  private void handleForeach(@NotNull PsiForeachStatementBase statement) {
     startElement(statement);
     final PsiStatement body = statement.getBody();
     myStartStatementStack.pushStatement(body == null ? statement : body, false);
@@ -727,14 +736,13 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     myCurrentFlow.addInstruction(instruction);
     addElementOffsetLater(statement, false);
 
-    PsiForeachDeclarationElement iterationDeclaration = statement.getIterationDeclaration();
-    if (iterationDeclaration instanceof PsiParameter) {
-      final PsiParameter iterationParameter = (PsiParameter)iterationDeclaration;
+    if (statement instanceof PsiForeachStatement) {
+      final PsiParameter iterationParameter = ((PsiForeachStatement)statement).getIterationParameter();
       if (myPolicy.isParameterAccepted(iterationParameter)) {
         generateWriteInstruction(iterationParameter);
       }
-    } else if (iterationDeclaration instanceof PsiPattern) {
-      PsiPattern pattern = (PsiPattern)iterationDeclaration;
+    } else if (statement instanceof PsiForeachPatternStatement) {
+      PsiPattern pattern = ((PsiForeachPatternStatement)statement).getIterationPattern();
       processPattern(pattern);
     }
     if (body != null) {
