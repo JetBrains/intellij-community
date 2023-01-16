@@ -205,7 +205,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     return navigatable != null ? wrapKeepEditorAreaFocusNavigatable(myProject, navigatable) : null;
   }
 
-  private @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame) {
+  protected @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame) {
     XSourcePosition position = frame.getSourcePosition();
     return position != null ? position.createNavigatable(myProject) : null;
   }

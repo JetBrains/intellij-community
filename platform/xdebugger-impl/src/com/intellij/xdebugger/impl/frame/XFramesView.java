@@ -29,6 +29,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
@@ -115,6 +116,12 @@ public final class XFramesView extends XDebugView {
             handleFrameSelection();
           }
         };
+      }
+
+      @Override
+      protected @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame) {
+        XSourcePosition position = session.getFrameSourcePosition(frame);
+        return position != null ? position.createNavigatable(session.getProject()) : null;
       }
     };
     myFrameSelectionHandler.install(myFramesList);
