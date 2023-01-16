@@ -249,6 +249,12 @@ class ListLayout private constructor(
 
   override fun invalidateLayout(target: Container) = Unit
 
+  override fun toString(): String =
+    when (majorAxis) {
+      Axis.X -> "HorizontalListLayout(minorAxisAlignment=$minorAxisAlignment, defaultGrowPolicy=$defaultGrowPolicy, gap=$gap)"
+      Axis.Y -> "VerticalListLayout(minorAxisAlignment=$minorAxisAlignment, defaultGrowPolicy=$defaultGrowPolicy, gap=$gap)"
+    }
+
   companion object {
     /**
      * Create a simple horizontal variant - major axis [Axis.X]
@@ -290,4 +296,6 @@ class ListLayout private constructor(
 
     private fun getVisibleComponents(container: Container): List<Component> = container.components.filter { it.isVisible }
   }
+
+
 }
