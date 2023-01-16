@@ -2680,6 +2680,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/inapplicableAlreadyTyped.kt");
         }
 
+        @TestMetadata("inapplicableDefinitelyNonNullableTypeToReifiedType.kt")
+        public void testInapplicableDefinitelyNonNullableTypeToReifiedType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/inapplicableDefinitelyNonNullableTypeToReifiedType.kt");
+        }
+
+        @TestMetadata("inapplicableDefinitelyNonNullableTypeToReifiedTypeWithOtherArguments.kt")
+        public void testInapplicableDefinitelyNonNullableTypeToReifiedTypeWithOtherArguments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/inapplicableDefinitelyNonNullableTypeToReifiedTypeWithOtherArguments.kt");
+        }
+
         @TestMetadata("inapplicableNotGeneric.kt")
         public void testInapplicableNotGeneric() throws Exception {
             runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/inapplicableNotGeneric.kt");
@@ -2725,6 +2735,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertDefinitelyNonNullTypeWithVarargs.kt");
         }
 
+        @TestMetadata("insertDefinitelyNonNullableType.kt")
+        public void testInsertDefinitelyNonNullableType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertDefinitelyNonNullableType.kt");
+        }
+
+        @TestMetadata("insertDefinitelyNonNullableTypeToInlineFun.kt")
+        public void testInsertDefinitelyNonNullableTypeToInlineFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertDefinitelyNonNullableTypeToInlineFun.kt");
+        }
+
+        @TestMetadata("insertDefinitelyNonNullableTypeWithOtherReifiedType.kt")
+        public void testInsertDefinitelyNonNullableTypeWithOtherReifiedType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertDefinitelyNonNullableTypeWithOtherReifiedType.kt");
+        }
+
         @TestMetadata("insertImportForArg.kt")
         public void testInsertImportForArg() throws Exception {
             runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertImportForArg.kt");
@@ -2743,6 +2768,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("insertMultipleSomeWithClashingName.kt")
         public void testInsertMultipleSomeWithClashingName() throws Exception {
             runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertMultipleSomeWithClashingName.kt");
+        }
+
+        @TestMetadata("insertReifiedType.kt")
+        public void testInsertReifiedType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertReifiedType.kt");
         }
 
         @TestMetadata("insertTwoTypesFun.kt")
