@@ -201,7 +201,7 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
     toolbarActionGroup.addAction(moreActionGroup)
     val toolbar: ActionToolbarImpl = object : ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, toolbarActionGroup, true) {
       override fun createToolbarButton(action: AnAction,
-                                       look: ActionButtonLook,
+                                       look: ActionButtonLook?,
                                        place: String,
                                        presentation: Presentation,
                                        minimumSize: Dimension): ActionButton {
