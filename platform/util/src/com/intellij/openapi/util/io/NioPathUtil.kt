@@ -12,6 +12,14 @@ import java.nio.file.Paths
 import kotlin.io.path.*
 
 
+/**
+ * List of path directories and file name.
+ *
+ * For example, pathList for `"/a/b/c/d"` is `["a", "b", "c", "d"]`
+ */
+val Path.pathList: List<String>
+  get() = map { it.pathString }
+
 fun Path.toCanonicalPath(): String {
   return getResolvedPathString(null)
 }
@@ -97,7 +105,7 @@ private fun String.getResolvedPathString(relativePath: String?): String {
 object NioPathPrefixTreeFactory : AbstractPrefixTreeFactory<Path, String>() {
 
   override fun convertToList(element: Path): List<String> {
-    return element.map { it.pathString }
+    return element.pathList
   }
 }
 

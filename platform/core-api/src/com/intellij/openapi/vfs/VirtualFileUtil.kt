@@ -120,7 +120,7 @@ fun VirtualFile.findOrCreateDirectory(relativePath: @SystemIndependent String): 
   var directory = checkNotNull(fileSystem.findFileByPath("/")) {
     "Cannot find file system root for file: $path/$relativePath"
   }
-  val names = NioPathPrefixTreeFactory.convertToList(path.getResolvedNioPath(relativePath))
+  val names = path.getResolvedNioPath(relativePath).pathList
   for (name in names) {
     directory = directory.findChild(name) ?: directory.createChildDirectory(fileSystem, name)
     if (!directory.isDirectory) {
