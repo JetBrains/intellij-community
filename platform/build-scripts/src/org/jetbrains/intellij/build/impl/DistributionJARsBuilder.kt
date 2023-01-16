@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "BlockingMethodInNonBlockingContext", "ReplaceNegatedIsEmptyWithIsNotEmpty", "PrivatePropertyName")
 
 package org.jetbrains.intellij.build.impl
@@ -196,6 +196,7 @@ class DistributionJARsBuilder {
                             tempDir = context.paths.tempDir.resolve("searchableOptions"),
                             ideClasspath = ideClasspath,
                             arguments = listOf("traverseUI", targetDirectory.toString(), "true"),
+                            vmOptions = listOf("-Xmx2g"),
                             systemProperties = systemProperties)
       check(Files.isDirectory(targetDirectory)) {
         "Failed to build searchable options index: $targetDirectory does not exist. See log above for error output from traverseUI run."
