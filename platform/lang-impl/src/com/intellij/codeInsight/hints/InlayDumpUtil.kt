@@ -25,6 +25,7 @@ object InlayDumpUtil {
     file: PsiFile,
     editor: Editor,
     document: Document,
+    // if document has multiple injected files, a proper host offset should be passed
     offsetShift: Int = 0
   ): String {
     val model = editor.inlayModel
