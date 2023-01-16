@@ -2,8 +2,9 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.application.subscribe
-import com.intellij.ide.impl.trustedProjects.LocatedProject
 import com.intellij.ide.impl.trustedProjects.TrustedProjectsListener
+import com.intellij.ide.impl.trustedProjects.TrustedProjectsLocator
+import com.intellij.ide.impl.trustedProjects.TrustedProjectsLocator.LocatedProject
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
@@ -124,7 +125,7 @@ abstract class GradleUntrustedProjectTestCase {
     project: Project,
     vararg relativePaths: String
   ) {
-    val locatedProject = LocatedProject.locateProject(project)
+    val locatedProject = TrustedProjectsLocator.locateProject(project)
     Assertions.assertEquals(
       relativePaths.map { rootPath.getResolvedPath(it) }.toSet(),
       locatedProject.projectRoots.toSet()

@@ -41,7 +41,7 @@ object TrustedProjectsDialog {
     @NlsContexts.Button distrustButtonText: String,
     @NlsContexts.Button cancelButtonText: String
   ): Boolean {
-    val locatedProject = LocatedProject.locateProject(projectRoot, project)
+    val locatedProject = TrustedProjectsLocator.locateProject(projectRoot, project)
     val projectTrustedState = TrustedProjects.getProjectTrustedState(locatedProject)
     if (projectTrustedState == ThreeState.YES) {
       TrustedProjects.setProjectTrusted(locatedProject, true)
@@ -108,7 +108,7 @@ object TrustedProjectsDialog {
     @NlsContexts.Button trustButtonText: String,
     @NlsContexts.Button distrustButtonText: String
   ): Boolean {
-    val locatedProject = LocatedProject.locateProject(project)
+    val locatedProject = TrustedProjectsLocator.locateProject(project)
     if (TrustedProjects.isProjectTrusted(locatedProject)) {
       TrustedProjects.setProjectTrusted(locatedProject, true)
       return true
@@ -140,7 +140,7 @@ object TrustedProjectsDialog {
     @NlsContexts.Button distrustButtonText: String,
     @NlsContexts.Button cancelButtonText: String
   ): Boolean {
-    val locatedProject = LocatedProject.locateProject(projectRoot, project)
+    val locatedProject = TrustedProjectsLocator.locateProject(projectRoot, project)
     val projectTrustedState = TrustedProjects.getProjectTrustedState(locatedProject)
     if (projectTrustedState == ThreeState.YES) {
       TrustedProjects.setProjectTrusted(locatedProject, true)
@@ -191,7 +191,7 @@ object TrustedProjectsDialog {
     @NlsContexts.Button trustButtonText: String,
     @NlsContexts.Button distrustButtonText: String
   ): Boolean {
-    val locatedProject = LocatedProject.locateProject(project)
+    val locatedProject = TrustedProjectsLocator.locateProject(project)
     if (TrustedProjects.isProjectTrusted(locatedProject)) {
       TrustedProjects.setProjectTrusted(locatedProject, true)
       return true

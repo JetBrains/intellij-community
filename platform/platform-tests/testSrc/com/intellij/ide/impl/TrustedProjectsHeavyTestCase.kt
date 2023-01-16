@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
-import com.intellij.ide.impl.trustedProjects.LocatedProject
 import com.intellij.ide.impl.trustedProjects.TrustedProjectsLocator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeAction
@@ -157,7 +156,7 @@ abstract class TrustedProjectsHeavyTestCase {
     project: Project,
     vararg relativeRoots: String
   ) {
-    val locatedProject = LocatedProject.locateProject(project)
+    val locatedProject = TrustedProjectsLocator.locateProject(project)
     Assertions.assertEquals(
       relativeRoots.map { testRoot.path.getResolvedNioPath(it) }.toSet(),
       locatedProject.projectRoots.toSet()

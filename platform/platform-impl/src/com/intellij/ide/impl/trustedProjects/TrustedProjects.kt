@@ -4,6 +4,7 @@ package com.intellij.ide.impl.trustedProjects
 import com.intellij.ide.impl.*
 import com.intellij.ide.impl.TrustedPathsSettings
 import com.intellij.ide.impl.TrustedProjectSettings
+import com.intellij.ide.impl.trustedProjects.TrustedProjectsLocator.LocatedProject
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -70,8 +71,8 @@ internal object TrustedProjects {
   @Deprecated("Use isProjectTrusted instead")
   fun isProjectImplicitlyTrusted(projectDir: Path?, project: Project?): Boolean {
     val locatedProject = when {
-      projectDir != null -> LocatedProject.locateProject(projectDir, project)
-      project != null -> LocatedProject.locateProject(project)
+      projectDir != null -> TrustedProjectsLocator.locateProject(projectDir, project)
+      project != null -> TrustedProjectsLocator.locateProject(project)
       else -> null
     }
     return getImplicitTrustedProjectState(locatedProject) == ThreeState.YES

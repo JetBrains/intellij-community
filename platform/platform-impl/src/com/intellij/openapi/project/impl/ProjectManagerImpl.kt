@@ -14,9 +14,9 @@ import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
 import com.intellij.ide.impl.*
-import com.intellij.ide.impl.trustedProjects.LocatedProject
 import com.intellij.ide.impl.trustedProjects.TrustedProjects
 import com.intellij.ide.impl.trustedProjects.TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProjectAsync
+import com.intellij.ide.impl.trustedProjects.TrustedProjectsLocator
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.lightEdit.LightEditService
@@ -1339,7 +1339,7 @@ interface ProjectServiceContainerCustomizer {
  * @return true, if we should proceed with project opening, false if the process of project opening should be canceled.
  */
 private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
-  val locatedProject = LocatedProject.locateProject(projectStoreBaseDir, project = null)
+  val locatedProject = TrustedProjectsLocator.locateProject(projectStoreBaseDir, project = null)
   if (TrustedProjects.isProjectTrusted(locatedProject)) {
     // the trusted state of this project path is already known => proceed with opening
     return true

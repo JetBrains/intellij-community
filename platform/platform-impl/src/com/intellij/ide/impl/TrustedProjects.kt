@@ -4,10 +4,10 @@
 
 package com.intellij.ide.impl
 
-import com.intellij.ide.impl.trustedProjects.LocatedProject
 import com.intellij.ide.impl.trustedProjects.TrustedProjects
 import com.intellij.ide.impl.trustedProjects.TrustedProjectsDialog
 import com.intellij.ide.impl.trustedProjects.TrustedProjectsListener
+import com.intellij.ide.impl.trustedProjects.TrustedProjectsLocator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -53,11 +53,11 @@ enum class OpenUntrustedProjectChoice {
   CANCEL;
 }
 
-fun Project.isTrusted() = TrustedProjects.isProjectTrusted(LocatedProject.locateProject(this))
+fun Project.isTrusted() = TrustedProjects.isProjectTrusted(TrustedProjectsLocator.locateProject(this))
 
-fun Project.setTrusted(isTrusted: Boolean) = TrustedProjects.setProjectTrusted(LocatedProject.locateProject(this), isTrusted)
+fun Project.setTrusted(isTrusted: Boolean) = TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(this), isTrusted)
 
-fun Project.getTrustedState() = TrustedProjects.getProjectTrustedState(LocatedProject.locateProject(this))
+fun Project.getTrustedState() = TrustedProjects.getProjectTrustedState(TrustedProjectsLocator.locateProject(this))
 
 @ApiStatus.Internal
 fun isTrustedCheckDisabled() = TrustedProjects.isTrustedCheckDisabled()

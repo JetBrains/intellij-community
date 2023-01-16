@@ -3,6 +3,7 @@ package com.intellij.ide.impl.trustedProjects
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**
@@ -27,8 +28,47 @@ interface TrustedProjectsLocator {
    */
   fun getProjectRoots(projectRoot: Path, project: Project?): List<Path>
 
+  /**
+   * Represents main project properties for project trust check.
+   */
+  @ApiStatus.NonExtendable
+  interface LocatedProject {
+
+    /**
+     * Collected project roots which can contain malicious code for [project].
+     */
+    val projectRoots: List<Path>
+
+    /**
+     * Project instance can be null if we need to make "trust check" when project isn't open yet.
+     */
+    val project: Project?
+  }
+
   companion object {
 
     val EP_NAME = ExtensionPointName<TrustedProjectsLocator>("com.intellij.trustedProjectsLocator")
+
+    fun locateProject(projectRoot: Path, project: Project?): LocatedProject {
+      return locateProject(project) { getProjectRoots(projectRoot, project) }
+    }
+
+    fun locateProject(project: Project): LocatedProject {
+      return locateProject(project) { getProjectRoots(project) }
+    }
+
+    private fun locateProject(
+      project: Project?,
+      getProjectRoots: TrustedProjectsLocator.() -> List<Path>
+    ): LocatedProject {
+      val projectRoots = LinkedHashSet<Path>()
+      EP_NAME.forEachExtensionSafe { locator ->
+        projectRoots.addAll(locator.getProjectRoots())
+      }
+      return object : LocatedProject {
+        override val projectRoots = projectRoots.toList()
+        override val project = project
+      }
+    }
   }
 }
