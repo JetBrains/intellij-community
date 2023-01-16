@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection.custom;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 
 /**
  * @author Bas Leijdekkers
@@ -119,10 +121,9 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
           final int start = result.getStartOffset() - elementRange.getStartOffset();
           final TextRange warningRange = new TextRange(start, result.getEndOffset() - result.getStartOffset() + start);
           final String problemDescriptor = StringUtil.defaultIfEmpty(configuration.getProblemDescriptor(), configuration.getName());
+          final CustomRegExpQuickFix fix = replacement == null ? null : new CustomRegExpQuickFix(findManager, model, text, result);
           final ProblemDescriptor descriptor =
-            manager.createProblemDescriptor(element, warningRange, problemDescriptor,
-                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly,
-                                            new CustomRegExpQuickFix(findManager, model, text, result));
+            manager.createProblemDescriptor(element, warningRange, problemDescriptor, GENERIC_ERROR_OR_WARNING, isOnTheFly, fix);
           descriptors.add(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, uuid));
           result = findManager.findString(text, result.getEndOffset(), model);
         }
