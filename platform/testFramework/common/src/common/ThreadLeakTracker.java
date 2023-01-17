@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -68,6 +68,7 @@ public final class ThreadLeakTracker {
       "Cidr Symbol Building Thread", // ForkJoinPool com.jetbrains.cidr.lang.symbols.symtable.building.OCBuildingActivityExecutionService
       "Cleaner-0", // Thread[Cleaner-0,8,InnocuousThreadGroup], java.lang.ref.Cleaner in android layoutlib, Java9+
       "CompilerThread0",
+      "Coroutines Debugger Cleaner", // kotlinx.coroutines.debug.internal.DebugProbesImpl.startWeakRefCleanerThread
       "dockerjava-netty",
       "External compiler",
       "Finalizer",

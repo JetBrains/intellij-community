@@ -9,6 +9,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.idea.*
@@ -100,6 +101,7 @@ fun loadApp() {
 @OptIn(DelicateCoroutinesApi::class)
 @Internal
 fun loadApp(setupEventQueue: Runnable) {
+  enableCoroutineDump()
   val isHeadless = UITestUtil.getAndSetHeadlessProperty()
   AppMode.setHeadlessInTestMode(isHeadless)
   PluginManagerCore.isUnitTestMode = true
