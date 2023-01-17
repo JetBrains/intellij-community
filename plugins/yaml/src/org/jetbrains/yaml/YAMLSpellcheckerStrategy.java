@@ -18,6 +18,7 @@ package org.jetbrains.yaml;
 import com.intellij.json.JsonSchemaSpellcheckerClient;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -31,27 +32,24 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLQuotedText;
 import org.jetbrains.yaml.psi.YAMLScalar;
 
 final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy {
 
   private final Tokenizer<PsiElement> myQuotedTextTokenizer = new TokenizerBase<>(PlainTextSplitter.getInstance()) {
     @Override
-    public void tokenize(@NotNull PsiElement element, @NotNull TokenConsumer consumer) {
-      if (element instanceof LeafPsiElement) {
-        CharSequence chars = ((LeafPsiElement)element).getChars();
-        int length = chars.length();
-        if (length >= 2
-            && (chars.charAt(0) == '\'' || chars.charAt(0) == '"')
-            && (chars.charAt(length - 1) == '\'' || chars.charAt(length - 1) == '"')) {
+    public void tokenize(@NotNull PsiElement leafElement, @NotNull TokenConsumer consumer) {
+      if (leafElement instanceof LeafPsiElement && leafElement.getParent() instanceof YAMLQuotedText) {
+        YAMLQuotedText quotedText = (YAMLQuotedText)leafElement.getParent();
 
-          // remove quotes from text analysis
-          int quotesLength = 1;
-          String text = chars.subSequence(quotesLength, length - quotesLength).toString();
-          consumer.consumeToken(element, text, false, quotesLength, TextRange.allOf(text), PlainTextSplitter.getInstance());
+        TextRange range = ElementManipulators.getValueTextRange(quotedText);
+        if (!range.isEmpty()) {
+          String text = ElementManipulators.getValueText(quotedText);
+          consumer.consumeToken(leafElement, text, false, range.getStartOffset(), TextRange.allOf(text), PlainTextSplitter.getInstance());
         }
       } else {
-        super.tokenize(element, consumer);
+        super.tokenize(leafElement, consumer);
       }
     }
   };
