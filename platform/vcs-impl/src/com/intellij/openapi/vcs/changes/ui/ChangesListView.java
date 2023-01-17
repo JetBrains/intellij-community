@@ -38,8 +38,6 @@ import java.util.Set;
 
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
-import static com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.findTagNode;
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.vcs.commit.ChangesViewCommitPanelKt.subtreeRootObject;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
@@ -488,21 +486,28 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   }
 
   @Nullable
-  public DefaultMutableTreeNode findNodeInTree(@Nullable Object userObject) {
+  public ChangesBrowserNode<?> findNodeInTree(@Nullable Object userObject) {
     return findNodeInTree(userObject, null);
   }
 
   @Nullable
-  public DefaultMutableTreeNode findNodeInTree(@Nullable Object userObject, @Nullable Object tag) {
-    DefaultMutableTreeNode fromNode = tag != null ? notNull(findTagNode(this, tag), getRoot()) : getRoot();
-
+  public ChangesBrowserNode<?> findNodeInTree(@Nullable Object userObject, @Nullable Object tag) {
     if (userObject instanceof LocalChangeList) {
-      return TreeUtil.nodeChildren(fromNode).filter(DefaultMutableTreeNode.class).find(node -> userObject.equals(node.getUserObject()));
+      return getRoot().iterateNodeChildren()
+        .find(node -> userObject.equals(node.getUserObject()));
     }
+
+    ChangesBrowserNode<?> fromNode = tag != null ? VcsTreeModelData.findTagNode(this, tag) : getRoot();
+    if (fromNode == null) return null;
+
     if (userObject instanceof ChangeListChange) {
-      return TreeUtil.findNode(fromNode, node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject));
+      return VcsTreeModelData.allUnder(fromNode).iterateNodes()
+        .find(node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject));
     }
-    return TreeUtil.findNodeWithObject(fromNode, userObject);
+    else {
+      return VcsTreeModelData.allUnder(fromNode).iterateNodes()
+        .find(node -> Objects.equals(node.getUserObject(), userObject));
+    }
   }
 
   @Nullable
