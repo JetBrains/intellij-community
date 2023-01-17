@@ -57,7 +57,7 @@ public class SpellcheckingStrategy {
     if (element instanceof PsiWhiteSpace) {
       return EMPTY_TOKENIZER;
     }
-    if (element instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) {
+    if (isInjectedLanguageFragment(element)) {
       return EMPTY_TOKENIZER;
     }
     if (element instanceof PsiNameIdentifierOwner) return PsiIdentifierOwnerTokenizer.INSTANCE;
@@ -80,6 +80,11 @@ public class SpellcheckingStrategy {
       return TEXT_TOKENIZER;
     }
     return EMPTY_TOKENIZER;
+  }
+
+  protected static boolean isInjectedLanguageFragment(PsiElement element) {
+    return element instanceof PsiLanguageInjectionHost
+           && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element);
   }
 
   public LocalQuickFix[] getRegularFixes(PsiElement element,
