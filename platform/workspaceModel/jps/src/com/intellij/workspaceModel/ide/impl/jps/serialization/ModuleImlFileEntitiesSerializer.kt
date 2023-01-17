@@ -81,20 +81,25 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           .exceptionOrNull()
 
 
-        val source = getOtherEntitiesEntitySource(reader)
-        if (moduleLoadedInfo.data.moduleEntity.isEmpty) {
-          newModuleEntity = ModuleEntity(moduleLoadedInfo.data.moduleEntity.name, emptyList(), OrphanageWorkerEntitySource)
-          exception = runCatchingXmlIssues {
-            loadAdditionalContentRoots(newModuleEntity as ModuleEntity.Builder, reader, virtualFileManager, source)
+        if (Orphanage.use) {
+          val source = getOtherEntitiesEntitySource(reader)
+          if (moduleLoadedInfo.data.moduleEntity.isEmpty) {
+            newModuleEntity = ModuleEntity(moduleLoadedInfo.data.moduleEntity.name, emptyList(), OrphanageWorkerEntitySource)
+            exception = runCatchingXmlIssues {
+              loadAdditionalContentRoots(newModuleEntity as ModuleEntity.Builder, reader, virtualFileManager, source)
+            }
+                          .exceptionOrNull() ?: exception
           }
-                        .exceptionOrNull() ?: exception
+          else {
+            newModuleEntity = moduleLoadedInfo.data.moduleEntity
+            exception = runCatchingXmlIssues {
+              loadAdditionalContentRoots(newModuleEntity as ModuleEntity.Builder, reader, virtualFileManager, source)
+            }
+                          .exceptionOrNull() ?: exception
+          }
         }
         else {
           newModuleEntity = moduleLoadedInfo.data.moduleEntity
-          exception = runCatchingXmlIssues {
-            loadAdditionalContentRoots(newModuleEntity as ModuleEntity.Builder, reader, virtualFileManager, source)
-          }
-                        .exceptionOrNull() ?: exception
         }
 
 

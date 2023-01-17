@@ -15,6 +15,8 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
 import org.jetbrains.jps.util.JpsPathUtil
+import org.junit.Assert
+import org.junit.Assume
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -47,6 +49,7 @@ class JpsSplitModuleAndContentRootTest {
 
   @Test
   fun `add local content root via orphanage`() {
+    Assume.assumeTrue(Orphanage.use)
     checkSaveProjectAfterChange("after/addContentRootOrphanage", "after/addContentRootOrphanage", false) { builder, orphanage, configLocation ->
       assertTrue(builder.entities(ModuleEntity::class.java).toList().isEmpty())
       assertTrue(orphanage.entities(ModuleEntity::class.java).single().contentRoots.single().entitySource !is OrphanageWorkerEntitySource)
@@ -55,6 +58,7 @@ class JpsSplitModuleAndContentRootTest {
 
   @Test
   fun `add local source root via orphanage`() {
+    Assume.assumeTrue(Orphanage.use)
     checkSaveProjectAfterChange("after/addSourceRootOrphanage", "after/addSourceRootOrphanage", false) { builder, orphanage, configLocation ->
       assertTrue(builder.entities(ModuleEntity::class.java).toList().isEmpty())
       assertTrue(orphanage.entities(ModuleEntity::class.java).single().contentRoots.single().entitySource is OrphanageWorkerEntitySource)
@@ -64,6 +68,7 @@ class JpsSplitModuleAndContentRootTest {
 
   @Test
   fun `add local content and source root via orphanage`() {
+    Assume.assumeTrue(Orphanage.use)
     checkSaveProjectAfterChange("after/addSourceAndContentRootOrphanage", "after/addSourceAndContentRootOrphanage", false) { builder, orphanage, configLocation ->
       assertTrue(builder.entities(ModuleEntity::class.java).toList().isEmpty())
       assertTrue(orphanage.entities(ModuleEntity::class.java).single().contentRoots.single().entitySource !is OrphanageWorkerEntitySource)
@@ -73,6 +78,7 @@ class JpsSplitModuleAndContentRootTest {
 
   @Test
   fun `add local exclude via orphanage`() {
+    Assume.assumeTrue(Orphanage.use)
     checkSaveProjectAfterChange("after/addExcludeOrphanage", "after/addExcludeOrphanage", false) { builder, orphanage, configLocation ->
       assertTrue(builder.entities(ModuleEntity::class.java).toList().isEmpty())
       assertTrue(orphanage.entities(ModuleEntity::class.java).single().contentRoots.single().entitySource is OrphanageWorkerEntitySource)
@@ -81,7 +87,8 @@ class JpsSplitModuleAndContentRootTest {
   }
 
   @Test
-  fun `add local exclude and countent root via orphanage`() {
+  fun `add local exclude and content root via orphanage`() {
+    Assume.assumeTrue(Orphanage.use)
     checkSaveProjectAfterChange("after/addExcludeAndContentRootOrphanage", "after/addExcludeAndContentRootOrphanage", false) { builder, orphanage, configLocation ->
       assertTrue(builder.entities(ModuleEntity::class.java).toList().isEmpty())
       assertTrue(orphanage.entities(ModuleEntity::class.java).single().contentRoots.single().entitySource !is OrphanageWorkerEntitySource)

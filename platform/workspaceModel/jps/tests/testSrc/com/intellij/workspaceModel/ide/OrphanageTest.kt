@@ -13,6 +13,8 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.workspaceModel.storage.entities.test.api.MySource
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.test.assertEquals
@@ -27,6 +29,11 @@ class OrphanageTest {
 
   private val virtualFileManager: VirtualFileUrlManager
     get() = VirtualFileUrlManager.getInstance(projectModel.project)
+
+  @BeforeEach
+  fun setUp() {
+    Assumptions.assumeTrue(Orphanage.use)
+  }
 
   @Test
   fun `adding content root`() {

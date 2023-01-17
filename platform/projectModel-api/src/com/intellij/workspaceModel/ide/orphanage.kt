@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -47,10 +48,17 @@ class Orphanage {
     val newStorage: EntityStorageSnapshot = builder.toSnapshot()
     entityStorage.replace(newStorage, emptyMap(), {}, {})
   }
+
+  companion object {
+    val use: Boolean by lazy { Registry.`is`("ide.workspace.model.separate.component.for.roots", false) }
+  }
 }
 
 class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
+
+    if (!Orphanage.use) return
+
     // Do not move to the field! They should be created every time! (or the code should be refactored)
     val adders = listOf(
       ContentRootAdder(),
