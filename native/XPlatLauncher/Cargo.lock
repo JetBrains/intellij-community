@@ -543,6 +543,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "columns"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42118f8f83dd1c93860502e6acfffc2283201a1ad51bad7cdf2157ef6faeab80"
+
+[[package]]
 name = "combine"
 version = "4.6.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3242,6 +3248,7 @@ dependencies = [
  "anyhow",
  "cargo-about",
  "cargo-deny",
+ "columns",
  "core-foundation",
  "is_executable",
  "jni",

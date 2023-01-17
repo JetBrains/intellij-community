@@ -503,8 +503,55 @@ pub struct RemoteDevArgs {
     pub ij_args: Vec<String>
 }
 
+struct RemoteDevCommand {
+    pub command_name: String,
+    pub is_project_path_needed: bool,
+    pub is_arguments_needed: bool,
+}
+
+impl std::fmt::Display for RemoteDevCommand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let path = if self.is_project_path_needed {"/path/to/project"} else { "" };
+        let args = if self.is_arguments_needed {"[arguments...]"} else { "" };
+        write!(f, "{} {} {}", self.command_name, path, args)
+    }
+}
+
 fn print_help() {
-    println!("TODO: help")
+    let remote_dev_commands = vec![
+        RemoteDevCommand {command_name: "run".to_string(), is_project_path_needed: true, is_arguments_needed: true},
+        RemoteDevCommand {command_name: "status".to_string(), is_project_path_needed: false, is_arguments_needed: false},
+        RemoteDevCommand {command_name: "warm-up".to_string(), is_project_path_needed: true, is_arguments_needed: true},
+        RemoteDevCommand {command_name: "invalidate-caches".to_string(), is_project_path_needed: true, is_arguments_needed: false},
+        RemoteDevCommand {command_name: "installPlugins".to_string(), is_project_path_needed: false, is_arguments_needed: false}, // todo: change name to '-'case
+        RemoteDevCommand {command_name: "stop".to_string(), is_project_path_needed: true, is_arguments_needed: false},
+        RemoteDevCommand {command_name: "registerBackendLocationForGateway".to_string(), is_project_path_needed: false, is_arguments_needed: false},
+    ];
+    let mut remote_dev_commands_message = String::from("\nExamples:\n");
+    for remote_dev_command in remote_dev_commands {
+        let command_string = format!("\t./remote-dev-server {}\n", remote_dev_command);
+        remote_dev_commands_message.push_str(command_string.as_str());
+    }
+
+    let remote_dev_environment_variables = columns::Columns::from(vec![
+        vec!["\tREMOTE_DEV_SERVER_TRACE",
+             "\tREMOTE_DEV_SERVER_JCEF_ENABLED",
+             "\tREMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS",
+             "\tREMOTE_DEV_LAUNCHER_NAME_FOR_USAGE",
+             "\tREMOTE_DEV_TRUST_PROJECTS",
+             "\tREMOTE_DEV_NON_INTERACTIVE"],
+        vec!["set to any value to get more debug output from the startup script",
+             "set to '1' to enable JCEF (embedded chromium) in IDE",
+             "set to '0' to skip using bundled X11 and other linux libraries from plugins/remote-dev-server/selfcontained. Use everything from the system. by default bundled libraries are used",
+             "set to any value to use as the script name in this output",
+             "set to any value to skip project trust warning (will execute build scripts automatically)",
+             "set to any value to skip all interactive shell prompts (set automatically if running without TTY)"
+        ],
+    ]).base_tabsize_in(0);
+    let remote_dev_environment_variables_message = format!("Environment variables:\n{remote_dev_environment_variables}");
+
+    let help_message = "\nUsage: ./remote-dev-server [ij_command_name] [/path/to/project] args";
+    println!("{help_message}{remote_dev_commands_message}{remote_dev_environment_variables_message}");
 }
 
 fn init_env_vars() -> Result<()> {
