@@ -22,6 +22,7 @@ internal object LangDownloader {
     if (GrazieRemote.isAvailableLocally(lang)) return true
 
     val result = runDownload(lang, project) ?: return false
+    check(GrazieRemote.isValidBundleForLanguage(lang, result)) { "Language bundle checksum became invalid right before loading it" }
     val classLoader = UrlClassLoader.build().parent(GraziePlugin.classLoader).files(listOf(result)).get()
     GrazieDynamic.addDynClassLoader(classLoader)
     // force reloading available language classes
