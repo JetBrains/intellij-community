@@ -185,7 +185,9 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
       artifactEntities.firstOrNull { it.isFailure }?.exceptionOrNull())
   }
 
-  override fun checkAndAddToBuilder(builder: MutableEntityStorage, newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
+  override fun checkAndAddToBuilder(builder: MutableEntityStorage,
+                                    orphanage: MutableEntityStorage,
+                                    newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
     if (preserveOrder) {
       val order = newEntities[ArtifactsOrderEntity::class.java]?.singleOrNull() as? ArtifactsOrderEntity
       if (order != null) {

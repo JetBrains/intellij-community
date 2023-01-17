@@ -76,7 +76,7 @@ class JpsIncorrectDataLoading  : HeavyPlatformTestCase() {
   private fun loadProject(projectFile: File): EntityStorage {
     val storageBuilder = MutableEntityStorage.create()
     val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
-    loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, virtualFileManager, errorReporter = errorCollector)
+    loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, storageBuilder, virtualFileManager, errorReporter = errorCollector)
     return storageBuilder.toSnapshot()
   }
 }

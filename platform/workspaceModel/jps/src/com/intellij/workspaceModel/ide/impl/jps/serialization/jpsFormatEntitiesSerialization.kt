@@ -50,7 +50,7 @@ interface JpsFileEntitiesSerializer<E : WorkspaceEntity> {
   fun loadEntities(reader: JpsFileContentReader,
                    errorReporter: ErrorReporter,
                    virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>>
-  fun checkAndAddToBuilder(builder: MutableEntityStorage, newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>)
+  fun checkAndAddToBuilder(builder: MutableEntityStorage, orphanage: MutableEntityStorage, newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>)
 
   fun saveEntities(mainEntities: Collection<E>,
                    entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
@@ -127,6 +127,7 @@ interface JpsProjectSerializers {
 
   suspend fun loadAll(reader: JpsFileContentReader,
                       builder: MutableEntityStorage,
+                      orphanageBuilder: MutableEntityStorage,
                       unloadedEntityBuilder: MutableEntityStorage,
                       unloadedModuleNames: Set<String>,
                       errorReporter: ErrorReporter,
@@ -150,6 +151,7 @@ interface JpsProjectSerializers {
 
 data class ReloadingResult(
   val builder: MutableEntityStorage,
+  val orphanageBuilder: MutableEntityStorage,
   val unloadedEntityBuilder: MutableEntityStorage,
   val affectedSources: Set<EntitySource>
 )

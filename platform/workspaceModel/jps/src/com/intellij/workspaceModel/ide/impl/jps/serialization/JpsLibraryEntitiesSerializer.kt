@@ -150,7 +150,9 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun checkAndAddToBuilder(builder: MutableEntityStorage, newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
+  override fun checkAndAddToBuilder(builder: MutableEntityStorage,
+                                    orphanage: MutableEntityStorage,
+                                    newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
     val libraries = (newEntities[LibraryEntity::class.java] as? List<LibraryEntity>) ?: emptyList()
     libraries.forEach {
       if (it.symbolicId in builder) {

@@ -37,7 +37,8 @@ class Orphanage {
     }
   }
 
-  private fun update(updater: (MutableEntityStorage) -> Unit) {
+  @RequiresWriteLock
+  fun update(updater: (MutableEntityStorage) -> Unit) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
     val before = entityStorage.current
@@ -90,3 +91,5 @@ class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
     }
   }
 }
+
+object OrphanageWorkerEntitySource : EntitySource

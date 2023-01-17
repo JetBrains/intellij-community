@@ -47,6 +47,7 @@ internal val sampleFileBasedProjectFile = File(PathManagerEx.getCommunityHomePat
 
 internal data class LoadedProjectData(
   val storage: EntityStorageSnapshot,
+  val orphanage: EntityStorageSnapshot,
   val unloadedEntitiesStorage: EntityStorageSnapshot,
   val serializers: JpsProjectSerializersImpl,
   val configLocation: JpsProjectConfigLocation,
@@ -68,10 +69,12 @@ internal fun copyAndLoadProject(originalProjectFile: File,
   val projectFile = if (originalProjectFile.isFile) File(projectDir, originalProjectFile.name) else projectDir
   val configLocation = toConfigLocation(projectFile.toPath(), virtualFileManager)
   val unloadedEntitiesBuilder = MutableEntityStorage.create()
-  val serializers = loadProject(configLocation, originalBuilder, virtualFileManager, externalStorageConfigurationManager = externalStorageConfigurationManager,
+  val orphanage = MutableEntityStorage.create()
+  val serializers = loadProject(configLocation, originalBuilder, orphanage, virtualFileManager, externalStorageConfigurationManager = externalStorageConfigurationManager,
                                 unloadedModuleNames = unloadedModuleNames,
                                 unloadedEntitiesBuilder = unloadedEntitiesBuilder) as JpsProjectSerializersImpl
-  val loadedProjectData = LoadedProjectData(originalBuilder.toSnapshot(), unloadedEntitiesBuilder.toSnapshot(), serializers, configLocation, 
+  val loadedProjectData = LoadedProjectData(originalBuilder.toSnapshot(), orphanage.toSnapshot(), unloadedEntitiesBuilder.toSnapshot(),
+                                            serializers, configLocation,
                                             originalProjectDir)
   if (checkConsistencyAfterLoading) {
     serializers.checkConsistency(loadedProjectData.configLocation, loadedProjectData.storage, loadedProjectData.unloadedEntitiesStorage, virtualFileManager)
@@ -86,7 +89,10 @@ internal fun copyProjectFiles(originalProjectFile: File): Pair<File, File> {
   return projectDir to originalProjectDir
 }
 
-internal fun loadProject(configLocation: JpsProjectConfigLocation, originalBuilder: MutableEntityStorage, virtualFileManager: VirtualFileUrlManager,
+internal fun loadProject(configLocation: JpsProjectConfigLocation,
+                         originalBuilder: MutableEntityStorage,
+                         orphanage: MutableEntityStorage,
+                         virtualFileManager: VirtualFileUrlManager,
                          unloadedModuleNames: Set<String> = emptySet(),
                          unloadedEntitiesBuilder: MutableEntityStorage = MutableEntityStorage.create(),
                          fileInDirectorySourceNames: FileInDirectorySourceNames = FileInDirectorySourceNames.empty(),
@@ -94,8 +100,15 @@ internal fun loadProject(configLocation: JpsProjectConfigLocation, originalBuild
                          errorReporter: ErrorReporter = TestErrorReporter): JpsProjectSerializers {
   val cacheDirUrl = configLocation.baseDirectoryUrl.append("cache")
   return runUnderModalProgressIfIsEdt {
-    JpsProjectEntitiesLoader.loadProject(configLocation, originalBuilder, File(VfsUtil.urlToPath(cacheDirUrl.url)).toPath(),
-                                         errorReporter, virtualFileManager, unloadedModuleNames, unloadedEntitiesBuilder, fileInDirectorySourceNames,
+    JpsProjectEntitiesLoader.loadProject(configLocation,
+                                         originalBuilder,
+                                         orphanage,
+                                         File(VfsUtil.urlToPath(cacheDirUrl.url)).toPath(),
+                                         errorReporter,
+                                         virtualFileManager,
+                                         unloadedModuleNames,
+                                         unloadedEntitiesBuilder,
+                                         fileInDirectorySourceNames,
                                          externalStorageConfigurationManager)
   }
 }
@@ -322,7 +335,7 @@ internal class CollectingErrorReporter : ErrorReporter {
 
 internal fun checkSaveProjectAfterChange(originalProjectFile: File,
                                          changedFilesDirectoryName: String?,
-                                         change: (MutableEntityStorage, MutableEntityStorage, JpsProjectConfigLocation) -> Unit,
+                                         change: (MutableEntityStorage, MutableEntityStorage, MutableEntityStorage, JpsProjectConfigLocation) -> Unit,
                                          unloadedModuleNames: Set<String>,
                                          virtualFileManager: VirtualFileUrlManager,
                                          testDir: String,
@@ -331,7 +344,7 @@ internal fun checkSaveProjectAfterChange(originalProjectFile: File,
   val projectData = copyAndLoadProject(originalProjectFile, virtualFileManager, unloadedModuleNames, checkConsistencyAfterLoading, externalStorageConfigurationManager)
   val builder = MutableEntityStorage.from(projectData.storage)
   val unloadedEntitiesBuilder = MutableEntityStorage.from(projectData.unloadedEntitiesStorage)
-  change(builder, unloadedEntitiesBuilder, projectData.configLocation)
+  change(builder, projectData.orphanage.toBuilder(), unloadedEntitiesBuilder, projectData.configLocation)
   val changesList = builder.collectChanges(projectData.storage).values + unloadedEntitiesBuilder.collectChanges(projectData.unloadedEntitiesStorage).values  
   val changedSources = changesList.flatMapTo(HashSet()) { changes ->
     changes.flatMap { change ->

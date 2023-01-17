@@ -36,6 +36,7 @@ import kotlin.io.path.exists
 internal const val DEPRECATED_MODULE_MANAGER_COMPONENT_NAME = "DeprecatedModuleOptionManager"
 internal const val TEST_MODULE_PROPERTIES_COMPONENT_NAME = "TestModuleProperties"
 private const val MODULE_ROOT_MANAGER_COMPONENT_NAME = "NewModuleRootManager"
+private const val ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME = "AdditionalModuleElements"
 internal const val URL_ATTRIBUTE = "url"
 private val STANDARD_MODULE_OPTIONS = setOf(
   "type", "external.system.id", "external.system.module.version", "external.linked.project.path", "external.linked.project.id",
@@ -75,9 +76,28 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     if (!externalStorageEnabled) {
       val moduleLoadedInfo = loadModuleEntity(reader, errorReporter, virtualFileManager, moduleLibrariesCollector)
       if (moduleLoadedInfo != null) {
-        val exception = runCatchingXmlIssues { createFacetSerializer().loadFacetEntities(moduleLoadedInfo.data.moduleEntity, reader) }
+        var exception = runCatchingXmlIssues { createFacetSerializer().loadFacetEntities(moduleLoadedInfo.data.moduleEntity, reader) }
           .exceptionOrNull()
-        newModuleEntity = moduleLoadedInfo.data.moduleEntity
+
+
+        val source = getOtherEntitiesEntitySource(reader)
+        if (moduleLoadedInfo.data.moduleEntity.isEmpty) {
+          newModuleEntity = ModuleEntity(moduleLoadedInfo.data.moduleEntity.name, emptyList(), OrphanageWorkerEntitySource)
+          exception = runCatchingXmlIssues {
+            loadAdditionalContentRoots(newModuleEntity as ModuleEntity.Builder, reader, virtualFileManager, source)
+          }
+                        .exceptionOrNull() ?: exception
+        }
+        else {
+          newModuleEntity = moduleLoadedInfo.data.moduleEntity
+          exception = runCatchingXmlIssues {
+            loadAdditionalContentRoots(newModuleEntity as ModuleEntity.Builder, reader, virtualFileManager, source)
+          }
+                        .exceptionOrNull() ?: exception
+        }
+
+
+
         error = moduleLoadedInfo.exception ?: exception
       } else newModuleEntity = null
     }
@@ -118,8 +138,14 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     )
   }
 
-  override fun checkAndAddToBuilder(builder: MutableEntityStorage, newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
-    newEntities.values.forEach { lists -> lists.forEach { builder addEntity it } }
+  override fun checkAndAddToBuilder(builder: MutableEntityStorage,
+                                    orphanage: MutableEntityStorage,
+                                    newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
+
+    val (orphans, elements) = newEntities.values.asSequence().flatten().partition { it.entitySource is OrphanageWorkerEntitySource }
+
+    elements.forEach { builder addEntity it }
+    orphans.forEach { orphanage addEntity it }
   }
 
   private class ModuleLoadedInfo(
@@ -241,6 +267,20 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
         loadRootManager(rootManagerElement, moduleEntity, virtualFileManager, contentRootEntitySource, loadingAdditionalRoots,
                         moduleLibrariesCollector)
       }
+    }
+  }
+
+  private fun loadAdditionalContentRoots(
+    moduleEntity: ModuleEntity.Builder,
+    reader: JpsFileContentReader,
+    virtualFileManager: VirtualFileUrlManager,
+    contentRootEntitySource: EntitySource,
+  ) {
+    val additionalElements = reader.loadComponent(fileUrl.url, ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME, getBaseDirPath())?.clone()
+    if (additionalElements != null) {
+      val additionalContentRoots = loadContentRootEntities(moduleEntity, additionalElements, virtualFileManager, contentRootEntitySource)
+
+      moduleEntity.contentRoots += additionalContentRoots
     }
   }
 
@@ -968,3 +1008,7 @@ fun ContentRootEntity.getSourceRootsComparator(): Comparator<SourceRootEntity> {
   val order = (sourceRootOrder?.orderOfSourceRoots ?: emptyList()).withIndex().associateBy({ it.value }, { it.index })
   return compareBy<SourceRootEntity> { order[it.url] ?: order.size }.thenBy { it.url.url }
 }
+
+private val ModuleEntity.isEmpty: Boolean
+  get() = this.contentRoots.isEmpty() && this.javaSettings == null && this.facets.isEmpty() && this.dependencies.filterNot { it is ModuleDependencyItem.ModuleSourceDependency }.isEmpty()
+
