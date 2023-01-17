@@ -13,3 +13,4 @@ fun test() {
     A(0) === A(1)
     A(0) !== A(1)
 }
+// FIR_COMPARISON

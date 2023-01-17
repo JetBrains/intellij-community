@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.descriptors.impl.EnumEntrySyntheticClassDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.synthetic.SyntheticMemberDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.core.unwrapIfFakeOverride
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaPackageFragment
 import org.jetbrains.kotlin.load.java.sam.SamAdapterDescriptor
@@ -39,10 +40,7 @@ import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.ImportedFromObjectCallableDescriptor
+import org.jetbrains.kotlin.resolve.*
 import org.jetbrains.kotlin.resolve.calls.inference.model.TypeVariableTypeConstructor
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
@@ -297,6 +295,11 @@ internal fun resolveToPsiMethod(
         return resolveToPsiMethod(context, descriptor.underlyingConstructorDescriptor)
     }
 
+    // import pkg.to.Object.member
+    if (descriptor is FunctionImportedFromObject) {
+        return resolveToPsiMethod(context, descriptor.callableFromObject)
+    }
+
     // For synthetic members in enum classes, `source` points to their containing enum class.
     if (source is KtClass && source.isEnum() && descriptor is SimpleFunctionDescriptor) {
         val lightClass = source.toLightClass() ?: return null
@@ -330,7 +333,10 @@ internal fun resolveToPsiMethod(
             else // UltraLightMembersCreator.createMethods() returns nothing for JVM-invisible methods, so fake it if we get null here
                 LightClassUtil.getLightClassMethod(source) ?: getContainingLightClass(source)?.let { UastFakeLightMethod(source, it) }
         is PsiMethod -> source
-        null -> resolveDeserialized(context, descriptor) as? PsiMethod
+        null -> {
+            val unwrapped = descriptor.unwrapIfFakeOverride() as? DeserializedCallableMemberDescriptor ?: descriptor
+            resolveDeserialized(context, unwrapped) as? PsiMethod
+        }
         else -> null
     }
 }

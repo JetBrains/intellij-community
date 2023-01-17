@@ -61,3 +61,9 @@ enum class ImportDescriptorResult {
     ALREADY_IMPORTED
 }
 
+@Suppress("unused")
+@Deprecated("Use `runImmediately` flag instead.")
+enum class ActionRunningMode {
+    RUN_IN_CURRENT_THREAD,
+    RUN_IN_EDT
+}

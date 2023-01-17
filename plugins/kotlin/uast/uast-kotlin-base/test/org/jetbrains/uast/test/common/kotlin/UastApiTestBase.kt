@@ -52,15 +52,15 @@ interface UastApiTestBase : UastPluginSelection {
 
     private fun checkLiteralArraysTypes(uFile: UFile) {
         uFile.findElementByTextFromPsi<UCallExpression>("intArrayOf(1, 2, 3)").let { field ->
-            Assert.assertEquals("PsiType:int[]", field.returnType.toString())
+            Assert.assertEquals("int[]", field.returnType?.canonicalText)
         }
         uFile.findElementByTextFromPsi<UCallExpression>("[1, 2, 3]").let { field ->
-            Assert.assertEquals("PsiType:int[]", field.returnType.toString())
-            Assert.assertEquals("PsiType:int", field.typeArguments.single().toString())
+            Assert.assertEquals("int[]", field.returnType?.canonicalText)
+            Assert.assertEquals("int", field.typeArguments.single().canonicalText)
         }
         uFile.findElementByTextFromPsi<UCallExpression>("[\"a\", \"b\", \"c\"]").let { field ->
-            Assert.assertEquals("PsiType:String[]", field.returnType.toString())
-            Assert.assertEquals("PsiType:String", field.typeArguments.single().toString())
+            Assert.assertEquals("java.lang.String[]", field.returnType?.canonicalText)
+            Assert.assertEquals("java.lang.String", field.typeArguments.single().canonicalText)
         }
     }
 
@@ -696,7 +696,7 @@ interface UastApiTestBase : UastPluginSelection {
 
         val functionCall = m.findElementByText<UElement>("println").uastParent as KotlinUFunctionCallExpression
         // type through the base service: KotlinUElementWithType#getExpressionType
-        TestCase.assertEquals("PsiType:Unit", functionCall.getExpressionType()?.toString())
+        TestCase.assertEquals("kotlin.Unit", functionCall.getExpressionType()?.canonicalText)
     }
 
     fun checkSwitchYieldTargets(uFilePath: String, uFile: UFile) {
