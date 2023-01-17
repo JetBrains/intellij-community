@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ignore
 
 import com.intellij.openapi.Disposable
@@ -182,8 +182,8 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project) : Disp
 
     LOG.debug("Generate $GITIGNORE in $projectConfigDirPath for ${gitVcsKey.name}")
 
-    val gitIgnoreFile = runBlockingMaybeCancellable {
-      writeAction { projectConfigDirVFile.createChildData(projectConfigDirVFile, GITIGNORE) }
+    val gitIgnoreFile = writeAction {
+      projectConfigDirVFile.createChildData(projectConfigDirVFile, GITIGNORE)
     }
 
     for (ignoredFileProvider in IgnoredFileProvider.IGNORE_FILE.extensionList) {
