@@ -42,16 +42,20 @@ public class JUnitModuleInfoIntegrationTest extends AbstractTestFrameworkCompili
 
   
   public void testModulePathSplit() throws ExecutionException {
-    doTest();
+    doTest("a.Test1", 2);
+  }
+
+  public void testModulePathNested() throws ExecutionException {
+    doTest("a.Test1.MyNested", 1);
   }
 
   public void testModulePathSplitExplicitLauncher() throws Exception {
     addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.platform", "junit-platform-launcher", "1.5.2"), getRepoManager());
-    doTest();
+    doTest("a.Test1", 2);
   }
 
-  private void doTest() throws ExecutionException {
-    @Nullable PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass("a.Test1", GlobalSearchScope.projectScope(myProject));
+  private void doTest(String qualifiedName, int testCount) throws ExecutionException {
+    @Nullable PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(qualifiedName, GlobalSearchScope.projectScope(myProject));
     assertNotNull(aClass);
     RunConfiguration runConfiguration = createConfiguration(aClass);
     assertInstanceOf(runConfiguration, JUnitConfiguration.class);
@@ -61,7 +65,7 @@ public class JUnitModuleInfoIntegrationTest extends AbstractTestFrameworkCompili
 
     assertTrue(processOutput.sys.toString().contains("-junit5"));
     assertEmpty(processOutput.out);
-    assertSize(1, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance));
+    assertSize(testCount, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance));
   }
 
 }
