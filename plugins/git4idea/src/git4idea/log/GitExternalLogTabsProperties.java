@@ -60,24 +60,19 @@ public final class GitExternalLogTabsProperties
 
     @NotNull
     @Override
-    public TabState getState() {
+    protected TabState getLogUiState() {
       return myState.TAB_STATES.get(myId);
     }
 
     @Override
-    public void loadState(@NotNull TabState state) {
-      myState.TAB_STATES.put(myId, state);
-    }
-
-    @Override
     public void addRecentlyFilteredGroup(@NotNull String filterName, @NotNull Collection<String> values) {
-      VcsLogProjectTabsProperties.addRecentGroup(getState().RECENT_FILTERS, filterName, values);
+      VcsLogProjectTabsProperties.addRecentGroup(getLogUiState().RECENT_FILTERS, filterName, values);
     }
 
     @NotNull
     @Override
     public List<List<String>> getRecentlyFilteredGroups(@NotNull String filterName) {
-      return VcsLogProjectTabsProperties.getRecentGroup(getState().RECENT_FILTERS, filterName);
+      return VcsLogProjectTabsProperties.getRecentGroup(getLogUiState().RECENT_FILTERS, filterName);
     }
   }
 }

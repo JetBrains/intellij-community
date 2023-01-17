@@ -122,7 +122,7 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
     }
 
     @Override
-    public @NotNull MyState getState() {
+    protected @NotNull MyState getLogUiState() {
       MyState state = myState.TAB_STATES.get(myId);
       if (state == null) {
         state = new MyState();
@@ -131,16 +131,11 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
       return state;
     }
 
-    @Override
-    public void loadState(@NotNull MyState state) {
-      myState.TAB_STATES.put(myId, state);
-    }
-
     @SuppressWarnings("unchecked")
     @Override
     public <T> @NotNull T get(@NotNull VcsLogUiProperty<T> property) {
       if (property instanceof CustomBooleanTabProperty) {
-        Boolean value = getState().CUSTOM_BOOLEAN_PROPERTIES.get(property.getName());
+        Boolean value = getLogUiState().CUSTOM_BOOLEAN_PROPERTIES.get(property.getName());
         if (value == null) {
           value = ((CustomBooleanTabProperty)property).defaultValue(myId);
         }
@@ -152,7 +147,7 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
     @Override
     public <T> void set(@NotNull VcsLogUiProperty<T> property, @NotNull T value) {
       if (property instanceof CustomBooleanTabProperty) {
-        getState().CUSTOM_BOOLEAN_PROPERTIES.put(property.getName(), (Boolean)value);
+        getLogUiState().CUSTOM_BOOLEAN_PROPERTIES.put(property.getName(), (Boolean)value);
         onPropertyChanged(property);
         return;
       }
