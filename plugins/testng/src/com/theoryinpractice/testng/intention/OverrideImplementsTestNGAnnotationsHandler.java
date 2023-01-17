@@ -18,11 +18,13 @@ package com.theoryinpractice.testng.intention;
 
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import com.theoryinpractice.testng.util.TestNGUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class OverrideImplementsTestNGAnnotationsHandler implements OverrideImplementsAnnotationsHandler{
   @Override
-  public String[] getAnnotations(Project project) {
+  public String[] getAnnotations(@NotNull PsiFile file) {
     return TestNGUtil.CONFIG_ANNOTATIONS_FQN;
   }
 }
