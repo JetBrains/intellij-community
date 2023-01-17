@@ -155,7 +155,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
             is KtCallableDeclaration -> {
                 analyzeWithReadAction(psiElement) {
                     fun getPsiClassOfKtType(ktType: KtType): PsiClass? {
-                        val psi = ktType.asPsiType(psiElement, KtTypeMappingMode.DEFAULT, isAnnotationMethod = false)
+                        val psi = ktType.asPsiType(psiElement, allowErrorTypes = false, KtTypeMappingMode.DEFAULT, isAnnotationMethod = false)
                         return (psi as? PsiClassReferenceType)?.resolve()
                     }
                     when (val elementSymbol = psiElement.getSymbol()) {

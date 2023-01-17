@@ -2,8 +2,10 @@
 package org.jetbrains.tools.model.updater
 
 import org.jdom.Document
-import org.jetbrains.tools.model.updater.GeneratorPreferences.ArtifactMode
-import org.jetbrains.tools.model.updater.impl.*
+import org.jetbrains.tools.model.updater.impl.JpsLibrary
+import org.jetbrains.tools.model.updater.impl.Preferences
+import org.jetbrains.tools.model.updater.impl.readXml
+import org.jetbrains.tools.model.updater.impl.xml
 import java.io.File
 import java.util.*
 
@@ -59,7 +61,6 @@ fun main(args: Array<String>) {
     }
 
     processRoot(communityRoot, isCommunity = true)
-    patchGitignore(communityRoot, preferences.kotlincArtifactsMode)
     updateLatestGradlePluginVersion(communityRoot, preferences.kotlinGradlePluginVersion)
     updateKGPVersionForKotlinNativeTests(communityRoot, preferences.kotlinGradlePluginVersion)
 }
@@ -71,17 +72,6 @@ private fun regenerateProjectLibraries(dotIdea: File, libraries: List<JpsLibrary
     for (library in libraries) {
         val libraryFileName = library.name.replace("\\W".toRegex(), "_") + ".xml"
         librariesDir.resolve(libraryFileName).writeText(library.render())
-    }
-}
-
-private fun patchGitignore(dotIdea: File, kotlincArtifactsMode: ArtifactMode) {
-    val gitignoreFile = dotIdea.resolve("..").resolve(".gitignore")
-    val ignoreRule = "**/build"
-    val normalizedContent = gitignoreFile.readLines().filter { it != ignoreRule }.joinToString("\n")
-
-    when (kotlincArtifactsMode) {
-        ArtifactMode.MAVEN -> gitignoreFile.writeText(normalizedContent)
-        ArtifactMode.BOOTSTRAP -> gitignoreFile.writeText("$normalizedContent\n$ignoreRule")
     }
 }
 
