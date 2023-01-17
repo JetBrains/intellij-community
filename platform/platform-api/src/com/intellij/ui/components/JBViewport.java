@@ -228,6 +228,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
+  @DirtyUI
   @Override
   public void paint(Graphics g) {
     myPaintingNow = true;
