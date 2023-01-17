@@ -3,10 +3,8 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.EntityStorageSnapshot
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
@@ -30,23 +28,39 @@ class Orphanage {
 
 class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
-    //val modules = event.getChanges(ModuleEntity::class.java)
-    //  .filterIsInstance<EntityChange.Added<ModuleEntity>>()
-    //  .mapNotNull {
-    //    project.workspaceModel.currentSnapshot.resolve(it.entity.symbolicId)
-    //  }
-    //
-    //// This is important to use invokeLater in order not to update the project model inside of the listeners
-    //ApplicationManager.getApplication().invokeLater {
-    //  ApplicationManager.getApplication().runWriteAction {
-    //    WorkspaceModel.getInstance(project).updateProjectModel("") {
-    //      for (module in modules) {
-    //        it.modifyEntity(module) {
-    //          // TODO: Implement copy with parents
-    //        }
-    //      }
-    //    }
-    //  }
-    //}
+    val targetModules = event.getChanges(ModuleEntity::class.java)
+      .filterIsInstance<EntityChange.Added<ModuleEntity>>()
+      .map { it.entity }
+
+    val orphanageSnapshot = project.workspaceModel.orphanage.entityStorage.pointer.storage
+    if (targetModules.isNotEmpty() && targetModules.any { orphanageSnapshot.resolve(it.symbolicId) != null }) {
+      runLaterAndWrite {
+        val orphanage = project.workspaceModel.orphanage.entityStorage.pointer.storage
+        val newRoots = targetModules
+          .mapNotNull { orphanage.resolve(it.symbolicId) }
+          .filter { it.contentRoots.isNotEmpty() }
+          .associateWith { it.contentRoots.map { it.createEntityTreeCopy() as ContentRootEntity.Builder } }
+
+        if (newRoots.isNotEmpty()) {
+          project.workspaceModel.updateProjectModel("Move orphan elements") {
+            newRoots.forEach { (module, roots) ->
+              val localModule = it.resolve(module.symbolicId) ?: return@forEach
+              it.modifyEntity(localModule) {
+                this.contentRoots += roots
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private inline fun runLaterAndWrite(crossinline run: () -> Unit) {
+    // This is important to use invokeLater in order not to update the project model inside the listeners
+    ApplicationManager.getApplication().invokeLater {
+      ApplicationManager.getApplication().runWriteAction {
+        run()
+      }
+    }
   }
 }

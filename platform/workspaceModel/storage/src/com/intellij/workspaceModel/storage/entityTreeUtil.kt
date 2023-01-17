@@ -1,29 +1,35 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.workspaceModel.storage.impl
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.workspaceModel.storage
 
 import com.intellij.util.containers.FList
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
+import com.intellij.workspaceModel.storage.impl.EntityId
+import org.jetbrains.annotations.ApiStatus.Experimental
 
 /**
- * Creates a detached copy of [entity] and its children recursively. This is used to support copying entities from one storage to another
+ * Creates a detached copy of [this@createEntityTreeCopy] and its children recursively. This is used to support copying entities from one storage to another
  * via [com.intellij.workspaceModel.storage.MutableEntityStorage.addEntity] function.
  */
-internal fun <T : WorkspaceEntity> createEntityTreeCopy(entity: T): ModifiableWorkspaceEntityBase<T, *> {
+@Experimental
+fun <T : WorkspaceEntity> T.createEntityTreeCopy(requireTopLevelEntity: Boolean = false): WorkspaceEntity.Builder<T> {
   //copying entity from another snapshot
-  val originalSnapshot = (entity as WorkspaceEntityBase).snapshot as AbstractEntityStorage
-  val entityData = originalSnapshot.entityDataByIdOrDie(entity.id)
-  require(entityData.getRequiredParents().isEmpty()) { "copying is supported only for top-level entities which don't have required parents" }
-  
+  val originalSnapshot = (this as WorkspaceEntityBase).snapshot as AbstractEntityStorage
+  val entityData = originalSnapshot.entityDataByIdOrDie(id)
+  if (requireTopLevelEntity) {
+    require(entityData.getRequiredParents().isEmpty()) { "copying is supported only for top-level entities which don't have required parents" }
+  }
+
   val newEntity = entityData.createDetachedEntity(emptyList())
   val copied = HashSet<EntityId>()
   val deferred = HashSet<EntityId>()
   val parents = FList.emptyList<WorkspaceEntity>().prepend(newEntity)
   val parentInterfaces = FList.emptyList<Class<out WorkspaceEntity>>().prepend(entityData.getEntityInterface())
-  copyChildren(entity.id, parents, parentInterfaces, originalSnapshot, copied, deferred)
+  copyChildren(id, parents, parentInterfaces, originalSnapshot, copied, deferred)
   deferred.removeAll(copied)
   require(deferred.isEmpty()) { "some elements weren't copied because their additional parents are located in a separate tree: $deferred" }
   @Suppress("UNCHECKED_CAST")
-  return newEntity as ModifiableWorkspaceEntityBase<T, *>
+  return newEntity as WorkspaceEntity.Builder<T>
 }
 
 private fun copyChildren(oldEntityId: EntityId,
