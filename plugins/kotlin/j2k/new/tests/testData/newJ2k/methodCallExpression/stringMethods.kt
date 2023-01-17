@@ -1,5 +1,3 @@
-// ERROR: Type mismatch: inferred type is String but Charset was expected
-// ERROR: Type mismatch: inferred type is String but Charset was expected
 import java.nio.charset.Charset
 import java.util.Locale
 
@@ -18,8 +16,8 @@ internal class A {
         String(bytes)
         String(bytes, charset)
         String(bytes, 0, 2)
-        String(bytes, "utf-8")
-        String(bytes, 0, 2, "utf-8")
+        String(bytes, charset("utf-8"))
+        String(bytes, 0, 2, charset("utf-8"))
         String(bytes, 0, 2, charset)
         String(StringBuilder("content"))
         String(StringBuffer("content"))

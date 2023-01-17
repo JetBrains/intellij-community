@@ -587,14 +587,12 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
             // It is the constructor of "kotlin.String" and not "java.lang.String" because
             // java.lang.String was already converted to kotlin.String in a previous TypeMappingConversion
             NewExpression("kotlin.String") convertTo CustomExpression { newExpression ->
-                val arguments = (newExpression as JKNewExpression).arguments.arguments
-                val stringFactoryFunctionCall = {
-                    JKCallExpressionImpl(
-                        symbolProvider.provideMethodSymbol("kotlin.text.String"),
-                        JKArgumentList(newExpression.arguments::arguments.detached())
-                    )
-                }
+                if (newExpression !is JKNewExpression) throw IllegalStateException()
 
+                fun stringFactoryFunctionCall(newArguments: List<JKArgument> = newExpression.arguments::arguments.detached()) =
+                    JKCallExpressionImpl(symbolProvider.provideMethodSymbol("kotlin.text.String"), JKArgumentList(newArguments))
+
+                val arguments = newExpression.arguments.arguments
                 return@CustomExpression when (arguments.size) {
                     // `new String()` is the same as a literal empty string ""
                     0 -> JKLiteralExpression("\"\"", type = STRING)
@@ -619,7 +617,22 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                         }
                     }
 
-                    else -> stringFactoryFunctionCall()
+                    else -> {
+                        val last = arguments.last().value
+                        if ((arguments.size == 2 || arguments.size == 4) && last.calculateType(typeFactory)?.isStringType() == true) {
+                            // the last argument is a charset in a string form, we need to convert it to a Charset object
+                            val detachedArguments = newExpression.arguments::arguments.detached()
+                            last.detach(arguments.last())
+                            val charsetCall = JKCallExpressionImpl(
+                                symbolProvider.provideMethodSymbol("kotlin.text.charset"),
+                                JKArgumentList(last)
+                            )
+                            val newArguments = detachedArguments.dropLast(1) + listOf(JKArgumentImpl(charsetCall))
+                            stringFactoryFunctionCall(newArguments)
+                        } else {
+                            stringFactoryFunctionCall()
+                        }
+                    }
                 }
             },
 

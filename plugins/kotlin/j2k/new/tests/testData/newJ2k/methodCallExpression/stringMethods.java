@@ -140,3 +140,4 @@ class A {
 
     void useSplit(String[] result) {
     }
+}
