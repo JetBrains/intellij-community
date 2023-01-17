@@ -148,24 +148,8 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
         .iterateUserObjects(ChangeList.class)
         .toList().toArray(ChangeList[]::new);
     }
-    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      return VcsTreeModelData.mapToVirtualFile(VcsTreeModelData.selected(this))
-        .toArray(VirtualFile.EMPTY_ARRAY);
-    }
-    if (VcsDataKeys.VIRTUAL_FILES.is(dataId)) {
-      return VcsTreeModelData.mapToVirtualFile(VcsTreeModelData.selected(this));
-    }
     if (VcsDataKeys.FILE_PATHS.is(dataId)) {
       return VcsTreeModelData.mapToFilePath(VcsTreeModelData.selected(this));
-    }
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      VirtualFile file = VcsTreeModelData.mapToNavigatableFile(VcsTreeModelData.selected(this)).single();
-      return file != null && !file.isDirectory()
-             ? PsiNavigationSupport.getInstance().createNavigatable(myProject, file, 0)
-             : null;
-    }
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      return getNavigatableArray(myProject, VcsTreeModelData.mapToNavigatableFile(VcsTreeModelData.selected(this)));
     }
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       // don't try to delete files when only a changelist node is selected
@@ -209,7 +193,32 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
     if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
     }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
+      return (DataProvider)slowId -> getSlowData(myProject, treeSelection, slowId);
+    }
     return super.getData(dataId);
+  }
+
+  @Nullable
+  private static Object getSlowData(@NotNull Project project, @NotNull VcsTreeModelData treeSelection, @NotNull String slowId) {
+    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(slowId)) {
+      return VcsTreeModelData.mapToVirtualFile(treeSelection)
+        .toArray(VirtualFile.EMPTY_ARRAY);
+    }
+    if (VcsDataKeys.VIRTUAL_FILES.is(slowId)) {
+      return VcsTreeModelData.mapToVirtualFile(treeSelection);
+    }
+    if (CommonDataKeys.NAVIGATABLE.is(slowId)) {
+      VirtualFile file = VcsTreeModelData.mapToNavigatableFile(treeSelection).single();
+      return file != null && !file.isDirectory()
+             ? PsiNavigationSupport.getInstance().createNavigatable(project, file, 0)
+             : null;
+    }
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(slowId)) {
+      return getNavigatableArray(project, VcsTreeModelData.mapToNavigatableFile(treeSelection));
+    }
+    return null;
   }
 
   @NotNull
