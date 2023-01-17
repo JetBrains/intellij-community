@@ -116,12 +116,14 @@ class ProductivityFeedbackDialog(
           .applyToComponent {
             selectedItem = null
             columns(COLUMNS_MEDIUM)
-          }.whenItemSelectedFromUi { usingExperience.set(it) }
-          .validation {
+          }.whenItemSelectedFromUi { 
+            usingExperience.set(it)
+          }
+          .validationOnApply {
             if (usingExperience.get() == null) {
-              return@validation error(ProductivityFeedbackBundle.message("dialog.combobox.error"))
+              return@validationOnApply error(ProductivityFeedbackBundle.message("dialog.combobox.error"))
             }
-            return@validation null
+            return@validationOnApply null
           }
 
       }.bottomGap(BottomGap.MEDIUM)
