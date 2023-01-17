@@ -43,7 +43,11 @@ class OrphanageTest {
 
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
 
-    val contentRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).single().contentRoots.single()
+    val contentRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
+      .entities(ModuleEntity::class.java).single().contentRoots.single()
     assertEquals(url, contentRoots.url)
+
+    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    assertEquals(0, orphanModules.size)
   }
 }

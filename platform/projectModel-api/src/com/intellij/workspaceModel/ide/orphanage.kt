@@ -50,6 +50,10 @@ class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
               }
             }
           }
+
+          project.workspaceModel.orphanage.update { mutableOrphanage ->
+            newRoots.forEach { mutableOrphanage.removeEntity(it.key) }
+          }
         }
       }
     }
