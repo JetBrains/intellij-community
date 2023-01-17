@@ -94,10 +94,16 @@ class KotlinBuildScriptManipulator(
                 addMavenCentralIfMissing()
             }
             jvmTarget?.let {
-                val useNewJvmSyntax = useNewJvmToolchainSyntax(gradleVersion)
-                if (useNewJvmSyntax) {
-                    val jvmTargetVersionNumber = getJvmTargetVersionNumber(it)
-                    addTopLevelBlock("kotlin")?.addExpressionIfMissing("jvmToolchain($jvmTargetVersionNumber)")
+                val useToolchainSyntax = useJvmToolchainSyntax(gradleVersion)
+                val jvmTargetVersionNumber = getJvmTargetVersionNumber(it)
+
+                if (useToolchainSyntax && version.compare("1.7.20") >= 0) {
+                    getKotlinBlock()
+                        ?.addExpressionIfMissing("jvmToolchain($jvmTargetVersionNumber)")
+                } else if (useToolchainSyntax && version.compare("1.5.30") >= 0) {
+                    getKotlinBlock()
+                        ?.findOrCreateBlock("jvmToolchain")
+                        ?.addExpressionIfMissing("(this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of($jvmTargetVersionNumber))")
                 } else {
                     changeKotlinTaskParameter("jvmTarget", it, forTests = false)
                     changeKotlinTaskParameter("jvmTarget", it, forTests = true)
