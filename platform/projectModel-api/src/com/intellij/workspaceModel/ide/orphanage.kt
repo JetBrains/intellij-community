@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
@@ -13,12 +14,14 @@ import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 class Orphanage {
   val entityStorage: VersionedEntityStorageImpl = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
 
+  @RequiresWriteLock
   fun put(orphan: WorkspaceEntity) {
     update { builder ->
       builder addEntity orphan
     }
   }
 
+  @RequiresWriteLock
   fun put(orphans: Collection<WorkspaceEntity>) {
     update { builder ->
       orphans.forEach {
@@ -27,6 +30,7 @@ class Orphanage {
     }
   }
 
+  @RequiresWriteLock
   fun remove(orphans: Collection<WorkspaceEntity>) {
     update { builder ->
       orphans.forEach { builder.removeEntity(it) }
