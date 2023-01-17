@@ -15,9 +15,6 @@ import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.model.MavenDomParent;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenRedundantGroupIdInspection extends XmlSuppressableInspectionTool {
 
   @Override

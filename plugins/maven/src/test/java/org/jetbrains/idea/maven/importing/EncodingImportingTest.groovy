@@ -21,9 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
 class EncodingImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test

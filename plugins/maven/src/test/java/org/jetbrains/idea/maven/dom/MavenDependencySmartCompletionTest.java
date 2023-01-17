@@ -6,9 +6,6 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestCase {
 
 

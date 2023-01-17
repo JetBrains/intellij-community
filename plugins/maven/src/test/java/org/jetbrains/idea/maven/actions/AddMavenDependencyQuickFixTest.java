@@ -26,9 +26,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Collections;
 
-/**
- * @author Sergey Evdokimov
- */
 public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase {
 
   private IntentionAction findAddMavenIntention() {

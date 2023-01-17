@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenCentralSourceSearcher extends SourceSearcher {
   private static final Logger LOG = Logger.getInstance(MavenCentralSourceSearcher.class);
 

@@ -15,9 +15,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenArgumentsCompletionProvider extends CommandLineCompletionProvider implements DumbAware {
 
   private static final Options ourOptions;

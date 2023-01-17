@@ -24,9 +24,6 @@ import org.jetbrains.idea.maven.dom.model.MavenDomExclusion;
 
 import java.util.Set;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenPomXmlCompletionTagListenerContributor extends CompletionContributor {
   private final Set<String> myHandledTags = Set.of("dependency", "exclusion");
 

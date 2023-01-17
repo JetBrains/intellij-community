@@ -19,9 +19,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.junit.Test;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenParameterGoalTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected void tearDown() throws Exception {

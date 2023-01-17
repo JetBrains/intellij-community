@@ -38,9 +38,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
 public class SelectPropertiesStep extends ModuleWizardStep {
 
   private final Project myProjectOrNull;

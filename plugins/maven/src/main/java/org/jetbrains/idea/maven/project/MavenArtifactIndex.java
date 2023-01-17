@@ -10,9 +10,6 @@ import org.jetbrains.idea.maven.model.MavenId;
 
 import java.util.*;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class MavenArtifactIndex {
 
   private static final MavenArtifactIndex EMPTY_INDEX = new MavenArtifactIndex(Collections.emptyMap());

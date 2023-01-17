@@ -8,8 +8,6 @@ import java.util.*;
 
 /**
  * Copy pasted from org.apache.maven.artifact.versioning.ComparableVersion
- *
- * @author Sergey Evdokimov
  */
 public class MavenVersionComparable implements Comparable<MavenVersionComparable> {
   private String value;

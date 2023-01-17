@@ -34,9 +34,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
 
   private static final Logger LOG = Logger.getInstance(InternetAttachSourceProvider.class);

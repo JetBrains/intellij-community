@@ -9,9 +9,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class TagSetRuleProvider extends XmlTagRuleProviderBase {
 
   private final Map<String, TagsRuleMap> map = Collections.synchronizedMap(new HashMap<>());

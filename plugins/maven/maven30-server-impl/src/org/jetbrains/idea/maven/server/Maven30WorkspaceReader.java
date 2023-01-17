@@ -27,9 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author Sergey Evdokimov
- */
 public class Maven30WorkspaceReader implements WorkspaceReader {
 
   private final WorkspaceRepository myRepository = new WorkspaceRepository();

@@ -28,9 +28,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class AbstractAttachSourceProvider implements AttachSourcesProvider {
 
   private static final Logger LOG = Logger.getInstance(AbstractAttachSourceProvider.class);

@@ -2535,7 +2535,6 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
   @Test
   public void testAttachedJarDependency() throws IOException {
     // IDEA-86815 Recognize attached jar as library dependency
-    //  @author Sergey Evdokimov
 
     createModulePom("m1", """
       <groupId>test</groupId>
