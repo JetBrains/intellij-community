@@ -33,9 +33,6 @@ import javax.swing.Icon
 import javax.swing.JComboBox
 import javax.swing.event.DocumentEvent
 
-/**
- * @author vlan
- */
 open class PyAddNewCondaEnvPanel(
   private val project: Project?,
   private val module: Module?,

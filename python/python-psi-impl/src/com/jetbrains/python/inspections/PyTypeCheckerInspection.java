@@ -27,9 +27,6 @@ import java.util.*;
 
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
 
-/**
- * @author vlan
- */
 public class PyTypeCheckerInspection extends PyInspection {
   private static final Logger LOG = Logger.getInstance(PyTypeCheckerInspection.class.getName());
   private static final Key<Long> TIME_KEY = Key.create("PyTypeCheckerInspection.StartTime");

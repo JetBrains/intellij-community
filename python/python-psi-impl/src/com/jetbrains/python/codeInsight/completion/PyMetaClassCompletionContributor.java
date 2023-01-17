@@ -29,9 +29,6 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
 public class PyMetaClassCompletionContributor extends CompletionContributor implements DumbAware {
   public PyMetaClassCompletionContributor() {
     extend(CompletionType.BASIC,

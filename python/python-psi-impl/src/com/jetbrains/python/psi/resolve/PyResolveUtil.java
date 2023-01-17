@@ -47,8 +47,6 @@ import java.util.*;
 import java.util.stream.Stream;
 
 /**
- * @author vlan
- * <p>
  * TODO: Merge it with {@link ScopeUtil}
  */
 public final class PyResolveUtil {

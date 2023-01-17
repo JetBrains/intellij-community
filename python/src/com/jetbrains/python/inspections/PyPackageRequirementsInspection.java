@@ -54,9 +54,6 @@ import java.util.*;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-/**
- * @author vlan
- */
 public class PyPackageRequirementsInspection extends PyInspection {
   public JDOMExternalizableStringList ignoredPackages = new JDOMExternalizableStringList();
 

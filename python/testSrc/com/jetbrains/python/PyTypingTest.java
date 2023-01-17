@@ -32,7 +32,6 @@ import java.util.List;
 /**
  * Tests for a type system based on mypy's typing module.
  *
- * @author vlan
  */
 public class PyTypingTest extends PyTestCase {
 

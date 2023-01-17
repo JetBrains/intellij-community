@@ -33,9 +33,6 @@ import java.awt.Component
 import javax.swing.JComboBox
 import javax.swing.JComponent
 
-/**
- * @author vlan
- */
 class PyAddExistingSdkPanel(project: Project?,
                             module: Module?,
                             existingSdks: List<Sdk>,

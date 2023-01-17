@@ -50,7 +50,6 @@ import static com.jetbrains.python.psi.impl.PyTypeDeclarationStatementNavigator.
  * Annotates declarations that unconditionally override others without these being used.
  *
  * @author dcheryasov
- * @author vlan
  */
 public class PyRedeclarationInspection extends PyInspection {
 

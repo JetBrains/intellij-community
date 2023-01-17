@@ -34,7 +34,6 @@ import java.io.File
  *
  * The original Git repo is located [here](https://github.com/JetBrains/typeshed).
  *
- * @author vlan
  */
 object PyTypeShed {
 

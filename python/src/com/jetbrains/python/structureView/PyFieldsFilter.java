@@ -9,9 +9,6 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.ui.IconManager;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
 public class PyFieldsFilter implements Filter {
   private static final String ID = "SHOW_FIELDS";
 

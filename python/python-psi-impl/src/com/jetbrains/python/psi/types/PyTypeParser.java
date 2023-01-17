@@ -45,9 +45,6 @@ import static com.jetbrains.python.psi.types.PyTypeTokenTypes.IDENTIFIER;
 import static com.jetbrains.python.psi.types.PyTypeTokenTypes.PARAMETER;
 import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.*;
 
-/**
- * @author vlan
- */
 public final class PyTypeParser {
   private static final ParseResult EMPTY_RESULT = new ParseResult(null, Collections.emptyMap(), Collections.emptyMap(),
                                                                   Collections.emptyMap());

@@ -28,7 +28,6 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * Injects fragments for type annotations either in string literals (quoted annotations containing forward references) or
  * in type comments starting with <tt># type:</tt>.
  *
- * @author vlan
  */
 public class PyTypingAnnotationInjector extends PyInjectorBase {
   public static final Pattern RE_TYPING_ANNOTATION = Pattern.compile("\\s*\\S+(\\[.*\\])?\\s*");

@@ -37,9 +37,6 @@ import java.awt.BorderLayout
 import java.awt.event.ItemEvent
 import javax.swing.Icon
 
-/**
- * @author vlan
- */
 open class PyAddExistingCondaEnvPanel(private val project: Project?,
                                       private val module: Module?,
                                       private val existingSdks: List<Sdk>,

@@ -34,9 +34,6 @@ import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.PyUtil.getReturnTypeToAnalyzeAsCallType;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
 
-/**
- * @author vlan
- */
 public final class PyTypeChecker {
   private PyTypeChecker() {
   }

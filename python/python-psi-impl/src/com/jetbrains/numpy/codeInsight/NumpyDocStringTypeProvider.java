@@ -47,7 +47,6 @@ import java.util.regex.Pattern;
  * Provides type information extracted from NumPy docstring format.
  *
  * @author avereshchagin
- * @author vlan
  */
 public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   private static final Map<String, String> NUMPY_ALIAS_TO_REAL_TYPE = new HashMap<>();

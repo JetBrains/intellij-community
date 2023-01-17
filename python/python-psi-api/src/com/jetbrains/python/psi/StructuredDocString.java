@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author vlan
- */
 public interface StructuredDocString {
 
   String getSummary();

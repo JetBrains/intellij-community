@@ -38,9 +38,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author vlan
- */
 public final class PyiUtil {
   private PyiUtil() {}
 

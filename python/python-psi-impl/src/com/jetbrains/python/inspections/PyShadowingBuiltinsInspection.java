@@ -45,7 +45,6 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * Warns about shadowing built-in names.
  *
- * @author vlan
  */
 public class PyShadowingBuiltinsInspection extends PyInspection {
 

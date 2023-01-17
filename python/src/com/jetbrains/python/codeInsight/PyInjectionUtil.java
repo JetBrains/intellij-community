@@ -18,9 +18,6 @@ import java.util.List;
 
 import static com.jetbrains.python.PyStringFormatParser.*;
 
-/**
- * @author vlan
- */
 public final class PyInjectionUtil {
 
   public static class InjectionResult {

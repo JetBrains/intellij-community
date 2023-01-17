@@ -65,7 +65,6 @@ import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author Alexey.Ivanov
- * @author vlan
  */
 abstract public class IntroduceHandler implements RefactoringActionHandler {
   protected static PsiElement findAnchor(List<? extends PsiElement> occurrences) {

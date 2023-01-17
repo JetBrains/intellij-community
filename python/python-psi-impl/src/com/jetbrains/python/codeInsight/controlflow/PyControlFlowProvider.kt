@@ -7,9 +7,6 @@ import com.intellij.codeInsight.controlflow.Instruction
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 
-/**
- * @author vlan
- */
 class PyControlFlowProvider : ControlFlowProvider {
   override fun getControlFlow(element: PsiElement): ControlFlow? {
     val scopeOwner = ScopeUtil.getScopeOwner(element) ?: return null
