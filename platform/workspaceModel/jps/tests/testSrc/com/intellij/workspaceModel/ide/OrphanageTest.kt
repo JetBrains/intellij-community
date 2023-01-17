@@ -9,6 +9,7 @@ import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.workspaceModel.storage.entities.test.api.MySource
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.jupiter.api.Test
@@ -31,7 +32,7 @@ class OrphanageTest {
     val url = virtualFileManager.fromUrl("/123")
     runWriteAction {
       projectModel.project.workspaceModel.orphanage.put(
-        ModuleEntity("MyName", emptyList(), MySource) {
+        ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
           this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
         }
       )
@@ -63,7 +64,7 @@ class OrphanageTest {
 
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
         it addEntity ModuleEntity("MyName", emptyList(), MySource) {
-          ContentRootEntity(url, emptyList(), MySource)
+          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
         }
       }
     }
@@ -160,5 +161,135 @@ class OrphanageTest {
     val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(1, orphanModules.size)
     assertEquals(1, orphanModules.single().contentRoots.size)
+  }
+
+  @Test
+  fun `adding source root`() {
+    val url = virtualFileManager.fromUrl("/123")
+    val sourceUrl = virtualFileManager.fromUrl("/123/source")
+    runWriteAction {
+      projectModel.project.workspaceModel.orphanage.put(
+        ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
+          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
+            this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
+          })
+        }
+      )
+
+      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+        it addEntity ModuleEntity("MyName", emptyList(), MySource) {
+          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource))
+        }
+      }
+    }
+
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
+    val sourceRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
+      .entities(ModuleEntity::class.java).single().contentRoots.single().sourceRoots.single()
+    assertEquals(sourceUrl, sourceRoots.url)
+
+    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    assertEquals(0, orphanModules.size)
+  }
+
+  @Test
+  fun `adding source root to existing one duplicate`() {
+    val url = virtualFileManager.fromUrl("/123")
+    val sourceUrl = virtualFileManager.fromUrl("/123/source")
+    runWriteAction {
+      projectModel.project.workspaceModel.orphanage.put(
+        ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
+          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
+            this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
+          })
+        }
+      )
+
+      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+        it addEntity ModuleEntity("MyName", emptyList(), MySource) {
+          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource) {
+            this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
+          })
+        }
+      }
+    }
+
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
+    val sourceRoot = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
+      .entities(ModuleEntity::class.java).single().contentRoots.single().sourceRoots.single()
+    assertEquals(sourceUrl, sourceRoot.url)
+
+    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    assertEquals(0, orphanModules.size)
+  }
+
+  @Test
+  fun `adding source root to existing one`() {
+    val url = virtualFileManager.fromUrl("/123")
+    val sourceUrl1 = virtualFileManager.fromUrl("/123/source1")
+    val sourceUrl2 = virtualFileManager.fromUrl("/123/source2")
+    runWriteAction {
+      projectModel.project.workspaceModel.orphanage.put(
+        ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
+          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
+            this.sourceRoots = listOf(SourceRootEntity(sourceUrl1, "", MySource))
+          })
+        }
+      )
+
+      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+        it addEntity ModuleEntity("MyName", emptyList(), MySource) {
+          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
+            this.sourceRoots = listOf(SourceRootEntity(sourceUrl2, "", MySource))
+          })
+        }
+      }
+    }
+
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
+    val sourceRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
+      .entities(ModuleEntity::class.java).single().contentRoots.single().sourceRoots
+    assertEquals(2, sourceRoots.size)
+
+    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    assertEquals(0, orphanModules.size)
+  }
+
+  @Test
+  fun `adding source root to removed module`() {
+    val url = virtualFileManager.fromUrl("/123")
+    val sourceUrl = virtualFileManager.fromUrl("/123/source1")
+    runWriteAction {
+      projectModel.project.workspaceModel.orphanage.put(
+        ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
+          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
+            this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
+          })
+        }
+      )
+
+      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+        it addEntity ModuleEntity("MyName", emptyList(), MySource) {
+          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
+        }
+      }
+
+      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+        val module = it.entities(ModuleEntity::class.java).single()
+        it.removeEntity(module)
+      }
+    }
+
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
+    val modules = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
+      .entities(ModuleEntity::class.java)
+    assertEquals(0, modules.toList().size)
+
+    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    assertEquals(0, orphanModules.size)
   }
 }
