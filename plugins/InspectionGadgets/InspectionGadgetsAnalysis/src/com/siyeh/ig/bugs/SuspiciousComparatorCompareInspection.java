@@ -238,7 +238,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
       private final Set<PsiParameter> parameters;
 
       private ParameterAccessVisitor(PsiParameter @NotNull [] parameters) {
-        this.parameters = ContainerUtil.set(parameters);
+        this.parameters = ContainerUtil.newHashSet(parameters);
       }
 
       @Override
