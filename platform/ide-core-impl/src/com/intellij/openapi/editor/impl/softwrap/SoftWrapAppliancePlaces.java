@@ -20,8 +20,6 @@ package com.intellij.openapi.editor.impl.softwrap;
  * <p/>
  * The general idea is that we may want to allow configure distinct soft wrap settings for distinct use-cases. E.g. we may want
  * to use soft wraps at console editor but avoid using them at the main editor etc.
- *
- * @author Denis Zhdanov
  */
 public enum SoftWrapAppliancePlaces {
   MAIN_EDITOR, CONSOLE, PREVIEW

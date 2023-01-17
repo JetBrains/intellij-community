@@ -33,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Denis Zhdanov
- */
 public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
 
   private static final Context NOT_MATCHED_CONTEXT = new Context();

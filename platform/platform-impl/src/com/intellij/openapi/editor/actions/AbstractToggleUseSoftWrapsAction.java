@@ -35,8 +35,6 @@ import java.awt.*;
 
 /**
  * Provides common functionality for {@code 'toggle soft wraps usage'} actions.
- *
- * @author Denis Zhdanov
  */
 public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction implements DumbAware, LightEditCompatible {
 

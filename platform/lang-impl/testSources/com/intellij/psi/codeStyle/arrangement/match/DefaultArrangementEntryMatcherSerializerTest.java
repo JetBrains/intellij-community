@@ -20,9 +20,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.En
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
 import static org.junit.Assert.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class DefaultArrangementEntryMatcherSerializerTest {
 
   private final DefaultArrangementEntryMatcherSerializer mySerializer =

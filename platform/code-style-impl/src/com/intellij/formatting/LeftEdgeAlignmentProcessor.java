@@ -20,8 +20,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * {@link BlockAlignmentProcessor} implementation for {@link Alignment} that
  * {@link Alignment.Anchor#LEFT anchors to the left block edge}.
- * 
- * @author Denis Zhdanov
  */
 public class LeftEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor {
 

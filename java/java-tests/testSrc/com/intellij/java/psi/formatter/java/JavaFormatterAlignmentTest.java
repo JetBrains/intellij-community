@@ -11,8 +11,6 @@ import static com.intellij.formatting.FormatterTestUtils.Action.REFORMAT_WITH_CO
 /**
  * Is intended to hold specific java formatting tests for alignment settings (
  * {@code Project Settings - Code Style - Alignment and Braces}).
- *
- * @author Denis Zhdanov
  */
 public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
 

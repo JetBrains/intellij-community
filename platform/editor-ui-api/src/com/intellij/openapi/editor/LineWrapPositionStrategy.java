@@ -25,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
  * One possible use case for such functionality is a situation when user opens document with lines that are wider that editor's
  * visible area. We can represent such long strings in multiple visual line then and need to know the best place to insert
  * such virtual wrap.
- *
- * @author Denis Zhdanov
  */
 public interface LineWrapPositionStrategy {
 

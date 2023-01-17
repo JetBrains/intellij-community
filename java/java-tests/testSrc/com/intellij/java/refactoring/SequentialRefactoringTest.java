@@ -25,8 +25,6 @@ import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
 /**
  * Is assumed to contain tests that include more than one refactoring into the processing.
- * 
- * @author Denis Zhdanov
  */
 public class SequentialRefactoringTest extends LightJavaCodeInsightTestCase {
 

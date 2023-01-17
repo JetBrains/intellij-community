@@ -17,9 +17,6 @@ package com.intellij.psi.codeStyle.arrangement;
 
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Denis Zhdanov
- */
 public interface NameAwareArrangementEntry extends ArrangementEntry {
   
   @Nullable

@@ -13,8 +13,6 @@ import java.util.Set;
 
 /**
  * Holds settings specific to a particular project imported from an external system.
- *
- * @author Denis Zhdanov
  */
 public abstract class ExternalProjectSettings implements Comparable<ExternalProjectSettings>, Cloneable {
 

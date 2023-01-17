@@ -37,8 +37,6 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * Updates existing documentation comment if necessary if the one exists. E.g. we've changed method signature and want to remove all
  * outdated parameters and create stubs for the new ones.
- *
- * @author Denis Zhdanov
  */
 public class FixDocCommentAction extends EditorAction {
 

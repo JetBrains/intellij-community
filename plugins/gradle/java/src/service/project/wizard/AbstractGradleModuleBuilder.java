@@ -82,9 +82,6 @@ import java.util.function.Consumer;
 import static com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.MODAL_SYNC;
 import static com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl.setupCreatedProject;
 
-/**
- * @author Denis Zhdanov
- */
 @SuppressWarnings("unused")
 public abstract class AbstractGradleModuleBuilder extends AbstractExternalModuleBuilder<GradleProjectSettings> {
   private static final Logger LOG = Logger.getInstance(AbstractGradleModuleBuilder.class);

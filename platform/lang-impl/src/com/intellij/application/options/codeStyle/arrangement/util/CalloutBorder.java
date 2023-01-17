@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.border.Border;
 import java.awt.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class CalloutBorder implements Border {
 
   @NotNull private static final Insets INSETS = new Insets(

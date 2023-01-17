@@ -27,8 +27,6 @@ import java.util.List;
  * Python-specific Emacs-like processing extension.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class PyEmacsHandler implements EmacsProcessingHandler {
 

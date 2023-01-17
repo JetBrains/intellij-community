@@ -61,9 +61,6 @@ import static com.intellij.util.containers.ContainerUtil.addAllNotNull;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
 
-/**
- * @author Denis Zhdanov
- */
 public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecutionSettings> {
 
   public static final Key<String> INIT_SCRIPT_KEY = Key.create("INIT_SCRIPT_KEY");

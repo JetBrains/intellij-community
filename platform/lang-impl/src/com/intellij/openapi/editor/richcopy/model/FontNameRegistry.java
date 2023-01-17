@@ -15,8 +15,5 @@
  */
 package com.intellij.openapi.editor.richcopy.model;
 
-/**
- * @author Denis Zhdanov
- */
 public class FontNameRegistry extends AbstractRegistry<String> {
 }

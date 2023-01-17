@@ -10,8 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Defines common contract for clients interested in folding processing.
- *
- * @author Denis Zhdanov
  */
 public interface FoldingListener {
 

@@ -35,9 +35,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.En
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
 import static org.junit.Assert.*;
 
-/**
- * @author Denis Zhdanov
- */
 @RunWith(JMock.class)
 public class StandardArrangementEntryMatcherTest {
 

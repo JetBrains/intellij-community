@@ -27,8 +27,6 @@ import java.util.List;
 
 /**
  * Abstraction layer for executing external system tasks.
- * 
- * @author Denis Zhdanov
  */
 public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSettings> {
 

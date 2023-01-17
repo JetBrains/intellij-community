@@ -40,8 +40,6 @@ import static com.intellij.formatting.FormatterTestUtils.Action.REFORMAT;
 
 /**
  * Base class for java formatter tests that holds utility methods.
- *
- * @author Denis Zhdanov
  */
 public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
 

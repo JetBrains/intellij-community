@@ -29,8 +29,6 @@ import java.util.List;
 
 /**
  * Defines common contract for target {@link Color} retrieving.
- *
- * @author Denis Zhdanov
  */
 public abstract class ColorProvider {
 

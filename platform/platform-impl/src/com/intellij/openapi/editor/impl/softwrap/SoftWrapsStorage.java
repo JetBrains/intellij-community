@@ -32,8 +32,6 @@ import java.util.List;
  * Holds registered soft wraps and provides monitoring and management facilities for them.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class SoftWrapsStorage implements Dumpable {
 

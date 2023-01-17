@@ -9,8 +9,6 @@ import java.util.*;
 
 /**
  * Used to group ordered collections of {@link StdArrangementTokens} along with their {@link StdArrangementTokenUiRole roles}.
- *
- * @author Denis Zhdanov
  */
 public class CompositeArrangementSettingsToken {
 

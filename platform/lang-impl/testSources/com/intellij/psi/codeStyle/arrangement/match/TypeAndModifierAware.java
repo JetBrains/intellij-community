@@ -18,8 +18,5 @@ package com.intellij.psi.codeStyle.arrangement.match;
 import com.intellij.psi.codeStyle.arrangement.ModifierAwareArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.TypeAwareArrangementEntry;
 
-/**
- * @author Denis Zhdanov
- */
 public interface TypeAndModifierAware extends TypeAwareArrangementEntry, ModifierAwareArrangementEntry {
 }

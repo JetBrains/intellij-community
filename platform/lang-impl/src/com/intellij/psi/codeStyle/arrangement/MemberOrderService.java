@@ -21,8 +21,6 @@ import java.util.*;
  * determine position where a new element should be inserted.
  * <p/>
  * This service provides utility methods for that.
- * 
- * @author Denis Zhdanov
  */
 public class MemberOrderService {
   

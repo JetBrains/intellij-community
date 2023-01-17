@@ -3,8 +3,5 @@ package com.intellij.platform.externalSystem.testFramework;
 
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 
-/**
- * @author Denis Zhdanov
- */
 public interface TestExternalSystemSettingsListener extends ExternalSystemSettingsListener<TestExternalProjectSettings> {
 }

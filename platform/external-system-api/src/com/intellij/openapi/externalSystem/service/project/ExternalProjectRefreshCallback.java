@@ -23,9 +23,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
-* @author Denis Zhdanov
-*/
 public interface ExternalProjectRefreshCallback {
 
   /**

@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class HtmlSyntaxInfoReader extends AbstractSyntaxAwareReader implements MarkupHandler {
   private final int myTabSize;
   protected StringBuilder    myResultBuffer;

@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-/**
- * @author Denis Zhdanov
- */
 public interface ModifierAwareArrangementEntry extends ArrangementEntry {
   
   @NotNull

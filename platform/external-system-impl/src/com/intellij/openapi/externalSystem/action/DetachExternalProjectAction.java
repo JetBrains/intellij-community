@@ -23,9 +23,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class DetachExternalProjectAction extends ExternalSystemNodeAction<ProjectData> {
 
   public DetachExternalProjectAction() {

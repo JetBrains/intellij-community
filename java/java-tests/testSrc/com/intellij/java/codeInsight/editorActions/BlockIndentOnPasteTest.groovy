@@ -23,9 +23,6 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
-/**
- * @author Denis Zhdanov
- */
 @CompileStatic
 class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase {
 

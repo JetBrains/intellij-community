@@ -25,9 +25,6 @@ import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
 
-/**
- * @author Denis Zhdanov
- */
 public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorTest {
 
   private boolean mySmartHome;
