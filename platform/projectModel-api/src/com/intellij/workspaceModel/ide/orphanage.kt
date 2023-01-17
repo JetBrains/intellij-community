@@ -5,10 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 
 
@@ -54,9 +51,11 @@ class Orphanage {
 
 class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
+    // Do not move to the field! They should be created every time! (or the code should be refactored)
     val adders = listOf(
       ContentRootAdder(),
       SourceRootAdder(),
+      ExcludeAdder(),
     )
 
     adders.forEach { it.collectParentChanges(event) }
@@ -201,6 +200,78 @@ class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
 
           it.resolve(contentRoot.module.symbolicId)?.contentRoots?.firstOrNull { it.url == contentRoot.url }?.let { orphanRoot ->
             if (orphanRoot.sourceRoots.isEmpty()) {
+              it.removeEntity(orphanRoot)
+            }
+          }
+
+          it.resolve(contentRoot.module.symbolicId)?.let { moduleEntity ->
+            if (moduleEntity.contentRoots.isEmpty()) {
+              it.removeEntity(moduleEntity)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private inner class ExcludeAdder : EntitiesAdder {
+    lateinit var targetContentRoots: List<ContentRootEntity>
+    lateinit var orphanRoots: Map<ContentRootEntity, List<ExcludeUrlEntity.Builder>>
+
+    override fun collectParentChanges(event: VersionedStorageChange) {
+      targetContentRoots = event.getChanges(ContentRootEntity::class.java)
+        .filterIsInstance<EntityChange.Added<ContentRootEntity>>()
+        .map { it.entity }
+    }
+
+    override fun anyEntitiesToMove(): Boolean {
+      val orphanageSnapshot = project.workspaceModel.orphanage.entityStorage.pointer.storage
+
+      return targetContentRoots.isNotEmpty()
+             && targetContentRoots.any {
+        orphanageSnapshot.resolve(it.module.symbolicId)?.contentRoots?.any { root -> root.url == it.url } == true
+      }
+    }
+
+    override fun collectOrphanRoots() {
+      val orphanage = project.workspaceModel.orphanage.entityStorage.pointer.storage
+      orphanRoots = targetContentRoots
+        .mapNotNull { root -> orphanage.resolve(root.module.symbolicId)?.contentRoots?.firstOrNull { it.url == root.url } }
+        .filter { it.excludedUrls.isNotEmpty() }
+        .associateWith { it.excludedUrls.map { exclude -> exclude.createEntityTreeCopy() as ExcludeUrlEntity.Builder } }
+    }
+
+    override fun anyOrphanRoots(): Boolean {
+      return orphanRoots.isNotEmpty()
+    }
+
+    override fun addToBuilder(builder: MutableEntityStorage) {
+      orphanRoots.forEach { (contentRoot, excludes) ->
+        val localRoot = builder.resolve(contentRoot.module.symbolicId)?.contentRoots?.firstOrNull { it.url == contentRoot.url }
+                        ?: return@forEach
+        val existingUrls = localRoot.excludedUrls.mapTo(HashSet()) { it.url }
+        val excludesToAdd = excludes.filter { it.url !in existingUrls }
+        if (excludesToAdd.isNotEmpty()) {
+          builder.modifyEntity(localRoot) {
+            this.excludedUrls += excludesToAdd
+          }
+        }
+      }
+    }
+
+    override fun cleanOrphanage() {
+      project.workspaceModel.orphanage.update {
+        orphanRoots.forEach { (contentRoot, excludes) ->
+          val excludesSet = excludes.mapTo(HashSet()) { it.url }
+          it.resolve(contentRoot.module.symbolicId)
+            ?.contentRoots
+            ?.firstOrNull { it.url == contentRoot.url }
+            ?.excludedUrls
+            ?.filter { it.url in excludesSet }
+            ?.forEach { toRemove -> it.removeEntity(toRemove) }
+
+          it.resolve(contentRoot.module.symbolicId)?.contentRoots?.firstOrNull { it.url == contentRoot.url }?.let { orphanRoot ->
+            if (orphanRoot.excludedUrls.isEmpty()) {
               it.removeEntity(orphanRoot)
             }
           }

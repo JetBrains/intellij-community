@@ -72,6 +72,24 @@ class JpsSplitModuleAndContentRootTest {
   }
 
   @Test
+  fun `add local exclude via orphanage`() {
+    checkSaveProjectAfterChange("after/addExcludeOrphanage", "after/addExcludeOrphanage", false) { builder, orphanage, configLocation ->
+      assertTrue(builder.entities(ModuleEntity::class.java).toList().isEmpty())
+      assertTrue(orphanage.entities(ModuleEntity::class.java).single().contentRoots.single().entitySource is OrphanageWorkerEntitySource)
+      assertTrue(orphanage.entities(ModuleEntity::class.java).single().contentRoots.single().excludedUrls.single().entitySource !is OrphanageWorkerEntitySource)
+    }
+  }
+
+  @Test
+  fun `add local exclude and countent root via orphanage`() {
+    checkSaveProjectAfterChange("after/addExcludeAndContentRootOrphanage", "after/addExcludeAndContentRootOrphanage", false) { builder, orphanage, configLocation ->
+      assertTrue(builder.entities(ModuleEntity::class.java).toList().isEmpty())
+      assertTrue(orphanage.entities(ModuleEntity::class.java).single().contentRoots.single().entitySource !is OrphanageWorkerEntitySource)
+      assertTrue(orphanage.entities(ModuleEntity::class.java).single().contentRoots.single().excludedUrls.single().entitySource !is OrphanageWorkerEntitySource)
+    }
+  }
+
+  @Test
   fun `add local content root local save`() {
     checkSaveProjectAfterChange("before/addContentRootLocalSave", "after/addContentRootLocalSave", false) { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
