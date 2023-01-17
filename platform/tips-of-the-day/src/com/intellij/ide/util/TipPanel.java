@@ -28,6 +28,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ObjectUtils;
@@ -255,8 +258,16 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   private void setTip(@NotNull TipAndTrickBean tip) {
+    IdeFrame projectFrame = myProject != null ? WindowManager.getInstance().getIdeFrame(myProject) : null;
+    IdeFrame welcomeFrame = WelcomeFrame.getInstance();
+    Component contextComponent = this.isShowing() ? this :
+                                 projectFrame != null ? projectFrame.getComponent() :
+                                 welcomeFrame != null ? welcomeFrame.getComponent() : null;
+    if (contextComponent == null) {
+      LOG.warn("Not found context component");
+    }
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      List<TextParagraph> tipContent = TipUtils.loadAndParseTip(tip);
+      List<TextParagraph> tipContent = TipUtils.loadAndParseTip(tip, contextComponent);
       ApplicationManager.getApplication().invokeLater(() -> doSetTip(tip, tipContent), ModalityState.stateForComponent(this));
     });
   }
