@@ -6,9 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
 
-/**
- * @author Irina.Chernushina on 7/15/2015.
- */
 public enum JsonSchemaType {
   _string, _number, _integer, _object, _array, _boolean, _null, _any, _string_number;
 

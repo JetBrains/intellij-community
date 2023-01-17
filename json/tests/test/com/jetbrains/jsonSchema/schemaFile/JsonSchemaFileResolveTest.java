@@ -13,9 +13,6 @@ import org.junit.Assert;
 
 import java.util.Collections;
 
-/**
- * @author Irina.Chernushina on 4/1/2016.
- */
 public class JsonSchemaFileResolveTest extends JsonSchemaHeavyAbstractTest {
   @Override
   protected String getBasePath() {

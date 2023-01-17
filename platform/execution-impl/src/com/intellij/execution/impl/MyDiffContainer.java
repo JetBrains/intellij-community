@@ -30,7 +30,6 @@ import java.awt.*;
 
 /**
  * @author amakeev
- * @author Irina.Chernushina
  */
 public class MyDiffContainer extends JBLayeredPane implements Disposable {
   private final AnimatedIcon myIcon = new AsyncProcessIcon(getClass().getName());
