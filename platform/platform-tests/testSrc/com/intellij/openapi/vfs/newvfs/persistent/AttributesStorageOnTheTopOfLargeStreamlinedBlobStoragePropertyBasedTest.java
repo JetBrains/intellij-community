@@ -5,14 +5,21 @@ import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfStr
 import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase.Attributes;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SmallStreamlinedBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
+import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.PagedFileStorage;
+import com.intellij.util.io.PagedFileStorageLockFree;
 import com.intellij.util.io.StorageLockContext;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.ImperativeCommand;
 import org.jetbrains.jetCheck.PropertyChecker;
-import org.junit.*;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
@@ -23,8 +30,9 @@ import java.util.List;
 import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.INLINE_ATTRIBUTE_SMALLER_THAN;
 import static org.jetbrains.jetCheck.Generator.constant;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
-public class AttributesStorageOnTheTopOfStreamlinedBlobStoragePropertyBasedTest {
+public class AttributesStorageOnTheTopOfLargeStreamlinedBlobStoragePropertyBasedTest {
 
   private static final int PAGE_SIZE = 1 << 14;
   private static final StorageLockContext LOCK_CONTEXT = new StorageLockContext(true, true);
@@ -33,21 +41,26 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStoragePropertyBasedTest 
 
   @BeforeClass
   public static void beforeClass() throws Exception {
+    assumeTrue(
+      "LOCK_FREE_VFS_ENABLED must be true for this test to run",
+      PageCacheUtils.LOCK_FREE_VFS_ENABLED
+    );
+
     IndexDebugProperties.DEBUG = true;
   }
 
   @Rule
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+
   protected AttributesStorageOverBlobStorage createStorage(final Path storagePath) throws Exception {
-    final PagedFileStorage pagedStorage = new PagedFileStorage(
+    final PagedFileStorageLockFree pagedStorage = new PagedFileStorageLockFree(
       storagePath,
       LOCK_CONTEXT,
       PAGE_SIZE,
-      true,
       true
     );
-    final SmallStreamlinedBlobStorage storage = new SmallStreamlinedBlobStorage(
+    final StreamlinedBlobStorage storage = new StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage(
       pagedStorage,
       new DataLengthPlusFixedPercentStrategy(256, 64, 30)
     );
@@ -89,35 +102,43 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStoragePropertyBasedTest 
     private final AttributesStorageOverBlobStorage storage;
     private final List<AttributeRecord> records;
 
-    public InsertAttribute(@NotNull final Attributes attributes,
-                           @NotNull final AttributesStorageOverBlobStorage storage,
-                           @NotNull final List<AttributeRecord> records) {
+    private final Int2IntOpenHashMap fileIdToAttributeId = new Int2IntOpenHashMap();
+
+    public InsertAttribute(final @NotNull Attributes attributes,
+                           final @NotNull AttributesStorageOverBlobStorage storage,
+                           final @NotNull List<AttributeRecord> records) {
       this.attributes = attributes;
       this.storage = storage;
       this.records = records;
     }
 
     @Override
-    public void performCommand(@NotNull final ImperativeCommand.Environment env) {
+    public void performCommand(final @NotNull ImperativeCommand.Environment env) {
       try {
-        //FIXME RC: this way we can create >1 AttributeRecords with same fileId/attributeId,
-        // which leads to property failure (i.e. one of the record !exist because another one
-        // was deleted)
-        final int fileId = env.generateValue(Generator.integers(0, Integer.MAX_VALUE),
-                                             "Generated fileId: %s");
-        final int attributeId = env.generateValue(Generator.integers(0, 1024),
-                                                  "Generated attributeId: %s");
+        while (true) {
+          final int fileId = env.generateValue(Generator.integers(0, Integer.MAX_VALUE),
+                                               "Generated fileId: %s");
+          final int attributeId = env.generateValue(Generator.integers(0, AttributesStorageOverBlobStorage.MAX_ATTRIBUTE_ID),
+                                                    "Generated attributeId: %s");
+          //RC: we can create >1 AttributeRecords with the same fileId/attributeId, which leads to
+          // property failure (i.e. one of the record found not exist because another one was
+          // deleted) -> prevents it:
+          if (fileIdToAttributeId.get(fileId) == attributeId) {
+            continue;
+          }
+          fileIdToAttributeId.put(fileId, attributeId);
 
-        final AttributeRecord insertedRecord = attributes.insertOrUpdateRecord(
-          AttributeRecord.newAttributeRecord(fileId, attributeId)
-            .withRandomAttributeBytes(1029),
-          storage
-        );
-        records.add(insertedRecord);
-
-        assertTrue(
-          insertedRecord.existsInStorage(storage)
-        );
+          final AttributeRecord insertedRecord = attributes.insertOrUpdateRecord(
+            AttributeRecord.newAttributeRecord(fileId, attributeId)
+              .withRandomAttributeBytes(1029),
+            storage
+          );
+          records.add(insertedRecord);
+          assertTrue(
+            insertedRecord.existsInStorage(storage)
+          );
+          return;
+        }
       }
       catch (IOException e) {
         throw new AssertionError(e);
@@ -130,16 +151,16 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStoragePropertyBasedTest 
     private final AttributesStorageOverBlobStorage storage;
     private final List<AttributeRecord> records;
 
-    public UpdateAttribute(@NotNull final Attributes attributes,
-                           @NotNull final AttributesStorageOverBlobStorage storage,
-                           @NotNull final List<AttributeRecord> records) {
+    public UpdateAttribute(final @NotNull Attributes attributes,
+                           final @NotNull AttributesStorageOverBlobStorage storage,
+                           final @NotNull List<AttributeRecord> records) {
       this.attributes = attributes;
       this.storage = storage;
       this.records = records;
     }
 
     @Override
-    public void performCommand(@NotNull final ImperativeCommand.Environment env) {
+    public void performCommand(final @NotNull ImperativeCommand.Environment env) {
       try {
         if (!records.isEmpty()) {
           final int recordIndex = env.generateValue(Generator.integers(0, records.size() - 1),
@@ -185,16 +206,16 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStoragePropertyBasedTest 
     private final AttributesStorageOverBlobStorage storage;
     private final List<AttributeRecord> records;
 
-    public DeleteAttribute(@NotNull final Attributes attributes,
-                           @NotNull final AttributesStorageOverBlobStorage storage,
-                           @NotNull final List<AttributeRecord> records) {
+    public DeleteAttribute(final @NotNull Attributes attributes,
+                           final @NotNull AttributesStorageOverBlobStorage storage,
+                           final @NotNull List<AttributeRecord> records) {
       this.attributes = attributes;
       this.storage = storage;
       this.records = records;
     }
 
     @Override
-    public void performCommand(@NotNull final ImperativeCommand.Environment env) {
+    public void performCommand(final @NotNull ImperativeCommand.Environment env) {
       try {
         if (!records.isEmpty()) {
           final int recordIndex = env.generateValue(Generator.integers(0, records.size() - 1),

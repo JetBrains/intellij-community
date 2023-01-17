@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
 import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
@@ -340,6 +341,18 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
   }
 
   protected static class AttributeEntry {
+    //RC: entry binary format.
+    //    We try very hard to be as compact as possible. This is because we have really a lot very small attributes:
+    //    2-10 bytes attributes are very common (and actually the most frequently queries/updated onces), and >97% of
+    //    all attributes are <64 bytes. Hence it is quite important to store few-bytes attributes with header as compact
+    //    as possible: even 2 bytes header is 100% overhead for 2 bytes attribute.
+    //    To implement that, we use 3 'sizes' of attribute record: tiny, medium and big. Tiny record is the smallest one,
+    //    it combines both attributeId and size into 1 byte -- i.e. it works for attributeId < 16 && size < 8, which
+    //    covers a significant part of very small attributes.
+    //    Entry sizes differentiated by first bits of 1st header byte:
+    //    1. if first bit=0... -> tiny record (7 remaining bits are attributeId+size)
+    //    2. if first bits = 10... -> medium record (6 bits remaining + 8 bits of next byte are attributeId+size)
+    //    3. if first bits = 11 -> big record (next byte is attributeId, next 4 bytes are size)
 
     private static final int SMALLEST_HEADER_SIZE = 1;
     private static final int MEDIUM_HEADER_SIZE = 2;
@@ -386,12 +399,15 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
           headerSize = SMALLEST_HEADER_SIZE;
         }
         else if ((firstByte & MEDIUM_ENTRY_MASK) == 0) {//2 bytes for (attributeId,size):
+          assertMediumHeaderIsValid(buffer, entryStartOffset, firstByte);
           final byte secondByte = buffer.get(entryStartOffset + 1);
           attributeId = firstByte & MEDIUM_ENTRY_MAX_ATTRIBUTE_ID;      //zero out first 2 bits
           inlinedValueSizeOrDedicatedRecordId = Byte.toUnsignedInt(secondByte);
           headerSize = MEDIUM_HEADER_SIZE;
         }
         else {//6 bytes for (attributeId, size):
+          assertBigHeaderIsValid(buffer, entryStartOffset, firstByte);
+
           final byte secondByte = buffer.get(entryStartOffset + 1);
           attributeId = ((firstByte & BIG_ENTRY_ATTR_ID_MASK) << Byte.SIZE) | Byte.toUnsignedInt(secondByte);
           inlinedValueSizeOrDedicatedRecordId = buffer.getInt(entryStartOffset + 2);
@@ -551,16 +567,46 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
       }
     }
 
+    /**
+     * @return true if (encodedAttributeId, sizeOrRefId) together are small enough to fit into 'tiny'
+     * entry format (1 byte for header)
+     */
     private static boolean fitsTinyEntry(final int encodedAttributeId,
                                          final int sizeOrRefId) {
       return (encodedAttributeId & TINY_ENTRY_MAX_ATTRIBUTE_ID) == encodedAttributeId
              && (sizeOrRefId & TINY_ENTRY_MAX_SIZE) == sizeOrRefId;
     }
 
+    /**
+     * @return true if (encodedAttributeId, sizeOrRefId) together are small enough to fit into 'medium'
+     * entry format (2 byte for header)
+     */
     private static boolean fitsMediumEntry(final int encodedAttributeId,
                                            final int sizeOrRefId) {
       return (encodedAttributeId & MEDIUM_ENTRY_MAX_ATTRIBUTE_ID) == encodedAttributeId
              && (sizeOrRefId & MEDIUM_ENTRY_MAX_SIZE) == sizeOrRefId;
+    }
+
+    private static void assertMediumHeaderIsValid(final @NotNull ByteBuffer buffer,
+                                                  final int entryStartOffset,
+                                                  final byte firstByte) {
+      assert buffer.limit() >= entryStartOffset + MEDIUM_HEADER_SIZE
+        : "Invalid record(@" + entryStartOffset + ") format: " +
+          "header[0](=" + Integer.toBinaryString(Byte.toUnsignedInt(firstByte)) + " -> medium record) but there is no header[1] byte. " +
+          "buffer[pos: " + buffer.position() + ", lim: " + buffer.limit() + "]:  " + IOUtil.toHexString(buffer);
+    }
+
+    private static void assertBigHeaderIsValid(final @NotNull ByteBuffer buffer,
+                                               final int entryStartOffset,
+                                               final byte firstByte) {
+      assert firstByte == BIG_ENTRY_MASK
+        : "Invalid record(@" + entryStartOffset + ") format: " +
+          "header[0](=" + Integer.toBinaryString(Byte.toUnsignedInt(firstByte)) + " -> big record) " +
+          "but there are other bits set but the first 2!";
+      assert buffer.limit() >= entryStartOffset + BIG_HEADER_SIZE
+        : "Invalid record(@" + entryStartOffset + ") format: " +
+          "header[0](=" + Integer.toBinaryString(firstByte) + " -> big record) but there is no header[1..5] bytes. " +
+          "buffer[pos: " + buffer.position() + ", lim: " + buffer.limit() + "]:  " + IOUtil.toHexString(buffer);
     }
   }
 
@@ -645,13 +691,10 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
   /**
    * Finds (.fileId, .attributeId) entry in storage, and overwrite its content (value) with
    * newAttributeInlinableValue bytes, either in place (if size remains the same), or re-arranging other
-   * entries to put updated one in the end (if size was changed)
+   * entries to find place (if size changes)
    * <p>
-   * newValueSize must be < MAX_SMALL_ATTR_SIZE -- method does not deal with non-inlinable
+   * newValueSize must be < INLINE_ATTRIBUTE_SMALLER_THAN -- method does not deal with non-inlinable
    * attribute entries.
-   * <p>
-   * if newValueSize==0 then attribute entry is removed from directory record
-   * FIXME RC: is above sentence is still true? seems like it is copied from the old version
    *
    * @return attributeRecordId (same as passed in, or new one, if record was re-allocated during updating)
    */
