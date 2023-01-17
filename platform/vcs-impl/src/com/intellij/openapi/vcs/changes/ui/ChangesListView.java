@@ -324,15 +324,6 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
       .filter(new DistinctChangePredicate());
   }
 
-  @NotNull
-  static JBIterable<ChangesBrowserNode<?>> getChangesNodes(@NotNull JTree tree) {
-    return JBIterable.of(tree.getSelectionPaths())
-      .map(TreePath::getLastPathComponent)
-      .map(node -> ((ChangesBrowserNode<?>)node))
-      .flatMap(node -> node.traverse())
-      .unique();
-  }
-
   @Nullable
   public static Change toHijackedChange(@NotNull Project project, @NotNull VirtualFile file) {
     VcsCurrentRevisionProxy before = VcsCurrentRevisionProxy.create(file, project);
@@ -397,11 +388,6 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
     return getRoot().traverseObjectsUnder().filter(Change.class);
   }
 
-  @NotNull
-  public JBIterable<ChangesBrowserChangeNode> getChangesNodes() {
-    return TreeUtil.treeNodeTraverser(getRoot()).traverse().filter(ChangesBrowserChangeNode.class);
-  }
-
   @Nullable
   public List<Change> getAllChangesFromSameChangelist(@NotNull Change change) {
     return getAllChangesUnder(change, ChangesBrowserChangeListNode.class);
@@ -439,8 +425,17 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   }
 
   @NotNull
+  public JBIterable<ChangesBrowserChangeNode> getChangesNodes() {
+    return TreeUtil.treeNodeTraverser(getRoot()).traverse().filter(ChangesBrowserChangeNode.class);
+  }
+
+  @NotNull
   public JBIterable<ChangesBrowserNode<?>> getSelectedChangesNodes() {
-    return getChangesNodes(this);
+    return JBIterable.of(getSelectionPaths())
+      .map(TreePath::getLastPathComponent)
+      .map(node -> ((ChangesBrowserNode<?>)node))
+      .flatMap(node -> node.traverse())
+      .unique();
   }
 
   @NotNull
