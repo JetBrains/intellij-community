@@ -18,6 +18,7 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.EntityChange;
+import com.intellij.workspaceModel.storage.EntityReference;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
@@ -86,7 +87,9 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
         builders.addAll(getBuildersOnWorkspaceChange(project, ((WorkspaceEventRescanningInfo)change).events));
       }
       else if (change instanceof WorkspaceEntitiesRootsChangedRescanningInfo) {
-        builders.addAll(getBuildersOnWorkspaceEntitiesRootsChange(project, ((WorkspaceEntitiesRootsChangedRescanningInfo)change).entities));
+        List<EntityReference<WorkspaceEntity>> references = ((WorkspaceEntitiesRootsChangedRescanningInfo)change).references;
+        List<@NotNull WorkspaceEntity> entities = ContainerUtil.mapNotNull(references, (ref) -> ref.resolve(entityStorage));
+        builders.addAll(getBuildersOnWorkspaceEntitiesRootsChange(project, entities));
       }
       else if (change instanceof BuildableRootsChangeRescanningInfo) {
         builders.addAll(getBuildersOnBuildableChangeInfo((BuildableRootsChangeRescanningInfo)change));
@@ -259,8 +262,8 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
 
   @NotNull
   @Override
-  public RootsChangeRescanningInfo createWorkspaceEntitiesRootsChangedInfo(@NotNull List<WorkspaceEntity> entities) {
-    return new WorkspaceEntitiesRootsChangedRescanningInfo(entities);
+  public RootsChangeRescanningInfo createWorkspaceEntitiesRootsChangedInfo(@NotNull List<EntityReference<WorkspaceEntity>> references) {
+    return new WorkspaceEntitiesRootsChangedRescanningInfo(references);
   }
 
   @Override
@@ -276,9 +279,9 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
 
   @NotNull
   @Override
-  public  List<WorkspaceEntity> getEntitiesWithChangedRoots(@NotNull List<? extends RootsChangeRescanningInfo> infos) {
+  public List<EntityReference<WorkspaceEntity>> getReferencesToEntitiesWithChangedRoots(@NotNull List<? extends RootsChangeRescanningInfo> infos) {
     return infos.stream().filter(info -> info instanceof WorkspaceEntitiesRootsChangedRescanningInfo).
-      flatMap(info -> ((WorkspaceEntitiesRootsChangedRescanningInfo)info).entities.stream()).collect(Collectors.toList());
+      flatMap(info -> ((WorkspaceEntitiesRootsChangedRescanningInfo)info).references.stream()).collect(Collectors.toList());
   }
 
   private static class WorkspaceEventRescanningInfo implements RootsChangeRescanningInfo {
@@ -292,10 +295,10 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
 
   private static class WorkspaceEntitiesRootsChangedRescanningInfo implements RootsChangeRescanningInfo {
     @NotNull
-    private final List<WorkspaceEntity> entities;
+    private final List<EntityReference<WorkspaceEntity>> references;
 
-    private WorkspaceEntitiesRootsChangedRescanningInfo(@NotNull List<WorkspaceEntity> entities) {
-      this.entities = entities;
+    private WorkspaceEntitiesRootsChangedRescanningInfo(@NotNull List<EntityReference<WorkspaceEntity>> entities) {
+      this.references = entities;
     }
   }
 }

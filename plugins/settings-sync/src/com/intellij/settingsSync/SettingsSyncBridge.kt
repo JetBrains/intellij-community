@@ -227,7 +227,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
   private fun stopSyncingAndRollback(previousState: CurrentState, exception: Throwable? = null) {
     if (exception != null) {
       LOG.error("Couldn't apply settings. Disabling sync and rolling back.", exception)
-      SettingsSyncEventsStatistics.DISABLED_BECAUSE_OF_EXCEPTION.log()
+      SettingsSyncEventsStatistics.DISABLED_AUTOMATICALLY.log(SettingsSyncEventsStatistics.AutomaticDisableReason.EXCEPTION)
     }
     else {
       LOG.info("Settings Sync is switched off. Rolling back.")

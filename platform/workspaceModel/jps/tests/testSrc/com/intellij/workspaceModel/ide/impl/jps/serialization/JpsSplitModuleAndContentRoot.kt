@@ -9,11 +9,7 @@ import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.contentRoot
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
@@ -435,6 +431,14 @@ class JpsSplitModuleAndContentRoot {
     checkSaveProjectAfterChange("after/jdkIsNotRemoved", "after/jdkIsNotRemoved") { builder, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       assertEquals(2, moduleEntity.dependencies.size)
+    }
+  }
+
+  @Test
+  fun `check output directory`() {
+    checkSaveProjectAfterChange("after/addContentRoot", "after/addContentRoot") { builder, configLocation ->
+      val moduleEntity = builder.entities(ModuleEntity::class.java).single()
+      assertTrue(moduleEntity.javaSettings!!.inheritedCompilerOutput)
     }
   }
 

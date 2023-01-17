@@ -10,6 +10,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ComparatorUtil;
@@ -126,6 +127,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
   public static class PyConsoleSettings implements PythonRunParams {
     public String myCustomStartScript = PydevConsoleRunnerImpl.CONSOLE_START_COMMAND;
     public String mySdkHome = null;
+    public Sdk mySdk = null;
     public String myInterpreterOptions = "";
     public boolean myUseModuleSdk;
     public String myModuleName = null;
@@ -147,6 +149,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
 
     public void apply(AbstractPythonRunConfigurationParams form) {
       mySdkHome = form.getSdkHome();
+      mySdk = form.getSdk();
       myInterpreterOptions = form.getInterpreterOptions();
       myEnvs = form.getEnvs();
       myPassParentEnvs = form.isPassParentEnvs();
@@ -177,6 +180,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       form.setPassParentEnvs(myPassParentEnvs);
       form.setInterpreterOptions(myInterpreterOptions);
       form.setSdkHome(mySdkHome);
+      form.setSdk(mySdk);
       form.setUseModuleSdk(myUseModuleSdk);
       form.setAddContentRoots(myAddContentRoots);
       form.setAddSourceRoots(myAddSourceRoots);
@@ -209,6 +213,12 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     @Attribute("sdk-home")
     public String getSdkHome() {
       return mySdkHome;
+    }
+
+    @Override
+    @Nullable
+    public Sdk getSdk() {
+      return mySdk;
     }
 
     @Override
@@ -266,6 +276,11 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     @Override
     public void setSdkHome(String sdkHome) {
       mySdkHome = sdkHome;
+    }
+
+    @Override
+    public void setSdk(@Nullable Sdk sdk) {
+      mySdk = sdk;
     }
 
     @Override

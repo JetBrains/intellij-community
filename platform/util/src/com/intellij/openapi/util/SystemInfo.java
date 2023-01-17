@@ -45,7 +45,6 @@ public final class SystemInfo {
   public static final boolean isIbmJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "IBM", 0) >= 0;
   public static final boolean isAzulJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "Azul", 0) >= 0;
   public static final boolean isJetBrainsJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "JetBrains", 0) >= 0;
-  public static final boolean isStudioJvm = isStudioJvm();
 
   public static final boolean isMetalRendering = isMac && Boolean.getBoolean("sun.java2d.metal");
   public static final boolean isDCEVM = ManagementFactory.getRuntimeMXBean().getInputArguments().contains("-XX:+AllowEnhancedClassRedefinition");
@@ -214,12 +213,6 @@ public final class SystemInfo {
   @ApiStatus.ScheduledForRemoval
   public static boolean isJavaVersionAtLeast(String v) {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
-  }
-
-  private static boolean isStudioJvm() {
-    final String vendor = JAVA_VENDOR;
-    final String url = System.getProperty("java.vendor.url");
-    return ("Google Inc.".equals(vendor) || ("Google LLC".equals(vendor))) && "http://developer.android.com/sdk/index.html".equals(url);
   }
 
   /** @deprecated may be inaccurate; please use {@link CpuArch} instead */

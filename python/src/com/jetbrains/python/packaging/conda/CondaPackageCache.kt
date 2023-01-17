@@ -5,6 +5,7 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.Project
@@ -14,10 +15,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.packaging.common.RANKING_AWARE_PACKAGE_NAME_COMPARATOR
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
-import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
-import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
+import com.jetbrains.python.sdk.flavors.conda.*
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.targetEnvConfiguration
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +23,8 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-object CondaPackageCache : PythonPackageCache<String> {
+@Service
+class CondaPackageCache : PythonPackageCache<String> {
   private var cache: Map<String, List<String>> = emptyMap()
 
   override val packages: List<String>
@@ -51,9 +50,8 @@ object CondaPackageCache : PythonPackageCache<String> {
 
       val helpersPath = helpers.apply(targetEnv)
 
-      baseConda.addCondaToTargetBuilder(commandLineBuilder)
-
-      commandLineBuilder.addParameter("python")
+      // SDK associated with another conda env, not the base one, so we do not pass it not to activate wrong conda
+      addCondaPythonToTargetCommandLine(commandLineBuilder, baseConda, null)
       commandLineBuilder.addParameter("$helpersPath/conda_packaging_tool.py")
       commandLineBuilder.addParameter("listall")
 

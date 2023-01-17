@@ -51,27 +51,28 @@ class StatisticsEventLogMessageBuilder {
         val rawValuesList = rawValue as? List<*>
         prepareValue(key, element, rawValuesList?.get(index))
       }
-      is String -> formatValue(rawValue?.toString(), if (key == "project") shortenProjectId(value.toString()) else value)
+      is String -> formatValue(rawValue?.toString(), if (fieldsToShorten.contains(key)) shortenAnonymizedId(value.toString()) else value)
       else -> value
     }
   }
 
-  private fun shortenProjectId(projectId: String): String {
-    val length = projectId.length
-    val isRejected = StatisticsEventLogToolWindow.rejectedValidationTypes.any { it.description == projectId }
-    if (!isRejected && projectId.isNotBlank() && length > maxProjectIdSize) {
-      return "${projectId.substring(0, projectIdPrefixSize)}...${projectId.substring(length - projectIdSuffixSize, length)}"
+  private fun shortenAnonymizedId(anonymizedId: String): String {
+    val length = anonymizedId.length
+    val isRejected = StatisticsEventLogToolWindow.rejectedValidationTypes.any { it.description == anonymizedId }
+    if (!isRejected && anonymizedId.isNotBlank() && length > maxProjectIdSize) {
+      return "${anonymizedId.substring(0, anonymizedIdPrefixSize)}...${anonymizedId.substring(length - anonymizedIdSuffixSize, length)}"
     }
     else {
-      return projectId
+      return anonymizedId
     }
   }
 
   companion object {
     private val gson = Gson()
     private val systemFields = setOf("last", "created", "system_event_id", "system_headless")
-    private const val projectIdPrefixSize = 8
-    private const val projectIdSuffixSize = 2
-    private const val maxProjectIdSize = projectIdPrefixSize + projectIdSuffixSize
+    internal val fieldsToShorten = setOf("project", "file_path", "login_hash", "anonymous_id")
+    private const val anonymizedIdPrefixSize = 8
+    private const val anonymizedIdSuffixSize = 2
+    private const val maxProjectIdSize = anonymizedIdPrefixSize + anonymizedIdSuffixSize
   }
 }

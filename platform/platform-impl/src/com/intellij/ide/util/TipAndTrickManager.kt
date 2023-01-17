@@ -12,9 +12,12 @@ interface TipAndTrickManager {
   /**
    * Shows the dialog with the tips sorted in descending order of usefulness.
    * Should be run from background thread, because sorting of the tips can take some time.
+   *
+   * If provided project is null, tip applicability will not be taken into account during sorting.
+   * Also Features Trainer lessons promoter will not be shown.
    */
   @RequiresBackgroundThread
-  fun showTipDialog(project: Project)
+  fun showTipDialog(project: Project?)
 
   /**
    * Show the dialog with one tip without "Next tip" and "Previous tip" buttons

@@ -23,10 +23,7 @@ import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
- *
- * @deprecated Use ordinary {@link AnAction} and {@link ToolbarDecorator#addExtraAction(AnAction)}
  */
-@Deprecated
 public abstract class AnActionButton extends AnAction implements ShortcutProvider {
   private static final Logger LOG = Logger.getInstance(AnActionButton.class);
   private boolean myEnabled = true;

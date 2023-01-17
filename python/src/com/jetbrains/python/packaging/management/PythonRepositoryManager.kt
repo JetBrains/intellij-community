@@ -24,5 +24,5 @@ abstract class PythonRepositoryManager(val project: Project, val sdk: Sdk) {
 
   abstract suspend fun initCaches()
 
-  internal abstract fun buildPackageDetails(rawInfo: String, spec: PythonPackageSpecification): PythonPackageDetails
+  internal abstract fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails
 }

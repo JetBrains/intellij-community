@@ -59,7 +59,12 @@ class PyPackagingTablesView(private val project: Project,
       val existingRepo = findTableForRepo(data.repository)
       val withExpander = if (data.moreItems > 0) data.packages + listOf(ExpandResultNode(data.moreItems, data.repository)) else data.packages
 
-      if (existingRepo != null) existingRepo.items = withExpander
+      if (existingRepo != null) {
+        // recreate order of the repositories -- it might have changed in the package manager (e.g. Sdk switch)
+        existingRepo.removeFrom(container)
+        existingRepo.items = withExpander
+        existingRepo.addTo(container)
+      }
       else {
         val newTable = PyPackagesTable(project, PyPackagesTableModel(), this, controller)
         newTable.items = withExpander

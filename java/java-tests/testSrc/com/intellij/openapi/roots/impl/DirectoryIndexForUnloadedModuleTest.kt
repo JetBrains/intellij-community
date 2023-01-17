@@ -44,10 +44,9 @@ class DirectoryIndexForUnloadedModuleTest : DirectoryIndexTestCase() {
     UsefulTestCase.assertSameElements(myIndex.getDependentUnloadedModules(common), "unloaded")
   }
 
-  private fun assertFromUnloadedModule(file: VirtualFile?, moduleName: String) {
-    val info = myIndex.getInfoForFile(file!!)
-    assertTrue(info.toString(), info.isExcluded(file))
-    assertNull(info.module)
-    assertEquals(moduleName, info.unloadedModuleName)
+  private fun assertFromUnloadedModule(file: VirtualFile, moduleName: String) {
+    assertFalse(myFileIndex.isInProject(file))
+    assertNull(myFileIndex.getModuleForFile(file))
+    assertEquals(moduleName, myIndex.getInfoForFile(file).unloadedModuleName)
   }
 }

@@ -107,6 +107,7 @@ class CodeVisionPass(
         true
       }
     }
+    CodeVisionPassFactory.putCurrentModificationStamp(editor, myFile)
   }
 
   class CodeVisionData internal constructor(

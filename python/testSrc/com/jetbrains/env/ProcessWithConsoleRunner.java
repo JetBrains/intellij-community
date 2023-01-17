@@ -25,10 +25,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +58,7 @@ public abstract class ProcessWithConsoleRunner implements Disposable {
    * @param tempWorkingPath path to {@link CodeInsightTestFixture#getTempDirFixture()}. Will be used as working dir.
    */
   abstract void runProcess(@NotNull String sdkPath,
+                           @Nullable Sdk sdk,
                            @NotNull Project project,
                            @NotNull ProcessListener processListener,
                            @NotNull String tempWorkingPath)

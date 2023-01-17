@@ -26,6 +26,10 @@
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="use.python.for.local.conda"
+                 defaultValue="true"
+                 restartRequired="false"
+                 description="Use bare python instead of conda run for conda"/>
     <iconMapper mappingFile="PythonIconMappings.json"/>
     <library.type implementation="com.jetbrains.python.library.PythonLibraryType"/>
     <roots.watchedRootsProvider implementation="com.jetbrains.python.target.targetWithVfs.TargetVfsWatchedRootsProvider"/>
@@ -384,8 +388,11 @@
     <registryKey key="python.create.namespace.package.action" defaultValue="false"
                  description="Possibility to create namespace packages from New | Python Package"/>
 
+    <!-- asyncio REPL -->
+    <registryKey key="python.console.asyncio.repl" defaultValue="true" restartRequired="false" description="Possibility to write await outside of function"/>
+
     <!-- asyncio REPL for Python Console/Debugger -->
-    <registryKey key="python.debug.asyncio.repl" defaultValue="true" restartRequired="false" description="Possibility to write await outside of function"/>
+    <registryKey key="python.debug.asyncio.repl" defaultValue="false" restartRequired="false" description="Possibility to write await outside of function"/>
 
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
@@ -502,6 +509,10 @@
     <vcs.codeVisionLanguageContext language="Python" implementationClass="com.jetbrains.python.vcs.PyVcsContextProvider"/>
 
     <backgroundPostStartupActivity implementation="com.jetbrains.python.packaging.management.PythonPackagesUpdater"/>
+
+    <applicationService
+      serviceInterface="com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory$Available"
+      serviceImplementation="com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory$Available$Default"/>
   </extensions>
 
   <extensionPoints>
@@ -585,6 +596,9 @@
     <extensionPoint qualifiedName="com.jetbrains.python.console.pyConsoleOutputCustomizer"
                     interface="com.jetbrains.python.console.PyConsoleOutputCustomizer"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.jetbrains.python.console.customizer"
+                    interface="com.jetbrains.python.console.PyConsoleCustomizer"
+                    dynamic="true"/>
 
     <!-- Experimental sdk EP, avoid using it -->
     <extensionPoint qualifiedName="Pythonid.pySdkProvider"
@@ -597,6 +611,10 @@
 
     <extensionPoint qualifiedName="Pythonid.PythonPackagingToolwindowActionProvider"
                     interface="com.jetbrains.python.packaging.toolwindow.PythonPackagingToolwindowActionProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.pythonPackageManagerProvider"
+                    interface="com.jetbrains.python.packaging.management.PythonPackageManagerProvider"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -687,6 +705,10 @@
 
     <pySdkProvider implementation="com.jetbrains.python.sdk.poetry.PoetrySdkProvider"/>
     <packageManagerProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetryPackageManagerProvider"/>
+
+
+    <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pip.PipPackageManagerProvider" order="last"/>
+    <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageManagerProvider"/>
 
     <inspectionExtension implementation="com.jetbrains.python.sdk.configuration.PyInterpreterInspectionSuppressor"/>
     <inspectionExtension implementation="com.jetbrains.python.inspections.PyUnresolvedReferenceDefaultInspectionExtension" order="last"/>
@@ -819,6 +841,7 @@
   <extensions defaultExtensionNs="com.jetbrains.python.console">
     <executeCustomizer implementation="com.jetbrains.python.console.PyExecuteConsoleCustomizerDefault"/>
     <pyConsoleOutputCustomizer implementation="com.jetbrains.python.console.PyConsoleOutputCustomizerDefault"/>
+    <customizer id="python" implementation="com.jetbrains.python.console.PythonConsoleCustomizer"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.jetbrains.python.debugger">

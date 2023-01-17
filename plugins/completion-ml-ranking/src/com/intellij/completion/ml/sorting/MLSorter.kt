@@ -87,7 +87,7 @@ class MLSorter : CompletionFinalSorter() {
     val element2score = HashMap<LookupElement, Double?>(elements.size)
 
     tryFillFromCache(element2score, elements, queryLength)
-    val itemsForScoring = if (element2score.size == elements.size) emptyList() else elements
+    val itemsForScoring = elements.filter { element2score[it] == null }
     calculateScores(element2score, itemsForScoring, positionsBefore,
                     queryLength, prefix, lookup, lookupStorage, parameters)
     val finalRanking = sortByMlScores(elements, element2score, positionsBefore, lookupStorage, lookup)

@@ -68,9 +68,11 @@ import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvide
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.flavors.conda.CondaPythonExecKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -323,6 +325,14 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     // Python script that may be the debugger script that runs the original script
     PythonExecution realPythonExecution = builder.build(helpersAwareTargetRequest, pythonScript);
+
+    if (myConfig instanceof PythonRunConfiguration) {
+      PythonRunConfiguration pythonConfig = (PythonRunConfiguration)myConfig;
+      String inputFilePath = pythonConfig.getInputFile();
+      if (pythonConfig.isRedirectInput() && !StringUtil.isEmptyOrSpaces(inputFilePath)) {
+        realPythonExecution.withInputFile(new File(inputFilePath));
+      }
+    }
 
     // TODO [Targets API] [major] Meaningful progress indicator should be taken
     EmptyProgressIndicator progressIndicator = new EmptyProgressIndicator();
@@ -645,7 +655,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
       env.putAll(runParams.getEnvs());
     }
     boolean addPyCharmHosted = true;
-    if (sdk != null) {
+    if (sdk != null && !CondaPythonExecKt.getUsePythonForLocalConda()) {
       addPyCharmHosted = PySdkExtKt.getOrCreateAdditionalData(sdk).getFlavor().providePyCharmHosted();
     }
     addCommonEnvironmentVariables(getInterpreterPath(project, runParams), env, addPyCharmHosted);

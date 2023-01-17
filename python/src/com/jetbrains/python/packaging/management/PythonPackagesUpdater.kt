@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
@@ -22,10 +23,13 @@ class PythonPackagesUpdater : ProjectPostStartupActivity {
     if (ApplicationManager.getApplication().isUnitTestMode || !project.hasPython) return
     withContext(Dispatchers.IO) {
       thisLogger().debug("Updating PyPI cache and ranking")
-      PyPIPackageRanking.reload()
+      service<PyPIPackageRanking>().reload()
 
-      if (PypiPackageCache.filePath.exists() && !cacheExpired(PypiPackageCache.filePath)) PypiPackageCache.loadFromFile()
-      else PypiPackageCache.refresh()
+      service<PypiPackageCache>().apply {
+        if (filePath.exists() && !cacheExpired(filePath)) loadFromFile()
+        else refresh()
+      }
+
     }
   }
 

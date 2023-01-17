@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.*;
 
@@ -345,39 +347,39 @@ public final class ProjectDependenciesSerializationService implements Serializat
 
           @Override
           public DependencyNode newInstance() {
-            String type = readString(reader, "_type");
+            String type = readString(reader, "_type", context.stringCache);
             long id = readLong(reader, "id");
             int resolutionStateOrdinal = readInt(reader, "resolutionState");
             ResolutionState resolutionState = resolutionStateOrdinal == -1 ? null : RESOLUTION_STATES[resolutionStateOrdinal];
-            String selectionReason = readString(reader, "selectionReason");
+            String selectionReason = readString(reader, "selectionReason", context.stringCache);
             DependencyNode node;
             if (ProjectDependencyNode.class.getSimpleName().equals(type)) {
-              String projectName = assertNotNull(readString(reader, "projectName"));
-              String projectPath = assertNotNull(readString(reader, "projectPath"));
+              String projectName = assertNotNull(readString(reader, "projectName", context.stringCache));
+              String projectPath = assertNotNull(readString(reader, "projectPath", context.stringCache));
               node = new ProjectDependencyNodeImpl(id, projectName, projectPath);
             }
             else if (ArtifactDependencyNode.class.getSimpleName().equals(type)) {
-              String group = assertNotNull(readString(reader, "group"));
-              String module = assertNotNull(readString(reader, "module"));
-              String version = assertNotNull(readString(reader, "version"));
+              String group = assertNotNull(readString(reader, "group", context.stringCache));
+              String module = assertNotNull(readString(reader, "module", context.stringCache));
+              String version = assertNotNull(readString(reader, "version", context.stringCache));
               node = new ArtifactDependencyNodeImpl(id, group, module, version);
             }
             else if (FileCollectionDependencyNode.class.getSimpleName().equals(type)) {
-              String displayName = assertNotNull(readString(reader, "displayName"));
-              String path = assertNotNull(readString(reader, "path"));
+              String displayName = assertNotNull(readString(reader, "displayName", context.stringCache));
+              String path = assertNotNull(readString(reader, "path", context.stringCache));
               node = new FileCollectionDependencyNodeImpl(id, displayName, path);
             }
             else if (DependencyScopeNode.class.getSimpleName().equals(type)) {
-              String scope = assertNotNull(readString(reader, "scope"));
-              String displayName = assertNotNull(readString(reader, "displayName"));
-              String description = assertNotNull(readString(reader, "description"));
+              String scope = assertNotNull(readString(reader, "scope", context.stringCache));
+              String displayName = assertNotNull(readString(reader, "displayName", context.stringCache));
+              String description = assertNotNull(readString(reader, "description", context.stringCache));
               node = new DependencyScopeNode(id, scope, displayName, description);
             }
             else if (ReferenceNode.class.getSimpleName().equals(type)) {
               node = new ReferenceNode(id);
             }
             else if (UnknownDependencyNode.class.getSimpleName().equals(type)) {
-              String name = assertNotNull(readString(reader, "name"));
+              String name = assertNotNull(readString(reader, "name", context.stringCache));
               node = new UnknownDependencyNode(id, name);
             }
             else {
@@ -417,6 +419,7 @@ public final class ProjectDependenciesSerializationService implements Serializat
     private final IntObjectMap<ProjectDependenciesImpl> objectMap = new IntObjectMap<ProjectDependenciesImpl>();
     private final IntObjectMap<ComponentDependencies> componentDependenciesMap = new IntObjectMap<ComponentDependencies>();
     private final IntObjectMap<DependencyNode> nodesMap = new IntObjectMap<DependencyNode>();
+    private final ConcurrentMap<String, String> stringCache = new ConcurrentHashMap<>();
   }
 
   private static class WriteContext {

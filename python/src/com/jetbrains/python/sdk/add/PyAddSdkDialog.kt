@@ -177,6 +177,8 @@ class PyAddSdkDialog private constructor(private val project: Project?,
           }
         }
         addListSelectionListener {
+          // Only last even must be processed. Other events may leave UI in inconsistent state
+          if (it.valueIsAdjusting) return@addListSelectionListener
           selectedPanel = selectedValue
           cardLayout.show(cardPanel, selectedValue.panelName)
 
@@ -347,7 +349,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     private fun PyAddSdkProvider.safeCreateView(project: Project?,
                                                 module: Module?,
                                                 existingSdks: List<Sdk>,
-                                                context:UserDataHolder): PyAddSdkView? {
+                                                context: UserDataHolder): PyAddSdkView? {
       try {
         return createView(project, module, null, existingSdks, context)
       }

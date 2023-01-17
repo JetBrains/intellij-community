@@ -9,6 +9,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.lensContextOrThrow
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
@@ -22,11 +23,27 @@ class CodeVisionPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
   override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
     if (registry.value.asBoolean().not()) return null
 
+    val savedStamp = editor.getUserData(PSI_MODIFICATION_STAMP)
+    val currentStamp = getCurrentModificationStamp(file)
+    if (savedStamp != null && savedStamp == currentStamp) return null
+
     return CodeVisionPass(file, editor)
   }
 
   companion object {
     private val registry = lazy { Registry.get("editor.codeVision.new") }
+
+    private val PSI_MODIFICATION_STAMP: Key<Long> = Key.create("code.vision.psi.modification.stamp")
+
+    fun putCurrentModificationStamp(editor: Editor, file: PsiFile) {
+      editor.putUserData(PSI_MODIFICATION_STAMP, getCurrentModificationStamp(file))
+    }
+
+    private fun getCurrentModificationStamp(file: PsiFile): Long {
+      return file.manager.modificationTracker.modificationCount
+    }
+
+    fun clearModificationStamp(editor: Editor) = editor.putUserData(PSI_MODIFICATION_STAMP, null)
 
     @JvmStatic
     fun applyPlaceholders(editor: Editor, placeholders: MutableList<Pair<TextRange, CodeVisionEntry>>) {

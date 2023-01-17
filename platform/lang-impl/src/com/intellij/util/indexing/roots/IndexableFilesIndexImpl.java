@@ -34,6 +34,7 @@ import com.intellij.util.indexing.roots.origin.SyntheticLibraryIterableOriginImp
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener;
 import com.intellij.workspaceModel.storage.EntityChange;
+import com.intellij.workspaceModel.storage.EntityReference;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
@@ -273,10 +274,10 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       return;
     }
     if (isFromWorkspaceOnly) return;
-    List<WorkspaceEntity> entityWithChangedRoots = EntityIndexingServiceEx.getInstanceEx().getEntitiesWithChangedRoots(indexingInfos);
+    List<EntityReference<WorkspaceEntity>> referencesToEntitiesWithChangedRoots = EntityIndexingServiceEx.getInstanceEx().getReferencesToEntitiesWithChangedRoots(indexingInfos);
     snapshotHandler.updateSnapshots(snapshots -> {
       WorkspaceModelSnapshot workspaceSnapshot =
-        snapshots.myWorkspaceModelSnapshot.createWithRefreshedEntitiesIfNeeded(entityWithChangedRoots, project);
+        snapshots.myWorkspaceModelSnapshot.createWithRefreshedEntitiesIfNeeded(referencesToEntitiesWithChangedRoots, project);
       if (workspaceSnapshot != null) {
         snapshots = snapshots.copyWithWorkspaceStatus(workspaceSnapshot);
       }

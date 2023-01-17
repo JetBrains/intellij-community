@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.*
 import java.time.Duration
@@ -86,16 +85,14 @@ enum class IdleFeedbackTypes {
   },
   NEW_UI_FEEDBACK {
     override val suitableIdeVersion: String = "2022.3"
-    private val lastDayCollectFeedback = LocalDate(2022, 11, 15)
+    private val lastDayCollectFeedback = LocalDate(2022, 12, 31)
     private val maxNumberNotificationShowed = 1
     private val minNumberDaysElapsed = 5
 
     override fun isSuitable(): Boolean {
       val newUIInfoState = NewUIInfoService.getInstance().state
 
-
-      return isIdeEAP() &&
-             checkIdeIsSuitable() &&
+      return checkIdeIsSuitable() &&
              checkIsNoDeadline() &&
              checkIdeVersionIsSuitable() &&
              checkFeedbackNotSent(newUIInfoState) &&
@@ -104,7 +101,7 @@ enum class IdleFeedbackTypes {
     }
 
     private fun checkIdeIsSuitable(): Boolean {
-      return PlatformUtils.isIdeaUltimate() || PlatformUtils.isIdeaCommunity()
+      return !PlatformUtils.isRider()
     }
 
     private fun checkIsNoDeadline(): Boolean {

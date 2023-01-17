@@ -205,7 +205,7 @@ fun headerPanel(label: JLabel, component: JComponent?) = object : JPanel() {
 }
 
 private class PyPaginationAwareRenderer : DefaultTableCellRenderer() {
-  private val emptyBorder = BorderFactory.createEmptyBorder()
+  private val emptyBorder = BorderFactory.createEmptyBorder(0, 12, 0, 0)
   private val expanderMarker = message("python.toolwindow.packages.load.more.start")
   override fun getTableCellRendererComponent(table: JTable?,
                                              value: Any?,

@@ -12,7 +12,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.jetbrains.python.FullPathOnTarget
+import com.intellij.execution.target.FullPathOnTarget
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
@@ -24,6 +25,15 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.isExecutable
+import kotlin.io.path.pathString
+
+/**
+ * Levels to be used for new conda envs
+ */
+val condaSupportedLanguages: List<LanguageLevel>
+  get() = LanguageLevel.SUPPORTED_LEVELS
+    .asReversed()
+    .filter { it < LanguageLevel.PYTHON311 }
 
 /**
  * See [com.jetbrains.env.conda.PyCondaSdkTest]
@@ -41,7 +51,10 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(condaIdentity: PyCondaE
   val sdk = ProjectJdkImpl(SdkConfigurationUtil.createUniqueSdkName(condaIdentity.userReadableName, existingSdks),
                            PythonSdkType.getInstance())
   sdk.sdkAdditionalData = additionalData
+  // homePath is not required by conda, but used by lots of tools all over the code and required by CondaPathFix
+  // Because homePath is not set yet, CondaPathFix does not work
   sdk.homePath = sdk.getPythonBinaryPath(project).getOrThrow()
+  saveLocalPythonCondaPath(Path.of(fullCondaPathOnTarget))
   return sdk
 }
 
@@ -57,7 +70,12 @@ suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(newCondaEnvInfo: NewCon
   val error = ProcessHandlerReader(process).runProcessAndGetError(uiContext, sink)
 
   return error?.let { Result.failure(Exception(it)) }
-         ?: Result.success(createCondaSdkFromExistingEnv(PyCondaEnvIdentity.NamedEnv(newCondaEnvInfo.envName), existingSdks, project))
+         ?: Result.success(
+           createCondaSdkFromExistingEnv(PyCondaEnvIdentity.NamedEnv(newCondaEnvInfo.envName), existingSdks, project)).apply {
+           onSuccess {
+             saveLocalPythonCondaPath(Path.of(this@createCondaSdkAlongWithNewEnv.fullCondaPathOnTarget))
+           }
+         }
 }
 
 /**
@@ -65,7 +83,7 @@ suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(newCondaEnvInfo: NewCon
  */
 suspend fun suggestCondaPath(configuration: TargetEnvironmentConfiguration?): FullPathOnTarget? {
   val request = configuration?.createEnvironmentRequest(null) ?: LocalTargetEnvironmentRequest()
-  val possiblePaths: Array<FullPathOnTarget> = when (request.targetPlatform.platform) {
+  var possiblePaths: Array<FullPathOnTarget> = when (request.targetPlatform.platform) {
     Platform.UNIX -> arrayOf("~/anaconda3/bin/conda",
                              "~/miniconda3/bin/conda",
                              "/usr/local/bin/conda",
@@ -79,6 +97,12 @@ suspend fun suggestCondaPath(configuration: TargetEnvironmentConfiguration?): Fu
                                 "%USERPROFILE%\\Anaconda3\\condabin\\conda.bat",
                                 "%USERPROFILE%\\Miniconda3\\condabin\\conda.bat"
     )
+  }
+  // If conda is local then store path
+  if (configuration == null) {
+    loadLocalPythonCondaPath()?.let {
+      possiblePaths = arrayOf(it.pathString) + possiblePaths
+    }
   }
   return possiblePaths.firstNotNullOfOrNull { request.getExpandedPathIfExecutable(it) }
 }

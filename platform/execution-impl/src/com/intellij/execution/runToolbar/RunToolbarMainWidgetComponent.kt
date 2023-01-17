@@ -127,10 +127,6 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
   private var rwActiveListener: RWActiveListener? = null
 
   private fun checkGotIt(project: Project) {
-    val propertiesComponent = PropertiesComponent.getInstance()
-    val inclusionState = propertiesComponent.getInt(ToolbarSettings.INCLUSION_STATE, 0)
-    if(inclusionState != 1) return
-
     val instance = RunToolbarSlotManager.getInstance(project)
     if(instance.initialized) {
       showGotItTooltip()
@@ -140,7 +136,6 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
           if(!instance.active) return
 
           showGotItTooltip()
-          propertiesComponent.setValue(ToolbarSettings.INCLUSION_STATE, inclusionState+1, 0)
           clearListeners(project)
         }
       }
@@ -156,8 +151,18 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
   }
 
   private fun showGotItTooltip() {
+    val propertiesComponent = PropertiesComponent.getInstance()
+    val inclusionState = propertiesComponent.getInt(ToolbarSettings.INCLUSION_STATE, 0)
+    if(inclusionState != 1) return
+
     val gotItTooltip = GotItTooltip(GOT_IT_TOOLTIP_ID, ExecutionBundle.message("run.toolbar.gotIt.text"), project)
       .withHeader(ExecutionBundle.message("run.toolbar.gotIt.title"))
+
+
+    if(!gotItTooltip.canShow()) {
+      propertiesComponent.setValue(ToolbarSettings.INCLUSION_STATE, inclusionState+1, 0)
+      return
+    }
 
    gotItTooltip.show(this){c, b ->
      Point(c.width/3, c.height)

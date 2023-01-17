@@ -27,6 +27,7 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.SettingsEditorConfigurable
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.popup.AlignedPopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
@@ -950,7 +951,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
                                                           { showAddPopup(false, null) }, true)
       //new TreeSpeedSearch(myTree);
       myPopupState.prepareToShow(popup)
-      if (clickEvent == null) popup.showUnderneathOf(toolbarDecorator!!.actionsPanel)
+      if (clickEvent == null) AlignedPopup.showUnderneathWithoutAlignment(popup, toolbarDecorator!!.actionsPanel)
       else popup.show(RelativePoint(clickEvent))
     }
   }

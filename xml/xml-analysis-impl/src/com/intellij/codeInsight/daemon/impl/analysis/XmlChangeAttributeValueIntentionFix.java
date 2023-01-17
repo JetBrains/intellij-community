@@ -27,11 +27,6 @@ public class XmlChangeAttributeValueIntentionFix implements LocalQuickFix, Inten
     myPriority = Priority.NORMAL;
   }
 
-  @SuppressWarnings("unused") // to instantiate via extension
-  public XmlChangeAttributeValueIntentionFix() {
-    this(null);
-  }
-
   @Override
   @NotNull
   public String getName() {

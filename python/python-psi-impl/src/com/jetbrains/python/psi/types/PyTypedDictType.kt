@@ -92,10 +92,6 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
     else null
   }
 
-  fun getKeysToValueTypes(): Map<String, PyType?> {
-    return fields.mapValues { it.value.type }
-  }
-
   fun getKeysToValuesWithTypes(): Map<String, Pair<PyExpression?, PyType?>> {
     return fields.mapValues { Pair(it.value.value, it.value.type) }
   }
@@ -145,12 +141,18 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
 
     fun createFromKeysToValueTypes(anchor: PsiElement,
                                    keysToValueTypes: Map<String, Pair<PyExpression?, PyType?>>): PyTypedDictType? {
+      return createFromKeysToValueTypes(anchor, keysToValueTypes, true)
+    }
+
+    fun createFromKeysToValueTypes(anchor: PsiElement,
+                                   keysToValueTypes: Map<String, Pair<PyExpression?, PyType?>>,
+                                   inferred: Boolean): PyTypedDictType? {
       val dict = PyBuiltinCache.getInstance(anchor).dictType?.pyClass
       return if (dict != null) {
         val fields = TDFields(keysToValueTypes.entries.associate {
           it.key to FieldTypeAndTotality(it.value.first, it.value.second)
         })
-        PyTypedDictType("TypedDict", fields, true, dict, DefinitionLevel.INSTANCE, emptyList())
+        PyTypedDictType("TypedDict", fields, inferred, dict, DefinitionLevel.INSTANCE, emptyList())
       }
       else null
     }

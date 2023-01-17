@@ -138,6 +138,8 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
           }
         }
         addListSelectionListener {
+          // Only last even must be processed. Other events may leave UI in inconsistent state
+          if (it.valueIsAdjusting) return@addListSelectionListener
           selectedPanel = selectedValue
           cardLayout.show(cardPanel, selectedValue.panelName)
 

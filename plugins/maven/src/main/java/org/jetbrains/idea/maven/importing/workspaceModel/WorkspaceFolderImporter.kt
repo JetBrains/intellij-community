@@ -191,10 +191,10 @@ internal class WorkspaceFolderImporter(
     fun toAbsolutePath(path: String) = MavenUtil.toPath(mavenProject, path).path
 
     mavenProject.sources.forEach { result.add(ContentRootCollector.SourceFolder(it, JavaSourceRootType.SOURCE)) }
-    mavenProject.resources.forEach { result.add(ContentRootCollector.SourceFolder(it.directory, JavaResourceRootType.RESOURCE)) }
+    mavenProject.resources.forEach { if (null != it.directory) result.add(ContentRootCollector.SourceFolder(it.directory, JavaResourceRootType.RESOURCE)) }
 
     mavenProject.testSources.forEach { result.add(ContentRootCollector.SourceFolder(it, JavaSourceRootType.TEST_SOURCE)) }
-    mavenProject.testResources.forEach { result.add(ContentRootCollector.SourceFolder(it.directory, JavaResourceRootType.TEST_RESOURCE)) }
+    mavenProject.testResources.forEach { if (null != it.directory) result.add(ContentRootCollector.SourceFolder(it.directory, JavaResourceRootType.TEST_RESOURCE)) }
 
     val buildHelperPlugin = BuildHelperMavenPluginUtil.findPlugin(mavenProject)
     if (buildHelperPlugin != null) {

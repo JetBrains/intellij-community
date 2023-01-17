@@ -24,7 +24,6 @@ internal class SearchEverywhereMlSearchState(
     SearchEverywhereRankingModel(modelProvider.getModel(tabId))
   }
 
-  @Synchronized
   fun getElementFeatures(elementId: Int?,
                          element: Any,
                          contributor: SearchEverywhereContributor<*>,
@@ -38,7 +37,6 @@ internal class SearchEverywhereMlSearchState(
     return SearchEverywhereMLItemInfo(elementId, contributorId, features)
   }
 
-  @Synchronized
   fun getMLWeight(context: SearchEverywhereMLContextInfo,
                   elementFeatures: List<EventPair<*>>): Double {
     val features = (context.features + elementFeatures + searchStateFeatures).associate { it.field.name to it.data }

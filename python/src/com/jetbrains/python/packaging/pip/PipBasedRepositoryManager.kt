@@ -16,13 +16,11 @@ import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
 import com.jetbrains.python.packaging.common.EmptyPythonPackageDetails
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.management.packagesByRepository
-import com.jetbrains.python.packaging.repository.PyPIPackageRepository
-import com.jetbrains.python.packaging.repository.PyPackageRepositories
-import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.packaging.repository.withBasicAuthorization
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
+import com.jetbrains.python.packaging.repository.*
+import com.jetbrains.python.packaging.repository.withBasicAuthorization
 import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 
@@ -30,7 +28,7 @@ import java.time.Duration
 abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRepositoryManager(project, sdk) {
 
   override val repositories: List<PyPackageRepository>
-    get() = listOf(PyPIPackageRepository) + PythonSimpleRepositoryCache.repositories
+    get() = listOf(PyPIPackageRepository) + service<PythonSimpleRepositoryCache>().repositories
 
   private val gson = Gson()
   private val packageDetailsCache = Caffeine.newBuilder()
@@ -47,22 +45,24 @@ abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRep
           .readTimeout(3000)
           .readString()
       }
-      if (result.isFailure) {
-        thisLogger().debug("Request failed for package $it.name")
+      if (result.isFailure) thisLogger().debug("Request failed for package $it.name")
 
-        val versions = tryParsingVersionsFromPage(it.name, repositoryUrl)
-        if (versions != null) return@build PythonSimplePackageDetails(it.name,
-                                                  versions.sortedWith(PyPackageVersionComparator.STR_COMPARATOR.reversed()),
-                                                  it.repository!!,
-                                                  description = PyBundle.message("python.packaging.no.package.info"))
-        else return@build EmptyPythonPackageDetails(it.name, PyBundle.message("python.packages.request.failed"))
-      }
-
-      buildPackageDetails(result.getOrThrow(), it)
+      buildPackageDetails(result.getOrNull(), it)
     }
 
 
-  override fun buildPackageDetails(rawInfo: String, spec: PythonPackageSpecification): PythonPackageDetails {
+  override fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails {
+    if (rawInfo == null) {
+      val versions = tryParsingVersionsFromPage(spec.name, spec.repository?.repositoryUrl)
+      val repository = if (spec.repository !is PyEmptyPackagePackageRepository) spec.repository else PyPIPackageRepository
+      val repositoryName = repository?.name ?: PyPIPackageRepository.name!!
+      return if (versions != null) PythonSimplePackageDetails(spec.name,
+                                                              versions.sortedWith(PyPackageVersionComparator.STR_COMPARATOR.reversed()),
+                                                              spec.repository!!,
+                                                              description = PyBundle.message("python.packages.no.details.in.repo", repositoryName))
+      else EmptyPythonPackageDetails(spec.name, PyBundle.message("python.packages.no.details.in.repo", repositoryName))
+    }
+
     try {
       val packageDetails = gson.fromJson(rawInfo, PyPIPackageUtil.PackageDetails::class.java)
       return PythonSimplePackageDetails(spec.name,
@@ -80,9 +80,10 @@ abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRep
     }
   }
 
-  private fun tryParsingVersionsFromPage(name: String, repositoryUrl: String): List<String>? {
+  private fun tryParsingVersionsFromPage(name: String, repositoryUrl: String?): List<String>? {
+    val actualUrl = repositoryUrl ?: PyPIPackageRepository.repositoryUrl!!
     val versions = runCatching {
-      val url = StringUtil.trimEnd(repositoryUrl, "/") + "/" + name
+      val url = StringUtil.trimEnd(actualUrl, "/") + "/" + name
       PyPIPackageUtil.parsePackageVersionsFromArchives(url, name)
     }
     return versions.getOrNull()
@@ -90,19 +91,20 @@ abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRep
 
 
   override suspend fun initCaches() {
-    if (PypiPackageCache.isEmpty()) {
-      PypiPackageCache.loadCache()
+    service<PypiPackageCache>().apply {
+      if (isEmpty()) loadCache()
     }
 
-    val service = service<PyPackageRepositories>()
-    if (service.repositories.isNotEmpty() && PythonSimpleRepositoryCache.isEmpty()) {
-      PythonSimpleRepositoryCache.refresh()
+    val repositoryService = service<PyPackageRepositories>()
+    val repositoryCache = service<PythonSimpleRepositoryCache>()
+    if (repositoryService.repositories.isNotEmpty() && repositoryCache.isEmpty()) {
+      repositoryCache.refresh()
     }
   }
 
   override suspend fun refreshCashes() {
-    PypiPackageCache.refresh()
-    PythonSimpleRepositoryCache.refresh()
+    service<PypiPackageCache>().refresh()
+    service<PythonSimpleRepositoryCache>().refresh()
   }
 
   override fun allPackages(): List<String> {
@@ -111,8 +113,8 @@ abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRep
   }
 
   override fun packagesFromRepository(repository: PyPackageRepository): List<String> {
-    return if (repository is PyPIPackageRepository) PypiPackageCache.packages
-    else PythonSimpleRepositoryCache[repository] ?: error("No packages for requested repository in cache")
+    return if (repository is PyPIPackageRepository) service<PypiPackageCache>().packages
+    else service<PythonSimpleRepositoryCache>()[repository] ?: error("No packages for requested repository in cache")
   }
 
   override suspend fun getPackageDetails(pkg: PythonPackageSpecification): PythonPackageDetails {

@@ -49,5 +49,6 @@
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" scope="TEST" name="jetbrains.kotlinx.coroutines.test" level="project" />
     <orderEntry type="module" module-name="intellij.python.community.core.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
   </component>
 </module>

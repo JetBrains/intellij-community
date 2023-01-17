@@ -33,6 +33,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootMana
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener.Companion.shouldFireRootsChanged
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher.Companion.calculateAffectedEntities
 import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
@@ -178,7 +179,7 @@ private class RootsChangeWatcher(private val project: Project) {
                                              allRootsWereRemoved: Boolean) {
     val includingJarDirectory = getIncludingJarDirectory(storage, virtualFileUrl)
     if (includingJarDirectory != null) {
-      val entities = storage.getVirtualFileUrlIndex().findEntitiesByUrl(includingJarDirectory).map { it.first }.toList()
+      val entities = storage.getVirtualFileUrlIndex().findEntitiesByUrl(includingJarDirectory).map { it.first.createReference<WorkspaceEntity>() }.toList()
       entityChanges.addAffectedEntities(entities, allRootsWereRemoved)
       return
     }
@@ -196,7 +197,7 @@ private class RootsChangeWatcher(private val project: Project) {
 
     if (affectedEntities.any { it.propertyName != "entitySource" && shouldFireRootsChanged(it.entity, project) }
         || virtualFileUrl.url in projectFilePaths) {
-      entityChanges.addAffectedEntities(affectedEntities.map { it.entity }, allRootsWereRemoved)
+      entityChanges.addAffectedEntities(affectedEntities.map { it.entity.createReference() }, allRootsWereRemoved)
     }
   }
 
@@ -286,13 +287,13 @@ private class RootsChangeWatcher(private val project: Project) {
 }
 
 private class EntityChangeStorage {
-  private var entitiesToReindex: MutableList<WorkspaceEntity>? = null
-  val affectedEntities = HashSet<WorkspaceEntity>()
+  private var entitiesToReindex: MutableList<EntityReference<WorkspaceEntity>>? = null
+  val affectedEntities = HashSet<EntityReference<WorkspaceEntity>>()
   val filesToInvalidate = HashSet<VirtualFile>()
 
-  private fun initChanges(): MutableList<WorkspaceEntity> = entitiesToReindex ?: (mutableListOf<WorkspaceEntity>().also { entitiesToReindex = it })
+  private fun initChanges(): MutableList<EntityReference<WorkspaceEntity>> = entitiesToReindex ?: (mutableListOf<EntityReference<WorkspaceEntity>>().also { entitiesToReindex = it })
 
-  fun addAffectedEntities(entities: Collection<WorkspaceEntity>, allRootsWereRemoved: Boolean) {
+  fun addAffectedEntities(entities: Collection<EntityReference<WorkspaceEntity>>, allRootsWereRemoved: Boolean) {
     affectedEntities.addAll(entities)
     val toReindex = initChanges()
     if (!allRootsWereRemoved) {

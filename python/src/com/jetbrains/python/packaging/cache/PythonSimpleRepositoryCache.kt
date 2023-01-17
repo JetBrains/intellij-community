@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging.cache
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.io.HttpRequests
@@ -18,7 +19,8 @@ import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.parser.ParserDelegator
 
 @ApiStatus.Experimental
-object PythonSimpleRepositoryCache : PythonPackageCache<PyPackageRepository> {
+@Service
+class PythonSimpleRepositoryCache : PythonPackageCache<PyPackageRepository> {
 
   private var cache: Map<PyPackageRepository, List<String>> = emptyMap()
 

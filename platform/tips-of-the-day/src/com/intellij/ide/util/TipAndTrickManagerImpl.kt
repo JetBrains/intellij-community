@@ -13,18 +13,18 @@ import com.intellij.ui.GotItTooltipService
 class TipAndTrickManagerImpl : TipAndTrickManager {
   private var openedDialog: TipDialog? = null
 
-  override fun showTipDialog(project: Project) = showTipDialog(project, TipAndTrickBean.EP_NAME.extensionList)
+  override fun showTipDialog(project: Project?) = showTipDialog(project, TipAndTrickBean.EP_NAME.extensionList)
 
   override fun showTipDialog(project: Project, tip: TipAndTrickBean) = showTipDialog(project, listOf(tip))
 
-  private fun showTipDialog(project: Project, tips: List<TipAndTrickBean>) {
+  private fun showTipDialog(project: Project?, tips: List<TipAndTrickBean>) {
     val sortingResult = if (tips.size > 1) {
       TipsOrderUtil.getInstance().sort(tips, project)
     }
     else TipsSortingResult(tips)
 
     invokeLater {
-      if (!project.isDisposed) {
+      if (project?.isDisposed != true) {
         closeTipDialog()
         openedDialog = TipDialog(project, sortingResult).also { dialog ->
           Disposer.register(dialog.disposable, Disposable { openedDialog = null })  // clear link to not leak the project

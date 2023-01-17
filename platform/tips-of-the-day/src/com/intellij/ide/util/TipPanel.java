@@ -53,7 +53,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
 
   private static final Logger LOG = Logger.getInstance(TipPanel.class);
 
-  private @NotNull final Project myProject;
+  private @Nullable final Project myProject;
   private @NotNull final JPanel myContentPanel;
   private @NotNull final JLabel mySubSystemLabel;
   private final StyledTextPane myTextPane;
@@ -68,7 +68,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private final Map<String, Boolean> myTipIdToLikenessState = new LinkedHashMap<>();
   private Boolean myCurrentLikenessState = null;
 
-  public TipPanel(@NotNull final Project project, @NotNull final TipsSortingResult sortingResult, @NotNull Disposable parentDisposable) {
+  public TipPanel(@Nullable final Project project, @NotNull final TipsSortingResult sortingResult, @NotNull Disposable parentDisposable) {
     setLayout(new BorderLayout());
     myProject = project;
 
@@ -280,6 +280,8 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     adjustTextPaneBorder(tipContent);
     setPromotionForCurrentTip();
     setTopBorder();
+    revalidate();
+    repaint();
 
     TipsOfTheDayUsagesCollector.triggerTipShown(tip, myAlgorithm, myAlgorithmVersion);
     TipsUsageManager.getInstance().fireTipShown(myCurrentTip);
@@ -299,7 +301,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   private void setPromotionForCurrentTip() {
-    if (myProject.isDisposed()) return;
+    if (myProject == null || myProject.isDisposed()) return;
     if (myCurrentPromotion != null) {
       remove(myCurrentPromotion);
       myCurrentPromotion = null;
@@ -313,8 +315,6 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
       myCurrentPromotion = promotions.get(0);
       add(myCurrentPromotion, BorderLayout.NORTH);
     }
-    revalidate();
-    repaint();
   }
 
   private void setTopBorder() {

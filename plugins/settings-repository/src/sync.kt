@@ -3,15 +3,15 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.eclipse.jgit.errors.NoRemoteRepositoryException
@@ -127,7 +127,9 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
 
       if (updateResult != null) {
         val app = ApplicationManager.getApplication()
-        restartApplication = updateStoragesFromStreamProvider(icsManager, app.stateStore as ComponentStoreImpl, updateResult!!,
+        restartApplication = updateStoragesFromStreamProvider(icsManager = icsManager,
+                                                              store = app.stateStore as ComponentStoreImpl,
+                                                              updateResult = updateResult!!,
                                                               reloadAllSchemes = syncType == SyncType.OVERWRITE_LOCAL)
 
       }
@@ -184,7 +186,7 @@ internal suspend fun updateStoragesFromStreamProvider(icsManager: IcsManager,
     return false
   }
 
-  return withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+  return withContext(Dispatchers.EDT) {
     val changedComponentNames = LinkedHashSet<String>()
     updateStateStorage(changedComponentNames, changed, false)
     updateStateStorage(changedComponentNames, deleted, true)

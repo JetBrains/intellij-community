@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.settings
 
 import com.intellij.codeInsight.codeVision.*
 import com.intellij.codeInsight.hints.codeVision.CodeVisionPass
 import com.intellij.codeInsight.hints.codeVision.CodeVisionProviderAdapter
+import com.intellij.lang.IdeLanguageCustomization
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.ComboBox
@@ -56,12 +57,15 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
     get() = getCasePreview()
 
   override val previewLanguage: Language?
-    get() =
-      CodeVisionSettingsPreviewLanguage.EP_NAME.extensionList.asSequence()
-        .filter { it.modelId == id }
-        .map { Language.findLanguageByID(it.language) }
-        .firstOrNull()
-      ?: Language.findLanguageByID("JAVA")
+    get() {
+      val primaryIdeLanguages = IdeLanguageCustomization.getInstance().primaryIdeLanguages
+      return CodeVisionSettingsPreviewLanguage.EP_NAME.extensionList.asSequence()
+               .filter { it.modelId == id }
+               .map { Language.findLanguageByID(it.language) }
+               .sortedBy { primaryIdeLanguages.indexOf(it).takeIf { it != -1 } ?: Integer.MAX_VALUE }
+               .firstOrNull()
+             ?: Language.findLanguageByID("JAVA")
+    }
 
   override fun isModified(): Boolean {
     return (isEnabled != (settings.isProviderEnabled(id) && settings.codeVisionEnabled)

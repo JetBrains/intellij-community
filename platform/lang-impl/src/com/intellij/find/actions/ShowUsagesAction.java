@@ -378,7 +378,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     Project project = parameters.project;
     UsageViewImpl usageView = createUsageView(project);
-    UsageViewStatisticsCollector.logSearchStarted(project, usageView, CodeNavigateSource.ShowUsagesPopup);
+    UsageViewStatisticsCollector.logSearchStarted(project, usageView, CodeNavigateSource.ShowUsagesPopup,
+                                                  actionHandler.getTargetLanguage());
     final SearchScope searchScope = actionHandler.getSelectedScope();
     final AtomicInteger outOfScopeUsages = new AtomicInteger();
     AtomicBoolean manuallyResized = new AtomicBoolean();
@@ -689,14 +690,17 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     SpeedSearchAdvertiser advertiser = new SpeedSearchAdvertiser();
     String hint = getSecondInvocationHint(actionHandler);
-    if (hint != null) {
-      advertiser.addAdvertisement(hint);
+
+    JPanel advertiserComponent = null;
+    boolean hintAdded = advertiser.addAdvertisement(hint);
+    boolean speedSearchAdded = advertiser.addSpeedSearchAdvertisement() != null;
+    if (hintAdded || speedSearchAdded) {
+      advertiserComponent = advertiser.getComponent();
     }
-    advertiser.addSpeedSearchAdvertisement();
 
     PopupChooserBuilder<?> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(table).
       setTitle(showUsagesPopupData.header.getTitle()).
-      setAdvertiser(advertiser.getComponent()).
+      setAdvertiser(advertiserComponent).
       setMovable(true).
       setResizable(true).
       setCancelKeyEnabled(true).

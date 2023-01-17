@@ -3,6 +3,7 @@ package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -527,8 +528,16 @@ public final class CustomizationUtil {
                                    }
                                  };
                                  dialogWrapper.show();
-                               }));
-      return PopupHandler.installPopupMenu(component, customizationGroup, place, new PopupMenuListenerAdapter() {
+                               })
+      );
+
+
+        AnAction rollbackAction = ActionManager.getInstance().getAction(ToolbarSettings.ROLLBACK_ACTION_ID);
+        if(rollbackAction != null) {
+          customizationGroup.add(rollbackAction);
+        }
+
+        return PopupHandler.installPopupMenu(component, customizationGroup, place, new PopupMenuListenerAdapter() {
         @Override
         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
           JBPopupMenu menu = ObjectUtils.tryCast(e.getSource(), JBPopupMenu.class);

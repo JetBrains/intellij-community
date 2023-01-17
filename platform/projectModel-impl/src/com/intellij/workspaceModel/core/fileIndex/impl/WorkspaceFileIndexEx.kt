@@ -4,8 +4,9 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
+import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   /**
@@ -27,15 +28,25 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
    * Must be called inside Write Action, and [updateDirtyEntities] must be called before that Write Action finishes.
    * It may happen that an implementation of [com.intellij.openapi.vfs.newvfs.BulkFileListener] will try to get information about changed
    * files synchronously during the same Write Action, in that case the index should recalculate the data to provide correct results.
-   * @param entities entities which refer to files which were created, deleted, moved or renamed
+   * @param entityReferences references to entities which refer to files which were created, deleted, moved or renamed
    * @param filesToInvalidate files which were deleted or moved to other directories and was referenced from some entities
    */
-  fun markDirty(entities: Collection<WorkspaceEntity>, filesToInvalidate: Collection<VirtualFile>)
+  fun markDirty(entityReferences: Collection<EntityReference<WorkspaceEntity>>, filesToInvalidate: Collection<VirtualFile>)
 
   /**
    * Forces the index to update entities marked by [markDirty]. Must be called during execution of the same Write Action as [markDirty].
    */
   fun updateDirtyEntities()
+
+  /**
+   * This is a temporary method introduced to support unloading of modules until IDEA-298694 is implemented.
+   */
+  fun unloadModules(entities: List<ModuleEntity>)
+
+  /**
+   * This is a temporary method introduced to support loading back unloaded modules until IDEA-298694 is implemented.
+   */
+  fun loadModules(entities: List<ModuleEntity>)
 
   companion object {
     @JvmField

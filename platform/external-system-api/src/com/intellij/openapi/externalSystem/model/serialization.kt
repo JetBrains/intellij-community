@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
@@ -26,16 +27,21 @@ private fun createDataClassResolver(log: Logger): (name: String, hostObject: Dat
       classLoadersToSearch = set
     }
 
+    var pe: PluginException? = null
     for (classLoader in classLoadersToSearch) {
       try {
         return classLoader.loadClass(name)
+      }
+      catch (e: PluginException) {
+        pe?.let(e::addSuppressed)
+        pe = e
       }
       catch (e: ClassNotFoundException) {
       }
     }
 
-    log.warn("Cannot find class `$name`")
-    return null
+    log.warn("Cannot find class `$name`", pe)
+    throw pe ?: return null
   }
 }
 

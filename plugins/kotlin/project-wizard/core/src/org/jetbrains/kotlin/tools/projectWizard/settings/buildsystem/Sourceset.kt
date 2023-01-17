@@ -54,7 +54,12 @@ class Sourceset(
     var dependencies: List<SourcesetDependency> = emptyList(),
     var parent: Module? = null,
     override val identificator: Identificator = GeneratedIdentificator(sourcesetType.name),
-    val createDirectory: Boolean = true
+    val createDirectory: Boolean = true,
+    /**
+     * Here you can configure dependencies between Kotlin sourceSets in Gradle module, for example:
+     * iosSimulatorArm64Main.dependsOn(iosMain)
+     */
+    val dependsOnModules: List<Module> = emptyList(),
 ) : DisplayableSettingItem, IdentificatorOwner {
     override val text: String
         @NlsSafe

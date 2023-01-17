@@ -13,6 +13,10 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory
@@ -32,7 +36,7 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
   private val storeFileSetRegistrar = StoreFileSetsRegistrarImpl()
   private val removeFileSetRegistrar = RemoveFileSetsRegistrarImpl()
   private val fileTypeRegistry = FileTypeRegistry.getInstance()
-  private val dirtyEntities = HashSet<WorkspaceEntity>()
+  private val dirtyEntities = HashSet<EntityReference<WorkspaceEntity>>()
   private val dirtyFiles = HashSet<VirtualFile>()
   @Volatile
   private var hasDirtyEntities = false
@@ -197,7 +201,7 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
     resetFileCache()
   }
 
-  fun markDirty(entities: Collection<WorkspaceEntity>, files: Collection<VirtualFile>) {
+  fun markDirty(entities: Collection<EntityReference<WorkspaceEntity>>, files: Collection<VirtualFile>) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     dirtyEntities.addAll(entities)
     dirtyFiles.addAll(files)
@@ -218,7 +222,8 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
       fileSets.remove(file)
     }
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
-    for (entity in dirtyEntities) {
+    for (reference in dirtyEntities) {
+      val entity = reference.resolve(storage) ?: continue
       unregisterFileSets(entity, entity.getEntityInterface(), storage)
       registerFileSets(entity, entity.getEntityInterface(), storage)
     }
@@ -230,6 +235,30 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
 
   fun resetFileCache() {
     fileIdWithoutFileSets.clear()
+  }
+
+  fun unloadModules(entities: List<ModuleEntity>) {
+    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    entities.forEach { moduleEntity ->
+      unregisterFileSets(moduleEntity, ModuleEntity::class.java, storage)
+      moduleEntity.contentRoots.forEach { contentRootEntity ->
+        unregisterFileSets(contentRootEntity, ContentRootEntity::class.java, storage)
+        contentRootEntity.sourceRoots.forEach { unregisterFileSets(it, SourceRootEntity::class.java, storage) }
+        contentRootEntity.excludedUrls.forEach { unregisterFileSets(it, ExcludeUrlEntity::class.java, storage) }
+      }
+    }
+  }
+
+  fun loadModules(entities: List<ModuleEntity>) {
+    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    entities.forEach { moduleEntity ->
+      registerFileSets(moduleEntity, ModuleEntity::class.java, storage)
+      moduleEntity.contentRoots.forEach { contentRootEntity ->
+        registerFileSets(contentRootEntity, ContentRootEntity::class.java, storage)
+        contentRootEntity.sourceRoots.forEach { registerFileSets(it, SourceRootEntity::class.java, storage) }
+        contentRootEntity.excludedUrls.forEach { registerFileSets(it, ExcludeUrlEntity::class.java, storage) }
+      }
+    }
   }
 
   private inner class StoreFileSetsRegistrarImpl : WorkspaceFileSetRegistrar {

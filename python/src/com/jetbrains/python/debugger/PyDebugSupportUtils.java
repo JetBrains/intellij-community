@@ -14,6 +14,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,8 @@ public final class PyDebugSupportUtils {
 
   private PyDebugSupportUtils() {
   }
+
+  public static final @NonNls String ASYNCIO_ENV = "ASYNCIO_DEBUGGER_ENV";
 
   // can expression be evaluated, or should be executed
   public static boolean isExpression(final Project project, final String expression) {

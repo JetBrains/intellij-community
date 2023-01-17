@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PatternUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
@@ -73,19 +74,16 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   /**
-   * Some flavours support virtual env activation: Intellij searches for activate(.bat) script and reads
-   * envs from it. This is harmless and sometimes useful for virtualenvs, but severe for conda.
-   * See inheritors docs.
-   */
-  public boolean supportsVirtualEnvActivation() {
-    return true;
-  }
-
-
-  /**
    * On local targets some flavours could be detected. It returns path to python interpreters for such cases.
    */
-  @NotNull
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
+    return ContainerUtil.map(suggestHomePaths(module, context), Path::of);
+  }
+
+  /**
+   * @deprecated use {@link #suggestLocalHomePaths(Module, UserDataHolder)}
+   */
+  @Deprecated
   public Collection<String> suggestHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
     return Collections.emptyList();
   }

@@ -18,15 +18,13 @@ public class ShowTipsAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project != null) {
-      new Task.Backgroundable(project, IdeBundle.message("tip.of.the.day.progress.title"), false) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          TipsOfTheDayUsagesCollector.triggerDialogShown(TipsOfTheDayUsagesCollector.DialogType.manually);
-          TipAndTrickManager.getInstance().showTipDialog(project);
-        }
-      }.queue();
-    }
+    new Task.Backgroundable(project, IdeBundle.message("tip.of.the.day.progress.title"), false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        TipsOfTheDayUsagesCollector.triggerDialogShown(TipsOfTheDayUsagesCollector.DialogType.manually);
+        TipAndTrickManager.getInstance().showTipDialog(project);
+      }
+    }.queue();
   }
 
   @Override

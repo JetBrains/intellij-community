@@ -21,6 +21,7 @@ import org.jetbrains.annotations.SystemDependent;
 
 import javax.swing.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -43,14 +44,6 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor<PyCondaFlavorData>
   }
 
   @Override
-  public boolean supportsVirtualEnvActivation() {
-    // Conda has its own machinery to set env vars, so it doesn't need explicit activation.
-    // Even worse: settings ``PATH`` read from base environment activation script executes python
-    // from base environment (instead of selected one), hence breaks everything
-    return false;
-  }
-
-  @Override
   public boolean isPlatformIndependent() {
     return true;
   }
@@ -65,9 +58,8 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor<PyCondaFlavorData>
     return PyCondaFlavorData.class;
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
     // There is no such thing as "conda homepath" since conda doesn't store python path
     return Collections.emptyList();
   }

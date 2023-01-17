@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
-project(restarter C)
+project(restarter OBJC)
 
 if(NOT APPLE)
     message(FATAL_ERROR "macOS only.")

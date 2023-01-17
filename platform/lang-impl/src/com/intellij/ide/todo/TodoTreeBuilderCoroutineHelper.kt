@@ -6,6 +6,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.tree.TreeUtil
@@ -62,6 +63,18 @@ private class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeBu
       }
     }.asCompletableFuture()
   }
+
+  fun scheduleMarkFilesAsDirtyAndUpdateTree(files: List<VirtualFile>) {
+    scope.launch(Dispatchers.Default) {
+      files.asSequence()
+        .filter { it.isValid }
+        .forEach { treeBuilder.markFileAsDirty(it) }
+
+      readActionBlocking {
+        treeBuilder.updateVisibleTree()
+      }
+    }
+  }
 }
 
 @RequiresBackgroundThread
@@ -94,8 +107,7 @@ private fun TodoTreeBuilder.validateCacheAndUpdateTree() {
 @RequiresReadLock
 private fun TodoTreeBuilder.updateVisibleTree() {
   if (isUpdatable) {
-    if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
-      validateCache()
+    if (hasDirtyFiles()) { // suppress redundant cache validations
       todoTreeStructure.validateCache()
     }
     model.invalidateAsync()

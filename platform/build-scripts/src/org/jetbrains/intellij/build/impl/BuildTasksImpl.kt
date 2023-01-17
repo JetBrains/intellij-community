@@ -955,8 +955,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
           // todo arm?
           vmOptionsFilePath = "bin/win/${executableName}64.exe.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
-          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch, isScript = true)
-        ),
+          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch)),
         ProductInfoLaunchData(
           os = OsFamily.LINUX.osName,
           arch = arch.dirName,
@@ -966,8 +965,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
           vmOptionsFilePath = "bin/linux/${executableName}64.vmoptions",
           startupWmClass = getLinuxFrameClass(context),
           bootClassPathJarNames = context.bootClassPathJarNames,
-          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch, isScript = true)
-        ),
+          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch)),
         ProductInfoLaunchData(
           os = OsFamily.MACOS.osName,
           arch = arch.dirName,

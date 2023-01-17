@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.common
 
 import com.jetbrains.python.packaging.repository.PyEmptyPackagePackageRepository
+import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.Nls
 
@@ -48,8 +49,13 @@ interface PythonPackageSpecification {
   val version: String?
   val repository: PyPackageRepository?
 
-  fun buildInstallationString(): List<String> {
-    return listOf("$name${if (version != null) "==$version" else ""}")
+  fun buildInstallationString(): List<String>  = buildList {
+    val versionString = if (version != null) "==$version" else ""
+    add("$name$versionString")
+    if (repository != null && repository != PyPIPackageRepository) {
+      add("--index-url")
+      add(repository!!.urlForInstallation)
+    }
   }
 }
 

@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.InstanceCreator
 import com.google.gson.reflect.TypeToken
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.io.exists
 import com.jetbrains.python.packaging.PyPIPackageUtil
@@ -24,7 +25,8 @@ import java.time.Instant
 import java.util.*
 
 @ApiStatus.Experimental
-object PypiPackageCache : PythonPackageCache<String> {
+@Service
+class PypiPackageCache : PythonPackageCache<String> {
   private val gson: Gson = GsonBuilder()
     .registerTypeAdapter(object : TypeToken<TreeSet<String>>() {}.type,
                          object : InstanceCreator<TreeSet<String>> {
