@@ -95,9 +95,6 @@ public final class ConsoleViewUtil {
     }
 
     @Override
-    public void setAttributes(TextAttributes attributes) { }
-
-    @Override
     public void setColorScheme(@NotNull EditorColorsScheme scheme) {}
   }
 

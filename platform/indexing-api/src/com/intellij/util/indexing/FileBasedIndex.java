@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Supplier;
 
 /**
  * @see FileBasedIndexExtension
@@ -357,10 +356,6 @@ public abstract class FileBasedIndex {
   public interface FileTypeSpecificInputFilter extends InputFilter {
     void registerFileTypesUsedForIndexing(@NotNull Consumer<? super FileType> fileTypeSink);
   }
-
-  /** @deprecated inline true */
-  @Deprecated(forRemoval = true)
-  public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping = true;
 
   @ApiStatus.Internal
   public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", true);

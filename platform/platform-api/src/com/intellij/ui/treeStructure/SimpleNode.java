@@ -15,7 +15,6 @@ import com.intellij.util.ui.update.ComparableObjectCheck;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 
@@ -236,15 +235,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor<Object> imple
 
   public boolean shouldHaveSeparator() {
     return false;
-  }
-
-  /**
-   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
-   * or update presentation dynamically by defining {@link #update(PresentationData)}
-   */
-  @Deprecated(forRemoval = true)
-  public void setUniformIcon(Icon aIcon) {
-    setIcon(aIcon);
   }
 
   @Override

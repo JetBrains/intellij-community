@@ -356,11 +356,6 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   @Override
-  public void removeCommandListener(@NotNull CommandListener listener) {
-    myListeners.remove(listener);
-  }
-
-  @Override
   public void runUndoTransparentAction(@NotNull Runnable action) {
     if (CommandLog.LOG.isDebugEnabled()) {
       CommandLog.LOG.debug("runUndoTransparentAction: " + action + ", in command = " + (myCurrentCommand != null) +

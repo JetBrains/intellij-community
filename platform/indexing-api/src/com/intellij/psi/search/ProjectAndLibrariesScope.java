@@ -28,14 +28,6 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
   }
 
-  /**
-   * @deprecated use {@link #ProjectAndLibrariesScope(Project)}
-   */
-  @Deprecated(forRemoval = true)
-  public ProjectAndLibrariesScope(Project project, boolean searchOutsideRootModel) {
-    this(project);
-  }
-
   @Override
   public boolean contains(@NotNull VirtualFile file) {
     return myProjectFileIndex.isInProject(file);
