@@ -8,7 +8,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.ProgressManager;
@@ -177,13 +176,6 @@ public final class TextMateServiceImpl extends TextMateService {
   public @NotNull ShellVariablesRegistry getShellVariableRegistry() {
     ensureInitialized();
     return myShellVariablesRegistry;
-  }
-
-  @Nullable
-  @Override
-  public TextMateShellVariable getVariable(@NotNull String name, @NotNull EditorEx editor) {
-    ensureInitialized();
-    return myShellVariablesRegistry.getVariableValue(name, TextMateEditorUtils.getCurrentScopeSelector(editor));
   }
 
   @NotNull
