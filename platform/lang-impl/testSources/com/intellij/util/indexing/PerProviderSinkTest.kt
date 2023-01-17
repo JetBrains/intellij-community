@@ -15,6 +15,8 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Phaser
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.random.Random
 
 class PerProviderSinkTest : LightPlatformTestCase() {
 
@@ -159,6 +161,72 @@ class PerProviderSinkTest : LightPlatformTestCase() {
 
     phaser.awaitAdvanceInterruptibly(phaser.arrive(), 5, TimeUnit.SECONDS) // p1
     TestCase.assertTrue(nonCancelableSectionCompeteNormally.get())
+  }
+
+  fun testManySinksManyProvidersStress() {
+    val maxBatchSize = 100
+    val threadsCount = 30
+    val providersCount = 5
+    val queueFlushCount = 50
+
+    val threadsCompleted = AtomicInteger()
+    val filesSubmitted = AtomicInteger()
+    val providers = List(providersCount) { FakeIterator() }
+
+    class SimpleRandomizedProducer(private val producerName: String) : Runnable {
+      override fun run() {
+        var batch = 0
+        while (true) {
+          batch++
+          val batchSize = Random.nextInt(maxBatchSize)
+          val provider = providers.random()
+          queue.getSink(provider).use { sink ->
+            for (f in 1..batchSize) {
+              sink.addFile(LightVirtualFile("$producerName batch $batch file $f"))
+            }
+            sink.commit()
+            filesSubmitted.addAndGet(batchSize)
+          }
+        }
+      }
+    }
+
+    for (i in 1..threadsCount) {
+      Thread {
+        try {
+          ProgressManager.getInstance().runProcess(SimpleRandomizedProducer("Producer $i"), EmptyProgressIndicator())
+        }
+        catch (_: ProcessCanceledException) {
+          // do nothing. This is not a production code, ignore the PCE
+        }
+        finally {
+          threadsCompleted.incrementAndGet()
+        }
+      }.start()
+    }
+
+    var totalFilesSum = 0
+    for (i in 1..queueFlushCount) {
+      if (i == queueFlushCount) {
+        queue.cancelAllTasksAndWait()
+      }
+
+      val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles(queue)
+      // Don't test latch: it is always `null` because in unit tests [UnindexedFilesScanner.shouldScanInSmartMode()] reports `false`
+      //TestCase.assertTrue("Total files: $totalFiles, latch: $currentLatch", (totalFiles < DUMB_MODE_THRESHOLD) == (currentLatch == null))
+      val totalFilesInThisQueue = filesInQueue.values.sumOf(Collection<*>::size)
+      TestCase.assertEquals(totalFiles, totalFilesInThisQueue)
+      totalFilesSum += totalFilesInThisQueue
+      Thread.sleep(50)
+    }
+
+    val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles(queue)
+    TestCase.assertEquals(0, filesInQueue.size)
+    TestCase.assertEquals(0, totalFiles)
+    TestCase.assertNull(currentLatch)
+
+    TestCase.assertEquals(threadsCompleted.get(), threadsCount)
+    TestCase.assertEquals(filesSubmitted.get(), totalFilesSum)
   }
 
   private fun getAndResetQueuedFiles(queue: PerProjectIndexingQueue):
