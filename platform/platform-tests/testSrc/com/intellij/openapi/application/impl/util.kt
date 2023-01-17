@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.Application
@@ -8,7 +8,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.testFramework.LeakHunter
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
-import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertNotNull
 import java.lang.Runnable
 import java.util.function.Supplier
 import javax.swing.SwingUtilities
@@ -30,15 +30,15 @@ fun Application.withModality(action: () -> Unit) {
 }
 
 fun assertReferenced(root: Any, referenced: Any) {
-  lateinit var foundObject: Any
+  val foundObjects = ArrayList<Any>()
   val rootSupplier: Supplier<Map<Any, String>> = Supplier {
     mapOf(root to "root")
   }
   LeakHunter.processLeaks(rootSupplier, referenced.javaClass, null) { leaked, _ ->
-    foundObject = leaked
-    false
+    foundObjects.add(leaked)
+    true
   }
-  assertSame(referenced, foundObject)
+  assertNotNull(foundObjects.find { it === referenced })
 }
 
 /**
