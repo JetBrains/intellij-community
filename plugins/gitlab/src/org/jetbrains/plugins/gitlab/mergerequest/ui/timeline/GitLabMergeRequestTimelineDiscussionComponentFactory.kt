@@ -8,9 +8,13 @@ import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.Replies
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
-import com.intellij.collaboration.ui.util.*
+import com.intellij.collaboration.ui.util.bindDisabled
+import com.intellij.collaboration.ui.util.bindIcon
+import com.intellij.collaboration.ui.util.bindText
+import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.containers.nullize
@@ -44,6 +48,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       }
     }
 
+    val actionsPanel = createNoteActions(cs, item.mainNote)
+
     val repliesPanel = VerticalListPanel().apply {
       cs.launch {
         item.replies.combine(item.repliesFolded) { replies, folded ->
@@ -69,7 +75,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     return CodeReviewChatItemUIUtil.build(CodeReviewChatItemUIUtil.ComponentType.FULL,
                                           { avatarIconsProvider.getIcon(constAuthor, it) },
                                           contentPanel) {
-      withHeader(createTitleTextPane(cs, item.author, item.date))
+      withHeader(createTitleTextPane(cs, item.author, item.date), actionsPanel)
     }.let {
       VerticalListPanel().apply {
         add(it)
@@ -159,11 +165,28 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
                              avatarIconsProvider: IconsProvider<GitLabUserDTO>,
                              vm: GitLabMergeRequestNoteViewModel): JComponent {
     val contentPanel = createNoteTextPanel(cs, vm.htmlBody)
+    val actionsPanel = createNoteActions(cs, flowOf(vm))
     return CodeReviewChatItemUIUtil.build(CodeReviewChatItemUIUtil.ComponentType.FULL_SECONDARY,
                                           { avatarIconsProvider.getIcon(vm.author, it) },
                                           contentPanel) {
-      withHeader(createTitleTextPane(vm.author, vm.createdAt))
+      withHeader(createTitleTextPane(vm.author, vm.createdAt), actionsPanel)
     }
+  }
+
+  private fun createNoteActions(cs: CoroutineScope, note: Flow<GitLabMergeRequestNoteViewModel>): JComponent {
+    val panel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
+      cs.launch {
+        note.mapNotNull { it.actionsVm }.collect {
+          removeAll()
+          CodeReviewCommentUIUtil.createDeleteCommentIconButton { _ -> it.delete() }.apply {
+            bindDisabled(cs, it.busy)
+          }.also(::add)
+          repaint()
+          revalidate()
+        }
+      }
+    }
+    return panel
   }
 
   private fun createNoteTextPanel(cs: CoroutineScope, textFlow: Flow<@Nls String>): JComponent =

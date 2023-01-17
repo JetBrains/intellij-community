@@ -18,6 +18,8 @@ interface GitLabMergeRequestNoteViewModel {
   val author: GitLabUserDTO
   val createdAt: Date
 
+  val actionsVm: GitLabMergeRequestNoteActionsViewModel?
+
   val htmlBody: Flow<@Nls String>
 }
 
@@ -30,6 +32,9 @@ class GitLabMergeRequestNoteViewModelImpl(
 
   override val author: GitLabUserDTO = note.author
   override val createdAt: Date = note.createdAt
+
+  override val actionsVm: GitLabMergeRequestNoteActionsViewModel? =
+    if (note.canAdmin) GitLabMergeRequestNoteActionsViewModelImpl(cs, note) else null
 
   private val body: Flow<String> = note.body
   override val htmlBody: Flow<String> = body.map { GitLabUIUtil.convertToHtml(it) }

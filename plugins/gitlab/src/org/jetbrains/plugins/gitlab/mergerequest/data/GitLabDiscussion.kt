@@ -3,19 +3,19 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.changeMergeRequestDiscussionResolve
 import java.util.*
 
 interface GitLabDiscussion {
+  val id: String
+
   val createdAt: Date
   val notes: Flow<List<GitLabNote>>
 
@@ -25,15 +25,18 @@ interface GitLabDiscussion {
   suspend fun changeResolvedState()
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class LoadedGitLabDiscussion(
   parentCs: CoroutineScope,
   private val connection: GitLabProjectConnection,
+  private val eventSink: suspend (GitLabDiscussionEvent) -> Unit,
   private val discussion: GitLabDiscussionDTO
 ) : GitLabDiscussion {
   init {
     require(discussion.notes.isNotEmpty()) { "Discussion with empty notes" }
   }
 
+  override val id: String = discussion.id
   override val createdAt: Date = discussion.createdAt
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e ->
@@ -41,10 +44,38 @@ class LoadedGitLabDiscussion(
   })
 
   private val operationsGuard = Mutex()
+  private val events = MutableSharedFlow<GitLabNoteEvent>()
 
-  private val loadedNotes = MutableStateFlow(discussion.notes)
-  override val notes: Flow<List<GitLabNote>> = loadedNotes.map { notes ->
-    notes.map { LoadedGitLabNote(it) }
+  private val loadedNotes = MutableSharedFlow<List<GitLabNoteDTO>>(1).apply {
+    tryEmit(discussion.notes)
+  }
+
+  override val notes: Flow<List<GitLabNote>> = loadedNotes.transformLatest<List<GitLabNoteDTO>, List<GitLabNote>> { loadedNotes ->
+    coroutineScope {
+      val notesCs = this
+      val notes = Collections.synchronizedMap(LinkedHashMap<String, LoadedGitLabNote>())
+      loadedNotes.associateByTo(notes, GitLabNoteDTO::id) { noteData ->
+        LoadedGitLabNote(notesCs, connection, { events.emit(it) }, noteData)
+      }
+      emit(notes.values.toList())
+
+      events.collectLatest {
+        when (it) {
+          is GitLabNoteEvent.NoteDeleted -> {
+            notes.remove(it.noteId)?.destroy()
+          }
+        }
+
+        emit(notes.values.toList())
+      }
+      awaitCancellation()
+    }
+  }.transform {
+    if (it.isEmpty()) {
+      eventSink(GitLabDiscussionEvent.DiscussionDeleted(id))
+      currentCoroutineContext().cancel()
+    }
+    emit(it)
   }.shareIn(cs, SharingStarted.Lazily, 1)
 
   private val firstNote = loadedNotes.map { it.first() }
@@ -61,8 +92,16 @@ class LoadedGitLabDiscussion(
           connection.apiClient
             .changeMergeRequestDiscussionResolve(connection.repo.repository, discussion.id, !resolved).body()!!
         }
-        loadedNotes.value = result.notes
+        updateNotes(result.notes)
       }
     }
+  }
+
+  private suspend fun updateNotes(notes: List<GitLabNoteDTO>) {
+    loadedNotes.emit(notes)
+  }
+
+  suspend fun destroy() {
+    cs.coroutineContext[Job]!!.cancelAndJoin()
   }
 }

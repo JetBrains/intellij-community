@@ -34,6 +34,7 @@ data class GitLabNoteDTO(
   )
 
   data class UserPermissions(
-    val resolveNote: Boolean
+    val resolveNote: Boolean,
+    val adminNote: Boolean
   )
 }

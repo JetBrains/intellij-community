@@ -25,5 +25,6 @@ fragment note on Note {
   resolved
   userPermissions {
     resolveNote
+    adminNote
   }
 }

@@ -11,6 +11,7 @@ import com.intellij.collaboration.api.json.JsonHttpApiHelper
 import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpSecurityUtil
+import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import java.net.http.HttpResponse
 
 class GitLabApi private constructor(httpHelper: HttpApiHelper)
@@ -45,4 +46,13 @@ class GitLabApi private constructor(httpHelper: HttpApiHelper)
                            requestConfigurer = requestConfigurer)
     }
   }
+}
+
+@Throws(GitLabGraphQLMutationException::class)
+fun <R : GitLabGraphQLMutationResultDTO> HttpResponse<out R?>.getResultOrThrow(): R {
+  val result = body()
+  if (result == null) throw GitLabGraphQLMutationEmptyResultException()
+  val errors = result.errors
+  if (errors != null) throw GitLabGraphQLMutationErrorException(errors)
+  return result
 }

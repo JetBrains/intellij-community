@@ -10,6 +10,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabGQLQueries
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import java.net.http.HttpResponse
 
@@ -39,4 +40,15 @@ suspend fun GitLabApi.changeMergeRequestDiscussionResolve(
   )
   val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.toggleMergeRequestDiscussionResolve, parameters)
   return loadGQLResponse(request, GitLabDiscussionDTO::class.java, "discussionToggleResolve", "discussion")
+}
+
+suspend fun GitLabApi.deleteNote(
+  project: GitLabProjectCoordinates,
+  noteId: String
+): HttpResponse<out GitLabGraphQLMutationResultDTO?> {
+  val parameters = mapOf(
+    "noteId" to noteId
+  )
+  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.destroyNote, parameters)
+  return loadGQLResponse(request, GitLabGraphQLMutationResultDTO::class.java, "destroyNote")
 }
