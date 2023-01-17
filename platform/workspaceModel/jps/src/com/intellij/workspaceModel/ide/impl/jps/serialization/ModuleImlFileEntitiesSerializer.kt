@@ -26,7 +26,6 @@ import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
 import org.jetbrains.jps.util.JpsPathUtil
-import java.io.Serializable
 import java.io.StringReader
 import java.nio.file.Path
 import java.util.*
