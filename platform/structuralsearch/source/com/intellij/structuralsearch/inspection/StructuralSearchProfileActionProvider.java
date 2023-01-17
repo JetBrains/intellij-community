@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -143,7 +143,8 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final CustomRegExpInspection inspection = InspectionProfileUtil.getCustomRegExpInspection(profile);
       final RegExpInspectionConfiguration configuration = new RegExpInspectionConfiguration("new inspection");
       configuration.patterns.add(pattern);
-      final Project project = getEventProject(e);
+      final Project project = e.getData(CommonDataKeys.PROJECT);
+      if (project == null) return;
       final MetaDataDialog metaDataDialog = new MetaDataDialog(project, inspection, configuration, true);
       if (!metaDataDialog.showAndGet()) return;
 
