@@ -122,20 +122,28 @@ public final class ImageLoader {
                                          String ext,
                                          float scale,
                                          @NotNull List<? super ImageDescriptor> list) {
-    String _ext = isSvg ? "svg" : ext;
-    float _scale = isSvg ? scale : retina ? 2 : 1;
+
+    String effectiveExt = isSvg ? "svg" : ext;
+    float retinaScale = isSvg ? scale : 2;
+    float nonRetinaScale = isSvg ? scale : 1;
 
     if (isStroke) {
-      list.add(new ImageDescriptor(name + "_stroke." + _ext, _scale, isSvg, false, true));
+      list.add(new ImageDescriptor(name + "_stroke." + effectiveExt, retina ? retinaScale : nonRetinaScale, isSvg, false, true));
     }
-    if (retina && isDark) {
-      list.add(new ImageDescriptor(name + "@2x_dark." + _ext, _scale, isSvg, true, false));
+    List<ImageDescriptor> descriptors = new ArrayList<>();
+    if (isDark) {
+      descriptors.add(new ImageDescriptor(name + "@2x_dark." + effectiveExt, retinaScale, isSvg, true, false));
+      descriptors.add(new ImageDescriptor(name + "_dark@2x." + effectiveExt, retinaScale, isSvg, true, false));
+      descriptors.add(new ImageDescriptor(name + "_dark." + effectiveExt, nonRetinaScale, isSvg, true, false));
     }
-    list.add(new ImageDescriptor(name + (isDark ? "_dark" : "") + (retina ? "@2x" : "") + "." + _ext, _scale, isSvg, isDark, false));
-    if (retina) {
-      // a fallback to 1x icon
-      list.add(new ImageDescriptor(name + (isDark ? "_dark" : "") + "." + _ext, isSvg ? scale : 1, isSvg, isDark, false));
+    else {
+      descriptors.add(new ImageDescriptor(name + "@2x." + effectiveExt, retinaScale, isSvg, false, false));
+      descriptors.add(new ImageDescriptor(name + "." + effectiveExt, nonRetinaScale, isSvg, false, false));
     }
+    if (!retina) {
+      Collections.reverse(descriptors);
+    }
+    list.addAll(descriptors);
   }
 
   // Some duplication here: isDark presents in parameters and in flags
