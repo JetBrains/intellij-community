@@ -186,7 +186,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
             final int attributeId = attributeEntry.attributeId();
             if (attributeEntry.isValueInlined()) {
               final byte[] valueBytes = attributeEntry.inlinedValueAsByteArray();
-              processor.processAttribute(recordId, fileId, attributeId, valueBytes, true);
+              processor.processAttribute(recordId, fileId, attributeId, valueBytes, /*inlined: */ true);
             }
           }
         }
@@ -194,7 +194,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
           final int fileId = attributesRecord.fileId();
           final int attributeId = attributesRecord.dedicatedRecordAttributeId();
           final byte[] valueBytes = attributesRecord.dedicatedValueAsByteArray();
-          processor.processAttribute(recordId, fileId, attributeId, valueBytes, false);
+          processor.processAttribute(recordId, fileId, attributeId, valueBytes, /*inlined: */ false);
         }
         return true;
       });
