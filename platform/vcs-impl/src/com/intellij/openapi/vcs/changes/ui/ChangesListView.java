@@ -223,14 +223,16 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
 
   @NotNull
   private JBIterable<VirtualFile> getSelectedModifiedWithoutEditing() {
-    return getSelectedVirtualFiles(MODIFIED_WITHOUT_EDITING_TAG);
+    return VcsTreeModelData.selectedUnderTag(this, MODIFIED_WITHOUT_EDITING_TAG)
+      .iterateUserObjects(VirtualFile.class)
+      .filter(VirtualFile::isValid);
   }
 
   @NotNull
-  protected JBIterable<VirtualFile> getSelectedVirtualFiles(@Nullable Object tag) {
-    return getSelectionNodes(this, tag)
-      .flatMap(node -> node.iterateFilesUnder())
-      .unique();
+  protected JBIterable<VirtualFile> getSelectedVirtualFiles() {
+    return VcsTreeModelData.selected(this)
+      .iterateUserObjects(VirtualFile.class)
+      .filter(VirtualFile::isValid);
   }
 
   @NotNull
@@ -268,13 +270,6 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
     return getSelectionNodes().map(ChangesBrowserNode::getUserObject);
   }
 
-  @NotNull
-  private static JBIterable<VirtualFile> getVirtualFiles(@NotNull JTree tree, @Nullable Object tag) {
-    return getSelectionNodes(tree, tag)
-      .flatMap(node -> node.iterateFilesUnder())
-      .unique();
-  }
-
   static boolean isUnderTag(@NotNull TreePath path, @Nullable Object tag) {
     boolean result = true;
 
@@ -286,12 +281,12 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   }
 
   @NotNull
-  private static JBIterable<Change> getChanges(@NotNull Project project, @NotNull JTree tree) {
-    JBIterable<Change> changes = getSelectionNodes(tree, null)
+  public JBIterable<Change> getSelectedChanges() {
+    JBIterable<Change> changes = getSelectionNodes(this, null)
       .flatMap(node -> node.traverseObjectsUnder())
       .filter(Change.class);
-    JBIterable<Change> hijackedChanges = getVirtualFiles(tree, MODIFIED_WITHOUT_EDITING_TAG)
-      .map(file -> toHijackedChange(project, file))
+    JBIterable<Change> hijackedChanges = getSelectedModifiedWithoutEditing()
+      .map(file -> toHijackedChange(myProject, file))
       .filter(Objects::nonNull);
 
     return changes.append(hijackedChanges)
@@ -325,7 +320,7 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   private JBIterable<FilePath> getContextFilePaths() {
     return JBIterable.<FilePath>empty()
       .append(getSelectedChanges().map(ChangesUtil::getFilePath))
-      .append(getSelectedVirtualFiles(null).map(VcsUtil::getFilePath))
+      .append(getSelectedVirtualFiles().map(VcsUtil::getFilePath))
       .append(getSelectedFilePaths())
       .unique();
   }
@@ -334,7 +329,7 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   private JBIterable<VirtualFile> getContextFiles() {
     return JBIterable.<VirtualFile>empty()
       .append(getSelectedChanges().filterMap(ChangesUtil::getAfterPath).filterMap(FilePath::getVirtualFile))
-      .append(getSelectedVirtualFiles(null))
+      .append(getSelectedVirtualFiles())
       .append(getSelectedFilePaths().filterMap(FilePath::getVirtualFile))
       .unique();
   }
@@ -343,7 +338,7 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   private JBIterable<VirtualFile> getContextNavigatableFiles() {
     return JBIterable.<VirtualFile>empty()
       .append(getSelectedChanges().flatMap(ChangesUtil::iteratePathsCaseSensitive).filterMap(FilePath::getVirtualFile))
-      .append(getSelectedVirtualFiles(null))
+      .append(getSelectedVirtualFiles())
       .append(getSelectedFilePaths().filterMap(FilePath::getVirtualFile))
       .unique();
   }
@@ -386,11 +381,6 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
       node = (DefaultMutableTreeNode)node.getParent();
     }
     return null;
-  }
-
-  @NotNull
-  public JBIterable<Change> getSelectedChanges() {
-    return getChanges(myProject, this);
   }
 
   @NotNull
