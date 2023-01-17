@@ -142,7 +142,9 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
       return getSelectedChanges().toList().toArray(Change[]::new);
     }
     if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
-      return getLeadSelection().toList().toArray(Change[]::new);
+      return VcsTreeModelData.exactlySelected(this)
+        .iterateUserObjects(Change.class)
+        .toArray(Change.EMPTY_CHANGE_ARRAY);
     }
     if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
       return getSelectedChangeLists().toList().toArray(ChangeList[]::new);
@@ -186,10 +188,12 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
       return getSelectedLocallyDeletedChanges().toList();
     }
     if (MISSING_FILES_DATA_KEY.is(dataId)) {
-      return getSelectedMissingFiles().toList();
+      return getSelectedLocallyDeletedChanges()
+        .map(LocallyDeletedChange::getPath)
+        .toList();
     }
     if (VcsDataKeys.HAVE_LOCALLY_DELETED.is(dataId)) {
-      return getSelectedMissingFiles().isNotEmpty();
+      return getSelectedLocallyDeletedChanges().isNotEmpty();
     }
     if (VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING.is(dataId)) {
       return getSelectedModifiedWithoutEditing().isNotEmpty();
@@ -253,38 +257,14 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   }
 
   @NotNull
-  private JBIterable<ChangesBrowserNode<?>> getSelectionNodes() {
-    return getSelectionNodes(this, null);
-  }
-
-  @NotNull
-  private static JBIterable<ChangesBrowserNode<?>> getSelectionNodes(@NotNull JTree tree, @Nullable Object tag) {
-    return JBIterable.of(tree.getSelectionPaths())
-      .filter(path -> isUnderTag(path, tag))
-      .map(TreePath::getLastPathComponent)
-      .map(node -> ((ChangesBrowserNode<?>)node));
-  }
-
-  @NotNull
   private JBIterable<Object> getSelectionObjects() {
-    return getSelectionNodes().map(ChangesBrowserNode::getUserObject);
-  }
-
-  static boolean isUnderTag(@NotNull TreePath path, @Nullable Object tag) {
-    boolean result = true;
-
-    if (tag != null) {
-      result = path.getPathCount() > 1 && ((ChangesBrowserNode<?>)path.getPathComponent(1)).getUserObject() == tag;
-    }
-
-    return result;
+    return VcsTreeModelData.exactlySelected(this).iterateUserObjects();
   }
 
   @NotNull
   public JBIterable<Change> getSelectedChanges() {
-    JBIterable<Change> changes = getSelectionNodes(this, null)
-      .flatMap(node -> node.traverseObjectsUnder())
-      .filter(Change.class);
+    JBIterable<Change> changes = VcsTreeModelData.selected(this)
+      .iterateUserObjects(Change.class);
     JBIterable<Change> hijackedChanges = getSelectedModifiedWithoutEditing()
       .map(file -> toHijackedChange(myProject, file))
       .filter(Objects::nonNull);
@@ -305,15 +285,8 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
 
   @NotNull
   private JBIterable<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
-    return getSelectionNodes(this, LOCALLY_DELETED_NODE_TAG)
-      .flatMap(node -> node.traverseObjectsUnder())
-      .filter(LocallyDeletedChange.class)
-      .unique();
-  }
-
-  @NotNull
-  private JBIterable<FilePath> getSelectedMissingFiles() {
-    return getSelectedLocallyDeletedChanges().map(LocallyDeletedChange::getPath);
+    return VcsTreeModelData.selectedUnderTag(this, LOCALLY_DELETED_NODE_TAG)
+      .iterateUserObjects(LocallyDeletedChange.class);
   }
 
   @NotNull
@@ -343,15 +316,6 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
       .unique();
   }
 
-  @NotNull
-  private JBIterable<Change> getLeadSelection() {
-    return getSelectionNodes()
-      .filter(node -> node instanceof ChangesBrowserChangeNode)
-      .map(ChangesBrowserChangeNode.class::cast)
-      .map(ChangesBrowserChangeNode::getUserObject)
-      .filter(new DistinctChangePredicate());
-  }
-
   @Nullable
   public List<Change> getAllChangesFromSameChangelist(@NotNull Change change) {
     return getAllChangesUnder(change, ChangesBrowserChangeListNode.class);
@@ -364,7 +328,7 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
 
   @SafeVarargs
   @Nullable
-  public final List<Change> getAllChangesUnder(@NotNull Change change, Class<? extends ChangesBrowserNode<?>> @NotNull ... nodeClasses) {
+  private final List<Change> getAllChangesUnder(@NotNull Change change, Class<? extends ChangesBrowserNode<?>> @NotNull ... nodeClasses) {
     DefaultMutableTreeNode node = findNodeInTree(change);
     boolean changeListNodeRequested = ArrayUtil.contains(ChangesBrowserChangeListNode.class, nodeClasses);
 
@@ -385,14 +349,12 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
 
   @NotNull
   public JBIterable<ChangesBrowserChangeNode> getChangesNodes() {
-    return TreeUtil.treeNodeTraverser(getRoot()).traverse().filter(ChangesBrowserChangeNode.class);
+    return VcsTreeModelData.all(this).iterateNodes().filter(ChangesBrowserChangeNode.class);
   }
 
   @NotNull
   public JBIterable<ChangesBrowserNode<?>> getSelectedChangesNodes() {
-    return getSelectionNodes(this, null)
-      .flatMap(node -> node.traverse())
-      .unique();
+    return VcsTreeModelData.selected(this).iterateNodes();
   }
 
   @NotNull
