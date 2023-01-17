@@ -3,9 +3,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 
-/**
- * @author ven
- */
 public class AddRuntimeExceptionToThrowsTest extends LightIntentionActionTestCase {
   @Override
   protected String getBasePath() {

@@ -19,9 +19,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public abstract class TypeConstraint {
   public static final TypeConstraint[] EMPTY_ARRAY = new TypeConstraint[0];
 

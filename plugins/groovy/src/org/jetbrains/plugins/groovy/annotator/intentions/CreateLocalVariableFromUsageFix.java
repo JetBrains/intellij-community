@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesPr
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
-/**
- * @author ven
- */
 public class CreateLocalVariableFromUsageFix extends Intention {
   private final GrVariableDeclarationOwner myOwner;
   private final GrReferenceExpression myRefExpression;

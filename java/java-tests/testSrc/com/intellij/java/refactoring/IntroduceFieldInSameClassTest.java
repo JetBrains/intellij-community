@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author ven
- */
 public class IntroduceFieldInSameClassTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override

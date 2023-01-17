@@ -20,9 +20,6 @@ import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.usageView.UsageInfo;
 
-/**
- * @author ven
- */
 public class MethodCallUsageInfo extends UsageInfo {
   private final PsiElement myMethodCallExpression;
   private final boolean myIsInternal;

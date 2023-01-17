@@ -15,8 +15,6 @@ import java.util.stream.Collectors;
 
 /**
  * Intersection types arise in a process of computing least upper bound.
- *
- * @author ven
  */
 public final class PsiIntersectionType extends PsiType.Stub {
   private final PsiType[] myConjuncts;

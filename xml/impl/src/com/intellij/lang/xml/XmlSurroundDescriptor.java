@@ -35,9 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class XmlSurroundDescriptor implements SurroundDescriptor {
   @Override
   public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {

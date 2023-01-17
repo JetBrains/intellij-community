@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-/**
- * @author ven
- */
 public abstract class GroovyLocalInspectionBase extends GroovyLocalInspectionTool {
 
   @Override

@@ -52,9 +52,6 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class VariableInplaceRenamer extends InplaceRefactoring {
   public static final LanguageExtension<ResolveSnapshotProvider> INSTANCE = new LanguageExtension<>(
     "com.intellij.rename.inplace.resolveSnapshotProvider"

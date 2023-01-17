@@ -27,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-/**
- * @author ven
- */
 public class JspxIncludePathReferenceProvider extends PsiReferenceProvider implements CustomizableReferenceProvider {
   @Nullable private Map<CustomizationKey, Object> myOptions;
 

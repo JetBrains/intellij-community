@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 
-/**
- * @author ven
- */
 public class RenameLocalTest extends LightRefactoringTestCase {
   private static final String BASE_PATH = "/refactoring/renameLocal/";
 

@@ -42,9 +42,6 @@ import java.awt.event.ActionListener;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author ven
- */
 public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
   private static final Logger LOG = Logger.getInstance(MoveClassesOrPackagesToNewDirectoryDialog.class);
 

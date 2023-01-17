@@ -21,9 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
-/**
- * @author ven
- */
 public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccessorMethod {
   @NotNull private final GrField myProperty;
 

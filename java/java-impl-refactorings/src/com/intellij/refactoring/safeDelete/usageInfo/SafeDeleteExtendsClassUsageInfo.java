@@ -16,9 +16,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-/**
- * @author ven
- */
 public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInfo {
   private static final Logger LOG = Logger.getInstance(SafeDeleteExtendsClassUsageInfo.class);
   private final PsiClass myExtendingClass;

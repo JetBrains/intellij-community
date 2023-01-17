@@ -20,9 +20,6 @@ import com.intellij.psi.impl.light.LightElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
-/**
- * @author ven
- */
 public class LightReferenceList extends LightElement implements PsiReferenceList {
   protected LightReferenceList(PsiManager manager) {
     super(manager, GroovyLanguage.INSTANCE);

@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.text.MessageFormat;
 import java.util.Arrays;
 
-/**
- * @author ven
- */
 public abstract class LanguageLevelCombo extends ComboBox<Object> {
   private final static LanguageLevel[] LTS = {LanguageLevel.JDK_17, LanguageLevel.JDK_11, LanguageLevel.JDK_1_8};
 

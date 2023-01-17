@@ -19,9 +19,6 @@ import com.intellij.testFramework.ServiceContainerUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 
-/**
- * @author ven
- */
 class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {

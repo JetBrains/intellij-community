@@ -18,9 +18,6 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.psi.PsiMethod;
 import com.intellij.usageView.UsageInfo;
 
-/**
- * @author ven
- */
 public class CallerUsageInfo extends UsageInfo {
   private final boolean myToInsertParameter;
   private final boolean myToInsertException;

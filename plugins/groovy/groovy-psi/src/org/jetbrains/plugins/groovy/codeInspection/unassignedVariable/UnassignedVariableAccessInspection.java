@@ -35,9 +35,6 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-/**
- * @author ven
- */
 public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBase {
 
   @NotNull

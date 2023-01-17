@@ -40,9 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
-/**
- * @author ven
- */
 public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance(ExternalToolPass.class);
 

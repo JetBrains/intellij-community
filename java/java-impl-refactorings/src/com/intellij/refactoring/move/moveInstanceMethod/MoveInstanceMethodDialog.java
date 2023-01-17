@@ -27,9 +27,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author ven
- */
 public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
   private static final String KEY = "#com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodDialog";
 

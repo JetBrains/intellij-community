@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
  * Interface that should be implemented by the language in order to provide inline functionality and possibly
  * participate in inline of elements in other languages this language may reference.
  *
- * @author ven
  * @see InlineHandlers#getInlineHandlers(com.intellij.lang.Language)
  */
 public interface InlineHandler {
