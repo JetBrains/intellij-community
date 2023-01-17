@@ -32,6 +32,11 @@
     <selectInTarget implementation="org.jetbrains.plugins.terminal.view.SelectInTerminal"/>
     <iconMapper mappingFile="TerminalIconMappings.json"/>
     <advancedSetting id="terminal.show.application.title" default="false" groupKey="group.advanced.settings.terminal"/>
+
+    <editorActionHandler action="EditorEnter" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalEnterHandler"
+                         id="terminalEnter" order="first"/>
+    <editorActionHandler action="EditorTab" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalTabHandler"
+                         id="terminalTab"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">

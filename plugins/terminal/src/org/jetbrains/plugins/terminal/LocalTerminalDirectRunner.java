@@ -272,7 +272,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
-  protected @NotNull TtyConnector createTtyConnector(@NotNull PtyProcess process) {
+  public @NotNull TtyConnector createTtyConnector(@NotNull PtyProcess process) {
     return new PtyProcessTtyConnector(process, myDefaultCharset) {
 
       @Override
