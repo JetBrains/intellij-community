@@ -40,7 +40,7 @@ import kotlin.math.max
  * Contains non-stable and not well-designed API. Will be changed in 2020.2
  */
 @ApiStatus.Experimental
-class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFactory {
+class PresentationFactory(private val editor: Editor) : InlayPresentationFactory {
   private val textMetricsStorage = InlayHintsUtils.getTextMetricStorage(editor)
   private val offsetFromTopProvider = object : InsetValueProvider {
     override val top: Int

@@ -61,6 +61,7 @@ class InlayHintsPass(
   }
 
   override fun doApplyInformationToEditor() {
+    if (editor !is EditorImpl) return
     val positionKeeper = EditorScrollingPositionKeeper(editor)
     positionKeeper.savePosition()
     applyCollected(allHints, rootElement, editor)

@@ -298,7 +298,7 @@ object InlayHintsUtils {
 
   private val TEXT_METRICS_STORAGE = Key.create<InlayTextMetricsStorage>("InlayTextMetricsStorage")
 
-  internal fun getTextMetricStorage(editor: EditorImpl): InlayTextMetricsStorage {
+  internal fun getTextMetricStorage(editor: Editor): InlayTextMetricsStorage {
     val storage = editor.getUserData(TEXT_METRICS_STORAGE)
     if (storage == null) {
       val newStorage = InlayTextMetricsStorage(editor)
