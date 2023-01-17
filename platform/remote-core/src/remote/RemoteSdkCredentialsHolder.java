@@ -122,16 +122,6 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
   }
 
   @Override
-  public boolean isInitialized() {
-    return myRemoteSdkProperties.isInitialized();
-  }
-
-  @Override
-  public void setInitialized(boolean initialized) {
-    myRemoteSdkProperties.setInitialized(initialized);
-  }
-
-  @Override
   public boolean isValid() {
     return myRemoteSdkProperties.isValid();
   }

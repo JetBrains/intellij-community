@@ -117,7 +117,6 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
     RemoteSdkCredentialsBuilder.copyCredentials(credentials, res);
     myRemoteSdkProperties.copyTo(res);
     res.setSkeletonsPath(getSkeletonsPath());
-    res.setInitialized(isInitialized());
     res.setValid(isValid());
     res.setSdkId(getSdkId());
     return res;
@@ -196,16 +195,6 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
   private static String constructSdkID(@NotNull RemoteConnectionCredentialsWrapper remoteConnectionCredentialsWrapper,
                                        @NotNull RemoteSdkPropertiesHolder properties) {
     return remoteConnectionCredentialsWrapper.getId() + properties.getInterpreterPath();
-  }
-
-  @Override
-  public boolean isInitialized() {
-    return myRemoteSdkProperties.isInitialized();
-  }
-
-  @Override
-  public void setInitialized(boolean initialized) {
-    myRemoteSdkProperties.setInitialized(initialized);
   }
 
   @Override
