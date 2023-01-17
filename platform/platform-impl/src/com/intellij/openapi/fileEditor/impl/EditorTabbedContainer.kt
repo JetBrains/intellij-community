@@ -30,7 +30,10 @@ import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -456,7 +459,7 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
         source.isHidden = false
       }
       else {
-        file!!.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, java.lang.Boolean.TRUE)
+        file!!.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, true)
         window.manager.closeFile(file!!, window)
       }
       session!!.process(event)
@@ -553,7 +556,7 @@ private class EditorTabs(
 
     setUiDecorator { UiDecoration(null, JBUI.CurrentTheme.EditorTabs.tabInsets()) }
     val source = ActionManager.getInstance().getAction("EditorTabsEntryPoint")
-    source.templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, java.lang.Boolean.TRUE)
+    source.templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
     entryPointActionGroup = DefaultActionGroup(source)
   }
 
@@ -575,26 +578,28 @@ private class EditorTabs(
   override fun getEntryPointActionGroup(): DefaultActionGroup = entryPointActionGroup
 
   override fun createTabLabel(info: TabInfo): TabLabel {
-    return object : SingleHeightLabel(this, info) {
-      override fun getPreferredHeight(): Int {
-        val insets = insets
-        val layoutInsets = layoutInsets
-        insets.top += layoutInsets.top
-        insets.bottom += layoutInsets.bottom
-        if (ExperimentalUI.isNewUI()) {
-          insets.top -= 7
-        }
-        return super.getPreferredHeight() - insets.top - insets.bottom
-      }
+    return EditorTabLabel(info)
+  }
 
-      override fun paint(g: Graphics) {
-        if (ExperimentalUI.isNewUI() && selectedInfo != info && !isHoveredTab(this)) {
-          val alpha = JBUI.getFloat("EditorTabs.hoverAlpha", 0.75f)
-          GraphicsUtil.paintWithAlpha(g, alpha) { super.paint(g) }
-        }
-        else {
-          super.paint(g)
-        }
+  private inner class EditorTabLabel(private val info: TabInfo) : SingleHeightLabel(this, info) {
+    override fun getPreferredHeight(): Int {
+      val insets = insets
+      val layoutInsets = layoutInsets
+      insets.top += layoutInsets.top
+      insets.bottom += layoutInsets.bottom
+      if (ExperimentalUI.isNewUI()) {
+        insets.top -= 7
+      }
+      return super.getPreferredHeight() - insets.top - insets.bottom
+    }
+
+    override fun paint(g: Graphics) {
+      if (ExperimentalUI.isNewUI() && selectedInfo != info && !isHoveredTab(this)) {
+        val alpha = JBUI.getFloat("EditorTabs.hoverAlpha", 0.75f)
+        GraphicsUtil.paintWithAlpha(g, alpha) { super.paint(g) }
+      }
+      else {
+        super.paint(g)
       }
     }
   }
