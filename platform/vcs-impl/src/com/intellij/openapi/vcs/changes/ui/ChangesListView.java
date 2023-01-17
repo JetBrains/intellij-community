@@ -286,13 +286,6 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
       .unique();
   }
 
-  @NotNull
-  static JBIterable<FilePath> getFilePaths(@NotNull JTree tree, @Nullable Object tag) {
-    return getSelectionNodes(tree, tag)
-      .flatMap(node -> node.iterateFilePathsUnder())
-      .unique();
-  }
-
   static boolean isUnderTag(@NotNull TreePath path, @Nullable Object tag) {
     boolean result = true;
 
@@ -304,7 +297,7 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   }
 
   @NotNull
-  static JBIterable<Change> getChanges(@NotNull Project project, @NotNull JTree tree) {
+  private static JBIterable<Change> getChanges(@NotNull Project project, @NotNull JTree tree) {
     JBIterable<Change> changes = getSelectionNodes(tree, null)
       .flatMap(node -> node.traverseObjectsUnder())
       .filter(Change.class);
