@@ -16,7 +16,6 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.commit.EditedCommitNode;
@@ -316,31 +315,46 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
 
   @Nullable
   public List<Change> getAllChangesFromSameChangelist(@NotNull Change change) {
-    return getAllChangesUnder(change, ChangesBrowserChangeListNode.class);
+    ChangesBrowserNode<?> node = findNodeInTree(change);
+    if (node == null) return null;
+
+    ChangesBrowserNode<?> parent;
+    if (Registry.is("vcs.skip.single.default.changelist") ||
+        !ChangeListManager.getInstance(myProject).areChangeListsEnabled()) {
+      parent = getRoot();
+    }
+    else {
+      parent = findParentOfType(node, ChangesBrowserChangeListNode.class);
+    }
+    if (parent == null) return null;
+
+    return parent.traverseObjectsUnder()
+      .filter(Change.class)
+      .toList();
   }
 
   @Nullable
   public List<Change> getAllChangesFromSameAmendNode(@NotNull Change change) {
-    return getAllChangesUnder(change, EditedCommitNode.class);
+    ChangesBrowserNode<?> node = findNodeInTree(change);
+    if (node == null) return null;
+
+    ChangesBrowserNode<?> parent = findParentOfType(node, EditedCommitNode.class);
+    if (parent == null) return null;
+
+    return parent.traverseObjectsUnder()
+      .filter(Change.class)
+      .toList();
   }
 
-  @SafeVarargs
   @Nullable
-  private final List<Change> getAllChangesUnder(@NotNull Change change, Class<? extends ChangesBrowserNode<?>> @NotNull ... nodeClasses) {
-    DefaultMutableTreeNode node = findNodeInTree(change);
-    boolean changeListNodeRequested = ArrayUtil.contains(ChangesBrowserChangeListNode.class, nodeClasses);
-
-    while (node != null) {
-      if (ArrayUtil.contains(node.getClass(), nodeClasses)) {
-        return ((ChangesBrowserNode<?>)node).getAllChangesUnder();
+  private static ChangesBrowserNode<?> findParentOfType(@NotNull ChangesBrowserNode<?> node,
+                                                        @NotNull Class<? extends ChangesBrowserNode<?>> clazz) {
+    ChangesBrowserNode<?> parent = node.getParent();
+    while (parent != null) {
+      if (clazz.isInstance(parent)) {
+        return parent;
       }
-      if (node == getRoot()) {
-        if (changeListNodeRequested && (Registry.is("vcs.skip.single.default.changelist") ||
-                                        !ChangeListManager.getInstance(myProject).areChangeListsEnabled())) {
-          return getRoot().getAllChangesUnder();
-        }
-      }
-      node = (DefaultMutableTreeNode)node.getParent();
+      parent = parent.getParent();
     }
     return null;
   }
