@@ -25,6 +25,7 @@ import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchType
+import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
@@ -84,7 +85,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
   private fun getSecondaryText(treeNode: Any?): @NlsSafe String? {
     return when (treeNode) {
       is PopupFactoryImpl.ActionItem -> KeymapUtil.getFirstKeyboardShortcutText(treeNode.action)
-      is GitRepository -> treeNode.currentBranch?.name.orEmpty()
+      is GitRepository -> GitBranchUtil.getDisplayableBranchText(treeNode)
       is GitLocalBranch -> {
         treeNode.getCommonTrackedBranch(repositories)?.name
       }
