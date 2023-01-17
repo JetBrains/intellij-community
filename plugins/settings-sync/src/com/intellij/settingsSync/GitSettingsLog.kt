@@ -116,8 +116,10 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   }
 
   private fun applyState(refName: String, snapshot: SettingsSnapshot, message: String, warnAboutEmptySnapshot: Boolean = true) {
-    if (snapshot.isEmpty() && warnAboutEmptySnapshot) {
-      LOG.error("Empty snapshot, requested to apply on branch '$refName' with message '$message'")
+    if (snapshot.isEmpty()) {
+      if (warnAboutEmptySnapshot) {
+        LOG.error("Empty snapshot, requested to apply on branch '$refName' with message '$message'")
+      }
       return
     }
 
