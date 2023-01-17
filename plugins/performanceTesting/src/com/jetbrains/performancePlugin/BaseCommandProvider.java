@@ -71,7 +71,8 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(GoToNamedElementCommand.PREFIX, GoToNamedElementCommand::new),
       Map.entry(MeasureVFSUpdateCommand.PREFIX, MeasureVFSUpdateCommand::new),
       Map.entry(ShowFileStructurePopupCommand.PREFIX, ShowFileStructurePopupCommand::new),
-      Map.entry(InplaceRenameCommand.PREFIX, InplaceRenameCommand::new)
+      Map.entry(StartInlineRenameCommand.PREFIX, StartInlineRenameCommand::new),
+      Map.entry(FinishInlineRename.PREFIX, FinishInlineRename::new)
     );
   }
 }
