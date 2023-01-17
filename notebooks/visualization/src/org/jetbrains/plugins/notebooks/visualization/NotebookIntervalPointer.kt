@@ -30,6 +30,9 @@ interface NotebookIntervalPointerFactory {
    */
   fun modifyPointers(changes: Iterable<Change>)
 
+  /**
+   * listener shouldn't throw exceptions
+   */
   interface ChangeListener : EventListener {
     fun onUpdated(event: NotebookIntervalPointersEvent)
   }
