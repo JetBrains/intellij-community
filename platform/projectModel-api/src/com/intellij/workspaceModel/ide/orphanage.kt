@@ -13,7 +13,27 @@ import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 class Orphanage {
   val entityStorage: VersionedEntityStorageImpl = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
 
-  fun update(updater: (MutableEntityStorage) -> Unit) {
+  fun put(orphan: WorkspaceEntity) {
+    update { builder ->
+      builder addEntity orphan
+    }
+  }
+
+  fun put(orphans: Collection<WorkspaceEntity>) {
+    update { builder ->
+      orphans.forEach {
+        builder addEntity it
+      }
+    }
+  }
+
+  fun remove(orphans: Collection<WorkspaceEntity>) {
+    update { builder ->
+      orphans.forEach { builder.removeEntity(it) }
+    }
+  }
+
+  private fun update(updater: (MutableEntityStorage) -> Unit) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
     val before = entityStorage.current
@@ -39,7 +59,7 @@ class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
         val newRoots = targetModules
           .mapNotNull { orphanage.resolve(it.symbolicId) }
           .filter { it.contentRoots.isNotEmpty() }
-          .associateWith { it.contentRoots.map { it.createEntityTreeCopy() as ContentRootEntity.Builder } }
+          .associateWith { it.contentRoots.map { root -> root.createEntityTreeCopy() as ContentRootEntity.Builder } }
 
         if (newRoots.isNotEmpty()) {
           project.workspaceModel.updateProjectModel("Move orphan elements") {
@@ -51,9 +71,7 @@ class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
             }
           }
 
-          project.workspaceModel.orphanage.update { mutableOrphanage ->
-            newRoots.forEach { mutableOrphanage.removeEntity(it.key) }
-          }
+          project.workspaceModel.orphanage.remove(newRoots.keys)
         }
       }
     }

@@ -30,11 +30,11 @@ class OrphanageTest {
   fun `adding content root`() {
     val url = virtualFileManager.fromUrl("/123")
     runWriteAction {
-      WorkspaceModel.getInstance(projectModel.project).orphanage.update {
-        it addEntity ModuleEntity("MyName", emptyList(), MySource) {
+      projectModel.project.workspaceModel.orphanage.put(
+        ModuleEntity("MyName", emptyList(), MySource) {
           this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
         }
-      }
+      )
 
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
         it addEntity ModuleEntity("MyName", emptyList(), MySource)
