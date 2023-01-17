@@ -768,7 +768,7 @@ private fun wrap(widget: StatusBarWidget): JComponent {
     createComponentByWidgetPresentation(widget)
   }
   ClientProperty.put(result, WIDGET_ID, widget.ID())
-  result.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, java.lang.Boolean.TRUE)
+  result.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, true)
   return result
 }
 
