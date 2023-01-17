@@ -107,7 +107,8 @@ enum class IdleFeedbackTypes {
     override fun isSuitable(): Boolean {
       val infoState = ProductivityMetricFeedbackInfoService.getInstance().state
 
-      return checkIdeIsSuitable() &&
+      return isIdeEAP() &&
+             checkIdeIsSuitable() &&
              checkIsNoDeadline() &&
              checkIdeVersionIsSuitable() &&
              checkFeedbackNotSent(infoState) &&
