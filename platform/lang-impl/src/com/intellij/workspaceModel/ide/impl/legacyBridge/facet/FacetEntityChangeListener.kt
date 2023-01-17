@@ -18,7 +18,6 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomFacetRelated
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
-import com.intellij.workspaceModel.ide.legacyBridge.FacetBridge
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.MutableEntityStorage

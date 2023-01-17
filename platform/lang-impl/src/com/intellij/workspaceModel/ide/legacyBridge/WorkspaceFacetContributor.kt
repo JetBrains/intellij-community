@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
  *  the changes of your custom entity this extension point should be implemented.
  *
  * If you want to use your custom module setting entity under the hood of your facet you also need to implement
- * [com.intellij.workspaceModel.ide.legacyBridge.FacetBridge] to be properly updated.
+ * [com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetBridge] to be properly updated.
  *
  * **N.B. Most of the time you need to implement them all to have a correct support all functionality relying on Facets.**
  *

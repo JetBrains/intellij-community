@@ -4,7 +4,10 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetId
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.childrenFacets
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.facet.FacetState
 
@@ -19,6 +22,8 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
                                           evaluateEntitySource: (FacetState) -> EntitySource) {
     loadFacetEntities(moduleEntity, listOf(facetState), null, evaluateEntitySource)
   }
+
+  override fun getEntityName(entity: FacetEntity): String = entity.name
 
   private fun loadFacetEntities(moduleEntity: ModuleEntity,
                                 facetStates: List<FacetState>,

@@ -19,7 +19,6 @@ import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomFacetRelatedEntitySerializer
-import com.intellij.workspaceModel.ide.legacyBridge.FacetBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import com.intellij.workspaceModel.ide.toExternalSource

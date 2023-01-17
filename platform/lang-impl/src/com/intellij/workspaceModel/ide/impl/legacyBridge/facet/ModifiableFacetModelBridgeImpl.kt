@@ -19,7 +19,6 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
-import com.intellij.workspaceModel.ide.legacyBridge.FacetBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
