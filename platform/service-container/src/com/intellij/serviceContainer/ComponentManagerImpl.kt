@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.util.attachAsChildTo
 import com.intellij.util.childScope
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
@@ -1477,8 +1478,8 @@ abstract class ComponentManagerImpl(
     val containerScope = getCoroutineScope()
     val intersectionName = "$debugString x ${pluginScope.coroutineContext[CoroutineName]?.name}"
     val intersectionScope = CoroutineScope(SupervisorJob() + CoroutineName(intersectionName)).also {
-      it.attachTo(containerScope)
-      it.attachTo(pluginScope)
+      it.attachAsChildTo(containerScope)
+      it.attachAsChildTo(pluginScope)
     }
     while (true) {
       val newScopes = scopes.put(pluginScope, intersectionScope)
@@ -1631,41 +1632,4 @@ private inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescripto
                                        crossinline task: (IdeaPluginDescriptorImpl) -> Unit) {
   task(mainPluginDescriptor)
   executeRegisterTaskForOldContent(mainPluginDescriptor, task)
-}
-
-/**
- * Makes [this] scope job behave as if it was a child of [secondaryParent] job
- * as per the coroutine framework parent-child [Job] relation:
- * - child prevents completion of the parent;
- * - child failure is propagated to the parent (note, parent might not cancel itself if it's a supervisor);
- * - parent cancellation is propagated to the child.
- *
- * The [real parent][ChildHandle.parent] of [this] scope job is not changed.
- * It does not matter whether the job of [this] scope has a real parent.
- *
- * Example usage:
- * ```
- * val containerScope: CoroutineScope = ...
- * val pluginScope: CoroutineScope = ...
- * CoroutineScope(SupervisorJob()).also {
- *   it.attachTo(containerScope)
- *   it.attachTo(pluginScope)
- * }
- * ```
- */
-private fun CoroutineScope.attachTo(secondaryParent: CoroutineScope) {
-  attachChildInternal(
-    parent = secondaryParent.coroutineContext.job,
-    child = this.coroutineContext.job,
-  )
-}
-
-@OptIn(InternalCoroutinesApi::class)
-private fun attachChildInternal(parent: Job, child: Job) {
-  @Suppress("DEPRECATION_ERROR")
-  val childJob = child as ChildJob
-  val childHandle = parent.attachChild(childJob)
-  child.invokeOnCompletion(onCancelling = true) {
-    childHandle.dispose()
-  }
 }
