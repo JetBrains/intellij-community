@@ -236,19 +236,6 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   }
 
   @NotNull
-  protected JBIterable<VirtualFile> getSelectedVirtualFiles() {
-    return VcsTreeModelData.selected(this)
-      .iterateUserObjects(VirtualFile.class)
-      .filter(VirtualFile::isValid);
-  }
-
-  @NotNull
-  private JBIterable<FilePath> getSelectedFilePaths() {
-    return VcsTreeModelData.selected(this)
-      .iterateUserObjects(FilePath.class);
-  }
-
-  @NotNull
   static JBIterable<VirtualFile> getExactlySelectedVirtualFiles(@NotNull JTree tree) {
     VcsTreeModelData exactlySelected = VcsTreeModelData.exactlySelected(tree);
 
@@ -289,27 +276,47 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   @NotNull
   private JBIterable<FilePath> getContextFilePaths() {
     return JBIterable.<FilePath>empty()
-      .append(getSelectedChanges().map(ChangesUtil::getFilePath))
-      .append(getSelectedVirtualFiles().map(VcsUtil::getFilePath))
-      .append(getSelectedFilePaths())
+      .append(VcsTreeModelData.selected(this)
+                .iterateUserObjects(Change.class)
+                .map(ChangesUtil::getFilePath))
+      .append(VcsTreeModelData.selected(this)
+                .iterateUserObjects(VirtualFile.class)
+                .filter(VirtualFile::isValid)
+                .map(VcsUtil::getFilePath))
+      .append(VcsTreeModelData.selected(this)
+                .iterateUserObjects(FilePath.class))
       .unique();
   }
 
   @NotNull
   private JBIterable<VirtualFile> getContextFiles() {
     return JBIterable.<VirtualFile>empty()
-      .append(getSelectedChanges().filterMap(ChangesUtil::getAfterPath).filterMap(FilePath::getVirtualFile))
-      .append(getSelectedVirtualFiles())
-      .append(getSelectedFilePaths().filterMap(FilePath::getVirtualFile))
+      .append(VcsTreeModelData.selected(this)
+                .iterateUserObjects(Change.class)
+                .filterMap(ChangesUtil::getAfterPath)
+                .filterMap(FilePath::getVirtualFile))
+      .append(VcsTreeModelData.selected(this)
+                .iterateUserObjects(VirtualFile.class)
+                .filter(VirtualFile::isValid))
+      .append(VcsTreeModelData.selected(this)
+                .iterateUserObjects(FilePath.class)
+                .filterMap(FilePath::getVirtualFile))
       .unique();
   }
 
   @NotNull
   private JBIterable<VirtualFile> getContextNavigatableFiles() {
     return JBIterable.<VirtualFile>empty()
-      .append(getSelectedChanges().flatMap(ChangesUtil::iteratePathsCaseSensitive).filterMap(FilePath::getVirtualFile))
-      .append(getSelectedVirtualFiles())
-      .append(getSelectedFilePaths().filterMap(FilePath::getVirtualFile))
+      .append(VcsTreeModelData.selected(this)
+                .iterateUserObjects(Change.class)
+                .flatMap(ChangesUtil::iteratePathsCaseSensitive)
+                .filterMap(FilePath::getVirtualFile))
+      .append(VcsTreeModelData.selected(this)
+                .iterateUserObjects(VirtualFile.class)
+                .filter(VirtualFile::isValid))
+      .append(VcsTreeModelData.selected(this)
+                .iterateUserObjects(FilePath.class)
+                .filterMap(FilePath::getVirtualFile))
       .unique();
   }
 
