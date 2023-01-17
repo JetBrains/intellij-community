@@ -6,6 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbModeTask
@@ -46,7 +47,8 @@ private class PerProviderSinkFactory(private val uncommittedListener: Uncommitte
     override fun addFile(file: VirtualFile) {
       LOG.assertTrue(!closed, "Should not invoke 'addFile' after 'close'")
       if (cancelActiveSinks.get()) {
-        throw ProcessCanceledException()
+        ProgressManager.getGlobalProgressIndicator()?.cancel()
+        ProgressManager.checkCanceled()
       }
 
       files.add(file)
@@ -89,7 +91,8 @@ private class PerProviderSinkFactory(private val uncommittedListener: Uncommitte
 
   fun newSink(provider: IndexableFilesIterator): PerProjectIndexingQueue.PerProviderSink {
     if (cancelActiveSinks.get()) {
-      throw ProcessCanceledException()
+      ProgressManager.getGlobalProgressIndicator()?.cancel()
+      ProgressManager.checkCanceled()
     }
 
     return PerProviderSinkImpl(provider)
