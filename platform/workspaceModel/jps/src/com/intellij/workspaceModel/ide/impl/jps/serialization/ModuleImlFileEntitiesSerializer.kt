@@ -38,6 +38,7 @@ internal const val TEST_MODULE_PROPERTIES_COMPONENT_NAME = "TestModuleProperties
 private const val MODULE_ROOT_MANAGER_COMPONENT_NAME = "NewModuleRootManager"
 private const val ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME = "AdditionalModuleElements"
 internal const val URL_ATTRIBUTE = "url"
+internal const val DUMB_ATTRIBUTE = "dumb"
 private val STANDARD_MODULE_OPTIONS = setOf(
   "type", "external.system.id", "external.system.module.version", "external.linked.project.path", "external.linked.project.id",
   "external.root.project.path", "external.system.module.group", "external.system.module.type"
@@ -454,11 +455,13 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
 
       val contentRootUrlString = contentElement.getAttributeValueStrict(URL_ATTRIBUTE)
+      val isDumb = contentElement.getAttributeValue(DUMB_ATTRIBUTE).toBoolean()
       val contentRoot = alreadyLoadedContentRoots[contentRootUrlString]
       if (contentRoot == null) {
         val contentRootUrl = contentRootUrlString.let { virtualFileManager.fromUrl(it) }
         val excludePatterns = contentElement.getChildren(EXCLUDE_PATTERN_TAG).map { it.getAttributeValue(EXCLUDE_PATTERN_ATTRIBUTE) }
-        ContentRootEntity(contentRootUrl, excludePatterns, contentRootEntitySource) {
+        val source = if (isDumb) OrphanageWorkerEntitySource else contentRootEntitySource
+        ContentRootEntity(contentRootUrl, excludePatterns, source) {
           this.sourceRoots = sourceRoots
           this.sourceRootOrder = sourceRootOrder
           this.excludedUrls = excludes

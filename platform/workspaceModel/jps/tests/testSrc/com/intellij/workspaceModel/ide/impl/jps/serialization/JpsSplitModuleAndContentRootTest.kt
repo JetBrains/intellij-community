@@ -7,11 +7,8 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
-import com.intellij.workspaceModel.ide.workspaceModel
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -51,7 +48,26 @@ class JpsSplitModuleAndContentRootTest {
   @Test
   fun `add local content root via orphanage`() {
     checkSaveProjectAfterChange("after/addContentRootOrphanage", "after/addContentRootOrphanage", false) { builder, orphanage, configLocation ->
-      println("")
+      assertTrue(builder.entities(ModuleEntity::class.java).toList().isEmpty())
+      assertTrue(orphanage.entities(ModuleEntity::class.java).single().contentRoots.single().entitySource !is OrphanageWorkerEntitySource)
+    }
+  }
+
+  @Test
+  fun `add local source root via orphanage`() {
+    checkSaveProjectAfterChange("after/addSourceRootOrphanage", "after/addSourceRootOrphanage", false) { builder, orphanage, configLocation ->
+      assertTrue(builder.entities(ModuleEntity::class.java).toList().isEmpty())
+      assertTrue(orphanage.entities(ModuleEntity::class.java).single().contentRoots.single().entitySource is OrphanageWorkerEntitySource)
+      assertTrue(orphanage.entities(ModuleEntity::class.java).single().contentRoots.single().sourceRoots.single().entitySource !is OrphanageWorkerEntitySource)
+    }
+  }
+
+  @Test
+  fun `add local content and source root via orphanage`() {
+    checkSaveProjectAfterChange("after/addSourceAndContentRootOrphanage", "after/addSourceAndContentRootOrphanage", false) { builder, orphanage, configLocation ->
+      assertTrue(builder.entities(ModuleEntity::class.java).toList().isEmpty())
+      assertTrue(orphanage.entities(ModuleEntity::class.java).single().contentRoots.single().entitySource !is OrphanageWorkerEntitySource)
+      assertTrue(orphanage.entities(ModuleEntity::class.java).single().contentRoots.single().sourceRoots.single().entitySource !is OrphanageWorkerEntitySource)
     }
   }
 
