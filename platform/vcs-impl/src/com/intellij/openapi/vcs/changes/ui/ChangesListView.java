@@ -148,22 +148,22 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
       return getSelectedChangeLists().toList().toArray(ChangeList[]::new);
     }
     if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      return getSelectedFiles().toList().toArray(VirtualFile[]::new);
+      return getContextFiles().toList().toArray(VirtualFile[]::new);
     }
     if (VcsDataKeys.VIRTUAL_FILES.is(dataId)) {
-      return getSelectedFiles();
+      return getContextFiles();
     }
     if (VcsDataKeys.FILE_PATHS.is(dataId)) {
-      return getSelectedFilePaths();
+      return getContextFilePaths();
     }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      VirtualFile file = getNavigatableFiles().single();
+      VirtualFile file = getContextNavigatableFiles().single();
       return file != null && !file.isDirectory()
              ? PsiNavigationSupport.getInstance().createNavigatable(myProject, file, 0)
              : null;
     }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      return getNavigatableArray(myProject, getNavigatableFiles());
+      return getNavigatableArray(myProject, getContextNavigatableFiles());
     }
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return getSelectionObjects().find(userObject -> !(userObject instanceof ChangeList)) != null
@@ -348,7 +348,7 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   }
 
   @NotNull
-  private JBIterable<FilePath> getSelectedFilePaths() {
+  private JBIterable<FilePath> getContextFilePaths() {
     return JBIterable.<FilePath>empty()
       .append(getSelectedChanges().map(ChangesUtil::getFilePath))
       .append(getSelectedVirtualFiles(null).map(VcsUtil::getFilePath))
@@ -357,7 +357,7 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   }
 
   @NotNull
-  private JBIterable<VirtualFile> getSelectedFiles() {
+  private JBIterable<VirtualFile> getContextFiles() {
     return JBIterable.<VirtualFile>empty()
       .append(getSelectedChanges().filterMap(ChangesUtil::getAfterPath).filterMap(FilePath::getVirtualFile))
       .append(getSelectedVirtualFiles(null))
@@ -366,7 +366,7 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   }
 
   @NotNull
-  private JBIterable<VirtualFile> getNavigatableFiles() {
+  private JBIterable<VirtualFile> getContextNavigatableFiles() {
     return JBIterable.<VirtualFile>empty()
       .append(getSelectedChanges().flatMap(ChangesUtil::iteratePathsCaseSensitive).filterMap(FilePath::getVirtualFile))
       .append(getSelectedVirtualFiles(null))
