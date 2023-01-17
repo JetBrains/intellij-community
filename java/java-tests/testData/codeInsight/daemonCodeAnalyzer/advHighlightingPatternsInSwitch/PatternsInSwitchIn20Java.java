@@ -37,4 +37,18 @@ class X {
       case <error descr="'switch' has both an unconditional pattern and a default label">String str</error> -> System.out.println("String");
     }
   }
+
+  void testDuplicateUnconditionalPattern1(Integer j) {
+    switch (j) {
+      case <error descr="Duplicate unconditional pattern">Integer i when true</error> -> System.out.println("An integer");
+      case <error descr="Duplicate unconditional pattern">Number number</error> -> System.out.println("An integer");
+    }
+  }
+
+  void testDuplicateUnconditionalPattern2(Integer j) {
+    switch (j) {
+      case <error descr="Duplicate unconditional pattern">Integer i when true</error> -> System.out.println("An integer");
+      case <error descr="Duplicate unconditional pattern">Integer i</error> -> System.out.println("An integer");
+    }
+  }
 }

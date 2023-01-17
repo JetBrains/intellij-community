@@ -655,7 +655,7 @@ public class SwitchBlockHighlightingModel {
         }
         elements.putValue(evaluateConstant(labelElement), labelElement);
       }
-      else if (labelElement instanceof PsiPattern && JavaPsiPatternUtil.isUnconditionalForType(labelElement, mySelectorType)) {
+      else if (JavaPsiPatternUtil.isUnconditionalForType(labelElement, mySelectorType)) {
         elements.putValue(myUnconditionalPattern, labelElement);
       }
     }
@@ -920,9 +920,7 @@ public class SwitchBlockHighlightingModel {
           }
         }
         else if (who instanceof PsiCaseLabelElement whoElement) {
-          PsiPattern overWhomPattern = ObjectUtils.tryCast(overWhom, PsiPattern.class);
-          PsiPattern whoPattern = ObjectUtils.tryCast(who, PsiPattern.class);
-          if (whoPattern == null || !JavaPsiPatternUtil.dominates(overWhomPattern, whoPattern)) {
+          if (!JavaPsiPatternUtil.dominates(overWhom, whoElement)) {
             IntentionAction action = getFixFactory().createMoveSwitchBranchUpFix(whoElement, overWhom);
             info.registerFix(action, null, null, null, null);
           }
