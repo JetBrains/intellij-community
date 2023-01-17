@@ -8,12 +8,14 @@ import com.intellij.codeInspection.options.*
 import com.intellij.ide.DataManager
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
@@ -23,8 +25,11 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.layout.selected
 import com.intellij.util.applyIf
+import java.awt.BorderLayout
+import java.awt.EventQueue
 import javax.swing.*
 import kotlin.math.max
+
 
 class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
@@ -53,7 +58,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
                            isFirst: Boolean = false,
                            withBottomGap: Boolean = false) {
     when (component) {
-      is OptControl, is OptSettingLink, is OptCustom -> {
+      is OptControl, is OptTable, is OptSettingLink, is OptCustom -> {
         renderOptRow(component, context, withBottomGap)
       }
 
@@ -264,6 +269,31 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
             .align(Align.FILL)
             .resizableColumn()
         }
+        
+        is OptTable -> {
+          val columns = component.children.map { stringList ->
+            @Suppress("UNCHECKED_CAST") val list = context.getOption(stringList.bindId) as MutableList<String>
+            ListWithListener(list) { context.setOption(stringList.bindId, list) }
+          }
+          val columnNames = component.children.map { stringList -> stringList.label.label() }
+          val table = ListTable(ListWrappingTableModel(columns, *columnNames.toTypedArray()))
+          val panel = ToolbarDecorator.createDecorator(table)
+            .setToolbarPosition(ActionToolbarPosition.LEFT)
+            .setAddAction { _ ->
+              val tableModel = table.model
+              tableModel.addRow()
+              EventQueue.invokeLater { editLastRow(table) }
+            }
+            .setRemoveAction { _ -> TableUtil.removeSelectedItems(table) }
+            .disableUpDownActions().createPanel()
+          val label = component.label.label()
+          if (!label.isEmpty()) {
+            panel.add(JLabel(label), BorderLayout.NORTH)
+          }
+          cell(panel)
+            .align(Align.FILL)
+            .resizableColumn()
+        }
 
         is OptCustom -> {
           val extension = CustomComponentExtension.find(component.componentId) ?: throw IllegalStateException(
@@ -285,6 +315,20 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
   private fun RendererContext.setOption(bindId: String, value: Any) {
     this.controller.setOption(bindId, value)
+  }
+
+  private fun editLastRow(table: ListTable) {
+    val tableModel = table.model
+    val row = tableModel.rowCount - 1
+    val selectionModel = table.selectionModel
+    selectionModel.setSelectionInterval(row, row)
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { IdeFocusManager.getGlobalInstance().requestFocus(table, true) }
+    val rectangle = table.getCellRect(row, 0, true)
+    table.scrollRectToVisible(rectangle)
+    table.editCellAt(row, 0)
+    val editor = table.cellEditor
+    val component = editor.getTableCellEditorComponent(table, tableModel.getValueAt(row, 0), true, row, 0)
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { IdeFocusManager.getGlobalInstance().requestFocus(component, true) }
   }
   
   private class ListWithListener(val list: MutableList<String>, val changeListener: () -> Unit): MutableList<String> by list {

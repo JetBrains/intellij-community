@@ -304,7 +304,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
    * @return editable sorted list of unique strings
    */
   @Contract(pure = true)
-  public static @NotNull OptStringList stringList(@Language("jvm-field-name") @NotNull String bindId, @NotNull @NlsContexts.Label String label) {
+  public static @NotNull OptStringList stringList(@Language("jvm-field-name") @NotNull String bindId, @NotNull @Nls String label) {
     return new OptStringList(bindId, new PlainMessage(label), null);
   }
 
@@ -316,9 +316,18 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
    * @return editable sorted list of unique strings
    */
   @Contract(pure = true)
-  public static @NotNull OptStringList stringList(@Language("jvm-field-name") @NotNull String bindId, @NotNull @NlsContexts.Label String label,
+  public static @NotNull OptStringList stringList(@Language("jvm-field-name") @NotNull String bindId, @NotNull @Nls String label,
                                                   @NotNull StringValidator validator) {
     return new OptStringList(bindId, new PlainMessage(label), validator);
+  }
+
+  /**
+   * @param label   label above the control
+   * @param columns lists for every column
+   * @return new table 
+   */
+  public static @NotNull OptTable table(@NotNull @NlsContexts.Label String label, @NotNull OptStringList @NotNull ... columns) {
+    return new OptTable(new PlainMessage(label), List.of(columns));
   }
 
   /* Layout elements */
