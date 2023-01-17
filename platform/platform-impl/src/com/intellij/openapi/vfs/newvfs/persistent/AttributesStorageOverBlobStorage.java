@@ -25,12 +25,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  */
 public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage {
+  public static final int MAX_ATTRIBUTE_ID = Byte.MAX_VALUE;
   //Persistent format (see AttributesRecord/AttributeEntry):
   //  Storage := (AttributeDirectoryRecord | AttributeDedicatedRecord)*
   //
   //  AttributeDirectoryRecord: header, entry*
   //      header:  fileId[4b]   (ref back to file owned attributes)
-  //      entry:  attributeId[4b], inlineSizeOrRefId[4b], inlineData[inlineSizeOrRefId]?
+  //      entry:  attributeId[?], inlineSizeOrRefId[?], inlineData[inlineSizeOrRefId]?
+  //              (elaborated schema to encode attributeId+size into 1 or 2 bytes, or 6 bytes)
   //
   //      Attribute values <= INLINE_ATTRIBUTE_MAX_SIZE stored inline, size in .inlineSizeOrRefId,
   //      Attribute values >  INLINE_ATTRIBUTE_MAX_SIZE stored in dedicated records, with
@@ -184,7 +186,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
             final int attributeId = attributeEntry.attributeId();
             if (attributeEntry.isValueInlined()) {
               final byte[] valueBytes = attributeEntry.inlinedValueAsByteArray();
-              processor.processAttribute(recordId, fileId, attributeId, valueBytes);
+              processor.processAttribute(recordId, fileId, attributeId, valueBytes, true);
             }
           }
         }
@@ -192,7 +194,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
           final int fileId = attributesRecord.fileId();
           final int attributeId = attributesRecord.dedicatedRecordAttributeId();
           final byte[] valueBytes = attributesRecord.dedicatedValueAsByteArray();
-          processor.processAttribute(recordId, fileId, attributeId, valueBytes);
+          processor.processAttribute(recordId, fileId, attributeId, valueBytes, false);
         }
         return true;
       });
@@ -205,7 +207,8 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
   public interface Processor<E extends Exception> {
     void processAttribute(final int recordId, final int fileId,
                           final int attributeId,
-                          final byte[] attributeValue) throws E;
+                          final byte[] attributeValue,
+                          final boolean inlinedAttribute) throws E;
   }
 
   @Override
@@ -240,7 +243,9 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
     public static final int DEDICATED_RECORD_ATTRIBUTE_ID_OFFSET = RECORD_FILE_ID_OFFSET + Integer.BYTES;
     public static final int DEDICATED_RECORD_HEADER_SIZE = DEDICATED_RECORD_ATTRIBUTE_ID_OFFSET + Integer.BYTES;
 
+    /** Record buffer */
     private final ByteBuffer buffer;
+    /** Fill record length (i.e. header + all attributes entries) */
     private final int length;
 
     private final int backRefFileId;
@@ -253,11 +258,11 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
       this.buffer = buffer;
       this.length = buffer.remaining();
 
-      if (length > RECORD_HEADER_SIZE) {
+      if (length >= RECORD_HEADER_SIZE) {
         final int fileId = buffer.getInt(RECORD_FILE_ID_OFFSET);
         if (fileId < 0) {
           assert length >= DEDICATED_RECORD_HEADER_SIZE : "record length(=" + length + ") must be > " + DEDICATED_RECORD_HEADER_SIZE;
-          //this is dedicated attribute record, not directory record
+          //this is a dedicated attribute record, not a directory record
           backRefFileId = -fileId;
           dedicatedAttributeId = buffer.getInt(DEDICATED_RECORD_ATTRIBUTE_ID_OFFSET);
         }
@@ -267,7 +272,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
         }
         entry.reset(RECORD_HEADER_SIZE, buffer);
       }
-      else {
+      else { //record is not exist (yet?): for creating new record from 0
         backRefFileId = -1;
         dedicatedAttributeId = -1;
       }
@@ -335,14 +340,37 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
   }
 
   protected static class AttributeEntry {
-    public static final int ENTRY_ATTR_ID_OFFSET = 0;
-    public static final int ENTRY_SIZE_OR_REF_OFFSET = Integer.BYTES;
-    public static final int ENTRY_INLINE_VALUE_OFFSET = ENTRY_SIZE_OR_REF_OFFSET + Integer.BYTES;
-    public static final int ENTRY_HEADER_SIZE = ENTRY_SIZE_OR_REF_OFFSET + Integer.BYTES;
+
+    private static final int SMALLEST_HEADER_SIZE = 1;
+    private static final int MEDIUM_HEADER_SIZE = 2;
+    private static final int BIG_HEADER_SIZE = 6;
+
+    //Tiny entry: header=1 byte, 3 bits for attributeId, 4 bits for size
+    private static final byte TINY_ENTRY_MASK = (byte)0b1000_0000;
+    private static final int TINY_ENTRY_ATTR_ID_BITS = 3;
+    private static final int TINY_ENTRY_ATTR_ID_MASK = 0b0111_0000;
+    private static final int TINY_ENTRY_SIZE_MASK = 0b0000_1111;
+    private static final int TINY_ENTRY_SIZE_BITS = 4;
+    private static final int TINY_ENTRY_MAX_ATTRIBUTE_ID = 0b111;
+    private static final int TINY_ENTRY_MAX_SIZE = 0b1111;
+
+    //Medium entry: header=2 bytes, 6 bits for attributeId, 8 bits for size (to be discussed: 7+7 instead)
+    private static final byte MEDIUM_ENTRY_MASK = (byte)0b0100_0000;
+    private static final int MEDIUM_ENTRY_ATTR_ID_BITS = 6;
+    private static final int MEDIUM_ENTRY_SIZE_BITS = 8;
+    private static final int MEDIUM_ENTRY_MAX_ATTRIBUTE_ID = 0b11_1111;
+    private static final int MEDIUM_ENTRY_MAX_SIZE = 0b1111_1111;
+
+    //Big entry: header=6 bytes, 8 bits for attributeId, 32 bits for size/refId (+6 spare bits to be discussed)
+    private static final byte BIG_ENTRY_MASK = (byte)0b1100_0000;
+    private static final int BIG_ENTRY_ATTR_ID_MASK = ~(TINY_ENTRY_MASK | MEDIUM_ENTRY_MASK);
 
     private int entryStartOffset;
     private int attributeId;
     private int inlinedValueSizeOrDedicatedRecordId;
+
+    private int headerSize = -1;
+
     private ByteBuffer buffer;
 
     public void reset(final int entryStartOffset,
@@ -351,17 +379,34 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
       this.buffer = buffer;
 
       if (isValid()) {
-        attributeId = buffer.getInt(entryStartOffset + ENTRY_ATTR_ID_OFFSET);
-        inlinedValueSizeOrDedicatedRecordId = buffer.getInt(entryStartOffset + ENTRY_SIZE_OR_REF_OFFSET);
+        final byte firstByte = buffer.get(entryStartOffset);
+        if ((firstByte & TINY_ENTRY_MASK) == 0) {//1 byte for (attributeId,size):
+          attributeId = ((firstByte & TINY_ENTRY_ATTR_ID_MASK) >> TINY_ENTRY_SIZE_BITS);
+          inlinedValueSizeOrDedicatedRecordId = (firstByte & TINY_ENTRY_SIZE_MASK);
+          headerSize = SMALLEST_HEADER_SIZE;
+        }
+        else if ((firstByte & MEDIUM_ENTRY_MASK) == 0) {//2 bytes for (attributeId,size):
+          final byte secondByte = buffer.get(entryStartOffset + 1);
+          attributeId = firstByte & MEDIUM_ENTRY_MAX_ATTRIBUTE_ID;      //zero out first 2 bits
+          inlinedValueSizeOrDedicatedRecordId = Byte.toUnsignedInt(secondByte);
+          headerSize = MEDIUM_HEADER_SIZE;
+        }
+        else {//6 bytes for (attributeId, size):
+          final byte secondByte = buffer.get(entryStartOffset + 1);
+          attributeId = ((firstByte & BIG_ENTRY_ATTR_ID_MASK) << Byte.SIZE) | Byte.toUnsignedInt(secondByte);
+          inlinedValueSizeOrDedicatedRecordId = buffer.getInt(entryStartOffset + 2);
+          headerSize = BIG_HEADER_SIZE;
+        }
       }
-      else {
+      else {//entry does not exist here (branch for to-be-created entry)
         attributeId = -1;
         inlinedValueSizeOrDedicatedRecordId = -1;
+        headerSize = -1;
       }
     }
 
     public boolean isValid() {
-      return entryStartOffset + ENTRY_HEADER_SIZE <= buffer.limit();
+      return entryStartOffset + SMALLEST_HEADER_SIZE <= buffer.limit();
     }
 
     public int attributeId() {
@@ -369,7 +414,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
     }
 
     public boolean isValueInlined() {
-      return inlinedValueSizeOrDedicatedRecordId < INLINE_ATTRIBUTE_SMALLER_THAN;
+      return 0 <= inlinedValueSizeOrDedicatedRecordId && inlinedValueSizeOrDedicatedRecordId < INLINE_ATTRIBUTE_SMALLER_THAN;
     }
 
     public int dedicatedValueRecordId() {
@@ -377,7 +422,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
     }
 
     public int inlinedValueStartOffset() {
-      return entryStartOffset + ENTRY_INLINE_VALUE_OFFSET;
+      return entryStartOffset + headerSize;
     }
 
     public int inlinedValueLength() {
@@ -389,8 +434,12 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
     }
 
     public int nextEntryOffset() {
-      return entryStartOffset + ENTRY_HEADER_SIZE +
-             (isValueInlined() ? inlinedValueLength() : 0);
+      return entryStartOffset + entrySize();
+    }
+
+    public int entrySize() {
+      return headerSize
+             + (isValueInlined() ? inlinedValueLength() : 0);
     }
 
     public boolean moveToNextEntry() {
@@ -425,8 +474,28 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
                                                   final int encodedAttributeId,
                                                   final int newValueSize) {
       assert newValueSize < INLINE_ATTRIBUTE_SMALLER_THAN : newValueSize + " >= " + INLINE_ATTRIBUTE_SMALLER_THAN;
-      return buffer.putInt(encodedAttributeId)
-        .putInt(newValueSize);
+      return putEntryHeader(buffer, encodedAttributeId, newValueSize);
+    }
+
+    private static ByteBuffer putEntryHeader(final ByteBuffer buffer,
+                                             final int encodedAttributeId,
+                                             final int sizeOrRefId) {
+      assert encodedAttributeId <= MAX_ATTRIBUTE_ID : encodedAttributeId + " > " + MAX_ATTRIBUTE_ID;
+
+      if (fitsTinyEntry(encodedAttributeId, sizeOrRefId)) {
+        final byte firstByte = (byte)((encodedAttributeId << TINY_ENTRY_SIZE_BITS) | sizeOrRefId);
+        return buffer.put(firstByte);
+      }
+      else if (fitsMediumEntry(encodedAttributeId, sizeOrRefId)) {
+        final byte firstByte = (byte)(encodedAttributeId | TINY_ENTRY_MASK);
+        return buffer.put(firstByte)
+          .put((byte)sizeOrRefId);
+      }
+      else {
+        return buffer.put(BIG_ENTRY_MASK) //6 spare bits
+          .put((byte)encodedAttributeId)
+          .putInt(sizeOrRefId);
+      }
     }
 
     public static ByteBuffer putInlineEntryValue(final ByteBuffer buffer,
@@ -439,7 +508,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
                                             final int attributeId,
                                             final byte[] newValueBytes,
                                             final int newValueSize) {
-      assert buffer.remaining() >= entrySizeForValueSize(newValueSize) :
+      assert buffer.remaining() >= entrySizeForInlineValueSize(attributeId, newValueSize) :
         "buffer(pos:" + buffer.position() + ", lim:" + buffer.limit() + ") " +
         "is too small for inline attribute " + newValueSize + " (+8b header)";
 
@@ -448,14 +517,50 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
     }
 
     public static ByteBuffer putRefEntry(final ByteBuffer buffer,
-                                         final int attributeId,
+                                         final int encodedAttributeId,
                                          final int dedicatedRecordId) {
-      return buffer.putInt(attributeId)
-        .putInt(INLINE_ATTRIBUTE_SMALLER_THAN + dedicatedRecordId);
+      return putEntryHeader(buffer, encodedAttributeId,
+                            INLINE_ATTRIBUTE_SMALLER_THAN + dedicatedRecordId);
     }
 
-    public static int entrySizeForValueSize(final int size) {
-      return ENTRY_HEADER_SIZE + size;
+    public static int entrySizeForInlineValueSize(final int encodedAttributeId,
+                                                  final int size) {
+      return headerSizeForInline(encodedAttributeId, size) + size;
+    }
+
+    public static int headerSizeForInline(final int encodedAttributeId,
+                                          final int size) {
+      return headerSizeFor(encodedAttributeId, size);
+    }
+
+    public static int headerSizeForRef(final int encodedAttributeId,
+                                       final int dedicatedRecordId) {
+      return headerSizeFor(encodedAttributeId, INLINE_ATTRIBUTE_SMALLER_THAN + dedicatedRecordId);
+    }
+
+    private static int headerSizeFor(final int encodedAttributeId,
+                                     final int sizeOrRefId) {
+      if (fitsTinyEntry(encodedAttributeId, sizeOrRefId)) {
+        return SMALLEST_HEADER_SIZE;
+      }
+      else if (fitsMediumEntry(encodedAttributeId, sizeOrRefId)) {
+        return MEDIUM_HEADER_SIZE;
+      }
+      else {
+        return BIG_HEADER_SIZE;
+      }
+    }
+
+    private static boolean fitsTinyEntry(final int encodedAttributeId,
+                                         final int sizeOrRefId) {
+      return (encodedAttributeId & TINY_ENTRY_MAX_ATTRIBUTE_ID) == encodedAttributeId
+             && (sizeOrRefId & TINY_ENTRY_MAX_SIZE) == sizeOrRefId;
+    }
+
+    private static boolean fitsMediumEntry(final int encodedAttributeId,
+                                           final int sizeOrRefId) {
+      return (encodedAttributeId & MEDIUM_ENTRY_MAX_ATTRIBUTE_ID) == encodedAttributeId
+             && (sizeOrRefId & MEDIUM_ENTRY_MAX_SIZE) == sizeOrRefId;
     }
   }
 
@@ -512,6 +617,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
                                 final int attributeId,
                                 final byte[] newValueBytes,
                                 final int newValueSize) throws IOException {
+    checkAttributeId(attributeId);
     final int updatedAttributesRecordId;
     if (newValueSize < INLINE_ATTRIBUTE_SMALLER_THAN) {
       //if attribute value could be stored in the directory record inline
@@ -558,9 +664,9 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
 
     if (attributesRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
       //no directory record yet -> create new one:
+      final int directoryRecordSize = AttributesRecord.RECORD_HEADER_SIZE
+                                      + AttributeEntry.entrySizeForInlineValueSize(attributeId, newValueSize);
       return storage.writeToRecord(attributesRecordId, buffer -> {
-        final int directoryRecordSize = AttributesRecord.RECORD_HEADER_SIZE
-                                        + AttributeEntry.entrySizeForValueSize(newValueSize);
         final ByteBuffer writeTo = ensureLimit(buffer, directoryRecordSize);
         AttributesRecord.putDirectoryRecordHeader(writeTo, fileId);
         AttributeEntry.putInlineEntry(
@@ -569,7 +675,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
         );
 
         return writeTo;
-      });
+      }, directoryRecordSize);
     }
     else {//modify already existing directory record:
       final IntRef recordToDelete = new IntRef(NON_EXISTENT_ATTR_RECORD_ID);
@@ -583,42 +689,20 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
             //delete dedicated record (later):
             recordToDelete.set(entryToOverwrite.dedicatedValueRecordId());
           }
-          //is buffer.capacity enough?
-          final int sizeDiff = newValueSize - entryToOverwrite.inlinedValueLength();
-          final ByteBuffer writeTo = ensureLimit(buffer, record.length + sizeDiff);
-
-          //there are a lot of bytes movements below, and it is easier to just 'switch checks off'
-          // (set .limit=.capacity) here, and return bounds checks before returning from the method,
-          // than to reason about .limit in each case.
-          writeTo.limit(writeTo.capacity());
-
-          if (writeTo != buffer) {
-            writeTo.put(0,
-                        buffer, 0, entryToOverwrite.offset());
-          }
-
-          if (sizeDiff != 0) {
-            //shift all entries _after_ current one:
-            final int remainingEntriesLength = record.length - entryToOverwrite.nextEntryOffset();
-            writeTo.put(
-              entryToOverwrite.nextEntryOffset() + sizeDiff,
-              buffer,
-              entryToOverwrite.nextEntryOffset(), remainingEntriesLength
-            );
-          }
+          final int newEntrySize = AttributeEntry.entrySizeForInlineValueSize(attributeId, newValueSize);
+          final ByteBuffer writeTo = resizeGap(buffer, entryToOverwrite.offset(),
+                                               entryToOverwrite.entrySize(), newEntrySize);
           writeTo.position(entryToOverwrite.offset());
           AttributeEntry.putInlineEntry(
             writeTo,
             attributeId, newValueBuffer, newValueSize
           );
 
-          return writeTo
-            .limit(record.length + sizeDiff)
-            .position(record.length + sizeDiff);
+          return writeTo.position(writeTo.limit());
         }
         else {
           //no entry for attributeId -> append new entry to the end:
-          final int entrySize = AttributeEntry.entrySizeForValueSize(newValueSize);
+          final int entrySize = AttributeEntry.entrySizeForInlineValueSize(attributeId, newValueSize);
           final ByteBuffer writeTo = ensureLimitAndData(buffer, record.length + entrySize);
 
           writeTo.position(record.length);
@@ -657,7 +741,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
 
       final AttributesRecord attributesRecord = new AttributesRecord(buffer);
       if (!attributesRecord.findAttributeInDirectoryRecord(attributeId)) {
-        //There is a directory record, but no entry for attributeId in it yet
+        //Directory record exists but contains no entry for attributeId
         //  -> append new entry to the end:
 
         //Put attribute value into dedicated record:
@@ -667,13 +751,18 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
           newValueBytes, newValueSize
         );
 
-        final ByteBuffer toWrite = ensureLimitAndData(buffer, attributesRecord.length + AttributeEntry.ENTRY_HEADER_SIZE);
-        toWrite.position(attributesRecord.length);
-        AttributeEntry.putRefEntry(toWrite, attributeId, dedicatedValueRecordId);
-        return toWrite;
+        //append the reference to the end of directory record:
+        final ByteBuffer writeTo = ensureLimitAndData(
+          buffer,
+          attributesRecord.length + AttributeEntry.headerSizeForRef(attributeId, dedicatedValueRecordId)
+        );
+        writeTo.position(attributesRecord.length);
+        AttributeEntry.putRefEntry(writeTo, attributeId, dedicatedValueRecordId);
+        return writeTo;
       }
       else {
-        //There is a directory record, and entry for attributeId in it -> update the entry
+        //Directory record exists and contains the entry for attributeId
+        //  -> update the entry:
         final AttributeEntry entry = attributesRecord.currentEntry();
 
         //Put/update attribute value into dedicated record:
@@ -686,15 +775,17 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
           newValueBytes, newValueSize
         );
 
-        buffer.position(entry.offset());
-        AttributeEntry.putRefEntry(buffer, attributeId, updatedDedicatedValueRecordId);
-        if (entry.isValueInlined()) {
-          //'collapse' inlined value (we need only entry header for dedicated value ref)
-          buffer.put(entry.inlinedValueStartOffset(),
-                     buffer, entry.nextEntryOffset(), buffer.limit() - entry.nextEntryOffset());
-          buffer.limit(buffer.limit() - entry.inlinedValueLength());
-        }
-        return buffer.position(buffer.limit());
+        //The previous entry likely has a different size than the future (reference) entry: we need to
+        // either collapse or expand it:
+        final int refEntrySize = AttributeEntry.headerSizeForRef(attributeId, updatedDedicatedValueRecordId);
+
+        final ByteBuffer writeTo = resizeGap(buffer, entry.offset(),
+                                             entry.entrySize(), refEntrySize);
+        writeTo.position(entry.offset());
+
+        AttributeEntry.putRefEntry(writeTo, attributeId, updatedDedicatedValueRecordId);
+
+        return writeTo.position(writeTo.limit());
       }
     });
     return updatedAttributeRecordId;
@@ -745,13 +836,8 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
       assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
                                                         " != backref fileId(" + attributesRecord.backRefFileId + ")";
       if (!attributesRecord.hasDirectory()) {
-        throw new IllegalArgumentException("record(" +
-                                           attributesRecordId +
-                                           ") is not a directory record (" +
-                                           attributesRecord.backRefFileId +
-                                           ", " +
-                                           attributesRecord.dedicatedAttributeId +
-                                           ")");
+        throw new IllegalArgumentException("record(" + attributesRecordId + ") is not a directory record: " +
+                                           "(" + attributesRecord.backRefFileId + ", " + attributesRecord.dedicatedAttributeId + ")");
       }
       if (!attributesRecord.findAttributeInDirectoryRecord(attributeId)) {
         return false;
@@ -863,6 +949,45 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
         .order(buffer.order())
         .put(0, buffer, 0, buffer.limit())
         .position(buffer.position());
+    }
+  }
+
+
+  /**
+   * Method 'resizes' a gap in buffer. Imagine you want to replace a few bytes in the middle
+   * of the buffer with another few bytes, of different size -- you need to ensure everything
+   * else around those few bytes moved accordingly. This method transforms buffer[...offset..(offset+oldGapSize)...]
+   * into buffer[...offset..(offset+newGapSize)...] keeping data before & after the gap intact.
+   */
+  @VisibleForTesting
+  protected static ByteBuffer resizeGap(final ByteBuffer buffer,
+                                        final int offset,
+                                        final int oldGapSize,
+                                        final int newGapSize) {
+    final int oldGapEndOffset = offset + oldGapSize;
+    final int newGapEndOffset = offset + newGapSize;
+    final int limitBefore = buffer.limit();
+    if (newGapSize > oldGapSize) {//expand:
+      final ByteBuffer enlargedBuffer = ensureLimitAndData(buffer, limitBefore + (newGapSize - oldGapSize));
+      enlargedBuffer.put(newGapEndOffset,
+                         buffer, oldGapEndOffset, limitBefore - oldGapEndOffset);
+      enlargedBuffer.limit(limitBefore + newGapSize - oldGapSize);
+      return enlargedBuffer;
+    }
+    else if (newGapSize < oldGapSize) {//collapse:
+      buffer.put(newGapEndOffset,
+                 buffer, oldGapEndOffset, limitBefore - oldGapEndOffset);
+      buffer.limit(limitBefore + (newGapSize - oldGapSize));
+      return buffer;
+    }
+    else {//nothing to move: oldGap=newGap
+      return buffer;
+    }
+  }
+
+  private static void checkAttributeId(final int attributeId) {
+    if (attributeId < 0 || attributeId > MAX_ATTRIBUTE_ID) {
+      throw new IllegalArgumentException("attributeId(=" + attributeId + ") must be in [0.." + MAX_ATTRIBUTE_ID + "]");
     }
   }
 }

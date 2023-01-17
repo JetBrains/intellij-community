@@ -16,6 +16,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -25,9 +26,6 @@ import static com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheT
 import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID;
 import static org.junit.Assert.*;
 
-/**
- *
- */
 public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase {
 
   protected static final int PAGE_SIZE = 1 << 15;
@@ -210,10 +208,13 @@ public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase 
   public void manyAttributesInserted_AreAllReportedExistInStorage_AndCouldBeReadBackAsIs() throws IOException {
     final int maxAttributeValueSize = Short.MAX_VALUE / 2;
     final int differentAttributesCount = 1024;
+    final Random rnd = ThreadLocalRandom.current();
+
+
     final AttributeRecord[] records = generateManyRandomRecords(
       ENOUGH_RECORDS,
       differentAttributesCount,
-      maxAttributeValueSize
+      maxAttributeValueSize, rnd
     );
 
     final AttributeRecord[] insertedRecords = attributes.insertOrUpdateAll(records, attributesStorage);
@@ -235,10 +236,12 @@ public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase 
   public void manyAttributesInserted_CouldAllBeReadBackAsIs_WithForEach() throws IOException {
     final int maxAttributeValueSize = Short.MAX_VALUE / 2;
     final int differentAttributesCount = 1024;
+    final Random rnd = ThreadLocalRandom.current();
+
     final AttributeRecord[] records = generateManyRandomRecords(
       ENOUGH_RECORDS,
       differentAttributesCount,
-      maxAttributeValueSize
+      maxAttributeValueSize, rnd
     );
 
     final AttributeRecord[] recordsWritten = attributes.insertOrUpdateAll(records, attributesStorage);
@@ -256,7 +259,7 @@ public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase 
     // until the need for it satisfies its cost.
 
     final Long2ObjectMap<AttributeRecord> recordsReadWithForEach = new Long2ObjectOpenHashMap<>();
-    attributesStorage.forEachAttribute((recordId, fileId, attributeId, attributeValue) -> {
+    attributesStorage.forEachAttribute((recordId, fileId, attributeId, attributeValue, inlinedAttribute) -> {
       final AttributeRecord attributeRecord = new AttributeRecord(recordId, fileId, attributeId)
         .withAttributeBytes(attributeValue, attributeValue.length);
       recordsReadWithForEach.put(
@@ -284,10 +287,12 @@ public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase 
   public void manyAttributesInserted_AndDeleted_NotExistAnymore() throws IOException {
     final int maxAttributeValueSize = Short.MAX_VALUE / 2;
     final int differentAttributesCount = 1024;
+    final Random rnd = ThreadLocalRandom.current();
+
     final AttributeRecord[] records = generateManyRandomRecords(
       ENOUGH_RECORDS,
       differentAttributesCount,
-      maxAttributeValueSize
+      maxAttributeValueSize, rnd
     );
 
     final AttributeRecord[] insertedRecords = attributes.insertOrUpdateAll(records, attributesStorage);
@@ -317,10 +322,12 @@ public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase 
     // -> attribute will change storage format on size change, so lets check this:
     final int maxAttributeValueSize = INLINE_ATTRIBUTE_SMALLER_THAN * 3;
     final int differentAttributesCount = 1024;
+    final Random rnd = ThreadLocalRandom.current();
+
     final AttributeRecord[] records = generateManyRandomRecords(
       ENOUGH_RECORDS,
       differentAttributesCount,
-      maxAttributeValueSize
+      maxAttributeValueSize, rnd
     );
 
     for (int i = 0; i < records.length; i++) {
@@ -331,7 +338,7 @@ public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase 
       );
     }
 
-    final ThreadLocalRandom rnd = ThreadLocalRandom.current();
+
     for (int i = 0; i < records.length; i++) {
       AttributeRecord record = records[i];
       final int attributeSize = record.attributeBytesLength;
@@ -345,11 +352,12 @@ public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase 
       records[i] = attributes.insertOrUpdateRecord(record, attributesStorage);
     }
 
-    for (AttributeRecord record : records) {
+    for (int i = 0; i < records.length; i++) {
+      AttributeRecord record = records[i];
       assertArrayEquals(
-        record + " value must be read",
-        record.readValueFromStorage(attributesStorage),
-        record.attributeBytes()
+        "[" + i + "]" + record + " value must be read",
+        record.attributeBytes(),
+        record.readValueFromStorage(attributesStorage)
       );
     }
   }
@@ -399,14 +407,14 @@ public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase 
 
   protected static AttributeRecord[] generateManyRandomRecords(final int size,
                                                                final int differentAttributesCount,
-                                                               final int maxAttributeValueSize) {
-    final ThreadLocalRandom rnd = ThreadLocalRandom.current();
+                                                               final int maxAttributeValueSize,
+                                                               final Random rnd) {
 
     final int[] fileIds = rnd.ints()
       .filter(id -> id > 0)
       .limit(size / 2)
       .toArray();
-    final int[] attributeIds = rnd.ints()
+    final int[] attributeIds = rnd.ints(0, AttributesStorageOverBlobStorage.MAX_ATTRIBUTE_ID + 1)
       .filter(id -> id > 0)
       .limit(differentAttributesCount)
       .toArray();
@@ -416,7 +424,7 @@ public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase 
         final int attributeId = attributeIds[rnd.nextInt(attributeIds.length)];
         return new IntPair(fileId, attributeId);
       })
-      .distinct()//each (fileId,attributeId) pair should occured only once!
+      .distinct()//each (fileId,attributeId) pair should occurred only once!
       .limit(size)
       .map(pair -> {
         final int fileId = pair.first;
