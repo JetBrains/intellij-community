@@ -357,7 +357,7 @@ public abstract class VcsTreeModelData {
       return getListSelectionOrAll(tree).map(entry -> ObjectUtils.tryCast(entry, Change.class));
     }
     else if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
-      return mapToChange(exactlySelected(tree)).take(1).toArray(Change.EMPTY_CHANGE_ARRAY);
+      return mapToChange(exactlySelected(tree)).toArray(Change.EMPTY_CHANGE_ARRAY);
     }
     else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       return mapToVirtualFile(selected(tree)).toArray(VirtualFile.EMPTY_ARRAY);
