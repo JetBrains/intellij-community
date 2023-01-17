@@ -8,9 +8,10 @@ import org.jetbrains.kotlin.gradle.newTests.testProperties.GradleVersionTestsPro
 import org.jetbrains.kotlin.gradle.newTests.testProperties.KotlinGradlePluginVersionTestsProperty
 import org.jetbrains.kotlin.gradle.newTests.testProperties.SimpleProperties
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
+import java.io.File
 
 interface KotlinTestPropertiesService {
-    fun substituteKotlinTestPropertiesInText(text: String): String
+    fun substituteKotlinTestPropertiesInText(text: String, sourceFile: File): String
 
     val agpVersion: String
     val gradleVersion: GradleVersion
@@ -45,19 +46,43 @@ class KotlinTestPropertiesServiceImpl(
         put(AndroidGradlePluginVersionTestsProperty.id, agpVersion)
     }
 
-    val defaultProperties: Map<String, String> =
-        mapOf(
-            // TODO fix hmpp flags when versions matrix is ready
-            "enable_hmpp_flags" to "",
-            "disable_hmpp_flags" to "kotlin.mpp.hierarchicalStructureSupport=false"
-        )
-
-    override fun substituteKotlinTestPropertiesInText(text: String): String {
+    override fun substituteKotlinTestPropertiesInText(text: String, sourceFile: File): String {
         var result = text
         allPropertiesValuesById.forEach { (key, value) ->
-            result = result.replace(Regex("""\{\s*\{\s*${key}\s*}\s*}"""), value)
+            result = result.replace(Regex("""\{\s*\{\s*${key}\s*\}\s*\}""", RegexOption.IGNORE_CASE), value)
         }
 
+        assertNoPatternsLeftUnsubstituted(result, sourceFile)
         return result
+    }
+
+    private fun assertNoPatternsLeftUnsubstituted(text: String, sourceFile: File) {
+        if (!ANY_TEMPLATE_REGEX.containsMatchIn(text)) return
+
+        // expected testdump files have txt-extension and use `{{ ... }}`-patterns for
+        // templating variable parts of outputs (e.g. version of KGP).
+        // Those patterns are substituted by specific [ModulePrinterContributor] and thus it's
+        // ok to have them unsubstituted here
+        if (sourceFile.extension == "txt") return
+
+        error(
+            """
+                |Not all '{{ ... }}' patterns were substituted in testdata.
+                |
+                |Available patterns: ${allPropertiesValuesById.keys}
+                |
+                |If you've introduced a new TestProperty, check that it is passed to KotlinTestPropertiesService
+                |(simple way to ensure that is to register it in the SimpleProperties)
+                | 
+                |Full text after substitution:
+                |  
+                |${text}
+            """.trimMargin()
+        )
+
+    }
+
+    companion object {
+        val ANY_TEMPLATE_REGEX = Regex("""\{\s*\{\s*.*\s*\}\s*\}""")
     }
 }

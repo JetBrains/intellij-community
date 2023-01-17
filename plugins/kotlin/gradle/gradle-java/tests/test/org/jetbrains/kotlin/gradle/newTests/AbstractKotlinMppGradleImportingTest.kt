@@ -129,7 +129,8 @@ abstract class AbstractKotlinMppGradleImportingTest :
 
                 !it.name.endsWith(KotlinGradleImportingTestCase.AFTER_SUFFIX) -> {
                     val text = kotlinTestPropertiesService.substituteKotlinTestPropertiesInText(
-                        clearTextFromDiagnosticMarkup(FileUtil.loadFile(it, /* convertLineSeparators = */ true))
+                        clearTextFromDiagnosticMarkup(FileUtil.loadFile(it, /* convertLineSeparators = */ true)),
+                        it
                     )
                     val virtualFile = createProjectSubFile(it.path.substringAfter(rootDir.path + File.separator), text)
 
