@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
 // TODO: deduplicate with [org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions]
 //       when the new tests infra becomes enabled by default
 object KotlinGradlePluginVersionTestsProperty : KotlinTestsResolvableProperty {
-    override val id: String = "kotlin_plugin_version"
+    override val id: String = "KGP_VERSION"
 
     enum class Values(val acronym: String, val version: String) {
         PreviousMajorRelease("PREV_RELEASE", "1.7.10"),
