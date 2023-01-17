@@ -33,6 +33,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
+import com.intellij.util.indexing.PerProjectIndexingQueue.PerProviderSink;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
@@ -366,13 +367,11 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
 
       return () -> {
         subTaskIndicator.setText(provider.getRootsScanningProgressText());
-        CollectingIterator collectingIterator = new CollectingIterator(project, subTaskIndicator, provider, fileScannerVisitors,
-                                                                       unindexedFileFinder, scanningStatistics);
-        try {
+        try (PerProviderSink perProviderSink = project.getService(PerProjectIndexingQueue.class).getSink(provider)) {
+          CollectingIterator collectingIterator = new CollectingIterator(project, subTaskIndicator, provider, fileScannerVisitors,
+                                                                         unindexedFileFinder, scanningStatistics, perProviderSink);
           provider.iterateFiles(project, collectingIterator, thisProviderDeduplicateFilter);
-        }
-        catch (Exception e) {
-          collectingIterator.perProviderSink.clear();
+          perProviderSink.commit();
         }
         finally {
           scanningStatistics.setNumberOfSkippedFiles(thisProviderDeduplicateFilter.getNumberOfSkippedFiles());
@@ -381,7 +380,6 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
               projectIndexingHistory.addScanningStatistics(scanningStatistics);
             }
           }
-          collectingIterator.perProviderSink.commit();
           subTaskIndicator.finished();
         }
       };
@@ -399,7 +397,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
 
   private static final class CollectingIterator implements ContentIterator {
     private final Project project;
-    private final PerProjectIndexingQueue.PerProviderSink perProviderSink;
+    private final PerProviderSink perProviderSink;
     private final SubTaskProgressIndicator subTaskIndicator;
     private final List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors;
     private final List<FilePropertyPusher<?>> pushers;
@@ -411,7 +409,8 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
 
     CollectingIterator(Project project, SubTaskProgressIndicator subTaskIndicator, IndexableFilesIterator provider,
                        List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors,
-                       UnindexedFilesFinder unindexedFileFinder, ScanningStatistics scanningStatistics) {
+                       UnindexedFilesFinder unindexedFileFinder, ScanningStatistics scanningStatistics,
+                       PerProviderSink perProviderSink) {
       this.project = project;
       this.subTaskIndicator = subTaskIndicator;
       this.fileScannerVisitors = fileScannerVisitors;
@@ -419,7 +418,9 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
       this.scanningStatistics = scanningStatistics;
 
       pushedFilePropertiesUpdater = PushedFilePropertiesUpdater.getInstance(project);
-      perProviderSink = project.getService(PerProjectIndexingQueue.class).getSink(provider);
+
+      // We always need to properly dispose perProviderSink. Make this fact explicit to clients by requiring clients to provide an instance
+      this.perProviderSink = perProviderSink;
 
       IndexableSetOrigin origin = provider.getOrigin();
       if (origin instanceof ModuleRootOrigin && !((ModuleRootOrigin)origin).getModule().isDisposed()) {

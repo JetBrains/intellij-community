@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.indexing.roots.IndexableFilesIterator
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.CountDownLatch
@@ -36,14 +37,14 @@ private class PerProviderSinkFactory(private val uncommittedListener: Uncommitte
 
   inner class PerProviderSinkImpl(private val iterator: IndexableFilesIterator) : PerProjectIndexingQueue.PerProviderSink {
     private val files: MutableList<VirtualFile> = ArrayList()
-    private var committed = false
+    private var closed = false
 
     init {
       activeSinksCount.incrementAndGet()
     }
 
     override fun addFile(file: VirtualFile) {
-      LOG.assertTrue(!committed, "Should not invoke 'addFile' after 'commit'")
+      LOG.assertTrue(!closed, "Should not invoke 'addFile' after 'close'")
       if (cancelActiveSinks.get()) {
         throw ProcessCanceledException()
       }
@@ -54,20 +55,33 @@ private class PerProviderSinkFactory(private val uncommittedListener: Uncommitte
     }
 
     override fun clear() {
-      val cntDirty = cntFilesDirty.addAndGet(-files.size)
-      files.clear()
-      uncommittedListener.onUncommittedCountChanged(cntDirty)
+      LOG.assertTrue(!closed, "Should not invoke 'clear' after 'close'")
+
+      if (files.isNotEmpty()) {
+        val cntDirty = cntFilesDirty.addAndGet(-files.size)
+        LOG.assertTrue(cntDirty >= 0, "cntFilesDirty should be positive or 0: ${cntDirty}")
+        files.clear()
+        uncommittedListener.onUncommittedCountChanged(cntDirty)
+      }
     }
 
     override fun commit() {
-      committed = true
+      LOG.assertTrue(!closed, "Should not invoke 'commit' after 'close'")
+
+      if (files.isNotEmpty()) {
+        val cntDirty = cntFilesDirty.addAndGet(-files.size)
+        LOG.assertTrue(cntDirty >= 0, "cntFilesDirty should be positive or 0: ${cntDirty}")
+        uncommittedListener.commit(iterator, files)
+        files.clear()
+      }
+    }
+
+    override fun close() {
       try {
-        if (files.isNotEmpty()) {
-          cntFilesDirty.addAndGet(-files.size)
-          uncommittedListener.commit(iterator, files)
-        }
+        clear()
       }
       finally {
+        closed = true
         activeSinksCount.decrementAndGet()
       }
     }
@@ -102,11 +116,18 @@ private class PerProviderSinkFactory(private val uncommittedListener: Uncommitte
 
 @Service(Service.Level.PROJECT)
 class PerProjectIndexingQueue(private val project: Project) : Disposable {
-  /** Not thread safe */
-  interface PerProviderSink {
+  /**
+   *  Not thread safe. These classes are cheap to construct and use - don't share instances.
+   *  <p>
+   *  Invoke [commit] to commit the changes. All the uncommitted changes will be lost after invocation of [close].
+   *  <p>
+   *  Always use try-with-resources when creating instances of this interface, otherwise [cancelAllTasksAndWait] may never end waiting
+   */
+  interface PerProviderSink : AutoCloseable {
     fun addFile(file: VirtualFile)
     fun clear()
     fun commit()
+    override fun close()
   }
 
   private val sinkFactory = PerProviderSinkFactory(object : PerProviderSinkFactory.UncommittedFilesListener {
@@ -150,7 +171,7 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
   private fun addFiles(iterator: IndexableFilesIterator, files: List<VirtualFile>) {
     lock.read {
       filesSoFar.compute(iterator) { _, old ->
-        return@compute if (old == null) files else old + files
+        return@compute if (old == null) ArrayList(files) else old + files
       }
       cntFilesSoFar.addAndGet(files.size)
     }
@@ -257,6 +278,13 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
       // This task is not running anymore. For example, it can be cancelled (e.g. by DumbService.cancelAllTasksAndWait())
       // Let the outer PerProjectIndexingQueue know about that
       latchRef.compareAndSet(latch, null)
+    }
+  }
+
+  @TestOnly
+  class TestCompanion(private val q: PerProjectIndexingQueue) {
+    fun getAndResetQueuedFiles(): Triple<ConcurrentMap<IndexableFilesIterator, Collection<VirtualFile>>, Int, CountDownLatch?> {
+      return q.getAndResetQueuedFiles()
     }
   }
 }
