@@ -17,7 +17,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.commit.EditedCommitNode;
@@ -34,7 +33,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
@@ -270,8 +268,7 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
       .map(file -> toHijackedChange(myProject, file))
       .filter(Objects::nonNull);
 
-    return changes.append(hijackedChanges)
-      .filter(new DistinctChangePredicate());
+    return changes.append(hijackedChanges);
   }
 
   @Nullable
@@ -435,16 +432,6 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   public void expandSafe(@NotNull DefaultMutableTreeNode node) {
     if (node.getChildCount() <= 10000) {
       expandPath(TreeUtil.getPathFromRoot(node));
-    }
-  }
-
-  private static class DistinctChangePredicate extends JBIterable.SCond<Change> {
-    private Set<Object> seen;
-
-    @Override
-    public boolean value(Change change) {
-      if (seen == null) seen = CollectionFactory.createCustomHashingStrategySet(ChangeListChange.HASHING_STRATEGY);
-      return seen.add(change);
     }
   }
 }
