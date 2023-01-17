@@ -20,9 +20,6 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-/**
- * @author ilyas
- */
 public interface GrTypeParameter extends GrTypeDefinition, PsiTypeParameter {
   GrTypeParameter[] EMPTY_ARRAY = new GrTypeParameter[0];
   ArrayFactory<GrTypeParameter> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new GrTypeParameter[count];

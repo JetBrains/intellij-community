@@ -52,9 +52,6 @@ import org.jetbrains.plugins.groovy.refactoring.util.AnySupers;
 import java.util.ArrayList;
 import java.util.Collection;
 
-/**
- * @author ilyas
- */
 public class GroovyMethodInliner implements InlineHandler.Inliner {
 
   private final GrMethod myMethod;

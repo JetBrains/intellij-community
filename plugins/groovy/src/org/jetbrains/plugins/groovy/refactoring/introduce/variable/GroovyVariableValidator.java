@@ -27,9 +27,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.ConflictReporter;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceValidatorEngine;
 
-/**
- * @author ilyas
- */
 public class GroovyVariableValidator extends GrIntroduceValidatorEngine implements GrIntroduceVariableHandler.Validator {
   public GroovyVariableValidator(GrIntroduceContext context) {
     super(context, new ConflictReporter() {

@@ -34,9 +34,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> implements GrTypeParameter, StubBasedPsiElement<GrTypeParameterStub> {
 
   public GrTypeParameterImpl(@NotNull ASTNode node) {

@@ -36,9 +36,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
-/**
- * @author ilyas
- */
 @SuppressWarnings({"UnusedDeclaration"})
 public class GroovyDslDefaultMembers implements GdslMembersProvider {
 

@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ilyas
- */
 public abstract class GroovyDocPsiElementImpl extends GroovyPsiElementImpl implements GroovyDocPsiElement {
 
   public GroovyDocPsiElementImpl(@NotNull ASTNode node) {

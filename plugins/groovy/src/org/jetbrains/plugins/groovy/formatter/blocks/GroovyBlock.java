@@ -37,8 +37,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LAMBDA_EX
 
 /**
  * Block implementation for Groovy formatter
- *
- * @author ilyas
  */
 public class GroovyBlock implements Block, ASTBlock {
 

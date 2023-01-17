@@ -47,9 +47,6 @@ import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyUnusedImportUtil.unusedImports;
 
-/**
- * @author ilyas
- */
 public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
 
   private final @NotNull GroovyFile myFile;

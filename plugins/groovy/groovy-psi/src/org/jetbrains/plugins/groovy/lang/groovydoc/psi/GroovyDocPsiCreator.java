@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.*;
 
-/**
- * @author ilyas
- */
 public final class GroovyDocPsiCreator {
 
   public static PsiElement createElement(ASTNode node) {

@@ -24,9 +24,6 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 import java.io.File;
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GantRunner extends GroovyScriptRunner {
 
   private static final String UNIQUE_STRING = "d230efbae4b744ae86ef4014eef1b387";

@@ -26,9 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgumentList, PsiListLikeElement {
 
   public GrArgumentListImpl(@NotNull ASTNode node) {

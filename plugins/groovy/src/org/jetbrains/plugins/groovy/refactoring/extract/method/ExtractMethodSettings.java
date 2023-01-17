@@ -18,9 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ilyas
- */
 public interface ExtractMethodSettings {
 
   @NotNull

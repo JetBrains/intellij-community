@@ -24,9 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrScriptClassNameIndex;
 
 import java.io.IOException;
 
-/**
- * @author ilyas
- */
 public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
 
   public static final int STUB_VERSION = 51;

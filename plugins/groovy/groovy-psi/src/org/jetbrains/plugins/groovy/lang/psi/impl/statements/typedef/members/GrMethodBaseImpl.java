@@ -64,9 +64,6 @@ import java.util.function.Function;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
 
-/**
- * @author ilyas
- */
 public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> implements GrMethod, StubBasedPsiElement<GrMethodStub> {
 
   private static final Logger LOG = Logger.getInstance(GrMethodBaseImpl.class);

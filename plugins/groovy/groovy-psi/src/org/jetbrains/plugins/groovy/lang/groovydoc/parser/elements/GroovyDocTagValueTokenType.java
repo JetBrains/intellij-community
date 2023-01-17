@@ -20,9 +20,6 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 
 import java.util.Set;
 
-/**
- * @author ilyas
- */
 public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType implements IGroovyDocElementType {
 
   private static final Set<@NlsSafe String> TAGS_WITH_REFERENCES;

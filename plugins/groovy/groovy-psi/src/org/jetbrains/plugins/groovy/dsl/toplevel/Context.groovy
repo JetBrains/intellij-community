@@ -11,9 +11,6 @@ import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.Scope
 import static com.intellij.patterns.PlatformPatterns.psiFile
 import static com.intellij.patterns.PlatformPatterns.virtualFile
 
-/**
- * @author ilyas
- */
 @CompileStatic
 class Context {
   private final List<ContextFilter> myFilters = []
