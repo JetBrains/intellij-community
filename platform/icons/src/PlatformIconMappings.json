@@ -584,7 +584,10 @@
       "testIgnored.svg": "runConfigurations/testIgnored.svg",
       "testNotRunYet.svg": "runConfigurations/testNotRan.svg",
       "testPassed.svg": "runConfigurations/testPassed.svg",
-      "testPassedIgnored.svg": "runConfigurations/testPassedIgnored.svg",
+      "testPassedIgnored.svg": [
+        "runConfigurations/testPassedIgnored.svg",
+        "runConfigurations/toolbarPassedIgnored.svg"
+      ],
       "testPaused.svg": "runConfigurations/testPaused.svg",
       "testSkipped.svg": "runConfigurations/testSkipped.svg",
       "testTerminated.svg": "runConfigurations/testTerminated.svg",

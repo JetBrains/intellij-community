@@ -1095,6 +1095,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ToolbarError = load("runConfigurations/toolbarError.svg", 377479880, 2);
     /** 16x16 */ public static final @NotNull Icon ToolbarFailed = load("runConfigurations/toolbarFailed.svg", -976551404, 2);
     /** 16x16 */ public static final @NotNull Icon ToolbarPassed = load("runConfigurations/toolbarPassed.svg", -612404887, 2);
+    /** 16x16 */ public static final @NotNull Icon ToolbarPassedIgnored = load("runConfigurations/toolbarPassedIgnored.svg", -2057153635, 2);
     /** 16x16 */ public static final @NotNull Icon ToolbarSkipped = load("runConfigurations/toolbarSkipped.svg", 1602720714, 2);
     /** 16x16 */ public static final @NotNull Icon ToolbarTerminated = load("runConfigurations/toolbarTerminated.svg", 1903197216, 2);
     /** 16x16 */ public static final @NotNull Icon TrackCoverage = load("runConfigurations/trackCoverage.svg", -1785737081, 2);
