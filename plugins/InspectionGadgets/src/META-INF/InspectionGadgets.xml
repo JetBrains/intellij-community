@@ -959,6 +959,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="ThrowsRuntimeException" bundle="messages.InspectionGadgetsBundle" key="throws.runtime.exception.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.ThrowsRuntimeExceptionInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ThrowableSupplierOnlyThrowException" bundle="messages.InspectionGadgetsBundle" key="throwable.supplier.only.throw.exception.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.errorhandling.ThrowableSupplierOnlyThrowExceptionInspection"/>
 
     <!--group.names.finalization.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="FinalizeDeclaration" shortName="Finalize" bundle="messages.InspectionGadgetsBundle"

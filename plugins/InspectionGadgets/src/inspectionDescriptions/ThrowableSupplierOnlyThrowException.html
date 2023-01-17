@@ -1,0 +1,18 @@
+<html>
+<body>
+Reports lambda in <code>Optional.orElseThrow(Supplier&lt;? extends X&gt; exceptionSupplier)</code>,
+which doesn't return any exception.
+<p><b>Example:</b></p>
+<pre><code>
+optional.orElseThrow(() -> {
+    throw new RuntimeException();
+});
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+optional.orElseThrow(() -> new RuntimeException());
+</code></pre>
+<!-- tooltip end -->
+<p><small>New in 2023.1</small></p>
+</body>
+</html>
