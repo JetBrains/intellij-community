@@ -19,30 +19,20 @@ internal object LangDownloader {
     // check if language lib already loaded
     if (GrazieRemote.isAvailableLocally(lang)) return true
 
-    val result = runDownload(lang, project)
-
-    // null if canceled or failed, zero result if nothing found
-    if (!result.isNullOrEmpty()) {
-      val classLoader = UrlClassLoader.build().parent(GraziePlugin.classLoader)
-        .files(result).get()
-
-      GrazieDynamic.addDynClassLoader(classLoader)
-
-      // force reloading available language classes
-      GrazieConfig.update { it.copy() }
-
-      // drop caches, restart highlighting
-      GrazieConfig.stateChanged(GrazieConfig.get(), GrazieConfig.get())
-      return true
-    }
-
-    return false
+    val result = runDownload(lang, project) ?: return false
+    val classLoader = UrlClassLoader.build().parent(GraziePlugin.classLoader).files(listOf(result)).get()
+    GrazieDynamic.addDynClassLoader(classLoader)
+    // force reloading available language classes
+    GrazieConfig.update { it.copy() }
+    // drop caches, restart highlighting
+    GrazieConfig.stateChanged(GrazieConfig.get(), GrazieConfig.get())
+    return true
   }
 
-  private fun runDownload(lang: Lang, project: Project?): List<Path>? {
+  private fun runDownload(lang: Lang, project: Project?): Path? {
     try {
       val presentableName = msg("grazie.settings.proofreading.languages.download.name", lang.nativeName)
-      return ProgressManager.getInstance().runProcessWithProgressSynchronously<List<Path>, Exception>(
+      return ProgressManager.getInstance().runProcessWithProgressSynchronously<Path, Exception>(
         { doDownload(lang, presentableName) },
         presentableName,
         false,
@@ -53,19 +43,20 @@ internal object LangDownloader {
     }
   }
 
-  private fun promptToSelectLanguageBundleManually(project: Project?, language: Lang): List<Path> {
-    val selectedFile = OfflineLanguageBundleSelectionDialog.show(project, language) ?: return emptyList()
+  private fun promptToSelectLanguageBundleManually(project: Project?, language: Lang): Path? {
+    val selectedFile = OfflineLanguageBundleSelectionDialog.show(project, language) ?: return null
     val targetPath = GrazieDynamic.dynamicFolder.resolve(language.remote.fileName)
     selectedFile.copyTo(targetPath, overwrite = true)
-    return listOf(targetPath)
+    return targetPath
   }
 
-  private fun doDownload(lang: Lang, presentableName: @Nls String): List<Path> {
+  private fun doDownload(lang: Lang, presentableName: @Nls String): Path {
     val downloaderService = DownloadableFileService.getInstance()
     val downloader = downloaderService.createDownloader(
       listOf(downloaderService.createFileDescription(lang.remote.url, lang.remote.fileName)),
       presentableName
     )
-    return downloader.download(GrazieDynamic.dynamicFolder.toFile()).map { it.first.toPath() }
+    val result = downloader.download(GrazieDynamic.dynamicFolder.toFile()).map { it.first.toPath() }
+    return result.single()
   }
 }
