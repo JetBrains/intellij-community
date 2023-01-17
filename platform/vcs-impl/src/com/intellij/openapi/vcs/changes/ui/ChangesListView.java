@@ -123,13 +123,12 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
 
   @Nullable
   private static ChangesBrowserNode<?> getDefaultChangelistNode(@NotNull ChangesBrowserNode<?> root) {
-    return root.iterateNodeChildren().find(node -> {
-      if (node instanceof ChangesBrowserChangeListNode) {
-        ChangeList list = ((ChangesBrowserChangeListNode)node).getUserObject();
+    return root.iterateNodeChildren()
+      .filter(ChangesBrowserChangeListNode.class)
+      .find(node -> {
+        ChangeList list = node.getUserObject();
         return list instanceof LocalChangeList && ((LocalChangeList)list).isDefault();
-      }
-      return false;
-    });
+      });
   }
 
   @Nullable
@@ -147,7 +146,9 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
         .toArray(Change.EMPTY_CHANGE_ARRAY);
     }
     if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
-      return getSelectedChangeLists().toList().toArray(ChangeList[]::new);
+      return VcsTreeModelData.exactlySelected(this)
+        .iterateUserObjects(ChangeList.class)
+        .toList().toArray(ChangeList[]::new);
     }
     if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       return getContextFiles().toList().toArray(VirtualFile[]::new);
@@ -168,7 +169,12 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
       return getNavigatableArray(myProject, getContextNavigatableFiles());
     }
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return getSelectionObjects().find(userObject -> !(userObject instanceof ChangeList)) != null
+      // don't try to delete files when only a changelist node is selected
+      boolean hasSelection = VcsTreeModelData.exactlySelected(this)
+        .iterateUserObjects()
+        .filter(userObject -> !(userObject instanceof ChangeList))
+        .isNotEmpty();
+      return hasSelection
              ? new VirtualFileDeleteProvider()
              : null;
     }
@@ -254,11 +260,6 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
       if (object instanceof FilePath) return ((FilePath)object).getVirtualFile();
       return null;
     }).filter(Objects::nonNull);
-  }
-
-  @NotNull
-  private JBIterable<Object> getSelectionObjects() {
-    return VcsTreeModelData.exactlySelected(this).iterateUserObjects();
   }
 
   @NotNull
@@ -355,14 +356,6 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   @NotNull
   public JBIterable<ChangesBrowserNode<?>> getSelectedChangesNodes() {
     return VcsTreeModelData.selected(this).iterateNodes();
-  }
-
-  @NotNull
-  private JBIterable<ChangeList> getSelectedChangeLists() {
-    return getSelectionObjects()
-      .filter(userObject -> userObject instanceof ChangeList)
-      .map(ChangeList.class::cast)
-      .unique();
   }
 
   @Override
