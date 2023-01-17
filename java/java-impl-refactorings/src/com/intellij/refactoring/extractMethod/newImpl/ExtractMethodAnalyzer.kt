@@ -141,9 +141,9 @@ fun findClassMember(element: PsiElement): PsiMember? {
 
 private fun findFlowOutput(analyzer: CodeFragmentAnalyzer): FlowOutput? {
   if (analyzer.hasObservableThrowExit()) return null
-  val (exitStatements, numberOfExits, hasSpecialExits) = analyzer.findExitDescription()
+  val (exitStatements, numberOfExits, isNormalExit) = analyzer.findExitDescription()
   return when (numberOfExits) {
-    1 -> if (exitStatements.isNotEmpty()) UnconditionalFlow(exitStatements, !hasSpecialExits) else EmptyFlow
+    1 -> if (exitStatements.isNotEmpty()) UnconditionalFlow(exitStatements, isNormalExit) else EmptyFlow
     2 -> if (exitStatements.isNotEmpty()) ConditionalFlow(exitStatements) else null
     else -> return null
   }
