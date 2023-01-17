@@ -812,17 +812,6 @@ public final class ContainerUtil {
     return hashMap;
   }
 
-  /**
-   * @deprecated Use {@link Collections#emptyList()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull <T> Iterable<T> emptyIterable() {
-    return Collections.emptyList();
-  }
-
   @Contract(pure=true)
   public static <T> T find(T @NotNull [] array, @NotNull Condition<? super T> condition) {
     for (T element : array) {
