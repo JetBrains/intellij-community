@@ -179,6 +179,19 @@
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
 
+        <property name="patchProjectsTabFactory"
+                  value="${basedir}/patches/MPS-35212-ProjectsTabFactory.patch"/>
+        <echo message="Applying ${patchProjectsTabFactory}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="--check"/>
+            <arg value="${patchProjectsTabFactory}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${patchProjectsTabFactory}"/>
+        </exec>
+
         <property name="patchFileApplicationNamesInfo"
                   value="${basedir}/patches/ApplicationNamesInfo.patch"/>
         <echo message="Applying ${patchFileApplicationNamesInfo}"/>
