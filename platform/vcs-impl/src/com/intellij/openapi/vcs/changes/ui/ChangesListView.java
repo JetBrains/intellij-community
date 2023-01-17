@@ -164,9 +164,6 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
     if (UNVERSIONED_FILE_PATHS_DATA_KEY.is(dataId)) {
       return getSelectedUnversionedFiles();
     }
-    if (EXACTLY_SELECTED_FILES_DATA_KEY.is(dataId)) {
-      return getExactlySelectedVirtualFiles(this);
-    }
     if (IGNORED_FILE_PATHS_DATA_KEY.is(dataId)) {
       return getSelectedIgnoredFiles();
     }
@@ -195,13 +192,17 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
     }
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
-      return (DataProvider)slowId -> getSlowData(myProject, treeSelection, slowId);
+      VcsTreeModelData exactSelection = VcsTreeModelData.exactlySelected(this);
+      return (DataProvider)slowId -> getSlowData(myProject, treeSelection, exactSelection, slowId);
     }
     return super.getData(dataId);
   }
 
   @Nullable
-  private static Object getSlowData(@NotNull Project project, @NotNull VcsTreeModelData treeSelection, @NotNull String slowId) {
+  private static Object getSlowData(@NotNull Project project,
+                                    @NotNull VcsTreeModelData treeSelection,
+                                    @NotNull VcsTreeModelData exactSelection,
+                                    @NotNull String slowId) {
     if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(slowId)) {
       return VcsTreeModelData.mapToVirtualFile(treeSelection)
         .toArray(VirtualFile.EMPTY_ARRAY);
@@ -217,6 +218,9 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
     }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(slowId)) {
       return getNavigatableArray(project, VcsTreeModelData.mapToNavigatableFile(treeSelection));
+    }
+    if (EXACTLY_SELECTED_FILES_DATA_KEY.is(slowId)) {
+      return VcsTreeModelData.mapToExactVirtualFile(exactSelection);
     }
     return null;
   }
@@ -247,23 +251,12 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   }
 
   @NotNull
-  static JBIterable<VirtualFile> getExactlySelectedVirtualFiles(@NotNull JTree tree) {
-    VcsTreeModelData exactlySelected = VcsTreeModelData.exactlySelected(tree);
-
-    return exactlySelected.iterateRawUserObjects().map(object -> {
-      if (object instanceof VirtualFile) return (VirtualFile)object;
-      if (object instanceof FilePath) return ((FilePath)object).getVirtualFile();
-      return null;
-    }).filter(Objects::nonNull);
-  }
-
-  @NotNull
   public JBIterable<Change> getSelectedChanges() {
     JBIterable<Change> changes = VcsTreeModelData.selected(this)
       .iterateUserObjects(Change.class);
     JBIterable<Change> hijackedChanges = getSelectedModifiedWithoutEditing()
       .map(file -> toHijackedChange(myProject, file))
-      .filter(Objects::nonNull);
+      .filterNotNull();
 
     return changes.append(hijackedChanges);
   }

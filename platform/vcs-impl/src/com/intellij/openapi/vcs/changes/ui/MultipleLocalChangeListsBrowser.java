@@ -290,7 +290,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       return new ChangeList[]{myChangeList};
     }
     else if (EXACTLY_SELECTED_FILES_DATA_KEY.is(dataId)) {
-      return ChangesListView.getExactlySelectedVirtualFiles(myViewer);
+      return VcsTreeModelData.mapToExactVirtualFile(VcsTreeModelData.exactlySelected(myViewer));
     }
     return super.getData(dataId);
   }

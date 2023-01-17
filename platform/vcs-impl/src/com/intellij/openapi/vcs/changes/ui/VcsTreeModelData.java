@@ -461,6 +461,21 @@ public abstract class VcsTreeModelData {
       .filterNotNull();
   }
 
+  /**
+   * @see ChangesListView#EXACTLY_SELECTED_FILES_DATA_KEY
+   */
+  @NotNull
+  static JBIterable<VirtualFile> mapToExactVirtualFile(@NotNull VcsTreeModelData data) {
+    return data.iterateUserObjects()
+      .map(object -> {
+        if (object instanceof VirtualFile) return (VirtualFile)object;
+        if (object instanceof FilePath) return ((FilePath)object).getVirtualFile();
+        return null;
+      })
+      .filterNotNull()
+      .filter(VirtualFile::isValid);
+  }
+
 
   @Nullable
   public static ChangesBrowserNode<?> findTagNode(@NotNull JTree tree, @NotNull Object tag) {
