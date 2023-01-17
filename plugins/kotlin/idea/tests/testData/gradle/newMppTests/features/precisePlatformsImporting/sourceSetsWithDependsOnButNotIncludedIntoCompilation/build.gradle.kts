@@ -17,7 +17,7 @@ version = "1.0"
 
 kotlin {
     jvm() 
-    js()
+    js(IR)
 
     sourceSets {
         val commonMain by getting { }
