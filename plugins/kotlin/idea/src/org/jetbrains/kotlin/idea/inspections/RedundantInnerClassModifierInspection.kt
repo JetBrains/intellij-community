@@ -45,8 +45,8 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
     var ignorableAnnotations = OrderedSet(listOf(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED))
 
     override fun getOptionsPane(): OptPane {
-        return OptPane.pane(OptPane.stringSet("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
-                                              JavaClassValidator().annotationsOnly()))
+        return OptPane.pane(OptPane.stringList("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                                               JavaClassValidator().annotationsOnly()))
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = classVisitor(fun(targetClass) {

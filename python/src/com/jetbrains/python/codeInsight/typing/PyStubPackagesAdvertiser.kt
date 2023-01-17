@@ -6,7 +6,7 @@ import com.intellij.codeInspection.*
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl
 import com.intellij.codeInspection.options.OptPane.pane
-import com.intellij.codeInspection.options.OptPane.stringSet
+import com.intellij.codeInspection.options.OptPane.stringList
 import com.intellij.execution.ExecutionException
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -54,7 +54,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
   var ignoredPackages: MutableList<String> = mutableListOf()
 
   override fun getOptionsPane() =
-    pane(stringSet("ignoredPackages", PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages.label")))
+    pane(stringList("ignoredPackages", PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages.label")))
   
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,

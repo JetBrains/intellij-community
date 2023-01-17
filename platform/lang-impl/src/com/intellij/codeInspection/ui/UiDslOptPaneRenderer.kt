@@ -249,7 +249,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           cell(label)
         }
 
-        is OptSet -> {
+        is OptStringList -> {
           @Suppress("UNCHECKED_CAST") val list = tool.getOption(component.bindId) as MutableList<String>
           val listWithListener = ListWithListener(list) { tool.setOption(component.bindId, list) }
           val validator = component.validator
@@ -316,7 +316,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
     get() = this is OptGroup
 
   private val OptComponent.hasResizableRow: Boolean
-    get() = this is OptSet
+    get() = this is OptStringList
 
   private fun convertItem(key: String, type: Class<*>): Any {
     @Suppress("UNCHECKED_CAST")

@@ -46,8 +46,8 @@ public class PublicMethodNotExposedInInterfaceInspection extends BaseInspection 
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
-                new JavaClassValidator().annotationsOnly()),
+      stringList("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                 new JavaClassValidator().annotationsOnly()),
       checkbox("onlyWarnIfContainingClassImplementsAnInterface",
                InspectionGadgetsBundle.message("public.method.not.in.interface.option"))
     );

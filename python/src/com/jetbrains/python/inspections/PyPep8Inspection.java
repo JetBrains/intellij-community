@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
 
 /**
  * Dummy inspection for configuring the PEP8 checker. The checking itself is performed by
@@ -22,7 +21,7 @@ public class PyPep8Inspection extends PyInspection implements ExternalAnnotatorB
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    return pane(stringSet("ignoredErrors", PyBundle.message("INSP.settings.pep8.ignore.errors.label")));
+    return pane(OptPane.stringList("ignoredErrors", PyBundle.message("INSP.settings.pep8.ignore.errors.label")));
   }
 
   @NotNull

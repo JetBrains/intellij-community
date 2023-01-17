@@ -9,7 +9,7 @@ import com.intellij.codeInspection.MoveToPackageFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.options.OptSet;
+import com.intellij.codeInspection.options.OptStringList;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionFamilyName;
@@ -75,7 +75,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase {
   @NonNls
@@ -109,11 +109,12 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    OptSet ignoreClassList = stringSet("myRegistrationCheckIgnoreClassList", DevKitBundle.message("inspections.plugin.xml.ignore.classes.title"),
-                            new JavaClassValidator().withTitle(DevKitBundle.message("inspections.plugin.xml.add.ignored.class.title")));
+    OptStringList
+      ignoreClassList = stringList("myRegistrationCheckIgnoreClassList", DevKitBundle.message("inspections.plugin.xml.ignore.classes.title"),
+                                   new JavaClassValidator().withTitle(DevKitBundle.message("inspections.plugin.xml.add.ignored.class.title")));
     if (ApplicationManager.getApplication().isInternal()) {
       return pane(ignoreClassList,
-           stringSet("PLUGINS_MODULES", DevKitBundle.message("inspections.plugin.xml.plugin.modules.label")));
+                  OptPane.stringList("PLUGINS_MODULES", DevKitBundle.message("inspections.plugin.xml.plugin.modules.label")));
     }
     return pane(ignoreClassList);
   }

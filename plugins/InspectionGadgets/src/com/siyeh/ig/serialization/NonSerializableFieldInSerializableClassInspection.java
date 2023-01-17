@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class NonSerializableFieldInSerializableClassInspection extends SerializableInspectionBase {
   @SuppressWarnings({"PublicField"})
@@ -38,8 +38,8 @@ public class NonSerializableFieldInSerializableClassInspection extends Serializa
 
   @Override
   protected @NotNull OptPane getAdditionalOptions() {
-    return pane(stringSet("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
-                new JavaClassValidator().annotationsOnly()));
+    return pane(stringList("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                           new JavaClassValidator().annotationsOnly()));
   }
 
   @Override

@@ -53,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
 
 /**
  * @author vlan
@@ -66,7 +65,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    return pane(stringSet("ignoredPackages", PyPsiBundle.message("INSP.requirements.ignore.packages.label")));
+    return pane(OptPane.stringList("ignoredPackages", PyPsiBundle.message("INSP.requirements.ignore.packages.label")));
   }
 
   @NotNull

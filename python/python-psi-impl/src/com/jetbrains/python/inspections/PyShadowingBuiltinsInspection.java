@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
 
 /**
  * Warns about shadowing built-in names.
@@ -65,7 +64,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    return pane(stringSet("ignoredNames", PyPsiBundle.message("INSP.shadowing.builtins.ignore.built.ins.label")));
+    return pane(OptPane.stringList("ignoredNames", PyPsiBundle.message("INSP.shadowing.builtins.ignore.built.ins.label")));
   }
 
   @NotNull

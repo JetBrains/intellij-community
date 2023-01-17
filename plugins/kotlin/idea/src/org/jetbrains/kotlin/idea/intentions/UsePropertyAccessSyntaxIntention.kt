@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.pane
-import com.intellij.codeInspection.options.OptPane.stringSet
+import com.intellij.codeInspection.options.OptPane.stringList
 import com.intellij.codeInspection.options.OptionController
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -88,7 +88,7 @@ class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtExpression>
         super.writeSettings(node)
     }
 
-    override fun getOptionsPane(): OptPane = pane(stringSet("fqNameStrings", KotlinBundle.message("excluded.methods")))
+    override fun getOptionsPane(): OptPane = pane(stringList("fqNameStrings", KotlinBundle.message("excluded.methods")))
 
     override fun getOptionController(): OptionController {
         return super.getOptionController()

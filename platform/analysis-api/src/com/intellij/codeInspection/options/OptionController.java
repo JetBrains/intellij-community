@@ -44,7 +44,7 @@ public interface OptionController {
 
   /**
    * @param bindId bindId of the option value to process especially; setting of this option is not supported
-   *               (can be used e.g. with {@link OptSet} control where setter is unnecessary)
+   *               (can be used e.g. with {@link OptStringList} control where setter is unnecessary)
    * @param getter getter for an option with a given bindId
    * @return a new controller that processes the specified bindId with a specified getter,
    * and delegates to this controller for any other bindId.

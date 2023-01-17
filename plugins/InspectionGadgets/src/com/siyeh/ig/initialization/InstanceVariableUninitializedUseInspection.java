@@ -59,8 +59,8 @@ public class InstanceVariableUninitializedUseInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("annotationNames", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
-                          new JavaClassValidator().annotationsOnly()),
+      stringList("annotationNames", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                 new JavaClassValidator().annotationsOnly()),
       checkbox("m_ignorePrimitives", InspectionGadgetsBundle.message("primitive.fields.ignore.option")));
   }
 

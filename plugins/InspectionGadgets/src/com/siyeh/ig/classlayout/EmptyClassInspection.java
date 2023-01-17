@@ -52,8 +52,8 @@ public class EmptyClassInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
-                new JavaClassValidator().annotationsOnly()),
+      stringList("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                 new JavaClassValidator().annotationsOnly()),
       checkbox("ignoreClassWithParameterization", InspectionGadgetsBundle.message("empty.class.ignore.parameterization.option")),
       checkbox("ignoreThrowables",
                InspectionGadgetsBundle.message("inspection.empty.class.ignore.subclasses.option", CommonClassNames.JAVA_LANG_THROWABLE)),

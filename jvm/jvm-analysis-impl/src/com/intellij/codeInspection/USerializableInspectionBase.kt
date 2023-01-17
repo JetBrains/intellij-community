@@ -34,8 +34,8 @@ abstract class USerializableInspectionBase(vararg hint: Class<out UElement>) : A
   }
 
   override fun getOptionsPane(): OptPane = pane(
-    stringSet("superClassList", InspectionGadgetsBundle.message("ignore.classes.in.hierarchy.column.name"),
-              JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.class"))),
+    stringList("superClassList", InspectionGadgetsBundle.message("ignore.classes.in.hierarchy.column.name"),
+               JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.class"))),
     checkbox("ignoreAnonymousInnerClasses", InspectionGadgetsBundle.message("ignore.anonymous.inner.classes"))
   )
 

@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class BadExceptionThrownInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
@@ -62,8 +62,8 @@ public class BadExceptionThrownInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("exceptions", InspectionGadgetsBundle.message("choose.exception.label"),
-                new JavaClassValidator().withSuperClass(CommonClassNames.JAVA_LANG_THROWABLE)
+      stringList("exceptions", InspectionGadgetsBundle.message("choose.exception.label"),
+                 new JavaClassValidator().withSuperClass(CommonClassNames.JAVA_LANG_THROWABLE)
                   .withTitle(InspectionGadgetsBundle.message("choose.exception.class"))));
   }
 

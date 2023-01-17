@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
 
 public class QuestionableNameInspection extends BaseInspection {
 
@@ -56,7 +55,7 @@ public class QuestionableNameInspection extends BaseInspection {
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    return pane(stringSet("nameList", InspectionGadgetsBundle.message("questionable.name.list.label")));
+    return pane(OptPane.stringList("nameList", InspectionGadgetsBundle.message("questionable.name.list.label")));
   }
 
   @Override

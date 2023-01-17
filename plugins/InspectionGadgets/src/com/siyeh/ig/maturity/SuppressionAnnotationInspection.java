@@ -39,14 +39,13 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
 
 public class SuppressionAnnotationInspection extends BaseInspection {
   public List<String> myAllowedSuppressions = new ArrayList<>();
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    return pane(stringSet("myAllowedSuppressions", JavaBundle.message("ignored.suppressions")));
+    return pane(OptPane.stringList("myAllowedSuppressions", JavaBundle.message("ignored.suppressions")));
   }
 
   @Override

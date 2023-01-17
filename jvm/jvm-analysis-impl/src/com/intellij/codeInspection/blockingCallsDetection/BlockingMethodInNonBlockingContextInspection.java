@@ -53,12 +53,12 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
     return pane(
       checkbox("myConsiderUnknownContextBlocking",
                JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.blocking")),
-      stringSet("myBlockingAnnotations", JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.blocking"),
-                new JavaClassValidator().withTitle(
+      stringList("myBlockingAnnotations", JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.blocking"),
+                 new JavaClassValidator().withTitle(
                     JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.add.blocking.title"))
                   .annotationsOnly()),
-      stringSet("myNonBlockingAnnotations", JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.non-blocking"),
-                new JavaClassValidator().withTitle(
+      stringList("myNonBlockingAnnotations", JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.non-blocking"),
+                 new JavaClassValidator().withTitle(
                     JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.add.non-blocking.title"))
                   .annotationsOnly())
     );
