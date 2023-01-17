@@ -209,11 +209,12 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   }
 
   private void addEmptyCoverageText(Project project, CoverageSuitesBundle suitesBundle) {
+    myTable.getTree().getEmptyText().clear();
     final StatusText emptyText = myTable.getTable().getEmptyText();
     emptyText.setText(CoverageBundle.message("coverage.view.no.coverage.results"));
     final RunConfigurationBase<?> configuration = suitesBundle.getRunConfiguration();
     if (configuration != null) {
-      emptyText.appendText(" " + CoverageBundle.message("coverage.view.edit.run.configuration.0") + " ");
+      emptyText.appendLine(CoverageBundle.message("coverage.view.edit.run.configuration.0") + " ");
       emptyText.appendText(CoverageBundle.message("coverage.view.edit.run.configuration.1"), SimpleTextAttributes.LINK_ATTRIBUTES, e -> {
         final RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(project).findSettings(configuration);
         if (configurationSettings != null) {
