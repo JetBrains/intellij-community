@@ -68,12 +68,15 @@ final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy {
           type == YAMLTokenTypes.SCALAR_DSTRING ||
           type == YAMLTokenTypes.COMMENT) {
 
+        if (isInjectedLanguageFragment(element.getParent())) {
+          return EMPTY_TOKENIZER;
+        }
+
         if (new JsonSchemaSpellcheckerClientForYaml(element).matchesNameFromSchema()) {
           return EMPTY_TOKENIZER;
         }
 
-        if (type == YAMLTokenTypes.SCALAR_STRING ||
-            type == YAMLTokenTypes.SCALAR_DSTRING) {
+        if (type == YAMLTokenTypes.SCALAR_STRING || type == YAMLTokenTypes.SCALAR_DSTRING) {
           return myQuotedTextTokenizer;
         }
 

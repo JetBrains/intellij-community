@@ -1,17 +1,23 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.injection.Injectable;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaTestProvider;
 import com.jetbrains.jsonSchema.JsonSchemaTestServiceImpl;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import org.intellij.lang.regexp.RegExpLanguage;
+import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
 
@@ -74,6 +80,37 @@ public class JsonSpellcheckerTest extends JsonTestCase {
       "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.dyt0CoTl4WoVjAHI9Q_CwSKhl6d_9rhM3NrXuJttkao"
     }
     """.stripIndent());
+
+    myFixture.checkHighlighting(true, false, true);
+  }
+
+  public void testInjectedFragments() {
+    myFixture.enableInspections(SpellCheckingInspection.class);
+
+    myFixture.configureByText("injected.json", """
+    {
+      "fail": "<TYPO>ilike</TYPO>",
+      "success": "[i<caret>like]?",
+    }
+    """.stripIndent());
+
+    InjectLanguageAction.invokeImpl(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), new Injectable() {
+      @Override
+      public @NotNull String getId() {
+        return "temporary";
+      }
+
+      @Nls(capitalization = Nls.Capitalization.Title)
+      @Override
+      public @NotNull String getDisplayName() {
+        return "Temporary";
+      }
+
+      @Override
+      public @NotNull Language getLanguage() {
+        return RegExpLanguage.INSTANCE;
+      }
+    });
 
     myFixture.checkHighlighting(true, false, true);
   }

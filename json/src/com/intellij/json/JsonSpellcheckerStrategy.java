@@ -41,6 +41,10 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
   @Override
   public Tokenizer<?> getTokenizer(PsiElement element) {
     if (element instanceof JsonStringLiteral) {
+      if (isInjectedLanguageFragment(element)) {
+        return EMPTY_TOKENIZER;
+      }
+
       return new JsonSchemaSpellcheckerClientForJson((JsonStringLiteral)element).matchesNameFromSchema()
         ? EMPTY_TOKENIZER
         : ourStringLiteralTokenizer;

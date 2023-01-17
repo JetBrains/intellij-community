@@ -82,7 +82,7 @@ public class SpellcheckingStrategy {
     return EMPTY_TOKENIZER;
   }
 
-  protected static boolean isInjectedLanguageFragment(PsiElement element) {
+  protected static boolean isInjectedLanguageFragment(@Nullable PsiElement element) {
     return element instanceof PsiLanguageInjectionHost
            && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element);
   }

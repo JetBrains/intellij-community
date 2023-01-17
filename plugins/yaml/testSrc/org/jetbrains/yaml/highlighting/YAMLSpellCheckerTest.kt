@@ -1,12 +1,22 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.highlighting
 
+import com.intellij.lang.Language
+import com.intellij.psi.injection.Injectable
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.intellij.lang.regexp.RegExpLanguage
+import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
+import org.jetbrains.annotations.Nls
 
 class YAMLSpellCheckerTest : BasePlatformTestCase() {
-  fun testSpellChecking() {
+  override fun setUp() {
+    super.setUp()
+
     myFixture.enableInspections(SpellCheckingInspection::class.java)
+  }
+
+  fun testSpellChecking() {
     myFixture.configureByText("test.yaml", """
       a: b
       # hello <TYPO descr="Typo: In word 'warld'">warld</TYPO>
@@ -28,7 +38,6 @@ class YAMLSpellCheckerTest : BasePlatformTestCase() {
   }
 
   fun testHashesQuotedSpelling() {
-    myFixture.enableInspections(SpellCheckingInspection::class.java)
     myFixture.configureByText("hashes.yaml", """
       data:
         typo: '<TYPO>hereistheerror</TYPO>'
@@ -43,7 +52,6 @@ class YAMLSpellCheckerTest : BasePlatformTestCase() {
   }
 
   fun testHashesUnquotedSpelling() {
-    myFixture.enableInspections(SpellCheckingInspection::class.java)
     myFixture.configureByText("hashes.yaml", """
       data:
         typo: <TYPO>hereistheerror</TYPO>
@@ -53,6 +61,31 @@ class YAMLSpellCheckerTest : BasePlatformTestCase() {
         sha256: 50d858e0985ecc7f60418aaf0cc5ab587f42c2570a884095a9e8ccacd0f6545c
         jwt: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.dyt0CoTl4WoVjAHI9Q_CwSKhl6d_9rhM3NrXuJttkao
     """.trimIndent())
+
+    myFixture.checkHighlighting(true, false, true)
+  }
+
+  fun testInjectedFragments() {
+    myFixture.configureByText("hashes.yaml", """
+      data:
+        fail: '<TYPO>ilike</TYPO>'
+        ok: '[i<caret>like]?' 
+    """.trimIndent())
+
+    InjectLanguageAction.invokeImpl(myFixture.project, myFixture.editor, myFixture.file, object : Injectable() {
+      override fun getId(): String {
+        return "temporary"
+      }
+
+      @Nls(capitalization = Nls.Capitalization.Title)
+      override fun getDisplayName(): String {
+        return "Temporary"
+      }
+
+      override fun getLanguage(): Language {
+        return RegExpLanguage.INSTANCE
+      }
+    })
 
     myFixture.checkHighlighting(true, false, true)
   }
