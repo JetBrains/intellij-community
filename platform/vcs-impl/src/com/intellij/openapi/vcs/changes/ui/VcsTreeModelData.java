@@ -14,6 +14,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -380,7 +381,7 @@ public abstract class VcsTreeModelData {
   }
 
   @NotNull
-  private static JBIterable<VirtualFile> mapToNavigatableFile(@NotNull VcsTreeModelData data) {
+  static JBIterable<VirtualFile> mapToNavigatableFile(@NotNull VcsTreeModelData data) {
     return data.iterateUserObjects()
       .flatMap(entry -> {
         if (entry instanceof Change) {
@@ -395,11 +396,12 @@ public abstract class VcsTreeModelData {
         }
         return JBIterable.empty();
       })
-      .filterNotNull();
+      .filterNotNull()
+      .filter(VirtualFile::isValid);
   }
 
   @NotNull
-  private static JBIterable<VirtualFile> mapToVirtualFile(@NotNull VcsTreeModelData data) {
+  static JBIterable<VirtualFile> mapToVirtualFile(@NotNull VcsTreeModelData data) {
     return data.iterateUserObjects()
       .map(entry -> {
         if (entry instanceof Change) {
@@ -414,16 +416,35 @@ public abstract class VcsTreeModelData {
         }
         return null;
       })
-      .filterNotNull();
+      .filterNotNull()
+      .filter(VirtualFile::isValid);
   }
 
   @NotNull
-  private static JBIterable<File> mapToIoFile(@NotNull VcsTreeModelData data) {
+  static JBIterable<File> mapToIoFile(@NotNull VcsTreeModelData data) {
     return data.iterateUserObjects()
       .map(entry -> {
         if (entry instanceof Change) {
           FilePath path = ChangesUtil.getAfterPath((Change)entry);
           return path != null ? path.getIOFile() : null;
+        }
+        return null;
+      })
+      .filterNotNull();
+  }
+
+  @NotNull
+  static JBIterable<FilePath> mapToFilePath(@NotNull VcsTreeModelData data) {
+    return data.iterateUserObjects()
+      .map(entry -> {
+        if (entry instanceof Change) {
+          return ChangesUtil.getFilePath((Change)entry);
+        }
+        else if (entry instanceof VirtualFile) {
+          return VcsUtil.getFilePath((VirtualFile)entry);
+        }
+        else if (entry instanceof FilePath) {
+          return ((FilePath)entry);
         }
         return null;
       })

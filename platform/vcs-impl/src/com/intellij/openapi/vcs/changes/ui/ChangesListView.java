@@ -135,7 +135,8 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
       return this;
     }
     if (VcsDataKeys.CHANGES.is(dataId)) {
-      return getSelectedChanges().toList().toArray(Change[]::new);
+      return getSelectedChanges()
+        .toArray(Change.EMPTY_CHANGE_ARRAY);
     }
     if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
       return VcsTreeModelData.exactlySelected(this)
@@ -148,22 +149,23 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
         .toList().toArray(ChangeList[]::new);
     }
     if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      return getContextFiles().toList().toArray(VirtualFile[]::new);
+      return VcsTreeModelData.mapToVirtualFile(VcsTreeModelData.selected(this))
+        .toArray(VirtualFile.EMPTY_ARRAY);
     }
     if (VcsDataKeys.VIRTUAL_FILES.is(dataId)) {
-      return getContextFiles();
+      return VcsTreeModelData.mapToVirtualFile(VcsTreeModelData.selected(this));
     }
     if (VcsDataKeys.FILE_PATHS.is(dataId)) {
-      return getContextFilePaths();
+      return VcsTreeModelData.mapToFilePath(VcsTreeModelData.selected(this));
     }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      VirtualFile file = getContextNavigatableFiles().single();
+      VirtualFile file = VcsTreeModelData.mapToNavigatableFile(VcsTreeModelData.selected(this)).single();
       return file != null && !file.isDirectory()
              ? PsiNavigationSupport.getInstance().createNavigatable(myProject, file, 0)
              : null;
     }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      return getNavigatableArray(myProject, getContextNavigatableFiles());
+      return getNavigatableArray(myProject, VcsTreeModelData.mapToNavigatableFile(VcsTreeModelData.selected(this)));
     }
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       // don't try to delete files when only a changelist node is selected
@@ -271,53 +273,6 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   private JBIterable<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
     return VcsTreeModelData.selectedUnderTag(this, LOCALLY_DELETED_NODE_TAG)
       .iterateUserObjects(LocallyDeletedChange.class);
-  }
-
-  @NotNull
-  private JBIterable<FilePath> getContextFilePaths() {
-    return JBIterable.<FilePath>empty()
-      .append(VcsTreeModelData.selected(this)
-                .iterateUserObjects(Change.class)
-                .map(ChangesUtil::getFilePath))
-      .append(VcsTreeModelData.selected(this)
-                .iterateUserObjects(VirtualFile.class)
-                .filter(VirtualFile::isValid)
-                .map(VcsUtil::getFilePath))
-      .append(VcsTreeModelData.selected(this)
-                .iterateUserObjects(FilePath.class))
-      .unique();
-  }
-
-  @NotNull
-  private JBIterable<VirtualFile> getContextFiles() {
-    return JBIterable.<VirtualFile>empty()
-      .append(VcsTreeModelData.selected(this)
-                .iterateUserObjects(Change.class)
-                .filterMap(ChangesUtil::getAfterPath)
-                .filterMap(FilePath::getVirtualFile))
-      .append(VcsTreeModelData.selected(this)
-                .iterateUserObjects(VirtualFile.class)
-                .filter(VirtualFile::isValid))
-      .append(VcsTreeModelData.selected(this)
-                .iterateUserObjects(FilePath.class)
-                .filterMap(FilePath::getVirtualFile))
-      .unique();
-  }
-
-  @NotNull
-  private JBIterable<VirtualFile> getContextNavigatableFiles() {
-    return JBIterable.<VirtualFile>empty()
-      .append(VcsTreeModelData.selected(this)
-                .iterateUserObjects(Change.class)
-                .flatMap(ChangesUtil::iteratePathsCaseSensitive)
-                .filterMap(FilePath::getVirtualFile))
-      .append(VcsTreeModelData.selected(this)
-                .iterateUserObjects(VirtualFile.class)
-                .filter(VirtualFile::isValid))
-      .append(VcsTreeModelData.selected(this)
-                .iterateUserObjects(FilePath.class)
-                .filterMap(FilePath::getVirtualFile))
-      .unique();
   }
 
   @Nullable
