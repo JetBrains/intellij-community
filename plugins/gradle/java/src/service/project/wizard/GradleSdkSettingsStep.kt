@@ -38,9 +38,9 @@ class GradleSdkSettingsStep(
       ),
       message = GradleBundle.message(
         "gradle.settings.wizard.unsupported.jdk.message",
-        javaVersion.toFeatureString(),
         suggestOldestCompatibleJavaVersion(GradleVersion.current()),
         suggestLatestJavaVersion(GradleVersion.current()),
+        javaVersion.toFeatureString(),
         GradleVersion.current().version
       )
     )

@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathCo
 import com.intellij.openapi.ui.validation.CHECK_DIRECTORY
 import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.ui.validation.WHEN_GRAPH_PROPAGATION_FINISHED
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.util.minimumWidth
@@ -41,6 +42,7 @@ import icons.GradleIcons
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleOlderThan
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager.getGradleVersionSafe
 import org.jetbrains.plugins.gradle.service.project.open.suggestGradleHome
@@ -150,8 +152,8 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
               .applyToComponent { setEmptyState(GradleBundle.message("gradle.project.settings.distribution.local.location.empty.state")) }
               .bindText(gradleHomeProperty.toUiPathProperty())
               .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
-              .validationOnInput { validateGradleHome(gradleHome, withDialog = false) }
-              .validationOnApply { validateGradleHome(gradleHome, withDialog = true) }
+              .validationOnInput { validateGradleHome(withDialog = false) }
+              .validationOnApply { validateGradleHome(withDialog = true) }
               .align(AlignX.FILL)
           }
         }
@@ -212,46 +214,85 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     catch (ex: IllegalArgumentException) {
       return error(ex.localizedMessage)
     }
+    return validateJavaCompatibility(withDialog, gradleVersion)
+           ?: validateGradleDslCompatibility(withDialog, gradleVersion)
+  }
+
+  private fun ValidationInfoBuilder.validateJavaCompatibility(withDialog: Boolean, gradleVersion: GradleVersion): ValidationInfo? {
     val javaVersion = getJdkVersion()
     if (javaVersion != null && !isSupported(gradleVersion, javaVersion)) {
-      val errorMessage = GradleBundle.message(
-        "gradle.project.settings.distribution.version.unsupported",
-        javaVersion.toFeatureString(),
-        gradleVersion.version
+      return validationWithDialog(
+        withDialog = withDialog,
+        message = GradleBundle.message(
+          "gradle.project.settings.distribution.version.unsupported",
+          javaVersion.toFeatureString(),
+          gradleVersion.version
+        ),
+        dialogTitle = GradleBundle.message(
+          "gradle.settings.wizard.unsupported.jdk.title",
+          context.isCreatingNewProjectInt
+        ),
+        dialogMessage = GradleBundle.message(
+          "gradle.settings.wizard.unsupported.jdk.message",
+          suggestOldestCompatibleJavaVersion(gradleVersion),
+          suggestLatestJavaVersion(gradleVersion),
+          javaVersion.toFeatureString(),
+          gradleVersion.version
+        )
       )
-      if (!withDialog) {
-        return warning(errorMessage)
-      }
-      val errorTitle = GradleBundle.message(
-        "gradle.settings.wizard.unsupported.jdk.title",
-        context.isCreatingNewProjectInt
-      )
-      val errorText = GradleBundle.message(
-        "gradle.settings.wizard.unsupported.jdk.message",
-        javaVersion.toFeatureString(),
-        suggestOldestCompatibleJavaVersion(gradleVersion),
-        suggestLatestJavaVersion(gradleVersion),
-        gradleVersion.version
-      )
-      val dialog = MessageDialogBuilder.yesNo(errorTitle, errorText).asWarning()
-      if (!dialog.ask(component)) {
-        return warning(errorMessage)
-          .apply { okEnabled = false }
-      }
     }
     return null
   }
 
-  private fun ValidationInfoBuilder.validateGradleHome(gradleHome: String, withDialog: Boolean): ValidationInfo? {
+  private fun ValidationInfoBuilder.validateGradleDslCompatibility(withDialog: Boolean, gradleVersion: GradleVersion): ValidationInfo? {
+    val oldestCompatibleGradle = "4.0"
+    if (gradleDsl == GradleDsl.KOTLIN && gradleVersion.isGradleOlderThan(oldestCompatibleGradle)) {
+      return validationWithDialog(
+        withDialog = withDialog,
+        message = GradleBundle.message(
+          "gradle.project.settings.kotlin.dsl.unsupported",
+          gradleVersion.version
+        ),
+        dialogTitle = GradleBundle.message(
+          "gradle.project.settings.kotlin.dsl.unsupported.title",
+          context.isCreatingNewProjectInt
+        ),
+        dialogMessage = GradleBundle.message(
+          "gradle.project.settings.kotlin.dsl.unsupported.message",
+          oldestCompatibleGradle,
+          gradleVersion.version
+        )
+      )
+    }
+    return null
+  }
+
+  private fun ValidationInfoBuilder.validationWithDialog(
+    withDialog: Boolean, // dialog shouldn't be shown on text input
+    message: @NlsContexts.DialogMessage String,
+    dialogTitle: @NlsContexts.DialogTitle String,
+    dialogMessage: @NlsContexts.DialogMessage String
+  ): ValidationInfo? {
+    if (!withDialog) {
+      return error(message)
+    }
+    val dialog = MessageDialogBuilder.yesNo(dialogTitle, dialogMessage).asWarning()
+    if (!dialog.ask(component)) {
+      return error(message)
+    }
+    return null
+  }
+
+  private fun ValidationInfoBuilder.validateGradleHome(withDialog: Boolean): ValidationInfo? {
     val installationManager = GradleInstallationManager.getInstance()
     if (!installationManager.isGradleSdkHome(context.project, gradleHome)) {
       return error(GradleBundle.message("gradle.project.settings.distribution.invalid"))
     }
-    val rawGradleVersion = GradleInstallationManager.getGradleVersion(gradleHome)
-    if (rawGradleVersion == null) {
+    val gradleVersion = GradleInstallationManager.getGradleVersion(gradleHome)
+    if (gradleVersion == null) {
       return error(GradleBundle.message("gradle.project.settings.distribution.version.invalid"))
     }
-    return validateGradleVersion(rawGradleVersion, withDialog)
+    return validateGradleVersion(gradleVersion, withDialog)
   }
 
   private fun getJdkVersion(): JavaVersion? {
