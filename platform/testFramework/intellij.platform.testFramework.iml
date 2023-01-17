@@ -46,7 +46,7 @@
     <orderEntry type="library" scope="TEST" name="http-client" level="project" />
     <orderEntry type="module-library" scope="TEST">
       <library name="okhttp3-mockwebserver" type="repository">
-        <properties maven-id="com.squareup.okhttp3:mockwebserver:5.0.0-alpha.10">
+        <properties maven-id="com.squareup.okhttp3:mockwebserver:5.0.0-alpha.11">
           <exclude>
             <dependency maven-id="com.squareup.okhttp3:okhttp-jvm" />
             <dependency maven-id="junit:junit" />
@@ -60,8 +60,8 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/mockwebserver/5.0.0-alpha.10/mockwebserver-5.0.0-alpha.10.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/mockwebserver3/5.0.0-alpha.10/mockwebserver3-5.0.0-alpha.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/mockwebserver/5.0.0-alpha.11/mockwebserver-5.0.0-alpha.11.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/mockwebserver3/5.0.0-alpha.11/mockwebserver3-5.0.0-alpha.11.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

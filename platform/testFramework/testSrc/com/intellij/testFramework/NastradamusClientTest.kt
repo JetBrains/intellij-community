@@ -40,7 +40,6 @@ class NastradamusClientTest {
 
   @Before
   fun beforeEach() {
-    Assume.assumeFalse("Until IJI-1000 is fixed", true)
     tcMockServer.start()
     tcClient = getTeamCityClientWithMock()
     nastradamus = getNastradamusClientWithMock(teamCityClient = tcClient)
@@ -71,13 +70,13 @@ class NastradamusClientTest {
   }
 
   private fun getTeamCityClientWithMock(vararg buildProperties: Pair<String, String>): TeamCityClient {
-    return TeamCityClient(baseUri = URI("http://localhost:${tcMockServer.port}").normalize(),
+    return TeamCityClient(baseUri = URI("http://${tcMockServer.hostName}:${tcMockServer.port}").normalize(),
                           systemPropertiesFilePath = setBuildParams(*buildProperties))
   }
 
   private fun getNastradamusClientWithMock(unsortedClasses: List<Class<*>> = listOf(), teamCityClient: TeamCityClient): NastradamusClient {
     return NastradamusClient(
-      baseUrl = URI("http://localhost:${nastradamusMockServer.port}").normalize(),
+      baseUrl = URI("http://${nastradamusMockServer.hostName}:${nastradamusMockServer.port}").normalize(),
       unsortedClasses = listOf(),
       teamCityClient = teamCityClient
     )
