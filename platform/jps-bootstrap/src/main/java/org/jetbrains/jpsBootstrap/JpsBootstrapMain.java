@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 
 import static org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.*;
 import static org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.underTeamCity;
+import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.getJpsArtifactsResolutionRetryProperties;
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.getTeamCitySystemProperties;
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.toBooleanChecked;
 
@@ -185,6 +186,19 @@ public class JpsBootstrapMain {
     if (onlyDownloadJdk) {
       return;
     }
+
+    /*
+     * Enable dependencies resolution retries while building buildscript.
+     * Don't override settings properties if they're already present in System.properties(), in additionalSystemProperties or
+     * in additionalSystemPropertiesFromPropertiesFile.
+     */
+    Properties resolverRetrySettingsProperties = getJpsArtifactsResolutionRetryProperties(
+      additionalSystemPropertiesFromPropertiesFile,
+      additionalSystemProperties,
+      System.getProperties()
+    );
+    resolverRetrySettingsProperties.forEach((k, v) -> System.setProperty((String) k, (String) v));
+
     Path kotlincHome = KotlinCompiler.downloadAndExtractKotlinCompiler(communityHome);
 
     JpsModel model = JpsProjectUtils.loadJpsProject(projectHome, jdkHome, kotlincHome);
@@ -242,6 +256,16 @@ public class JpsBootstrapMain {
 
     systemProperties.putIfAbsent("file.encoding", "UTF-8"); // just in case
     systemProperties.putIfAbsent("java.awt.headless", "true");
+
+    /*
+     * Add dependencies resolution retries properties to argfile.
+     * Don't override them if they're already present in additionalSystemProperties or in additionalSystemPropertiesFromPropertiesFile.
+     */
+    Properties resolverRetrySettingsProperties = getJpsArtifactsResolutionRetryProperties(
+      additionalSystemPropertiesFromPropertiesFile,
+      additionalSystemProperties
+    );
+    systemProperties.putAll(resolverRetrySettingsProperties);
 
     List<String> args = new ArrayList<>();
     args.add("-ea");

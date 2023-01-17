@@ -17,6 +17,12 @@ public final class JpsBootstrapUtil {
   public static final String TEAMCITY_BUILD_PROPERTIES_FILE_ENV = "TEAMCITY_BUILD_PROPERTIES_FILE";
   public static final String TEAMCITY_CONFIGURATION_PROPERTIES_SYSTEM_PROPERTY = "teamcity.configuration.properties.file";
 
+  public static final String JPS_RESOLUTION_RETRY_ENABLED_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.enabled";
+  public static final String JPS_RESOLUTION_RETRY_MAX_ATTEMPTS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.max.attempts";
+  public static final String JPS_RESOLUTION_RETRY_DELAY_MS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.delay.ms";
+  public static final String JPS_RESOLUTION_RETRY_BACKOFF_LIMIT_MS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.backoff.limit.ms";
+
+
   public static boolean toBooleanChecked(String s) {
     switch (s) {
       case "true": return true;
@@ -67,6 +73,39 @@ public final class JpsBootstrapUtil {
       throw new IllegalStateException("TeamCity config property " + configProperty + " was not found");
     }
     return value;
+  }
+
+  /**
+   * Create properties to enable artifacts resolution retries in org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder
+   * if ones absent in {@code existingProperties}. Latest of {@code existingProperties} has the highest priority.
+   *
+   * @param existingProperties Existing properties to check whether required values already present.
+   * @return Properties to enable artifacts resolution retries while build.
+   */
+  public static Properties getJpsArtifactsResolutionRetryProperties(final Properties... existingProperties) {
+    final Properties properties = new Properties();
+
+    final Properties existingPropertiesMerged = new Properties();
+    for (Properties it : existingProperties) {
+      existingPropertiesMerged.putAll(it);
+    }
+
+    String enabled = existingPropertiesMerged.getProperty(JPS_RESOLUTION_RETRY_ENABLED_PROPERTY, "true");
+    properties.put(JPS_RESOLUTION_RETRY_ENABLED_PROPERTY, enabled);
+
+    String maxAttempts = existingPropertiesMerged.getProperty(JPS_RESOLUTION_RETRY_MAX_ATTEMPTS_PROPERTY, "3");
+    properties.put(JPS_RESOLUTION_RETRY_MAX_ATTEMPTS_PROPERTY, maxAttempts);
+
+    String initialDelayMs = existingPropertiesMerged.getProperty(JPS_RESOLUTION_RETRY_DELAY_MS_PROPERTY, "1000");
+    properties.put(JPS_RESOLUTION_RETRY_DELAY_MS_PROPERTY, initialDelayMs);
+
+    String backoffLimitMs = existingPropertiesMerged.getProperty(
+      JPS_RESOLUTION_RETRY_BACKOFF_LIMIT_MS_PROPERTY,
+      Long.toString(TimeUnit.MINUTES.toMillis(5))
+    );
+    properties.put(JPS_RESOLUTION_RETRY_BACKOFF_LIMIT_MS_PROPERTY, backoffLimitMs);
+
+    return properties;
   }
 
   static <T> List<T> executeTasksInParallel(List<Callable<T>> tasks) throws InterruptedException {
