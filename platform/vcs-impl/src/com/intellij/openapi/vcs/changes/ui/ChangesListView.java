@@ -383,11 +383,6 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
       .filter(new DistinctChangePredicate());
   }
 
-  @NotNull
-  public JBIterable<Change> getChanges() {
-    return getRoot().traverseObjectsUnder().filter(Change.class);
-  }
-
   @Nullable
   public List<Change> getAllChangesFromSameChangelist(@NotNull Change change) {
     return getAllChangesUnder(change, ChangesBrowserChangeListNode.class);
