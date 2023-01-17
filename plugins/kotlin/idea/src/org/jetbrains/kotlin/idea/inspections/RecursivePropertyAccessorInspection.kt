@@ -6,8 +6,10 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.codegen.kotlinType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -21,6 +23,9 @@ import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
+import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
+import org.jetbrains.kotlin.types.typeUtil.nullability
 
 class RecursivePropertyAccessorInspection : AbstractKotlinInspection() {
 
@@ -90,7 +95,13 @@ class RecursivePropertyAccessorInspection : AbstractKotlinInspection() {
             val target = bindingContext[REFERENCE_TARGET, element]
             if (target != bindingContext[DECLARATION_TO_DESCRIPTOR, propertyAccessor.property]) return false
             (element.parent as? KtQualifiedExpression)?.let {
-                if (it.receiverExpression.text != KtTokens.THIS_KEYWORD.value && !it.hasObjectReceiver(bindingContext)) return false
+                if (it.receiverExpression.text != KtTokens.THIS_KEYWORD.value && !it.hasObjectReceiver(bindingContext)) {
+                    val targetReceiverType = (target as? PropertyDescriptorImpl)?.extensionReceiverParameter?.value?.type
+                    val receiverKotlinType = it.receiverExpression.kotlinType(bindingContext)?.makeNotNullable()
+                    if (receiverKotlinType == null || targetReceiverType == null || !receiverKotlinType.isSubtypeOf(targetReceiverType)) {
+                        return false
+                    }
+                }
             }
             return isSameAccessor(element, propertyAccessor.isGetter)
         }
