@@ -41,12 +41,16 @@ internal class A {
         s.startsWith("st", 2)
         s.indexOf("st")
         s.indexOf("st", 5)
-        s.lastIndexOf("st")
-        s.lastIndexOf("st", 4)
         s.indexOf('t')
         s.indexOf('t', 5)
+        s.indexOf(32.toChar())
+        s.indexOf(32.toChar(), 2)
+        s.lastIndexOf("st")
+        s.lastIndexOf("st", 4)
         s.lastIndexOf('t')
         s.lastIndexOf('t', 5)
+        s.lastIndexOf(32.toChar())
+        s.lastIndexOf(32.toChar(), 2)
         s.substring(1)
         s.substring(0, 4)
         s.subSequence(0, 4)
@@ -117,16 +121,6 @@ internal class A {
         String(chars)
         String(chars, 1, 2)
         val order = java.lang.String.CASE_INSENSITIVE_ORDER
-    }
-
-    fun unsupportedMethods() {
-        val s = "test string"
-        /* TODO:
-        s.indexOf(32);
-        s.indexOf(32, 2);
-        s.lastIndexOf(32);
-        s.lastIndexOf(32, 2);
-        */
     }
 
     fun useSplit(result: Array<String?>?) {}

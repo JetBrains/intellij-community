@@ -44,12 +44,16 @@ class A {
         s.startsWith("st", 2);
         s.indexOf("st");
         s.indexOf("st", 5);
-        s.lastIndexOf("st");
-        s.lastIndexOf("st", 4);
         s.indexOf('t');
         s.indexOf('t', 5);
+        s.indexOf(32);
+        s.indexOf(32, 2);
+        s.lastIndexOf("st");
+        s.lastIndexOf("st", 4);
         s.lastIndexOf('t');
         s.lastIndexOf('t', 5);
+        s.lastIndexOf(32);
+        s.lastIndexOf(32, 2);
         s.substring(1);
         s.substring(0, 4);
         s.subSequence(0, 4);
@@ -60,7 +64,6 @@ class A {
         s.toLowerCase(Locale.FRENCH);
         s.toUpperCase();
         s.toUpperCase(Locale.FRENCH);
-
         s.toString();
         s.toCharArray();
     }
@@ -126,16 +129,6 @@ class A {
         String.copyValueOf(chars, 1, 2);
 
         Comparator<String> order = String.CASE_INSENSITIVE_ORDER;
-    }
-
-    void unsupportedMethods() {
-        String s = "test string";
-        /* TODO:
-        s.indexOf(32);
-        s.indexOf(32, 2);
-        s.lastIndexOf(32);
-        s.lastIndexOf(32, 2);
-        */
     }
 
     void useSplit(String[] result) {
