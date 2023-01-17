@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.border.NamedBorderKt;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -677,11 +678,27 @@ public final class JBUI {
         Color PRESSED_BACKGROUND = JBColor.namedColor("StatusBar.Widget.pressedBackground", ActionButton.pressedBackground());
 
         static Border iconBorder() {
-          return new JBEmptyBorder(insets(insetsKey(), insets(0, 4)));
+          return NamedBorderKt.withName(
+            new JBEmptyBorder(insets(insetsKey(), insets(0, 4))),
+            iconBorderName()
+          );
+        }
+
+        @NotNull
+        static String iconBorderName() {
+          return "StatusBar.Widget.iconBorder";
         }
 
         static Border border() {
-          return new JBEmptyBorder(insets(insetsKey(), insets(0, 6)));
+          return NamedBorderKt.withName(
+            new JBEmptyBorder(insets(insetsKey(), insets(0, 6))),
+            borderName()
+          );
+        }
+
+        @NotNull
+        static String borderName() {
+          return "StatusBar.Widget.border";
         }
 
         @NotNull

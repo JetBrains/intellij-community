@@ -43,6 +43,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.awt.RelativeRectangle
+import com.intellij.ui.border.name
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.NotificationPopup
 import com.intellij.ui.popup.PopupState
@@ -555,6 +556,18 @@ open class IdeStatusBarImpl internal constructor(
     else {
       setUI(StatusBarUI())
     }
+    GuiUtils.iterateChildren(this, { c ->
+      if (c is JComponent) {
+        val newBorder = when (c.border?.name) {
+          JBUI.CurrentTheme.StatusBar.Widget.borderName() -> JBUI.CurrentTheme.StatusBar.Widget.border()
+          JBUI.CurrentTheme.StatusBar.Widget.iconBorderName() -> JBUI.CurrentTheme.StatusBar.Widget.iconBorder()
+          else -> null
+        }
+        if (newBorder != null) {
+          c.border = newBorder
+        }
+      }
+    })
   }
 
   override fun getComponentGraphics(g: Graphics): Graphics {
