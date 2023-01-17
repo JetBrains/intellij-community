@@ -10,6 +10,7 @@ import com.intellij.diagnostic.telemetry.IJTracer;
 import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.client.ClientAppSession;
@@ -42,7 +43,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
 
   private final IJTracer myCompletionTracer = TraceManager.INSTANCE.getTracer("codeCompletion");
 
-  private static class ClientCompletionService {
+  private static class ClientCompletionService implements Disposable {
     @Nullable
     public static ClientCompletionService tryGetInstance(@Nullable ClientAppSession session) {
       if (session == null)
@@ -58,6 +59,11 @@ public final class CompletionServiceImpl extends BaseCompletionService {
 
     ClientCompletionService(@NotNull ClientAppSession appSession) {
       myAppSession = appSession;
+    }
+
+    @Override
+    public void dispose() {
+      Disposer.dispose(myPhaseHolder.phase);
     }
 
     public void setCompletionPhase(@NotNull CompletionPhase phase) {
