@@ -281,20 +281,14 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
 
   @NotNull
   static JBIterable<VirtualFile> getVirtualFiles(@NotNull JTree tree, @Nullable Object tag) {
-    return JBIterable.of(tree.getSelectionPaths())
-      .filter(path -> isUnderTag(path, tag))
-      .map(TreePath::getLastPathComponent)
-      .map(node -> ((ChangesBrowserNode<?>)node))
+    return getSelectionNodes(tree, tag)
       .flatMap(node -> node.iterateFilesUnder())
       .unique();
   }
 
   @NotNull
   static JBIterable<FilePath> getFilePaths(@NotNull JTree tree, @Nullable Object tag) {
-    return JBIterable.of(tree.getSelectionPaths())
-      .filter(path -> isUnderTag(path, tag))
-      .map(TreePath::getLastPathComponent)
-      .map(node -> ((ChangesBrowserNode<?>)node))
+    return getSelectionNodes(tree, tag)
       .flatMap(node -> node.iterateFilePathsUnder())
       .unique();
   }
@@ -311,9 +305,7 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
 
   @NotNull
   static JBIterable<Change> getChanges(@NotNull Project project, @NotNull JTree tree) {
-    JBIterable<Change> changes = JBIterable.of(tree.getSelectionPaths())
-      .map(TreePath::getLastPathComponent)
-      .map(node -> ((ChangesBrowserNode<?>)node))
+    JBIterable<Change> changes = getSelectionNodes(tree, null)
       .flatMap(node -> node.traverseObjectsUnder())
       .filter(Change.class);
     JBIterable<Change> hijackedChanges = getVirtualFiles(tree, MODIFIED_WITHOUT_EDITING_TAG)
@@ -426,9 +418,7 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
 
   @NotNull
   public JBIterable<ChangesBrowserNode<?>> getSelectedChangesNodes() {
-    return JBIterable.of(getSelectionPaths())
-      .map(TreePath::getLastPathComponent)
-      .map(node -> ((ChangesBrowserNode<?>)node))
+    return getSelectionNodes(this, null)
       .flatMap(node -> node.traverse())
       .unique();
   }
