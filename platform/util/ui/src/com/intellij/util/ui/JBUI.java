@@ -723,7 +723,24 @@ public final class JBUI {
         static Insets floatingBorderInsets() {
           return insets("StatusBar.Breadcrumbs.floatingToolbarInsets", JBInsets.emptyInsets());
         }
+
+        @NotNull
+        static Insets navBarInsets() {
+          return insets(navBarInsetsKey(), defaultNavBarInsets());
+        }
+
+        @NotNull
+        static JBInsets defaultNavBarInsets() {
+          return insets(3, 0, 4, 4);
+        }
+
+        @NotNull
+        static String navBarInsetsKey() {
+          return "StatusBar.Breadcrumbs.navBarInsets";
+        }
+
       }
+
     }
 
     public static final class ToolWindow {
