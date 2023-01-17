@@ -315,9 +315,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       final PsiExpression iteratedValue = PsiUtil.skipParenthesizedExprDown(statement.getIteratedValue());
       final PsiExpression iteratedExpression = getIteratedExpression(iteratedValue);
       if (iteratedExpression == null) return;
-      PsiForeachDeclarationElement declaration = statement.getIterationDeclaration();
-      if (!(declaration instanceof PsiParameter)) return;
-      final PsiParameter parameter = (PsiParameter)declaration;
+      PsiParameter parameter = statement.getIterationParameter();
       PsiElement context = statement.getBody();
       if (context == null) return;
       PsiReferenceExpression mapExpression = getMapReferenceFromKeySetCall(iteratedExpression);
