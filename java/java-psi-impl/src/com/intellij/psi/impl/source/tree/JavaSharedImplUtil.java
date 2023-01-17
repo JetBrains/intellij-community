@@ -209,7 +209,7 @@ public final class JavaSharedImplUtil {
     boolean negated = false;
     for (PsiElement nextParent = parent.getParent(); ; parent = nextParent, nextParent = parent.getParent()) {
       if (nextParent instanceof PsiParenthesizedExpression) continue;
-      if (nextParent instanceof PsiForeachStatement ||
+      if (nextParent instanceof PsiForeachStatementBase ||
         nextParent instanceof PsiConditionalExpression && parent == ((PsiConditionalExpression)nextParent).getCondition()) {
         return nextParent;
       }

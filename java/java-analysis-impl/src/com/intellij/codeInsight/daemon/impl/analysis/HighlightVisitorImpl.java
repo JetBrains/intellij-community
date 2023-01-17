@@ -2007,7 +2007,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     add(checkFeature(deconstructionPattern, HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS));
     if (myHolder.hasErrorResults()) return;
     PsiElement parent = deconstructionPattern.getParent();
-    if (parent instanceof PsiForeachStatement forEach) {
+    if (parent instanceof PsiForeachPatternStatement forEach) {
       add(checkFeature(deconstructionPattern, HighlightingFeature.RECORD_PATTERNS_IN_FOR_EACH));
       if (!myHolder.hasErrorResults()) {
         PsiTypeElement typeElement = JavaPsiPatternUtil.getPatternTypeElement(deconstructionPattern);
