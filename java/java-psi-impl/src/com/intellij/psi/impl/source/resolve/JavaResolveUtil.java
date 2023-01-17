@@ -1,28 +1,26 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
-import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
+import com.intellij.psi.impl.source.resolve.graphInference.PatternInference;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.java.PsiExpressionListImpl;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.infos.PatternCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -274,7 +272,7 @@ public final class JavaResolveUtil {
           if (resultClass.hasTypeParameters()) {
             PsiSubstitutor substitutor = resolveResult.getSubstitutor();
             result[i] = pattern != null && ref.getTypeParameterCount() == 0 
-                        ? inferPatternType(resolveResult, pattern, resultClass, getContextType(pattern))
+                        ? PatternInference.inferPatternType(resolveResult, pattern, resultClass, getContextType(pattern))
                         : new CandidateInfo(resolveResult, substitutor) {
                           @NotNull
                           @Override
@@ -328,57 +326,11 @@ public final class JavaResolveUtil {
     return JavaDirectoryService.getInstance().getPackage(directory);
   }
 
-  private static @NotNull CandidateInfo inferPatternType(@NotNull CandidateInfo resolveResult,
-                                                         @NotNull PsiDeconstructionPattern pattern,
-                                                         @NotNull PsiClass recordClass,
-                                                         @Nullable PsiType type) {
-    // JLS 18.5.5
-    if (type == null) return resolveResult;
-    if (type instanceof PsiCapturedWildcardType) {
-      type = ((PsiCapturedWildcardType)type).getUpperBound();
-    }
-    Project project = recordClass.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiClassType recordRawType = factory.createType(recordClass);
-    if (!recordRawType.isConvertibleFrom(type) || JavaGenericsUtil.isUncheckedCast(recordRawType, type)) {
-      return resolveResult;
-    }
-    PsiTypeParameter[] parameters = recordClass.getTypeParameters();
-    InferenceSession session = new InferenceSession(parameters, PsiSubstitutor.EMPTY, PsiManagerEx.getInstanceEx(project), pattern);
-    if (!addConstraints(recordClass, type, factory, session)) {
-      return resolveResult;
-    }
-    PsiSubstitutor substitutor = session.infer();
-    return new PatternCandidateInfo(resolveResult, substitutor, ContainerUtil.getFirstItem(session.getIncompatibleErrorMessages()));
-  }
-
-  private static boolean addConstraints(@NotNull PsiClass recordClass,
-                                        @NotNull PsiType type,
-                                        PsiElementFactory factory,
-                                        InferenceSession session) {
-    if (type instanceof PsiClassType) {
-      PsiClass gClass = ((PsiClassType)type).resolve();
-      if (gClass == null) return false;
-      if (gClass instanceof PsiTypeParameter) {
-        for (PsiClassType upperBound : gClass.getExtendsListTypes()) {
-          if (!addConstraints(recordClass, upperBound, factory, session)) return false;
-        }
-      }
-      else if (recordClass.isEquivalentTo(gClass) || recordClass.isInheritor(gClass, true)) {
-        PsiClassType rAType = factory.createType(recordClass, session.getInferenceSubstitution());
-        PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(gClass, rAType);
-        PsiType recordPrimeType = factory.createType(gClass, superClassSubstitutor);
-        session.addConstraint(new TypeEqualityConstraint(type, recordPrimeType));
-      }
-    }
-    if (type instanceof PsiIntersectionType) {
-      for (PsiType conjunct : ((PsiIntersectionType)type).getConjuncts()) {
-        if (!addConstraints(recordClass, conjunct, factory, session)) return false;
-      }
-    }
-    return true;
-  }
-
+  /**
+   * @param pattern deconstruction pattern to find a context type for
+   * @return a context type for the pattern; null, if cannot be determined. This method can perform 
+   * the inference for outer patterns if necessary.
+   */
   private static @Nullable PsiType getContextType(@NotNull PsiDeconstructionPattern pattern) {
     PsiElement parent = pattern.getParent();
     while (parent instanceof PsiParenthesizedPattern) {
