@@ -829,7 +829,15 @@ public final class JBUI {
       }
 
       public static int headerHeight() {
-        return getInt("ToolWindow.Header.height", 42);
+        return getInt(headerHeightKey(), defaultHeaderHeight());
+      }
+
+      public static @NotNull String headerHeightKey() {
+        return "ToolWindow.Header.height";
+      }
+
+      public static int defaultHeaderHeight() {
+        return 42;
       }
 
       public static JBInsets headerLabelLeftRightInsets() {

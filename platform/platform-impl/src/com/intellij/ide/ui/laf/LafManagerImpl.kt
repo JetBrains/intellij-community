@@ -663,10 +663,12 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     defaults.put(JBUI.CurrentTheme.RunWidget.configurationSelectorWidthKey(), JBUI.CurrentTheme.RunWidget.defaultConfigurationSelectorWidth())
     // minimize/maximize/close buttons
     defaults.put(JBUI.CurrentTheme.TitlePane.buttonPreferredSizeKey(), JBUI.CurrentTheme.TitlePane.defaultButtonPreferredSize())
-    // These are set by the theme, only overwrite them in Compact Mode: tree row height, status bar widget insets, editor tab insets
+    // These are set by the theme, only overwrite them in Compact Mode: tree row height, status bar widget insets, editor tab insets, tool window header height
     defaults.put(JBUI.CurrentTheme.StatusBar.Breadcrumbs.navBarInsetsKey(), JBUI.CurrentTheme.StatusBar.Breadcrumbs.defaultNavBarInsets())
     // editor tabs
     defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), JBUI.CurrentTheme.EditorTabs.defaultFont())
+    // toolwindows
+    defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), JBUI.CurrentTheme.ToolWindow.defaultHeaderHeight())
     if (density == UIDensity.COMPACT) {
       // main toolbar
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(34, 34))
@@ -688,7 +690,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       defaults.put("EditorTabs.tabInsets", JBInsets.create(1, 2).asUIResource())
       defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), JBFont.medium())
       // toolwindows
-      defaults.put("ToolWindow.Header.height", 35)
+      defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), 32)
     }
   }
 
