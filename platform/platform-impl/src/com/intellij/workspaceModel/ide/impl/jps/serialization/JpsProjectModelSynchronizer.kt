@@ -201,8 +201,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       override fun changed(event: VersionedStorageChange) {
         LOG.debug("Marking changed entities for save")
         event.getAllChanges().forEach { change ->
-          change.oldEntity?.entitySource?.let { sourcesToSave.add(it) }
-          change.newEntity?.entitySource?.let { sourcesToSave.add(it) }
+          change.oldEntity?.entitySource?.let { if (it !is JpsFileEntitySource.ExactGlobalFile) sourcesToSave.add(it) }
+          change.newEntity?.entitySource?.let { if (it !is JpsFileEntitySource.ExactGlobalFile) sourcesToSave.add(it) }
         }
       }
     }
