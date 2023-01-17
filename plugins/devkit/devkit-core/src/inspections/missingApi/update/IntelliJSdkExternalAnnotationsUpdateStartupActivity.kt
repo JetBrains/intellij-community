@@ -7,8 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.startup.ProjectPostStartupActivity
-import com.intellij.openapi.util.BuildNumber
-import kotlinx.coroutines.launch
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
 
 /**
@@ -30,10 +28,7 @@ internal class IntelliJSdkExternalAnnotationsUpdateStartupActivity : ProjectPost
   }
 
   private fun updateAnnotationsLaterIfNecessary(project: Project, ideaJdk: Sdk) {
-    val buildNumber = getIdeaBuildNumber(ideaJdk)
-    if (buildNumber != null) {
-      IntelliJSdkExternalAnnotationsUpdater.getInstance().updateIdeaJdkAnnotationsIfNecessary(project, ideaJdk, buildNumber)
-    }
+    IntelliJSdkExternalAnnotationsUpdater.getInstance().updateIdeaJdkAnnotationsIfNecessary(project, ideaJdk)
   }
 
   private fun subscribeToJdkChanges(project: Project, application: Application) {
@@ -41,25 +36,15 @@ internal class IntelliJSdkExternalAnnotationsUpdateStartupActivity : ProjectPost
     connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, object : ProjectJdkTable.Listener {
       override fun jdkAdded(jdk: Sdk) {
         if (jdk.sdkType == IdeaJdk.getInstance()) {
-          project.coroutineScope.launch {
-            updateAnnotationsLaterIfNecessary(project, jdk)
-          }
+          updateAnnotationsLaterIfNecessary(project, jdk)
         }
       }
 
       override fun jdkNameChanged(jdk: Sdk, previousName: String) {
         if (jdk.sdkType == IdeaJdk.getInstance()) {
-          project.coroutineScope.launch {
-            updateAnnotationsLaterIfNecessary(project, jdk)
-          }
+          updateAnnotationsLaterIfNecessary(project, jdk)
         }
       }
     })
-  }
-
-  private fun getIdeaBuildNumber(ideaJdk: Sdk): BuildNumber? {
-    val homePath = ideaJdk.homePath ?: return null
-    val buildNumberStr = IdeaJdk.getBuildNumber(homePath) ?: return null
-    return BuildNumber.fromStringOrNull(buildNumberStr)
   }
 }
