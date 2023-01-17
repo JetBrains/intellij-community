@@ -282,8 +282,8 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   }
 
   @NotNull
-  static JBIterable<VirtualFile> getVirtualFiles(TreePath @Nullable [] paths, @Nullable Object tag) {
-    return JBIterable.of(paths)
+  static JBIterable<VirtualFile> getVirtualFiles(@NotNull JTree tree, @Nullable Object tag) {
+    return JBIterable.of(tree.getSelectionPaths())
       .filter(path -> isUnderTag(path, tag))
       .map(TreePath::getLastPathComponent)
       .map(node -> ((ChangesBrowserNode<?>)node))
@@ -292,8 +292,8 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   }
 
   @NotNull
-  static JBIterable<FilePath> getFilePaths(TreePath @Nullable [] paths, @Nullable Object tag) {
-    return JBIterable.of(paths)
+  static JBIterable<FilePath> getFilePaths(@NotNull JTree tree, @Nullable Object tag) {
+    return JBIterable.of(tree.getSelectionPaths())
       .filter(path -> isUnderTag(path, tag))
       .map(TreePath::getLastPathComponent)
       .map(node -> ((ChangesBrowserNode<?>)node))
@@ -312,13 +312,13 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   }
 
   @NotNull
-  static JBIterable<Change> getChanges(@NotNull Project project, TreePath @Nullable [] paths) {
-    JBIterable<Change> changes = JBIterable.of(paths)
+  static JBIterable<Change> getChanges(@NotNull Project project, @NotNull JTree tree) {
+    JBIterable<Change> changes = JBIterable.of(tree.getSelectionPaths())
       .map(TreePath::getLastPathComponent)
       .map(node -> ((ChangesBrowserNode<?>)node))
       .flatMap(node -> node.traverseObjectsUnder())
       .filter(Change.class);
-    JBIterable<Change> hijackedChanges = getVirtualFiles(paths, MODIFIED_WITHOUT_EDITING_TAG)
+    JBIterable<Change> hijackedChanges = getVirtualFiles(tree, MODIFIED_WITHOUT_EDITING_TAG)
       .map(file -> toHijackedChange(project, file))
       .filter(Objects::nonNull);
 
@@ -327,8 +327,8 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   }
 
   @NotNull
-  static JBIterable<ChangesBrowserNode<?>> getChangesNodes(TreePath @Nullable [] paths) {
-    return JBIterable.of(paths)
+  static JBIterable<ChangesBrowserNode<?>> getChangesNodes(@NotNull JTree tree) {
+    return JBIterable.of(tree.getSelectionPaths())
       .map(TreePath::getLastPathComponent)
       .map(node -> ((ChangesBrowserNode<?>)node))
       .flatMap(node -> node.traverse())
@@ -437,12 +437,12 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
 
   @NotNull
   public JBIterable<Change> getSelectedChanges() {
-    return getChanges(myProject, getSelectionPaths());
+    return getChanges(myProject, this);
   }
 
   @NotNull
   public JBIterable<ChangesBrowserNode<?>> getSelectedChangesNodes() {
-    return getChangesNodes(getSelectionPaths());
+    return getChangesNodes(this);
   }
 
   @NotNull

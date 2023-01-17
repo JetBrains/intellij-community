@@ -39,9 +39,9 @@ public final class ChangesViewDnDSupport extends ChangesTreeDnDSupport {
   @Override
   protected DnDDragStartBean createDragStartBean(@NotNull DnDActionInfo info) {
     if (info.isMove()) {
-      Change[] changes = getChanges(myProject, myTree.getSelectionPaths()).toList().toArray(Change[]::new);
-      List<FilePath> unversionedFiles = getFilePaths(myTree.getSelectionPaths(), UNVERSIONED_FILES_TAG).toList();
-      List<FilePath> ignoredFiles = getFilePaths(myTree.getSelectionPaths(), IGNORED_FILES_TAG).toList();
+      Change[] changes = getChanges(myProject, myTree).toList().toArray(Change[]::new);
+      List<FilePath> unversionedFiles = getFilePaths(myTree, UNVERSIONED_FILES_TAG).toList();
+      List<FilePath> ignoredFiles = getFilePaths(myTree, IGNORED_FILES_TAG).toList();
 
       if (changes.length > 0 || !unversionedFiles.isEmpty() || !ignoredFiles.isEmpty()) {
         return new DnDDragStartBean(new ChangeListDragBean(myTree, changes, unversionedFiles, ignoredFiles));
