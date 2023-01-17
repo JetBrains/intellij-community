@@ -34,6 +34,8 @@ import java.util.*;
 import java.util.concurrent.locks.LockSupport;
 
 public class PlaybackRunner {
+  private PlaybackCommandReporter myCommandStartStopProcessor = PlaybackCommandReporter.EMPTY_PLAYBACK_COMMAND_REPORTER;
+
   private static final Logger LOG = Logger.getInstance(PlaybackRunner.class);
 
   private Robot myRobot;
@@ -84,6 +86,7 @@ public class PlaybackRunner {
   }
 
   public ActionCallback run() {
+    myCommandStartStopProcessor.startOfScript(getProject());
     myStopRequested = false;
 
     myRegistryValues.clear();
@@ -96,18 +99,23 @@ public class PlaybackRunner {
 
     subscribeListeners(ApplicationManager.getApplication().getMessageBus().connect(myOnStop));
     Disposer.register(myOnStop, () -> {
+      myCommandStartStopProcessor.endOfScript(getProject());
       onStop();
     });
 
     myActionCallback = new ActionCallback();
-    myActionCallback.doWhenProcessed(() -> {
-      Disposer.dispose(myOnStop);
+    myActionCallback
+      .doWhenRejected(() -> {
+        myCommandStartStopProcessor.scriptCanceled();
+      })
+      .doWhenProcessed(() -> {
+        Disposer.dispose(myOnStop);
 
-      SwingUtilities.invokeLater(() -> {
-        activityMonitor.setActive(false);
-        restoreRegistryValues();
+        SwingUtilities.invokeLater(() -> {
+          activityMonitor.setActive(false);
+          restoreRegistryValues();
+        });
       });
-    });
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       try {
@@ -213,10 +221,14 @@ public class PlaybackRunner {
             return project;
           }
         };
+
+      myCommandStartStopProcessor.startOfCommand(commandDescriptor.fullLine);
+
       final Promise<Object> cmdCallback = cmd.execute(context);
       Context initialContext = Context.current();
       cmdCallback
         .onSuccess(it -> {
+          myCommandStartStopProcessor.endOfCommand(null);
           try(Scope ignored = initialContext.makeCurrent()) {
             if (cmd.canGoFurther()) {
               int delay = getDelay(cmd);
@@ -242,6 +254,7 @@ public class PlaybackRunner {
           }
         })
         .onError(error -> {
+          myCommandStartStopProcessor.endOfCommand(error.getMessage());
           myCallback.message(null, "Stopped: " + error, StatusCallback.Type.message);
           LOG.warn("Callback step stopped with error: " + error, error);
           myActionCallback.reject(error.getMessage());
@@ -269,9 +282,17 @@ public class PlaybackRunner {
     connection.subscribe(ApplicationActivationListener.TOPIC, myAppListener);
   }
 
+  public PlaybackRunner setCommandStartStopProcessor(@NotNull PlaybackCommandReporter commandStartStopProcessor) {
+    myCommandStartStopProcessor = commandStartStopProcessor;
+    return this;
+  }
+
   protected void onStop() {
     myCommands.clear();
   }
+
+  static final String INCLUDE_CMD = AbstractCommand.CMD_PREFIX + "include";
+  static final String IMPORT_CALL_CMD = AbstractCommand.CMD_PREFIX + "importCall";
 
   @NotNull
   private List<CommandDescriptor> includeScript(String scriptText, File scriptDir) {
@@ -281,11 +302,8 @@ public class PlaybackRunner {
     while (tokens.hasMoreTokens()) {
       final String eachLine = tokens.nextToken();
 
-      String includeCmd = AbstractCommand.CMD_PREFIX + "include";
-      String importCallCmd = AbstractCommand.CMD_PREFIX + "importCall";
-
-      if (eachLine.startsWith(includeCmd)) {
-        File file = new PathMacro().setScriptDir(scriptDir).resolveFile(eachLine.substring(includeCmd.length()).trim(), scriptDir);
+      if (eachLine.startsWith(INCLUDE_CMD)) {
+        File file = new PathMacro().setScriptDir(scriptDir).resolveFile(eachLine.substring(INCLUDE_CMD.length()).trim(), scriptDir);
         if (!file.exists()) {
           throw new RuntimeException("Cannot find file to include at line " + line + ": " + file.getAbsolutePath());
         }
@@ -299,8 +317,8 @@ public class PlaybackRunner {
           throw new RuntimeException("Error reading file at line " + line + ": " + file.getAbsolutePath());
         }
       }
-      else if (eachLine.startsWith(importCallCmd)) {
-        String className = eachLine.substring(importCallCmd.length()).trim();
+      else if (eachLine.startsWith(IMPORT_CALL_CMD)) {
+        String className = eachLine.substring(IMPORT_CALL_CMD.length()).trim();
         try {
           Class<?> facadeClass = Class.forName(className);
           myFacadeClasses.add(facadeClass);
@@ -318,11 +336,11 @@ public class PlaybackRunner {
   }
 
   /**
-     * This data class aggregates parameters of a command to be called.
-     * We do not create instances of commands beforehand because
-     * command classes may be provided by plugins and may prevent plugin from unloading [IDEA-259898].
-     */
-    private record CommandDescriptor(String fullLine, int line, File scriptDir) {
+   * This data class aggregates parameters of a command to be called.
+   * We do not create instances of commands beforehand because
+   * command classes may be provided by plugins and may prevent plugin from unloading [IDEA-259898].
+   */
+  private record CommandDescriptor(String fullLine, int line, File scriptDir) {
   }
 
   @Nullable
