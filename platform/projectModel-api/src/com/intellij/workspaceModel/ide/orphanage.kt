@@ -61,22 +61,26 @@ class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
     if (targetModules.isNotEmpty() && targetModules.any { orphanageSnapshot.resolve(it.symbolicId) != null }) {
       runLaterAndWrite {
         val orphanage = project.workspaceModel.orphanage.entityStorage.pointer.storage
-        val newRoots = targetModules
+        val orphanageRoots = targetModules
           .mapNotNull { orphanage.resolve(it.symbolicId) }
           .filter { it.contentRoots.isNotEmpty() }
           .associateWith { it.contentRoots.map { root -> root.createEntityTreeCopy() as ContentRootEntity.Builder } }
 
-        if (newRoots.isNotEmpty()) {
+        if (orphanageRoots.isNotEmpty()) {
           project.workspaceModel.updateProjectModel("Move orphan elements") {
-            newRoots.forEach { (module, roots) ->
+            orphanageRoots.forEach { (module, roots) ->
               val localModule = it.resolve(module.symbolicId) ?: return@forEach
-              it.modifyEntity(localModule) {
-                this.contentRoots += roots
+              val existingUrls = localModule.contentRoots.mapTo(HashSet()) { it.url }
+              val rootsToAdd = roots.filter { it.url !in existingUrls }
+              if (rootsToAdd.isNotEmpty()) {
+                it.modifyEntity(localModule) {
+                  this.contentRoots += rootsToAdd
+                }
               }
             }
           }
 
-          project.workspaceModel.orphanage.remove(newRoots.keys)
+          project.workspaceModel.orphanage.remove(orphanageRoots.keys)
         }
       }
     }
