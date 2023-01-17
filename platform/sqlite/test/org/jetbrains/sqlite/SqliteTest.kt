@@ -4,7 +4,6 @@
 package org.jetbrains.sqlite
 
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.sqlite.core.SqliteConnection
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -24,32 +23,7 @@ class SqliteTest {
 
   @Test
   fun insert() {
-    connection.execute("""
-      create table log (
-        commitId integer primary key,
-        message text not null,
-        authorTime integer not null,
-        commitTime integer not null,
-        committerId integer null
-      ) strict
-    """)
-
-    connection.prepareStatement("""
-      insert into log(commitId, message, authorTime, commitTime, committerId) 
-      values(?, ?, ?, ?, ?) 
-      on conflict(commitId) do update set message=excluded.message
-    """, ObjectBinder(5)).use { statement ->
-      statement.binder.bind(12, "test", 2, 2, 1)
-      statement.binder.addBatch()
-      statement.executeBatch()
-    }
-
-    connection.prepareStatement("select message from log where commitId = ?", IntBinder(paramCount = 1)).use { statement ->
-      statement.binder.bind(12)
-      val resultSet = statement.executeQuery()
-      assertThat(resultSet.next()).isTrue()
-      assertThat(resultSet.getString(0)).isEqualTo("test")
-    }
+    testInsert(connection)
   }
 
   @Test
@@ -125,5 +99,34 @@ class SqliteTest {
         assertThat(resultSet.getLong(0)).isEqualTo(42)
       }
     }
+  }
+}
+
+internal fun testInsert(connection: SqliteConnection) {
+  connection.execute("""
+      create table log (
+        commitId integer primary key,
+        message text not null,
+        authorTime integer not null,
+        commitTime integer not null,
+        committerId integer null
+      ) strict
+    """)
+
+  connection.prepareStatement("""
+      insert into log(commitId, message, authorTime, commitTime, committerId) 
+      values(?, ?, ?, ?, ?) 
+      on conflict(commitId) do update set message=excluded.message
+    """, ObjectBinder(5)).use { statement ->
+    statement.binder.bind(12, "test", 2, 2, 1)
+    statement.binder.addBatch()
+    statement.executeBatch()
+  }
+
+  connection.prepareStatement("select message from log where commitId = ?", IntBinder(paramCount = 1)).use { statement ->
+    statement.binder.bind(12)
+    val resultSet = statement.executeQuery()
+    assertThat(resultSet.next()).isTrue()
+    assertThat(resultSet.getString(0)).isEqualTo("test")
   }
 }

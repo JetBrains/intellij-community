@@ -3,8 +3,6 @@
 
 package org.jetbrains.sqlite
 
-import org.jetbrains.sqlite.core.SqliteConnection
-
 class SQLiteConfig {
   // SQLite defaults to 0, but as https://github.com/xerial/sqlite-jdbc we use 3000
   var busyTimeout: Int = 3000
@@ -16,7 +14,9 @@ class SQLiteConfig {
   // SQLite defaults to FULL (https://www.sqlite.org/pragma.html#pragma_synchronous),
   // but "FULL synchronous is very safe, but it is also slower", so
   // as we use WAL (see above) and WAL "is safe from corruption with synchronous=NORMAL", we use NORMAL as default.
-  private var synchronous: SynchronousMode = SynchronousMode.NORMAL
+  //private var synchronous: SynchronousMode = SynchronousMode.NORMAL
+
+  // SQLite is compiled with SQLITE_DEFAULT_WAL_SYNCHRONOUS=1
 
   // set the default open mode of SQLite3
   var openModeFlag: Int = 0x00 or SQLiteOpenMode.READWRITE.flag or SQLiteOpenMode.CREATE.flag
@@ -28,12 +28,13 @@ class SQLiteConfig {
       if (journalMode != JournalMode.DELETE) {
         yield("PRAGMA journal_mode = $journalMode")
       }
-      if (synchronous != SynchronousMode.FULL) {
-        yield("PRAGMA synchronous = $synchronous")
-      }
+      //if (synchronous != SynchronousMode.FULL && journalMode != synchronous) {
+      //  yield("PRAGMA synchronous = $synchronous")
+      //}
 
       // https://www.sqlite.org/pragma.html#pragma_temp_store
       yield("PRAGMA temp_store = MEMORY")
+      yield("pragma cache_size = 2000")
     }.joinToString(";")
     connection.db.exec(sql)
   }

@@ -15,11 +15,7 @@
  */
 package org.jetbrains.sqlite;
 
-import org.jetbrains.sqlite.core.Codes;
-import org.jetbrains.sqlite.core.DB;
-import org.jetbrains.sqlite.core.SqliteConnection;
-
-import java.sql.SQLException;
+import java.io.IOException;
 
 /**
  * Provides an interface for creating SQLite user-defined collations.
@@ -43,7 +39,7 @@ import java.sql.SQLException;
  */
 public abstract class Collation {
   private SqliteConnection conn;
-  private DB db;
+  private SqliteDb db;
 
   /**
    * Called by SQLite as a custom collation to compare two strings.
@@ -62,16 +58,16 @@ public abstract class Collation {
    * @param name The name of the collation.
    * @param f    The collation to register.
    */
-  public static void create(SqliteConnection conn, String name, Collation f) throws SQLException {
+  public static void create(SqliteConnection conn, String name, Collation f) throws IOException {
     if (conn.isClosed()) {
-      throw new SQLException("connection closed");
+      throw new IOException("connection closed");
     }
 
     f.conn = conn;
     f.db = f.conn.db;
 
-    if (f.db.create_collation(name, f) != Codes.SQLITE_OK) {
-      throw new SQLException("error creating collation");
+    if (f.db.create_collation(name, f) != SqliteCodes.SQLITE_OK) {
+      throw new IOException("error creating collation");
     }
   }
 
@@ -81,7 +77,7 @@ public abstract class Collation {
    * @param conn The connection to remove the collation from.
    * @param name The name of the collation.
    */
-  public static void destroy(SqliteConnection conn, String name) throws SQLException {
+  public static void destroy(SqliteConnection conn, String name) {
     conn.db.destroy_collation(name);
   }
 }

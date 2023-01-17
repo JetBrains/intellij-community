@@ -3,10 +3,6 @@
 
 package org.jetbrains.sqlite
 
-import org.jetbrains.sqlite.core.Codes
-import org.jetbrains.sqlite.core.DB
-import org.jetbrains.sqlite.core.stepInBatch
-
 class IntBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramCount) {
   private var batch: IntArray = IntArray(paramCount * batchCountHint)
 
@@ -28,12 +24,12 @@ class IntBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramCoun
     batch[batchPosition + 2] = v3
   }
 
-  override fun bindParams(pointer: Long, db: DB) {
+  override fun bindParams(pointer: Long, db: SqliteDb) {
     assert(batchQueryCount == 0)
     for ((index, value) in batch.withIndex()) {
       val status = db.bind_int(pointer, index + 1, value) and 0xFF
-      if (status != Codes.SQLITE_OK) {
-        throw db.newSQLException(status)
+      if (status != SqliteCodes.SQLITE_OK) {
+        throw db.newException(status)
       }
     }
   }
@@ -50,13 +46,13 @@ class IntBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramCoun
     }
   }
 
-  override fun executeBatch(pointer: Long, db: DB) {
+  override fun executeBatch(pointer: Long, db: SqliteDb) {
     for (batchIndex in 0 until batchQueryCount) {
       db.reset(pointer)
       for (index in 0 until paramCount) {
         val status = db.bind_int(pointer, index + 1, batch[batchIndex * paramCount + index]) and 0xFF
-        if (status != Codes.SQLITE_OK) {
-          throw db.newSQLException(status)
+        if (status != SqliteCodes.SQLITE_OK) {
+          throw db.newException(status)
         }
       }
 
@@ -86,12 +82,12 @@ class LongBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramCou
     batch[batchPosition + 2] = v3
   }
 
-  override fun bindParams(pointer: Long, db: DB) {
+  override fun bindParams(pointer: Long, db: SqliteDb) {
     assert(batchQueryCount == 0)
     for ((index, value) in batch.withIndex()) {
       val status = db.bind_long(pointer, index + 1, value) and 0xFF
-      if (status != Codes.SQLITE_OK) {
-        throw db.newSQLException(status)
+      if (status != SqliteCodes.SQLITE_OK) {
+        throw db.newException(status)
       }
     }
   }
@@ -108,13 +104,13 @@ class LongBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramCou
     }
   }
 
-  override fun executeBatch(pointer: Long, db: DB) {
+  override fun executeBatch(pointer: Long, db: SqliteDb) {
     for (batchIndex in 0 until batchQueryCount) {
       db.reset(pointer)
       for (index in 0 until paramCount) {
         val status = db.bind_long(pointer, index + 1, batch[batchIndex * paramCount + index]) and 0xFF
-        if (status != Codes.SQLITE_OK) {
-          throw db.newSQLException(status)
+        if (status != SqliteCodes.SQLITE_OK) {
+          throw db.newException(status)
         }
       }
 

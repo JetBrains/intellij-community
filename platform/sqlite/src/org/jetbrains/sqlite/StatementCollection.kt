@@ -3,10 +3,6 @@ package org.jetbrains.sqlite
 
 import com.intellij.openapi.diagnostic.logger
 import org.intellij.lang.annotations.Language
-import org.jetbrains.sqlite.core.SqliteConnection
-import org.jetbrains.sqlite.core.SqliteIntPreparedStatement
-import org.jetbrains.sqlite.core.SqlitePreparedStatement
-import org.jetbrains.sqlite.core.SqliteStatement
 
 /**
  * Simplifies calling [SqliteStatement.executeBatch] or [SqliteStatement.close] for multiple statements.

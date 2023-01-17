@@ -509,18 +509,27 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
   val libVersion = sourceFile.getName(sourceFile.nameCount - 2).toString()
   val signTool = context.proprietaryBuildTools.signTool
   val unsignedFiles = TreeMap<OsFamily, MutableList<Path>>()
-  val packagePrefix = getCommonPath(paths)
+
+  val packagePrefix = if (paths.size == 1) {
+    // if a native lib is built with the only arch for testing purposes
+    val first = paths.first()
+    first.substring(0, first.indexOf('/') + 1)
+  }
+  else {
+    getCommonPath(paths)
+  }
+
   val libName = sourceFile.name.substringBefore('-')
   HashMapZipFile.load(sourceFile).use { zipFile ->
-    val jnaOutDir = Files.createDirectories(context.paths.tempDir.resolve(libName))
-    Files.createDirectories(jnaOutDir)
+    val outDir = Files.createDirectories(context.paths.tempDir.resolve(libName))
+    Files.createDirectories(outDir)
     for (pathWithPackage in paths) {
       val path = pathWithPackage.substring(packagePrefix.length)
       val fileName = path.substring(path.lastIndexOf('/') + 1)
 
       val os = when {
-        path.startsWith("darwin-") || path.startsWith("darwin/") || path.startsWith("mac/") || path.startsWith("Mac/") -> OsFamily.MACOS
-        path.startsWith("win32-") || path.startsWith("win/") || path.startsWith("Windows/") -> OsFamily.WINDOWS
+        path.startsWith("darwin-") || path.startsWith("mac-") || path.startsWith("darwin/") || path.startsWith("mac/") || path.startsWith("Mac/") -> OsFamily.MACOS
+        path.startsWith("win32-") || path.startsWith("win/") || path.startsWith("win-") || path.startsWith("Windows/") -> OsFamily.WINDOWS
         path.startsWith("Linux-Android/") || path.startsWith("Linux-Musl/") -> continue
         path.startsWith("linux-") || path.startsWith("linux/") || path.startsWith("Linux/") -> OsFamily.LINUX
         else -> continue
@@ -529,7 +538,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
       val osAndArch = path.substring(0, path.indexOf('/'))
       val arch: JvmArchitecture? = when {
         osAndArch.endsWith("-aarch64") || path.contains("/aarch64/") -> JvmArchitecture.aarch64
-        osAndArch.endsWith("-x86-64") || path.contains("/x86-64/") || path.contains("/x86_64/") -> JvmArchitecture.x64
+        osAndArch.contains("x86-64") || path.contains("x86_64") -> JvmArchitecture.x64
         // universal library
         os == OsFamily.MACOS && path.count { it == '/' } == 1 -> null
         else -> continue
@@ -544,7 +553,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
 
       if (file == null) {
         @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
-        file = jnaOutDir.resolve(path)!!
+        file = outDir.resolve(path)!!
         Files.createDirectories(file.parent)
         FileChannel.open(file, W_CREATE_NEW).use { channel ->
           val byteBuffer = zipFile.getByteBuffer(pathWithPackage)!!

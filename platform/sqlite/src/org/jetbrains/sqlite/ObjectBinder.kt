@@ -3,20 +3,16 @@
 
 package org.jetbrains.sqlite
 
-import org.jetbrains.sqlite.core.DB
-import org.jetbrains.sqlite.core.sqlBind
-import org.jetbrains.sqlite.core.stepInBatch
-
 sealed class Binder {
   internal abstract val paramCount: Int
 
   abstract val batchQueryCount: Int
 
-  internal abstract fun bindParams(pointer: Long, db: DB)
-
   abstract fun addBatch()
 
-  abstract fun executeBatch(pointer: Long, db: DB)
+  internal abstract fun bindParams(pointer: Long, db: SqliteDb)
+
+  internal abstract fun executeBatch(pointer: Long, db: SqliteDb)
 
   internal abstract fun clearBatch()
 }
@@ -28,12 +24,12 @@ object EmptyBinder : Binder() {
   override val batchQueryCount: Int
     get() = 0
 
-  override fun bindParams(pointer: Long, db: DB) {
+  override fun bindParams(pointer: Long, db: SqliteDb) {
   }
 
   override fun addBatch() = throw IllegalStateException()
 
-  override fun executeBatch(pointer: Long, db: DB) = throw IllegalStateException()
+  override fun executeBatch(pointer: Long, db: SqliteDb) = throw IllegalStateException()
 
   override fun clearBatch() {
   }
@@ -55,7 +51,7 @@ sealed class BaseBinder(override val paramCount: Int) : Binder() {
 class ObjectBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramCount) {
   private var batch: Array<Any?> = arrayOfNulls(paramCount * batchCountHint)
 
-  override fun bindParams(pointer: Long, db: DB) {
+  override fun bindParams(pointer: Long, db: SqliteDb) {
     assert(batchQueryCount == 0)
     for ((position, value) in batch.withIndex()) {
       sqlBind(pointer, position, value, db)
@@ -74,7 +70,7 @@ class ObjectBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramC
     }
   }
 
-  override fun executeBatch(pointer: Long, db: DB) {
+  override fun executeBatch(pointer: Long, db: SqliteDb) {
     for (batchIndex in 0 until batchQueryCount) {
       db.reset(pointer)
       for (position in 0 until paramCount) {

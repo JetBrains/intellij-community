@@ -15,12 +15,8 @@
  */
 package org.jetbrains.sqlite;
 
-import org.jetbrains.sqlite.core.Codes;
-import org.jetbrains.sqlite.core.DB;
-import org.jetbrains.sqlite.core.SqliteConnection;
-
+import java.io.IOException;
 import java.sql.Connection;
-import java.sql.SQLException;
 
 /**
  * Provides an interface for creating SQLite user-defined functions.
@@ -57,7 +53,7 @@ public abstract class Function {
   long value = 0; // pointer sqlite3_value**
   int args = 0;
   private SqliteConnection conn;
-  private DB db;
+  private SqliteDb db;
 
   /**
    * Called by SQLite as a custom function. Should access arguments through <tt>value_*(int)</tt>,
@@ -69,7 +65,7 @@ public abstract class Function {
    * Returns the number of arguments passed to the function. Can only be called from
    * <tt>xFunc()</tt>.
    */
-  protected final synchronized int args() throws SQLException {
+  protected final synchronized int args() throws IOException {
     checkContext();
     return args;
   }
@@ -78,7 +74,7 @@ public abstract class Function {
    * Called by <tt>xFunc</tt> to return a value.
    *
    */
-  protected final synchronized void result(byte[] value) throws SQLException {
+  protected final synchronized void result(byte[] value) throws IOException {
     checkContext();
     db.result_blob(context, value);
   }
@@ -87,7 +83,7 @@ public abstract class Function {
    * Called by <tt>xFunc</tt> to return a value.
    *
    */
-  protected final synchronized void result(double value) throws SQLException {
+  protected final synchronized void result(double value) throws IOException {
     checkContext();
     db.result_double(context, value);
   }
@@ -96,7 +92,7 @@ public abstract class Function {
    * Called by <tt>xFunc</tt> to return a value.
    *
    */
-  protected final synchronized void result(int value) throws SQLException {
+  protected final synchronized void result(int value) throws IOException {
     checkContext();
     db.result_int(context, value);
   }
@@ -105,13 +101,13 @@ public abstract class Function {
    * Called by <tt>xFunc</tt> to return a value.
    *
    */
-  protected final synchronized void result(long value) throws SQLException {
+  protected final synchronized void result(long value) throws IOException {
     checkContext();
     db.result_long(context, value);
   }
 
   /** Called by <tt>xFunc</tt> to return a value. */
-  protected final synchronized void result() throws SQLException {
+  protected final synchronized void result() throws IOException {
     checkContext();
     db.result_null(context);
   }
@@ -120,7 +116,7 @@ public abstract class Function {
    * Called by <tt>xFunc</tt> to return a value.
    *
    */
-  protected final synchronized void result(String value) throws SQLException {
+  protected final synchronized void result(String value) throws IOException {
     checkContext();
     db.result_text(context, value);
   }
@@ -129,7 +125,7 @@ public abstract class Function {
    * Called by <tt>xFunc</tt> to throw an error.
    *
    */
-  protected final synchronized void error(String err) throws SQLException {
+  protected final synchronized void error(String err) throws IOException {
     checkContext();
     db.result_error(context, err);
   }
@@ -138,7 +134,7 @@ public abstract class Function {
    * Called by <tt>xFunc</tt> to access the value of an argument.
    *
    */
-  protected final synchronized String value_text(int arg) throws SQLException {
+  protected final synchronized String value_text(int arg) throws IOException {
     checkValue(arg);
     return db.value_text(this, arg);
   }
@@ -147,7 +143,7 @@ public abstract class Function {
    * Called by <tt>xFunc</tt> to access the value of an argument.
    *
    */
-  protected final synchronized byte[] value_blob(int arg) throws SQLException {
+  protected final synchronized byte[] value_blob(int arg) throws IOException {
     checkValue(arg);
     return db.value_blob(this, arg);
   }
@@ -156,7 +152,7 @@ public abstract class Function {
    * Called by <tt>xFunc</tt> to access the value of an argument.
    *
    */
-  protected final synchronized double value_double(int arg) throws SQLException {
+  protected final synchronized double value_double(int arg) throws IOException {
     checkValue(arg);
     return db.value_double(this, arg);
   }
@@ -165,7 +161,7 @@ public abstract class Function {
    * Called by <tt>xFunc</tt> to access the value of an argument.
    *
    */
-  protected final synchronized int value_int(int arg) throws SQLException {
+  protected final synchronized int value_int(int arg) throws IOException {
     checkValue(arg);
     return db.value_int(this, arg);
   }
@@ -174,7 +170,7 @@ public abstract class Function {
    * Called by <tt>xFunc</tt> to access the value of an argument.
    *
    */
-  protected final synchronized long value_long(int arg) throws SQLException {
+  protected final synchronized long value_long(int arg) throws IOException {
     checkValue(arg);
     return db.value_long(this, arg);
   }
@@ -183,26 +179,26 @@ public abstract class Function {
    * Called by <tt>xFunc</tt> to access the value of an argument.
    *
    */
-  protected final synchronized int value_type(int arg) throws SQLException {
+  protected final synchronized int value_type(int arg) throws IOException {
     checkValue(arg);
     return db.value_type(this, arg);
   }
 
   /** */
-  private void checkContext() throws SQLException {
+  private void checkContext() throws IOException {
     if (conn == null || conn.db == null || context == 0) {
-      throw new SQLException("no context, not allowed to read value");
+      throw new IOException("no context, not allowed to read value");
     }
   }
 
   /**
    */
-  private void checkValue(int arg) throws SQLException {
+  private void checkValue(int arg) throws IOException {
     if (conn == null || conn.db == null || value == 0) {
-      throw new SQLException("not in value access state");
+      throw new IOException("not in value access state");
     }
     if (arg >= args) {
-      throw new SQLException("arg " + arg + " out bounds [0," + args + ")");
+      throw new IOException("arg " + arg + " out bounds [0," + args + ")");
     }
   }
 
@@ -213,7 +209,7 @@ public abstract class Function {
    * @param name The name of the function.
    * @param f    The function to register.
    */
-  public static void create(SqliteConnection conn, String name, Function f) throws SQLException {
+  public static void create(SqliteConnection conn, String name, Function f) throws IOException {
     create(conn, name, f, 0);
   }
 
@@ -226,7 +222,7 @@ public abstract class Function {
    * @param flags Extra flags to pass, such as {@link #FLAG_DETERMINISTIC}
    */
   public static void create(SqliteConnection conn, String name, Function f, int flags)
-    throws SQLException {
+    throws IOException {
     create(conn, name, f, -1, flags);
   }
 
@@ -240,20 +236,20 @@ public abstract class Function {
    * @param flags Extra flags to pass, such as {@link #FLAG_DETERMINISTIC}
    */
   public static void create(SqliteConnection conn, String name, Function f, int nArgs, int flags)
-    throws SQLException {
+    throws IOException {
     if (conn.isClosed()) {
-      throw new SQLException("connection closed");
+      throw new IOException("connection closed");
     }
 
     f.conn = conn;
     f.db = f.conn.db;
 
     if (nArgs < -1 || nArgs > 127) {
-      throw new SQLException("invalid args provided: " + nArgs);
+      throw new IOException("invalid args provided: " + nArgs);
     }
 
-    if (f.db.create_function(name, f, nArgs, flags) != Codes.SQLITE_OK) {
-      throw new SQLException("error creating function");
+    if (f.db.create_function(name, f, nArgs, flags) != SqliteCodes.SQLITE_OK) {
+      throw new IOException("error creating function");
     }
   }
 
@@ -264,7 +260,7 @@ public abstract class Function {
    * @param name  The name of the function.
    * @param nArgs Ignored.
    */
-  public static void destroy(SqliteConnection conn, String name, int nArgs) throws SQLException {
+  public static void destroy(SqliteConnection conn, String name, int nArgs) {
     conn.db.destroy_function(name);
   }
 
@@ -274,7 +270,7 @@ public abstract class Function {
    * @param conn The connection to remove the function from.
    * @param name The name of the function.
    */
-  public static void destroy(SqliteConnection conn, String name) throws SQLException {
+  public static void destroy(SqliteConnection conn, String name) {
     destroy(conn, name, -1);
   }
 
