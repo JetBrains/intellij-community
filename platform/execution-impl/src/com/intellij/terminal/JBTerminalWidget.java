@@ -88,6 +88,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     myProject = project;
     addHyperlinkFilter(line -> runFilters(project, line));
     Disposer.register(parent, this);
+    Disposer.register(this, myBridge);
     setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
       @Override
       public Component getDefaultComponent(Container aContainer) {
