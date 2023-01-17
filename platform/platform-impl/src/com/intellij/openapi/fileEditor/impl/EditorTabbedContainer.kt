@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ComponentWithMnemonics
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.GuiUtils
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
@@ -582,6 +583,19 @@ private class EditorTabs(
   }
 
   private inner class EditorTabLabel(private val info: TabInfo) : SingleHeightLabel(this, info) {
+
+    override fun updateUI() {
+      super.updateUI()
+      updateFont()
+    }
+
+    private fun updateFont() {
+      val font = JBUI.CurrentTheme.EditorTabs.font()
+      GuiUtils.iterateChildren(this, { c ->
+        c.font = font
+      })
+    }
+
     override fun getPreferredHeight(): Int {
       val insets = insets
       val layoutInsets = layoutInsets

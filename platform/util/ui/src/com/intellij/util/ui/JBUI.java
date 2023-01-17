@@ -8,6 +8,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.border.NamedBorderKt;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -610,6 +611,19 @@ public final class JBUI {
       public static @NotNull Color underlinedTabForeground() {
         return JBColor.namedColor("EditorTabs.underlinedTabForeground", DefaultTabs.underlinedTabForeground());
       }
+
+      public static @NotNull Font font() {
+        return ObjectUtils.coalesce(UIManager.getFont(fontKey()), defaultFont());
+      }
+
+      public static String fontKey() {
+        return "EditorTabs.font";
+      }
+
+      public static @NotNull Font defaultFont() {
+        return JBFont.label();
+      }
+
     }
 
     public interface Editor {
