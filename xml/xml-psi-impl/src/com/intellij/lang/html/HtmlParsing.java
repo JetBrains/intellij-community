@@ -466,6 +466,10 @@ public class HtmlParsing {
 
   @Nullable
   protected Boolean childTerminatesParent(final String childName, final String parentName, int tagLevel) {
+    return childTerminatesParent(childName, parentName);
+  }
+
+  public static Boolean childTerminatesParent(final String childName, final String parentName) {
     final boolean isCell = TD_TAG.equals(childName) || TH_TAG.equals(childName);
     final boolean isRow = TR_TAG.equals(childName);
     final boolean isStructure = isStructure(childName);
