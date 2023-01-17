@@ -2114,7 +2114,6 @@ public final class ContainerUtil {
    * If you need a mutable {@link Set} pre-populated with elements, use {@link #newHashSet}
    */
   @SafeVarargs
-  @Unmodifiable
   public static @NotNull <T> Set<T> set(T @NotNull ... items) {
     //noinspection SSBasedInspection
     return new HashSet<>(Arrays.asList(items));
