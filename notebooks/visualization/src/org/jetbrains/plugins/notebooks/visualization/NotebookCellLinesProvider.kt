@@ -19,9 +19,14 @@ interface NotebookCellLinesProvider : IntervalsGenerator {
     fun install(editor: Editor): NotebookCellLinesProvider? {
       get(editor.document)?.let { return it }
       val project = editor.project ?: return null
-      val language = getLanguage(project, editor.document) ?: return null
+      return install(project, editor.document)
+    }
+
+    fun install(project: Project, document: Document): NotebookCellLinesProvider? {
+      get(document)?.let { return it }
+      val language = getLanguage(project, document) ?: return null
       val provider = forLanguage(language) ?: return null
-      key.set(editor.document, provider)
+      key.set(document, provider)
       return provider
     }
 

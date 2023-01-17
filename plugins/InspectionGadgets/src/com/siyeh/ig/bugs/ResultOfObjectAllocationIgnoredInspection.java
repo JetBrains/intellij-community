@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 /**
  * @author Bas Leijdekkers
@@ -33,8 +33,8 @@ public class ResultOfObjectAllocationIgnoredInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("ignoredClasses", InspectionGadgetsBundle.message("options.label.ignored.classes"),
-                        new JavaClassValidator().withTitle(
+      stringList("ignoredClasses", InspectionGadgetsBundle.message("options.label.ignored.classes"),
+                 new JavaClassValidator().withTitle(
                           InspectionGadgetsBundle.message("result.of.object.allocation.ignored.options.chooserTitle"))));
   }
 

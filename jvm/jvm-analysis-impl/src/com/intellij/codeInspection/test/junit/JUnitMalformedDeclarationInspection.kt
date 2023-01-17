@@ -13,7 +13,7 @@ import com.intellij.codeInspection.*
 import com.intellij.codeInspection.fix.CompositeIntentionQuickFix
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.pane
-import com.intellij.codeInspection.options.OptPane.stringSet
+import com.intellij.codeInspection.options.OptPane.stringList
 import com.intellij.codeInspection.test.junit.references.MethodSourceReference
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.Language
@@ -48,9 +48,9 @@ class JUnitMalformedDeclarationInspection : AbstractBaseUastLocalInspectionTool(
   val ignorableAnnotations = mutableListOf("mockit.Mocked", "org.junit.jupiter.api.io.TempDir")
 
   override fun getOptionsPane(): OptPane = pane(
-    stringSet("ignorableAnnotations",
-              JvmAnalysisBundle.message("jvm.inspections.junit.malformed.option.ignore.test.parameter.if.annotated.by"),
-              JavaClassValidator().annotationsOnly()))
+    stringList("ignorableAnnotations",
+               JvmAnalysisBundle.message("jvm.inspections.junit.malformed.option.ignore.test.parameter.if.annotated.by"),
+               JavaClassValidator().annotationsOnly()))
 
   private fun shouldInspect(file: PsiFile) = isJUnit3InScope(file) || isJUnit4InScope(file) || isJUnit5InScope(file)
 

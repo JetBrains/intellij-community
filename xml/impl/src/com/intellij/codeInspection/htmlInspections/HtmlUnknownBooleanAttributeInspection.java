@@ -27,7 +27,7 @@ public class HtmlUnknownBooleanAttributeInspection extends HtmlUnknownBooleanAtt
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("myCustomValuesEnabled", XmlAnalysisBundle.message("html.inspections.unknown.tag.boolean.attribute.checkbox.title"),
-               stringSet("myValues", XmlAnalysisBundle.message("html.inspections.unknown.tag.boolean.attribute.title")))
+               stringList("myValues", XmlAnalysisBundle.message("html.inspections.unknown.tag.boolean.attribute.title")))
     );
   }
 }

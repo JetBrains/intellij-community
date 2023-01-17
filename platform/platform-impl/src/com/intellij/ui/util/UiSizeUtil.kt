@@ -46,3 +46,27 @@ private fun <Receiver> dimensionProperty(
 fun JComponent.getTextWidth(text: @NlsSafe String): Int {
   return getFontMetrics(font).stringWidth(text)
 }
+
+/**
+ * @return the number of chars in [text] that fit in the given [availTextWidth].
+ */
+fun JComponent.getAvailTextLength(text: @NlsSafe String, availTextWidth: Int): Int {
+  if (availTextWidth <= 0) return 0
+
+  val fm = getFontMetrics(font)
+  var maxBranchWidth = 0
+  var maxBranchLength = 0
+
+  for (ch in text) {
+    if (maxBranchWidth >= availTextWidth) {
+      maxBranchLength--
+      break
+    }
+    else {
+      maxBranchLength++
+    }
+    maxBranchWidth += fm.charWidth(ch)
+  }
+
+  return maxBranchLength
+}

@@ -33,6 +33,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -73,32 +74,32 @@ import java.util.zip.ZipInputStream;
 public class TemplateModuleBuilder extends ModuleBuilder {
   private static final Logger LOG = Logger.getInstance(TemplateModuleBuilder.class);
 
-  private final ModuleType<?> myType;
-  private final List<WizardInputField<?>> myAdditionalFields;
+  private final NotNullLazyValue<ModuleType<?>> myType;
+  private final NotNullLazyValue<List<WizardInputField<?>>> myAdditionalFields;
   private final ArchivedProjectTemplate myTemplate;
   private boolean myProjectMode;
 
-  public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType<?> moduleType, @NotNull List<WizardInputField<?>> additionalFields) {
+  public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType<?> moduleType, List<WizardInputField<?>> additionalFields) {
     myTemplate = template;
-    myType = moduleType;
-    myAdditionalFields = additionalFields;
+    myType = moduleType != null ? NotNullLazyValue.createConstantValue(moduleType) : NotNullLazyValue.lazy(() -> template.getModuleType());
+    myAdditionalFields = additionalFields != null ? NotNullLazyValue.createConstantValue(additionalFields) :  NotNullLazyValue.lazy(() -> template.getInputFields());
   }
 
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
-    ModuleBuilder builder = myType.createModuleBuilder();
+    ModuleBuilder builder = myType.getValue().createModuleBuilder();
     return builder.createWizardSteps(wizardContext, modulesProvider);
   }
 
   @Override
   public ModuleWizardStep[] createFinishingSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
-    ModuleBuilder builder = myType.createModuleBuilder();
+    ModuleBuilder builder = myType.getValue().createModuleBuilder();
     return builder.createFinishingSteps(wizardContext, modulesProvider);
   }
 
   @Override
   protected @NotNull List<WizardInputField<?>> getAdditionalFields() {
-    return myAdditionalFields;
+    return myAdditionalFields.getValue();
   }
 
   @Override
@@ -147,7 +148,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   @Override
   public ModuleType<?> getModuleType() {
-    return myType;
+    return myTemplate.getModuleType();
   }
 
   @Override
@@ -176,7 +177,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   private void fixModuleName(@NotNull Module module) {
     ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    for (WizardInputField<?> field : myAdditionalFields) {
+    for (WizardInputField<?> field : getAdditionalFields()) {
       ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(field.getId());
       if (factory != null) {
         factory.applyResult(field.getValue(), model);
@@ -341,18 +342,17 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     return "/" + value.replace('.', '/') + "/";
   }
 
-  @SuppressWarnings("UseOfPropertiesAsHashtable")
   private byte @Nullable [] processTemplates(@Nullable String projectName, String content, File file, Consumer<? super VelocityException> exceptionConsumer)
     throws IOException {
     String patchedContent = content;
     if (!(myTemplate instanceof LocalArchivedTemplate) || ((LocalArchivedTemplate)myTemplate).isEscaped()) {
-      for (WizardInputField<?> field : myAdditionalFields) {
+      for (WizardInputField<?> field : getAdditionalFields()) {
         if (!field.acceptFile(file)) {
           return null;
         }
       }
       Properties properties = FileTemplateManager.getDefaultInstance().getDefaultProperties();
-      for (WizardInputField<?> field : myAdditionalFields) {
+      for (WizardInputField<?> field : getAdditionalFields()) {
         properties.putAll(field.getValues());
       }
       if (projectName != null) {
@@ -379,7 +379,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   @Override
   public boolean isSuitableSdkType(SdkTypeId sdkType) {
-    return myType.createModuleBuilder().isSuitableSdkType(sdkType);
+    return myTemplate.getModuleType().createModuleBuilder().isSuitableSdkType(sdkType);
   }
 
   @Override

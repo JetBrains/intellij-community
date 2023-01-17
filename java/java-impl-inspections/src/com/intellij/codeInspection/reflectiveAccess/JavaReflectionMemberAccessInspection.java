@@ -51,8 +51,8 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("ignoredClassNames", JavaBundle.message("inspection.reflection.member.access.check.exists.exclude.label"),
-                new JavaClassValidator().withTitle(JavaBundle.message("inspection.reflection.member.access.check.exists.exclude.chooser"))),
+      stringList("ignoredClassNames", JavaBundle.message("inspection.reflection.member.access.check.exists.exclude.label"),
+                 new JavaClassValidator().withTitle(JavaBundle.message("inspection.reflection.member.access.check.exists.exclude.chooser"))),
       checkbox("checkMemberExistsInNonFinalClasses", JavaBundle.message("inspection.reflection.member.access.check.exists"))
     );
   }

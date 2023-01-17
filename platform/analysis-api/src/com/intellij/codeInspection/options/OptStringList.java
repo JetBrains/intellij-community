@@ -13,10 +13,10 @@ import org.jetbrains.annotations.Nullable;
  * @param validator optional validator for content; can validate max-length or be something more complicated
  *                  (e.g., validate that a string is a class-name which is a subclass of specific class)
  */
-public record OptSet(@Language("jvm-field-name") @NotNull String bindId, 
-                     @NotNull LocMessage label, @Nullable StringValidator validator) implements OptControl {
+public record OptStringList(@Language("jvm-field-name") @NotNull String bindId,
+                            @NotNull LocMessage label, @Nullable StringValidator validator) implements OptControl {
   @Override
-  public @NotNull OptSet prefix(@NotNull String bindPrefix) {
-    return new OptSet(bindPrefix + "." + bindId, label, validator);
+  public @NotNull OptStringList prefix(@NotNull String bindPrefix) {
+    return new OptStringList(bindPrefix + "." + bindId, label, validator);
   }
 }

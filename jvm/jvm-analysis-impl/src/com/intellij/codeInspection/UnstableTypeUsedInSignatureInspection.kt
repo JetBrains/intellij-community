@@ -7,7 +7,7 @@ import com.intellij.codeInsight.options.JavaClassValidator
 import com.intellij.codeInspection.AnnotatedApiUsageUtil.findAnnotatedTypeUsedInDeclarationSignature
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.pane
-import com.intellij.codeInspection.options.OptPane.stringSet
+import com.intellij.codeInspection.options.OptPane.stringList
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElementVisitor
@@ -39,8 +39,8 @@ class UnstableTypeUsedInSignatureInspection : LocalInspectionTool() {
   }
 
   override fun getOptionsPane(): OptPane = pane(
-    stringSet("unstableApiAnnotations", JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.annotations.list"),
-                      JavaClassValidator().annotationsOnly())
+    stringList("unstableApiAnnotations", JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.annotations.list"),
+               JavaClassValidator().annotationsOnly())
   )
 }
 

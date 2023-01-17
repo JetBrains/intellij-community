@@ -44,7 +44,6 @@ import org.jetbrains.uast.*;
 import java.util.*;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
 
 public final class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLocalInspectionTool {
   private static final Key<SuspiciousPackagePrivateAccessInspection> INSPECTION_KEY = Key.create("SuspiciousPackagePrivateAccess");
@@ -260,7 +259,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("MODULES_SETS_LOADED_TOGETHER", InspectionGadgetsBundle.message("groups.of.modules.loaded.together.label"))
+      OptPane.stringList("MODULES_SETS_LOADED_TOGETHER", InspectionGadgetsBundle.message("groups.of.modules.loaded.together.label"))
     );
   }
 

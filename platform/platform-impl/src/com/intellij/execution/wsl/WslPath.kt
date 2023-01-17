@@ -5,10 +5,19 @@ import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import com.intellij.openapi.vfs.impl.wsl.WslConstants
 
-data class WslPath(val distributionId: String, val linuxPath: String) {
+data class WslPath(private val prefix: String, val distributionId: String, val linuxPath: String) {
+  init {
+    if (!prefix.endsWith("\\")) {
+      throw AssertionError("$prefix should end with \\")
+    }
+  }
+
   val distribution: WSLDistribution by lazy {
     WslDistributionManager.getInstance().getOrCreateDistributionByMsId(distributionId)
   }
+
+  val wslRoot: String
+    get() = prefix + distributionId
 
   companion object {
     @JvmStatic
@@ -22,7 +31,7 @@ data class WslPath(val distributionId: String, val linuxPath: String) {
       if (path.startsWith(prefix, true)) {
         val slashIndex = path.indexOf('\\', prefix.length)
         if (slashIndex > prefix.length) {
-          return WslPath(path.substring(prefix.length, slashIndex), toSystemIndependentName(path.substring(slashIndex)))
+          return WslPath(prefix, path.substring(prefix.length, slashIndex), toSystemIndependentName(path.substring(slashIndex)))
         }
       }
       return null

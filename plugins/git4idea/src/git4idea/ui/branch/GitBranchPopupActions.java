@@ -67,7 +67,7 @@ public class GitBranchPopupActions {
   public static final @NonNls String EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP = "Git.Experimental.Branch.Popup.Actions";
 
   private static final int MAX_BRANCH_NAME_LENGTH = 40;
-  private static final int BRANCH_NAME_LENGHT_DELTA = 4;
+  private static final int BRANCH_NAME_LENGTH_DELTA = 4;
   private static final int BRANCH_NAME_SUFFIX_LENGTH = 5;
   private final Project myProject;
   private final GitRepository myRepository;
@@ -236,25 +236,31 @@ public class GitBranchPopupActions {
   @NlsSafe
   @NotNull
   public static String truncateBranchName(@NotNull @NlsSafe String branchName, @NotNull Project project) {
+    return truncateBranchName(project, branchName,
+                              MAX_BRANCH_NAME_LENGTH, BRANCH_NAME_SUFFIX_LENGTH, BRANCH_NAME_LENGTH_DELTA);
+  }
+
+  @NlsSafe
+  @NotNull
+  public static String truncateBranchName(@NotNull Project project, @NotNull @NlsSafe String branchName,
+                                          int maxBranchNameLength, int suffixLength, int delta) {
     int branchNameLength = branchName.length();
 
-    if (branchNameLength <= MAX_BRANCH_NAME_LENGTH + BRANCH_NAME_LENGHT_DELTA) {
+    if (branchNameLength <= maxBranchNameLength + delta) {
       return branchName;
     }
 
     IssueNavigationConfiguration issueNavigationConfiguration = IssueNavigationConfiguration.getInstance(project);
     List<IssueNavigationConfiguration.LinkMatch> issueMatches = issueNavigationConfiguration.findIssueLinks(branchName);
+    int affectedMaxBranchNameLength = maxBranchNameLength - StringUtil.ELLIPSIS.length();
     if (issueMatches.size() != 0) {
       // never truncate the first occurrence of the issue id
       IssueNavigationConfiguration.LinkMatch firstMatch = issueMatches.get(0);
       TextRange firstMatchRange = firstMatch.getRange();
-      return truncateAndSaveIssueId(firstMatchRange, branchName, MAX_BRANCH_NAME_LENGTH, BRANCH_NAME_SUFFIX_LENGTH,
-                                    BRANCH_NAME_LENGHT_DELTA);
+      return truncateAndSaveIssueId(firstMatchRange, branchName, affectedMaxBranchNameLength, suffixLength, delta);
     }
 
-    return StringUtil.shortenTextWithEllipsis(branchName,
-                                              MAX_BRANCH_NAME_LENGTH,
-                                              BRANCH_NAME_SUFFIX_LENGTH, true);
+    return StringUtil.shortenTextWithEllipsis(branchName, affectedMaxBranchNameLength, suffixLength, true);
   }
 
   @NlsSafe

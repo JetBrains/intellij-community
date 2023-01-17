@@ -25,7 +25,6 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
 
 public final class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
   private static final String ADDITIONAL_LANGUAGES_ATTR_NAME = "additionalLanguages";
@@ -65,7 +64,7 @@ public final class SuspiciousLocalesLanguagesInspection extends LocalInspectionT
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    return pane(stringSet("myAdditionalLanguages", JavaI18nBundle.message("dissociate.resource.bundle.quick.fix.options.label")));
+    return pane(OptPane.stringList("myAdditionalLanguages", JavaI18nBundle.message("dissociate.resource.bundle.quick.fix.options.label")));
   }
 
   @Override

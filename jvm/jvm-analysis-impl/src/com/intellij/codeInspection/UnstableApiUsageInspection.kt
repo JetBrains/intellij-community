@@ -63,8 +63,8 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
       checkbox("myIgnoreInsideImports", JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.inside.imports")),
       checkbox("myIgnoreApiDeclaredInThisProject", JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.declared.inside.this.project")),
       //TODO in add annotation window "Include non-project items" should be enabled by default
-      stringSet("unstableApiAnnotations", JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.annotations.list"),
-                JavaClassValidator().annotationsOnly())
+      stringList("unstableApiAnnotations", JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.annotations.list"),
+                 JavaClassValidator().annotationsOnly())
     )
   }
 }

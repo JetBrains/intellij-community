@@ -44,7 +44,6 @@ import org.jetbrains.lang.manifest.psi.Header;
 import java.util.*;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
 
 /**
  * @author Robert F. Beeger (robert@beeger.net)
@@ -110,7 +109,7 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    return pane(stringSet("CUSTOM_HEADERS", ManifestBundle.message("inspection.header.ui.label")));
+    return pane(OptPane.stringList("CUSTOM_HEADERS", ManifestBundle.message("inspection.header.ui.label")));
   }
 
   private static final class HeaderRenameQuickFix extends AbstractManifestQuickFix {

@@ -46,8 +46,8 @@ public abstract class SerializableInspectionBase extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     List<OptRegularComponent> components = new ArrayList<>();
-    components.add(OptPane.stringSet("superClassList", InspectionGadgetsBundle.message("ignore.classes.in.hierarchy.column.name"),
-                                     new JavaClassValidator()));
+    components.add(OptPane.stringList("superClassList", InspectionGadgetsBundle.message("ignore.classes.in.hierarchy.column.name"),
+                                      new JavaClassValidator()));
     components.addAll(getAdditionalOptions().components());
     components.add(OptPane.checkbox("ignoreAnonymousInnerClasses", InspectionGadgetsBundle.message("ignore.anonymous.inner.classes")));
     return new OptPane(components);

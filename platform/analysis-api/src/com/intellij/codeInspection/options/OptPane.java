@@ -304,8 +304,8 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
    * @return editable sorted list of unique strings
    */
   @Contract(pure = true)
-  public static @NotNull OptSet stringSet(@Language("jvm-field-name") @NotNull String bindId, @NotNull @NlsContexts.Label String label) {
-    return new OptSet(bindId, new PlainMessage(label), null);
+  public static @NotNull OptStringList stringList(@Language("jvm-field-name") @NotNull String bindId, @NotNull @NlsContexts.Label String label) {
+    return new OptStringList(bindId, new PlainMessage(label), null);
   }
 
   /**
@@ -316,9 +316,9 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
    * @return editable sorted list of unique strings
    */
   @Contract(pure = true)
-  public static @NotNull OptSet stringSet(@Language("jvm-field-name") @NotNull String bindId, @NotNull @NlsContexts.Label String label,
-                                          @NotNull StringValidator validator) {
-    return new OptSet(bindId, new PlainMessage(label), validator);
+  public static @NotNull OptStringList stringList(@Language("jvm-field-name") @NotNull String bindId, @NotNull @NlsContexts.Label String label,
+                                                  @NotNull StringValidator validator) {
+    return new OptStringList(bindId, new PlainMessage(label), validator);
   }
 
   /* Layout elements */

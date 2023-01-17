@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class ClassWithMultipleLoggersInspection extends BaseInspection {
 
@@ -54,8 +54,8 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("loggerNames", InspectionGadgetsBundle.message("logger.class.name"),
-                        new JavaClassValidator()
+      stringList("loggerNames", InspectionGadgetsBundle.message("logger.class.name"),
+                 new JavaClassValidator()
                           .withTitle(InspectionGadgetsBundle.message("choose.logger.class")))
     );
   }

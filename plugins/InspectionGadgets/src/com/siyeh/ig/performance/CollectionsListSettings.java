@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 /**
  * @author Dmitry Batkovich
@@ -85,9 +85,9 @@ public abstract class CollectionsListSettings {
   }
 
   public @NotNull OptPane getOptionPane() {
-    return pane(stringSet("myCollectionClassesRequiringCapacity",
-                          QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.options.label"),
-                          new JavaClassValidator().withTitle(
+    return pane(stringList("myCollectionClassesRequiringCapacity",
+                           QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.options.label"),
+                           new JavaClassValidator().withTitle(
                             QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.options.dialog.title"))));
   }
   

@@ -279,8 +279,8 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
       checkbox("doNotWeakenReturnType", InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.return.type")),
       checkbox("doNotWeakenInferredVariableType",
                InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.inferred.variable.type")),
-      stringSet("myStopClassSet", InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.table.label"),
-                new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.table"))));
+      stringList("myStopClassSet", InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.table.label"),
+                 new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.table"))));
   }
 
   private static class TypeMayBeWeakenedFix extends InspectionGadgetsFix {
