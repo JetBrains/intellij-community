@@ -2891,6 +2891,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/implicitCasts/ktij-16665.java");
         }
 
+        @TestMetadata("ktij-8518.java")
+        public void testKtij_8518() throws Exception {
+            runTest("testData/newJ2k/implicitCasts/ktij-8518.java");
+        }
+
         @TestMetadata("operationsWithChar.java")
         public void testOperationsWithChar() throws Exception {
             runTest("testData/newJ2k/implicitCasts/operationsWithChar.java");
