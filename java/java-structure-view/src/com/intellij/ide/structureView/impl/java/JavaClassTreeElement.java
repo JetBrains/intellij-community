@@ -18,15 +18,6 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     super(inherited, cls);
   }
 
-  /**
-   * @deprecated use {@link #JavaClassTreeElement(PsiClass, boolean)}
-   * @noinspection unused
-   */
-  @Deprecated(forRemoval = true)
-  public JavaClassTreeElement(PsiClass cls, boolean inherited, Set<PsiClass> parents) {
-    this(cls, inherited);
-  }
-
   @Override
   @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {

@@ -40,7 +40,6 @@ import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
-import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,14 +138,6 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
       myExcludedFilesScope = null;
       myCompilationAffectedModules.clear();
     }
-  }
-
-  /**
-   * @deprecated use {@link DirtyScopeHolder#upToDateCheckFinished(Collection, Collection)}
-   */
-  @Deprecated(forRemoval = true)
-  public void upToDateCheckFinished(Module @NotNull [] modules) {
-    upToDateCheckFinished(ArraysKt.asList(modules), Collections.emptyList());
   }
 
   public void upToDateCheckFinished(@Nullable Collection<@NotNull Module> allModules, @Nullable Collection<@NotNull Module> compiledModules) {
