@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.gradle.newTests.testProperties
 import org.jetbrains.kotlin.gradle.newTests.*
 
 object AndroidGradlePluginVersionTestsProperty : KotlinTestsResolvableProperty {
-    override val id: String = "android_gradle_plugin_version"
+    override val id: String = "AGP_VERSION"
 
     enum class Values(val acronym: String, val version: String) {
         MinSupported("MIN", "7.2"),
