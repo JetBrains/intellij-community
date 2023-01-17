@@ -4,8 +4,6 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
@@ -48,8 +46,7 @@ public class NonFinalUtilityClassInspection extends BaseInspection {
         return;
       }
 
-      final SearchScope scope = GlobalSearchScope.projectScope(aClass.getProject());
-      final Query<PsiClass> query = ClassInheritorsSearch.search(aClass, scope, true);
+      final Query<PsiClass> query = ClassInheritorsSearch.search(aClass, false);
       final PsiClass subclass = query.findFirst();
       if (subclass != null) {
         return;
