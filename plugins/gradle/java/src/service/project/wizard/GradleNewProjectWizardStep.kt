@@ -122,6 +122,8 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
           .columns(COLUMNS_SHORT)
           .bindItem(distributionTypeProperty)
       }
+      // TODO(@Pavel Porvatov) replace with visibleId and validation enableIf
+      // https://youtrack.jetbrains.com/issue/IDEA-310738/Kotlin-DSL-Cannot-disable-validation-for-invisible-components
       placeholderGroup {
         component(WRAPPER) {
           row {
