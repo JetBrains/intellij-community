@@ -6,8 +6,10 @@ import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.annotations.Nls
@@ -29,18 +31,29 @@ internal object LangDownloader {
     return true
   }
 
-  private fun runDownload(lang: Lang, project: Project?): Path? {
+  private fun runDownload(language: Lang, project: Project?): Path? {
     try {
-      val presentableName = msg("grazie.settings.proofreading.languages.download.name", lang.nativeName)
+      val presentableName = msg("grazie.settings.proofreading.languages.download.name", language.nativeName)
       return ProgressManager.getInstance().runProcessWithProgressSynchronously<Path, Exception>(
-        { doDownload(lang, presentableName) },
+        { performDownload(language, presentableName) },
         presentableName,
         false,
         project
       )
     } catch (exception: Throwable) {
-      return promptToSelectLanguageBundleManually(project, lang)
+      thisLogger().warn(exception)
+      return promptToSelectLanguageBundleManually(project, language)
     }
+  }
+
+  @Throws(IllegalStateException::class)
+  private fun performDownload(language: Lang, presentableName: @Nls String): Path? {
+    val bundle = doDownload(language, presentableName)
+    if (!GrazieRemote.isValidBundleForLanguage(language, bundle)) {
+      FileUtil.delete(bundle)
+      throw IllegalStateException("Failed to verify integrity of downloaded language bundle for language ${language.nativeName}.")
+    }
+    return bundle
   }
 
   private fun promptToSelectLanguageBundleManually(project: Project?, language: Lang): Path? {
