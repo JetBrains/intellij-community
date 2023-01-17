@@ -53,9 +53,14 @@ interface NotebookCellLines {
      * Called each time when document is changed, even if intervals are the same.
      * Contains DocumentEvent and additional information about intervals.
      * Components which work with intervals can simply listen for NotebookCellLinesEvent and don't subscribe for DocumentEvent.
+     * Listener shouldn't throw exceptions
      */
     fun documentChanged(event: NotebookCellLinesEvent)
 
+    /**
+     * Called each time before document is changed.
+     * Listener shouldn't throw exceptions
+     */
     fun beforeDocumentChange(event: NotebookCellLinesEventBeforeChange) {}
   }
 
