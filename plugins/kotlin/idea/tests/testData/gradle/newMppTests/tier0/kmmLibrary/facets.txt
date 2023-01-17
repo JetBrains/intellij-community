@@ -16,28 +16,28 @@ MODULES
     project.iosArm64Main
         externalProjectId = project
         languageLevel = 1.8
-        apiLevel = 1.7
+        apiLevel = 1.8
         mppVersion = M3
         dependsOnModuleNames = project:commonMain, project:iosMain
         targetPlatform = Native (ios_arm64)
     project.iosArm64Test
         externalProjectId = project
         languageLevel = 1.8
-        apiLevel = 1.7
+        apiLevel = 1.8
         mppVersion = M3
         dependsOnModuleNames = project:commonTest, project:iosTest
         targetPlatform = Native (ios_arm64)
     project.iosMain
         externalProjectId = project
         languageLevel = 1.8
-        apiLevel = 1.7
+        apiLevel = 1.8
         mppVersion = M3
         dependsOnModuleNames = project:commonMain
         targetPlatform = Native (ios_arm64)/Native (ios_x64)
     project.iosTest
         externalProjectId = project
         languageLevel = 1.8
-        apiLevel = 1.7
+        apiLevel = 1.8
         mppVersion = M3
         dependsOnModuleNames = project:commonTest
         additionalVisibleModuleNames = project:commonMain, project:iosMain
@@ -45,14 +45,14 @@ MODULES
     project.iosX64Main
         externalProjectId = project
         languageLevel = 1.8
-        apiLevel = 1.7
+        apiLevel = 1.8
         mppVersion = M3
         dependsOnModuleNames = project:commonMain, project:iosMain
         targetPlatform = Native (ios_x64)
     project.iosX64Test
         externalProjectId = project
         languageLevel = 1.8
-        apiLevel = 1.7
+        apiLevel = 1.8
         mppVersion = M3
         dependsOnModuleNames = project:commonTest, project:iosTest
         targetPlatform = Native (ios_x64)
