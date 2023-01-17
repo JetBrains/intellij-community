@@ -22,9 +22,6 @@ import com.intellij.refactoring.MoveInnerRefactoring;
 import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.move.moveInner.MoveInnerProcessor;
 
-/**
- * @author dsl
- */
 public class MoveInnerRefactoringImpl extends RefactoringImpl<MoveInnerProcessor> implements MoveInnerRefactoring {
   public MoveInnerRefactoringImpl(Project project,
                                   PsiClass innerClass,

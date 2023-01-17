@@ -22,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author dsl
- */
 public interface MatchProvider {
   /**
    * Call change signature here to avoid refactoring under write action

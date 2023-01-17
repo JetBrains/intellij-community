@@ -45,9 +45,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(InheritanceToDelegationProcessor.class);
   private final PsiClass myClass;

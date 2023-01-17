@@ -6,9 +6,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 
-/**
- * @author dsl
- */
 public final class InheritanceToDelegationUtil {
   private InheritanceToDelegationUtil() {
   }

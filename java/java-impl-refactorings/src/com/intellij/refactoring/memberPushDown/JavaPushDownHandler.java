@@ -42,9 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHandler, ContextAwareActionHandler {
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {

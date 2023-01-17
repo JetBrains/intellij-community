@@ -33,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(TurnRefsToSuperProcessorBase.class);
   protected PsiClass myClass;

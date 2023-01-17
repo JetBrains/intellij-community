@@ -11,9 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public abstract class BaseOccurrenceManager implements OccurrenceManager {
   private PsiExpression[] myOccurrences;
   private PsiElement myAnchorStatement;

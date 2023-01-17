@@ -22,9 +22,6 @@ import java.util.*;
 
 import static org.junit.Assert.assertFalse;
 
-/**
- * @author dsl
- */
 public class GraphGeneratorTest {
   @Test
   public void testEmptyGraph() {

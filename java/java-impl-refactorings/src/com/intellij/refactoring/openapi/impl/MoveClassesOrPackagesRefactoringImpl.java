@@ -11,9 +11,6 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackages
 
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class MoveClassesOrPackagesRefactoringImpl extends RefactoringImpl<MoveClassesOrPackagesProcessor> implements MoveClassesOrPackagesRefactoring {
 
 

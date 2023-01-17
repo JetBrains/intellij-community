@@ -25,9 +25,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 
-/**
- * @author dsl
- */
 public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
   protected final PsiMethod myMethod;
   protected final Object[] myVariables;

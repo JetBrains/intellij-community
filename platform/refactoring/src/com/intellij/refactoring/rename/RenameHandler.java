@@ -8,8 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows customizing UI/workflow of "Rename" refactoring.
- *
- * @author dsl
  */
 public interface RenameHandler extends RefactoringActionHandler {
   ExtensionPointName<RenameHandler> EP_NAME = new ExtensionPointName<>("com.intellij.renameHandler");

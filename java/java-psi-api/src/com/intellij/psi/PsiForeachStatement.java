@@ -19,8 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a Java enhanced {@code for}   statement.
- *
- * @author dsl
  */
 public interface PsiForeachStatement extends PsiForeachStatementBase {
   /**

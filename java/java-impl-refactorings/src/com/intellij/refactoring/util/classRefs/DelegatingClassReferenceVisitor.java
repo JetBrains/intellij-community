@@ -17,9 +17,6 @@ package com.intellij.refactoring.util.classRefs;
 
 import com.intellij.psi.*;
 
-/**
- * @author dsl
- */
 public class DelegatingClassReferenceVisitor implements ClassReferenceVisitor {
   private final ClassReferenceVisitor myDelegate;
 

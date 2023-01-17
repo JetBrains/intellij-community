@@ -23,8 +23,6 @@ import org.jetbrains.annotations.ApiStatus;
  * Returns {@code true} or {@code false} for the given input object.
  * <p/>
  * See {@link Conditions} for chained conditions.
- *
- * @author dsl
  */
 public interface Condition<T> {
   boolean value(T t);

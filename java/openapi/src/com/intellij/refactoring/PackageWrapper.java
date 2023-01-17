@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a package. 
- *  @author dsl
  */
 public class PackageWrapper {
   private final PsiManager myManager;

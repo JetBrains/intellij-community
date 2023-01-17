@@ -26,9 +26,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
 
-/**
- * @author dsl
- */
 public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessorBase {
   private static final Logger LOG = Logger.getInstance(ExtractSuperClassProcessor.class);
   protected PsiDirectory myTargetDirectory;

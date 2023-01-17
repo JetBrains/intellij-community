@@ -18,9 +18,6 @@ import java.util.*;
 import java.util.function.ObjIntConsumer;
 import java.util.function.ToIntFunction;
 
-/**
- * @author dsl, ven
- */
 public final class DFSTBuilder<Node> {
 
   private final @NotNull OutboundSemiGraph<Node> myGraph;

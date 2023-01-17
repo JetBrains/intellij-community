@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(ReplaceConstructorWithFactoryProcessor.class);
   private final PsiMethod myConstructor;

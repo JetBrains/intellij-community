@@ -34,7 +34,6 @@ import java.util.List;
  * <p/>
  * Invoke {@link #commit()} to persist changes, see also {@link ModuleRootModificationUtil}.
  *
- * @author dsl
  * @see ModuleRootManager#getModifiableModel()
  * @see ModuleRootModificationUtil
  */

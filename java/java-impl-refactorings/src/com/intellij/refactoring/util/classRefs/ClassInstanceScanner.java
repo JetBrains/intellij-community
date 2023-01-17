@@ -10,9 +10,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 
-/**
- * @author dsl
- */
 public class ClassInstanceScanner extends DelegatingClassReferenceVisitor {
   private static final Logger LOG = Logger.getInstance(ClassInstanceScanner.class);
   private final PsiClass myClass;

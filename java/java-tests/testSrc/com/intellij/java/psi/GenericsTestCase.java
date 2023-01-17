@@ -26,9 +26,6 @@ import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 
-/**
- * @author dsl
- */
 public abstract class GenericsTestCase extends JavaPsiTestCase {
   @Override
   protected void setUp() throws Exception {

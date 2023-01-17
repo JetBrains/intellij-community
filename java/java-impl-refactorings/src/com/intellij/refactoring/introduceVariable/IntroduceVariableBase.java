@@ -65,9 +65,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- * @author dsl
- */
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   public static class JavaReplaceChoice implements OccurrencesChooser.BaseReplaceChoice {
     public static final JavaReplaceChoice NO = new JavaReplaceChoice(ReplaceChoice.NO, null, false);

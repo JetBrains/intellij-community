@@ -30,9 +30,6 @@ import java.util.regex.Pattern;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
-/**
- * @author dsl
- */
 public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override

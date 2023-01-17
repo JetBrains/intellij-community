@@ -39,9 +39,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class ConvertToInstanceMethodHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance(ConvertToInstanceMethodHandler.class);
 

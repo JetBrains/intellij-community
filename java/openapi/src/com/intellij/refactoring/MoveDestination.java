@@ -26,7 +26,6 @@ import java.util.Collection;
  *
  * @see JavaRefactoringFactory#createSourceFolderPreservingMoveDestination(String) 
  * @see JavaRefactoringFactory#createSourceRootMoveDestination(String, VirtualFile)
- *  @author dsl
  */
 public interface MoveDestination {
   /**

@@ -17,9 +17,6 @@ package com.intellij.refactoring.util.occurrences;
 
 
 
-/**
- * @author dsl
- */
 public class NotInSuperCallOccurrenceFilter extends NotInSuperOrThisCallFilterBase {
   public static final OccurrenceFilter INSTANCE = new NotInSuperCallOccurrenceFilter();
 

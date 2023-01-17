@@ -22,9 +22,6 @@ import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * @author dsl
- */
 public class ExtractInterfaceProcessor extends ExtractSuperBaseProcessor {
   public ExtractInterfaceProcessor(Project project,
                boolean replaceInstanceOf,

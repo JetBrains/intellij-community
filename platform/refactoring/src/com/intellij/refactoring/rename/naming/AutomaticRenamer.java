@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public abstract class AutomaticRenamer {
   private static final Logger LOG = Logger.getInstance(AutomaticRenamer.class);
 

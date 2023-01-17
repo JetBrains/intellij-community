@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author dsl
- */
 public class PsiForeachStatementImpl extends PsiLoopStatementImpl implements PsiForeachStatement, Constants {
   private static final Logger LOG = Logger.getInstance(PsiForeachStatementImpl.class);
   public PsiForeachStatementImpl() {

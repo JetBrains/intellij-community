@@ -17,9 +17,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- *  @author dsl
- */
 public abstract class AutocreatingMoveDestination implements MoveDestination {
   @NotNull
   protected final PackageWrapper myPackage;

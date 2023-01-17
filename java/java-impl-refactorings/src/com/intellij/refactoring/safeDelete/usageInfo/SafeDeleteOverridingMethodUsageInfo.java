@@ -19,9 +19,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * @author dsl
- */
 public class SafeDeleteOverridingMethodUsageInfo extends SafeDeleteUsageInfo implements SafeDeleteCustomUsageInfo {
 
   public SafeDeleteOverridingMethodUsageInfo(PsiMethod overridingMethod, PsiMethod method) {

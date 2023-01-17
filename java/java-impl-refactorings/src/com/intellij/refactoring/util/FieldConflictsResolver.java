@@ -28,7 +28,6 @@ import java.util.List;
 /**
  *  Resolves conflicts with fields in a class, when new local variable is
  *  introduced in code block
- *  @author dsl
  */
 public class FieldConflictsResolver {
   private static final Logger LOG = Logger.getInstance(FieldConflictsResolver.class);
