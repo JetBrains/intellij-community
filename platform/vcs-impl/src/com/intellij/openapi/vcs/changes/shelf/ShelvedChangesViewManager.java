@@ -441,9 +441,6 @@ public class ShelvedChangesViewManager implements Disposable {
           .map(s -> s.getBinaryFile())
           .filterNotNull().toList();
       }
-      else if (VcsDataKeys.HAVE_SELECTED_CHANGES.is(dataId)) {
-        return getSelectionCount() > 0;
-      }
       else if (VcsDataKeys.CHANGES.is(dataId)) {
         List<ShelvedWrapper> shelvedChanges = VcsTreeModelData.selected(this).userObjects(ShelvedWrapper.class);
         if (!shelvedChanges.isEmpty()) {

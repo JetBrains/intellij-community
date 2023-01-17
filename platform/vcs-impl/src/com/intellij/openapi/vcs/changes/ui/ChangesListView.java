@@ -178,15 +178,6 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
         .map(LocallyDeletedChange::getPath)
         .toList();
     }
-    if (VcsDataKeys.HAVE_LOCALLY_DELETED.is(dataId)) {
-      return getSelectedLocallyDeletedChanges().isNotEmpty();
-    }
-    if (VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING.is(dataId)) {
-      return getSelectedModifiedWithoutEditing().isNotEmpty();
-    }
-    if (VcsDataKeys.HAVE_SELECTED_CHANGES.is(dataId)) {
-      return getSelectedChanges().isNotEmpty();
-    }
     if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
     }
