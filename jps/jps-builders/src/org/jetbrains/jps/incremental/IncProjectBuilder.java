@@ -1192,13 +1192,12 @@ public final class IncProjectBuilder {
 
     final List<TargetBuilder<?, ?>> builders = BuilderRegistry.getInstance().getTargetBuilders();
     int builderCount = 0;
-    boolean filesGenerated = false;
     for (TargetBuilder<?, ?> builder : builders) {
-      filesGenerated |= buildTarget(target, context, builder);
+      buildTarget(target, context, builder);
       builderCount++;
       buildProgress.updateProgress(target, ((double)builderCount)/builders.size(), context);
     }
-    return filesGenerated;
+    return true;
   }
 
   private static CompileContext wrapWithModuleInfoAppender(CompileContext context, Collection<ModuleBuildTarget> moduleTargets) {
@@ -1283,10 +1282,10 @@ public final class IncProjectBuilder {
   }
 
   private <R extends BuildRootDescriptor, T extends BuildTarget<R>>
-  boolean buildTarget(final T target, final CompileContext context, TargetBuilder<?, ?> builder) throws ProjectBuildException, IOException {
+  void buildTarget(final T target, final CompileContext context, TargetBuilder<?, ?> builder) throws ProjectBuildException, IOException {
 
     if (builder.getTargetTypes().contains(target.getTargetType())) {
-      DirtyFilesHolder<R, T> holder = new DirtyFilesHolderBase<>(context) {
+      DirtyFilesHolder<R, T> holder = new DirtyFilesHolderBase<R, T>(context) {
         @Override
         public void processDirtyFiles(@NotNull FileProcessor<R, T> processor) throws IOException {
           context.getProjectDescriptor().fsState.processFilesToRecompile(context, target, processor);
@@ -1294,19 +1293,11 @@ public final class IncProjectBuilder {
       };
       BuildOutputConsumerImpl outputConsumer = new BuildOutputConsumerImpl(target, context);
       long start = System.nanoTime();
-      //noinspection unchecked
-      TargetBuilder.ExitCode exitCode = ((TargetBuilder<R, T>)builder).buildTarget(target, holder, outputConsumer, context);
-      if (exitCode == TargetBuilder.ExitCode.ABORT) {
-        throw new StopBuildException(
-          JpsBuildBundle.message("build.message.builder.0.requested.build.stop", builder.getPresentableName())
-        );
-      }
+      ((TargetBuilder<R, T>)builder).build(target, holder, outputConsumer, context);
       storeBuilderStatistics(builder, System.nanoTime() - start, outputConsumer.getNumberOfProcessedSources());
       outputConsumer.fireFileGeneratedEvent();
       context.checkCanceled();
-      return exitCode != TargetBuilder.ExitCode.NOTHING_DONE;
     }
-    return false;
   }
 
   private static <T extends BuildRootDescriptor> void cleanOldOutputs(final CompileContext context, final BuildTarget<T> target) throws ProjectBuildException{

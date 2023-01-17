@@ -5,8 +5,8 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
-import org.jetbrains.jps.builders.impl.OutputTracker;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
@@ -38,20 +38,20 @@ public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescr
   }
 
   @Override
-  public ExitCode buildTarget(@NotNull final CheckResourcesTarget target,
-                              @NotNull DirtyFilesHolder<GroovyResourceRootDescriptor, CheckResourcesTarget> holder,
-                              @NotNull final BuildOutputConsumer outputConsumer,
-                              @NotNull CompileContext context) throws ProjectBuildException, IOException {
+  public void build(@NotNull final CheckResourcesTarget target,
+                    @NotNull DirtyFilesHolder<GroovyResourceRootDescriptor, CheckResourcesTarget> holder,
+                    @NotNull final BuildOutputConsumer outputConsumer,
+                    @NotNull CompileContext context) throws ProjectBuildException, IOException {
     if (context.getBuilderParameter(CHECKING_RESOURCES_REBUILD.toString()) == null) {
-      return ExitCode.NOTHING_DONE;
+      return;
     }
 
-    final OutputTracker out = OutputTracker.create(outputConsumer);
-    new ResourceCheckingGroovycRunner(target).doBuild(
-      context, singleModuleChunk(target.getModule()), holder, this,
-      (tgt, srcFile, outputFile, bytes) -> out.registerOutputFile(outputFile, Collections.singleton(srcFile.getPath()))
-    );
-    return out.isOutputGenerated()? ExitCode.OK : ExitCode.NOTHING_DONE;
+    new ResourceCheckingGroovycRunner(target).doBuild(context, singleModuleChunk(target.getModule()), holder, this, new GroovyOutputConsumer() {
+      @Override
+      public void registerCompiledClass(BuildTarget<?> target, File srcFile, File outputFile, byte[] bytes) throws IOException {
+        outputConsumer.registerOutputFile(outputFile, Collections.singleton(srcFile.getPath()));
+      }
+    });
   }
 
   @NotNull
