@@ -188,11 +188,11 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @TestOnly
   public void disposeContainer() {
+    joinBlocking(this);
     runWriteAction(() -> {
       startDispose();
       Disposer.dispose(this);
     });
-    joinBlocking(this);
     Disposer.assertIsEmpty();
   }
 

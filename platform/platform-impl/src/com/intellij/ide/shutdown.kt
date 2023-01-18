@@ -43,10 +43,7 @@ internal fun joinBlocking(containerScope: CoroutineScope, debugString: String, p
   }
   val containerJob = containerScope.coroutineContext.job
   LOG.trace("$debugString: joining scope")
-  if (!containerJob.isCancelled) {
-    LOG.error("$debugString: scope is expected to be cancelled during disposal")
-    containerJob.cancel()
-  }
+  containerJob.cancel()
   if (containerJob.isCompleted) {
     LOG.trace("$debugString: scope is already completed")
     return

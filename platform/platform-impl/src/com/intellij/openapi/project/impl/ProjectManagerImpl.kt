@@ -372,6 +372,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     // somebody can start progress here, do not wrap in write action
     fireProjectClosing(project)
+    if (project is ProjectImpl) {
+      joinBlocking(project)
+    }
     app.runWriteAction {
       removeFromOpened(project)
       @Suppress("GrazieInspection")
@@ -390,9 +393,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       if (dispose) {
         Disposer.dispose(project)
       }
-    }
-    if (project is ProjectImpl) {
-      joinBlocking(project)
     }
     return true
   }
