@@ -15,8 +15,9 @@ import com.intellij.workspaceModel.storage.entities.test.api.MySource
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import kotlin.test.assertEquals
 
 @RunInEdt
@@ -35,18 +36,34 @@ class OrphanageTest {
     Assumptions.assumeTrue(Orphanage.use)
   }
 
-  @Test
-  fun `adding content root`() {
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `adding content root`(orphanBeforeUpdate: Boolean) {
     val url = virtualFileManager.fromUrl("/123")
     runWriteAction {
-      projectModel.project.workspaceModel.orphanage.update { builder ->
-        builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
-          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
+      // List of operations as functions to support parametrized test. We call them in different order
+      val operations = listOf(
+        {
+          projectModel.project.workspaceModel.orphanage.update { builder ->
+            builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
+            }
+          }
+        },
+        {
+          WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+            it addEntity ModuleEntity("MyName", emptyList(), MySource)
+          }
         }
-      }
+      )
 
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        it addEntity ModuleEntity("MyName", emptyList(), MySource)
+      if (orphanBeforeUpdate) {
+        operations[0]()
+        operations[1]()
+      }
+      else {
+        operations[1]()
+        operations[0]()
       }
     }
 
@@ -60,20 +77,37 @@ class OrphanageTest {
     assertEquals(0, orphanModules.size)
   }
 
-  @Test
-  fun `adding content root to existing one duplicate`() {
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `adding content root to existing one duplicate`(orphanBeforeUpdate: Boolean) {
     val url = virtualFileManager.fromUrl("/123")
     runWriteAction {
-      projectModel.project.workspaceModel.orphanage.update { builder ->
-        builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
-          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
-        }
-      }
+      // List of operations as functions to support parametrized test. We call them in different order
+      val operations = listOf(
+        {
+          projectModel.project.workspaceModel.orphanage.update { builder ->
+            builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
+            }
+          }
 
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        it addEntity ModuleEntity("MyName", emptyList(), MySource) {
-          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
+        },
+        {
+          WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+            it addEntity ModuleEntity("MyName", emptyList(), MySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
+            }
+          }
         }
+      )
+
+      if (orphanBeforeUpdate) {
+        operations[0]()
+        operations[1]()
+      }
+      else {
+        operations[1]()
+        operations[0]()
       }
     }
 
@@ -87,21 +121,37 @@ class OrphanageTest {
     assertEquals(0, orphanModules.size)
   }
 
-  @Test
-  fun `adding content root to existing one`() {
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `adding content root to existing one`(orphanBeforeUpdate: Boolean) {
     val url = virtualFileManager.fromUrl("/123")
     val url2 = virtualFileManager.fromUrl("/1234")
     runWriteAction {
-      projectModel.project.workspaceModel.orphanage.update { builder ->
-        builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
-          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
+      // List of operations as functions to support parametrized test. We call them in different order
+      val operations = listOf(
+        {
+          projectModel.project.workspaceModel.orphanage.update { builder ->
+            builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
+            }
+          }
+        },
+        {
+          WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+            it addEntity ModuleEntity("MyName", emptyList(), MySource) {
+              this.contentRoots = listOf(ContentRootEntity(url2, emptyList(), MySource))
+            }
+          }
         }
-      }
+      )
 
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        it addEntity ModuleEntity("MyName", emptyList(), MySource) {
-          this.contentRoots = listOf(ContentRootEntity(url2, emptyList(), MySource))
-        }
+      if (orphanBeforeUpdate) {
+        operations[0]()
+        operations[1]()
+      }
+      else {
+        operations[1]()
+        operations[0]()
       }
     }
 
@@ -115,8 +165,9 @@ class OrphanageTest {
     assertEquals(0, orphanModules.size)
   }
 
-  @Test
-  fun `adding content root to removed module`() {
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `adding content root to removed module`(orphanBeforeUpdate: Boolean) {
     val url = virtualFileManager.fromUrl("/123")
     runWriteAction {
       projectModel.project.workspaceModel.orphanage.update { builder ->
@@ -145,18 +196,35 @@ class OrphanageTest {
     assertEquals(0, orphanModules.size)
   }
 
-  @Test
-  fun `do not add orphan content root`() {
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `do not add orphan content root`(orphanBeforeUpdate: Boolean) {
     val url = virtualFileManager.fromUrl("/123")
     runWriteAction {
-      projectModel.project.workspaceModel.orphanage.update { builder ->
-        builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
-          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource))
-        }
-      }
+      // List of operations as functions to support parametrized test. We call them in different order
+      val operations = listOf(
+        {
+          projectModel.project.workspaceModel.orphanage.update { builder ->
+            builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource))
+            }
+          }
+        },
+        {
+          WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+            it addEntity ModuleEntity("MyName", emptyList(), MySource)
+          }
 
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        it addEntity ModuleEntity("MyName", emptyList(), MySource)
+        }
+      )
+
+      if (orphanBeforeUpdate) {
+        operations[0]()
+        operations[1]()
+      }
+      else {
+        operations[1]()
+        operations[0]()
       }
     }
 
@@ -171,18 +239,35 @@ class OrphanageTest {
     assertEquals(1, orphanModules.single().contentRoots.size)
   }
 
-  @Test
-  fun `add content root to existing module`() {
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `add content root to existing module`(orphanBeforeUpdate: Boolean) {
     val url = virtualFileManager.fromUrl("/123")
     runWriteAction {
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        it addEntity ModuleEntity("MyName", emptyList(), MySource)
-      }
+      // List of operations as functions to support parametrized test. We call them in different order
+      val operations = listOf(
+        {
+          projectModel.project.workspaceModel.orphanage.update { builder ->
+            builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
+            }
+          }
+        },
+        {
+          WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+            it addEntity ModuleEntity("MyName", emptyList(), MySource)
+          }
 
-      projectModel.project.workspaceModel.orphanage.update { builder ->
-        builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
-          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
         }
+      )
+
+      if (orphanBeforeUpdate) {
+        operations[0]()
+        operations[1]()
+      }
+      else {
+        operations[1]()
+        operations[0]()
       }
     }
 
@@ -196,22 +281,38 @@ class OrphanageTest {
     assertEquals(0, orphanModules.size)
   }
 
-  @Test
-  fun `add content root to existing module and module remain in orphanage`() {
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `add content root to existing module and module remain in orphanage`(orphanBeforeUpdate: Boolean) {
     val url = virtualFileManager.fromUrl("/123")
     val url2 = virtualFileManager.fromUrl("/1233")
     runWriteAction {
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        it addEntity ModuleEntity("MyName", emptyList(), MySource)
-      }
-
-      projectModel.project.workspaceModel.orphanage.update { builder ->
-        builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
-          this.contentRoots = listOf(
-            ContentRootEntity(url, emptyList(), MySource),
-            ContentRootEntity(url2, emptyList(), OrphanageWorkerEntitySource),
-          )
+      // List of operations as functions to support parametrized test. We call them in different order
+      val operations = listOf(
+        {
+          projectModel.project.workspaceModel.orphanage.update { builder ->
+            builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
+              this.contentRoots = listOf(
+                ContentRootEntity(url, emptyList(), MySource),
+                ContentRootEntity(url2, emptyList(), OrphanageWorkerEntitySource),
+              )
+            }
+          }
+        },
+        {
+          WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+            it addEntity ModuleEntity("MyName", emptyList(), MySource)
+          }
         }
+      )
+
+      if (orphanBeforeUpdate) {
+        operations[0]()
+        operations[1]()
+      }
+      else {
+        operations[1]()
+        operations[0]()
       }
     }
 
@@ -227,23 +328,39 @@ class OrphanageTest {
     assertEquals(url2, remainedOrphanUrl)
   }
 
-  @Test
-  fun `adding source root`() {
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `adding source root`(orphanBeforeUpdate: Boolean) {
     val url = virtualFileManager.fromUrl("/123")
     val sourceUrl = virtualFileManager.fromUrl("/123/source")
     runWriteAction {
-      projectModel.project.workspaceModel.orphanage.update { builder ->
-        builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
-          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
-            this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
-          })
+      // List of operations as functions to support parametrized test. We call them in different order
+      val operations = listOf(
+        {
+          projectModel.project.workspaceModel.orphanage.update { builder ->
+            builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
+                this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
+              })
+            }
+          }
+        },
+        {
+          WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+            it addEntity ModuleEntity("MyName", emptyList(), MySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource))
+            }
+          }
         }
-      }
+      )
 
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        it addEntity ModuleEntity("MyName", emptyList(), MySource) {
-          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource))
-        }
+      if (orphanBeforeUpdate) {
+        operations[0]()
+        operations[1]()
+      }
+      else {
+        operations[1]()
+        operations[0]()
       }
     }
 
@@ -257,25 +374,41 @@ class OrphanageTest {
     assertEquals(0, orphanModules.size)
   }
 
-  @Test
-  fun `adding source root to existing one duplicate`() {
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `adding source root to existing one duplicate`(orphanBeforeUpdate: Boolean) {
     val url = virtualFileManager.fromUrl("/123")
     val sourceUrl = virtualFileManager.fromUrl("/123/source")
     runWriteAction {
-      projectModel.project.workspaceModel.orphanage.update { builder ->
-        builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
-          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
-            this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
-          })
+      // List of operations as functions to support parametrized test. We call them in different order
+      val operations = listOf(
+        {
+          projectModel.project.workspaceModel.orphanage.update { builder ->
+            builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
+                this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
+              })
+            }
+          }
+        },
+        {
+          WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+            it addEntity ModuleEntity("MyName", emptyList(), MySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource) {
+                this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
+              })
+            }
+          }
         }
-      }
+      )
 
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        it addEntity ModuleEntity("MyName", emptyList(), MySource) {
-          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource) {
-            this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
-          })
-        }
+      if (orphanBeforeUpdate) {
+        operations[0]()
+        operations[1]()
+      }
+      else {
+        operations[1]()
+        operations[0]()
       }
     }
 
@@ -289,26 +422,42 @@ class OrphanageTest {
     assertEquals(0, orphanModules.size)
   }
 
-  @Test
-  fun `adding source root to existing one`() {
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `adding source root to existing one`(orphanBeforeUpdate: Boolean) {
     val url = virtualFileManager.fromUrl("/123")
     val sourceUrl1 = virtualFileManager.fromUrl("/123/source1")
     val sourceUrl2 = virtualFileManager.fromUrl("/123/source2")
     runWriteAction {
-      projectModel.project.workspaceModel.orphanage.update { builder ->
-        builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
-          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
-            this.sourceRoots = listOf(SourceRootEntity(sourceUrl1, "", MySource))
-          })
+      // List of operations as functions to support parametrized test. We call them in different order
+      val operations = listOf(
+        {
+          projectModel.project.workspaceModel.orphanage.update { builder ->
+            builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
+                this.sourceRoots = listOf(SourceRootEntity(sourceUrl1, "", MySource))
+              })
+            }
+          }
+        },
+        {
+          WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+            it addEntity ModuleEntity("MyName", emptyList(), MySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
+                this.sourceRoots = listOf(SourceRootEntity(sourceUrl2, "", MySource))
+              })
+            }
+          }
         }
-      }
+      )
 
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        it addEntity ModuleEntity("MyName", emptyList(), MySource) {
-          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
-            this.sourceRoots = listOf(SourceRootEntity(sourceUrl2, "", MySource))
-          })
-        }
+      if (orphanBeforeUpdate) {
+        operations[0]()
+        operations[1]()
+      }
+      else {
+        operations[1]()
+        operations[0]()
       }
     }
 
@@ -322,8 +471,9 @@ class OrphanageTest {
     assertEquals(0, orphanModules.size)
   }
 
-  @Test
-  fun `adding source root to removed module`() {
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `adding source root to removed module`(orphanBeforeUpdate: Boolean) {
     val url = virtualFileManager.fromUrl("/123")
     val sourceUrl = virtualFileManager.fromUrl("/123/source1")
     runWriteAction {
@@ -357,23 +507,39 @@ class OrphanageTest {
     assertEquals(0, orphanModules.size)
   }
 
-  @Test
-  fun `adding exclude root`() {
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `adding exclude root`(orphanBeforeUpdate: Boolean) {
     val url = virtualFileManager.fromUrl("/123")
     val excludeUrl = virtualFileManager.fromUrl("/123/source")
     runWriteAction {
-      projectModel.project.workspaceModel.orphanage.update { builder ->
-        builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
-          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
-            this.excludedUrls = listOf(ExcludeUrlEntity(excludeUrl, MySource))
-          })
+      // List of operations as functions to support parametrized test. We call them in different order
+      val operations = listOf(
+        {
+          projectModel.project.workspaceModel.orphanage.update { builder ->
+            builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
+                this.excludedUrls = listOf(ExcludeUrlEntity(excludeUrl, MySource))
+              })
+            }
+          }
+        },
+        {
+          WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+            it addEntity ModuleEntity("MyName", emptyList(), MySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource))
+            }
+          }
         }
-      }
+      )
 
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        it addEntity ModuleEntity("MyName", emptyList(), MySource) {
-          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource))
-        }
+      if (orphanBeforeUpdate) {
+        operations[0]()
+        operations[1]()
+      }
+      else {
+        operations[1]()
+        operations[0]()
       }
     }
 
@@ -387,25 +553,41 @@ class OrphanageTest {
     assertEquals(0, orphanModules.size)
   }
 
-  @Test
-  fun `adding exclude root to existing one duplicate`() {
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `adding exclude root to existing one duplicate`(orphanBeforeUpdate: Boolean) {
     val url = virtualFileManager.fromUrl("/123")
     val excludeUrl = virtualFileManager.fromUrl("/123/source")
     runWriteAction {
-      projectModel.project.workspaceModel.orphanage.update { builder ->
-        builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
-          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
-            this.excludedUrls = listOf(ExcludeUrlEntity(excludeUrl, MySource))
-          })
+      // List of operations as functions to support parametrized test. We call them in different order
+      val operations = listOf(
+        {
+          projectModel.project.workspaceModel.orphanage.update { builder ->
+            builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
+                this.excludedUrls = listOf(ExcludeUrlEntity(excludeUrl, MySource))
+              })
+            }
+          }
+        },
+        {
+          WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+            it addEntity ModuleEntity("MyName", emptyList(), MySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource) {
+                this.excludedUrls = listOf(ExcludeUrlEntity(excludeUrl, MySource))
+              })
+            }
+          }
         }
-      }
+      )
 
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        it addEntity ModuleEntity("MyName", emptyList(), MySource) {
-          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource) {
-            this.excludedUrls = listOf(ExcludeUrlEntity(excludeUrl, MySource))
-          })
-        }
+      if (orphanBeforeUpdate) {
+        operations[0]()
+        operations[1]()
+      }
+      else {
+        operations[1]()
+        operations[0]()
       }
     }
 
@@ -419,26 +601,42 @@ class OrphanageTest {
     assertEquals(0, orphanModules.size)
   }
 
-  @Test
-  fun `adding exclude root to existing one`() {
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `adding exclude root to existing one`(orphanBeforeUpdate: Boolean) {
     val url = virtualFileManager.fromUrl("/123")
     val excludeUrl1 = virtualFileManager.fromUrl("/123/exclude1")
     val excludeUrl2 = virtualFileManager.fromUrl("/123/exclude2")
     runWriteAction {
-      projectModel.project.workspaceModel.orphanage.update { builder ->
-        builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
-          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
-            this.excludedUrls = listOf(ExcludeUrlEntity(excludeUrl1, MySource))
-          })
+      // List of operations as functions to support parametrized test. We call them in different order
+      val operations = listOf(
+        {
+          projectModel.project.workspaceModel.orphanage.update { builder ->
+            builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
+                this.excludedUrls = listOf(ExcludeUrlEntity(excludeUrl1, MySource))
+              })
+            }
+          }
+        },
+        {
+          WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+            it addEntity ModuleEntity("MyName", emptyList(), MySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
+                this.excludedUrls = listOf(ExcludeUrlEntity(excludeUrl2, MySource))
+              })
+            }
+          }
         }
-      }
+      )
 
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        it addEntity ModuleEntity("MyName", emptyList(), MySource) {
-          this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
-            this.excludedUrls = listOf(ExcludeUrlEntity(excludeUrl2, MySource))
-          })
-        }
+      if (orphanBeforeUpdate) {
+        operations[0]()
+        operations[1]()
+      }
+      else {
+        operations[1]()
+        operations[0]()
       }
     }
 
@@ -452,8 +650,9 @@ class OrphanageTest {
     assertEquals(0, orphanModules.size)
   }
 
-  @Test
-  fun `adding exclude root to removed module`() {
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `adding exclude root to removed module`(orphanBeforeUpdate: Boolean) {
     val url = virtualFileManager.fromUrl("/123")
     val excludeUrl = virtualFileManager.fromUrl("/123/source1")
     runWriteAction {
@@ -482,6 +681,55 @@ class OrphanageTest {
     val modules = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
       .entities(ModuleEntity::class.java)
     assertEquals(0, modules.toList().size)
+
+    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    assertEquals(0, orphanModules.size)
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `move both source and exclude root`(orphanBeforeUpdate: Boolean) {
+    val url = virtualFileManager.fromUrl("/123")
+    val excludeUrl = virtualFileManager.fromUrl("/123/source1")
+    val sourceUrl = virtualFileManager.fromUrl("/123/source2")
+    runWriteAction {
+      // List of operations as functions to support parametrized test. We call them in different order
+      val operations = listOf(
+        {
+          projectModel.project.workspaceModel.orphanage.update { builder ->
+            builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
+                this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
+                this.excludedUrls = listOf(ExcludeUrlEntity(excludeUrl, MySource))
+              })
+            }
+          }
+        },
+        {
+          WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+            it addEntity ModuleEntity("MyName", emptyList(), MySource) {
+              this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
+            }
+          }
+        }
+      )
+
+      if (orphanBeforeUpdate) {
+        operations[0]()
+        operations[1]()
+      }
+      else {
+        operations[1]()
+        operations[0]()
+      }
+    }
+
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
+    val contentRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
+      .entities(ModuleEntity::class.java).single().contentRoots.single()
+    assertEquals(excludeUrl, contentRoots.excludedUrls.single().url)
+    assertEquals(sourceUrl, contentRoots.sourceRoots.single().url)
 
     val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(0, orphanModules.size)

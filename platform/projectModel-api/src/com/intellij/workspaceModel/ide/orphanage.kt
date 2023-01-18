@@ -8,6 +8,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 
 class Orphanage(private val project: Project) {
@@ -35,41 +36,189 @@ class Orphanage(private val project: Project) {
                          ?.filterIsInstance<EntityChange.Added<ModuleEntity>>()
                          ?.map { it.entity } ?: return
 
-    val adder = ContentRootsAdder()
+    val adders = listOf(
+      ContentRootsAdder(),
+      SourceRootsAdder(),
+      ExcludesAdder(),
+    )
 
-    adder.collectUpdates(addedModules)
+    adders.forEach { it.collectUpdates(addedModules) }
 
-    if (adder.anyUpdates()) {
-      project.workspaceModel.updateProjectModel("Apply orphan elements to already existing entities") {
-        adder.applyUpdates(it)
+    if (adders.any { it.anyUpdates() }) {
+      project.workspaceModel.updateProjectModel("Apply orphan elements to already existing entities") { mutableBuilder ->
+        adders.forEach { it.applyUpdates(mutableBuilder) }
       }
     }
-    adder.cleanOrphanBuilder(builder)
+    adders.forEach { it.cleanOrphanBuilder(builder) }
   }
 
-  inner class ContentRootsAdder {
-    private lateinit var updates: List<Pair<ModuleEntity, List<ContentRootEntity.Builder>>>
-    private val entitiesToRemoveFromOrphanage = ArrayList<ContentRootEntity>()
+  interface Adder {
+    fun collectUpdates(addedModules: List<ModuleEntity>)
+    fun anyUpdates(): Boolean
+    fun applyUpdates(builder: MutableEntityStorage)
+    fun cleanOrphanBuilder(builder: MutableEntityStorage)
+  }
 
-    fun collectUpdates(addedModules: List<ModuleEntity>) {
+  inner class ExcludesAdder : Adder {
+    private val entitiesToRemoveFromOrphanage = ArrayList<ExcludeUrlEntity>()
+    lateinit var updates: List<Pair<ModuleEntity, List<Pair<VirtualFileUrl, List<ExcludeUrlEntity.Builder>>>>>
+    override fun collectUpdates(addedModules: List<ModuleEntity>) {
       updates = addedModules.mapNotNull { orphanModule ->
         val snapshot = project.workspaceModel.currentSnapshot
         val snapshotModule = snapshot.resolve(orphanModule.symbolicId) ?: return@mapNotNull null
 
-        val existingUrls = snapshotModule.contentRoots.map { it.url }
+        val existingContentUrls = snapshotModule.contentRoots
+          .associate { content -> content.url to content.excludedUrls.mapTo(HashSet()) { it.url } }
         val rootsToAdd = orphanModule.contentRoots
-          .filter { it.url !in existingUrls && it.entitySource !is OrphanageWorkerEntitySource }
-          .onEach { entitiesToRemoveFromOrphanage += it }
-          .map { it.createEntityTreeCopy() as ContentRootEntity.Builder }
-        snapshotModule to rootsToAdd
+          .filter { it.url in existingContentUrls && it.entitySource is OrphanageWorkerEntitySource }
+          .onEach { entitiesToRemoveFromOrphanage += it.excludedUrls }
+          .mapNotNull { contentRoot ->
+            val excludesUrl = contentRoot.excludedUrls
+              .filter { it.url !in (existingContentUrls[contentRoot.url] ?: emptyList()) }
+              .map { it.createEntityTreeCopy() as ExcludeUrlEntity.Builder }
+
+            if (excludesUrl.isNotEmpty()) {
+              contentRoot.url to excludesUrl
+            } else null
+          }
+
+        if (rootsToAdd.isNotEmpty()) snapshotModule to rootsToAdd else null
       }
     }
 
-    fun anyUpdates(): Boolean {
+    override fun anyUpdates(): Boolean {
       return updates.isNotEmpty()
     }
 
-    fun applyUpdates(builder: MutableEntityStorage) {
+    override fun applyUpdates(builder: MutableEntityStorage) {
+      // TODO: Looks like o^2
+      updates.forEach { (snapshotModule, data) ->
+        data.forEach inner@ { (rootUrl, newExcludes) ->
+          val contentRoot = snapshotModule.contentRoots.firstOrNull { it.url == rootUrl } ?: return@inner
+          builder.modifyEntity(contentRoot) {
+            this.excludedUrls += newExcludes
+          }
+        }
+      }
+    }
+
+    override fun cleanOrphanBuilder(builder: MutableEntityStorage) {
+      entitiesToRemoveFromOrphanage.forEach {
+        val moduleId = it.contentRoot!!.module.symbolicId
+        val contentUrl = it.contentRoot!!.url
+
+        builder.removeEntity(it)
+
+        val module = builder.resolve(moduleId) ?: return@forEach
+
+        // TODO: Another o^2?
+        val root = module.contentRoots.firstOrNull { it.url == contentUrl } ?: return@forEach
+        if (root.sourceRoots.isEmpty() && root.excludedUrls.isEmpty()) {
+          builder.removeEntity(root)
+
+          val moduleAgain = builder.resolve(moduleId) ?: return@forEach
+          if (moduleAgain.contentRoots.isEmpty()) {
+            builder.removeEntity(moduleAgain)
+          }
+        }
+      }
+    }
+  }
+
+  inner class SourceRootsAdder : Adder {
+    private val entitiesToRemoveFromOrphanage = ArrayList<SourceRootEntity>()
+    lateinit var updates: List<Pair<ModuleEntity, List<Pair<VirtualFileUrl, List<SourceRootEntity.Builder>>>>>
+    override fun collectUpdates(addedModules: List<ModuleEntity>) {
+      updates = addedModules.mapNotNull { orphanModule ->
+        val snapshot = project.workspaceModel.currentSnapshot
+        val snapshotModule = snapshot.resolve(orphanModule.symbolicId) ?: return@mapNotNull null
+
+        val existingContentUrls = snapshotModule.contentRoots
+          .associate { it.url to it.sourceRoots.mapTo(HashSet()) { it.url } }
+        val rootsToAdd = orphanModule.contentRoots
+          .filter { it.url in existingContentUrls && it.entitySource is OrphanageWorkerEntitySource }
+          .onEach { entitiesToRemoveFromOrphanage += it.sourceRoots }
+          .mapNotNull { contentRoot ->
+            val sourcesToAdd = contentRoot.sourceRoots
+              .filter { it.url !in (existingContentUrls[contentRoot.url] ?: emptyList()) }
+              .map { it.createEntityTreeCopy() as SourceRootEntity.Builder }
+
+            if (sourcesToAdd.isNotEmpty()) {
+              contentRoot.url to sourcesToAdd
+            } else null
+          }
+
+        if (rootsToAdd.isNotEmpty()) snapshotModule to rootsToAdd else null
+      }
+    }
+
+    override fun anyUpdates(): Boolean {
+      return updates.isNotEmpty()
+    }
+
+    override fun applyUpdates(builder: MutableEntityStorage) {
+      // TODO: Looks like o^2
+      updates.forEach { (snapshotModule, data) ->
+        data.forEach inner@ { (rootUrl, newSources) ->
+          val contentRoot = snapshotModule.contentRoots.firstOrNull { it.url == rootUrl } ?: return@inner
+          builder.modifyEntity(contentRoot) {
+            this.sourceRoots += newSources
+          }
+        }
+      }
+    }
+
+    override fun cleanOrphanBuilder(builder: MutableEntityStorage) {
+      entitiesToRemoveFromOrphanage.forEach {
+        val moduleId = it.contentRoot.module.symbolicId
+        val contentUrl = it.contentRoot.url
+
+        builder.removeEntity(it)
+
+        val module = builder.resolve(moduleId) ?: return@forEach
+
+        // TODO: Another o^2?
+        val root = module.contentRoots.firstOrNull { it.url == contentUrl } ?: return@forEach
+        if (root.sourceRoots.isEmpty() && root.excludedUrls.isEmpty()) {
+          builder.removeEntity(root)
+
+          val moduleAgain = builder.resolve(moduleId) ?: return@forEach
+          if (moduleAgain.contentRoots.isEmpty()) {
+            builder.removeEntity(moduleAgain)
+          }
+        }
+      }
+    }
+  }
+
+  inner class ContentRootsAdder : Adder {
+    private lateinit var updates: List<Pair<ModuleEntity, List<ContentRootEntity.Builder>>>
+    private val entitiesToRemoveFromOrphanage = ArrayList<ContentRootEntity>()
+
+    override fun collectUpdates(addedModules: List<ModuleEntity>) {
+      updates = addedModules.mapNotNull { orphanModule ->
+        val snapshot = project.workspaceModel.currentSnapshot
+        val snapshotModule = snapshot.resolve(orphanModule.symbolicId) ?: return@mapNotNull null
+
+        val existingUrls = snapshotModule.contentRoots.mapTo(HashSet()) { it.url }
+        val rootsToAdd = orphanModule.contentRoots
+          .filter { it.entitySource !is OrphanageWorkerEntitySource }
+          .onEach { entitiesToRemoveFromOrphanage += it }
+          .filter { it.url !in existingUrls } // TODO: Test this! Existing url is removed from orphanage
+          .map { it.createEntityTreeCopy() as ContentRootEntity.Builder }
+
+        if (rootsToAdd.isNotEmpty()) {
+          snapshotModule to rootsToAdd
+        }
+        else null
+      }
+    }
+
+    override fun anyUpdates(): Boolean {
+      return updates.isNotEmpty()
+    }
+
+    override fun applyUpdates(builder: MutableEntityStorage) {
       updates.forEach { (snapshotModule, rootsToAdd) ->
         builder.modifyEntity(snapshotModule) {
           this.contentRoots += rootsToAdd
@@ -77,7 +226,7 @@ class Orphanage(private val project: Project) {
       }
     }
 
-    fun cleanOrphanBuilder(builder: MutableEntityStorage) {
+    override fun cleanOrphanBuilder(builder: MutableEntityStorage) {
       entitiesToRemoveFromOrphanage.forEach {
         val moduleId = it.module.symbolicId
 
@@ -90,7 +239,6 @@ class Orphanage(private val project: Project) {
       }
     }
   }
-
 
   companion object {
     val use: Boolean by lazy { Registry.`is`("ide.workspace.model.separate.component.for.roots", false) }
@@ -250,7 +398,7 @@ class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
             ?.forEach { toRemove -> it.removeEntity(toRemove) }
 
           it.resolve(contentRoot.module.symbolicId)?.contentRoots?.firstOrNull { it.url == contentRoot.url }?.let { orphanRoot ->
-            if (orphanRoot.sourceRoots.isEmpty()) {
+            if (orphanRoot.excludedUrls.isEmpty() && orphanRoot.excludedUrls.isEmpty()) {
               it.removeEntity(orphanRoot)
             }
           }
@@ -322,7 +470,7 @@ class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
             ?.forEach { toRemove -> it.removeEntity(toRemove) }
 
           it.resolve(contentRoot.module.symbolicId)?.contentRoots?.firstOrNull { it.url == contentRoot.url }?.let { orphanRoot ->
-            if (orphanRoot.excludedUrls.isEmpty()) {
+            if (orphanRoot.excludedUrls.isEmpty() && orphanRoot.excludedUrls.isEmpty()) {
               it.removeEntity(orphanRoot)
             }
           }
