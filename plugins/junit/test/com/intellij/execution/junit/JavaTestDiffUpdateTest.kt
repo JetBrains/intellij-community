@@ -4,7 +4,18 @@ package com.intellij.execution.junit
 import com.intellij.openapi.editor.Document
 import org.intellij.lang.annotations.Language
 
+@Suppress("AssertBetweenInconvertibleTypes", "NewClassNamingConvention")
 class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
+  @Suppress("SameParameterValue")
+  private fun checkHasNoDiff(
+    @Language("Java") before: String,
+    testClass: String,
+    testName: String,
+    expected: String,
+    actual: String,
+    stackTrace: String
+  ) = checkHasNoDiff(before, testClass, testName, expected, actual, stackTrace, "java")
+
   @Suppress("SameParameterValue")
   private fun checkAcceptFullDiff(
     @Language("Java") before: String,
@@ -83,6 +94,46 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
           at org.junit.Assert.assertEquals(Assert.java:146)
           at MyJUnitTest.testFoo(MyJUnitTest.java:7)
       """.trimIndent())
+  }
+
+  fun `test accept diff is not available when expected is not a string literal`() {
+    checkHasNoDiff("""
+      import org.junit.Assert;
+      import org.junit.Test;
+      
+      public class MyJUnitTest {
+          @Test
+          public void testFoo() {
+              Assert.assertEquals(true, "actual");
+          }
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+      	at org.junit.Assert.fail(Assert.java:89)
+      	at org.junit.Assert.failNotEquals(Assert.java:835)
+      	at org.junit.Assert.assertEquals(Assert.java:120)
+      	at org.junit.Assert.assertEquals(Assert.java:146)
+      	at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+    """.trimIndent())
+  }
+
+  fun `test accept diff is not available when actual is not a string literal`() {
+    checkHasNoDiff("""
+      import org.junit.Assert;
+      import org.junit.Test;
+      
+      public class MyJUnitTest {
+          @Test
+          public void testFoo() {
+              Assert.assertEquals("actual", actual);
+          }
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+      	at org.junit.Assert.fail(Assert.java:89)
+      	at org.junit.Assert.failNotEquals(Assert.java:835)
+      	at org.junit.Assert.assertEquals(Assert.java:120)
+      	at org.junit.Assert.assertEquals(Assert.java:146)
+      	at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+    """.trimIndent())
   }
 
   fun `test accept text block diff`() {

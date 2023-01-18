@@ -7,7 +7,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.asSafely
-import com.siyeh.ig.testFrameworks.AssertHint.Companion.createAssertEqualsHint
+import com.siyeh.ig.testFrameworks.AssertHint
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.UParameter
 
@@ -34,7 +34,10 @@ class JavaTestDiffProvider : JvmTestDiffProvider() {
   override fun getExpected(call: PsiElement, param: UParameter?): PsiElement? {
     if (call !is PsiMethodCallExpression) return null
     val expr = if (param == null) {
-      createAssertEqualsHint(call)?.expected ?: return null
+      val assertHint = AssertHint.createAssertEqualsHint(call) ?: return null
+      if (assertHint.actual.type != PsiType.getJavaLangString(call.manager, call.resolveScope)) return null
+      if (assertHint.expected.type != PsiType.getJavaLangString(call.manager, call.resolveScope)) return null
+      assertHint.expected
     } else {
       val srcParam = param.sourcePsi?.asSafely<PsiParameter>()
       val paramList = srcParam?.parentOfType<PsiParameterList>()

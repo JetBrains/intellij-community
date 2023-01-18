@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.testIntegration
 import com.intellij.execution.testframework.JvmTestDiffProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiType
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.asSafely
 import com.siyeh.ig.testFrameworks.UAssertHint
@@ -35,7 +36,10 @@ class KotlinTestDiffProvider : JvmTestDiffProvider() {
         if (call !is KtCallExpression) return null
         val expr = if (param == null) {
             val uCallElement = call.toUElementOfType<UCallExpression>() ?: return null
-            UAssertHint.createAssertEqualsUHint(uCallElement)?.expected?.sourcePsi ?: return null
+            val assertHint = UAssertHint.createAssertEqualsUHint(uCallElement) ?: return null
+            if (assertHint.expected.getExpressionType() != PsiType.getJavaLangString(call.manager, call.resolveScope)) return null
+            if (assertHint.actual.getExpressionType() != PsiType.getJavaLangString(call.manager, call.resolveScope)) return null
+            assertHint.expected.sourcePsi ?: return null
         } else {
             val argument = call.valueArguments.firstOrNull {it.getArgumentName()?.asName?.asString() == param.name } ?: let {
                 val srcParam = param.sourcePsi?.asSafely<KtParameter>()
