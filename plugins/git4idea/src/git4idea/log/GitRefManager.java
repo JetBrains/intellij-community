@@ -441,6 +441,7 @@ public class GitRefManager implements VcsLogRefManager {
     @NotNull
     protected RefType getType(@NotNull VcsRef ref) {
       VcsRefType type = ref.getType();
+      String name = ref.getName();
       if (type == HEAD) {
         return RefType.HEAD;
       }
@@ -448,13 +449,13 @@ public class GitRefManager implements VcsLogRefManager {
         return RefType.TAG;
       }
       else if (type == LOCAL_BRANCH) {
-        if (ref.getName().equals(MASTER)) {
+        if (name.equals(MASTER) || name.equals(MAIN)) {
           return RefType.MASTER;
         }
         return RefType.LOCAL_BRANCH;
       }
       else if (type == REMOTE_BRANCH) {
-        if (ref.getName().equals(ORIGIN_MASTER)) {
+        if (name.equals(ORIGIN_MASTER) || name.equals(ORIGIN_MAIN)) {
           return RefType.ORIGIN_MASTER;
         }
         return RefType.REMOTE_BRANCH;
