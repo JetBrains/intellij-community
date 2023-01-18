@@ -222,7 +222,7 @@ public class ShowAffectedTestsAction extends AnAction {
         .map(m -> UastContextKt.toUElement(m))
         .filter(Objects::nonNull)
         .map(m -> ObjectUtils.tryCast(m.getJavaPsi(), PsiMethod.class))
-        .filter(Objects::nonNull)
+        .filter(m -> Objects.nonNull(m) && !ContainerUtil.exists(m.getParameterList().getParameters(), p -> p.getType() == PsiType.NULL))
         .toArray(PsiMethod.ARRAY_FACTORY::create);
     });
   }
