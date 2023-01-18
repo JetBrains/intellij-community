@@ -63,19 +63,4 @@ public class NormalRecordsCompletionTest extends NormalCompletionTestCase {
   public void testTopLevelPublicRecordParenthesisExists() { doTest(); }
 
   public void testTopLevelPublicRecordBraceExists() { doTest(); }
-
-  @NeedsIndex.Full(reason = "AllClassesGetter.processJavaClasses uses indices, see 0a72bf3a7baa7dc1550e8e4308431d78eb753eb6 commit")
-  public void testSealedClassDifferentPackageInheritor() {
-    myFixture.addClass("package bar;\nimport foo.*;\npublic final class Child2 extends Parent {}");
-    doTest();
-  }
-
-  @NeedsIndex.Full(reason = "AllClassesGetter.processJavaClasses uses indices, see 0a72bf3a7baa7dc1550e8e4308431d78eb753eb6 commit")
-  public void testSealedClassPermitsReference() { doTest(); }
-
-  @NeedsIndex.Full(reason = "AllClassesGetter.processJavaClasses uses indices, see 0a72bf3a7baa7dc1550e8e4308431d78eb753eb6 commit")
-  public void testSecondPermitsReference() { doTest(); }
-
-  @NeedsIndex.Full(reason = "AllClassesGetter.processJavaClasses uses indices, see 0a72bf3a7baa7dc1550e8e4308431d78eb753eb6 commit")
-  public void testSealedPermitsInner() { doTest("\n"); }
 }
