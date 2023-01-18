@@ -89,6 +89,7 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant</b>.
     <backgroundPostStartupActivity implementation="com.intellij.lang.ant.config.impl.AntShortcutStartupActivity"/>
 
     <externalSystemUnlinkedProjectAware implementation="com.intellij.lang.ant.config.impl.AntUnlinkedProjectAware"/>
+    <externalTextProvider implementation="com.intellij.lang.ant.config.impl.AntTextProvider"/>
     <iconMapper mappingFile="antIconMappings.json"/>
   </extensions>
 

@@ -14,15 +14,17 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Companion.LOG
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle.message
+import com.intellij.openapi.externalSystem.ui.ExternalSystemTextProvider
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.containers.DisposableWrapperList
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
+@ApiStatus.Internal
 @State(name = "UnlinkedProjectNotification", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 class UnlinkedProjectNotificationAware(private val project: Project) : PersistentStateComponent<UnlinkedProjectNotificationAware.State> {
   private val disabledNotifications = Collections.newSetFromMap<String>(ConcurrentHashMap())
@@ -33,7 +35,6 @@ class UnlinkedProjectNotificationAware(private val project: Project) : Persisten
 
     val systemId = unlinkedProjectAware.systemId
     val projectId = unlinkedProjectAware.getProjectId(externalProjectPath)
-    val systemName = systemId.readableName
 
     if (systemId.id in disabledNotifications) return
     if (projectId in notifiedNotifications) {
@@ -43,8 +44,9 @@ class UnlinkedProjectNotificationAware(private val project: Project) : Persisten
 
     val notificationManager = NotificationGroupManager.getInstance()
     val notificationGroup = notificationManager.getNotificationGroup(NOTIFICATION_GROUP_ID)
+    val textProvider = ExternalSystemTextProvider.getExtension(systemId)
     val notification = notificationGroup.createNotification(
-      message("unlinked.project.notification.title", systemName),
+      textProvider.getUPNText(projectId.projectName),
       NotificationType.INFORMATION
     )
     notification.setSuggestionType(true)
@@ -58,17 +60,19 @@ class UnlinkedProjectNotificationAware(private val project: Project) : Persisten
       }
     }, notificationDisposable)
 
-    notification.addAction(NotificationAction.createSimple(unlinkedProjectAware.getNotificationText()) {
+    notification.addAction(NotificationAction.createSimple(textProvider.getUPNLinkActionText()) {
       notification.expire()
       unlinkedProjectAware.linkAndLoadProject(project, externalProjectPath)
     })
-    notification.addAction(NotificationAction.createSimple(message("unlinked.project.notification.skip.action")) {
+    notification.addAction(NotificationAction.createSimple(textProvider.getUPNSkipActionText()) {
       notification.expire()
       disabledNotifications.add(systemId.id)
     })
     notification.contextHelpAction = object : DumbAwareAction(
       CommonBundle.getHelpButtonText(),
-      message("unlinked.project.notification.help.text", systemName), null) {
+      textProvider.getUPNHelpText(),
+      null
+    ) {
       override fun actionPerformed(e: AnActionEvent) {}
     }
 
