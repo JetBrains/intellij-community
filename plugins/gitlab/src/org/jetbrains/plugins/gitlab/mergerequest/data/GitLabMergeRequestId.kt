@@ -2,10 +2,9 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 interface GitLabMergeRequestId {
-  val id: Long
   val iid: String
 
-  data class Simple(override val id: Long, override val iid: String) : GitLabMergeRequestId {
-    constructor(id: GitLabMergeRequestId) : this(id.id, id.iid)
+  data class Simple(override val iid: String) : GitLabMergeRequestId {
+    constructor(id: GitLabMergeRequestId) : this(id.iid)
   }
 }

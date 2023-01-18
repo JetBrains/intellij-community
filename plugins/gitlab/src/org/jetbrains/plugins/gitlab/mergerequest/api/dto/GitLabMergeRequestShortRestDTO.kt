@@ -10,7 +10,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeStatus
 import java.util.*
 
 data class GitLabMergeRequestShortRestDTO(
-  override val id: Long,
+  val id: Long,
   override val iid: String,
   val projectId: Long,
   val title: String,
