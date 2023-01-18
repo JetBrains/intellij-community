@@ -10,6 +10,7 @@ import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
@@ -58,6 +59,12 @@ val MatchingHandler.withinHierarchyTextFilterSet: Boolean
     get() = this is SubstitutionHandler && (this.isSubtype || this.isStrictSubtype)
 
 fun KtDeclaration.resolveDeclType(): KotlinType? = (resolveToDescriptorIfAny() as? CallableDescriptor)?.returnType
+
+fun KtExpression.resolveReceiverType(): KotlinType? {
+    val descriptor = resolveToCall()?.resultingDescriptor?.containingDeclaration
+    if (descriptor is ClassDescriptor) return descriptor.classValueType ?: descriptor.defaultType
+    return null
+}
 
 fun KtExpression.resolveExprType(): KotlinType? {
     val descriptor = resolveMainReferenceToDescriptors().firstOrNull()

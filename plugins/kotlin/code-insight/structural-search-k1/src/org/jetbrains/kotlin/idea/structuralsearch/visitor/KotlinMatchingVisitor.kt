@@ -322,8 +322,8 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
             myMatchingVisitor.result = other.parent !is KtDotQualifiedExpression
                     && other.parent !is KtCallExpression // don't match name reference of calls
                     && myMatchingVisitor.match(expression.selectorExpression, other)
-                    && other.resolveExprType()?.let { type ->
-                        receiverHandler.findPredicate(KotlinExprTypePredicate::class.java)?.match(type) ?: true
+                    && receiverHandler.findPredicate(KotlinExprTypePredicate::class.java)?.let { predicate ->
+                        other.resolveReceiverType()?.let { type -> predicate.match(type) } ?: false
                     } ?: true
         } else {
             myMatchingVisitor.result = other is KtDotQualifiedExpression
