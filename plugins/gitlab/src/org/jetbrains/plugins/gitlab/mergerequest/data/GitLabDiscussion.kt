@@ -10,6 +10,7 @@ import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
+import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.changeMergeRequestDiscussionResolve
 import java.util.*
 
@@ -90,7 +91,7 @@ class LoadedGitLabDiscussion(
         val resolved = resolved.first()
         val result = withContext(Dispatchers.IO) {
           connection.apiClient
-            .changeMergeRequestDiscussionResolve(connection.repo.repository, discussion.id, !resolved).body()!!
+            .changeMergeRequestDiscussionResolve(connection.repo.repository, discussion.id, !resolved).getResultOrThrow()
         }
         updateNotes(result.notes)
       }

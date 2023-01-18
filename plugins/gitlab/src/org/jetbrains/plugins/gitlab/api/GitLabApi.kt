@@ -49,10 +49,10 @@ class GitLabApi private constructor(httpHelper: HttpApiHelper)
 }
 
 @Throws(GitLabGraphQLMutationException::class)
-fun <R : GitLabGraphQLMutationResultDTO> HttpResponse<out R?>.getResultOrThrow(): R {
+fun <R : Any, MR : GitLabGraphQLMutationResultDTO<R>> HttpResponse<out MR?>.getResultOrThrow(): R {
   val result = body()
   if (result == null) throw GitLabGraphQLMutationEmptyResultException()
   val errors = result.errors
-  if (errors != null) throw GitLabGraphQLMutationErrorException(errors)
-  return result
+  if (!errors.isNullOrEmpty()) throw GitLabGraphQLMutationErrorException(errors)
+  return result.value
 }
