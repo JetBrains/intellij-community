@@ -687,7 +687,7 @@
 
     <projectService serviceInterface="com.intellij.execution.RunManager" serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
     <projectService serviceImplementation="com.intellij.execution.impl.IprRunManagerImpl"/>
-    <projectServiceContainerInitializedListener implementation="com.intellij.execution.impl.ProjectRunConfigurationInitializer" order="last"/>
+    <projectService serviceImplementation="com.intellij.execution.impl.ProjectRunConfigurationInitializer" preload="true"/>
     <projectFileScanner implementation="com.intellij.execution.impl.RunConfigurationInArbitraryFileScanner"/>
     <vfs.asyncListener implementation="com.intellij.execution.impl.RCInArbitraryFileListener"/>
     <editorNotificationProvider implementation="com.intellij.execution.impl.RunConfigEditorNotificationProvider"/>
