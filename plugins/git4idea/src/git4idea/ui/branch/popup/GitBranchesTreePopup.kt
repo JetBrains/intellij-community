@@ -453,12 +453,12 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   override fun processKeyEvent(e: KeyEvent) {
     when {
-      Character.isWhitespace(e.keyChar) -> {
-        e.consume()
-      }
-      e.keyCode == KeyEvent.VK_DOWN || e.keyCode == KeyEvent.VK_UP -> {
+      e.keyCode == KeyEvent.VK_DOWN || e.keyCode == KeyEvent.VK_UP || e.keyCode == KeyEvent.VK_ENTER -> {
         tree.requestFocus()
         tree.dispatchEvent(e)
+      }
+      Character.isWhitespace(e.keyChar) -> {
+        e.consume()
       }
       findKeyStroke == KeyStroke.getKeyStroke(e.keyCode, e.modifiersEx, e.id == KeyEvent.KEY_RELEASED) -> {
         mySpeedSearchPatternField.textEditor.requestFocus()
