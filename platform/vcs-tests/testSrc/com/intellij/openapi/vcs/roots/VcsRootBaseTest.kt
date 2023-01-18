@@ -49,6 +49,9 @@ abstract class VcsRootBaseTest : VcsPlatformTest() {
     try {
       vcsManager.unregisterVcs(vcs)
     }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
     finally {
       super.tearDown()
     }

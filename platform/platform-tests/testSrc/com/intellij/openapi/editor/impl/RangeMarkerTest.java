@@ -82,13 +82,20 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    documentManager = null;
-    synchronizer = null;
-    psiFile = null;
-    Reference.reachabilityFence(fileNode);
-    fileNode = null;
-    document = null;
-    super.tearDown();
+    try {
+      documentManager = null;
+      synchronizer = null;
+      psiFile = null;
+      Reference.reachabilityFence(fileNode);
+      fileNode = null;
+      document = null;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testCreation() {

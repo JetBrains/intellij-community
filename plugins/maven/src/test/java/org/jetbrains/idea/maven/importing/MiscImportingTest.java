@@ -46,8 +46,15 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myEventsTestHelper.tearDown();
-    super.tearDown();
+    try {
+      myEventsTestHelper.tearDown();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Test

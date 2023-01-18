@@ -219,11 +219,18 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = true;
-    CodeInsightSettings.getInstance().setCompletionCaseSensitive(CodeInsightSettings.FIRST_LETTER);
-    CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(false);
-    CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = true;
-    super.tearDown();
+    try {
+      CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = true;
+      CodeInsightSettings.getInstance().setCompletionCaseSensitive(CodeInsightSettings.FIRST_LETTER);
+      CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(false);
+      CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = true;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testConstructorName1() throws Exception {
