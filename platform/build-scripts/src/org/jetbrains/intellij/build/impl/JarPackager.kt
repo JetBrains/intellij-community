@@ -538,7 +538,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
       val osAndArch = path.substring(0, path.indexOf('/'))
       val arch: JvmArchitecture? = when {
         osAndArch.endsWith("-aarch64") || path.contains("/aarch64/") -> JvmArchitecture.aarch64
-        osAndArch.contains("x86-64") || path.contains("x86_64") -> JvmArchitecture.x64
+        path.contains("x86-64") || path.contains("x86_64") -> JvmArchitecture.x64
         // universal library
         os == OsFamily.MACOS && path.count { it == '/' } == 1 -> null
         else -> continue
