@@ -659,13 +659,12 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     // Run Widget
     defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), JBUI.CurrentTheme.RunWidget.defaultToolbarHeight())
     defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), JBUI.CurrentTheme.RunWidget.defaultToolbarBorderHeight())
-    defaults.put(JBUI.CurrentTheme.RunWidget.actionButtonWidthKey(), JBUI.CurrentTheme.RunWidget.defaultActionButtonWidth())
-    defaults.put(JBUI.CurrentTheme.RunWidget.configurationSelectorWidthKey(), JBUI.CurrentTheme.RunWidget.defaultConfigurationSelectorWidth())
-    // minimize/maximize/close buttons
-    defaults.put(JBUI.CurrentTheme.TitlePane.buttonPreferredSizeKey(), JBUI.CurrentTheme.TitlePane.defaultButtonPreferredSize())
-    // These are set by the theme, only overwrite them in Compact Mode: tree row height, status bar widget insets, editor tab insets, tool window header height
+    // tree row height set by the theme
+    // status bar
+    // widget insets set by the theme
     defaults.put(JBUI.CurrentTheme.StatusBar.Breadcrumbs.navBarInsetsKey(), JBUI.CurrentTheme.StatusBar.Breadcrumbs.defaultNavBarInsets())
     // editor tabs
+    // tab insets set by the theme
     defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), JBUI.CurrentTheme.EditorTabs.defaultFont())
     // toolwindows
     defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), JBUI.CurrentTheme.ToolWindow.defaultHeaderHeight())
@@ -681,7 +680,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       // Run Widget
       defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), 26)
       defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 4)
-      // minimize/maximize/close buttons are fine as they are (emulating native Windows 11 buttons)
       // trees
       defaults.put(JBUI.CurrentTheme.Tree.rowHeightKey(), JBUI.scale(22))
       // status bar
