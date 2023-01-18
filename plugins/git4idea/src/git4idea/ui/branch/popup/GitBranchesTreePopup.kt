@@ -301,7 +301,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     val updateSpeedSearch = {
       val textInEditor = mySpeedSearchPatternField.textEditor.text
       speedSearch.updatePattern(textInEditor)
-      applySearchPattern(textInEditor)
+      onSpeedSearchPatternChanged()
     }
     val editorActionsContext = mapOf(PlatformCoreDataKeys.CONTEXT_COMPONENT to mySpeedSearchPatternField.textEditor)
 
