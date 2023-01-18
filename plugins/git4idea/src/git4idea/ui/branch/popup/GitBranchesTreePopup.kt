@@ -351,6 +351,9 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     override fun actionPerformed(e: ActionEvent?) {
       if (closePopup) {
         cancel()
+        if (parent != null) {
+          parent.cancel()
+        }
       }
 
       val stepContext = GitBranchesTreePopupStep.createDataContext(project, treeStep.repositories)
