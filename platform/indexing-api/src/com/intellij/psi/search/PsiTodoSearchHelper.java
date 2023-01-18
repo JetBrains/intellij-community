@@ -6,9 +6,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author irengrig
- */
 public interface PsiTodoSearchHelper {
 
   /**

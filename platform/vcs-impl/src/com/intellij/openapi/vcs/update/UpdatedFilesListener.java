@@ -20,9 +20,6 @@ import com.intellij.util.messages.Topic;
 
 import java.util.Set;
 
-/**
- * @author irengrig
- */
 public interface UpdatedFilesListener extends Consumer<Set<String>> {
   Topic<UpdatedFilesListener> UPDATED_FILES = new Topic<>("AbstractCommonUpdateAction.UpdatedFiles", UpdatedFilesListener.class);
 }

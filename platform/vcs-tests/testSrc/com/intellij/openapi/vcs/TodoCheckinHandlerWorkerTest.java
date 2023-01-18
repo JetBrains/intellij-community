@@ -18,9 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author irengrig
- */
 public class TodoCheckinHandlerWorkerTest extends HeavyPlatformTestCase {
   private VirtualFile myChildData;
   private String myNewText;

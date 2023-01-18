@@ -24,9 +24,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ZipperUpdater;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author irengrig
- */
 public class ZipAndQueue {
   private final ZipperUpdater myZipperUpdater;
   private final BackgroundTaskQueue myQueue;
