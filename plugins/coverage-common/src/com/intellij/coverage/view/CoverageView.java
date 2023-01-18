@@ -44,6 +44,7 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,6 +73,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private final JBTreeTable myTable;
   private final Project myProject;
   private final CoverageViewManager.StateBean myStateBean;
+  private final CoverageSuitesBundle mySuitesBundle;
   private final CoverageViewExtension myViewExtension;
   private final CoverageViewTreeStructure myTreeStructure;
 
@@ -79,11 +81,11 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   public CoverageView(final Project project, final CoverageDataManager dataManager, CoverageViewManager.StateBean stateBean) {
     myProject = project;
     myStateBean = stateBean;
-    final CoverageSuitesBundle suitesBundle = dataManager.getCurrentSuitesBundle();
-    myViewExtension = suitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, suitesBundle, myStateBean);
-    myTreeStructure = new CoverageViewTreeStructure(project, suitesBundle, stateBean);
+    mySuitesBundle = dataManager.getCurrentSuitesBundle();
+    myViewExtension = mySuitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, mySuitesBundle, myStateBean);
+    myTreeStructure = new CoverageViewTreeStructure(project, mySuitesBundle, stateBean);
 
-    myModel = new CoverageTableModel(suitesBundle, stateBean, project, myTreeStructure);
+    myModel = new CoverageTableModel(mySuitesBundle, stateBean, project, myTreeStructure);
     Disposer.register(this, myModel);
     myTable = new JBTreeTable(myModel);
     TreeUtil.expand(myTable.getTree(), 2);
@@ -111,7 +113,13 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     });
     setUpShowRootNode();
 
-    addEmptyCoverageText(project, suitesBundle);
+    setUpEmptyText(false, false);
+    if (myTreeStructure.getRootElement() instanceof CoverageListRootNode root) {
+      root.getState().afterChange(this, state -> {
+        setUpEmptyText(state.myHasVCSFilteredChildren, state.myHasFullyCoveredChildren);
+        return Unit.INSTANCE;
+      });
+    }
     final CoverageRowSorter rowSorter = new CoverageRowSorter(myTable, myModel);
     myTable.setRowSorter(rowSorter);
     if (stateBean.mySortingColumn < 0 || stateBean.mySortingColumn >= myModel.getColumnCount()) {
@@ -208,25 +216,37 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     FileStatusManager.getInstance(myProject).addFileStatusListener(fileStatusListener, this);
   }
 
-  private void addEmptyCoverageText(Project project, CoverageSuitesBundle suitesBundle) {
+  private void setUpEmptyText(boolean hasVcsFiltered, boolean hasFullyCovered) {
     myTable.getTree().getEmptyText().clear();
     final StatusText emptyText = myTable.getTable().getEmptyText();
     emptyText.setText(CoverageBundle.message("coverage.view.no.coverage.results"));
-    final RunConfigurationBase<?> configuration = suitesBundle.getRunConfiguration();
+    final RunConfigurationBase<?> configuration = mySuitesBundle.getRunConfiguration();
     if (configuration != null) {
       emptyText.appendLine(CoverageBundle.message("coverage.view.edit.run.configuration.0") + " ");
       emptyText.appendText(CoverageBundle.message("coverage.view.edit.run.configuration.1"), SimpleTextAttributes.LINK_ATTRIBUTES, e -> {
-        final RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(project).findSettings(configuration);
+        final RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(myProject).findSettings(configuration);
         if (configurationSettings != null) {
-          RunDialog.editConfiguration(project, configurationSettings,
+          RunDialog.editConfiguration(myProject, configurationSettings,
                                       ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", configuration.getName()));
         }
         else {
-          Messages.showErrorDialog(project, CoverageBundle.message("coverage.view.configuration.was.not.found", configuration.getName()),
+          Messages.showErrorDialog(myProject, CoverageBundle.message("coverage.view.configuration.was.not.found", configuration.getName()),
                                    CommonBundle.getErrorTitle());
         }
       });
       emptyText.appendText(" " + CoverageBundle.message("coverage.view.edit.run.configuration.2"));
+    }
+    if (hasVcsFiltered && myStateBean.myShowOnlyModified) {
+      emptyText.appendLine(CoverageBundle.message("coverage.show.unmodified.elements"), SimpleTextAttributes.LINK_ATTRIBUTES, e -> {
+        myStateBean.myShowOnlyModified = false;
+        resetView();
+      });
+    }
+    if (hasFullyCovered && myStateBean.myHideFullyCovered) {
+      emptyText.appendLine(CoverageBundle.message("coverage.show.fully.covered.elements"), SimpleTextAttributes.LINK_ATTRIBUTES, e -> {
+        myStateBean.myHideFullyCovered = false;
+        resetView();
+      });
     }
   }
 
@@ -311,7 +331,8 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }
     if (ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
       actionGroup.add(new ShowOnlyModifiedAction());
-    } else {
+    }
+    else {
       myStateBean.myShowOnlyModified = false;
     }
 

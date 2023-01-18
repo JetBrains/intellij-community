@@ -27,6 +27,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   protected CoverageViewManager.StateBean myStateBean;
   private final FileStatusManager myFileStatusManager;
   private final boolean myIsLeaf;
+  private boolean myFullyCovered = false;
 
   public CoverageListNode(Project project,
                           @NotNull PsiNamedElement classOrPackage,
@@ -53,6 +54,29 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
     return myIsLeaf;
   }
 
+  protected boolean isFullyCovered() {
+    return myFullyCovered;
+  }
+
+  public void setFullyCovered(boolean value) {
+    myFullyCovered = value;
+  }
+
+  private CoverageListRootNode myRoot;
+
+  CoverageListRootNode getRoot() {
+    if (myRoot == null) {
+      var node = this;
+      while (true) {
+        var parent = (CoverageListNode)node.getParent();
+        if (parent == null) break;
+        node = parent;
+      }
+      myRoot = (CoverageListRootNode)node;
+    }
+    return myRoot;
+  }
+
   @NotNull
   @Override
   public List<? extends AbstractTreeNode<?>> getChildren() {
@@ -62,15 +86,30 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   }
 
   protected List<AbstractTreeNode<?>> filterChildren(List<AbstractTreeNode<?>> nodes) {
-    if (myStateBean.myShowOnlyModified) {
+    if (myStateBean.myShowOnlyModified || myStateBean.myHideFullyCovered) {
       nodes = nodes.stream().filter((node) -> {
-        if (node instanceof CoverageListNode) {
-          if (!((CoverageListNode)node).isLeaf()) return true;
+        boolean filtered = true;
+        boolean isLeaf = false;
+        if (node instanceof CoverageListNode coverageNode) {
+          isLeaf = coverageNode.isLeaf();
+          final boolean fullyCovered = coverageNode.isFullyCovered();
+          if (myStateBean.myHideFullyCovered && fullyCovered) {
+            filtered = false;
+            getRoot().setHasFullyCoveredChildren(true);
+          }
         }
-        final FileStatus status = node.getFileStatus();
-        return status == FileStatus.MODIFIED || status == FileStatus.ADDED || status == FileStatus.UNKNOWN;
+        if (myStateBean.myShowOnlyModified && isLeaf) {
+          final FileStatus status = node.getFileStatus();
+          final boolean isModified = status == FileStatus.MODIFIED || status == FileStatus.ADDED || status == FileStatus.UNKNOWN;
+          if (!isModified) {
+            filtered = false;
+            getRoot().setHasVCSFilteredChildren(true);
+          }
+        }
+        return filtered;
       }).toList();
     }
+
     return nodes.stream().filter((node) -> {
       if (node instanceof CoverageListNode) {
         if (((CoverageListNode)node).isLeaf()) return true;
