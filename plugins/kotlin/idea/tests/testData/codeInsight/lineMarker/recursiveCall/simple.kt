@@ -5,5 +5,5 @@ fun f(a: Int) {
 }
 
 class Node(val next: Node?) {
-    fun lastNode(): Node = next?.lastNode() ?: this
+    fun lastNode(): Node = next?.<lineMarker descr="Recursive call">lastNode</lineMarker>() ?: this
 }

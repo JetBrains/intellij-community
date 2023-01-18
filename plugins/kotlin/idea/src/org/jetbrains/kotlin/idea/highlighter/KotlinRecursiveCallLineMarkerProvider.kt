@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -98,12 +99,12 @@ class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
             return when (receiverOwner) {
                 is SimpleFunctionDescriptor -> receiverOwner != enclosingFunctionDescriptor
                 is ClassDescriptor -> receiverOwner != enclosingFunctionDescriptor.containingDeclaration
+                is PropertyDescriptor -> receiverOwner.containingDeclaration != enclosingFunctionDescriptor.containingDeclaration
                 else -> return true
             }
         }
 
-        if (isDifferentReceiver(resolvedCall.dispatchReceiver)) return false
-        return true
+        return !isDifferentReceiver(resolvedCall.dispatchReceiver)
     }
 
     private class RecursiveMethodCallMarkerInfo(callElement: PsiElement) : LineMarkerInfo<PsiElement>(

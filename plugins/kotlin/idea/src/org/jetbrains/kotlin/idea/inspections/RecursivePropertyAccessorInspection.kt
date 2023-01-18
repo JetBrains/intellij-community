@@ -95,12 +95,10 @@ class RecursivePropertyAccessorInspection : AbstractKotlinInspection() {
             val target = bindingContext[REFERENCE_TARGET, element]
             if (target != bindingContext[DECLARATION_TO_DESCRIPTOR, propertyAccessor.property]) return false
             (element.parent as? KtQualifiedExpression)?.let {
-                if (it.receiverExpression.text != KtTokens.THIS_KEYWORD.value && !it.hasObjectReceiver(bindingContext)) {
-                    val targetReceiverType = (target as? PropertyDescriptorImpl)?.extensionReceiverParameter?.value?.type
-                    val receiverKotlinType = it.receiverExpression.kotlinType(bindingContext)?.makeNotNullable()
-                    if (receiverKotlinType == null || targetReceiverType == null || !receiverKotlinType.isSubtypeOf(targetReceiverType)) {
-                        return false
-                    }
+                val targetReceiverType = (target as? PropertyDescriptorImpl)?.extensionReceiverParameter?.value?.type
+                val receiverKotlinType = it.receiverExpression.kotlinType(bindingContext)?.makeNotNullable()
+                if (receiverKotlinType != null && targetReceiverType != null && !receiverKotlinType.isSubtypeOf(targetReceiverType)) {
+                    return false
                 }
             }
             return isSameAccessor(element, propertyAccessor.isGetter)
