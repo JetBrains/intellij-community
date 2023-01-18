@@ -14,7 +14,8 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.hash.ContentHashEnumerator;
-import com.intellij.util.io.*;
+import com.intellij.util.io.ScannableDataEnumeratorEx;
+import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import com.intellij.util.io.storage.CapacityAllocationPolicy;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.RefCountingContentStorage;
@@ -212,7 +213,7 @@ final class PersistentFSConnection {
       myAttributesStorage.force();
       myContents.force();
       if (myContentHashesEnumerator != null) myContentHashesEnumerator.force();
-      markClean();      //TODO RC: shouldn't markClean() be _after_ myRecords.close()?
+      markClean();      //TODO RC: shouldn't markClean() be _after_ myRecords.force()?
       myRecords.force();
     }
   }
