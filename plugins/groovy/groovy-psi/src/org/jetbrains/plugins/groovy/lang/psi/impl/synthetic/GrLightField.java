@@ -29,9 +29,6 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * @author sergey.evdokimov
- */
 public class GrLightField extends GrLightVariable implements GrField {
 
   private PsiClass myContainingClass;

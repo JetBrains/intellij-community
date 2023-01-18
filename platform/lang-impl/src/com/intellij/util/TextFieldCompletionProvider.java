@@ -16,9 +16,6 @@ import com.intellij.util.textCompletion.TextCompletionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author sergey.evdokimov
- */
 public abstract class TextFieldCompletionProvider implements TextCompletionProvider, PossiblyDumbAware {
   protected boolean myCaseInsensitivity;
 
