@@ -29,7 +29,6 @@ import java.util.Objects;
 /**
  * Something that describes a property, with all related accessors.
  * <br/>
- * User: dcheryasov
  */
 public abstract class PropertyBunch<MType> {
 

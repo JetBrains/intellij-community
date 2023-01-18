@@ -36,7 +36,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * Adds an alias to "import foo" or "from foo import bar" import elements, or removes it if it's already present.
- * User: dcheryasov
  */
 public class ImportToggleAliasIntention extends PyBaseIntentionAction {
   private static class IntentionState {

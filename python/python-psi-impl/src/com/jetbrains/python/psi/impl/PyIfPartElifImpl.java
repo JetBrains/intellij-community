@@ -6,7 +6,6 @@ import com.jetbrains.python.psi.PyIfPart;
 
 /**
  * PyIfPart that represents an 'elif' part.
- * User: dcheryasov
  */
 public class PyIfPartElifImpl extends PyConditionalStatementPartImpl implements PyIfPart {
   public PyIfPartElifImpl(ASTNode astNode) {

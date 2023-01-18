@@ -11,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * @author dcheryasov
- */
 @NonNls
 public final class PyNames {
   public static final String SITE_PACKAGES = "site-packages";

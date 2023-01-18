@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a qualified expression, that is, of "a.b.c..." sort.
- * User: dcheryasov
  */
 public interface PyQualifiedExpression extends PyExpression {
   @Nullable

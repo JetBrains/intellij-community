@@ -31,8 +31,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * Adds a missing top-level function to a module.
- * <br/>
- * User: dcheryasov
  *
  * @see AddMethodQuickFix AddMethodQuickFix
  */

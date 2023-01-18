@@ -170,7 +170,6 @@ public final class PythonUiServiceImpl extends PythonUiService {
 
   /**
    * Simplistic usage object for demonstration of name clashes, etc.
-   * User: dcheryasov
    */
   public static class NameUsage implements PsiElementUsage {
 
