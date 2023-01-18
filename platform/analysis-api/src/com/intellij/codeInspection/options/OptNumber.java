@@ -14,6 +14,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public record OptNumber(@Language("jvm-field-name") @NotNull String bindId, 
                         @NotNull LocMessage splitLabel, int minValue, int maxValue) implements OptControl {
+  public OptNumber {
+    if (minValue > maxValue) {
+      throw new IllegalArgumentException(minValue + ">" + maxValue);
+    }
+  }
+  
   @Override
   public @NotNull OptNumber prefix(@NotNull String bindPrefix) {
     return new OptNumber(bindPrefix + "." + bindId, splitLabel, minValue, maxValue);
