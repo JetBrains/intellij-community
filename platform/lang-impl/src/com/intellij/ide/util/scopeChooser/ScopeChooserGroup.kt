@@ -52,13 +52,12 @@ class ScopeChooserGroup(project: Project, parentDisposable: Disposable, initialS
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    val result = object : ActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+    return object : ActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       override fun actionPerformed(event: AnActionEvent) {
         HelpTooltip.hide(this)
         showActionGroupPopup(this@ScopeChooserGroup, event)
       }
     }
-    return result
   }
 
   fun addChangeListener(listener: Consumer<SearchScope?>) {
