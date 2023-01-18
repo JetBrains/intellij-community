@@ -34,4 +34,4 @@ interface ResolverForModuleComputationTrackerEx: ResolverForModuleComputationTra
     }
 }
 
-private val enabled = ApplicationManager.getApplication().isInternal && ApplicationManagerEx.isInIntegrationTest()
+private val enabled = ApplicationManagerEx.isInIntegrationTest()
