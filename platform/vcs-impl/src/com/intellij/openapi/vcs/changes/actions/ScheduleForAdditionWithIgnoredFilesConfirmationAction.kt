@@ -21,14 +21,8 @@ import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Functions.identity
 import com.intellij.util.PairConsumer
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.JBIterable
-import com.intellij.util.containers.isEmpty
-import com.intellij.util.containers.stream
 import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
-import one.util.streamex.StreamEx
-import java.util.stream.Stream
 
 
 class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditionAction() {
@@ -36,24 +30,23 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
     val project = e.getData(CommonDataKeys.PROJECT) ?: return false
     if (getUnversionedFiles(e, project).isNotEmpty) return true
 
-    val changeStream = e.getData(VcsDataKeys.CHANGES).stream<Change>()
-    if (!collectPathsFromChanges(project, changeStream).isEmpty()) return true
+    val changes = e.getData(VcsDataKeys.CHANGES)?.asSequence().orEmpty()
+    val files = e.getData(VcsDataKeys.VIRTUAL_FILES)?.asSequence().orEmpty()
 
-    val filesStream = StreamEx.of(JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).iterator())
-    return !collectPathsFromFiles(project, filesStream).isEmpty()
+    return collectPathsFromChanges(project, changes).firstOrNull() != null ||
+           collectPathsFromFiles(project, files).firstOrNull() != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
     val browser = e.getData(ChangesBrowserBase.DATA_KEY)
 
+    val changes = e.getData(VcsDataKeys.CHANGES)?.asSequence().orEmpty()
+    val files = e.getData(VcsDataKeys.VIRTUAL_FILES)?.asSequence().orEmpty()
+
     val toAdd = HashSet<FilePath>()
-
-    val changeStream = e.getData(VcsDataKeys.CHANGES).stream()
-    ContainerUtil.addAll(toAdd, collectPathsFromChanges(project, changeStream).iterator())
-
-    val filesStream = StreamEx.of(JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).iterator())
-    ContainerUtil.addAll(toAdd, collectPathsFromFiles(project, filesStream).iterator())
+    toAdd += collectPathsFromChanges(project, changes)
+    toAdd += collectPathsFromFiles(project, files)
 
     val unversionedFiles = getUnversionedFiles(e, project).toList()
 
@@ -102,7 +95,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
     }
   }
 
-  private fun collectPathsFromChanges(project: Project, allChanges: Stream<Change>): Stream<FilePath> {
+  private fun collectPathsFromChanges(project: Project, allChanges: Sequence<Change>): Sequence<FilePath> {
     val vcsManager = ProjectLevelVcsManager.getInstance(project)
 
     return allChanges
@@ -113,7 +106,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
       .map(ChangesUtil::getFilePath)
   }
 
-  private fun collectPathsFromFiles(project: Project, allFiles: Stream<VirtualFile>): Stream<FilePath> {
+  private fun collectPathsFromFiles(project: Project, allFiles: Sequence<VirtualFile>): Sequence<FilePath> {
     val vcsManager = ProjectLevelVcsManager.getInstance(project)
     val changeListManager = ChangeListManager.getInstance(project)
 
