@@ -32,7 +32,7 @@ class CustomFileTypeTokenizer extends Tokenizer<PsiElement> {
   }
 
   @Override
-  public void tokenize(@NotNull PsiElement element, TokenConsumer consumer) {
+  public void tokenize(@NotNull PsiElement element, @NotNull TokenConsumer consumer) {
     CustomFileTypeLexer lexer = new CustomFileTypeLexer(mySyntaxTable);
     String text = element.getText();
     lexer.start(text);

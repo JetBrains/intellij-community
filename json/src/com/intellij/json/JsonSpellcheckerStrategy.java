@@ -18,7 +18,7 @@ import java.util.List;
 public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
   private final Tokenizer<JsonStringLiteral> ourStringLiteralTokenizer = new Tokenizer<>() {
     @Override
-    public void tokenize(@NotNull JsonStringLiteral element, TokenConsumer consumer) {
+    public void tokenize(@NotNull JsonStringLiteral element, @NotNull TokenConsumer consumer) {
       final PlainTextSplitter textSplitter = PlainTextSplitter.getInstance();
       if (element.textContains('\\')) {
         final List<Pair<TextRange, String>> fragments = element.getTextFragments();

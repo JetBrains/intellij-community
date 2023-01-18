@@ -163,7 +163,7 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
     }
 
     @Override
-    public void tokenize(@NotNull XmlAttributeValue element, TokenConsumer consumer) {
+    public void tokenize(@NotNull XmlAttributeValue element, @NotNull TokenConsumer consumer) {
       PsiReference[] references = element.getReferences();
       for (PsiReference reference : references) {
         if (reference instanceof XmlEnumeratedValueReference) {

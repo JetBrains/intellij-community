@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public class RestSpellcheckerStrategy extends SpellcheckingStrategy {
   private static final Tokenizer<PsiElement> REST_ELEMENT_TOKENIZER = new Tokenizer<>() {
     @Override
-    public void tokenize(@NotNull PsiElement element, TokenConsumer consumer) {
+    public void tokenize(@NotNull PsiElement element, @NotNull TokenConsumer consumer) {
       consumer.consumeToken(element, PlainTextSplitter.getInstance());
     }
   };

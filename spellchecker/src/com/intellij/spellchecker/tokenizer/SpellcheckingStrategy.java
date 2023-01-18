@@ -35,7 +35,7 @@ public class SpellcheckingStrategy {
     new ExtensionPointName<>("com.intellij.spellchecker.support");
   public static final Tokenizer EMPTY_TOKENIZER = new Tokenizer() {
     @Override
-    public void tokenize(@NotNull PsiElement element, TokenConsumer consumer) {
+    public void tokenize(@NotNull PsiElement element, @NotNull TokenConsumer consumer) {
     }
 
     @Override
