@@ -14,10 +14,10 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
-    <orderEntry type="module" module-name="intellij.platform.vcs.core" />
-    <orderEntry type="module" module-name="intellij.platform.vcs.log" />
-    <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl" />
-    <orderEntry type="module" module-name="intellij.vcs.git" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.core" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.log" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.vcs.git" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.devkit.core" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
