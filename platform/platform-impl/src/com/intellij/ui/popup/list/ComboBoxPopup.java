@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.GroupedComboBoxRenderer;
 import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.TitledSeparator;
@@ -246,8 +247,8 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     @Override
     public @Nullable ListSeparator getSeparatorAbove(T value) {
       final int index = getValues().indexOf(value);
-      if (index > 0 && getValues().get(index - 1) instanceof ListSeparator separator) {
-        return separator;
+      if (index > 0 && getValues().get(index - 1) instanceof GroupedComboBoxRenderer.Item item && item.isSeparator()) {
+        return new ListSeparator(item.getSeparatorText(), item.getIcon());
       }
       return null;
     }
@@ -255,7 +256,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
 
   @Override
   public boolean shouldBeShowing(Object value) {
-    if (value instanceof ListSeparator) return false;
+    if (value instanceof GroupedComboBoxRenderer.Item item && item.isSeparator()) return false;
     return super.shouldBeShowing(value);
   }
 
@@ -268,11 +269,11 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     return items;
   }
 
-  public <T> Boolean isSeparatorAboveOf(T value) {
+  public <U> Boolean isSeparatorAboveOf(U value) {
     return getListModel().isSeparatorAboveOf(value);
   }
 
-  public <T> @NlsContexts.Separator String getCaptionAboveOf(T value) {
+  public <U> @NlsContexts.Separator String getCaptionAboveOf(U value) {
     return getListModel().getCaptionAboveOf(value);
   }
 }
