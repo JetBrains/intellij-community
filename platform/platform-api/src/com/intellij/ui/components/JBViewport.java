@@ -42,7 +42,6 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   private static final ViewportLayout ourLayoutManager = new ViewportLayout() {
     @Override
-    @DirtyUI
     public void layoutContainer(Container parent) {
       if (parent instanceof JViewport) {
         JViewport viewport = (JViewport)parent;
@@ -60,7 +59,6 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     }
 
     @Override
-    @DirtyUI
     public Dimension preferredLayoutSize(Container parent) {
       if (parent instanceof JViewport) {
         JViewport viewport = (JViewport)parent;
@@ -228,7 +226,6 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
-  @DirtyUI
   @Override
   public void paint(Graphics g) {
     myPaintingNow = true;
