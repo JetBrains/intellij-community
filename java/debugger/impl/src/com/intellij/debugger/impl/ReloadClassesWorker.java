@@ -23,7 +23,9 @@ import com.intellij.util.ui.MessageCategory;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ReferenceType;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 
 import javax.swing.*;
 import java.io.File;
@@ -36,19 +38,15 @@ import java.util.stream.IntStream;
 
 class ReloadClassesWorker {
   private static final Logger LOG = Logger.getInstance(ReloadClassesWorker.class);
-  private final DebuggerSession myDebuggerSession;
-  private final HotSwapProgress myProgress;
+  private final @NotNull DebuggerSession myDebuggerSession;
+  private final @NotNull HotSwapProgress myProgress;
 
-  ReloadClassesWorker(DebuggerSession session, HotSwapProgress progress) {
+  ReloadClassesWorker(@NotNull DebuggerSession session, @NotNull HotSwapProgress progress) {
     myDebuggerSession = session;
     myProgress = progress;
   }
 
-  private DebugProcessImpl getDebugProcess() {
-    return myDebuggerSession.getProcess();
-  }
-
-  private void processException(Throwable e) {
+  private void processException(@NotNull Throwable e) {
     if (e.getMessage() != null) {
       myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, e.getMessage());
     }
@@ -75,16 +73,16 @@ class ReloadClassesWorker {
     myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, message);
   }
 
-  public void reloadClasses(final Map<String, HotSwapFile> modifiedClasses) {
+  public void reloadClasses(@NotNull Map<@NotNull String, @NotNull HotSwapFile> modifiedClasses) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
-    if (modifiedClasses == null || modifiedClasses.size() == 0) {
-      myProgress.addMessage(myDebuggerSession, MessageCategory.INFORMATION, JavaDebuggerBundle
-        .message("status.hotswap.loaded.classes.up.to.date"));
+    if (modifiedClasses.isEmpty()) {
+      myProgress.addMessage(myDebuggerSession, MessageCategory.INFORMATION,
+                            JavaDebuggerBundle.message("status.hotswap.loaded.classes.up.to.date"));
       return;
     }
 
-    final DebugProcessImpl debugProcess = getDebugProcess();
+    final DebugProcessImpl debugProcess = myDebuggerSession.getProcess();
     final VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
 
     final Project project = debugProcess.getProject();
@@ -109,8 +107,8 @@ class ReloadClassesWorker {
       RedefineProcessor redefineProcessor = new RedefineProcessor(virtualMachineProxy);
 
       int processedEntriesCount = 0;
-      for (final Map.Entry<String, HotSwapFile> entry : modifiedClasses.entrySet()) {
-        // stop if process is finished already
+      for (Map.Entry<@NotNull String, @NotNull HotSwapFile> entry : modifiedClasses.entrySet()) {
+        // stop if the process is finished already
         if (debugProcess.isDetached() || debugProcess.isDetaching()) {
           break;
         }
@@ -119,11 +117,9 @@ class ReloadClassesWorker {
           break;
         }
         processedEntriesCount++;
-        final String qualifiedName = entry.getKey();
-        if (qualifiedName != null) {
-          myProgress.setText(qualifiedName);
-          myProgress.setFraction(processedEntriesCount / (double)modifiedClasses.size());
-        }
+        String qualifiedName = entry.getKey();
+        myProgress.setText(qualifiedName);
+        myProgress.setFraction(processedEntriesCount / (double)modifiedClasses.size());
         try {
           redefineProcessor.processClass(qualifiedName, entry.getValue().file);
         }
@@ -212,12 +208,9 @@ class ReloadClassesWorker {
     }
   }
 
-  private void reportProblem(final String qualifiedName, @Nullable Exception ex) {
-    String reason = null;
-    if (ex != null) {
-      reason = ex.getLocalizedMessage();
-    }
-    if (reason == null || reason.length() == 0) {
+  private void reportProblem(String qualifiedName, @Nullable Exception ex) {
+    String reason = ex != null ? ex.getLocalizedMessage() : null;
+    if (reason == null || reason.isEmpty()) {
       reason = JavaDebuggerBundle.message("error.io.error");
     }
     myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, qualifiedName + " : " + reason);
@@ -229,16 +222,16 @@ class ReloadClassesWorker {
      * Such restriction is needed to deal with big number of classes being reloaded
      */
     private static final int CLASSES_CHUNK_SIZE = 100;
-    private final VirtualMachineProxyImpl myVirtualMachineProxy;
-    private final Map<ReferenceType, byte[]> myRedefineMap = new HashMap<>();
-    private int myProcessedClassesCount;
-    private int myPartiallyRedefinedClassesCount;
+    private final @NotNull VirtualMachineProxyImpl myVirtualMachineProxy;
+    private final @NotNull Map<@NotNull ReferenceType, byte @NotNull []> myRedefineMap = new HashMap<>();
+    private @Range(from = 0, to = Integer.MAX_VALUE) int myProcessedClassesCount;
+    private @Range(from = 0, to = Integer.MAX_VALUE) int myPartiallyRedefinedClassesCount;
 
-    RedefineProcessor(VirtualMachineProxyImpl virtualMachineProxy) {
+    RedefineProcessor(@NotNull VirtualMachineProxyImpl virtualMachineProxy) {
       myVirtualMachineProxy = virtualMachineProxy;
     }
 
-    public void processClass(String qualifiedName, File file) throws Throwable {
+    public void processClass(@NotNull String qualifiedName, @NotNull File file) throws Throwable {
       final List<ReferenceType> vmClasses = myVirtualMachineProxy.classesByName(qualifiedName);
       if (vmClasses.isEmpty()) {
         return;
