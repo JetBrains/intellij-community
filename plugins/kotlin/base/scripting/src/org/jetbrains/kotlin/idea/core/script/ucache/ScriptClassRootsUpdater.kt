@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.applyIf
+import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -26,7 +27,6 @@ import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.base.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptDependenciesClassFinder
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.dependencies.hasGradleDependency
@@ -36,7 +36,6 @@ import org.jetbrains.kotlin.idea.util.FirPluginOracleService
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -233,7 +232,7 @@ abstract class ScriptClassRootsUpdater(
                         // Here we're sometimes under read-lock.
                         // There is no way to acquire write-lock (on EDT) without releasing this thread.
 
-                        applyDiffToModel(filesToAddOrUpdate, filesToRemove)
+                        applyDiffToModelAsync(filesToAddOrUpdate, filesToRemove)
                     }
             }
 
@@ -299,6 +298,19 @@ abstract class ScriptClassRootsUpdater(
         }
     }
 
+    private fun applyDiffToModelAsync(
+        filesToAddOrUpdate: List<VirtualFile>,
+        filesToRemove: List<VirtualFile>
+    ) {
+        if (ApplicationManager.getApplication().isUnitTestMode || !isCurrentThreadEdt()) {
+            applyDiffToModel(filesToAddOrUpdate, filesToRemove)
+        } else {
+            BackgroundTaskUtil.executeOnPooledThread(KotlinPluginDisposable.getInstance(project)) {
+                applyDiffToModel(filesToAddOrUpdate, filesToRemove)
+            }
+        }
+    }
+
     private fun applyDiffToModel(
         filesToAddOrUpdate: List<VirtualFile>,
         filesToRemove: List<VirtualFile>
@@ -316,13 +328,7 @@ abstract class ScriptClassRootsUpdater(
             }
             if (!replaced) {
                 // initiate update once again
-                if (ApplicationManager.getApplication().isUnitTestMode) {
-                    applyDiffToModel(filesToAddOrUpdate, filesToRemove)
-                } else {
-                    BackgroundTaskUtil.executeOnPooledThread(KotlinPluginDisposable.getInstance(project)) {
-                        applyDiffToModel(filesToAddOrUpdate, filesToRemove)
-                    }
-                }
+                applyDiffToModelAsync(filesToAddOrUpdate, filesToRemove)
             }
         }
     }
