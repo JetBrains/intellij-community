@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,9 @@ public class MoveWindowToNextDisplayAction extends DumbAwareAction {
   public void actionPerformed(final @NotNull AnActionEvent e) {
     Window activeFrame = IdeFrameImpl.getActiveFrame();
     if (activeFrame == null) return;
+
+    if (ApplicationManager.getApplication().isHeadlessEnvironment())
+      return;
 
     GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
     String currentId = activeFrame.getGraphicsConfiguration().getDevice().getIDstring();
@@ -35,10 +39,13 @@ public class MoveWindowToNextDisplayAction extends DumbAwareAction {
 
   @Override
   public void update(final @NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(false);
+    if (ApplicationManager.getApplication().isHeadlessEnvironment())
+      return;
     GraphicsEnvironment g = GraphicsEnvironment.getLocalGraphicsEnvironment();
-    if (g == null) return;
     GraphicsDevice[] devices = g.getScreenDevices();
-    if (devices == null) return;
+    if (devices == null)
+      return;
     e.getPresentation().setEnabledAndVisible(devices.length > 1);
   }
 }
