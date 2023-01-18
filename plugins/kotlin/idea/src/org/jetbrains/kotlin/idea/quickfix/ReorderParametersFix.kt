@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.base.psi.childrenDfsSequence
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
@@ -92,3 +91,13 @@ class ReorderParametersFix(
 
 fun ResolvedCall<out CallableDescriptor>.variableCallOrThis(): ResolvedCall<out CallableDescriptor> =
     (this as? VariableAsFunctionResolvedCall)?.variableCall ?: this
+
+fun PsiElement.childrenDfsSequence(): Sequence<PsiElement> =
+    sequence {
+        visit(this@childrenDfsSequence)
+    }
+
+private suspend fun SequenceScope<PsiElement>.visit(element: PsiElement) {
+    element.children.forEach { visit(it) }
+    yield(element)
+}
