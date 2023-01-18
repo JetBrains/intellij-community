@@ -124,14 +124,6 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   public EditorNotificationPanel(@Nullable Editor editor,
                                  @Nullable Color backgroundColor,
                                  @Nullable ColorKey backgroundColorKey) {
-    this(editor, backgroundColor, backgroundColorKey, false);
-  }
-
-  @ApiStatus.Experimental
-  public EditorNotificationPanel(@Nullable Editor editor,
-                                 @Nullable Color backgroundColor,
-                                 @Nullable ColorKey backgroundColorKey,
-                                 boolean actionLabelsNextToText) {
     super(new BorderLayout());
 
     mySchemeSupplier = editor != null ? () -> editor.getColorsScheme() : GLOBAL_SCHEME_SUPPLIER;
@@ -139,16 +131,9 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     myBackgroundColorKey = backgroundColorKey != null ? backgroundColorKey : EditorColors.NOTIFICATION_BACKGROUND;
     putClientProperty(FileEditorManager.SEPARATOR_COLOR, JBUI.CurrentTheme.Editor.BORDER_COLOR);
 
-    JPanel panel;
-    if (actionLabelsNextToText) {
-      panel = new NonOpaquePanel(new HorizontalLayout(8));
-      panel.add(myLabel);
-      panel.add(myLinksPanel);
-    } else {
-      panel = new NonOpaquePanel(new BorderLayout());
-      panel.add(BorderLayout.CENTER, myLabel);
-      panel.add(BorderLayout.EAST, myLinksPanel);
-    }
+    JPanel panel = new NonOpaquePanel(new BorderLayout());
+    panel.add(BorderLayout.CENTER, myLabel);
+    panel.add(BorderLayout.EAST, myLinksPanel);
     panel.setMinimumSize(new Dimension(0, 0));
 
     Wrapper gearWrapper = new Wrapper(myGearLabel);
