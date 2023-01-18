@@ -1188,8 +1188,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     }
 
     FindInProjectExecutor projectExecutor = FindInProjectExecutor.Companion.getInstance();
-    GlobalSearchScope scope = GlobalSearchScopeUtil.toGlobalSearchScope(
-      FindInProjectUtil.getScopeFromModel(myProject, myHelper.myPreviousModel), myProject);
     TableCellRenderer renderer = projectExecutor.createTableCellRenderer();
     if (renderer == null) renderer = new UsageTableCellRenderer();
     myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(renderer);
@@ -1198,17 +1196,21 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     AtomicInteger resultsFilesCount = new AtomicInteger();
     FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, findModel);
 
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(myProject,
-                                                                                               FindBundle.message("find.usages.progress.title")) {
+    Project project = myProject;
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(
+      project, FindBundle.message("find.usages.progress.title")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        GlobalSearchScope scope = GlobalSearchScopeUtil.toGlobalSearchScope(
+          FindInProjectUtil.getScopeFromModel(project, myHelper.myPreviousModel), project);
+
         FindUsagesProcessPresentation processPresentation =
-          FindInProjectUtil.setupProcessPresentation(myProject, myUsageViewPresentation);
+          FindInProjectUtil.setupProcessPresentation(project, myUsageViewPresentation);
         ThreadLocal<String> lastUsageFileRef = new ThreadLocal<>();
         ThreadLocal<Reference<FindPopupItem>> recentItemRef = new ThreadLocal<>();
 
-        projectExecutor.findUsages(myProject, myResultsPreviewSearchProgress, processPresentation, findModel, filesToScanInitially, usage -> {
-          if(isCancelled()) {
+        projectExecutor.findUsages(project, myResultsPreviewSearchProgress, processPresentation, findModel, filesToScanInitially, usage -> {
+          if (isCancelled()) {
             onStop(hash);
             return false;
           }
@@ -1229,11 +1231,11 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
           FindPopupItem newItem;
           boolean merged = !myHelper.isReplaceState() && recentItem != null && recentItem.getUsage().merge(usage);
           if (!merged) {
-            newItem = new FindPopupItem(usage, usagePresentation(myProject, scope, usage));
+            newItem = new FindPopupItem(usage, usagePresentation(project, scope, usage));
           }
           else {
             // recompute presentation of a merged instance
-            newItem = recentItem.withPresentation(usagePresentation(myProject, scope, recentItem.getUsage()));
+            newItem = recentItem.withPresentation(usagePresentation(project, scope, recentItem.getUsage()));
           }
           recentItemRef.set(new WeakReference<>(newItem));
 
