@@ -28,6 +28,7 @@ import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
 import com.intellij.util.PathUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
+import kotlin.coroutines.EmptyCoroutineContext
 
 @VisibleForTesting
 class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
@@ -113,8 +114,10 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
     project: Project,
     externalProjectPath: String
   ): Map<ExternalSystemUnlinkedProjectAware, Set<VirtualFile>> {
-    return EP_NAME.extensionList.associateWith { unlinkedProjectAware ->
-      findUnlinkedProjectBuildFiles(project, externalProjectPath, unlinkedProjectAware)
+    return EP_NAME.extensionList.associateWith { extension ->
+      coroutineScope(EP_NAME.createExtensionDisposable(extension, project)) {
+        findUnlinkedProjectBuildFiles(project, externalProjectPath, extension)
+      }
     }
   }
 
@@ -126,7 +129,7 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
     if (unlinkedProjectAware.isLinkedProject(project, externalProjectPath)) {
       return emptySet()
     }
-    val buildFiles = readAction(project, unlinkedProjectAware) {
+    val buildFiles = readAction {
       LocalFileSystem.getInstance().findFileByPath(externalProjectPath)
         ?.children?.filter { unlinkedProjectAware.isBuildFile(project, it) }
         ?.toSet() ?: emptySet()
@@ -142,10 +145,8 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
     EP_NAME.withEachExtensionSafe(project) { extension, extensionDisposable ->
       extension.subscribe(project, object : ExternalSystemProjectLinkListener {
         override fun onProjectUnlinked(externalProjectPath: String) {
-          project.coroutineScope.launch {
-            coroutineScope(extensionDisposable) {
-              showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, extension)
-            }
+          submit(extensionDisposable) {
+            showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, extension)
           }
         }
       }, extensionDisposable)
@@ -165,10 +166,8 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
 
   private fun showNotificationWhenBuildToolPluginEnabled(project: Project, externalProjectPath: String) {
     EP_NAME.whenExtensionAdded(project) { extension, extensionDisposable ->
-      project.coroutineScope.launch {
-        coroutineScope(extensionDisposable) {
-          showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, extension)
-        }
+      submit(extensionDisposable) {
+        showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, extension)
       }
     }
   }
@@ -196,10 +195,8 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
     }
 
     override fun apply() {
-      project.coroutineScope.launch {
-        coroutineScope(parentDisposable) {
-          showUnlinkedProjectsNotification(project, externalProjectPath, unlinkedProjectAware, buildFiles.toSet())
-        }
+      submit(parentDisposable) {
+        showUnlinkedProjectsNotification(project, externalProjectPath, unlinkedProjectAware, buildFiles.toSet())
       }
     }
 
@@ -220,53 +217,24 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
       return ExternalSystemProjectId(systemId, externalProjectPath)
     }
 
-    private fun createExtensionDisposable(project: Project, unlinkedProjectAware: ExternalSystemUnlinkedProjectAware): Disposable {
-      return EP_NAME.createExtensionDisposable(unlinkedProjectAware, project)
-    }
-
-    private suspend fun <R> readAction(project: Project, unlinkedProjectAware: ExternalSystemUnlinkedProjectAware, action: () -> R): R {
-      return createExtensionDisposable(project, unlinkedProjectAware).use { disposable ->
-        readAction(disposable) {
-          action()
-        }
-      }
-    }
-
-    private suspend fun <R> readAction(parentDisposable: Disposable, action: () -> R): R {
-      return coroutineScope(parentDisposable) {
-        readAction {
-          action()
-        }
-      }
-    }
-
     private suspend fun <R> coroutineScope(parentDisposable: Disposable, action: suspend CoroutineScope.() -> R): R {
-      return coroutineScope {
-        Disposer.newDisposable(parentDisposable, "CoroutineScope").use { disposable ->
-          val task = async(start = CoroutineStart.LAZY) {
-            action()
-          }
-          Disposer.register(disposable, Disposable {
-            task.cancel("disposed")
-          })
-          task.start()
-          task.await()
+      val task = submit(parentDisposable, action)
+      return task.await()
+    }
+
+    private fun <R> submit(parentDisposable: Disposable, action: suspend CoroutineScope.() -> R): Deferred<R> {
+      val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+      val disposable = Disposer.newDisposable(parentDisposable, "CoroutineScope")
+      val task = coroutineScope.async(start = CoroutineStart.LAZY) {
+        disposable.use {
+          action()
         }
       }
-    }
-  }
-
-  private inline fun <T : Any> forEachExtensionSafe(point: ExtensionPointName<T>, consumer: (T) -> Unit) {
-    for (item in point.extensionList) {
-      try {
-        consumer(item)
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Exception) {
-        LOG.error(e)
-      }
+      Disposer.register(disposable, Disposable {
+        task.cancel("disposed")
+      })
+      task.start()
+      return task
     }
   }
 }
