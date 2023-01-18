@@ -3,6 +3,8 @@ package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -12,10 +14,12 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XExpression;
@@ -148,6 +152,29 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   protected void prepareEditor(EditorEx editor) {
     super.prepareEditor(editor);
     editor.getColorsScheme().setEditorFontSize(Math.min(myComboBox.getFont().getSize(), EditorUtil.getEditorFont().getSize()));
+  }
+
+  // Workaround for IDEA-273987, IDEA-278153.
+  // Should be removed after IDEA-285001 is fixed
+  public void fixEditorNotReleasedFalsePositiveException(@NotNull Project project, @NotNull Disposable parentDisposable) {
+    EditorTextField field = ObjectUtils.tryCast(getEditorComponent(), EditorTextField.class);
+    if (field == null) return;
+    Disposable disposable = Disposer.newDisposable("XDebuggerExpressionComboBox Disposable");
+    Disposer.register(parentDisposable, () -> {
+      // In case the project is closing this block is called
+      // from the BaseContentCloseListener#disposeContent
+      // and then removes editor with EditorComboBox#releaseLater.
+      // The latter causes a false-positive exception (IDEA-273987) that editor is not released
+      // when validation is running (see  IDEA-285001).
+      // Until IDEA-285001 is fixed this one is scheduled for next EDT call
+      // to let Disposer.register(session.getProject(), disposable) dispose an editor
+      // with correct way when project is closed.
+      // If this one is triggered because the tool window is closed
+      // then it's ok to release it later.
+      ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(disposable));
+    });
+    Disposer.register(project, disposable);
+    field.setDisposedWith(disposable);
   }
 
   private class XDebuggerComboBoxEditor implements ComboBoxEditor {
