@@ -29,9 +29,6 @@ import javax.swing.*;
 import java.util.Map;
 import java.util.function.Supplier;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnAction implements WriteActionAware {
   protected static final Logger LOG = Logger.getInstance(CreateFromTemplateAction.class);
 

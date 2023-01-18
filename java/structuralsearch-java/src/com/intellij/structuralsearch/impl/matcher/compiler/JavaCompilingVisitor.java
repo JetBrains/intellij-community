@@ -38,9 +38,6 @@ import java.util.regex.Pattern;
 
 import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor.OccurenceKind.*;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   @NotNull
   private final GlobalCompilingVisitor myCompilingVisitor;

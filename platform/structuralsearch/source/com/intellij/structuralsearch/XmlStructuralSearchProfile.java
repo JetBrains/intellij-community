@@ -31,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createLegacyConfiguration;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override

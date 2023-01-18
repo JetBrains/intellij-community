@@ -5,9 +5,6 @@ import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
 import com.intellij.structuralsearch.groovy.GroovyStructuralSearchProfile;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
 
   public void test1() {

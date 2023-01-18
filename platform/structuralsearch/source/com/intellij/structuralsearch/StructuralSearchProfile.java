@@ -34,8 +34,6 @@ import java.util.List;
 
 /**
  * Entry point for supporting a specific language in Structural Search.
- *
- * @author Eugene.Kudelevsky
  */
 public abstract class StructuralSearchProfile {
   public static final ExtensionPointName<StructuralSearchProfile> EP_NAME =

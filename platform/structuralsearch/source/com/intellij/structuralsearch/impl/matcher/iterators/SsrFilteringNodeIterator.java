@@ -7,9 +7,6 @@ import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class SsrFilteringNodeIterator extends FilteringNodeIterator {
   private SsrFilteringNodeIterator(@NotNull NodeIterator iterator) {
     super(iterator, LexicalNodesFilter.getInstance());
