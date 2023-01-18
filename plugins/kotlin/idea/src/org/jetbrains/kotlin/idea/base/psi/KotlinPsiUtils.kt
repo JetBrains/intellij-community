@@ -204,13 +204,3 @@ fun KtModifierListOwner.hasInlineModifier(): Boolean =
 
 fun KtPrimaryConstructor.mustHaveValOrVar(): Boolean =
     containingClass()?.mustHaveOnlyPropertiesInPrimaryConstructor() ?: false
-
-fun PsiElement.childrenDfsSequence(): Sequence<PsiElement> =
-    sequence {
-        visit(this@childrenDfsSequence)
-    }
-
-private suspend fun SequenceScope<PsiElement>.visit(element: PsiElement) {
-    element.children.forEach { visit(it) }
-    yield(element)
-}
