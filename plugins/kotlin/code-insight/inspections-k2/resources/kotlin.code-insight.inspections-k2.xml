@@ -98,7 +98,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.elvis.return.null.display.name"
                      bundle="messages.KotlinBundle" />
 
