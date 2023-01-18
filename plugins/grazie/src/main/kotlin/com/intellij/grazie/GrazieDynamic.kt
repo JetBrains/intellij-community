@@ -1,12 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie
 
-import com.intellij.grazie.GrazieDynamicPathPartsProvider.Companion.getDynamicFolder
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.io.delete
 import com.intellij.util.io.isFile
@@ -17,6 +17,7 @@ import java.io.InputStream
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 
 internal object GrazieDynamic : DynamicPluginListener {
@@ -67,9 +68,16 @@ internal object GrazieDynamic : DynamicPluginListener {
   private val dynClassLoaders: Set<ClassLoader>
     get() = myDynClassLoaders.toSet()
 
+  private fun getDynamicFolderPath(): Path {
+    val customFolder = System.getProperty("grazie.dynamic.customJarDirectory")
+    if(customFolder != null)
+      return Path.of(customFolder)
+    return Paths.get(PathManager.getSystemPath(), "grazie")
+  }
+
   val dynamicFolder: Path
     get() {
-      val result = getDynamicFolder()
+      val result = getDynamicFolderPath()
       Files.createDirectories(result)
       return result
     }

@@ -105,7 +105,5 @@
     <extensionPoint qualifiedName="com.intellij.grazie.disableChecking"
                     beanClass="com.intellij.grazie.config.CheckingContext$DisableChecking"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.grazie.dynamic.pathPartsProvider" interface="com.intellij.grazie.GrazieDynamicPathPartsProvider"
-                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
