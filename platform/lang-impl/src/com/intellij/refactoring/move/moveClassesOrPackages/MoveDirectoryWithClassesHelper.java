@@ -16,9 +16,6 @@ import com.intellij.util.containers.MultiMap;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author ksafonov
- */
 public abstract class MoveDirectoryWithClassesHelper {
   private static final ExtensionPointName<MoveDirectoryWithClassesHelper> EP_NAME =
     ExtensionPointName.create("com.intellij.refactoring.moveDirectoryWithClassesHelper");
