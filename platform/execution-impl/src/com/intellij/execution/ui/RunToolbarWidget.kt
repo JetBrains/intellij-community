@@ -317,7 +317,9 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
   inlineActions.add(RunToolbarWidgetRunAction(runExecutor) { conf })
   inlineActions.add(RunToolbarWidgetRunAction(debugExecutor) { conf })
 
-  return SelectRunConfigurationWithInlineActions(inlineActions, conf, project, shouldBeShown)
+  val result = SelectRunConfigurationWithInlineActions(inlineActions, conf, project, shouldBeShown)
+  addAdditionalActionsToRunConfigurationOptions(project, conf, result, false)
+  return result
 }
 
 private fun createRunConfigurationPopup(context: DataContext, project: Project): JBPopup {

@@ -260,9 +260,10 @@ private class MoreRunToolbarActions : TogglePopupAction(
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {
     val project = e.project ?: return null
     val selectedConfiguration = RunManager.getInstance(project).selectedConfiguration
-    return createOtherRunnersSubgroup(selectedConfiguration, project)
+    val result = createOtherRunnersSubgroup(selectedConfiguration, project)
+    addAdditionalActionsToRunConfigurationOptions(project, selectedConfiguration, result, true)
+    return result
   }
-
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
 
@@ -271,14 +272,24 @@ internal val excludeRunAndDebug: (Executor) -> Boolean = {
   it.id != ToolWindowId.RUN && it.id != ToolWindowId.DEBUG
 }
 
-private fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationSettings?, project: Project): ActionGroup? {
+private fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationSettings?, project: Project): DefaultActionGroup {
   if (runConfiguration != null) {
     return RunConfigurationsComboBoxAction.SelectConfigAction(runConfiguration, project, excludeRunAndDebug)
   }
   if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
     return RunConfigurationsComboBoxAction.RunCurrentFileAction(excludeRunAndDebug)
   }
-  return ActionGroup.EMPTY_GROUP
+  return DefaultActionGroup()
+}
+
+internal fun addAdditionalActionsToRunConfigurationOptions(project: Project,
+                                                           selectedConfiguration: RunnerAndConfigurationSettings?,
+                                                           targetGroup: DefaultActionGroup,
+                                                           isWidget: Boolean) {
+  val additionalActions = AdditionalRunningOptions.getInstance(project).getAdditionalActions(selectedConfiguration, isWidget)
+  for (action in additionalActions.getChildren(null).reversed()) {
+    targetGroup.add(action, Constraints.FIRST)
+  }
 }
 
 private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomComponentAction, DumbAware {

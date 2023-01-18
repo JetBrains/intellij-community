@@ -1313,6 +1313,8 @@
                             implementationClass="com.intellij.codeInsight.template.postfix.completion.PostfixTemplateCompletionContributor"
                             order="last"/>
 
+    <projectService serviceInterface="com.intellij.execution.AdditionalRunningOptions"
+                    serviceImplementation="com.intellij.execution.EmptyAdditionalRunningOptions"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionManager"
                     serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager"
