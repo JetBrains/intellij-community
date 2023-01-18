@@ -36,9 +36,6 @@ import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 import java.io.IOException;
 import java.util.function.Function;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public final class EclipseClasspathStorageProvider implements ClasspathStorageProvider {
   @NotNull
   @Override
