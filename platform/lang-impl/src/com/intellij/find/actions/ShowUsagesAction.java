@@ -15,7 +15,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ModelDiff;
-import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
+import com.intellij.ide.util.scopeChooser.ScopeChooserGroup;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -83,7 +83,6 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
@@ -770,6 +769,15 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       }
     });
 
+    if (!(actionHandler.getMaximalScope() instanceof LocalSearchScope)) {
+      filteringGroup.add(createScopeChooser(project, contentDisposable, actionHandler.getSelectedScope(), scope -> {
+        UsageViewStatisticsCollector.logScopeChanged(project, usageView, actionHandler.getSelectedScope(), scope,
+                                                     actionHandler.getTargetClass());
+        cancel(popupRef.get());
+        showElementUsages(parameters, actionHandler.withScope(scope));
+      }));
+    }
+
     JPanel northPanel = new JPanel(new GridBagLayout());
     GridBag gc = new GridBag().nextLine();
 
@@ -777,16 +785,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     JComponent toolbarComponent = actionToolbar.getComponent();
     toolbarComponent.setOpaque(false);
     northPanel.add(toolbarComponent, gc.next());
-
-    if (!(actionHandler.getMaximalScope() instanceof LocalSearchScope)) {
-      ScopeChooserCombo scopeChooserCombo = scopeChooser(project, actionHandler.getSelectedScope(), scope -> {
-        UsageViewStatisticsCollector.logScopeChanged(project,usageView, actionHandler.getSelectedScope(), scope, actionHandler.getTargetClass());
-        cancel(popupRef.get());
-        showElementUsages(parameters, actionHandler.withScope(scope));
-      });
-      Disposer.register(contentDisposable, scopeChooserCombo);
-      northPanel.add(scopeChooserCombo, gc.next());
-    }
 
     northPanel.add(new Box.Filler(JBUI.size(10, 0), JBUI.size(10, 0), JBUI.size(Short.MAX_VALUE, 0)), gc.next().weightx(1.0).fillCellHorizontally());
 
@@ -1004,35 +1002,16 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     }
   }
 
-  private static @NotNull ScopeChooserCombo scopeChooser(
+  private static @NotNull ScopeChooserGroup createScopeChooser(
     @NotNull Project project,
+    @NotNull Disposable parentDisposable,
     @NotNull SearchScope initialScope,
-    @NotNull Consumer<? super SearchScope> scopeConsumer
+    @NotNull Consumer<SearchScope> scopeConsumer
   ) {
-    ScopeChooserCombo scopeChooserCombo = new ScopeChooserCombo();
-    scopeChooserCombo.getComboBox().putClientProperty("JComboBox.isBorderless", Boolean.TRUE);
-    if (ExperimentalUI.isNewUI()) {
-      scopeChooserCombo.setOpaque(false);
-      scopeChooserCombo.getComboBox().setOpaque(false);
-    }
-    scopeChooserCombo
-      .initialize(project, false, false, initialScope.getDisplayName(), null)
-      .onSuccess(__ -> {
-        var scopeComboBox = scopeChooserCombo.getComboBox();
-        scopeComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(200));
-        scopeComboBox.addItemListener(event -> {
-          if (event.getStateChange() != ItemEvent.SELECTED) {
-            return;
-          }
-          SearchScope scope = scopeChooserCombo.getSelectedScope();
-          if (scope == null) {
-            return;
-          }
-          scopeConsumer.accept(scope);
-        });
-      });
-    scopeChooserCombo.setButtonVisible(false);
-    return scopeChooserCombo;
+    ScopeChooserGroup result = new ScopeChooserGroup(project, parentDisposable, initialScope);
+    result.addChangeListener(scopeConsumer);
+
+    return result;
   }
 
   private static @Nls @NotNull String suggestSecondInvocation(@Nls(capitalization = Sentence) @NotNull String text,
