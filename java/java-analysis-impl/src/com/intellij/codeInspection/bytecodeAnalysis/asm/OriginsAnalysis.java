@@ -13,9 +13,6 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.*;
 import java.util.HashSet;
 import java.util.LinkedList;
 
-/**
- * @author lambdamix
- */
 public final class OriginsAnalysis {
   private static final SourceInterpreter ourInterpreter = new SourceInterpreter(Opcodes.API_VERSION) {
     @Override

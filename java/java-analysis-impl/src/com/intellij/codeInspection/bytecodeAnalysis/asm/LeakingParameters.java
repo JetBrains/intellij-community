@@ -11,9 +11,6 @@ import java.util.List;
 
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
-/**
- * @author lambdamix
- */
 public class LeakingParameters {
   public final Frame<? extends Value>[] frames;
   public final boolean[] parameters;
