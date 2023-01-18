@@ -223,7 +223,10 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
               @Suppress("HardCodedStringLiteral")
               model.selectedItem = if (option is Enum<*>) option.name else option.toString()
             }
-            .onChanged { context.setOption(component.bindId, convertItem((it.selectedItem as OptDropdown.Option).key, context.getOption(component.bindId).javaClass)) }
+            .onChanged { context.setOption(component.bindId, convertItem(
+              (it.selectedItem as OptDropdown.Option).key,
+              context.getOption(component.bindId)?.javaClass ?: throw NullPointerException("OptDropdown value can't be initialized with 'null'.")
+            )) }
             .gap(RightGap.SMALL)
         }
 
@@ -309,7 +312,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
     }
   }
 
-  private fun RendererContext.getOption(bindId: String): Any {
+  private fun RendererContext.getOption(bindId: String): Any? {
     return this.controller.getOption(bindId)
   }
 

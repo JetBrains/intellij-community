@@ -6,6 +6,7 @@ import com.intellij.util.ReflectionUtil;
 import kotlin.reflect.KMutableProperty0;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.function.BiConsumer;
@@ -40,6 +41,7 @@ public interface OptionController {
    * @see #setOption(String, Object)
    * @see InspectionProfileEntry#getOptionController()
    */
+  @Nullable
   Object getOption(@NotNull String bindId);
 
   /**
