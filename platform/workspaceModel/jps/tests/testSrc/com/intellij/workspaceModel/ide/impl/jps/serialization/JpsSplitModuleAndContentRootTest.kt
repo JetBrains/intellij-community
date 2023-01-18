@@ -15,7 +15,6 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
 import org.jetbrains.jps.util.JpsPathUtil
-import org.junit.Assert
 import org.junit.Assume
 import org.junit.Before
 import org.junit.ClassRule
@@ -306,7 +305,7 @@ class JpsSplitModuleAndContentRootTest {
 
   @Test
   fun `load content root`() {
-    checkSaveProjectAfterChange("after/addContentRoot", "after/addContentRoot") { builder, _, configLocation ->
+    checkSaveProjectAfterChange("after/addContentRoot", "after/addContentRoot") { builder, orphanage, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRoot = moduleEntity.contentRoots.single()
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
@@ -316,7 +315,7 @@ class JpsSplitModuleAndContentRootTest {
 
   @Test
   fun `load content root with two roots`() {
-    checkSaveProjectAfterChange("after/addSecondContentRoot", "after/addSecondContentRoot") { builder, _, configLocation ->
+    checkSaveProjectAfterChange("after/addSecondContentRoot", "after/addSecondContentRoot") { builder, orphanage, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRoots = moduleEntity.contentRoots
       assertEquals(2, contentRoots.size)
@@ -544,8 +543,8 @@ class JpsSplitModuleAndContentRootTest {
   @TestFor(classes = [JavaModuleSettingsEntity::class, ModuleImlFileEntitiesSerializer::class, JavaSettingsSerializer::class])
   @Test
   fun `load module without java custom settings`() {
-    checkSaveProjectAfterChange("after/imlWithoutJavaSettings", "after/imlWithoutJavaSettings") { builder, _, _ ->
-      val javaSettings = builder.entities(ModuleEntity::class.java).single().javaSettings
+    checkSaveProjectAfterChange("after/imlWithoutJavaSettings", "after/imlWithoutJavaSettings") { _, orphanage, _ ->
+      val javaSettings = orphanage.entities(ModuleEntity::class.java).single().javaSettings
       assertNull(javaSettings)
     }
   }
