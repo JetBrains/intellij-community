@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
@@ -293,7 +292,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 if (group is SuppressableProblemGroup) {
                     val at = file.findElementAt(highlight.actualStartOffset) ?: continue
                     val action = highlight.findRegisteredQuickFix<IntentionAction?> { desc, range ->
-                        desc.getOptions(at, null).find { action -> action.text == text }
+                        desc.getOptions(at, null).find { action ->
+                            action.text == text && action.isAvailable(project, editor, file)
+                        }
                     }
                     if (action != null) {
                         return action
