@@ -20,8 +20,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
+import com.intellij.util.indexing.roots.IndexingRootsCollectionUtil;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.util.indexing.roots.builders.SyntheticLibraryIteratorBuilder;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
+import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryEntityUtils;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
@@ -133,6 +137,35 @@ class RescannedRootsUtil {
         if (excludedRoots.isEmpty()) {
           break;
         }
+      }
+    }
+
+    if (excludedRoots.isEmpty()) {
+      return result;
+    }
+
+
+    IndexingRootsCollectionUtil.IndexingRootsCollectionSettings settings =
+      new IndexingRootsCollectionUtil.IndexingRootsCollectionSettings();
+    settings.collectModuleAwareContent = false;
+
+    for (WorkspaceFileIndexContributor<?> contributor : WorkspaceFileIndexImpl.Companion.getEP_NAME().getExtensionList()) {
+      if (contributor instanceof PlatformInternalWorkspaceFileIndexContributor) {
+        continue;
+      }
+      IndexingRootsCollectionUtil.IndexingRootsDescriptions roots =
+        IndexingRootsCollectionUtil.collectRootsFromWorkspaceFileIndexContributors(project, current, settings);
+      Iterator<VirtualFile> rootsIterator = excludedRoots.iterator();
+      while (rootsIterator.hasNext()) {
+        VirtualFile next = rootsIterator.next();
+        Collection<? extends IndexableIteratorBuilder> builders = IndexingRootsCollectionUtil.createBuilderForFile(roots, next);
+        if (!builders.isEmpty()) {
+          result.addAll(builders);
+          rootsIterator.remove();
+        }
+      }
+      if (excludedRoots.isEmpty()) {
+        break;
       }
     }
 
