@@ -23,9 +23,6 @@ import java.util.function.Function;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static java.util.stream.Collectors.groupingBy;
 
-/**
- * @author ibessonov
- */
 public class MavenRunAnythingProviderTest extends MavenMultiVersionImportingTestCase {
 
   private DataContext myDataContext;
