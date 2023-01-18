@@ -31,8 +31,6 @@ import static com.intellij.openapi.util.io.FileUtilRt.doIOOperation;
  * Reads information about the Hg repository from Hg service files located in the {@code .hg} folder.
  * NB: works with {@link File}, i.e. reads from disk. Consider using caching.
  * Throws a {@link RepoStateException} in the case of incorrect Hg file format.
- *
- * @author Nadya Zabrodina
  */
 public final class HgRepositoryReader {
   private static final Logger LOG = Logger.getInstance(HgRepositoryReader.class);

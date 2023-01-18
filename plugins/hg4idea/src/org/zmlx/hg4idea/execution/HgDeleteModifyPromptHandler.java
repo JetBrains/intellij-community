@@ -12,9 +12,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgDeleteModifyPromptHandler implements HgPromptHandler {
 
   private static final Logger LOG = Logger.getInstance(HgDeleteModifyPromptHandler.class);
