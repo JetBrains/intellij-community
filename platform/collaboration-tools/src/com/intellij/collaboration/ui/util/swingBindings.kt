@@ -10,6 +10,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.Nls
 import javax.swing.*
 import javax.swing.event.ListDataEvent
@@ -140,9 +141,38 @@ fun Wrapper.bindContent(scope: CoroutineScope, contentFlow: Flow<JComponent>) {
   }
 }
 
+fun <D> JPanel.bindChild(scope: CoroutineScope, dataFlow: Flow<D>,
+                         constraints: Any? = null, index: Int? = null,
+                         componentFactory: (CoroutineScope, D) -> JComponent?) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    dataFlow.collectLatest {
+      coroutineScope {
+        val component = componentFactory(this, it) ?: return@coroutineScope
+        if (index != null) {
+          add(component, constraints, index)
+        }
+        else {
+          add(component, constraints)
+        }
+        validate()
+        repaint()
+
+        try {
+          awaitCancellation()
+        }
+        finally {
+          remove(component)
+          revalidate()
+          repaint()
+        }
+      }
+    }
+  }
+}
+
 private typealias Block = CoroutineScope.() -> Unit
 
-class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { SupervisorJob() + Dispatchers.Main.immediate })
+class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { SupervisorJob() + Dispatchers.Main })
   : Activatable {
 
   private var scope: CoroutineScope? = null
@@ -154,7 +184,7 @@ class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineCont
     launch { block() }
   }
 
-  private fun doInScope(block: Block) {
+  fun doInScope(block: Block) {
     blocks.add(block)
     scope?.run {
       block()

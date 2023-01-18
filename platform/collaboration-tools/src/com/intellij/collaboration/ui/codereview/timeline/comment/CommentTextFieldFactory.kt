@@ -1,30 +1,30 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview.timeline.comment
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.actions.IncrementalFindAction
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComponentValidator
-import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.EditorTextField
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.update.Activatable
-import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.annotations.Nls
-import java.util.function.Supplier
+import java.awt.Rectangle
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import javax.swing.JComponent
 
 object CommentTextFieldFactory {
   fun create(
-    model: CommentTextFieldModel,
-    placeHolder: @Nls String? = null,
-    withValidation: Boolean = true
-  ): EditorTextField = CommentTextField(model.project, model.document).apply {
+    project: Project?,
+    document: Document,
+    scrollOnChange: ScrollOnChangePolicy = ScrollOnChangePolicy.ScrollToField,
+    placeHolder: @Nls String? = null
+  ): EditorTextField = CommentTextField(project, document).apply {
     putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     setPlaceholder(placeHolder)
     addSettingsProvider {
@@ -34,10 +34,49 @@ object CommentTextFieldFactory {
       it.isEmbeddedIntoDialogWrapper = true
       it.contentComponent.isOpaque = false
     }
+    installScrollIfChangedController(scrollOnChange)
     selectAll()
-    if (withValidation) {
-      UiNotifyConnector(this, ValidatorActivatable(model, this), false)
+  }
+
+  private fun EditorTextField.installScrollIfChangedController(policy: ScrollOnChangePolicy) {
+    if (policy == ScrollOnChangePolicy.DontScroll) return
+
+    fun scroll() {
+      val field = this
+      val parent = field.parent as? JComponent
+      when (policy) {
+        is ScrollOnChangePolicy.ScrollToComponent -> {
+          val componentToScroll = policy.component
+          parent?.scrollRectToVisible(Rectangle(0, 0, componentToScroll.width, componentToScroll.height))
+        }
+        ScrollOnChangePolicy.ScrollToField -> {
+          parent?.scrollRectToVisible(Rectangle(0, 0, parent.width, parent.height))
+        }
+        else -> Unit
+      }
     }
+
+    addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        scroll()
+      }
+    })
+
+    // Previous listener doesn't work properly when text field's size is changed because component is not resized at this moment.
+    // Without the following listener component will not be scrolled to when newline is inserted.
+    addComponentListener(object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent?) {
+        if (UIUtil.isFocusAncestor(parent)) {
+          scroll()
+        }
+      }
+    })
+  }
+
+  sealed class ScrollOnChangePolicy {
+    object DontScroll : ScrollOnChangePolicy()
+    object ScrollToField : ScrollOnChangePolicy()
+    class ScrollToComponent(val component: JComponent) : ScrollOnChangePolicy()
   }
 
   private class CommentTextField(
@@ -68,33 +107,6 @@ object CommentTextFieldFactory {
         return editor?.let { TextEditorProvider.getInstance().getTextEditor(it) } ?: super.getData(dataId)
       }
       return super.getData(dataId)
-    }
-  }
-
-  private class ValidatorActivatable(
-    private val model: CommentTextFieldModel,
-    private val textField: EditorTextField
-  ) : Activatable {
-    private var validatorDisposable: Disposable? = null
-    private var validator: ComponentValidator? = null
-
-    init {
-      model.addStateListener {
-        validator?.revalidate()
-      }
-    }
-
-    override fun showNotify() {
-      validatorDisposable = Disposer.newDisposable("ETF validator")
-      validator = ComponentValidator(validatorDisposable!!).withValidator(Supplier {
-        model.error?.let { ValidationInfo(it.message.orEmpty(), textField) }
-      }).installOn(textField)
-    }
-
-    override fun hideNotify() {
-      validatorDisposable?.let { Disposer.dispose(it) }
-      validatorDisposable = null
-      validator = null
     }
   }
 }

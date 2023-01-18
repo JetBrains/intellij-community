@@ -3,12 +3,15 @@ package com.intellij.collaboration.ui
 
 import com.intellij.application.subscribe
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
+import com.intellij.collaboration.ui.util.JComponentOverlay
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
+import com.intellij.openapi.ui.ComponentValidator
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
@@ -24,10 +27,12 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.text.DefaultCaret
@@ -65,6 +70,54 @@ object CollaborationToolsUIUtil {
 
     ScrollingUtil.installActions(list)
     ScrollingUtil.installActions(list, searchTextField.textEditor)
+  }
+
+  /**
+   * Show an error on [component] if there's one in [errorValue]
+   */
+  @Internal
+  fun installValidator(component: JComponent, errorValue: SingleValueModel<@Nls String?>) {
+    UiNotifyConnector(component, ValidatorActivatable(errorValue, component), false)
+  }
+
+  private class ValidatorActivatable(
+    private val errorValue: SingleValueModel<@Nls String?>,
+    private val component: JComponent
+  ) : Activatable {
+    private var validatorDisposable: Disposable? = null
+    private var validator: ComponentValidator? = null
+
+    init {
+      errorValue.addListener {
+        validator?.revalidate()
+      }
+    }
+
+    override fun showNotify() {
+      validatorDisposable = Disposer.newDisposable("Component validator")
+      validator = ComponentValidator(validatorDisposable!!).withValidator(Supplier {
+        errorValue.value?.let { ValidationInfo(it, component) }
+      }).installOn(component)
+    }
+
+    override fun hideNotify() {
+      validatorDisposable?.let { Disposer.dispose(it) }
+      validatorDisposable = null
+      validator = null
+    }
+  }
+
+  /**
+   * Show progress label over [component]
+   */
+  @Internal
+  fun wrapWithProgressOverlay(component: JComponent, inProgressValue: SingleValueModel<Boolean>): JComponent {
+    val busyLabel = JLabel(AnimatedIcon.Default())
+    inProgressValue.addAndInvokeListener {
+      busyLabel.isVisible = it
+      component.isEnabled = !it
+    }
+    return JComponentOverlay.createCentered(component, busyLabel)
   }
 
   /**
