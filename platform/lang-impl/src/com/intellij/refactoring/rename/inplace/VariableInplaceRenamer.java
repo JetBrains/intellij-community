@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.CommonBundle;
@@ -11,6 +11,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
@@ -59,6 +61,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   private ResolveSnapshotProvider.ResolveSnapshot mySnapshot;
   private TextRange mySelectedRange;
   protected Language myLanguage;
+  private SuggestedNameInfo mySuggestedNameInfo;
 
   public VariableInplaceRenamer(@NotNull PsiNamedElement elementToRename,
                                 @NotNull Editor editor) {
@@ -260,8 +263,19 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   protected void renameSynthetic(String newName) {
   }
 
-  protected void performRefactoringRename(final String newName,
-                                          final StartMarkAction markAction) {
+  @Override
+  protected MyLookupExpression createLookupExpression(PsiElement selectedElement) {
+    if (myNameSuggestions == null && myElementToRename != null) {
+      myNameSuggestions = new LinkedHashSet<>();
+      mySuggestedNameInfo =
+        ActionUtil.underModalProgress(selectedElement.getProject(),
+                                      RefactoringBundle.message("progress.title.collecting.suggested.names"),
+                                      () -> NameSuggestionProvider.suggestNames(myElementToRename, selectedElement, myNameSuggestions));
+    }
+    return new MyLookupExpression(getInitialName(), myNameSuggestions, myElementToRename, selectedElement, shouldSelectAll(), myAdvertisementText);
+  }
+
+  protected void performRefactoringRename(String newName, StartMarkAction markAction) {
     final String refactoringId = getRefactoringId();
     try {
       PsiNamedElement elementToRename = getVariable();
@@ -320,7 +334,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       }
     }
     finally {
-
+      if (mySuggestedNameInfo != null) mySuggestedNameInfo.nameChosen(newName);
       if (refactoringId != null) {
         final RefactoringEventData afterData = new RefactoringEventData();
         afterData.addElement(getVariable());
