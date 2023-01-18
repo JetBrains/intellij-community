@@ -10,7 +10,6 @@ import com.intellij.ui.win.WinDockDelegate;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Denis Fokin
  * @author Nikita Provotorov
  */
 public final class SystemDock {
