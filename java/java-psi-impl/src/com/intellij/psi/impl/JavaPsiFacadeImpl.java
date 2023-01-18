@@ -25,8 +25,6 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,13 +40,11 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private final ConcurrentMap<String, PsiPackage> myPackageCache = ContainerUtil.createConcurrentSoftValueMap();
 
-  // either NULL_OBJECT or PsiClass
-  private final ConcurrentMap<GlobalSearchScope, Map<String, Object>> myClassCache = ContainerUtil.createConcurrentSoftKeySoftValueMap();
+  private final ConcurrentMap<GlobalSearchScope, Map<String, Optional<PsiClass>>> myClassCache = ContainerUtil.createConcurrentSoftKeySoftValueMap();
   private final Project myProject;
   private final JavaFileManager myFileManager;
   private final NotNullLazyValue<JvmFacadeImpl> myJvmFacade;
   private final JvmPsiConversionHelper myConversionHelper;
-  private static final Object NULL_OBJECT = new Object();
 
   public JavaPsiFacadeImpl(@NotNull Project project) {
     myProject = project;
@@ -69,20 +65,17 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   public PsiClass findClass(@NotNull final String qualifiedName, @NotNull GlobalSearchScope scope) {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
-    Map<String, Object> map = myClassCache.computeIfAbsent(scope, scope1 -> ContainerUtil.createConcurrentWeakValueMap());
-    Object result = map.get(qualifiedName);
+    Map<String, Optional<PsiClass>> map = myClassCache.computeIfAbsent(scope, scope1 -> ContainerUtil.createConcurrentWeakValueMap());
+    Optional<PsiClass> result = map.get(qualifiedName);
     if (result == null) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
-      result = doFindClass(qualifiedName, scope);
+      result = Optional.ofNullable(doFindClass(qualifiedName, scope));
       if (stamp.mayCacheNow()) {
-        map.put(qualifiedName, result == null ? NULL_OBJECT : result);
+        map.put(qualifiedName, result);
       }
     }
-    if (result == NULL_OBJECT) {
-      return null;
-    }
 
-    return (PsiClass)result;
+    return result.orElse(null);
   }
 
   @Nullable
