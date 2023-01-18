@@ -602,14 +602,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
   @Override
   public @NotNull VirtualFile getVcsRoot(@NotNull Project project, @NotNull VirtualFile detectedRoot, @NotNull FilePath path) {
-    GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(path);
-    if (repository != null && repository.getRoot().equals(detectedRoot)) {
-      GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
-      if (submodule != null) {
-        return submodule.getParent().getRoot();
-      }
-    }
-    return detectedRoot;
+    return getCorrectedVcsRoot(myRepositoryManager, detectedRoot, path);
   }
 
   @SuppressWarnings("unchecked")
@@ -664,5 +657,19 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       return null;
     }
     return repository;
+  }
+
+  @NotNull
+  public static VirtualFile getCorrectedVcsRoot(@NotNull GitRepositoryManager repositoryManager,
+                                                @NotNull VirtualFile detectedRoot,
+                                                @NotNull FilePath path) {
+    GitRepository repository = repositoryManager.getRepositoryForRootQuick(path);
+    if (repository != null && repository.getRoot().equals(detectedRoot)) {
+      GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
+      if (submodule != null) {
+        return submodule.getParent().getRoot();
+      }
+    }
+    return detectedRoot;
   }
 }
