@@ -39,9 +39,6 @@ import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
-/**
- * @author spleaner
- */
 @SuppressWarnings("SpellCheckingInspection")
 class LiveTemplateTest extends LiveTemplateTestCase {
   final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/"

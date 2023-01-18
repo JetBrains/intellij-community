@@ -15,9 +15,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author spleaner
- */
 public class DefaultRunExecutor extends Executor {
   @NonNls public static final String EXECUTOR_ID = ToolWindowId.RUN;
 

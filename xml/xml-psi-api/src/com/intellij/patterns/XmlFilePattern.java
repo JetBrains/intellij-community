@@ -21,9 +21,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author spleaner
- */
 public class XmlFilePattern<Self extends XmlFilePattern<Self>> extends PsiFilePattern<XmlFile, Self>{
 
   public XmlFilePattern() {

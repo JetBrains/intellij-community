@@ -9,7 +9,6 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * @author spleaner
  * @deprecated see {@link PreviewHintProvider} deprecation notice
  */
 @Deprecated

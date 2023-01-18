@@ -9,7 +9,6 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author spleaner
  * @see PlatformPatterns#psiFile()
  */
 public class PsiFilePattern<T extends PsiFile, Self extends PsiFilePattern<T, Self>> extends PsiElementPattern<T, Self> {

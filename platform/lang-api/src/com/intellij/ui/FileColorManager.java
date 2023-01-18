@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Collection;
 
-/**
- * @author spleaner
- */
 public abstract class FileColorManager {
   public static FileColorManager getInstance(@NotNull Project project) {
     return project.getService(FileColorManager.class);

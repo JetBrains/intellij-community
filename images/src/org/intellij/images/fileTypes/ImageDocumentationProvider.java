@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-/**
- * @author spleaner
- */
 public class ImageDocumentationProvider extends AbstractDocumentationProvider {
   private static final int MAX_IMAGE_SIZE = 300;
 

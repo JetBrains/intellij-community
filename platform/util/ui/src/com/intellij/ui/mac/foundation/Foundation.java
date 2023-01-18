@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.*;
 
 /**
- * @author spleaner
  * see <a href="http://developer.apple.com/documentation/Cocoa/Reference/ObjCRuntimeRef/Reference/reference.html">Documentation</a>
  */
 @NonNls
