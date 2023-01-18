@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.KotlinBaseFe10CodeInsightBundle
+import org.jetbrains.kotlin.idea.base.fe10.highlighting.KotlinBaseFe10HighlightingBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.highlighter.AnnotationHostKind
 import org.jetbrains.kotlin.idea.util.addAnnotation
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.replaceFileAnnotationList
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinSuppressIntentionAction(
     suppressAt: KtElement,
@@ -31,7 +33,20 @@ class KotlinSuppressIntentionAction(
     override fun getFamilyName() = KotlinBaseFe10CodeInsightBundle.message("intention.suppress.family")
     override fun getText() = KotlinBaseFe10CodeInsightBundle.message("intention.suppress.text", suppressionKey, kind.kind, kind.name ?: "")
 
-    override fun isAvailable(project: Project, editor: Editor?, element: PsiElement) = element.isValid
+    override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
+        if (isLambdaParameter(element)) {
+            // Lambda parameters can't be annotated: KT-13900
+            return false
+        }
+        return element.isValid
+    }
+
+    private fun isLambdaParameter(element: PsiElement): Boolean {
+        if (kind.kind != KotlinBaseFe10HighlightingBundle.message("declaration.kind.parameter")) return false
+        val parentParameter = element.parent.safeAs<KtParameter>()
+            ?: element.parent.safeAs<KtDestructuringDeclarationEntry>()?.parent?.parent.safeAs<KtParameter>()
+        return parentParameter?.isLambdaParameter == true
+    }
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         if (!element.isValid) return
