@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage
 
 import com.intellij.ide.projectView.actions.MarkRootActionBase
@@ -11,6 +11,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -170,7 +171,9 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
 
     val application = ApplicationManager.getApplication()
     val future = project.coroutineScope.async {
-      updateSourceFolders(sourceFoldersToChange)
+      blockingContext {
+        updateSourceFolders(sourceFoldersToChange)
+      }
     }.asCompletableFuture()
 
     if (application.isUnitTestMode) {
