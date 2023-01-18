@@ -25,12 +25,8 @@ public class SafeDeleteOverridingMethodUsageInfo extends SafeDeleteUsageInfo imp
     super(overridingMethod, method);
   }
 
-  public PsiMethod getOverridingMethod() {
-    return (PsiMethod) getElement();
-  }
-
-  public PsiMethod getReferencedMethod() {
-    return (PsiMethod) getReferencedElement();
+  public PsiElement getOverridingMethod() {
+    return getElement();
   }
 
   @Override
