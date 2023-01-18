@@ -10,31 +10,8 @@ import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 
 
-class Orphanage {
+class Orphanage(private val project: Project) {
   val entityStorage: VersionedEntityStorageImpl = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
-
-  @RequiresWriteLock
-  fun put(orphan: WorkspaceEntity) {
-    update { builder ->
-      builder addEntity orphan
-    }
-  }
-
-  @RequiresWriteLock
-  fun put(orphans: Collection<WorkspaceEntity>) {
-    update { builder ->
-      orphans.forEach {
-        builder addEntity it
-      }
-    }
-  }
-
-  @RequiresWriteLock
-  fun remove(orphans: Collection<WorkspaceEntity>) {
-    update { builder ->
-      orphans.forEach { builder.removeEntity(it) }
-    }
-  }
 
   @RequiresWriteLock
   fun update(updater: (MutableEntityStorage) -> Unit) {
@@ -45,9 +22,75 @@ class Orphanage {
 
     updater(builder)
 
+    val changes = builder.collectChanges(before)
+
+    checkIfParentsAlreadyExist(changes, builder)
+
     val newStorage: EntityStorageSnapshot = builder.toSnapshot()
     entityStorage.replace(newStorage, emptyMap(), {}, {})
   }
+
+  private fun checkIfParentsAlreadyExist(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
+    val addedModules = changes[ModuleEntity::class.java]
+                         ?.filterIsInstance<EntityChange.Added<ModuleEntity>>()
+                         ?.map { it.entity } ?: return
+
+    val adder = ContentRootsAdder()
+
+    adder.collectUpdates(addedModules)
+
+    if (adder.anyUpdates()) {
+      project.workspaceModel.updateProjectModel("Apply orphan elements to already existing entities") {
+        adder.applyUpdates(it)
+      }
+    }
+    adder.cleanOrphanBuilder(builder)
+  }
+
+  inner class ContentRootsAdder {
+    private lateinit var updates: List<Pair<ModuleEntity, List<ContentRootEntity.Builder>>>
+    private val entitiesToRemoveFromOrphanage = ArrayList<ContentRootEntity>()
+
+    fun collectUpdates(addedModules: List<ModuleEntity>) {
+      updates = addedModules.mapNotNull { orphanModule ->
+        val snapshot = project.workspaceModel.currentSnapshot
+        val snapshotModule = snapshot.resolve(orphanModule.symbolicId) ?: return@mapNotNull null
+
+        val existingUrls = snapshotModule.contentRoots.map { it.url }
+        val rootsToAdd = orphanModule.contentRoots
+          .filter { it.url !in existingUrls && it.entitySource !is OrphanageWorkerEntitySource }
+          .onEach { entitiesToRemoveFromOrphanage += it }
+          .map { it.createEntityTreeCopy() as ContentRootEntity.Builder }
+        snapshotModule to rootsToAdd
+      }
+    }
+
+    fun anyUpdates(): Boolean {
+      return updates.isNotEmpty()
+    }
+
+    fun applyUpdates(builder: MutableEntityStorage) {
+      updates.forEach { (snapshotModule, rootsToAdd) ->
+        builder.modifyEntity(snapshotModule) {
+          this.contentRoots += rootsToAdd
+        }
+      }
+    }
+
+    fun cleanOrphanBuilder(builder: MutableEntityStorage) {
+      entitiesToRemoveFromOrphanage.forEach {
+        val moduleId = it.module.symbolicId
+
+        builder.removeEntity(it)
+
+        val module = builder.resolve(moduleId) ?: return@forEach
+        if (module.contentRoots.isEmpty()) {
+          builder.removeEntity(module)
+        }
+      }
+    }
+  }
+
 
   companion object {
     val use: Boolean by lazy { Registry.`is`("ide.workspace.model.separate.component.for.roots", false) }
@@ -135,7 +178,7 @@ class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
     override fun cleanOrphanage() {
       project.workspaceModel.orphanage.update {
         orphanageRoots.forEach { (module, roots) ->
-          val rootSet = roots.mapTo(HashSet()) { it.url}
+          val rootSet = roots.mapTo(HashSet()) { it.url }
           val orphanModule = it.resolve(module.symbolicId) ?: return@forEach
           orphanModule.contentRoots.filter { it.url in rootSet }
             .forEach { toRemove -> it.removeEntity(toRemove) }
