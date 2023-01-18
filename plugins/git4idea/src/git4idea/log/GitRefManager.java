@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log;
 
 import com.intellij.dvcs.repo.RepositoryManager;
@@ -56,8 +56,9 @@ public class GitRefManager implements VcsLogRefManager {
   private static final List<VcsRefType> REF_TYPE_INDEX = Arrays.asList(HEAD, LOCAL_BRANCH, REMOTE_BRANCH, TAG, OTHER);
 
   public static final String MASTER = "master";
+  public static final String MAIN = "main";
   public static final String ORIGIN_MASTER = "origin/master";
-  public static final String ORIGIN_MASTER_REF = GitBranch.REFS_REMOTES_PREFIX + ORIGIN_MASTER;
+  public static final String ORIGIN_MAIN = "origin/main";
   private static final Logger LOG = Logger.getInstance(GitRefManager.class);
   private static final String REMOTE_TABLE_SEPARATOR = " & ";
   private static final String SEPARATOR = "/";
