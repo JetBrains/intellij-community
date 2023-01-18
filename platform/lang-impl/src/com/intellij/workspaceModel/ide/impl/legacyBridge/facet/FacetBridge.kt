@@ -7,13 +7,13 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntityBase
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 /**
  * Bridge interface for facet which uses custom module settings entity under the hood
  */
-interface FacetBridge<T: WorkspaceEntity> {
+interface FacetBridge<T: FacetEntityBase> {
   /**
    * Add root entity which [FacetBridge] uses under the hood, into the storage
    * @param mutableStorage for saving root entity and it's children in it
@@ -74,9 +74,12 @@ interface FacetBridge<T: WorkspaceEntity> {
   val config: FacetConfigurationBridge<T>
 }
 
-interface FacetConfigurationBridge<T: WorkspaceEntity> {
+interface FacetConfigurationBridge<T: FacetEntityBase> {
   fun initSettings(moduleEntity: ModuleEntity, entitySource: EntitySource) : T
   fun applyChangesToStorage(mutableStorage: MutableEntityStorage, existingFacetEntity: T, moduleEntity: ModuleEntity)
   fun getFacetEntity(): T
   fun updateData(rootEntity: T)
+  fun rename(newName: String) {
+    (getFacetEntity() as FacetEntityBase.Builder<*>).name = newName
+  }
 }

@@ -110,7 +110,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
 
   override fun getNewName(facet: Facet<*>): String {
     val entityTypeToFacetContributor = WorkspaceFacetContributor.EP_NAME.extensions.associateBy { it.rootEntityType }
-    val entity = diff.facetMapping().getEntities(facet).single()
+    val entity = diff.facetMapping().getEntities(facet).single() as FacetEntityBase
     return entityTypeToFacetContributor[entity.getEntityInterface()]!!.getFacetName(entity)
   }
 
