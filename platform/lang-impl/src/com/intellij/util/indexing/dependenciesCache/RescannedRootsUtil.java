@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependenciesCache;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -92,7 +92,8 @@ class RescannedRootsUtil {
           if (library != null) {
             found = true;
             LibraryId libraryId = LibraryEntityUtils.findLibraryId(library);
-            result.addAll(IndexableIteratorBuilders.INSTANCE.forLibraryEntity(libraryId, false, excluded));
+            List<VirtualFile> files = Collections.singletonList(excluded);
+            result.addAll(IndexableIteratorBuilders.INSTANCE.forLibraryEntity(libraryId, false, files, files));
           }
         }
       }

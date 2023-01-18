@@ -704,15 +704,15 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
       assertNothingToRescanAndFinishIndexing();
 
       updateExcludedRoots(urls -> urls.clear());
-      assertRescanningLibraryContent(UNSURE, classesDir, sourcesDir);
+      assertRescanningLibraryContent(UNSURE, Collections.singletonList(classesDir), Collections.singletonList(sourcesDir));
 
       updateExcludedRoots(urls -> {
         urls.add(sourcesDir.getUrl());
       });
-      assertRescanningLibraryContent(YES, classesDir);
+      assertRescanningLibraryContent(YES, Collections.singletonList(classesDir), Collections.emptyList());
 
       updateExcludedRoots(urls -> urls.clear());
-      assertRescanningLibraryContent(YES, sourcesDir);
+      assertRescanningLibraryContent(YES, Collections.emptyList(), Collections.singletonList(sourcesDir));
     }
 
     private void updateExcludedRoots(Consumer<List<String>> urlsConsumer) {
@@ -756,17 +756,22 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
       finishIndexing(finishIndexingWithStatus, statusPair.getSecond(), statusService);
     }
 
-    private void assertRescanningLibraryContent(ThreeState finishIndexingWithStatus, VirtualFile... roots) {
+    private void assertRescanningLibraryContent(ThreeState finishIndexingWithStatus,
+                                                Collection<VirtualFile> roots,
+                                                Collection<VirtualFile> sourceRoots) {
       DependenciesIndexedStatusService statusService = DependenciesIndexedStatusService.getInstance(getProject());
       @Nullable Pair<@NotNull Collection<? extends IndexableIteratorBuilder>, @NotNull StatusMark> statusPair;
       statusPair = statusService.getDeltaWithLastIndexedStatus();
       Collection<? extends IndexableIteratorBuilder> builders = statusPair.getFirst();
       List<VirtualFile> actualRoots = new ArrayList<>();
+      List<VirtualFile> actualSourceRoots = new ArrayList<>();
       for (IndexableIteratorBuilder builder : builders) {
         assertInstanceOf(builder, LibraryIdIteratorBuilder.class);
-        actualRoots.add(((LibraryIdIteratorBuilder)builder).getRoot());
+        actualRoots.addAll(((LibraryIdIteratorBuilder)builder).getRoots());
+        actualSourceRoots.addAll(((LibraryIdIteratorBuilder)builder).getSourceRoots());
       }
       assertContainsElements(actualRoots, roots);
+      assertContainsElements(actualSourceRoots, sourceRoots);
 
       finishIndexing(finishIndexingWithStatus, statusPair.getSecond(), statusService);
     }

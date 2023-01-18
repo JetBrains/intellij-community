@@ -31,7 +31,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.util.indexing.roots.IndexableEntityProviderMethods.INSTANCE;
-import static com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl.createIterator;
+import static com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl.createIteratorFromEntity;
 
 public class IndexingRootsCollectionUtil {
 
@@ -113,7 +113,7 @@ public class IndexingRootsCollectionUtil {
       initialIterators.add(new ModuleIndexableFilesIteratorImpl(moduleRootsDescription.module(), moduleRootsDescription.roots(), true));
     }
     for (IndexingRootsCollectionUtil.LibraryRootsDescription root : descriptions.libraryRoots()) {
-      LibraryIndexableFilesIteratorImpl iterator = createIterator(root.library(), root.classRoots(), root.sourceRoots());
+      LibraryIndexableFilesIteratorImpl iterator = createIteratorFromEntity(root.library(), root.classRoots(), root.sourceRoots());
       if (libraryOrigins.add(iterator.getOrigin())) {
         initialIterators.add(iterator);
       }

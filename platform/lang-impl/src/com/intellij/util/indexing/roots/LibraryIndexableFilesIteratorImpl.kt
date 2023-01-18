@@ -70,19 +70,21 @@ private constructor(private val libraryName: @NlsSafe String?,
 
     @RequiresReadLock
     @JvmStatic
-    fun createIterator(library: Library, roots: List<VirtualFile>? = null): LibraryIndexableFilesIteratorImpl? =
+    fun createIterator(library: Library,
+                       roots: List<VirtualFile>? = null,
+                       sourceRoots: List<VirtualFile>? = null): LibraryIndexableFilesIteratorImpl? =
       if (library is LibraryEx && library.isDisposed)
         null
       else
         LibraryIndexableFilesIteratorImpl(library.name, library.presentableName,
                                           collectFiles(library, OrderRootType.CLASSES, roots),
-                                          collectFiles(library, OrderRootType.SOURCES, roots))
+                                          collectFiles(library, OrderRootType.SOURCES, sourceRoots))
 
     @RequiresReadLock
     @JvmStatic
-    fun createIterator(entity: WorkspaceEntity,
-                       roots: List<VirtualFile>,
-                       sourceRoots: List<VirtualFile>): LibraryIndexableFilesIteratorImpl =
+    fun createIteratorFromEntity(entity: WorkspaceEntity,
+                                 roots: List<VirtualFile>,
+                                 sourceRoots: List<VirtualFile>): LibraryIndexableFilesIteratorImpl =
       if (entity is Library)
         LibraryIndexableFilesIteratorImpl(entity.name, entity.presentableName, roots, sourceRoots)
       else
