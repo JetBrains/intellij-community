@@ -347,9 +347,9 @@ fun CodeInsightTestFixture.assertUnresolvedReference(signature: String, okWithNo
   if (okWithNoRef && ref == null) {
     return
   }
-  assertNotNull("Expected not null reference for signature $signature at offset $offsetBySignature in file\n${file.text}", ref)
+  assertNotNull("Expected not null reference for signature '$signature' at offset $offsetBySignature in file\n${file.text}", ref)
   val resolved = ref!!.resolve()
-  assertNull("Expected that $ref resolves to null but resolved to $resolved (${resolved?.text}) in ${resolved?.containingFile?.name}",
+  assertNull("Expected that reference for signature '$signature' at offset $offsetBySignature resolves to null but resolved to $resolved (${resolved?.text}) in file ${resolved?.containingFile?.name}",
              resolved)
   if (ref is PsiPolyVariantReference) {
     assertEmpty(ref.multiResolve(false))
