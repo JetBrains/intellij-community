@@ -23,8 +23,6 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
     loadFacetEntities(moduleEntity, listOf(facetState), null, evaluateEntitySource)
   }
 
-  override fun getEntityName(entity: FacetEntity): String = entity.name
-
   private fun loadFacetEntities(moduleEntity: ModuleEntity,
                                 facetStates: List<FacetState>,
                                 underlyingFacet: FacetEntity?,

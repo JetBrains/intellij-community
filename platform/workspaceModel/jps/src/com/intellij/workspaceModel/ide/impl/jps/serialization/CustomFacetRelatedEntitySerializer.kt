@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntityBase
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -28,7 +28,7 @@ import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
  */
 @ApiStatus.Internal
 @ApiStatus.OverrideOnly
-interface CustomFacetRelatedEntitySerializer<T: WorkspaceEntity> {
+interface CustomFacetRelatedEntitySerializer<T: FacetEntityBase> {
   /**
    * Declare class for the main entity associated with [com.intellij.facet.Facet].
    */
@@ -58,7 +58,7 @@ interface CustomFacetRelatedEntitySerializer<T: WorkspaceEntity> {
   fun createFacetStateFromEntities(entities: List<T>, storeExternally: Boolean): List<FacetState> {
     return entities.map { settingsEntity ->
       val state = FacetState().apply {
-        name = getEntityName(settingsEntity)
+        name = settingsEntity.name
         facetType = supportedFacetType
         configuration = Element(JpsFacetSerializer.CONFIGURATION_TAG)
         val externalSystemIdValue = (settingsEntity.entitySource as? JpsImportedEntitySource)?.externalSystemId
@@ -74,15 +74,13 @@ interface CustomFacetRelatedEntitySerializer<T: WorkspaceEntity> {
     }
   }
 
-  fun getEntityName(entity: T): String
-
   /**
    * Method for creation facet XML tag from root type entity passed as a parameter
    */
   fun serializeIntoXml(entity: T): Element
 
   companion object {
-    val EP_NAME: ExtensionPointName<CustomFacetRelatedEntitySerializer<WorkspaceEntity>> =
+    val EP_NAME: ExtensionPointName<CustomFacetRelatedEntitySerializer<FacetEntityBase>> =
       ExtensionPointName.create("com.intellij.workspaceModel.customFacetRelatedEntitySerializer")
   }
 }
