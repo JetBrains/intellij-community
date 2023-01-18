@@ -55,7 +55,21 @@ interface CustomFacetRelatedEntitySerializer<T: FacetEntityBase> {
    * @param entities list of certain type entities
    * @param storeExternally indicator which tells where this data will be store, under `.idea` or in external system folder
    */
-  fun createFacetStateFromEntities(entities: List<T>, storeExternally: Boolean): List<FacetState> {
+  fun createFacetStateFromEntities(entities: List<T>, storeExternally: Boolean): List<FacetState>
+
+  /**
+   * Method for creation facet XML tag from root type entity passed as a parameter
+   */
+  fun serializeIntoXml(entity: T): Element
+
+  companion object {
+    val EP_NAME: ExtensionPointName<CustomFacetRelatedEntitySerializer<FacetEntityBase>> =
+      ExtensionPointName.create("com.intellij.workspaceModel.customFacetRelatedEntitySerializer")
+  }
+}
+
+interface FacetEntityBaseSerializer<T: FacetEntityBase> : CustomFacetRelatedEntitySerializer<T> {
+  override fun createFacetStateFromEntities(entities: List<T>, storeExternally: Boolean): List<FacetState> {
     return entities.map { settingsEntity ->
       val state = FacetState().apply {
         name = settingsEntity.name
@@ -73,14 +87,6 @@ interface CustomFacetRelatedEntitySerializer<T: FacetEntityBase> {
       return@map state
     }
   }
-
-  /**
-   * Method for creation facet XML tag from root type entity passed as a parameter
-   */
-  fun serializeIntoXml(entity: T): Element
-
-  companion object {
-    val EP_NAME: ExtensionPointName<CustomFacetRelatedEntitySerializer<FacetEntityBase>> =
-      ExtensionPointName.create("com.intellij.workspaceModel.customFacetRelatedEntitySerializer")
-  }
+  override fun serializeIntoXml(entity: T): Element = serialize(entity, Element(JpsFacetSerializer.CONFIGURATION_TAG))
+  fun serialize(entity: T, rootElement: Element): Element
 }
