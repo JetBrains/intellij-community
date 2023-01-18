@@ -29,7 +29,7 @@ private const val GAP_FOR_BUTTONS = 80
 private const val DEFAULT_HEADER_HEIGHT = 40
 
 internal class MacToolbarFrameHeader(private val frame: JFrame,
-                                     private val root: JRootPane) : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder, UISettingsListener {
+                                     root: JRootPane) : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder, UISettingsListener {
   private val ideMenu: IdeMenuBar = IdeMenuBar()
   private var toolbar: MainToolbar? = null
   private val headerTitle = SimpleCustomDecorationPath(frame)
@@ -136,15 +136,8 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   override fun getHeaderBackground(active: Boolean) = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(active)
 
   private fun updateBorders() {
-    val isFullscreen = root.getClientProperty(MacMainFrameDecorator.FULL_SCREEN) != null
-    if (isFullscreen) {
-      border = JBUI.Borders.empty()
-      headerTitle.updateBorders(0)
-    }
-    else {
-      border = JBUI.Borders.emptyLeft(GAP_FOR_BUTTONS)
-      headerTitle.updateBorders(GAP_FOR_BUTTONS)
-    }
+    border = JBUI.Borders.emptyLeft(GAP_FOR_BUTTONS)
+    headerTitle.updateBorders(GAP_FOR_BUTTONS)
     toolbar?.let { it.border = JBUI.Borders.empty() }
   }
 

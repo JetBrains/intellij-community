@@ -72,7 +72,10 @@ public class MergeAllWindowsAction extends DumbAwareAction {
     Foundation.executeOnMainThread(true, false, () -> {
       ID id = MacUtil.getWindowFromJavaWindow(window);
       Foundation.invoke(id, "mergeAllWindows:", ID.NIL);
-      if (updateTabBars) {
+      if (MacWinTabsHandler.isVersion2()) {
+        ApplicationManager.getApplication().invokeLater(() -> MacWinTabsHandlerV2.updateTabBarsAfterMerge());
+      }
+      else if (updateTabBars) {
         ApplicationManager.getApplication().invokeLater(() -> MacWinTabsHandler.updateTabBars(null));
       }
     });

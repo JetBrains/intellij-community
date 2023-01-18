@@ -64,7 +64,8 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   public MacMainFrameDecorator(@NotNull IdeFrameImpl frame, @NotNull IdeGlassPane glassPane, @NotNull Disposable parentDisposable) {
     super(frame);
 
-    myTabsHandler = new MacWinTabsHandler(frame, parentDisposable);
+    myTabsHandler =
+      MacWinTabsHandler.isVersion2() ? new MacWinTabsHandlerV2(frame, parentDisposable) : new MacWinTabsHandler(frame, parentDisposable);
 
     if (toggleFullScreenMethod != null) {
       FullScreenUtilities.setWindowCanFullScreen(frame, true);

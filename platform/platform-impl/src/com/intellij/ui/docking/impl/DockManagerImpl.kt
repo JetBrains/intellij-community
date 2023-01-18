@@ -226,6 +226,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
         }
       })
       window.contentPane = imageContainer
+      window.pack()
       setLocationFrom(mouseEvent)
       window.isVisible = true
       val windowManager = WindowManagerEx.getInstanceEx()
@@ -294,7 +295,12 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
           // the target location. Ideally, we should pass the DevicePoint to createNewDockContainerFor, but that will change the API. We'll
           // fix it up inside createNewDockContainerFor
           val point = RelativePoint(e)
-          createNewDockContainerFor(content, point)
+          if (content is DockableContentContainer) {
+            content.add(point)
+          }
+          else {
+            createNewDockContainerFor(content, point)
+          }
           e.consume() //Marker for DragHelper: drag into a separate window is not tabs reordering
         }
         else {
@@ -324,7 +330,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
 
   private fun findContainerFor(devicePoint: DevicePoint, content: DockableContent<*>): DockContainer? {
     val containers = containers.toMutableList()
-    FileEditorManagerEx.getInstanceEx(project).dockContainer?.let(containers::add)
+    getFileManagerContainer()?.let(containers::add)
 
     val startDragContainer = currentDragSession?.startDragContainer
     if (startDragContainer != null) {
@@ -670,9 +676,16 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
   }
 
   private fun getAllContainers(): Sequence<DockContainer> {
-    return sequenceOfNotNull(FileEditorManagerEx.getInstanceEx(project).dockContainer) +
+    return sequenceOfNotNull(getFileManagerContainer()) +
            containers.asSequence() +
            containerToWindow.keys
+  }
+
+  private fun getFileManagerContainer(): DockContainer? {
+    if (project.isDefault) {
+      return null
+    }
+    return FileEditorManagerEx.getInstanceEx(project).dockContainer
   }
 
   override fun loadState(state: Element) {

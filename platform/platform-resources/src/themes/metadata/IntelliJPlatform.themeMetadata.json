@@ -1921,6 +1921,33 @@
       "key": "RunWidget.separatorColor",
       "description": "The color for separator in run widget",
       "since": "2022.3"
+    },
+    {
+      "key": "MainWindow.Tab.selectedForeground"
+    },
+    {
+      "key": "MainWindow.Tab.selectedBackground"
+    },
+    {
+      "key": "MainWindow.Tab.selectedInactiveBackground"
+    },
+    {
+      "key": "MainWindow.Tab.foreground"
+    },
+    {
+      "key": "MainWindow.Tab.background"
+    },
+    {
+      "key": "MainWindow.Tab.hoverForeground"
+    },
+    {
+      "key": "MainWindow.Tab.hoverBackground"
+    },
+    {
+      "key": "MainWindow.Tab.separatorColor"
+    },
+    {
+      "key": "MainWindow.Tab.borderColor"
     }
   ]
 }

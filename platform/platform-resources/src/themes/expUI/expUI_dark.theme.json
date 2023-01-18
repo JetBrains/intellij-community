@@ -626,6 +626,18 @@
       "hoverBackground": "#00000019",
       "pressedBackground": "#00000028",
       "separatorColor": "#FFFFFF40"
+    },
+
+    "MainWindow.Tab" : {
+      "selectedForeground": "Grey11",
+      "selectedBackground": "Grey2",
+      "selectedInactiveBackground": "Grey3",
+      "foreground": "Grey10",
+      "background": "#131314",
+      "hoverForeground": "Grey11",
+      "hoverBackground": "#1A1A1B",
+      "separatorColor": "Grey2",
+      "borderColor": "Grey1"
     }
   },
 

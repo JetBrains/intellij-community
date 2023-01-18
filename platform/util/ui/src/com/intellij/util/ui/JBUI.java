@@ -1769,6 +1769,36 @@ public final class JBUI {
         return size(47, 28);
       }
     }
+
+    public static final class MainWindow {
+      public static final class Tab {
+        private static final Color SELECTED_FOREGROUND = JBColor.namedColor("MainWindow.Tab.selectedForeground", 0xC9CCD6, 0xCED0D6);
+        private static final Color SELECTED_BACKGROUND = JBColor.namedColor("MainWindow.Tab.selectedBackground", 0x27282E, 0x2B2D30);
+        private static final Color SELECTED_INACTIVE_BACKGROUND =
+          JBColor.namedColor("MainWindow.Tab.selectedInactiveBackground", 0x383A42, 0x393B40);
+        private static final Color FOREGROUND = JBColor.namedColor("MainWindow.Tab.foreground", 0xA8ADBD, 0xB4B8BF);
+        private static final Color BACKGROUND = JBColor.namedColor("MainWindow.Tab.background", 0x000000, 0x131314);
+        private static final Color HOVER_FOREGROUND = JBColor.namedColor("MainWindow.Tab.hoverForeground", 0xC9CCD6, 0xCED0D6);
+        private static final Color HOVER_BACKGROUND = JBColor.namedColor("MainWindow.Tab.hoverBackground", 0x171717, 0x1A1A1B);
+
+        public static final Color SEPARATOR = JBColor.namedColor("MainWindow.Tab.separatorColor", 0x383A42, 0x2B2D30);
+        public static final Color BORDER = JBColor.namedColor("MainWindow.Tab.borderColor", 0x383A42, 0x1E1F22);
+
+        public static @NotNull Color foreground(boolean selection, boolean hovered) {
+          if (selection) {
+            return SELECTED_FOREGROUND;
+          }
+          return hovered ? HOVER_FOREGROUND : FOREGROUND;
+        }
+
+        public static @NotNull Color background(boolean selection, boolean inactive, boolean hovered) {
+          if (selection) {
+            return inactive ? SELECTED_INACTIVE_BACKGROUND : SELECTED_BACKGROUND;
+          }
+          return hovered ? HOVER_BACKGROUND : BACKGROUND;
+        }
+      }
+    }
   }
 
   public static int getInt(@NonNls @NotNull String propertyName, int defaultValue) {
