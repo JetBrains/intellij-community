@@ -232,11 +232,12 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     public String getTextFor(T value) {
       final ListCellRenderer<? super T> cellRenderer = myGetRenderer.get();
       Component component = cellRenderer.getListCellRendererComponent(myProxyList, value, -1, false, false);
-      return component instanceof TitledSeparator || component instanceof JSeparator ? "" :
-             component instanceof JLabel label ? label.getText() :
-             component instanceof SimpleColoredComponent c ? c.getCharSequence(false).toString() :
-             component instanceof Accessible accessible ? accessible.getAccessibleContext().getAccessibleName() :
-             String.valueOf(value);
+      String componentText = component instanceof TitledSeparator || component instanceof JSeparator ? "" :
+                             component instanceof JLabel label ? label.getText() :
+                             component instanceof SimpleColoredComponent c ? c.getCharSequence(false).toString() :
+                             component instanceof Accessible accessible ? accessible.getAccessibleContext().getAccessibleName() :
+                             null;
+      return componentText != null ? componentText : String.valueOf(value);
     }
 
     @Override
