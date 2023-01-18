@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Nikolay Matveev
- */
 public class InconsistentLineSeparatorsInspection extends LocalInspectionTool {
   @NotNull
   @Override
