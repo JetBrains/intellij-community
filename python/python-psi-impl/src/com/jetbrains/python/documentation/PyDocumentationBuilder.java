@@ -96,21 +96,25 @@ public class PyDocumentationBuilder {
     }
 
     if (!mySectionsMap.isEmpty()) {
-      final String[] firstSections =
-        {PyPsiBundle.message("QDOC.attributes"), PyPsiBundle.message("QDOC.params"), PyPsiBundle.message("QDOC.keyword.args"),
-          PyPsiBundle.message("QDOC.returns"), PyPsiBundle.message("QDOC.raises")};
+      final List<String> canonicalSectionOrder =
+        List.of(PyPsiBundle.message("QDOC.attributes"),
+                PyPsiBundle.message("QDOC.params"),
+                PyPsiBundle.message("QDOC.keyword.args"),
+                PyPsiBundle.message("QDOC.returns"),
+                PyPsiBundle.message("QDOC.raises"));
 
-      final List<String> firstSectionsList = new ArrayList<>(Arrays.asList(firstSections));
-      firstSectionsList.retainAll(mySectionsMap.keySet());
+      final List<String> topSections = new ArrayList<>(canonicalSectionOrder);
+      topSections.retainAll(mySectionsMap.keySet());
 
       final ArrayList<String> remainingSections = new ArrayList<>(mySectionsMap.keySet());
-      remainingSections.removeAll(firstSectionsList);
+      remainingSections.removeAll(topSections);
 
       // FactoryMap's entrySet() returns pairs without particular order even for LinkedHashMap
-      for (@NlsSafe String header : ContainerUtil.concat(firstSectionsList, remainingSections)) {
-        mySections.append(HtmlChunk.tag("tr"));
-        mySections.append(HtmlChunk.text(header).wrapWith(DocumentationMarkup.SECTION_HEADER_CELL));
-        mySections.append(mySectionsMap.get(header).wrapWith(DocumentationMarkup.SECTION_CONTENT_CELL));
+      for (@NlsSafe String header : ContainerUtil.concat(topSections, remainingSections)) {
+        mySections.append(HtmlChunk.tag("tr").children(
+          HtmlChunk.text(header).wrapWith(DocumentationMarkup.SECTION_HEADER_CELL),
+          mySectionsMap.get(header).wrapWith(DocumentationMarkup.SECTION_CONTENT_CELL)
+        ));
       }
     }
 
@@ -209,24 +213,19 @@ public class PyDocumentationBuilder {
       if (docString != null) {
         final StructuredDocString structuredDocString = DocStringUtil.parse(docString.getStringValue());
         final String description = structuredDocString.getParamDescription(parameter.getName());
-        appendFormattedDescriptionToContent(description);
+        if (StringUtil.isNotEmpty(description)) {
+          myContent.append(runFormatterService(description));
+        }
       }
     }
     myBody.append(PythonDocumentationProvider.describeParameter(parameter, myContext));
   }
 
-  private void appendFormattedDescriptionToContent(@NlsSafe @Nullable String description) {
-    if (StringUtil.isNotEmpty(description)) {
-      final DocstringFormatterRequest output =
-        PyStructuredDocstringFormatter.formatDocstring(myElement, new DocstringFormatterRequest(description, Collections.emptyList()),
-                                                       List.of(PyStructuredDocstringFormatter.FORMATTER_FRAGMENTS_FLAG));
-      if (output != null) {
-        myContent.appendRaw(output.getBody());
-      }
-      else {
-        myContent.append(description);
-      }
-    }
+  private @NotNull HtmlChunk runFormatterService(@NotNull @NlsSafe String description) {
+    final DocstringFormatterRequest output =
+      PyStructuredDocstringFormatter.formatDocstring(myElement, new DocstringFormatterRequest(description, Collections.emptyList()),
+                                                     List.of(PyStructuredDocstringFormatter.FORMATTER_FRAGMENTS_FLAG));
+    return output != null ? HtmlChunk.raw(output.getBody()) : HtmlChunk.text(description);
   }
 
   @Nullable
@@ -455,7 +454,9 @@ public class PyDocumentationBuilder {
         if (docString != null) {
           final StructuredDocString structuredDocString = DocStringUtil.parse(docString.getStringValue());
           final String description = structuredDocString.getAttributeDescription(targetName);
-          appendFormattedDescriptionToContent(description);
+          if (StringUtil.isNotEmpty(description)) {
+            myContent.append(runFormatterService(description));
+          }
         }
       }
     }

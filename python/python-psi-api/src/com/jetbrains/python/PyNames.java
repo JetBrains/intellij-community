@@ -223,7 +223,7 @@ public final class PyNames {
 
   public static final String UNKNOWN_TYPE = "Any";
 
-  @NlsSafe public static final String UNNAMED_ELEMENT = "<unnamed>";
+  public static final @NlsSafe String UNNAMED_ELEMENT = "<unnamed>";
 
   public static final String UNDERSCORE = "_";
 
