@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.Disposable
@@ -18,7 +18,6 @@ import com.intellij.workspaceModel.storage.impl.isConsistent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
@@ -51,7 +50,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : AbstractWorkspaceM
   private fun initCacheFile(): Path {
     if (ApplicationManager.getApplication().isUnitTestMode && testCacheFile != null) {
       // For testing purposes
-      val testFile = testCacheFile!!.toPath()
+      val testFile = testCacheFile!!
       if (!testFile.exists()) {
         error("Test cache file defined, but doesn't exist")
       }
@@ -111,7 +110,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : AbstractWorkspaceM
     private var forceEnableCaching = false
 
     @TestOnly
-    var testCacheFile: File? = null
+    var testCacheFile: Path? = null
 
     private val cachesInvalidated = AtomicBoolean(false)
     internal val invalidateCachesMarkerFile = projectsDataDir.resolve(".invalidate")

@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.workspaceModel.storage.impl
 
 import com.esotericsoftware.kryo.kryo5.Kryo
@@ -31,10 +33,9 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.*
 import org.jetbrains.annotations.TestOnly
-import java.io.InputStream
-import java.io.OutputStream
 import java.lang.reflect.Modifier
 import java.lang.reflect.ParameterizedType
+import java.nio.file.Path
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.system.measureNanoTime
@@ -44,7 +45,8 @@ private val LOG = logger<EntityStorageSerializerImpl>()
 class DefaultListSerializer<T : List<*>> : CollectionSerializer<T>() {
   override fun create(kryo: Kryo, input: Input, type: Class<out T>, size: Int): T {
     val registration: Registration = kryo.getRegistration(type)
-    if (List::class.java.isAssignableFrom(type) && registration.instantiator == null) {
+    if (registration.instantiator == null && List::class.java.isAssignableFrom(type)) {
+      @Suppress("UNCHECKED_CAST")
       return ArrayList<Any>(size) as T
     }
     return super.create(kryo, input, type, size)
@@ -54,7 +56,8 @@ class DefaultListSerializer<T : List<*>> : CollectionSerializer<T>() {
 class DefaultSetSerializer<T : Set<*>> : CollectionSerializer<T>() {
   override fun create(kryo: Kryo, input: Input, type: Class<out T>, size: Int): T {
     val registration: Registration = kryo.getRegistration(type)
-    if (Set::class.java.isAssignableFrom(type) && registration.instantiator == null) {
+    if (registration.instantiator == null && Set::class.java.isAssignableFrom(type)) {
+      @Suppress("UNCHECKED_CAST")
       return HashSet<Any>(size) as T
     }
     return super.create(kryo, input, type, size)
@@ -63,8 +66,9 @@ class DefaultSetSerializer<T : Set<*>> : CollectionSerializer<T>() {
 
 class DefaultMapSerializer<T : Map<*, *>> : MapSerializer<T>() {
   override fun create(kryo: Kryo, input: Input, type: Class<out T>, size: Int): T {
-    val registration: Registration = kryo.getRegistration(type)
-    if (Map::class.java.isAssignableFrom(type) && registration.instantiator == null) {
+    val registration = kryo.getRegistration(type)
+    if (registration.instantiator == null && Map::class.java.isAssignableFrom(type)) {
+      @Suppress("UNCHECKED_CAST")
       return HashMap<Any, Any>(size) as T
     }
     return super.create(kryo, input, type, size)
@@ -77,10 +81,8 @@ class EntityStorageSerializerImpl(
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v46"
+    const val SERIALIZER_VERSION = "v47"
   }
-
-  internal val KRYO_BUFFER_SIZE = 64 * 1024
 
   private val interner = HashSetInterner<SerializableEntityId>()
   private val typeInfoInterner = HashSetInterner<TypeInfo>()
@@ -314,10 +316,10 @@ class EntityStorageSerializerImpl(
     return false
   }
 
-  override fun serializeCache(stream: OutputStream, storage: EntityStorageSnapshot): SerializationResult {
+  override fun serializeCache(file: Path, storage: EntityStorageSnapshot): SerializationResult {
     storage as EntityStorageSnapshotImpl
 
-    val output = Output(stream, KRYO_BUFFER_SIZE)
+    val output = createKryoOutput(file)
     return try {
       val (kryo, _) = createKryo()
 
@@ -457,9 +459,9 @@ class EntityStorageSerializerImpl(
     }
   }
 
-  override fun deserializeCache(stream: InputStream): Result<MutableEntityStorage?> {
+  override fun deserializeCache(file: Path): Result<MutableEntityStorage?> {
     LOG.debug("Start deserializing workspace model cache")
-    val deserializedCache = Input(stream, KRYO_BUFFER_SIZE).use { input ->
+    val deserializedCache = createKryoInput(file).use { input ->
       val (kryo, classesCache) = createKryo()
 
       try { // Read version
@@ -824,13 +826,14 @@ class EntityStorageSerializerImpl(
       val vfu2EntityId = Vfu2EntityId(getHashingStrategy())
       repeat(input.readInt()) {
         val file = kryo.readObject(input, VirtualFileUrl::class.java) as VirtualFileUrl
-        val data = Object2LongOpenHashMap<String>()
-        repeat(input.readInt()) {
+        val size = input.readInt()
+        val data = Object2LongOpenHashMap<String>(size)
+        repeat(size) {
           val internalKey = input.readString()
           val entityId = kryo.readObject(input, SerializableEntityId::class.java).toEntityId(classesCache)
-          data[internalKey] = entityId
+          data.put(internalKey, entityId)
         }
-        vfu2EntityId[file] = data
+        vfu2EntityId.put(file, data)
       }
       return vfu2EntityId
     }
@@ -886,11 +889,11 @@ class EntityStorageSerializerImpl(
 
   @TestOnly
   @Suppress("UNCHECKED_CAST")
-  fun deserializeCacheAndDiffLog(storeStream: InputStream, diffLogStream: InputStream): MutableEntityStorage? {
-    val builder = this.deserializeCache(storeStream).getOrThrow() ?: return null
+  fun deserializeCacheAndDiffLog(file: Path, diffLogFile: Path): MutableEntityStorage? {
+    val builder = deserializeCache(file).getOrThrow() ?: return null
 
     var log: ChangeLog
-    Input(diffLogStream, KRYO_BUFFER_SIZE).use { input ->
+    createKryoInput(diffLogFile).use { input ->
       val (kryo, classCache) = createKryo()
 
       // Read version
@@ -916,8 +919,8 @@ class EntityStorageSerializerImpl(
 
   @TestOnly
   @Suppress("UNCHECKED_CAST")
-  fun deserializeClassToIntConverter(stream: InputStream) {
-    Input(stream, KRYO_BUFFER_SIZE).use { input ->
+  fun deserializeClassToIntConverter(file: Path) {
+    createKryoInput(file).use { input ->
       val (kryo, _) = createKryo()
 
       // Read version
@@ -934,4 +937,21 @@ class EntityStorageSerializerImpl(
       ClassToIntConverter.INSTANCE.fromMap(map)
     }
   }
+}
+
+internal fun createKryoOutput(file: Path): Output {
+  val output = KryoOutput(file)
+  //val output = ByteBufferOutput(file.outputStream(), 512 * 1024)
+  //return byteBufferOutput
+  //val output = Output(file.outputStream())
+  output.variableLengthEncoding = false
+  return output
+}
+
+private fun createKryoInput(file: Path): Input {
+  //val input = Input(file.inputStream())
+  val input = KryoInput(file)
+  input.variableLengthEncoding = false
+  return input
+  //return Input(file.inputStream())
 }

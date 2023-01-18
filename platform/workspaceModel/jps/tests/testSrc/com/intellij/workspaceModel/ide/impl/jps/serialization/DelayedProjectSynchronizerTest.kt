@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.facet.mock.AnotherMockFacetType
@@ -37,14 +37,12 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.apache.commons.lang.RandomStringUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.*
 import org.junit.Assert.*
 import java.io.File
 import java.nio.file.Files
 import java.util.stream.Collectors
-import kotlin.io.path.name
 
 class DelayedProjectSynchronizerTest {
   @Rule
@@ -140,7 +138,7 @@ class DelayedProjectSynchronizerTest {
     val librariesFolder = projectData.projectDir.toPath().resolve(".idea/libraries/")
     val librariesPaths = Files.list(librariesFolder).use { it.collect(Collectors.toList()).sorted() }
     assertEquals(4, librariesPaths.size)
-    assertThat(librariesPaths.map { it.name }).containsAll(listOf("foo.xml", "jarDir.xml", "junit.xml", "log4j.xml"))
+    assertThat(librariesPaths.map { it.fileName.toString() }).containsAll(listOf("foo.xml", "jarDir.xml", "junit.xml", "log4j.xml"))
     assertTrue(librariesPaths[0].readText().contains("library name=\"foo\""))
     assertTrue(librariesPaths[1].readText().contains("library name=\"jarDir\""))
     assertTrue(librariesPaths[2].readText().contains("library name=\"junit\""))
@@ -213,13 +211,9 @@ class DelayedProjectSynchronizerTest {
 
 
   private fun saveToCache(storage: EntityStorageSnapshot) {
-    val cacheFile = tempDirectory.newFile("cache.data")
+    val cacheFile = tempDirectory.newFile("cache.data").toPath()
     WorkspaceModelCacheImpl.testCacheFile = cacheFile
-
-
-    cacheFile.outputStream().use {
-      serializer.serializeCache(it, storage)
-    }
+    serializer.serializeCache(cacheFile, storage)
   }
 
   private suspend fun loadProject(projectDir: File): Project {
@@ -249,10 +243,6 @@ class DelayedProjectSynchronizerTest {
 
     private fun projectFile(path: String): File {
       return File(PathManagerEx.getCommunityHomePath(), "$dirBasedProject/$path")
-    }
-
-    private fun cacheFileName(): String {
-      return "test_caching_" + RandomStringUtils.randomAlphabetic(5) + ".data"
     }
   }
 }
