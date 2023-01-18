@@ -117,18 +117,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
     }
 
     final boolean pkgContext = JavaCompletionUtil.inSomePackage(insertedElement);
-    final Project project = insertedElement.getProject();
-    final GlobalSearchScope scope;
-    if (inPermitsList) {
-      PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(psiFile.getOriginalElement());
-      if (javaModule == null) return;
-      JavaModuleScope moduleScope = JavaModuleScope.moduleScope(javaModule);
-      if (moduleScope == null) return;
-      scope = moduleScope;
-    }
-    else {
-      scope = filterByScope ? psiFile.getResolveScope() : GlobalSearchScope.allScope(project);
-    }
+    final GlobalSearchScope scope = getReferenceScope(parameters, filterByScope, inPermitsList);
 
     JavaLookupElementHighlighter highlighter = JavaCompletionUtil.getHighlighterForPlace(insertedElement);
     boolean patternContext = JavaPatternCompletionUtil.isPatternContext(psiFile, insertedElement);
@@ -189,8 +178,36 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
         return innerName != null && matcher.prefixMatches(innerName);
       }
     };
+    final Project project = insertedElement.getProject();
     AllClassesGetter.processJavaClasses(matcher, project, scope,
                                         new LimitedAccessibleClassPreprocessor(parameters, filterByScope, classProcessor));
+  }
+
+  @NotNull
+  private static GlobalSearchScope getReferenceScope(@NotNull CompletionParameters parameters,
+                                                     boolean filterByScope,
+                                                     boolean inPermitsList) {
+    PsiElement insertedElement = parameters.getPosition();
+    PsiFile psiFile = insertedElement.getContainingFile().getOriginalFile();
+    Project project = insertedElement.getProject();
+    if (!inPermitsList) {
+      return filterByScope ? psiFile.getResolveScope() : GlobalSearchScope.allScope(project);
+    }
+    if (parameters.getInvocationCount() >= 2) {
+      return GlobalSearchScope.allScope(project);
+    }
+    PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(psiFile.getOriginalElement());
+    JavaModuleScope moduleScope = javaModule == null ? null : JavaModuleScope.moduleScope(javaModule);
+    if (moduleScope != null) {
+      return moduleScope;
+    }
+    PsiDirectory dir = psiFile.getParent();
+    PsiPackage psiPackage = dir == null ? null : JavaDirectoryService.getInstance().getPackage(dir);
+    if (psiPackage != null) {
+      return GlobalSearchScope.filesScope(project, ContainerUtil.map(psiPackage.getFiles(GlobalSearchScope.allScope(project)),
+                                                                     PsiFile::getVirtualFile));
+    }
+    return GlobalSearchScope.fileScope(psiFile);
   }
 
   @NotNull
