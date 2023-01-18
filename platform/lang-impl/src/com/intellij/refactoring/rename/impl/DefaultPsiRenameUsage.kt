@@ -6,6 +6,7 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.rename.api.PsiRenameUsage
+import com.intellij.usages.impl.rules.UsageType
 
 internal class DefaultPsiRenameUsage(
   private val psiUsage: PsiUsage
@@ -21,4 +22,6 @@ internal class DefaultPsiRenameUsage(
   override val file: PsiFile get() = psiUsage.file
 
   override val range: TextRange get() = psiUsage.range
+
+  override val usageType: UsageType? get() = psiUsage.usageType
 }
