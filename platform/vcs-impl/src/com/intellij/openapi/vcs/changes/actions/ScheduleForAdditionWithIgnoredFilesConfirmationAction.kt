@@ -74,14 +74,14 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
     performUnversionedFilesAddition(project, unversionedFiles, browser, addToVcsTask)
   }
 
-  private fun dialogMessage(path: FilePath): String {
+  private fun dialogMessage(path: FilePath): @NlsContexts.DialogMessage String {
     val question =
       if (path.isDirectory) message("confirmation.message.add.ignored.single.directory")
       else message("confirmation.message.add.ignored.single.file")
     return question + "\n" + FileUtil.getLocationRelativeToUserHome(path.presentableUrl)
   }
 
-  private fun dialogTitle(path: FilePath): String =
+  private fun dialogTitle(path: FilePath): @NlsContexts.DialogTitle String =
     if (path.isDirectory) message("confirmation.title.add.ignored.single.directory")
     else message("confirmation.title.add.ignored.single.file")
 
@@ -121,7 +121,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
       .filter { file ->
         val actionExtension = getExtensionFor(project, vcsManager.getVcsFor(file))
         actionExtension != null &&
-        changeListManager.getStatus(file).let { status->
+        changeListManager.getStatus(file).let { status ->
           if (file.isDirectory) actionExtension.isStatusForDirectoryAddition(status) else actionExtension.isStatusForAddition(status)
         }
       }
@@ -134,8 +134,8 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
 }
 
 fun confirmAddFilePaths(project: Project, paths: List<FilePath>,
-                        singlePathDialogTitle: (FilePath) -> String,
-                        singlePathDialogMessage: (FilePath) -> String,
+                        singlePathDialogTitle: (FilePath) -> @NlsContexts.DialogTitle String,
+                        singlePathDialogMessage: (FilePath) -> @NlsContexts.DialogMessage String,
                         @NlsContexts.DialogTitle multiplePathsDialogTitle: String): List<FilePath> {
   if (paths.isEmpty()) return paths
 
