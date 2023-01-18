@@ -242,13 +242,67 @@ public interface IntentionPreviewInfo {
     if (targetIcon instanceof DeferredIcon) {
       targetIcon = ((DeferredIcon)targetIcon).evaluate();
     }
-    HtmlBuilder builder = new HtmlBuilder()
+    HtmlBuilder builder = getMoveChunk(sourceIcon, targetIcon, source.getName(), target.getName());
+    return new Html(builder.wrapWith("p"));
+  }
+
+  /**
+   * @param sources List of PsiElements to move
+   * @param target  target PsiElement
+   * @return a presentation describing moving of source elements to the target
+   */
+  static @NotNull IntentionPreviewInfo moveMultiplePsi(
+    @NotNull List<PsiNamedElement> sources,
+    @NotNull PsiNamedElement target) {
+    return moveMultiplePsi(sources, target, null, null);
+  }
+
+  /**
+   * @param sources            List of PsiElements to move
+   * @param target             target PsiElement
+   * @param explicitSourceName name of element to move
+   * @param explicitTargetName name of target element
+   * @return a presentation describing moving of source elements to the target
+   */
+  static @NotNull IntentionPreviewInfo moveMultiplePsi(
+    @NotNull List<PsiNamedElement> sources,
+    @NotNull PsiNamedElement target,
+    @Nullable String explicitSourceName,
+    @Nullable String explicitTargetName) {
+
+    HtmlBuilder builder = new HtmlBuilder();
+
+    sources.forEach((source) -> {
+      Icon sourceIcon = source.getIcon(0);
+      if (sourceIcon instanceof DeferredIcon) {
+        sourceIcon = ((DeferredIcon)sourceIcon).evaluate();
+      }
+      Icon targetIcon = target.getIcon(0);
+      if (targetIcon instanceof DeferredIcon) {
+        targetIcon = ((DeferredIcon)targetIcon).evaluate();
+      }
+
+      builder.append(getMoveChunk(
+        sourceIcon,
+        targetIcon,
+        explicitSourceName == null ? source.getName() : explicitSourceName,
+        explicitTargetName == null ? target.getName() : explicitTargetName));
+    });
+    return new Html(builder.wrapWith("p"));
+  }
+
+  @NotNull
+  private static HtmlBuilder getMoveChunk(@Nullable Icon sourceIcon,
+                                          @Nullable Icon targetIcon,
+                                          @Nullable @NlsSafe String sourceName,
+                                          @Nullable @NlsSafe String targetName) {
+    return new HtmlBuilder()
       .append(getIconChunk(sourceIcon, "source"))
-      .append(Objects.requireNonNull(source.getName()))
+      .append(Objects.requireNonNull(sourceName))
       .append(" ").append(HtmlChunk.htmlEntity("&rarr;")).append(" ")
       .append(getIconChunk(targetIcon, "target"))
-      .append(Objects.requireNonNull(target.getName()));
-    return new Html(builder.wrapWith("p"));
+      .append(Objects.requireNonNull(targetName))
+      .append(HtmlChunk.br());
   }
 
   /**
