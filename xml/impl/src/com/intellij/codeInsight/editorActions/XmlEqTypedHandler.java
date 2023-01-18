@@ -37,7 +37,7 @@ import static com.intellij.xml.util.HtmlUtil.hasHtml;
 
 public class XmlEqTypedHandler extends TypedHandlerDelegate {
 
-  private static final Key<Integer> QUOTE_INSERTED_AT = new Key<>("xml.eq-handler.quote-inserted-at");
+  private static final Key<QuoteInfo> QUOTE_INSERTED_AT = new Key<>("xml.eq-handler.inserted-quote");
 
   private boolean needToInsertQuotes = false;
 
@@ -51,7 +51,8 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
     }
     if ((c == '"' || (c == '\'' && hasHtml(file)))
         && quoteInsertedAt != null
-        && quoteInsertedAt == currentCaret.getOffset()) {
+        && quoteInsertedAt.position == currentCaret.getOffset()
+        && quoteInsertedAt.quote != '{') {
       return Result.STOP;
     }
     if (c == '=' && WebEditorOptions.getInstance().isInsertQuotesForAttributeValue()) {
@@ -98,7 +99,7 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
       }
       needToInsertQuotes = false;
       Caret caret = editor.getCaretModel().getCurrentCaret();
-      caret.putUserData(QUOTE_INSERTED_AT, caret.getOffset());
+      caret.putUserData(QUOTE_INSERTED_AT, toInsert.isEmpty() ? null : new QuoteInfo(toInsert.charAt(0), caret.getOffset()));
     }
 
     return super.charTyped(c, project, editor, file);
@@ -128,4 +129,7 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
     }
     return XmlExtension.getExtension(file).getAttributeValuePresentation(null, "", quote);
   }
+
+  private record QuoteInfo(char quote, int position) {}
+
 }
