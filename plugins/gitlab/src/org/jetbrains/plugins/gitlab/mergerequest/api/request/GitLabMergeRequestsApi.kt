@@ -10,12 +10,12 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceLabelEventDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceMilestoneEventDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceStateEventDTO
 import org.jetbrains.plugins.gitlab.api.restApiUri
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import java.net.http.HttpResponse
 
 suspend fun GitLabApi.loadMergeRequests(project: GitLabProjectCoordinates,
-                                        searchQuery: String): HttpResponse<out List<GitLabMergeRequestShortDTO>> {
+                                        searchQuery: String): HttpResponse<out List<GitLabMergeRequestShortRestDTO>> {
   val uri = project.restApiUri.resolveRelative("merge_requests").withQuery(searchQuery)
   val request = request(uri).GET().build()
   return loadJsonList(request)

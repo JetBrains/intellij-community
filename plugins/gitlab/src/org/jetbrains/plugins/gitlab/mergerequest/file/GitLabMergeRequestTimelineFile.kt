@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.file
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 
 internal class GitLabMergeRequestTimelineFile(sessionId: String,
@@ -21,7 +21,7 @@ internal class GitLabMergeRequestTimelineFile(sessionId: String,
   override fun getPresentablePath() = findDetails()?.webUrl ?: "$glProject/mergerequests/${mergeRequestId.iid}"
 
   //TODO: implement
-  private fun findDetails(): GitLabMergeRequestShortDTO? {
+  private fun findDetails(): GitLabMergeRequestShortRestDTO? {
     findConnection()
     return null
   }

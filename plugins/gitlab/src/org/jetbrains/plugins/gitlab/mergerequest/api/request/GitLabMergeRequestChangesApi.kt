@@ -6,16 +6,16 @@ import com.intellij.collaboration.util.resolveRelative
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.restApiUri
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import java.net.http.HttpResponse
 
-suspend fun GitLabApi.loadMergeRequestVersions(project: GitLabProjectCoordinates): HttpResponse<out List<GitLabMergeRequestShortDTO>> {
+suspend fun GitLabApi.loadMergeRequestVersions(project: GitLabProjectCoordinates): HttpResponse<out List<GitLabMergeRequestShortRestDTO>> {
   val uri = project.restApiUri.resolveRelative("merge_requests").resolveRelative("versions")
   val request = request(uri).GET().build()
   return loadJsonList(request)
 }
 
-suspend fun GitLabApi.loadMergeRequestDiffs(project: GitLabProjectCoordinates): HttpResponse<out List<GitLabMergeRequestShortDTO>> {
+suspend fun GitLabApi.loadMergeRequestDiffs(project: GitLabProjectCoordinates): HttpResponse<out List<GitLabMergeRequestShortRestDTO>> {
   val uri = project.restApiUri.resolveRelative("merge_requests").resolveRelative("diffs")
   val request = request(uri).GET().build()
   return loadJsonList(request)

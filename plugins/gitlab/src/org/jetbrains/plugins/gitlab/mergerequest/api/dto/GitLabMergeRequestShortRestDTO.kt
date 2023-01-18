@@ -9,7 +9,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeStatus
 import java.util.*
 
-data class GitLabMergeRequestShortDTO(
+data class GitLabMergeRequestShortRestDTO(
   override val id: Long,
   override val iid: String,
   val projectId: Long,
@@ -32,7 +32,7 @@ data class GitLabMergeRequestShortDTO(
   val mergeStatusEnum: GitLabMergeStatus = parseMergeStatus(mergeStatus)
 
   companion object {
-    private val logger: Logger = logger<GitLabMergeRequestShortDTO>()
+    private val logger: Logger = logger<GitLabMergeRequestShortRestDTO>()
 
     private fun parseState(state: String): GitLabMergeRequestState = try {
       GitLabMergeRequestState.valueOf(state.uppercase(Locale.getDefault()))
