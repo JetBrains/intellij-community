@@ -70,8 +70,9 @@ internal object GrazieDynamic : DynamicPluginListener {
 
   private fun getDynamicFolderPath(): Path {
     val customFolder = System.getProperty("grazie.dynamic.customJarDirectory")
-    if(customFolder != null)
+    if (customFolder != null) {
       return Path.of(customFolder)
+    }
     return Paths.get(PathManager.getSystemPath(), "grazie")
   }
 
