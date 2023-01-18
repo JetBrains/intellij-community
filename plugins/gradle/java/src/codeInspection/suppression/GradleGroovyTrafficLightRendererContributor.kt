@@ -23,9 +23,10 @@ class GradleGroovyTrafficLightRendererContributor : TrafficLightRendererContribu
 
 }
 
-private class GradleGroovyTrafficLightRenderer(val file: PsiFile, editor: Editor) : TrafficLightRenderer(file.project, editor) {
+private class GradleGroovyTrafficLightRenderer(file: PsiFile, editor: Editor) : TrafficLightRenderer(file.project, editor) {
+  val linkedProjectPath: String? = file.getLinkedGradleProjectPath()
   override fun getStatus(): AnalyzerStatus {
-    val linkedProjectPath = file.getLinkedGradleProjectPath() ?: return super.getStatus()
+    if (linkedProjectPath == null) return super.getStatus()
     val service = project.service<GradleSuspendTypecheckingService>()
     if (!service.isSuspended(linkedProjectPath)) return super.getStatus()
     return AnalyzerStatus(AllIcons.RunConfigurations.TestIgnored, GradleInspectionBundle.message("traffic.light.inspections.disabled"), GradleInspectionBundle.message("traffic.light.inspections.disabled.description"), uiController)
