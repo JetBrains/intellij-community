@@ -381,12 +381,11 @@ object DynamicPlugins {
                                pluginDescriptor: IdeaPluginDescriptorImpl,
                                options: UnloadPluginOptions): Boolean {
     var result = false
-    if (!allowLoadUnloadSynchronously(pluginDescriptor)) {
+    if (options.save) {
       runInAutoSaveDisabledMode {
-        val saveAndSyncHandler = SaveAndSyncHandler.getInstance()
-        saveAndSyncHandler.saveSettingsUnderModalProgress(ApplicationManager.getApplication())
-        for (openProject in ProjectUtil.getOpenProjects()) {
-          saveAndSyncHandler.saveSettingsUnderModalProgress(openProject)
+        FileDocumentManager.getInstance().saveAllDocuments()
+        runBlockingUnderModalProgress {
+          saveProjectsAndApp(true)
         }
       }
     }
@@ -395,7 +394,7 @@ object DynamicPlugins {
                                      parentComponent,
                                      null)
     indicator.runInSwingThread {
-      result = unloadPlugin(pluginDescriptor, options.withSave(false))
+      result = unloadPluginWithoutProgress(pluginDescriptor, options.withSave(false))
     }
     return result
   }
@@ -441,6 +440,11 @@ object DynamicPlugins {
   @JvmOverloads
   fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl,
                    options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
+    return unloadPluginWithProgress(project = null, parentComponent = null, pluginDescriptor, options)
+  }
+
+  private fun unloadPluginWithoutProgress(pluginDescriptor: IdeaPluginDescriptorImpl,
+                                          options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
     val app = ApplicationManager.getApplication() as ApplicationImpl
     val pluginId = pluginDescriptor.pluginId
     val pluginSet = PluginManagerCore.getPluginSet()
@@ -448,22 +452,13 @@ object DynamicPlugins {
     if (options.checkImplementationDetailDependencies) {
       processImplementationDetailDependenciesOnPlugin(pluginDescriptor, pluginSet) { dependentDescriptor ->
         dependentDescriptor.isEnabled = false
-        unloadPlugin(dependentDescriptor, UnloadPluginOptions(save = false,
-                                                              waitForClassloaderUnload = false,
-                                                              checkImplementationDetailDependencies = false))
+        unloadPluginWithoutProgress(dependentDescriptor, UnloadPluginOptions(waitForClassloaderUnload = false,
+                                                                             checkImplementationDetailDependencies = false))
         true
       }
     }
 
     try {
-      if (options.save) {
-        runInAutoSaveDisabledMode {
-          FileDocumentManager.getInstance().saveAllDocuments()
-          runBlockingUnderModalProgress {
-            saveProjectsAndApp(true)
-          }
-        }
-      }
       TipAndTrickManager.getInstance().closeTipDialog()
 
       app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, options.isUpdate)
