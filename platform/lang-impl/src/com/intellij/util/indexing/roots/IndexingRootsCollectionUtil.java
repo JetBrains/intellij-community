@@ -88,7 +88,7 @@ public class IndexingRootsCollectionUtil {
 
     settings = ObjectUtils.notNull(settings, new IndexingRootsCollectionSettings());
     IndexingRootsDescriptions roots = new IndexingRootsDescriptions();
-    MyRegistrar registrar = new MyRegistrar(settings);
+    RootsCollector registrar = new RootsCollector(settings);
     for (WorkspaceFileIndexContributor<?> contributor : contributors) {
       ProgressManager.checkCanceled();
       handleContributor(contributor, roots, registrar, entityStorage);
@@ -99,7 +99,7 @@ public class IndexingRootsCollectionUtil {
 
   private static <E extends WorkspaceEntity> void handleContributor(@NotNull WorkspaceFileIndexContributor<E> contributor,
                                                                     @NotNull IndexingRootsCollectionUtil.IndexingRootsDescriptions roots,
-                                                                    @NotNull MyRegistrar registrar,
+                                                                    @NotNull IndexingRootsCollectionUtil.RootsCollector registrar,
                                                                     @NotNull EntityStorage entityStorage) {
     registrar.registerAndCollectNonModuleAwareRoots(roots, contributor, entityStorage.entities(contributor.getEntityClass()),
                                                     entityStorage);
@@ -166,27 +166,94 @@ public class IndexingRootsCollectionUtil {
     return new ArrayList<>(value);
   }
 
-  private static class MyRegistrar implements WorkspaceFileSetRegistrar {
+  private static class RootsCollector {
     private final MultiMap<Module, VirtualFile> myContents = MultiMap.create();
     private final IndexingRootsCollectionSettings mySettings;
     private final MultiMap<WorkspaceEntity, VirtualFile> myContentRoots = MultiMap.createSet();
+    private final MultiMap<WorkspaceEntity, VirtualFile> myLibraryRoots = MultiMap.createSet();
+    private final MultiMap<WorkspaceEntity, VirtualFile> myLibrarySourceRoots = MultiMap.createSet();
     private final MultiMap<WorkspaceEntity, VirtualFile> myExternalRoots = MultiMap.createSet();
     private final MultiMap<WorkspaceEntity, VirtualFile> myExternalSourceRoots = MultiMap.createSet();
+    @Nullable
+    private WorkspaceFileIndexContributor<?> myCurrentContributor;
+    private final WorkspaceFileSetRegistrar myRegistrar = new WorkspaceFileSetRegistrar() {
 
-    private MyRegistrar(IndexingRootsCollectionSettings settings) {
-      mySettings = settings;
-    }
-
-    @Override
-    public void registerFileSet(@NotNull VirtualFileUrl root,
-                                @NotNull WorkspaceFileKind kind,
-                                @NotNull WorkspaceEntity entity,
-                                @Nullable WorkspaceFileSetData customData) {
-      if (shouldIgnore(kind, customData)) return;
-      VirtualFile file = UtilsKt.getVirtualFile(root);
-      if (file != null) {
-        registerFileSet(file, kind, entity, customData);
+      @Override
+      public void registerFileSet(@NotNull VirtualFileUrl root,
+                                  @NotNull WorkspaceFileKind kind,
+                                  @NotNull WorkspaceEntity entity,
+                                  @Nullable WorkspaceFileSetData customData) {
+        if (shouldIgnore(kind, customData)) return;
+        VirtualFile file = UtilsKt.getVirtualFile(root);
+        if (file != null) {
+          doRegisterFileSet(file, kind, entity, customData);
+        }
       }
+
+      @Override
+      public void registerFileSet(@NotNull VirtualFile root,
+                                  @NotNull WorkspaceFileKind kind,
+                                  @NotNull WorkspaceEntity entity,
+                                  @Nullable WorkspaceFileSetData customData) {
+        if (shouldIgnore(kind, customData)) return;
+        doRegisterFileSet(root, kind, entity, customData);
+      }
+
+      private void doRegisterFileSet(@NotNull VirtualFile root,
+                                     @NotNull WorkspaceFileKind kind,
+                                     @NotNull WorkspaceEntity entity,
+                                     @Nullable WorkspaceFileSetData customData) {
+        if (customData instanceof ModuleContentOrSourceRootData) {
+          myContents.putValue(((ModuleContentOrSourceRootData)customData).getModule(), root);
+        }
+        else if (kind == WorkspaceFileKind.CONTENT || kind == WorkspaceFileKind.TEST_CONTENT) {
+          myContentRoots.putValue(entity, root);
+        }
+        else if (kind == WorkspaceFileKind.EXTERNAL) {
+          if (myCurrentContributor instanceof LibraryRootFileIndexContributor) {
+            myLibraryRoots.putValue(entity, root);
+          }
+          else {
+            myExternalRoots.putValue(entity, root);
+          }
+        }
+        else {
+          if (myCurrentContributor instanceof LibraryRootFileIndexContributor) {
+            myLibrarySourceRoots.putValue(entity, root);
+          }
+          else {
+            myExternalSourceRoots.putValue(entity, root);
+          }
+        }
+      }
+
+      @Override
+      public void registerExcludedRoot(@NotNull VirtualFileUrl excludedRoot, @NotNull WorkspaceEntity entity) {
+
+      }
+
+      @Override
+      public void registerExcludedRoot(@NotNull VirtualFile excludedRoot,
+                                       @NotNull WorkspaceFileKind excludedFrom,
+                                       @NotNull WorkspaceEntity entity) {
+
+      }
+
+      @Override
+      public void registerExclusionPatterns(@NotNull VirtualFileUrl root, @NotNull List<String> patterns, @NotNull WorkspaceEntity entity) {
+
+      }
+
+      @Override
+      public void registerExclusionCondition(@NotNull VirtualFile root,
+                                             @NotNull Function1<? super VirtualFile, Boolean> condition,
+                                             @NotNull WorkspaceEntity entity) {
+
+      }
+    };
+
+    private RootsCollector(IndexingRootsCollectionSettings settings) {
+      mySettings = settings;
     }
 
     private boolean shouldIgnore(@NotNull WorkspaceFileKind kind, @Nullable WorkspaceFileSetData data) {
@@ -205,50 +272,10 @@ public class IndexingRootsCollectionUtil {
       };
     }
 
-    @Override
-    public void registerFileSet(@NotNull VirtualFile root,
-                                @NotNull WorkspaceFileKind kind,
-                                @NotNull WorkspaceEntity entity,
-                                @Nullable WorkspaceFileSetData customData) {
-      if (shouldIgnore(kind, customData)) return;
-      if (customData instanceof ModuleContentOrSourceRootData) {
-        myContents.putValue(((ModuleContentOrSourceRootData)customData).getModule(), root);
-      }
-      else if (kind == WorkspaceFileKind.CONTENT || kind == WorkspaceFileKind.TEST_CONTENT) {
-        myContentRoots.putValue(entity, root);
-      }
-      else if (kind == WorkspaceFileKind.EXTERNAL) {
-        myExternalRoots.putValue(entity, root);
-      }
-      else {
-        myExternalSourceRoots.putValue(entity, root);
-      }
-    }
-
-    @Override
-    public void registerExcludedRoot(@NotNull VirtualFileUrl excludedRoot, @NotNull WorkspaceEntity entity) {
-    }
-
-    @Override
-    public void registerExcludedRoot(@NotNull VirtualFile excludedRoot,
-                                     @NotNull WorkspaceFileKind excludedFrom,
-                                     @NotNull WorkspaceEntity entity) {
-    }
-
-    @Override
-    public void registerExclusionPatterns(@NotNull VirtualFileUrl root,
-                                          @NotNull List<String> patterns,
-                                          @NotNull WorkspaceEntity entity) {
-    }
-
-    @Override
-    public void registerExclusionCondition(@NotNull VirtualFile root,
-                                           @NotNull Function1<? super VirtualFile, Boolean> condition,
-                                           @NotNull WorkspaceEntity entity) {
-    }
-
     public void clearNonModuleAwareMaps() {
       myContentRoots.clear();
+      myLibraryRoots.clear();
+      myLibrarySourceRoots.clear();
       myExternalRoots.clear();
       myExternalSourceRoots.clear();
     }
@@ -262,10 +289,12 @@ public class IndexingRootsCollectionUtil {
                                                                                   @NotNull EntityStorage entityStorage) {
       if (shouldIgnore(contributor)) return;
       clearNonModuleAwareMaps();
+      myCurrentContributor = contributor;
       for (E entity : SequencesKt.asIterable(entities)) {
-        contributor.registerFileSets(entity, this, entityStorage);
+        contributor.registerFileSets(entity, myRegistrar, entityStorage);
       }
-      doCollectNonModuleAwareRoots(roots, contributor);
+      myCurrentContributor = null;
+      doCollectNonModuleAwareRoots(roots);
       clearNonModuleAwareMaps();
     }
 
@@ -276,40 +305,39 @@ public class IndexingRootsCollectionUtil {
       if (shouldIgnore(contributor)) return;
       myContents.clear();
       clearNonModuleAwareMaps();
+      myCurrentContributor = contributor;
       for (E entity : SequencesKt.asIterable(entities)) {
-        contributor.registerFileSets(entity, this, entityStorage);
+        contributor.registerFileSets(entity, myRegistrar, entityStorage);
       }
+      myCurrentContributor = null;
       collectModuleAwareRoots(roots);
-      doCollectNonModuleAwareRoots(roots, contributor);
+      doCollectNonModuleAwareRoots(roots);
       clearNonModuleAwareMaps();
     }
 
-    private <E extends WorkspaceEntity> void doCollectNonModuleAwareRoots(@NotNull IndexingRootsDescriptions roots,
-                                                                          @NotNull WorkspaceFileIndexContributor<E> contributor) {
+    private void doCollectNonModuleAwareRoots(@NotNull IndexingRootsDescriptions roots) {
       for (Map.Entry<WorkspaceEntity, Collection<VirtualFile>> entry : myContentRoots.entrySet()) {
         roots.contentEntityRoots.add(new EntityContentRootsDescription(entry.getKey().createReference(), entry.getValue()));
       }
-      if (contributor instanceof LibraryRootFileIndexContributor) {
-        for (Map.Entry<WorkspaceEntity, Collection<VirtualFile>> entry : myExternalRoots.entrySet()) {
-          WorkspaceEntity entity = entry.getKey();
-          Collection<VirtualFile> sourceRoots = ObjectUtils.notNull(myExternalSourceRoots.remove(entity), Collections.emptyList());
-          roots.libraryRoots.add(new LibraryRootsDescription(entity, toList(entry.getValue()), toList(sourceRoots)));
-        }
-        for (Map.Entry<WorkspaceEntity, Collection<VirtualFile>> entry : myExternalSourceRoots.entrySet()) {
-          roots.libraryRoots.add(new LibraryRootsDescription(entry.getKey(), Collections.emptyList(), toList(entry.getValue())));
-        }
+
+      for (Map.Entry<WorkspaceEntity, Collection<VirtualFile>> entry : myLibraryRoots.entrySet()) {
+        WorkspaceEntity entity = entry.getKey();
+        Collection<VirtualFile> sourceRoots = ObjectUtils.notNull(myExternalSourceRoots.remove(entity), Collections.emptyList());
+        roots.libraryRoots.add(new LibraryRootsDescription(entity, toList(entry.getValue()), toList(sourceRoots)));
       }
-      else {
-        for (Map.Entry<WorkspaceEntity, Collection<VirtualFile>> entry : myExternalRoots.entrySet()) {
-          WorkspaceEntity entity = entry.getKey();
-          Collection<VirtualFile> sourceRoots = myExternalSourceRoots.remove(entity);
-          sourceRoots = ObjectUtils.notNull(sourceRoots, Collections.emptyList());
-          roots.externalEntityRoots.add(new EntityRootsDescription(entity.createReference(), entry.getValue(), sourceRoots));
-        }
-        for (Map.Entry<WorkspaceEntity, Collection<VirtualFile>> entry : myExternalSourceRoots.entrySet()) {
-          WorkspaceEntity entity = entry.getKey();
-          roots.externalEntityRoots.add(new EntityRootsDescription(entity.createReference(), Collections.emptyList(), entry.getValue()));
-        }
+      for (Map.Entry<WorkspaceEntity, Collection<VirtualFile>> entry : myLibrarySourceRoots.entrySet()) {
+        roots.libraryRoots.add(new LibraryRootsDescription(entry.getKey(), Collections.emptyList(), toList(entry.getValue())));
+      }
+
+      for (Map.Entry<WorkspaceEntity, Collection<VirtualFile>> entry : myExternalRoots.entrySet()) {
+        WorkspaceEntity entity = entry.getKey();
+        Collection<VirtualFile> sourceRoots = myExternalSourceRoots.remove(entity);
+        sourceRoots = ObjectUtils.notNull(sourceRoots, Collections.emptyList());
+        roots.externalEntityRoots.add(new EntityRootsDescription(entity.createReference(), entry.getValue(), sourceRoots));
+      }
+      for (Map.Entry<WorkspaceEntity, Collection<VirtualFile>> entry : myExternalSourceRoots.entrySet()) {
+        WorkspaceEntity entity = entry.getKey();
+        roots.externalEntityRoots.add(new EntityRootsDescription(entity.createReference(), Collections.emptyList(), entry.getValue()));
       }
     }
 
