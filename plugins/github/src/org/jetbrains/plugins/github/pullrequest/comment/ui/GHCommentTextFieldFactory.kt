@@ -5,8 +5,8 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.wrapWithProgressOverlay
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
-import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory.create
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory.wrapWithLeftIcon
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
@@ -23,9 +23,8 @@ class GHCommentTextFieldFactory(private val model: GHCommentTextFieldModel) {
       inputField
     }
     else {
-      CommentInputComponentFactory
-        .addIconLeft(avatar.componentType, inputField,
-                     avatar.avatarIconsProvider, avatar.user.avatarUrl, avatar.user.getPresentableName())
+      wrapWithLeftIcon(avatar.componentType, inputField,
+                       avatar.avatarIconsProvider, avatar.user.avatarUrl, avatar.user.getPresentableName())
     }
 
     return CommentInputActionsComponentFactory.attachActions(field, inputActions)
