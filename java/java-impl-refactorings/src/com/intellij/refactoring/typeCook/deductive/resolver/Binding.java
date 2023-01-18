@@ -20,9 +20,6 @@ import com.intellij.psi.PsiTypeVariable;
 
 import java.util.Set;
 
-/**
- * @author db
- */
 public abstract class Binding {
   public abstract PsiType apply(PsiType type);
 

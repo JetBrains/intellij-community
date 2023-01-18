@@ -6,9 +6,6 @@ import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.File;
 
-/**
- * @author db
- */
 public final class StorageDumper {
   private static class Env {
     final String myProjectPath;

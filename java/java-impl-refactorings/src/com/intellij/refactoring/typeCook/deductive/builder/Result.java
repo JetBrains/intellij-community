@@ -31,9 +31,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author db
- */
 public class Result {
   private static final Logger LOG = Logger.getInstance(Result.class);
 

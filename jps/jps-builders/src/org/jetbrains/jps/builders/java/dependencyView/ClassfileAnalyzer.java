@@ -15,9 +15,6 @@ import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
-/**
- * @author db
- */
 final class ClassfileAnalyzer {
   private final static Logger LOG = Logger.getInstance(ClassfileAnalyzer.class);
   public static final String LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";

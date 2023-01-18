@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author db
- */
 public class VictimCollector extends Visitor {
   final Set<PsiElement> myVictims = new LinkedHashSet<>();
   final PsiElement[] myElements;

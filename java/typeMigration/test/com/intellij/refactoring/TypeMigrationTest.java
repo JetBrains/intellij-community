@@ -11,9 +11,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author db
- */
 public class TypeMigrationTest extends TypeMigrationTestBase {
   private PsiElementFactory myFactory;
 
