@@ -2,23 +2,45 @@
 package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.util.childScope
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
 interface GitLabNoteAdminActionsViewModel {
   val busy: Flow<Boolean>
 
+  val editVm: Flow<GitLabNoteEditingViewModel?>
+
+  fun startEditing()
+  fun stopEditing()
+
   fun delete()
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class GitLabNoteAdminActionsViewModelImpl(parentCs: CoroutineScope, private val note: GitLabNote)
   : GitLabNoteAdminActionsViewModel {
 
-  private val taskLauncher = SingleCoroutineLauncher(parentCs.childScope())
+  private val cs = parentCs.childScope()
+  private val taskLauncher = SingleCoroutineLauncher(cs)
   override val busy: Flow<Boolean> = taskLauncher.busy
+
+  private val isEditing = MutableStateFlow(false)
+  override val editVm: Flow<GitLabNoteEditingViewModel?> = isEditing.transformLatest { editing ->
+    if (editing) {
+      coroutineScope {
+        val editVm = GitLabNoteEditingViewModelImpl(this, note) {
+          stopEditing()
+        }
+        emit(editVm)
+        awaitCancellation()
+      }
+    }
+    else {
+      emit(null)
+    }
+  }.shareIn(cs, SharingStarted.Lazily, 1)
 
   override fun delete() {
     taskLauncher.launch {
@@ -30,5 +52,13 @@ class GitLabNoteAdminActionsViewModelImpl(parentCs: CoroutineScope, private val 
         //TODO: handle???
       }
     }
+  }
+
+  override fun startEditing() {
+    isEditing.value = true
+  }
+
+  override fun stopEditing() {
+    isEditing.value = false
   }
 }

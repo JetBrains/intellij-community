@@ -38,7 +38,7 @@ internal class GitLabMergeRequestTimelineFileEditor(private val project: Project
     val userIconsProvider = CachingIconsProvider(
       AsyncImageIconsProvider(cs, GitLabImageLoader(connection.apiClient, connection.repo.repository.serverPath))
     )
-    GitLabMergeRequestTimelineComponentFactory.create(cs.childScope(Dispatchers.Main), vm, userIconsProvider)
+    GitLabMergeRequestTimelineComponentFactory.create(project, cs.childScope(Dispatchers.Main), vm, userIconsProvider)
   }
 
   override fun getComponent(): JComponent = component

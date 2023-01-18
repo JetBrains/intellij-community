@@ -4,8 +4,9 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
@@ -13,6 +14,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.deleteNote
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.updateNote
 import java.util.*
 
 interface GitLabNote {
@@ -20,8 +22,9 @@ interface GitLabNote {
   val createdAt: Date
   val canAdmin: Boolean
 
-  val body: Flow<String>
+  val body: StateFlow<String>
 
+  suspend fun updateBody(newText: String)
   suspend fun delete()
 }
 
@@ -42,7 +45,21 @@ class LoadedGitLabNote(
   override val createdAt: Date = note.createdAt
   override val canAdmin: Boolean = note.userPermissions.adminNote
 
-  override val body: Flow<String> = flowOf(note.body)
+  private val _body = MutableStateFlow(note.body)
+  override val body: StateFlow<String> = _body.asStateFlow()
+
+  override suspend fun updateBody(newText: String) {
+    withContext(cs.coroutineContext) {
+      operationsGuard.withLock {
+        withContext(Dispatchers.IO) {
+          connection.apiClient.updateNote(connection.repo.repository, note.id, newText).getResultOrThrow()
+        }
+      }
+      withContext(NonCancellable) {
+        _body.value = newText
+      }
+    }
+  }
 
   override suspend fun delete() {
     withContext(cs.coroutineContext) {

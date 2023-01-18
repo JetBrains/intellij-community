@@ -12,6 +12,7 @@ import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColorUtil
@@ -29,7 +30,8 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 object GitLabMergeRequestTimelineComponentFactory {
-  fun create(cs: CoroutineScope,
+  fun create(project: Project,
+             cs: CoroutineScope,
              vm: GitLabMergeRequestTimelineViewModel,
              avatarIconsProvider: IconsProvider<GitLabUserDTO>): JComponent {
     val panel = Wrapper().apply {
@@ -52,7 +54,7 @@ object GitLabMergeRequestTimelineComponentFactory {
             val itemScope = this
             VerticalListPanel(0).apply {
               for (item in state.items) {
-                add(createItemComponent(itemScope, avatarIconsProvider, item))
+                add(createItemComponent(project, itemScope, avatarIconsProvider, item))
               }
             }.let {
               TransparentScrollPane(it)
@@ -73,7 +75,8 @@ object GitLabMergeRequestTimelineComponentFactory {
     }
   }
 
-  private suspend fun createItemComponent(cs: CoroutineScope,
+  private suspend fun createItemComponent(project: Project,
+                                          cs: CoroutineScope,
                                           avatarIconsProvider: IconsProvider<GitLabUserDTO>,
                                           item: GitLabMergeRequestTimelineItemViewModel): JComponent =
     when (item) {
@@ -87,7 +90,7 @@ object GitLabMergeRequestTimelineComponentFactory {
         }
       }
       is GitLabMergeRequestTimelineItemViewModel.Discussion -> {
-        GitLabMergeRequestTimelineDiscussionComponentFactory.create(cs, avatarIconsProvider, item)
+        GitLabMergeRequestTimelineDiscussionComponentFactory.create(project, cs, avatarIconsProvider, item)
       }
     }
 

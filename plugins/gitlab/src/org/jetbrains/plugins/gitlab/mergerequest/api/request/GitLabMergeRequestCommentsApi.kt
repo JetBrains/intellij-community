@@ -47,6 +47,19 @@ private class ResolveResult(discussion: GitLabDiscussionDTO, errors: List<String
   override val value = discussion
 }
 
+suspend fun GitLabApi.updateNote(
+  project: GitLabProjectCoordinates,
+  noteId: String,
+  newText: String
+): HttpResponse<out GitLabGraphQLMutationResultDTO<Unit>?> {
+  val parameters = mapOf(
+    "noteId" to noteId,
+    "body" to newText
+  )
+  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.updateNote, parameters)
+  return loadGQLResponse(request, GitLabGraphQLMutationResultDTO.Empty::class.java, "updateNote")
+}
+
 suspend fun GitLabApi.deleteNote(
   project: GitLabProjectCoordinates,
   noteId: String

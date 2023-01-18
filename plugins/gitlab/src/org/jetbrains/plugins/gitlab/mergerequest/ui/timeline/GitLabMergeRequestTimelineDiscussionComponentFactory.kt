@@ -1,20 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
+import com.intellij.CommonBundle
 import com.intellij.collaboration.async.inverted
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.EditableComponentFactory
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.Replies
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
-import com.intellij.collaboration.ui.util.bindDisabled
-import com.intellij.collaboration.ui.util.bindIcon
-import com.intellij.collaboration.ui.util.bindText
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.*
+import com.intellij.openapi.project.Project
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.containers.nullize
@@ -26,29 +27,45 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestDiscussionResolveViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteAdminActionsViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditorComponentFactory
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-@OptIn(FlowPreview::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
-  suspend fun create(cs: CoroutineScope,
+  suspend fun create(project: Project,
+                     cs: CoroutineScope,
                      avatarIconsProvider: IconsProvider<GitLabUserDTO>,
                      item: GitLabMergeRequestTimelineItemViewModel.Discussion): JComponent {
     val repliesActionsPanel = createRepliesActionsPanel(cs, avatarIconsProvider, item).apply {
       border = JBUI.Borders.empty(Replies.ActionsFolded.VERTICAL_PADDING, 0)
       bindVisibility(cs, item.repliesFolded)
     }
-    val contentPanel = createNoteTextPanel(cs, item.mainNote.map { it.htmlBody }.flattenConcat()).let {
-      VerticalListPanel().apply {
-        add(it)
-        add(repliesActionsPanel)
+    val mainNoteVm = item.mainNote
+    val textPanel = createNoteTextPanel(cs, mainNoteVm.flatMapLatest { it.htmlBody })
+
+    // oh well... probably better to make a suitable API in EditableComponentFactory, but that would look ugly
+    val actionAndEditVmsFlow: Flow<Pair<GitLabNoteAdminActionsViewModel, GitLabNoteEditingViewModel>?> =
+      mainNoteVm.flatMapLatest { note ->
+        val actionsVm = note.actionsVm
+        actionsVm?.editVm?.map { it?.let { actionsVm to it } } ?: flowOf(null)
       }
+
+    val textContentPanel = EditableComponentFactory.create(cs, textPanel, actionAndEditVmsFlow) { editCs, (actionsVm, editVm) ->
+      GitLabNoteEditorComponentFactory.create(project, editCs, editVm, createEditNoteActions(actionsVm, editVm))
     }
 
-    val actionsPanel = createNoteActions(cs, item.mainNote)
+    val contentPanel = VerticalListPanel().apply {
+      add(textContentPanel)
+      add(repliesActionsPanel)
+    }
+
+    val actionsPanel = createNoteActions(cs, mainNoteVm)
 
     val repliesPanel = VerticalListPanel().apply {
       cs.launch {
@@ -59,7 +76,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
             val notesScope = this
             removeAll()
             notes.forEach {
-              add(createNoteItem(notesScope, avatarIconsProvider, it))
+              add(createNoteItem(project, notesScope, avatarIconsProvider, it))
             }
             revalidate()
             repaint()
@@ -161,10 +178,22 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       })
     }
 
-  private fun createNoteItem(cs: CoroutineScope,
+  private fun createNoteItem(project: Project,
+                             cs: CoroutineScope,
                              avatarIconsProvider: IconsProvider<GitLabUserDTO>,
                              vm: GitLabNoteViewModel): JComponent {
-    val contentPanel = createNoteTextPanel(cs, vm.htmlBody)
+    val textPanel = createNoteTextPanel(cs, vm.htmlBody)
+
+    val actionsVm = vm.actionsVm
+    val contentPanel = if (actionsVm != null) {
+      EditableComponentFactory.create(cs, textPanel, actionsVm.editVm) { editCs, editVm ->
+        GitLabNoteEditorComponentFactory.create(project, editCs, editVm, createEditNoteActions(actionsVm, editVm))
+      }
+    }
+    else {
+      textPanel
+    }
+
     val actionsPanel = createNoteActions(cs, flowOf(vm))
     return CodeReviewChatItemUIUtil.build(CodeReviewChatItemUIUtil.ComponentType.FULL_SECONDARY,
                                           { avatarIconsProvider.getIcon(vm.author, it) },
@@ -176,13 +205,19 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
   private fun createNoteActions(cs: CoroutineScope, note: Flow<GitLabNoteViewModel>): JComponent {
     val panel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
       cs.launch {
-        note.mapNotNull { it.actionsVm }.collect {
+        note.mapNotNull { it.actionsVm }.collectLatest {
           removeAll()
-          CodeReviewCommentUIUtil.createDeleteCommentIconButton { _ -> it.delete() }.apply {
-            bindDisabled(cs, it.busy)
-          }.also(::add)
-          repaint()
-          revalidate()
+          coroutineScope {
+            CodeReviewCommentUIUtil.createEditButton { _ -> it.startEditing() }.apply {
+              bindDisabled(this@coroutineScope, it.busy)
+            }.also(::add)
+            CodeReviewCommentUIUtil.createDeleteCommentIconButton { _ -> it.delete() }.apply {
+              bindDisabled(this@coroutineScope, it.busy)
+            }.also(::add)
+            repaint()
+            revalidate()
+            awaitCancellation()
+          }
         }
       }
     }
@@ -193,4 +228,17 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     SimpleHtmlPane().apply {
       bindText(cs, textFlow)
     }
+
+  private fun createEditNoteActions(actionsVm: GitLabNoteAdminActionsViewModel,
+                                    editVm: GitLabNoteEditingViewModel) =
+    CommentInputActionsComponentFactory.Config(
+      primaryAction = MutableStateFlow(swingAction(CollaborationToolsBundle.message("review.comment.save")) {
+        editVm.submit()
+      }),
+      cancelAction = MutableStateFlow(swingAction(CommonBundle.getCancelButtonText()) {
+        actionsVm.stopEditing()
+      }),
+      submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comment.save.hint",
+                                                                     CommentInputActionsComponentFactory.submitShortcutText))
+    )
 }
