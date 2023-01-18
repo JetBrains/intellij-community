@@ -448,13 +448,7 @@ final class ActionUpdater {
 
   private void waitTheTestDelay() {
     if (myTestDelayMillis <= 0) return;
-    ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
-    long start = System.nanoTime();
-    while (true) {
-      progress.checkCanceled();
-      if (TimeoutUtil.getDurationMillis(start) > myTestDelayMillis) break;
-      TimeoutUtil.sleep(1);
-    }
+    ProgressIndicatorUtils.awaitWithCheckCanceled(myTestDelayMillis);
   }
 
   private void ensureSlowDataKeysPreCached(@NotNull Object action, @NotNull String targetOperationName) {
