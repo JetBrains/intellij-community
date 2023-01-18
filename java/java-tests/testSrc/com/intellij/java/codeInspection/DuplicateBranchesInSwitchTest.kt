@@ -7,9 +7,6 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class DuplicateBranchesInSwitchTest : LightJavaCodeInsightFixtureTestCase() {
   val inspection = DuplicateBranchesInSwitchInspection()
 

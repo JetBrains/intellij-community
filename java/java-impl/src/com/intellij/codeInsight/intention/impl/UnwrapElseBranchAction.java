@@ -29,9 +29,6 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
 public class UnwrapElseBranchAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance(UnwrapElseBranchAction.class);
 

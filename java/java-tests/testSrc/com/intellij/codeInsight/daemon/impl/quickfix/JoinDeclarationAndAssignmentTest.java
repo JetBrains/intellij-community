@@ -6,9 +6,6 @@ import com.intellij.codeInspection.JoinDeclarationAndAssignmentJavaInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JoinDeclarationAndAssignmentTest extends LightQuickFixParameterizedTestCase {
 
   @Override

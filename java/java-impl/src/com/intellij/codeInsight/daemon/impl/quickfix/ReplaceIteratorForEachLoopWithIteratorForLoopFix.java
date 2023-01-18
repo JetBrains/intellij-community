@@ -30,9 +30,6 @@ import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements IntentionAction {
   private final PsiForeachStatement myStatement;
 

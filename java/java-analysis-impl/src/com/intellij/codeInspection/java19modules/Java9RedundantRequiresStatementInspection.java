@@ -24,9 +24,6 @@ import org.jetbrains.uast.UastContextKt;
 import java.util.*;
 import java.util.stream.Stream;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchInspectionTool {
 
   private static final Key<Set<String>> IMPORTED_JAVA_PACKAGES = Key.create("imported_java_packages");

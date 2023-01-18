@@ -38,9 +38,6 @@ import static com.intellij.codeInsight.completion.JavaCompletionContributor.isIn
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaReflectionCompletionContributor extends CompletionContributor implements DumbAware {
   private static final String CONSTRUCTOR = "getConstructor";
   private static final String DECLARED_CONSTRUCTOR = "getDeclaredConstructor";

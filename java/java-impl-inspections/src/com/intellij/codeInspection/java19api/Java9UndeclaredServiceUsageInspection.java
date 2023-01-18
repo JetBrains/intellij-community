@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveType;
 
-/**
- * @author Pavel.Dolgov
- */
 public class Java9UndeclaredServiceUsageInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override

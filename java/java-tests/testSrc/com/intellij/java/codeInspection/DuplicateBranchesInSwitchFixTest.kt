@@ -6,9 +6,6 @@ import com.intellij.codeInspection.DuplicateBranchesInSwitchInspection
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_20
 
-/**
- * @author Pavel.Dolgov
- */
 class DuplicateBranchesInSwitchFixTest : LightQuickFixParameterizedTestCase() {
 
   override fun configureLocalInspectionTools(): Array<LocalInspectionTool> = arrayOf(DuplicateBranchesInSwitchInspection())

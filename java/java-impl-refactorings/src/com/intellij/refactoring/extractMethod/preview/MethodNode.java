@@ -15,9 +15,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Pavel.Dolgov
- */
 class MethodNode extends FragmentNode {
   private final Icon myIcon;
 

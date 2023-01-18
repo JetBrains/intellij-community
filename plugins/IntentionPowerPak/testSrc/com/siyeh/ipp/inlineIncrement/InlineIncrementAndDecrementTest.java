@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Pavel.Dolgov
- */
 public class InlineIncrementAndDecrementTest extends IPPTestCase {
 
   public void testPostfixDecrementNext() {doInlineTest("--");}

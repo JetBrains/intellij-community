@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Pavel.Dolgov
- */
 public class ExtractMethodSnapshot {
   public static final Key<ExtractMethodSnapshot> SNAPSHOT_KEY = Key.create("ExtractMethodSnapshot");
 

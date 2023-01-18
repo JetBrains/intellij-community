@@ -33,9 +33,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * @author Pavel.Dolgov
- */
 class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider {
   private final Project myProject;
   private final PreviewTree myTree;

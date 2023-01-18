@@ -16,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.java.JavaBundle.message;
 
-/**
- * @author Pavel.Dolgov
- */
 public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspectionTool {
   @NotNull
   @Override

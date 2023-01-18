@@ -7,9 +7,6 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Pavel.Dolgov
- */
 final class IncrementUtil {
   @Nullable
   @Contract("null -> null")

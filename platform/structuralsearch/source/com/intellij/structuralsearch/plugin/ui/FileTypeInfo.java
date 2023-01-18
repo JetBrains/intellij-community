@@ -11,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author Pavel.Dolgov
- */
 class FileTypeInfo {
   public static final FileTypeInfo[] EMPTY_ARRAY = new FileTypeInfo[0];
 
