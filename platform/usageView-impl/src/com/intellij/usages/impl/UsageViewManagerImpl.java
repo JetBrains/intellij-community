@@ -161,7 +161,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     Task.Backgroundable task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        SearchScope searchScopeToWarnOfFallingOutOf = scopeSupplier.get();
+        SearchScope searchScopeToWarnOfFallingOutOf = ReadAction.compute(() -> scopeSupplier.get());
         new SearchForUsagesRunnable(UsageViewManagerImpl.this, UsageViewManagerImpl.this.myProject, usageViewRef, presentation, searchFor, searcherFactory,
                                     processPresentation, searchScopeToWarnOfFallingOutOf, listener, firstItemFoundTS, tooManyUsages).run();
       }
