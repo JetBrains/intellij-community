@@ -22,11 +22,11 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.INLINE_ATTRIBUTE_SMALLER_THAN;
-import static com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase.AttributeRecord.*;
 import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID;
+import static com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTestBase.AttributeRecord.newAttributeRecord;
 import static org.junit.Assert.*;
 
-public abstract class AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase {
+public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
 
   protected static final int PAGE_SIZE = 1 << 15;
   protected static final StorageLockContext LOCK_CONTEXT = new StorageLockContext(true, true);

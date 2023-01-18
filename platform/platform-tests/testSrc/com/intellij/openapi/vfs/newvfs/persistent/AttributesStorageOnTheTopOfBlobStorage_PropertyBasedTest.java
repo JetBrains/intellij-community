@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase.AttributeRecord;
-import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase.Attributes;
+import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTestBase.AttributeRecord;
+import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTestBase.Attributes;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SmallStreamlinedBlobStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage;
@@ -12,6 +13,7 @@ import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.PagedFileStorageLockFree;
 import com.intellij.util.io.StorageLockContext;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
@@ -21,6 +23,8 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -30,9 +34,9 @@ import java.util.List;
 import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.INLINE_ATTRIBUTE_SMALLER_THAN;
 import static org.jetbrains.jetCheck.Generator.constant;
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
 
-public class AttributesStorageOnTheTopOfLargeStreamlinedBlobStoragePropertyBasedTest {
+@RunWith(Parameterized.class)
+public class AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest {
 
   private static final int PAGE_SIZE = 1 << 14;
   private static final StorageLockContext LOCK_CONTEXT = new StorageLockContext(true, true);
@@ -41,11 +45,6 @@ public class AttributesStorageOnTheTopOfLargeStreamlinedBlobStoragePropertyBased
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    assumeTrue(
-      "LOCK_FREE_VFS_ENABLED must be true for this test to run",
-      PageCacheUtils.LOCK_FREE_VFS_ENABLED
-    );
-
     IndexDebugProperties.DEBUG = true;
   }
 
@@ -53,17 +52,32 @@ public class AttributesStorageOnTheTopOfLargeStreamlinedBlobStoragePropertyBased
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
 
+  @Parameterized.Parameters
+  public static List<Object[]> storagesToTest() {
+    final ArrayList<Object[]> storages = new ArrayList<>();
+    storages.add(new Object[]{false});
+    if (PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
+      storages.add(new Object[]{true});
+    }
+    return storages;
+  }
+
+  private final boolean useLockFreeStorage;
+
+  public AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest(final boolean storage) { useLockFreeStorage = storage; }
+
   protected AttributesStorageOverBlobStorage createStorage(final Path storagePath) throws Exception {
-    final PagedFileStorageLockFree pagedStorage = new PagedFileStorageLockFree(
-      storagePath,
-      LOCK_CONTEXT,
-      PAGE_SIZE,
-      true
-    );
-    final StreamlinedBlobStorage storage = new StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage(
-      pagedStorage,
-      new DataLengthPlusFixedPercentStrategy(256, 64, 30)
-    );
+    final SpaceAllocationStrategy spaceAllocationStrategy = new DataLengthPlusFixedPercentStrategy(256, 64, 30);
+    final StreamlinedBlobStorage storage = useLockFreeStorage ?
+                                           new StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage(
+                                             new PagedFileStorageLockFree(storagePath, LOCK_CONTEXT, PAGE_SIZE, true),
+                                             spaceAllocationStrategy
+                                           ) :
+                                           new SmallStreamlinedBlobStorage(
+                                             new PagedFileStorage(storagePath, LOCK_CONTEXT, PAGE_SIZE, true, true),
+                                             spaceAllocationStrategy
+                                           );
+
     return new AttributesStorageOverBlobStorage(storage);
   }
 
@@ -102,7 +116,7 @@ public class AttributesStorageOnTheTopOfLargeStreamlinedBlobStoragePropertyBased
     private final AttributesStorageOverBlobStorage storage;
     private final List<AttributeRecord> records;
 
-    private final Int2IntOpenHashMap fileIdToAttributeId = new Int2IntOpenHashMap();
+    private final Int2IntMap fileIdToAttributeId = new Int2IntOpenHashMap();
 
     public InsertAttribute(final @NotNull Attributes attributes,
                            final @NotNull AttributesStorageOverBlobStorage storage,

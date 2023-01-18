@@ -10,7 +10,7 @@ import java.nio.file.Path;
 
 /**
  */
-public class AttributesStorageOnTheTopOfSmallStreamlinedBlobStorageTest extends AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase {
+public class AttributesStorageOnTheTopOfSmallStreamlinedBlobStorageTest extends AttributesStorageOnTheTopOfBlobStorageTestBase {
   @Override
   protected AttributesStorageOverBlobStorage openAttributesStorage(final Path storagePath) throws IOException {
     final PagedFileStorage pagedStorage = new PagedFileStorage(

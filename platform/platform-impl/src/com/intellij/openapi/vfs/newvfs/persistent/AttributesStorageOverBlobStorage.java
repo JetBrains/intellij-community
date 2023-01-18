@@ -341,18 +341,18 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
   }
 
   protected static class AttributeEntry {
-    //RC: entry binary format.
-    //    We try very hard to be as compact as possible. This is because we have really a lot very small attributes:
-    //    2-10 bytes attributes are very common (and actually the most frequently queries/updated onces), and >97% of
-    //    all attributes are <64 bytes. Hence it is quite important to store few-bytes attributes with header as compact
-    //    as possible: even 2 bytes header is 100% overhead for 2 bytes attribute.
-    //    To implement that, we use 3 'sizes' of attribute record: tiny, medium and big. Tiny record is the smallest one,
-    //    it combines both attributeId and size into 1 byte -- i.e. it works for attributeId < 16 && size < 8, which
-    //    covers a significant part of very small attributes.
+    //Entry binary format:
+    //    We try hard to be as compact as possible. This is because we have really a lot of very small attributes:
+    //    2-10 bytes attributes are very common (and they are the most frequently queried/updated), and >97% of
+    //    all attributes are <64 bytes. Hence, it is quite important to store few-bytes attributes with header as
+    //    compact as possible: even 2 bytes header is 100% overhead for 2 bytes attribute.
+    //    To implement that, we use 3 'sizes' of attribute record: tiny, medium and big. Tiny record is the smallest
+    //    one, it combines both attributeId and size into 1 byte -- i.e. it works for attributeId < 16 && size < 8,
+    //    which covers a significant part of very small attributes.
     //    Entry sizes differentiated by first bits of 1st header byte:
-    //    1. if first bit=0... -> tiny record (7 remaining bits are attributeId+size)
+    //    1. if first bit  = 0...  -> tiny record (7 remaining bits are attributeId+size)
     //    2. if first bits = 10... -> medium record (6 bits remaining + 8 bits of next byte are attributeId+size)
-    //    3. if first bits = 11 -> big record (next byte is attributeId, next 4 bytes are size)
+    //    3. if first bits = 11... -> big record (6 bits remaining + next byte is attributeId, next 4 bytes is size)
 
     private static final int SMALLEST_HEADER_SIZE = 1;
     private static final int MEDIUM_HEADER_SIZE = 2;
@@ -374,7 +374,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
     private static final int MEDIUM_ENTRY_MAX_ATTRIBUTE_ID = 0b11_1111;
     private static final int MEDIUM_ENTRY_MAX_SIZE = 0b1111_1111;
 
-    //Big entry: header=6 bytes, 8 bits for attributeId, 32 bits for size/refId (+6 spare bits to be discussed)
+    //Big entry: header=6 bytes, 14 bits for attributeId, 32 bits for size/refId
     private static final byte BIG_ENTRY_MASK = (byte)0b1100_0000;
     private static final int BIG_ENTRY_ATTR_ID_MASK = ~(TINY_ENTRY_MASK | MEDIUM_ENTRY_MASK);
 
