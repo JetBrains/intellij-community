@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder
 import com.intellij.openapi.util.Key
