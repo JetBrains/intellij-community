@@ -54,31 +54,37 @@ import kotlin.time.Duration.Companion.seconds
 private typealias FrameAllocatorTask<T> = suspend CoroutineScope.(saveTemplateJob: Job?, initFrame: (project: Project) -> Unit) -> T
 
 internal open class ProjectFrameAllocator(private val options: OpenProjectTask) {
-  open suspend fun <T : Any> run(task: FrameAllocatorTask<T>): T =
-    coroutineScope {
+  open suspend fun <T : Any> run(task: FrameAllocatorTask<T>): T {
+    return coroutineScope {
       task(saveTemplateAsync(options)) {}
     }
+  }
 
   open suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
     cannotConvertException?.let { throw cannotConvertException }
   }
 
-  open fun projectOpened(project: Project) {}
+  open fun projectOpened(project: Project) {
+  }
 }
 
-private fun CoroutineScope.saveTemplateAsync(options: OpenProjectTask): Job? =
+private fun CoroutineScope.saveTemplateAsync(options: OpenProjectTask): Job? {
   if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
-    launch(Dispatchers.IO + CoroutineName("save default project")) {
+    return launch(Dispatchers.IO + CoroutineName("save default project")) {
       saveSettings(ProjectManager.getInstance().defaultProject, forceSavingAllSettings = true)
     }
   }
-  else null
+  else {
+    return null
+  }
+}
 
-internal class ProjectUiFrameAllocator(val options: OpenProjectTask, private val projectStoreBaseDir: Path) : ProjectFrameAllocator(options) {
+internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
+                                       private val projectStoreBaseDir: Path) : ProjectFrameAllocator(options) {
   private val deferredProjectFrameHelper = CompletableDeferred<ProjectFrameHelper>()
 
-  override suspend fun <T : Any> run(task: FrameAllocatorTask<T>): T =
-    coroutineScope {
+  override suspend fun <T : Any> run(task: FrameAllocatorTask<T>): T {
+    return coroutineScope {
       val debugTask = launch {
         delay(10.seconds)
         logger<ProjectFrameAllocator>().warn("Cannot load project in 10 seconds: ${dumpCoroutines()}")
@@ -187,6 +193,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, private val
         }
       }
     }
+  }
 
   private suspend fun createFrameManager(watcher: (frameHelper: ProjectFrameHelper, loadingState: MutableLoadingState) -> Unit) {
     var frame = options.frame
@@ -250,8 +257,9 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, private val
     deferredProjectFrameHelper.complete(frameHelper)
   }
 
-  private fun getFrameInfo(): FrameInfo? =
-    options.frameInfo ?: RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(projectStoreBaseDir)?.frame
+  private fun getFrameInfo(): FrameInfo? {
+    return options.frameInfo ?: RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(projectStoreBaseDir)?.frame
+  }
 
   private fun updateFullScreenState(frameHelper: ProjectFrameHelper, frameInfo: FrameInfo?) {
     if (frameInfo != null && frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
