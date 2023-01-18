@@ -1,16 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.settings;
 
-import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.spellchecker.DictionaryLevel;
 import com.intellij.spellchecker.util.SPFileUtil;
-import com.intellij.util.EventDispatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,7 +81,9 @@ public final class SpellCheckerSettings implements PersistentStateComponent<Elem
 
   public void setCustomDictionariesPaths(List<String> customDictionariesPaths) {
     myCustomDictionariesPaths = customDictionariesPaths;
-    customDictionariesPathsListenerEventDispatcher.getMulticaster().dictionariesChanged(customDictionariesPaths);
+    ApplicationManager.getApplication().getMessageBus()
+      .syncPublisher(CustomDictionaryPathListener.Companion.getTOPIC())
+      .dictionariesChanged(customDictionariesPaths);
   }
 
   public Set<String> getRuntimeDisabledDictionariesNames() {
@@ -173,14 +173,5 @@ public final class SpellCheckerSettings implements PersistentStateComponent<Elem
     }
     catch (Exception ignored) {
     }
-  }
-
-  private final EventDispatcher<CustomDictionariesPathsListener> customDictionariesPathsListenerEventDispatcher =
-    EventDispatcher.create(CustomDictionariesPathsListener.class);
-
-  @SuppressWarnings("unused")  // used in Rider
-  public void addCustomDictionariesPathsListener(CustomDictionariesPathsListener listener, Disposable parentDisposable) {
-    customDictionariesPathsListenerEventDispatcher.addListener(listener);
-    Disposer.register(parentDisposable, () -> customDictionariesPathsListenerEventDispatcher.removeListener(listener));
   }
 }
