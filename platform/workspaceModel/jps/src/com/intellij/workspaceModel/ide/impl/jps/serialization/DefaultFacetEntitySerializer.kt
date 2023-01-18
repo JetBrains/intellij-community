@@ -49,7 +49,7 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
       }
 
       if (existingFacet == null) {
-        facetEntity = FacetEntity(facetState.name, facetState.facetType, moduleEntity.symbolicId, entitySource) {
+        facetEntity = FacetEntity(facetState.name, moduleEntity.symbolicId, facetState.facetType, entitySource) {
           this.configurationXmlTag = configurationXmlTag
           this.module = moduleEntity
           this.underlyingFacet = underlyingFacet

@@ -190,9 +190,9 @@ class FacetModelBridgeTest {
     runWriteActionAndWait {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel { builder ->
         val moduleEntity = builder.entities(ModuleEntity::class.java).first()
-        builder addEntity FacetEntity("myName", "MockFacetId", moduleEntity.symbolicId, moduleEntity.entitySource) {
+        builder addEntity FacetEntity("myName", moduleEntity.symbolicId, "MockFacetId", moduleEntity.entitySource) {
           this.module = moduleEntity
-          underlyingFacet = FacetEntity("anotherName", "MockFacetId", moduleEntity.symbolicId, moduleEntity.entitySource) {
+          underlyingFacet = FacetEntity("anotherName", moduleEntity.symbolicId, "MockFacetId", moduleEntity.entitySource) {
             this.module = moduleEntity
           }
         }
