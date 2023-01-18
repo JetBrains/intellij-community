@@ -17,9 +17,6 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.Key;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public interface InteractiveCommandListener {
 
   boolean handlePrompt(String line, Key outputType);

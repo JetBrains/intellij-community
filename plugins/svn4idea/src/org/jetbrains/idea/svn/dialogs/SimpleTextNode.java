@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class SimpleTextNode extends DefaultMutableTreeNode {
 
   private final boolean myIsError;

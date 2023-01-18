@@ -13,9 +13,6 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class MergeContext {
 
   @NotNull private final Project myProject;
