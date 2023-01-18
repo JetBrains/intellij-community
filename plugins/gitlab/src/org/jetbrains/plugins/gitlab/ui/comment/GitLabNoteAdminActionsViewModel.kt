@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.mergerequest.ui.comment
+package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.util.childScope
 import kotlinx.coroutines.CancellationException
@@ -8,14 +8,14 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
-interface GitLabMergeRequestNoteActionsViewModel {
+interface GitLabNoteAdminActionsViewModel {
   val busy: Flow<Boolean>
 
   fun delete()
 }
 
-class GitLabMergeRequestNoteActionsViewModelImpl(parentCs: CoroutineScope, private val note: GitLabNote)
-  : GitLabMergeRequestNoteActionsViewModel {
+class GitLabNoteAdminActionsViewModelImpl(parentCs: CoroutineScope, private val note: GitLabNote)
+  : GitLabNoteAdminActionsViewModel {
 
   private val taskLauncher = SingleCoroutineLauncher(parentCs.childScope())
   override val busy: Flow<Boolean> = taskLauncher.busy

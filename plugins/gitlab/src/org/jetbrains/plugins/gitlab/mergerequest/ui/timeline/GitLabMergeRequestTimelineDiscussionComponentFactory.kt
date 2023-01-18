@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestDiscussionResolveViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestNoteViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -163,7 +163,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
   private fun createNoteItem(cs: CoroutineScope,
                              avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                             vm: GitLabMergeRequestNoteViewModel): JComponent {
+                             vm: GitLabNoteViewModel): JComponent {
     val contentPanel = createNoteTextPanel(cs, vm.htmlBody)
     val actionsPanel = createNoteActions(cs, flowOf(vm))
     return CodeReviewChatItemUIUtil.build(CodeReviewChatItemUIUtil.ComponentType.FULL_SECONDARY,
@@ -173,7 +173,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     }
   }
 
-  private fun createNoteActions(cs: CoroutineScope, note: Flow<GitLabMergeRequestNoteViewModel>): JComponent {
+  private fun createNoteActions(cs: CoroutineScope, note: Flow<GitLabNoteViewModel>): JComponent {
     val panel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
       cs.launch {
         note.mapNotNull { it.actionsVm }.collect {

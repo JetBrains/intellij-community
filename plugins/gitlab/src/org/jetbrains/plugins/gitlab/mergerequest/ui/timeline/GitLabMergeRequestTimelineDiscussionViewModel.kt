@@ -10,14 +10,14 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestDiscussionResolveViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestDiscussionResolveViewModelImpl
-import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestNoteViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestNoteViewModelImpl
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModelImpl
 
 interface GitLabMergeRequestTimelineDiscussionViewModel {
   val author: Flow<GitLabUserDTO>
 
-  val mainNote: Flow<GitLabMergeRequestNoteViewModel>
-  val replies: Flow<List<GitLabMergeRequestNoteViewModel>>
+  val mainNote: Flow<GitLabNoteViewModel>
+  val replies: Flow<List<GitLabNoteViewModel>>
 
   val repliesFolded: Flow<Boolean>
 
@@ -33,14 +33,14 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
 
   private val cs = parentCs.childScope()
 
-  override val mainNote: Flow<GitLabMergeRequestNoteViewModel> = discussion.notes.mapScoped {
+  override val mainNote: Flow<GitLabNoteViewModel> = discussion.notes.mapScoped {
     createNoteVm(this, it.first())
   }.share()
 
   private val _repliesFolded = MutableStateFlow(true)
   override val repliesFolded: Flow<Boolean> = _repliesFolded.asStateFlow()
 
-  override val replies: Flow<List<GitLabMergeRequestNoteViewModel>> =
+  override val replies: Flow<List<GitLabNoteViewModel>> =
     discussion.notes.mapScoped { notesList ->
       notesList.asSequence().drop(1).map { createNoteVm(this, it) }.toList()
     }.share()
@@ -54,8 +54,8 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     _repliesFolded.value = folded
   }
 
-  private fun createNoteVm(parentCs: CoroutineScope, note: GitLabNote): GitLabMergeRequestNoteViewModel =
-    GitLabMergeRequestNoteViewModelImpl(parentCs, note)
+  private fun createNoteVm(parentCs: CoroutineScope, note: GitLabNote): GitLabNoteViewModel =
+    GitLabNoteViewModelImpl(parentCs, note)
 
   private fun <T> Flow<T>.share() = shareIn(cs, SharingStarted.Lazily, 1)
 }

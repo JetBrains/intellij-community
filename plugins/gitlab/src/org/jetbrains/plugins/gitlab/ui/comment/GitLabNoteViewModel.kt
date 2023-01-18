@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.mergerequest.ui.comment
+package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -14,27 +14,27 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import java.util.*
 
-interface GitLabMergeRequestNoteViewModel {
+interface GitLabNoteViewModel {
   val author: GitLabUserDTO
   val createdAt: Date
 
-  val actionsVm: GitLabMergeRequestNoteActionsViewModel?
+  val actionsVm: GitLabNoteAdminActionsViewModel?
 
   val htmlBody: Flow<@Nls String>
 }
 
-class GitLabMergeRequestNoteViewModelImpl(
+class GitLabNoteViewModelImpl(
   parentCs: CoroutineScope,
   note: GitLabNote
-) : GitLabMergeRequestNoteViewModel {
+) : GitLabNoteViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default)
 
   override val author: GitLabUserDTO = note.author
   override val createdAt: Date = note.createdAt
 
-  override val actionsVm: GitLabMergeRequestNoteActionsViewModel? =
-    if (note.canAdmin) GitLabMergeRequestNoteActionsViewModelImpl(cs, note) else null
+  override val actionsVm: GitLabNoteAdminActionsViewModel? =
+    if (note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, note) else null
 
   private val body: Flow<String> = note.body
   override val htmlBody: Flow<String> = body.map { GitLabUIUtil.convertToHtml(it) }
