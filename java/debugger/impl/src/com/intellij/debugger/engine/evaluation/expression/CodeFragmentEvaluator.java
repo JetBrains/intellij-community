@@ -12,9 +12,6 @@ import com.sun.jdi.Value;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author lex
- */
 public class CodeFragmentEvaluator extends BlockStatementEvaluator {
   private static final Logger LOG = Logger.getInstance(CodeFragmentEvaluator.class);
 

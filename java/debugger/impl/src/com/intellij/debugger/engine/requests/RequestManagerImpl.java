@@ -30,9 +30,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-/**
- * @author lex
- */
 public class RequestManagerImpl extends DebugProcessAdapterImpl implements RequestManager {
   private static final Logger LOG = Logger.getInstance(RequestManagerImpl.class);
 

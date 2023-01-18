@@ -24,9 +24,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author lex
- */
 public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerCommandImpl> implements DebuggerManagerThread, Disposable {
   private static final Logger LOG = Logger.getInstance(DebuggerManagerThreadImpl.class);
   private static final ThreadLocal<LinkedList<DebuggerCommandImpl>> myCurrentCommands = ThreadLocal.withInitial(LinkedList::new);

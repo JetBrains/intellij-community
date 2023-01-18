@@ -29,9 +29,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author lex
- */
 public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandImpl {
   protected final PsiElement myElement;
   @Nullable private final Editor myEditor;
