@@ -268,7 +268,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                                    @NotNull TooManyUsagesStatus tooManyUsagesStatus,
                                                    @NotNull ProgressIndicator indicator,
                                                    @Nullable UsageViewEx usageView,
-                                                   @NotNull Supplier<String> messageSupplier,
+                                                   @NotNull Supplier<@NlsContexts.DialogMessage String> messageSupplier,
                                                    @Nullable Consumer<? super UsageLimitUtil.Result> onUserClicked) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (usageView != null && usageView.searchHasBeenCancelled() || indicator.isCanceled()) {
