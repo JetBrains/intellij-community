@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie
 
+import com.intellij.grazie.GrazieDynamicPathPartsProvider.Companion.getDynamicFolder
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -68,7 +69,7 @@ internal object GrazieDynamic : DynamicPluginListener {
 
   val dynamicFolder: Path
     get() {
-      val result = GraziePathProvider.getDynamicFolder()
+      val result = getDynamicFolder()
       Files.createDirectories(result)
       return result
     }
