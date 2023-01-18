@@ -108,9 +108,9 @@ object DynamicPlugins {
   /**
    * @return true if the requested enabled state was applied without restart, false if restart is required
    */
-  fun loadPlugins(descriptors: Collection<IdeaPluginDescriptorImpl>): Boolean {
+  fun loadPlugins(descriptors: Collection<IdeaPluginDescriptorImpl>, project: Project?): Boolean {
     return updateDescriptorsWithoutRestart(descriptors, load = true) {
-      loadPlugin(it, checkImplementationDetailDependencies = true)
+      loadPlugin(it, project)
     }
   }
 
@@ -813,11 +813,20 @@ object DynamicPlugins {
     }
   }
 
-  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
-    return loadPlugin(pluginDescriptor, checkImplementationDetailDependencies = true)
+  @JvmOverloads
+  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, project: Project? = null): Boolean {
+    var result = false
+    val indicator = PotemkinProgress(IdeBundle.message("plugins.progress.loading.plugin.title", pluginDescriptor.name),
+                                     project,
+                                     null,
+                                     null)
+    indicator.runInSwingThread {
+      result = loadPluginWithoutProgress(pluginDescriptor, checkImplementationDetailDependencies = true)
+    }
+    return result
   }
 
-  private fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, checkImplementationDetailDependencies: Boolean = true): Boolean {
+  private fun loadPluginWithoutProgress(pluginDescriptor: IdeaPluginDescriptorImpl, checkImplementationDetailDependencies: Boolean = true): Boolean {
     if (classloadersFromUnloadedPlugins[pluginDescriptor.pluginId]?.isEmpty() == false) {
       LOG.info("Requiring restart for loading plugin ${pluginDescriptor.pluginId}" +
                " because previous version of the plugin wasn't fully unloaded")
@@ -832,7 +841,7 @@ object DynamicPlugins {
 
     val classLoaderConfigurator = ClassLoaderConfigurator(pluginSet)
 
-    // todo loadPlugin should be called per each module, temporary solution
+    // todo loadPluginWithoutProgress should be called per each module, temporary solution
     val pluginWithContentModules = pluginSet.getEnabledModules()
       .filter { it.pluginId == pluginDescriptor.pluginId }
       .filter(classLoaderConfigurator::configureModule)
@@ -872,7 +881,7 @@ object DynamicPlugins {
       processImplementationDetailDependenciesOnPlugin(pluginDescriptor, pluginSet) { dependentDescriptor ->
         val dependencies = dependentDescriptor.pluginDependencies
         if (dependencies.all { it.isOptional || PluginManagerCore.getPlugin(it.pluginId) != null }) {
-          if (!loadPlugin(dependentDescriptor, checkImplementationDetailDependencies = false)) {
+          if (!loadPluginWithoutProgress(dependentDescriptor, checkImplementationDetailDependencies = false)) {
             implementationDetailsLoadedWithoutRestart = false
           }
         }
