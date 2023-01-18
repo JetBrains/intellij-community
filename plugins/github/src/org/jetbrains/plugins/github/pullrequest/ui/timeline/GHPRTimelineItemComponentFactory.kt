@@ -9,15 +9,16 @@ import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
-import com.intellij.collaboration.ui.codereview.onHyperlinkActivated
-import com.intellij.collaboration.ui.codereview.setHtmlBody
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
+import com.intellij.collaboration.ui.codereview.onHyperlinkActivated
+import com.intellij.collaboration.ui.codereview.setHtmlBody
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -351,7 +352,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val collapsedThreadActionsComponent = GHPRReviewThreadComponent
       .getCollapsedThreadActionsComponent(reviewDataProvider, avatarIconsProvider, thread, ghostUser) {
         repliesCollapsedState.update { !it }
-        CollaborationToolsUIUtil.focusPanel(commentsPanel)
+        invokeLater {
+          CollaborationToolsUIUtil.focusPanel(commentsPanel)
+        }
       }.apply {
         border = JBUI.Borders.empty(Thread.Replies.ActionsFolded.VERTICAL_PADDING, 0)
       }
