@@ -10,6 +10,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.ExtensionPointName
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
@@ -36,7 +37,7 @@ class PluginFeatureService : SerializablePersistentStateComponent<PluginFeatureS
     featureType: String,
     ep: ExtensionPointName<T>,
     idMapping: (T) -> String,
-    displayNameMapping: (T) -> String,
+    displayNameMapping: (T) -> @Nls String,
   ) {
     val featureMap = LinkedHashMap<String, FeaturePluginData>()
 
