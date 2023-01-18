@@ -19,9 +19,6 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Danila Ponomarenko
- */
 public class PointlessBooleanExpressionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testPointlessBooleanExpression() {

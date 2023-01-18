@@ -44,9 +44,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Danila Ponomarenko
- */
 public class BindFieldsFromParametersAction extends BaseIntentionAction implements HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(BindFieldsFromParametersAction.class);
 

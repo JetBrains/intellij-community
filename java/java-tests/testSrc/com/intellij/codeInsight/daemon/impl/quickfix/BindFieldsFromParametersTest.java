@@ -4,9 +4,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 
-/**
- * @author Danila Ponomarenko
- */
 public class BindFieldsFromParametersTest extends LightIntentionActionTestCase {
   @Override
   protected void setUp() throws Exception {

@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Danila Ponomarenko
- */
 public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "ParameterCanBeLocal";
 

@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Objects;
 
-/**
- * @author Danila Ponomarenko
- */
 public class BreakStringOnLineBreaksIntentionAction extends PsiElementBaseIntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
