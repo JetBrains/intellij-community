@@ -862,6 +862,14 @@ public final class JBUI {
 
 
       public static @NotNull Font headerFont() {
+        return ObjectUtils.coalesce(UIManager.getFont(headerFontKey()), defaultHeaderFont());
+      }
+
+      public static @NotNull String headerFontKey() {
+        return "ToolWindow.Header.font";
+      }
+
+      public static @NotNull JBFont defaultHeaderFont() {
         return JBFont.label();
       }
 

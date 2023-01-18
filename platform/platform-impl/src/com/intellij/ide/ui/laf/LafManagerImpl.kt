@@ -669,6 +669,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), JBUI.CurrentTheme.EditorTabs.defaultFont())
     // toolwindows
     defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), JBUI.CurrentTheme.ToolWindow.defaultHeaderHeight())
+    defaults.put(JBUI.CurrentTheme.ToolWindow.headerFontKey(), JBUI.CurrentTheme.ToolWindow.defaultHeaderFont())
     if (density == UIDensity.COMPACT) {
       // main toolbar
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(34, 34))
@@ -691,6 +692,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), JBFont.medium())
       // toolwindows
       defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), 32)
+      defaults.put(JBUI.CurrentTheme.ToolWindow.headerFontKey(), JBFont.medium())
     }
   }
 
