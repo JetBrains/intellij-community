@@ -215,7 +215,8 @@ public final class ThreadLeakTracker {
            || isIdleCommonPoolThread(thread, stackTrace)
            || isFutureTaskAboutToFinish(stackTrace)
            || isIdleDefaultCoroutineExecutorThread(thread, stackTrace)
-           || isCoroutineSchedulerPoolThread(thread, stackTrace);
+           || isCoroutineSchedulerPoolThread(thread, stackTrace)
+           || isKotlinCIOSelector(stackTrace);
   }
 
   private static boolean isWellKnownOffender(@NotNull String threadName) {
@@ -232,6 +233,13 @@ public final class ThreadLeakTracker {
     return ContainerUtil.exists(stackTrace, element -> {
       return element.getMethodName().equals("getTask")
              && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor");
+    });
+  }
+
+  private static boolean isKotlinCIOSelector(StackTraceElement @NotNull [] stackTrace) {
+    return ContainerUtil.exists(stackTrace, element -> {
+      return element.getMethodName().equals("select")
+             && element.getClassName().equals("io.ktor.network.selector.ActorSelectorManager");
     });
   }
 
