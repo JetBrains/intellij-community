@@ -93,8 +93,7 @@
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RedundantElvisReturnNullInspection"
                      groupPath="Kotlin"
-                     groupName="Redundant constructs"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
