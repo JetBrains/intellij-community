@@ -144,8 +144,17 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return this;
   }
 
+  /**
+   * Introduces text clipping logic if available space is not enough.
+   * <p>
+   * Only the last fragment can be successfully clipped.
+   * If the clipped fragment is not the last, the following ones will not fit the component bounds.
+   *
+   * @see DefaultFragmentTextClipper
+   * @see SwingUtilities2#clipStringIfNecessary
+   */
   @NotNull
-  public final SimpleColoredComponent appendWithClipping(@NotNull @Nls String fragment, @NotNull FragmentTextClipper clipper) {
+  public final SimpleColoredComponent appendWithClipping(@NotNull @Nls String fragment, @Nullable FragmentTextClipper clipper) {
     _append(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES, clipper, myMainTextLastIndex < 0);
     revalidateAndRepaint();
     return this;
@@ -233,7 +242,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   /**
    * Convert HTML text to colored fragments and add all this fragments to current component.
-   * @param html html string for supported html tags see {@link HtmlToSimpleColoredComponentConverter}
+   *
+   * @param html           html string for supported html tags see {@link HtmlToSimpleColoredComponentConverter}
    * @param baseAttributes attributes which will be base for parsed fragments
    */
   public void appendHTML(@Nls String html, SimpleTextAttributes baseAttributes) {
@@ -242,9 +252,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   /**
    * @param padding end offset that will be set after drawing current text fragment
-   * @param align alignment of the current text fragment, if it is SwingConstants.RIGHT
-   *              or SwingConstants.TRAILING then the text fragment will be aligned to the right at
-   *              the padding, otherwise it will be aligned to the left
+   * @param align   alignment of the current text fragment, if it is SwingConstants.RIGHT
+   *                or SwingConstants.TRAILING then the text fragment will be aligned to the right at
+   *                the padding, otherwise it will be aligned to the left
    */
   public void appendTextPadding(int padding, @JdkConstants.HorizontalAlignment int align) {
     synchronized (myFragments) {
@@ -330,7 +340,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    *
    * @param iconTextGap the gap between text and icon
    * @throws IllegalArgumentException if the {@code iconTextGap}
-   *                                            has a negative value
+   *                                  has a negative value
    */
   public void setIconTextGap(final int iconTextGap) {
     if (iconTextGap < 0) {
@@ -567,7 +577,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     int length = text.length();
     Font currentFont = basefont;
     int currentIndex = 0;
-    for(int pos = 0; pos < length; pos = text.offsetByCodePoints(pos, 1)) {
+    for (int pos = 0; pos < length; pos = text.offsetByCodePoints(pos, 1)) {
       int codePoint = text.codePointAt(pos);
       Font font = basefont;
       if (!font.canDisplay(codePoint)) {
@@ -1095,7 +1105,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     Color bg = getBackground();
     return bg != null
            && Comparing.equal(UIUtil.getTreeSelectionBackground(true), bg)
-           || Comparing.equal(UIUtil.getListSelectionBackground(true), bg) ;
+           || Comparing.equal(UIUtil.getListSelectionBackground(true), bg);
   }
 
   protected void applyAdditionalHints(@NotNull Graphics2D g) {
@@ -1313,6 +1323,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         return myOffset;
       }
     }
+
     @Override
     public boolean hasNext() {
       synchronized (myFragments) {
@@ -1364,11 +1375,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     volatile int padding;
     volatile int alignment;
 
-    private final @NotNull JComponent myComponent;
+    private final @NotNull SimpleColoredComponent myComponent;
     private final @Nullable FragmentTextClipper myClipper;
 
-    ColoredFragment(@Nls @NotNull String text, @NotNull SimpleTextAttributes attributes,
-                    @NotNull JComponent component,
+    ColoredFragment(@Nls @NotNull String text,
+                    @NotNull SimpleTextAttributes attributes,
+                    @NotNull SimpleColoredComponent component,
                     @Nullable FragmentTextClipper clipper) {
       this.text = text;
       this.attributes = attributes;
@@ -1411,29 +1423,34 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   public interface FragmentTextClipper {
     /**
-     * @param text - fragment text to display
-     * @param availTextWidth – Amount of space that the string can be drawn in
+     * @param text           fragment text to display
+     * @param availTextWidth Amount of space that the string can be drawn in
+     * @return clipped fragment text to display
      */
-    @NotNull String clipText(@NotNull Graphics2D g2, int fragmentIndex, @NotNull String text, int availTextWidth);
+    @NotNull String clipText(@NotNull SimpleColoredComponent component,
+                             @NotNull Graphics2D g2,
+                             int fragmentIndex,
+                             @NotNull String text,
+                             int availTextWidth);
   }
 
   @SuppressWarnings("unused")
   public static final class DefaultFragmentTextClipper implements FragmentTextClipper {
-
-    private final @NotNull JComponent myComponent;
-
-    public DefaultFragmentTextClipper(@NotNull JComponent component) {
-      myComponent = component;
-    }
+    public static final FragmentTextClipper INSTANCE = new DefaultFragmentTextClipper();
 
     @Override
-    public @NotNull String clipText(@NotNull Graphics2D g, int fragmentIndex, @NotNull String text, int availTextWidth) {
-      return SwingUtilities2.clipStringIfNecessary(myComponent, myComponent.getFontMetrics(g.getFont()), text, availTextWidth);
+    public @NotNull String clipText(@NotNull SimpleColoredComponent component,
+                                    @NotNull Graphics2D g,
+                                    int fragmentIndex,
+                                    @NotNull String text,
+                                    int availTextWidth) {
+      return SwingUtilities2.clipStringIfNecessary(component, component.getFontMetrics(g.getFont()), text, availTextWidth);
     }
   }
 
   private interface TextRenderer {
     float getWidth();
+
     void draw(Graphics2D g2, int fragmentIndex, float x, float y);
   }
 
@@ -1457,11 +1474,14 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   private static final class ClippedTextRenderer implements TextRenderer {
     private final @NotNull String myText;
-    private final @NotNull JComponent myComponent;
+    private final @NotNull SimpleColoredComponent myComponent;
     private final @NotNull SimpleColoredComponent.FragmentTextClipper myFragmentTextClipper;
     private final float myWidth;
 
-    private ClippedTextRenderer(@NotNull JComponent component, @NotNull String text, @NotNull SimpleColoredComponent.FragmentTextClipper fragmentTextClipper, float width) {
+    private ClippedTextRenderer(@NotNull SimpleColoredComponent component,
+                                @NotNull String text,
+                                @NotNull SimpleColoredComponent.FragmentTextClipper fragmentTextClipper,
+                                float width) {
       myText = text;
       myWidth = width;
       myComponent = component;
@@ -1475,7 +1495,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     @Override
     public void draw(Graphics2D g2, int fragmentIndex, float x, float y) {
-      String clippedText = myFragmentTextClipper.clipText(g2, fragmentIndex, myText, myComponent.getWidth() - (int)x);
+      String clippedText = myFragmentTextClipper.clipText(myComponent, g2, fragmentIndex, myText, myComponent.getWidth() - (int)x);
       g2.drawString(clippedText, x, y);
     }
   }

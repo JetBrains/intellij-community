@@ -35,10 +35,7 @@ import git4idea.ui.branch.GitBranchesClippedNamesCache
 import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchUnderRepository
 import icons.DvcsImplIcons
 import org.jetbrains.annotations.Nls
-import java.awt.Component
-import java.awt.Container
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
+import java.awt.*
 import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.tree.TreeCellRenderer
@@ -52,19 +49,8 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
 
   abstract fun hasRightArrow(nodeUserObject: Any?): Boolean
 
-  private val clippedBranchNamesCache = project.service<GitBranchesClippedNamesCache>()
-
-  fun getBranchNameClipper(textComponent: SimpleColoredComponent, treeNode: Any?) =
-    SimpleColoredComponent.FragmentTextClipper { _, _, text, availTextWidth ->
-      with(clippedBranchNamesCache) {
-        when {
-          textComponent.fragmentCount > 1 -> text
-          treeNode is BranchUnderRepository -> getOrCache(treeNode.branch.name, text, textComponent.getAvailTextLength(text, availTextWidth))
-          treeNode is GitBranch -> getOrCache(treeNode.name, text, textComponent.getAvailTextLength(text, availTextWidth))
-          else -> text
-        }
-      }
-    }
+  private fun getBranchNameClipper(treeNode: Any?): SimpleColoredComponent.FragmentTextClipper? =
+    GitBranchesTreeRendererClipper.create(project, treeNode)
 
   fun getLeftTreeIconRenderer(path: TreePath): Control? {
     val lastComponent = path.lastPathComponent
@@ -250,7 +236,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
       foreground = JBUI.CurrentTheme.Tree.foreground(selected, true)
 
       clear()
-      appendWithClipping(getText(userObject, treeModel, repositories).orEmpty(), getBranchNameClipper(this, userObject))
+      appendWithClipping(getText(userObject, treeModel, repositories).orEmpty(), getBranchNameClipper(userObject))
     }
 
     val (inOutIcon, inOutTooltip) = getIncomingOutgoingIconWithTooltip(userObject)
@@ -312,6 +298,25 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
         is PopupFactoryImpl.ActionItem -> value.text
         else -> null
       }
+    }
+  }
+}
+
+private class GitBranchesTreeRendererClipper(private val project: Project) : SimpleColoredComponent.FragmentTextClipper {
+
+  override fun clipText(component: SimpleColoredComponent, g2: Graphics2D, fragmentIndex: Int, text: String, availTextWidth: Int): String {
+    if (component.fragmentCount > 1) return text
+    val clipCache = project.service<GitBranchesClippedNamesCache>()
+    return clipCache.getOrCache(text, component.getAvailTextLength(text, availTextWidth))
+  }
+
+  companion object {
+    fun create(project: Project, treeNode: Any?): SimpleColoredComponent.FragmentTextClipper? {
+      if (treeNode is BranchUnderRepository ||
+          treeNode is GitBranch) {
+        return GitBranchesTreeRendererClipper(project)
+      }
+      return null
     }
   }
 }

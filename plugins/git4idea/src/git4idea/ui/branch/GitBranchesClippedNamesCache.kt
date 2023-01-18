@@ -25,25 +25,24 @@ class GitBranchesClippedNamesCache(private val project: Project) : Disposable {
   /**
    * Truncate [branchName] or get from cache
    *
-   * @param branchName Full branch name
-   * @param branchNameToClip Branch name or part of branch name to clip
+   * @param branchName branch name
    * @param maxBranchNameLength Amount of characters in branch name to preserve
    *
    * @see [truncateBranchName]
    */
-  fun getOrCache(branchName: String, branchNameToClip: String, maxBranchNameLength: Int): String {
-    if (cacheDisposable.isDisposed) return ""
+  fun getOrCache(branchName: String, maxBranchNameLength: Int): String {
+    if (cacheDisposable.isDisposed) return branchName
 
-    val (existingClippedName, existingMaxBranchNameLength) =
-      cache.get(branchName) {
-        ClippedBranch(truncateBranchName(project, branchNameToClip, maxBranchNameLength, 0, 0), maxBranchNameLength)
-      }
+    val oldClippedBranch = cache.get(branchName) { truncateBranchName(branchName, maxBranchNameLength) }
+    if (oldClippedBranch.length == maxBranchNameLength) return oldClippedBranch.clippedName
 
-    if (existingMaxBranchNameLength == maxBranchNameLength) return existingClippedName
-
-    val clippedBranch = ClippedBranch(truncateBranchName(project, branchNameToClip, maxBranchNameLength, 0, 0), maxBranchNameLength)
+    val clippedBranch = truncateBranchName(branchName, maxBranchNameLength)
     cache.put(branchName, clippedBranch)
     return clippedBranch.clippedName
+  }
+
+  private fun truncateBranchName(branchName: String, maxBranchNameLength: Int): ClippedBranch {
+    return ClippedBranch(truncateBranchName(project, branchName, maxBranchNameLength, 0, 0), maxBranchNameLength)
   }
 
   fun clear() = cache.invalidateAll()
