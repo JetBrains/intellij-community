@@ -663,7 +663,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
-    for (Object item : children(node).userObjects()) {
+    for (Object item : allUnder(node).userObjects()) {
       State state = getInclusionModel().getInclusionState(item);
 
       if (state == State.SELECTED) {

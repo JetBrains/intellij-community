@@ -52,9 +52,13 @@ public abstract class VcsTreeModelData {
     return new IncludedUnderData(tree, getRoot(tree));
   }
 
+  /**
+   * @deprecated Prefer using {@link #allUnder(ChangesBrowserNode)} with non-ambiguous name.
+   */
   @NotNull
+  @Deprecated
   public static VcsTreeModelData children(@NotNull ChangesBrowserNode<?> node) {
-    return new AllUnderData(node);
+    return allUnder(node);
   }
 
 

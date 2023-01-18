@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.IgnoredViewDialog
 import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.allUnder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
@@ -78,7 +79,7 @@ abstract class GitStageTree(project: Project,
       val hoverIcon = createHoverIcon(node)
       if (hoverIcon != null) return hoverIcon
     }
-    val statusNode = VcsTreeModelData.children(node).iterateUserObjects(GitFileStatusNode::class.java).first()
+    val statusNode = allUnder(node).iterateUserObjects(GitFileStatusNode::class.java).first()
                      ?: return null
     val operation = operations.find { it.matches(statusNode) } ?: return null
     if (operation.icon == null) return null
@@ -170,7 +171,7 @@ abstract class GitStageTree(project: Project,
   private inner class GitStageHoverIcon(val operation: StagingAreaOperation)
     : HoverIcon(operation.icon!!, operation.actionText.get()) {
     override fun invokeAction(node: ChangesBrowserNode<*>) {
-      val nodes = VcsTreeModelData.children(node).userObjects(GitFileStatusNode::class.java)
+      val nodes = allUnder(node).userObjects(GitFileStatusNode::class.java)
       performStageOperation(nodes, operation)
     }
 
