@@ -15,7 +15,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.origin.LibraryOriginImpl
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.annotations.Nls
 
 class LibraryIndexableFilesIteratorImpl
@@ -79,16 +78,6 @@ private constructor(private val libraryName: @NlsSafe String?,
         LibraryIndexableFilesIteratorImpl(library.name, library.presentableName,
                                           collectFiles(library, OrderRootType.CLASSES, roots),
                                           collectFiles(library, OrderRootType.SOURCES, sourceRoots))
-
-    @RequiresReadLock
-    @JvmStatic
-    fun createIteratorFromEntity(entity: WorkspaceEntity,
-                                 roots: List<VirtualFile>,
-                                 sourceRoots: List<VirtualFile>): LibraryIndexableFilesIteratorImpl =
-      if (entity is Library)
-        LibraryIndexableFilesIteratorImpl(entity.name, entity.presentableName, roots, sourceRoots)
-      else
-        LibraryIndexableFilesIteratorImpl(null, entity.toString(), roots, sourceRoots)
 
     @JvmStatic
     fun createIteratorList(library: Library): List<IndexableFilesIterator> =

@@ -114,7 +114,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
 
     IndexingRootsCollectionUtil.IndexingRootsDescriptions descriptions =
       IndexingRootsCollectionUtil.collectRootsFromWorkspaceFileIndexContributors(project, entityStorage, null);
-    IndexingRootsCollectionUtil.addIteratorsFromRootsDescriptions(descriptions, iterators, libraryOrigins);
+    IndexingRootsCollectionUtil.addIteratorsFromRootsDescriptions(descriptions, iterators, libraryOrigins, entityStorage);
 
     boolean addedFromDependenciesIndexedStatusService = false;
     if (DependenciesIndexedStatusService.shouldBeUsed()) {

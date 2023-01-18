@@ -175,7 +175,7 @@ internal class WorkspaceFileIndexContributorBasedContributor : IndexableFilesCon
     settings.retainCondition = Condition { contributor -> contributor !is PlatformInternalWorkspaceFileIndexContributor }
     val roots = collectRootsFromWorkspaceFileIndexContributors(project, entityStorage, settings)
     val result = mutableListOf<IndexableFilesIterator>()
-    addIteratorsFromRootsDescriptions(roots, result, mutableSetOf())
+    addIteratorsFromRootsDescriptions(roots, result, mutableSetOf(), entityStorage)
     return result
   }
 

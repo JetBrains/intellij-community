@@ -4,6 +4,7 @@ package com.intellij.util.indexing.roots;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,15 +12,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.core.fileIndex.*;
 import com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRootData;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
 import com.intellij.workspaceModel.ide.impl.UtilsKt;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryEntityUtils;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.storage.EntityReference;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import kotlin.jvm.functions.Function1;
 import kotlin.sequences.Sequence;
@@ -30,8 +35,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.util.indexing.roots.IndexableEntityProviderMethods.INSTANCE;
-import static com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl.createIteratorFromEntity;
+import static com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl.createIterator;
+import static com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.INSTANCE;
 
 public class IndexingRootsCollectionUtil {
 
@@ -43,7 +48,7 @@ public class IndexingRootsCollectionUtil {
 
   private IndexingRootsCollectionUtil() { }
 
-  public record LibraryRootsDescription(@NotNull WorkspaceEntity library,
+  public record LibraryRootsDescription(@NotNull LibraryEntity library,
                                         @NotNull List<? extends VirtualFile> classRoots,
                                         @NotNull List<? extends VirtualFile> sourceRoots) {
   }
@@ -85,8 +90,6 @@ public class IndexingRootsCollectionUtil {
                                                                                          @Nullable IndexingRootsCollectionSettings settings) {
     List<WorkspaceFileIndexContributor<?>> contributors =
       ((WorkspaceFileIndexImpl)WorkspaceFileIndex.getInstance(project)).getContributors();
-
-    settings = ObjectUtils.notNull(settings, new IndexingRootsCollectionSettings());
     IndexingRootsDescriptions roots = new IndexingRootsDescriptions();
     RootsCollector registrar = new RootsCollector(settings);
     for (WorkspaceFileIndexContributor<?> contributor : contributors) {
@@ -107,14 +110,19 @@ public class IndexingRootsCollectionUtil {
 
   public static void addIteratorsFromRootsDescriptions(@NotNull IndexingRootsDescriptions descriptions,
                                                        @NotNull List<IndexableFilesIterator> iterators,
-                                                       @NotNull Set<IndexableSetOrigin> libraryOrigins) {
+                                                       @NotNull Set<IndexableSetOrigin> libraryOrigins,
+                                                       @NotNull EntityStorage storage) {
     ArrayList<IndexableFilesIterator> initialIterators = new ArrayList<>();
     for (IndexingRootsCollectionUtil.ModuleRootsDescription moduleRootsDescription : descriptions.moduleRoots()) {
       initialIterators.add(new ModuleIndexableFilesIteratorImpl(moduleRootsDescription.module(), moduleRootsDescription.roots(), true));
     }
     for (IndexingRootsCollectionUtil.LibraryRootsDescription root : descriptions.libraryRoots()) {
-      LibraryIndexableFilesIteratorImpl iterator = createIteratorFromEntity(root.library(), root.classRoots(), root.sourceRoots());
-      if (libraryOrigins.add(iterator.getOrigin())) {
+      Library library = LibraryEntityUtils.findLibraryBridge(root.library, storage);
+      if (library == null) {
+        continue;
+      }
+      LibraryIndexableFilesIteratorImpl iterator = createIterator(library, root.classRoots(), root.sourceRoots());
+      if (iterator != null && libraryOrigins.add(iterator.getOrigin())) {
         initialIterators.add(iterator);
       }
     }
@@ -122,12 +130,35 @@ public class IndexingRootsCollectionUtil {
     iterators.addAll(0, initialIterators);
 
     for (IndexingRootsCollectionUtil.EntityContentRootsDescription description : descriptions.contentEntityRoots()) {
-      iterators.addAll(INSTANCE.createModuleUnawareContentEntityIterators(description.entityReference(), description.roots()));
+      iterators.addAll(
+        IndexableEntityProviderMethods.INSTANCE.createModuleUnawareContentEntityIterators(description.entityReference(),
+                                                                                          description.roots()));
     }
     for (IndexingRootsCollectionUtil.EntityRootsDescription description : descriptions.externalEntityRoots()) {
       iterators.addAll(
-        INSTANCE.createExternalEntityIterators(description.entityReference(), description.roots(), description.sourceRoots()));
+        IndexableEntityProviderMethods.INSTANCE.createExternalEntityIterators(description.entityReference(), description.roots(),
+                                                                              description.sourceRoots()));
     }
+  }
+
+  @NotNull
+  public static Collection<IndexableIteratorBuilder> createBuildersFromRootsDescriptions(@NotNull IndexingRootsDescriptions descriptions) {
+    ArrayList<IndexableIteratorBuilder> builders = new ArrayList<>();
+    for (IndexingRootsCollectionUtil.ModuleRootsDescription moduleRootsDescription : descriptions.moduleRoots()) {
+      builders.addAll(INSTANCE.forModuleRootsFileBased(((ModuleBridge)moduleRootsDescription.module()).getModuleEntityId(),
+                                                       moduleRootsDescription.roots()));
+    }
+    for (IndexingRootsCollectionUtil.LibraryRootsDescription root : descriptions.libraryRoots()) {
+      builders.addAll(INSTANCE.forLibraryEntity(root.library().getSymbolicId(), false, root.classRoots(), root.sourceRoots()));
+    }
+
+    for (IndexingRootsCollectionUtil.EntityContentRootsDescription description : descriptions.contentEntityRoots()) {
+      builders.addAll(INSTANCE.forModuleUnawareContentEntity(description.entityReference(), description.roots()));
+    }
+    for (IndexingRootsCollectionUtil.EntityRootsDescription description : descriptions.externalEntityRoots()) {
+      builders.addAll(INSTANCE.forExternalEntity(description.entityReference(), description.roots(), description.sourceRoots()));
+    }
+    return builders;
   }
 
   public static List<VirtualFile> optimizeRoots(@NotNull Collection<VirtualFile> roots) {
@@ -166,12 +197,12 @@ public class IndexingRootsCollectionUtil {
     return new ArrayList<>(value);
   }
 
-  private static class RootsCollector {
+  public static class RootsCollector {
     private final MultiMap<Module, VirtualFile> myContents = MultiMap.create();
     private final IndexingRootsCollectionSettings mySettings;
     private final MultiMap<WorkspaceEntity, VirtualFile> myContentRoots = MultiMap.createSet();
-    private final MultiMap<WorkspaceEntity, VirtualFile> myLibraryRoots = MultiMap.createSet();
-    private final MultiMap<WorkspaceEntity, VirtualFile> myLibrarySourceRoots = MultiMap.createSet();
+    private final MultiMap<LibraryEntity, VirtualFile> myLibraryRoots = MultiMap.createSet();
+    private final MultiMap<LibraryEntity, VirtualFile> myLibrarySourceRoots = MultiMap.createSet();
     private final MultiMap<WorkspaceEntity, VirtualFile> myExternalRoots = MultiMap.createSet();
     private final MultiMap<WorkspaceEntity, VirtualFile> myExternalSourceRoots = MultiMap.createSet();
     @Nullable
@@ -211,7 +242,7 @@ public class IndexingRootsCollectionUtil {
         }
         else if (kind == WorkspaceFileKind.EXTERNAL) {
           if (myCurrentContributor instanceof LibraryRootFileIndexContributor) {
-            myLibraryRoots.putValue(entity, root);
+            myLibraryRoots.putValue((LibraryEntity)entity, root);
           }
           else {
             myExternalRoots.putValue(entity, root);
@@ -219,7 +250,7 @@ public class IndexingRootsCollectionUtil {
         }
         else {
           if (myCurrentContributor instanceof LibraryRootFileIndexContributor) {
-            myLibrarySourceRoots.putValue(entity, root);
+            myLibrarySourceRoots.putValue((LibraryEntity)entity, root);
           }
           else {
             myExternalSourceRoots.putValue(entity, root);
@@ -252,8 +283,8 @@ public class IndexingRootsCollectionUtil {
       }
     };
 
-    private RootsCollector(IndexingRootsCollectionSettings settings) {
-      mySettings = settings;
+    public RootsCollector(@Nullable IndexingRootsCollectionSettings settings) {
+      mySettings = ObjectUtils.notNull(settings, new IndexingRootsCollectionSettings());
     }
 
     private boolean shouldIgnore(@NotNull WorkspaceFileKind kind, @Nullable WorkspaceFileSetData data) {
@@ -320,12 +351,12 @@ public class IndexingRootsCollectionUtil {
         roots.contentEntityRoots.add(new EntityContentRootsDescription(entry.getKey().createReference(), entry.getValue()));
       }
 
-      for (Map.Entry<WorkspaceEntity, Collection<VirtualFile>> entry : myLibraryRoots.entrySet()) {
-        WorkspaceEntity entity = entry.getKey();
-        Collection<VirtualFile> sourceRoots = ObjectUtils.notNull(myExternalSourceRoots.remove(entity), Collections.emptyList());
+      for (Map.Entry<LibraryEntity, Collection<VirtualFile>> entry : myLibraryRoots.entrySet()) {
+        LibraryEntity entity = entry.getKey();
+        Collection<VirtualFile> sourceRoots = ObjectUtils.notNull(myLibrarySourceRoots.remove(entity), Collections.emptyList());
         roots.libraryRoots.add(new LibraryRootsDescription(entity, toList(entry.getValue()), toList(sourceRoots)));
       }
-      for (Map.Entry<WorkspaceEntity, Collection<VirtualFile>> entry : myLibrarySourceRoots.entrySet()) {
+      for (Map.Entry<LibraryEntity, Collection<VirtualFile>> entry : myLibrarySourceRoots.entrySet()) {
         roots.libraryRoots.add(new LibraryRootsDescription(entry.getKey(), Collections.emptyList(), toList(entry.getValue())));
       }
 

@@ -15,7 +15,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryEntity> {
+public class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryEntity> {
 
   @Override
   public @NotNull Class<LibraryEntity> getEntityClass() {

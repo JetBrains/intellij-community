@@ -1641,6 +1641,9 @@
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.SdkIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.LibraryIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.SyntheticLibraryIndexableIteratorHandler"/>
+    <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.ExternalEntityIndexableIteratorHandler"/>
+    <indexableIteratorBuilderHandler
+      implementation="com.intellij.util.indexing.roots.builders.ModuleUnawareContentEntityIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler
       implementation="com.intellij.util.indexing.roots.builders.IndexableSetContributorIndexableIteratorHandler"/>
 
