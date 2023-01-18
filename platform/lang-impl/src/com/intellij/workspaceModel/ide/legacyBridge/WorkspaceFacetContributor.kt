@@ -36,11 +36,6 @@ interface WorkspaceFacetContributor<T: FacetEntityBase> {
   val rootEntityType: Class<T>
 
   /**
-   * Get the name for the associated with entity [com.intellij.facet.Facet]
-   */
-  fun getFacetName(entity: T): String
-
-  /**
    * Method return the module to which this entity belongs
    */
   fun getParentModuleEntity(entity: T): ModuleEntity

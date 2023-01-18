@@ -88,7 +88,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
           publisher.fireBeforeFacetRemoved(facet)
         }
         is EntityChange.Replaced -> {
-          if (workspaceFacetContributor.getFacetName(change.oldEntity) != workspaceFacetContributor.getFacetName(change.newEntity)) {
+          if (change.oldEntity.name != change.newEntity.name) {
             val facetBridge = event.storageAfter.facetMapping().getDataByEntity(change.newEntity) ?: error("Facet should be available")
             publisher.fireBeforeFacetRenamed(facetBridge)
           }
@@ -108,7 +108,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
           val moduleEntity = workspaceFacetContributor.getParentModuleEntity(change.newEntity)
           getFacetManager(moduleEntity)?.model?.facetsChanged()
 
-          FacetManagerBase.setFacetName(existingFacetBridge, workspaceFacetContributor.getFacetName(change.entity))
+          FacetManagerBase.setFacetName(existingFacetBridge, change.entity.name)
           existingFacetBridge.initFacet()
 
           // We should not send an event if the associated module was added in the same transaction.
@@ -133,8 +133,8 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
           val facet = event.storageAfter.facetMapping().getDataByEntity(change.newEntity) ?: error("Facet should be available")
           val moduleEntity = workspaceFacetContributor.getParentModuleEntity(change.newEntity)
           getFacetManager(moduleEntity)?.model?.facetsChanged()
-          val newFacetName = workspaceFacetContributor.getFacetName(change.newEntity)
-          val oldFacetName = workspaceFacetContributor.getFacetName(change.oldEntity)
+          val newFacetName = change.newEntity.name
+          val oldFacetName = change.oldEntity.name
           FacetManagerBase.setFacetName(facet, newFacetName)
           changedFacets[facet] = change.newEntity
           if (oldFacetName != newFacetName) {

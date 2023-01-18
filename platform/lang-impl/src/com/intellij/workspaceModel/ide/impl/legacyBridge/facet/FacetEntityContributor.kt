@@ -24,6 +24,4 @@ class FacetEntityContributor: WorkspaceFacetContributor<FacetEntity> {
   }
 
   override fun getParentModuleEntity(entity: FacetEntity): ModuleEntity = entity.module
-
-  override fun getFacetName(entity: FacetEntity): String = entity.name
 }

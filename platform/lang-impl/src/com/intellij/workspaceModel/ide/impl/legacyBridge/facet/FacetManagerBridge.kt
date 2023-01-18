@@ -219,9 +219,8 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
                        entityTypeToFacetContributor: Map<Class<FacetEntityBase>, WorkspaceFacetContributor<FacetEntityBase>>) {
     val facetEntitiesSet = facetRelatedEntities.toSet()
     for (entity in facetRelatedEntities) {
-      val facetContributor = entityTypeToFacetContributor[entity.getEntityInterface()]!!
       val facet = facetMapping().getDataByEntity(entity)
-      val facetName = facetContributor.getFacetName(entity)
+      val facetName = entity.name
       if (facet == null) {
         throw IllegalStateException("No facet registered for $entity (name = $facetName)")
       }
@@ -246,8 +245,7 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     mappedFacets.addAll(resolvedModuleEntity.facets.toSet())
     val staleEntity = (mappedFacets - facetRelatedEntities).firstOrNull()
     if (staleEntity != null) {
-      val facetContributor = entityTypeToFacetContributor[staleEntity.getEntityInterface()]!!
-      val facetName = facetContributor.getFacetName(staleEntity)
+      val facetName = staleEntity.name
       throw IllegalStateException("Stale entity $staleEntity (name = $facetName) in the mapping")
     }
   }
