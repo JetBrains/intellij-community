@@ -23,7 +23,7 @@ class TerminalWidgetImpl(private val project: Project,
   override val ttyConnectorAccessor: TtyConnectorAccessor = TtyConnectorAccessor()
 
 
-  private val blocksContainer: TerminalBlocksContainer = TerminalBlocksContainer(project)
+  private val blocksContainer: TerminalBlocksContainer = TerminalBlocksContainer(project, terminalSettings)
 
   init {
     Disposer.register(parent, this)
