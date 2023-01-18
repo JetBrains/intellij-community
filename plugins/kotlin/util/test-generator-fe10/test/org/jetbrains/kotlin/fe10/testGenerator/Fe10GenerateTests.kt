@@ -781,7 +781,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractKotlinFileStructureTest> {
-            model("structureView/fileStructure", pattern = KT_WITHOUT_DOTS)
+            model("structureView/fileStructure", pattern = KT_OR_KTS_WITHOUT_DOTS)
         }
 
         testClass<AbstractExpressionSelectionTest> {
@@ -993,7 +993,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractKotlinNavBarTest> {
-            model("navigationToolbar", isRecursive = false)
+            model("navigationToolbar", pattern = KT_OR_KTS, isRecursive = false)
         }
     }
 

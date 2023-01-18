@@ -36,7 +36,7 @@ internal class KtDeclarationTreeNode private constructor(
         private fun String?.orErrorName() = if (!isNullOrBlank()) this else ERROR_NAME
 
         @NlsSafe
-        fun tryGetRepresentableText(declaration: KtDeclaration): String {
+        fun tryGetRepresentableText(declaration: KtDeclaration, renderArguments: Boolean = true): String {
             val settings = declaration.containingKtFile.kotlinCustomSettings
             fun StringBuilder.appendColon() {
                 if (settings.SPACE_BEFORE_TYPE_COLON) append(" ")
@@ -58,21 +58,23 @@ internal class KtDeclarationTreeNode private constructor(
                     append('.')
                 }
                 append(name.orErrorName())
-                append("(")
-                val valueParameters = valueParameters
-                valueParameters.forEachIndexed { index, parameter ->
-                    parameter.name?.let { parameterName ->
-                        append(parameterName)
-                        appendColon()
+                if (renderArguments) {
+                    append("(")
+                    val valueParameters = valueParameters
+                    valueParameters.forEachIndexed { index, parameter ->
+                        parameter.name?.let { parameterName ->
+                            append(parameterName)
+                            appendColon()
+                        }
+                        parameter.typeReference?.text?.let { typeReference ->
+                            append(typeReference)
+                        }
+                        if (index != valueParameters.size - 1) {
+                            append(", ")
+                        }
                     }
-                    parameter.typeReference?.text?.let { typeReference ->
-                        append(typeReference)
-                    }
-                    if (index != valueParameters.size - 1) {
-                        append(", ")
-                    }
+                    append(")")
                 }
-                append(")")
 
                 typeReference?.text?.let { returnTypeReference ->
                     appendColon()

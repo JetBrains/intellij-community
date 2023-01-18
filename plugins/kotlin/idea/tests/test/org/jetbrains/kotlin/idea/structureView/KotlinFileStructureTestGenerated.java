@@ -103,6 +103,11 @@ public class KotlinFileStructureTestGenerated extends AbstractKotlinFileStructur
         runTest("testData/structureView/fileStructure/Render.kt");
     }
 
+    @TestMetadata("Script.kts")
+    public void testScript() throws Exception {
+        runTest("testData/structureView/fileStructure/Script.kts");
+    }
+
     @TestMetadata("SeveralClasses.kt")
     public void testSeveralClasses() throws Exception {
         runTest("testData/structureView/fileStructure/SeveralClasses.kt");
