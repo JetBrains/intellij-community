@@ -24,12 +24,12 @@ public interface SpaceAllocationStrategy {
     private final int defaultCapacity;
 
     public WriterDecidesStrategy(final int defaultCapacity) {
-      if (defaultCapacity <= 0 || defaultCapacity >= StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage.MAX_CAPACITY) {
+      if (defaultCapacity <= 0 || defaultCapacity >= StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY) {
         throw new IllegalArgumentException(
           "defaultCapacity(" +
           defaultCapacity +
           ") must be in [1," +
-          StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage.MAX_CAPACITY +
+          StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY +
           "]");
       }
       this.defaultCapacity = defaultCapacity;
@@ -66,12 +66,12 @@ public interface SpaceAllocationStrategy {
     public DataLengthPlusFixedPercentStrategy(final int defaultCapacity,
                                               final int minCapacity,
                                               final int percentOnTheTop) {
-      if (defaultCapacity <= 0 || defaultCapacity > StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage.MAX_CAPACITY) {
+      if (defaultCapacity <= 0 || defaultCapacity > StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY) {
         throw new IllegalArgumentException(
           "defaultCapacity(" +
           defaultCapacity +
           ") must be in [1," +
-          StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage.MAX_CAPACITY +
+          StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY +
           "]");
       }
       if (minCapacity <= 0 || minCapacity > defaultCapacity) {
@@ -101,8 +101,8 @@ public interface SpaceAllocationStrategy {
       }
       final double capacity = Math.ceil(actualLength * (1.0 + percentOnTheTop / 100.0));
       final int advisedCapacity = (int)Math.max(minCapacity, capacity);
-      if (advisedCapacity < 0 || advisedCapacity > StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage.MAX_CAPACITY) {
-        return StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage.MAX_CAPACITY;
+      if (advisedCapacity < 0 || advisedCapacity > StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY) {
+        return StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY;
       }
       return advisedCapacity;
     }

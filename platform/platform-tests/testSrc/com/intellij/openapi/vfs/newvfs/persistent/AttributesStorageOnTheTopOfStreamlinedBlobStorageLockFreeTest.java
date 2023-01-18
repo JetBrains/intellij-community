@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOverBlobStorage.AttributeEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOverBlobStorage.AttributesRecord;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
 import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.PagedFileStorageLockFree;
 import org.junit.BeforeClass;
@@ -42,7 +42,7 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageLockFreeTest
       PAGE_SIZE,
       true
     );
-    storage = new StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage(
+    storage = new StreamlinedBlobStorageOverLockFreePagesStorage(
       pagedStorage,
       new DataLengthPlusFixedPercentStrategy(256, 64, 30)
     );

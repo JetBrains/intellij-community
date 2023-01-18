@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.OffsetBasedNonStrictString
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SmallStreamlinedBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -225,7 +225,7 @@ final class PersistentFSConnector {
       final DataLengthPlusFixedPercentStrategy allocationStrategy = new DataLengthPlusFixedPercentStrategy(128, 64, 30);
       final StreamlinedBlobStorage blobStorage;
       if (PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
-        blobStorage = new StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage(
+        blobStorage = new StreamlinedBlobStorageOverLockFreePagesStorage(
           new PagedFileStorageLockFree(attributesFile, PERSISTENT_FS_STORAGE_CONTEXT, PageCacheUtils.DEFAULT_PAGE_SIZE, true),
           allocationStrategy
         );

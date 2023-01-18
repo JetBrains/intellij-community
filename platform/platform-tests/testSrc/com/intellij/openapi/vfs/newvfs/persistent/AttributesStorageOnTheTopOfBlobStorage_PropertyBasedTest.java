@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SmallStreamlin
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.PagedFileStorage;
@@ -69,7 +69,7 @@ public class AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest {
   protected AttributesStorageOverBlobStorage createStorage(final Path storagePath) throws Exception {
     final SpaceAllocationStrategy spaceAllocationStrategy = new DataLengthPlusFixedPercentStrategy(256, 64, 30);
     final StreamlinedBlobStorage storage = useLockFreeStorage ?
-                                           new StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage(
+                                           new StreamlinedBlobStorageOverLockFreePagesStorage(
                                              new PagedFileStorageLockFree(storagePath, LOCK_CONTEXT, PAGE_SIZE, true),
                                              spaceAllocationStrategy
                                            ) :

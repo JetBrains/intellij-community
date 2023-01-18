@@ -1,17 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage.*;
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage.RecordLayout.ActualRecords.*;
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage.RecordLayout.*;
-import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
-
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage.RecordLayout;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage.RecordLayout;
 import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.PagedFileStorageLockFree;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -20,8 +15,15 @@ import java.nio.file.Path;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
-public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorageTest
-  extends StreamlinedBlobStorageTestBase<StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage> {
+import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage.NULL_ID;
+import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage.RecordLayout.ActualRecords.LargeRecord;
+import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage.RecordLayout.ActualRecords.SmallRecord;
+import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage.RecordLayout.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeTrue;
+
+public class StreamlinedBlobStorageOverLockFreePagesStorageTest
+  extends StreamlinedBlobStorageTestBase<StreamlinedBlobStorageOverLockFreePagesStorage> {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -31,21 +33,21 @@ public class StreamlinedBlobStorageLargeSizeOverLockFreePagesStorageTest
     );
   }
 
-  public StreamlinedBlobStorageLargeSizeOverLockFreePagesStorageTest(final @NotNull Integer pageSize,
-                                                                     final @NotNull SpaceAllocationStrategy strategy) {
+  public StreamlinedBlobStorageOverLockFreePagesStorageTest(final @NotNull Integer pageSize,
+                                                            final @NotNull SpaceAllocationStrategy strategy) {
     super(pageSize, strategy);
   }
 
 
   @Override
-  protected StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage openStorage(final Path pathToStorage) throws IOException {
+  protected StreamlinedBlobStorageOverLockFreePagesStorage openStorage(final Path pathToStorage) throws IOException {
     final PagedFileStorageLockFree pagedStorage = new PagedFileStorageLockFree(
       pathToStorage,
       LOCK_CONTEXT,
       pageSize,
       true
     );
-    return new StreamlinedBlobStorageLargeSizeOverLockFreePagesStorage(
+    return new StreamlinedBlobStorageOverLockFreePagesStorage(
       pagedStorage,
       allocationStrategy
     );
