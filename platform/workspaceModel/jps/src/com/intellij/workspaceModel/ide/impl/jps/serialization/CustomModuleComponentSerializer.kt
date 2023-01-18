@@ -14,7 +14,7 @@ interface CustomModuleComponentSerializer {
   /**
    * [detachedModuleEntity] - module entity that is not added to the builder. You can change it by casting to builder and modify properties
    */
-  fun loadComponent(detachedModuleEntity: ModuleEntity,
+  fun loadComponent(detachedModuleEntity: ModuleEntity.Builder,
                     reader: JpsFileContentReader,
                     imlFileUrl: VirtualFileUrl,
                     errorReporter: ErrorReporter,

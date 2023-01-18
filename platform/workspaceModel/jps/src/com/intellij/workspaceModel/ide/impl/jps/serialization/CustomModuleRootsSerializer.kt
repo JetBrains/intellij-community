@@ -27,7 +27,7 @@ interface CustomModuleRootsSerializer {
                          customDir: String?,
                          virtualFileManager: VirtualFileUrlManager): EntitySource?
 
-  fun loadRoots(moduleEntity: ModuleEntity,
+  fun loadRoots(moduleEntity: ModuleEntity.Builder,
                 reader: JpsFileContentReader,
                 customDir: String?,
                 imlFileUrl: VirtualFileUrl,

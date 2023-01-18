@@ -18,7 +18,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader
  * Implements loading and saving configuration from [EclipseModuleManagerImpl] in iml file when workspace model is used
  */
 class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
-  override fun loadComponent(detachedModuleEntity: ModuleEntity,
+  override fun loadComponent(detachedModuleEntity: ModuleEntity.Builder,
                              reader: JpsFileContentReader,
                              imlFileUrl: VirtualFileUrl,
                              errorReporter: ErrorReporter,

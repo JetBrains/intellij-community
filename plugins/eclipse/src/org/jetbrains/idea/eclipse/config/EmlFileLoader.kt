@@ -21,7 +21,7 @@ import org.jetbrains.jps.util.JpsPathUtil
  * Loads additional module configuration from *.eml file to [ModuleEntity]
  */
 internal class EmlFileLoader(
-  private val module: ModuleEntity,
+  private val module: ModuleEntity.Builder,
   private val expandMacroToPathMap: ExpandMacroToPathMap,
   private val virtualFileManager: VirtualFileUrlManager,
   private val moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>,
@@ -49,7 +49,7 @@ internal class EmlFileLoader(
       { it.getAttributeValue("name") },
       { it.getScope() }
     )
-    (module as ModuleEntity.Builder).apply {
+    module.apply {
       val result = mutableListOf<ModuleDependencyItem>()
       dependencies.mapTo(result) { dep ->
         when (dep) {

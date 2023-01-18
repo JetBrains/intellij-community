@@ -73,65 +73,64 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     val externalStorageEnabled = externalStorageConfigurationManager?.isEnabled ?: false
     val moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity> = HashMap()
     val newModuleEntity: ModuleEntity?
-    var error: Throwable? = null
+    val exceptionsCollector = ArrayList<Throwable>()
     if (!externalStorageEnabled) {
-      val moduleLoadedInfo = loadModuleEntity(reader, errorReporter, virtualFileManager, moduleLibrariesCollector)
+      // Loading data if the external storage is disabled
+      val moduleLoadedInfo = loadModuleEntity(reader, errorReporter, virtualFileManager, moduleLibrariesCollector, exceptionsCollector)
       if (moduleLoadedInfo != null) {
-        var exception = runCatchingXmlIssues { createFacetSerializer().loadFacetEntities(moduleLoadedInfo.data.moduleEntity, reader) }
-          .exceptionOrNull()
+        // Load facets
+        runCatchingXmlIssues(exceptionsCollector) {
+          createFacetSerializer().loadFacetEntities(moduleLoadedInfo.moduleEntity, reader)
+        }
 
         if (Orphanage.use) {
-          val pair = loadAdditionalContents(reader, exception, virtualFileManager, moduleLoadedInfo.data.moduleEntity)
-          exception = pair.first
-          newModuleEntity = pair.second
+          // Load additional elements
+          newModuleEntity = loadAdditionalContents(reader,
+                                                   virtualFileManager,
+                                                   moduleLoadedInfo.moduleEntity,
+                                                   exceptionsCollector)
         }
         else {
-          newModuleEntity = moduleLoadedInfo.data.moduleEntity
+          newModuleEntity = moduleLoadedInfo.moduleEntity
         }
-
-        error = moduleLoadedInfo.exception ?: exception
       } else newModuleEntity = null
     }
     else {
+      // Loading module from two files - external and local
+      // Here we load BOTH external and internal iml file. This is done to load module once and attach all the information to it
+      // It's a bit dirty, but we'll get rid of this logic when we'll remove external iml storage
       val externalSerializer = externalModuleListSerializer?.createSerializer(internalEntitySource, fileUrl, modulePath.group) as ModuleImlFileEntitiesSerializer?
-      val moduleLoadedInfo = externalSerializer?.loadModuleEntity(reader, errorReporter, virtualFileManager, moduleLibrariesCollector)
+      val moduleLoadedInfo = externalSerializer?.loadModuleEntity(reader, errorReporter, virtualFileManager, moduleLibrariesCollector, exceptionsCollector)
       val moduleEntity: ModuleEntity?
       if (moduleLoadedInfo != null) {
-        val tmpModuleEntity = moduleLoadedInfo.data.moduleEntity
+        val tmpModuleEntity = moduleLoadedInfo.moduleEntity
         val entitySource = getOtherEntitiesEntitySource(reader)
-        val exception = runCatchingXmlIssues {
-          loadContentRoots(moduleLoadedInfo.data.customRootsSerializer, moduleLoadedInfo.data.moduleEntity, reader,
-                           moduleLoadedInfo.data.customDir, errorReporter, virtualFileManager, entitySource,
+        runCatchingXmlIssues(exceptionsCollector) {
+          loadContentRoots(moduleLoadedInfo.customRootsSerializer, moduleLoadedInfo.moduleEntity, reader,
+                           moduleLoadedInfo.customDir, errorReporter, virtualFileManager, entitySource,
                            true, moduleLibrariesCollector)
-        }.exceptionOrNull()
-        error = moduleLoadedInfo.exception ?: exception
+        }
 
         if (Orphanage.use) {
-          val pair = loadAdditionalContents(reader, exception, virtualFileManager, moduleLoadedInfo.data.moduleEntity)
-          error = error ?: pair.first
-          moduleEntity = pair.second
+          moduleEntity = loadAdditionalContents(reader, virtualFileManager, moduleLoadedInfo.moduleEntity, exceptionsCollector)
         } else {
           moduleEntity = tmpModuleEntity
         }
       } else {
-        val localModule = loadModuleEntity(reader, errorReporter, virtualFileManager, moduleLibrariesCollector)
+        val localModule = loadModuleEntity(reader, errorReporter, virtualFileManager, moduleLibrariesCollector, exceptionsCollector)
 
-        var tmpModule = localModule?.data?.moduleEntity
-        error = localModule?.exception
+        var tmpModule = localModule?.moduleEntity
 
         if (Orphanage.use && tmpModule != null) {
-          val pair = loadAdditionalContents(reader, error, virtualFileManager, tmpModule)
-          tmpModule = pair.second
-          error = pair.first
+          tmpModule = loadAdditionalContents(reader, virtualFileManager, tmpModule, exceptionsCollector)
         }
         moduleEntity = tmpModule
       }
       if (moduleEntity != null) {
-        val exception = runCatchingXmlIssues {
+        runCatchingXmlIssues(exceptionsCollector) {
           createFacetSerializer().loadFacetEntities(moduleEntity, reader)
           externalSerializer?.createFacetSerializer()?.loadFacetEntities(moduleEntity, reader)
-        }.exceptionOrNull()
-        if (error != null) error = exception
+        }
         newModuleEntity = moduleEntity
       } else newModuleEntity = null
     }
@@ -141,32 +140,29 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
         ModuleEntity::class.java to listOfNotNull(newModuleEntity),
         LibraryEntity::class.java to moduleLibrariesCollector.values,
       ),
-      error,
+      exceptionsCollector.firstOrNull(),
     )
   }
 
   private fun loadAdditionalContents(reader: JpsFileContentReader,
-                                     exception: Throwable?,
                                      virtualFileManager: VirtualFileUrlManager,
-                                     moduleEntity: ModuleEntity): Pair<Throwable?, ModuleEntity?> {
-    val newModuleEntity: ModuleEntity?
-    var exception1 = exception
+                                     moduleEntity: ModuleEntity.Builder,
+                                     exceptionCollector: MutableList<Throwable>,
+  ): ModuleEntity.Builder {
     val source = getOtherEntitiesEntitySource(reader)
     if (moduleEntity.isEmpty) {
-      newModuleEntity = ModuleEntity(moduleEntity.name, emptyList(), OrphanageWorkerEntitySource)
-      exception1 = runCatchingXmlIssues {
-        loadAdditionalContentRoots(newModuleEntity as ModuleEntity.Builder, reader, virtualFileManager, source)
+      val newModuleEntity = ModuleEntity(moduleEntity.name, emptyList(), OrphanageWorkerEntitySource) as ModuleEntity.Builder
+      runCatchingXmlIssues(exceptionCollector) {
+        loadAdditionalContentRoots(newModuleEntity, reader, virtualFileManager, source)
       }
-                     .exceptionOrNull() ?: exception1
+      return newModuleEntity
     }
     else {
-      newModuleEntity = moduleEntity
-      exception1 = runCatchingXmlIssues {
-        loadAdditionalContentRoots(newModuleEntity as ModuleEntity.Builder, reader, virtualFileManager, source)
+      runCatchingXmlIssues(exceptionCollector) {
+        loadAdditionalContentRoots(moduleEntity, reader, virtualFileManager, source)
       }
-                     .exceptionOrNull() ?: exception1
+      return moduleEntity
     }
-    return Pair(exception1, newModuleEntity)
   }
 
   override fun checkAndAddToBuilder(builder: MutableEntityStorage,
@@ -180,7 +176,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   }
 
   private class ModuleLoadedInfo(
-    val moduleEntity: ModuleEntity,
+    val moduleEntity: ModuleEntity.Builder,
     val customRootsSerializer: CustomModuleRootsSerializer?,
     val customDir: String?,
   )
@@ -188,7 +184,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   private fun loadModuleEntity(reader: JpsFileContentReader,
                                errorReporter: ErrorReporter,
                                virtualFileManager: VirtualFileUrlManager,
-                               moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>): LoadingResult<ModuleLoadedInfo>? {
+                               moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>,
+                               exceptionsCollector: MutableList<Throwable>): ModuleLoadedInfo? {
     if (skipLoadingIfFileDoesNotExist && !fileUrl.toPath().exists()) {
       return null
     }
@@ -225,16 +222,15 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       }
     }
       .onFailure {
-        return LoadingResult(
-          ModuleLoadedInfo(ModuleEntity(modulePath.moduleName, listOf(ModuleDependencyItem.ModuleSourceDependency), internalEntitySource),
-                           null, null),
-          it
-        )
+        exceptionsCollector.add(it)
+        val module = ModuleEntity(modulePath.moduleName, listOf(ModuleDependencyItem.ModuleSourceDependency),
+                                  internalEntitySource) as ModuleEntity.Builder
+        return ModuleLoadedInfo(module, null, null)
       }
       .getOrThrow()
 
     val moduleEntity = ModuleEntity(modulePath.moduleName, listOf(ModuleDependencyItem.ModuleSourceDependency),
-                                    entitySourceForModuleAndOtherEntities.first)
+                                    entitySourceForModuleAndOtherEntities.first) as ModuleEntity.Builder
 
     val entitySource = entitySourceForModuleAndOtherEntities.second
     val moduleGroup = modulePath.group
@@ -246,7 +242,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
     val moduleType = moduleOptions["type"]
     if (moduleType != null) {
-      (moduleEntity as ModuleEntity.Builder).type = moduleType
+      moduleEntity.type = moduleType
     }
     @Suppress("UNCHECKED_CAST")
     val customModuleOptions =
@@ -262,16 +258,16 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       it.loadComponent(moduleEntity, reader, fileUrl, errorReporter, virtualFileManager)
     }
 
-    val exception = runCatchingXmlIssues {
+    runCatchingXmlIssues(exceptionsCollector) {
       // Don't forget to load external system options even if custom root serializer exist
       loadExternalSystemOptions(moduleEntity, reader, externalSystemOptions, externalSystemId, entitySource)
 
       loadContentRoots(customRootsSerializer, moduleEntity, reader, customDir, errorReporter, virtualFileManager, moduleEntity.entitySource,
                        false, moduleLibrariesCollector)
       loadTestModuleProperty(moduleEntity, reader, entitySource)
-    }.exceptionOrNull()
+    }
 
-    return LoadingResult(ModuleLoadedInfo(moduleEntity, customRootsSerializer, customDir), exception)
+    return ModuleLoadedInfo(moduleEntity, customRootsSerializer, customDir)
   }
 
   /**
@@ -279,7 +275,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
    *   in maven project.
    */
   private fun loadContentRoots(customRootsSerializer: CustomModuleRootsSerializer?,
-                               moduleEntity: ModuleEntity,
+                               moduleEntity: ModuleEntity.Builder,
                                reader: JpsFileContentReader,
                                customDir: String?,
                                errorReporter: ErrorReporter,
@@ -363,15 +359,13 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   }
 
   private fun loadRootManager(rootManagerElement: Element,
-                              moduleEntity: ModuleEntity,
+                              moduleEntity: ModuleEntity.Builder,
                               virtualFileManager: VirtualFileUrlManager,
                               contentRootEntitySource: EntitySource,
                               loadingAdditionalRoots: Boolean,
                               moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>) {
     val contentRoots = loadContentRootEntities(moduleEntity, rootManagerElement, virtualFileManager, contentRootEntitySource)
-    (moduleEntity as ModuleEntity.Builder).apply {
-      this.contentRoots = this.contentRoots + contentRoots
-    }
+    moduleEntity.contentRoots += contentRoots
 
     val dependencyItems = loadModuleDependencies(rootManagerElement, contentRootEntitySource, virtualFileManager, moduleEntity.symbolicId,
                                                  moduleLibrariesCollector)
@@ -587,12 +581,12 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     }
   }
 
-  private fun loadTestModuleProperty(moduleEntity: ModuleEntity, reader: JpsFileContentReader, entitySource: EntitySource) {
+  private fun loadTestModuleProperty(moduleEntity: ModuleEntity.Builder, reader: JpsFileContentReader, entitySource: EntitySource) {
     if (!TestModuleProperties.testModulePropertiesBridgeEnabled()) return
     val component = reader.loadComponent(fileUrl.url, TEST_MODULE_PROPERTIES_COMPONENT_NAME) ?: return
     val productionModuleName = component.getAttribute(PRODUCTION_MODULE_NAME_ATTRIBUTE).value
     if (productionModuleName.isEmpty()) return
-    (moduleEntity as ModuleEntity.Builder).testProperties = TestModulePropertiesEntity(ModuleId(productionModuleName), entitySource)
+    moduleEntity.testProperties = TestModulePropertiesEntity(ModuleId(productionModuleName), entitySource)
   }
 
   private fun Element.getChildrenAndDetach(cname: String): List<Element> {
