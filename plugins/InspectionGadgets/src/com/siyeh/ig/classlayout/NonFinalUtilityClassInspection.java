@@ -46,16 +46,17 @@ public class NonFinalUtilityClassInspection extends BaseInspection {
         return;
       }
 
+      if (aClass.hasModifierProperty(PsiModifier.FINAL) ||
+          aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+
       final Query<PsiClass> query = ClassInheritorsSearch.search(aClass, false);
       final PsiClass subclass = query.findFirst();
       if (subclass != null) {
         return;
       }
 
-      if (aClass.hasModifierProperty(PsiModifier.FINAL) ||
-          aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
       registerClassError(aClass, aClass);
     }
   }
