@@ -17,9 +17,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-/**
- * Author: Alexey.Ivanov
- */
 public class PyFlipComparisonIntention extends PyBaseIntentionAction {
   private static class Holder {
     private static final Map<PyElementType, String> FLIPPED_OPERATORS = Map.of(

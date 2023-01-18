@@ -13,9 +13,6 @@ import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Author: Alexey.Ivanov
- */
 public class ComparisonWithNoneQuickFix implements LocalQuickFix {
   @Override
   @NotNull

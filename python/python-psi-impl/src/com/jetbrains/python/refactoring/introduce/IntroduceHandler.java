@@ -63,9 +63,6 @@ import java.util.*;
 import static com.jetbrains.python.PyStringFormatParser.*;
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author Alexey.Ivanov
- */
 abstract public class IntroduceHandler implements RefactoringActionHandler {
   protected static PsiElement findAnchor(List<? extends PsiElement> occurrences) {
     PsiElement anchor = occurrences.get(0);

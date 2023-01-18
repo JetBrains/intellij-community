@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyDictCreationInspection extends PyInspection {
 
   @NotNull

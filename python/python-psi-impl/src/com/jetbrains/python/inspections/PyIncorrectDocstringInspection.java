@@ -36,7 +36,6 @@ import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author Mikhail Golubev
- * @author Alexey.Ivanov
  */
 public class PyIncorrectDocstringInspection extends PyBaseDocstringInspection {
   @NotNull
