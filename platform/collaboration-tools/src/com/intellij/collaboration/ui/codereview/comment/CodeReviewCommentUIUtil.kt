@@ -4,6 +4,7 @@ package com.intellij.collaboration.ui.codereview.comment
 import com.intellij.CommonBundle
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -53,6 +54,16 @@ object CodeReviewCommentUIUtil {
       }
     }
     return button
+  }
+
+  fun createEditButton(actionListener: (ActionEvent) -> Unit): InlineIconButton {
+    val icon = AllIcons.General.Inline_edit
+    val hoverIcon = AllIcons.General.Inline_edit_hovered
+    return InlineIconButton(icon, hoverIcon, tooltip = CommonBundle.message("button.edit")).apply {
+      this.actionListener = ActionListener {
+        actionListener(it)
+      }
+    }
   }
 
   object Actions {

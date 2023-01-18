@@ -17,7 +17,6 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChange
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
-import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
@@ -70,7 +69,9 @@ object GHPRReviewCommentComponent {
       maxEditorWidth = maxTextWidth
     }
 
-    val editButton = GHTextActions.createEditButton(editablePaneHandle).apply {
+    val editButton = CodeReviewCommentUIUtil.createEditButton {
+      editablePaneHandle.showAndFocusEditor()
+    }.apply {
       isVisible = comment.canBeUpdated
     }
     val deleteButton = CodeReviewCommentUIUtil.createDeleteCommentIconButton {

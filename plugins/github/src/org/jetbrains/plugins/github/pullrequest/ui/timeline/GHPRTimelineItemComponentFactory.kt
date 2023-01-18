@@ -59,7 +59,6 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataPr
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
-import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.buildTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTimelineItem
@@ -199,7 +198,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       }
       contentPanel = panelHandle.panel
       actionsPanel = if (details.viewerCanUpdate) HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
-        add(GHTextActions.createEditButton(panelHandle))
+        add(CodeReviewCommentUIUtil.createEditButton {
+          panelHandle.showAndFocusEditor()
+        })
       }
       else null
     }
@@ -220,7 +221,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
         .successOnEdt { textPane.setHtmlBody(it.convertToHtml(project)) }
     }
     val actionsPanel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
-      if (comment.viewerCanUpdate) add(GHTextActions.createEditButton(panelHandle))
+      if (comment.viewerCanUpdate) add(CodeReviewCommentUIUtil.createEditButton {
+        panelHandle.showAndFocusEditor()
+      })
       if (comment.viewerCanDelete) add(CodeReviewCommentUIUtil.createDeleteCommentIconButton {
         commentsDataProvider.deleteComment(EmptyProgressIndicator(), comment.id)
       })
@@ -290,7 +293,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     }
 
     val actionsPanel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
-      if (firstComment.canBeUpdated) add(GHTextActions.createEditButton(panelHandle))
+      if (firstComment.canBeUpdated) add(CodeReviewCommentUIUtil.createEditButton {
+        panelHandle.showAndFocusEditor()
+      })
       if (firstComment.canBeDeleted) add(CodeReviewCommentUIUtil.createDeleteCommentIconButton {
         reviewDataProvider.deleteComment(EmptyProgressIndicator(), firstComment.id)
       })
@@ -465,7 +470,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     }
 
     val actionsPanel = HorizontalListPanel(8).apply {
-      if (panelHandle != null && review.viewerCanUpdate) add(GHTextActions.createEditButton(panelHandle))
+      if (panelHandle != null && review.viewerCanUpdate) add(CodeReviewCommentUIUtil.createEditButton {
+        panelHandle.showAndFocusEditor()
+      })
     }
 
     val stateText = when (review.state) {
