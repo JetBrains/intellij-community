@@ -244,11 +244,11 @@ public class SwitchBlockHighlightingModel {
     // todo replace with needToCheckCompleteness
     if (!holder.hasErrorResults() && myBlock instanceof PsiSwitchExpression && !hasDefaultCase) {
       PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
-      if (selectorClass == null) {
-        holder.add(createCompletenessInfoForSwitch(!values.keySet().isEmpty()).create());
+      if (selectorClass != null && selectorClass.isEnum()) {
+        checkEnumCompleteness(selectorClass, ContainerUtil.map(values.keySet(), String::valueOf), holder);
       }
       else {
-        checkEnumCompleteness(selectorClass, ContainerUtil.map(values.keySet(), String::valueOf), holder);
+        holder.add(createCompletenessInfoForSwitch(!values.keySet().isEmpty()).create());
       }
     }
   }
