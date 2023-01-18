@@ -52,6 +52,10 @@ inline fun <reified T> JComponent.getUserData(key: Key<T>): T? {
   return getClientProperty(key) as? T
 }
 
+inline fun <reified T> JComponent.getOrPutUserData(key: Key<T>, block: () -> T): T {
+  return getUserData(key) ?: block().also { putUserData(key, it) }
+}
+
 fun JTextComponent.isTextUnderMouse(e: MouseEvent): Boolean {
   val position = viewToModel2D(e.point)
   return position in 1 until text.length
