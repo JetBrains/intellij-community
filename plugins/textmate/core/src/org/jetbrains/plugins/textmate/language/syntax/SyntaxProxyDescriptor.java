@@ -11,7 +11,7 @@ import java.util.Set;
 
 /**
  * Syntax rule that represents include-rules.
- * In fact it is proxy for real syntax rule and it delegates all read-only methods
+ * In fact, it is proxy for real syntax rule, and it delegates all read-only methods
  * to appropriate real rule.
  * <p/>
  */
