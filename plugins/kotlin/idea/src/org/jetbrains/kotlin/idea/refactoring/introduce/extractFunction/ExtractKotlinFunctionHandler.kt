@@ -24,6 +24,7 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
 import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTemplateBuilder
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
+import com.intellij.refactoring.extractMethod.newImpl.inplace.TemplateField
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
@@ -115,16 +116,9 @@ class ExtractKotlinFunctionHandler(
                 val callOffset = callIdentifier.textRange.endOffset
                 val preview = InplaceExtractUtils.createPreview(editor, methodRange, methodOffset, callRange, callOffset)
                 Disposer.register(disposable, preview)
-                ExtractMethodTemplateBuilder(editor, EXTRACT_FUNCTION)
+                val templateField = TemplateField(callIdentifier.textRange, listOf(methodIdentifier.textRange))
                     .withCompletionNames(descriptor.suggestedNames)
-                    .enableRestartForHandler(ExtractKotlinFunctionHandler::class.java)
-                    .onBroken {
-                        editorState.revert()
-                    }
-                    .onSuccess {
-                        processDuplicates(extraction.duplicateReplacers, file.project, editor)
-                    }
-                    .withCompletionAdvertisement(getDialogAdvertisement())
+                    .withCompletionHint(getDialogAdvertisement())
                     .withValidation { variableRange ->
                         val error = getIdentifierError(file, variableRange)
                         if (error != null) {
@@ -132,8 +126,16 @@ class ExtractKotlinFunctionHandler(
                         }
                         error == null
                     }
+                ExtractMethodTemplateBuilder(editor, EXTRACT_FUNCTION)
+                    .enableRestartForHandler(ExtractKotlinFunctionHandler::class.java)
+                    .onBroken {
+                        editorState.revert()
+                    }
+                    .onSuccess {
+                        processDuplicates(extraction.duplicateReplacers, file.project, editor)
+                    }
                     .disposeWithTemplate(disposable)
-                    .createTemplate(file, methodIdentifier.textRange, callIdentifier.textRange)
+                    .createTemplate(file, listOf(templateField))
                 onFinish(extraction)
             }
             try {

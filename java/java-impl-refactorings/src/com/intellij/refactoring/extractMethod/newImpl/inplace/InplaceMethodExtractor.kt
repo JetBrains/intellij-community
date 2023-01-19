@@ -94,9 +94,20 @@ class InplaceMethodExtractor(private val editor: Editor,
                                       callIdentifier.textRange.endOffset)
       Disposer.register(disposable, codePreview)
 
-      val templateState = ExtractMethodTemplateBuilder(editor, ExtractMethodHandler.getRefactoringName())
+      val templateField = TemplateField(callIdentifier.textRange, listOf(methodIdentifier.textRange))
         .withCompletionNames(suggestedNames.toList())
-        .withCompletionAdvertisement(InplaceRefactoring.getPopupOptionsAdvertisement())
+        .withCompletionHint(InplaceRefactoring.getPopupOptionsAdvertisement())
+        .withValidation { variableRange ->
+          val errorMessage = getIdentifierError(file, variableRange)
+          if (errorMessage != null) {
+            try {
+              CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, ExtractMethodHandler.getRefactoringName(), null)
+            }
+            catch (ignore: CommonRefactoringUtil.RefactoringErrorHintException) {}
+          }
+          errorMessage == null
+        }
+      val templateState = ExtractMethodTemplateBuilder(editor, ExtractMethodHandler.getRefactoringName())
         .enableRestartForHandler(ExtractMethodHandler::class.java)
         .onBroken {
           editorState.revert()
@@ -111,17 +122,7 @@ class InplaceMethodExtractor(private val editor: Editor,
           extractor.replaceDuplicates(editor, extractedMethod)
         }
         .disposeWithTemplate(disposable)
-        .withValidation { variableRange ->
-          val errorMessage = getIdentifierError(file, variableRange)
-          if (errorMessage != null) {
-            try {
-              CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, ExtractMethodHandler.getRefactoringName(), null)
-            }
-            catch (ignore: CommonRefactoringUtil.RefactoringErrorHintException) {}
-          }
-          errorMessage == null
-        }
-        .createTemplate(file, methodIdentifier.textRange, callIdentifier.textRange)
+        .createTemplate(file, listOf(templateField))
       afterTemplateStart(templateState)
     } catch (e: Throwable) {
       Disposer.dispose(disposable)

@@ -2,10 +2,7 @@
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.template.Template
-import com.intellij.codeInsight.template.TemplateBuilderImpl
-import com.intellij.codeInsight.template.TemplateEditingAdapter
-import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.codeInsight.template.*
 import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.Disposable
@@ -25,12 +22,31 @@ import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
 
+data class TemplateField(val fieldRange: TextRange,
+                         val updateRanges: List<TextRange>,
+                         val completionHint: @NlsContexts.PopupAdvertisement String? = null,
+                         val completionNames: List<String> = emptyList(),
+                         val validator: (TextRange) -> Boolean = { true }
+) {
+  fun withCompletionNames(completionNames: List<String>): TemplateField {
+    return copy(completionNames = completionNames)
+  }
+
+  fun withCompletionHint(completionAdvertisement: @NlsContexts.PopupAdvertisement String): TemplateField {
+    return copy(completionHint = completionAdvertisement)
+  }
+
+  fun withValidation(validator: (TextRange) -> Boolean): TemplateField {
+    return copy(validator = validator)
+  }
+}
+
 data class ExtractMethodTemplateBuilder(
   private val editor: Editor,
   private val commandName: @NlsContexts.Command String,
   private val completionNames: List<String> = emptyList(),
   private val completionAdvertisement: @NlsContexts.PopupAdvertisement String? = null,
-  private val validator: (TextRange) -> Boolean = { true },
+  private val validator: (TemplateState) -> Boolean = { true },
   private val onBroken: () -> Unit = {},
   private val onSuccess: () -> Unit = {},
   private val disposable: Disposable = Disposer.newDisposable(),
@@ -57,27 +73,20 @@ data class ExtractMethodTemplateBuilder(
     return copy(onSuccess = onSuccess)
   }
 
-  fun withCompletionNames(completionNames: List<String>): ExtractMethodTemplateBuilder {
-    return copy(completionNames = completionNames)
-  }
-
-  fun withCompletionAdvertisement(completionAdvertisement: @NlsContexts.PopupAdvertisement String): ExtractMethodTemplateBuilder {
-    return copy(completionAdvertisement = completionAdvertisement)
-  }
-
-  fun withValidation(validator: (TextRange) -> Boolean): ExtractMethodTemplateBuilder {
-    return copy(validator = validator)
-  }
-
-  fun createTemplate(file: PsiFile, methodIdentifier: TextRange, callIdentifier: TextRange): TemplateState {
+  fun createTemplate(file: PsiFile, templateFields: List<TemplateField>): TemplateState {
     val project = file.project
     val document = editor.document
-    val defaultText = document.getText(callIdentifier)
     return WriteCommandAction.writeCommandAction(project).withName(commandName).withGroupId(commandName).compute(ThrowableComputable {
       val builder = TemplateBuilderImpl(file)
-      val expression = ConstantNode(defaultText).withLookupStrings(completionNames).withPopupAdvertisement(completionAdvertisement)
-      builder.replaceRange(callIdentifier, "PrimaryVariable", expression, true)
-      builder.replaceElement(methodIdentifier, "SecondaryVariable", "PrimaryVariable", false)
+      templateFields.forEachIndexed { i, templateField ->
+        val defaultText = document.getText(templateField.fieldRange)
+        val completionNames = templateField.completionNames
+        val expression = ConstantNode(defaultText).withLookupStrings(completionNames).withPopupAdvertisement(templateField.completionHint)
+        builder.replaceRange(templateField.fieldRange, "Primary$i", expression, true)
+        templateField.updateRanges.forEachIndexed { j, range ->
+          builder.replaceElement(range, "Secondary$j", " Primary$i", false)
+        }
+      }
       val template = builder.buildInlineTemplate()
       template.isToShortenLongNames = false
       template.isToReformat = false
@@ -87,10 +96,7 @@ data class ExtractMethodTemplateBuilder(
       setupImaginaryInplaceRenamer(templateState, restartHandler)
       Disposer.register(templateState) { SuggestedRefactoringProvider.getInstance(project).reset() }
       DaemonCodeAnalyzer.getInstance(project).disableUpdateByTimer(templateState)
-      setTemplateValidator(templateState) { state ->
-        val variableRange = state.currentVariableRange ?: return@setTemplateValidator false
-        validator.invoke(variableRange)
-      }
+      setTemplateValidator(templateState) { range -> templateFields[templateState.currentVariableNumber].validator.invoke(range) }
       Disposer.register(templateState, disposable)
       templateState.addTemplateStateListener(object: TemplateEditingAdapter(){
         override fun templateFinished(template: Template, brokenOff: Boolean) {
@@ -135,14 +141,15 @@ data class ExtractMethodTemplateBuilder(
     return editorOffsets.all { it in templateRange }
   }
 
-  private fun setTemplateValidator(templateState: TemplateState, validator: (TemplateState) -> Boolean){
+  private fun setTemplateValidator(templateState: TemplateState, validator: (TextRange) -> Boolean){
     val manager = EditorActionManager.getInstance()
     val actionName = "NextTemplateVariable"
     val defaultHandler = manager.getActionHandler(actionName)
     Disposer.register(templateState) { manager.setActionHandler(actionName, defaultHandler) }
     manager.setActionHandler(actionName, object : EditorActionHandler() {
       override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
-        if (!validator.invoke(templateState)) return
+        val textRange = templateState.currentVariableRange ?: return
+        if (!validator.invoke(textRange)) return
         defaultHandler.execute(editor, caret, dataContext)
       }
     })
