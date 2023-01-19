@@ -131,7 +131,7 @@ public final class DaemonListeners implements Disposable {
       public void beforeDocumentChange(@NotNull DocumentEvent e) {
         Document document = e.getDocument();
         VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-        Project project = virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile);
+        Project project = virtualFile == null ? null : guessProject(virtualFile);
         //no need to stop daemon if something happened in the console or in non-physical document
         if (!myProject.isDisposed() && ApplicationManager.getApplication().isDispatchThread() && worthBothering(document, project)) {
           stopDaemon(true, "Document change");
@@ -401,6 +401,14 @@ public final class DaemonListeners implements Disposable {
         }
       }));
     HeavyProcessLatch.INSTANCE.addListener(this, __ -> stopDaemon(true, "re-scheduled to execute after heavy processing finished"));
+  }
+
+  private Project guessProject(@NotNull VirtualFile virtualFile) {
+    if (FileEditorManager.getInstance(myProject).getAllEditors(virtualFile).length != 0) {
+      // if at least one editor in myProject frame has opened this file, then we can assume this file does belong to the myProject
+      return myProject;
+    }
+    return ProjectUtil.guessProjectForFile(virtualFile);
   }
 
   private <T, U extends KeyedLazyInstance<T>> void restartOnExtensionChange(@NotNull ExtensionPointName<U> name, @NotNull String message) {
