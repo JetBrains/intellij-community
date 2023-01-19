@@ -77,7 +77,15 @@ class KotlinFirStructureViewElement(
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> {
         val children = when (val element = element) {
-            is KtFile -> element.declarations
+            is KtFile -> {
+                val declarations = element.declarations
+                // it is a bit faster that `element.isScript()`
+                if (declarations.size == 1 && declarations[0] is KtScript) {
+                    declarations[0] as KtScript
+                } else {
+                    element
+                }.declarations
+            }
             is KtClass -> element.getStructureDeclarations()
             is KtClassOrObject -> element.declarations
             is KtFunction, is KtClassInitializer, is KtProperty -> element.collectLocalDeclarations()

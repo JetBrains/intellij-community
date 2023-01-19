@@ -97,16 +97,28 @@ internal class KotlinFirStructureElementPresentation(
             }
         }
 
-        val text = navigatablePsiElement.name
-        if (!text.isNullOrEmpty()) {
-            return text
-        }
+        navigatablePsiElement.name.takeUnless { it.isNullOrEmpty() }?.let { return it }
 
-        if (navigatablePsiElement is KtAnonymousInitializer) {
-            return KotlinCodeInsightBundle.message("class.initializer")
-        }
+        return when (navigatablePsiElement) {
+            is KtScriptInitializer -> {
+                val nameReferenceExpression: KtNameReferenceExpression? =
+                    navigatablePsiElement.referenceExpression()
 
-        return null
+                val referencedNameAsName = nameReferenceExpression?.getReferencedNameAsName()
+                referencedNameAsName?.asString() ?: KotlinCodeInsightBundle.message("class.initializer")
+            }
+            is KtAnonymousInitializer -> KotlinCodeInsightBundle.message("class.initializer")
+            else -> null
+        }
+    }
+
+    private fun KtScriptInitializer.referenceExpression(): KtNameReferenceExpression? {
+        val body = body
+        return when (body) {
+            is KtCallExpression -> body.calleeExpression
+            is KtExpression -> body.firstChild
+            else -> null
+        } as? KtNameReferenceExpression
     }
 
     private fun getElementLocationString(isInherited: Boolean, ktElement: KtElement, pointer: KtSymbolPointer<*>?): String? {
