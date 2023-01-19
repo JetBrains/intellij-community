@@ -35,7 +35,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("usage.view", 15)
+    val GROUP = EventLogGroup("usage.view", 16)
     val USAGE_VIEW = object : PrimitiveEventField<UsageView?>() {
       override val name: String = "usage_view"
 
@@ -46,6 +46,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
       override val validationRule: List<String>
         get() = listOf("{regexp#integer}")
     }
+    private val PRIMARY_TARGET = EventFields.Class("primary_target")
     private val REFERENCE_CLASS = EventFields.Class("reference_class")
     private val UI_LOCATION = EventFields.Enum("ui_location", CodeNavigateSource::class.java)
     private val USAGE_SHOWN = GROUP.registerVarargEvent("usage.shown", USAGE_VIEW, REFERENCE_CLASS, EventFields.Language, UI_LOCATION)
@@ -64,7 +65,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     private val TOO_MANY_RESULTS = EventFields.Boolean("too_many_result_warning")
     private val IS_SIMILAR_USAGE = EventFields.Boolean("is_similar_usage")
 
-    private val searchStarted = GROUP.registerVarargEvent("started", USAGE_VIEW, UI_LOCATION, EventFields.Language)
+    private val searchStarted = GROUP.registerVarargEvent("started", USAGE_VIEW, UI_LOCATION, EventFields.Language, PRIMARY_TARGET)
 
     private val searchCancelled = GROUP.registerVarargEvent("cancelled",
                                                             SYMBOL_CLASS,
@@ -110,8 +111,17 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     )
 
     @JvmStatic
-    fun logSearchStarted(project: Project?, usageView: UsageView, source: CodeNavigateSource, language: Language?) {
-      searchStarted.log(project, USAGE_VIEW.with(usageView), UI_LOCATION.with(source), EventFields.Language.with(language))
+    fun logSearchStarted(project: Project?,
+                         usageView: UsageView,
+                         source: CodeNavigateSource,
+                         language: Language?,
+                         psiElement: PsiElement?) {
+      logSearchStarted(project, usageView, source, language, psiElement?.javaClass)
+    }
+
+    @JvmStatic
+    fun logSearchStarted(project: Project?, usageView: UsageView, source: CodeNavigateSource, language: Language?, referenceClass: Class<out Any>?) {
+      searchStarted.log(project, USAGE_VIEW.with(usageView), UI_LOCATION.with(source), EventFields.Language.with(language), PRIMARY_TARGET.with(referenceClass))
     }
 
     @JvmStatic

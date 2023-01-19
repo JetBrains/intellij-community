@@ -382,7 +382,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     Project project = parameters.project;
     UsageViewImpl usageView = createUsageView(project);
     UsageViewStatisticsCollector.logSearchStarted(project, usageView, CodeNavigateSource.ShowUsagesPopup,
-                                                  actionHandler.getTargetLanguage());
+                                                  actionHandler.getTargetLanguage(), actionHandler.getTargetClass());
     final SearchScope searchScope = actionHandler.getSelectedScope();
     final AtomicInteger outOfScopeUsages = new AtomicInteger();
     AtomicBoolean manuallyResized = new AtomicBoolean();
