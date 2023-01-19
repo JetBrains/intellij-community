@@ -9,7 +9,17 @@ abstract class Test {
     abstract void foo2(@NotNull String @NotNull ... data);
 }
 
-<caret>class TImple extends Test {}
+class TImple extends Test {
+    @Override
+    void foo(@NotNull String @NotNull [] data) {
+        
+    }
+
+    @Override
+    void foo2(@NotNull String @NotNull ... data) {
+
+    }
+}
 
 @Target({ElementType.PARAMETER, ElementType.TYPE_USE})
 @interface NotNull {}

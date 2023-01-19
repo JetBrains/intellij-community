@@ -1,4 +1,4 @@
-// "Implement method 'foo'" "true"
+// "Implement method 'foo'" "true-preview"
 
 abstract class A<T> {
     abstract String f<caret>oo(T t);

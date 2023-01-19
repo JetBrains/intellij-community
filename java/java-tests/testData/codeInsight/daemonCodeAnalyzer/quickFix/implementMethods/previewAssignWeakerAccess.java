@@ -5,4 +5,9 @@ class B {
 interface A {
     void f();
 }
-<caret>class D extends B implements A {}
+class D extends B implements A {
+    @Override
+    public void f() {
+        
+    }
+}
