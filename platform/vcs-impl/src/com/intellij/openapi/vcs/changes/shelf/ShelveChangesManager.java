@@ -446,7 +446,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
         List<Change> textChanges = new ArrayList<>();
         final List<ShelvedBinaryFile> binaryFiles = new ArrayList<>();
         for (Change change : changes) {
-          if (ChangesUtil.getFilePath(change).isDirectory()) {
+          if (ChangesUtil.getFilePath(change).getIOFile().isDirectory()) {
             continue;
           }
           if (IdeaTextPatchBuilder.isBinaryRevision(change.getBeforeRevision()) ||
