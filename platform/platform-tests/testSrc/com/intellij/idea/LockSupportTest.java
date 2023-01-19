@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.intellij.ide.CliResult;
@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,6 +41,19 @@ public class LockSupportTest {
     finally {
       lock1.dispose();
       lock2.dispose();
+    }
+  }
+
+  @Test(timeout = 30000)
+  public void symlinks() throws IOException {
+    var cfgLink = Files.createSymbolicLink(tempDir.getRootPath().resolve("cl"), tempDir.newDirectoryPath("c"));
+    var sysLink = Files.createSymbolicLink(tempDir.getRootPath().resolve("sl"), tempDir.newDirectoryPath("s"));
+    var lock = new SocketLock(cfgLink, sysLink);
+    try {
+      assertEquals(SocketLock.ActivationStatus.NO_INSTANCE, lock.lockAndTryActivate(Collections.emptyList(), GlobalScope.INSTANCE).getFirst());
+    }
+    finally {
+      lock.dispose();
     }
   }
 
@@ -99,5 +114,13 @@ public class LockSupportTest {
   public void testPathCollision() {
     Path path = tempDir.getRoot().toPath().resolve("d");
     new SocketLock(path, path);
+  }
+
+  @Test(timeout = 30000, expected = IllegalArgumentException.class)
+  public void symlinkCollision() throws IOException {
+    var path = tempDir.newDirectoryPath("p");
+    var cfgLink = Files.createSymbolicLink(tempDir.getRootPath().resolve("cl"), path);
+    var sysLink = Files.createSymbolicLink(tempDir.getRootPath().resolve("sl"), path);
+    new SocketLock(cfgLink, sysLink);
   }
 }

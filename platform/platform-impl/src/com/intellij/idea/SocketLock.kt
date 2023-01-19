@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.idea
@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.User32Ex
 import com.sun.jna.platform.win32.WinDef
 import io.netty.buffer.ByteBuf
@@ -40,7 +41,7 @@ private const val PATHS_EOT_RESPONSE = "---"
 private const val ACTIVATE_COMMAND = "activate "
 private const val OK_RESPONSE = "ok"
 
-class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path) {
+class SocketLock(@JvmField val configPathUnresolved: Path, @JvmField val systemPathUnresolved: Path) {
   companion object {
     /**
      * Name of an environment variable that will be set by the Windows launcher and will contain the working directory the
@@ -65,6 +66,10 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
   @Volatile
   var serverFuture: Deferred<BuiltInServer>? = null
     private set
+
+  private val configPath = tryResolve(configPathUnresolved)
+  private val systemPath = tryResolve(systemPathUnresolved)
+  private fun tryResolve(path: Path): Path = runCatching { path.toRealPath() }.getOrDefault(path)
 
   init {
     if (configPath == systemPath) {
@@ -165,11 +170,11 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
   private fun lockPortFiles() {
     check(lockedFiles.isEmpty()) { "File locking must not be called twice" }
     val options = arrayOf<OpenOption>(StandardOpenOption.CREATE, StandardOpenOption.APPEND)
-    Files.createDirectories(configPath)
+    NioFiles.createDirectories(configPath)
     val cc = FileChannel.open(configPath.resolve(SpecialConfigFiles.PORT_LOCK_FILE), *options)
     lockedFiles.add(cc)
     lockedFiles.add(cc.lock())
-    Files.createDirectories(systemPath)
+    NioFiles.createDirectories(systemPath)
     val sc = FileChannel.open(systemPath.resolve(SpecialConfigFiles.PORT_LOCK_FILE), *options)
     lockedFiles.add(sc)
     lockedFiles.add(sc.lock())
