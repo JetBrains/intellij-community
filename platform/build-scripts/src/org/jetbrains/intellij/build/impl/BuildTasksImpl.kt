@@ -21,6 +21,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
+import org.apache.commons.io.FilenameUtils
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
@@ -586,7 +587,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
       val distributionJARsBuilder = DistributionJARsBuilder(distributionState)
 
       if (context.productProperties.buildDocAuthoringAssets) {
-        buildInspectopediaArtifacts(distributionJARsBuilder, context)
+        buildAdditionalAuthoringArtifacts(distributionJARsBuilder, context)
       }
       if (context.shouldBuildDistributions()) {
         val entries = distributionJARsBuilder.buildJARs(context)
@@ -1163,22 +1164,30 @@ fun getModulesToCompile(buildContext: BuildContext): Set<String> {
   return result
 }
 
-// Captures information about all available inspections in a JSON format as part of Inspectopedia project. This is later used by Qodana and other tools.
-private suspend fun buildInspectopediaArtifacts(builder: DistributionJARsBuilder,
-                                                context: BuildContext) {
+// Captures information about all available inspections in a JSON format as part of Inspectopedia project.
+// This is later used by Qodana and other tools. Keymaps are extracted as XML file and also used in help authoring.
+private suspend fun buildAdditionalAuthoringArtifacts(builder: DistributionJARsBuilder,
+                                                      context: BuildContext) {
+
+  val commands = listOf(Pair("inspectopedia-generator", "inspections-${context.applicationInfo.productCode.lowercase()}"),
+                        Pair("keymap", "keymap-${context.applicationInfo.productCode.lowercase()}"))
 
   val ideClasspath = builder.createIdeClassPath(context)
-  val tempDir = context.paths.tempDir.resolve("inspectopedia-generator")
-  val inspectionsPath = tempDir.resolve("inspections-${context.applicationInfo.productCode.lowercase()}")
+  val temporaryBuildDirectory = context.paths.tempDir
 
-  runApplicationStarter(context = context,
-                        tempDir = tempDir,
-                        ideClasspath = ideClasspath,
-                        arguments = listOf("inspectopedia-generator", inspectionsPath.toAbsolutePath().toString()))
+  commands.forEach {
+    val temporaryStepDirectory = temporaryBuildDirectory.resolve(it.first)
+    val targetPath = temporaryStepDirectory.resolve(it.second)
 
-  val targetFile = context.paths.artifactDir.resolve("inspections-${context.applicationInfo.productCode.lowercase()}.zip")
+    runApplicationStarter(context = context,
+                          tempDir = temporaryStepDirectory,
+                          ideClasspath = ideClasspath,
+                          arguments = listOf(it.first, targetPath.toAbsolutePath().toString()))
 
-  zipWithCompression(targetFile = targetFile, dirs = mapOf(inspectionsPath to ""))
+    val targetFile = context.paths.artifactDir.resolve("${it.second}.zip")
+
+    zipWithCompression(targetFile = targetFile, dirs = mapOf(targetPath to ""))
+  }
 }
 
 internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext) {
