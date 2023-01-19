@@ -30,6 +30,7 @@ import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -119,15 +120,9 @@ public class LanguageMismatch extends LocalInspectionTool {
               if (AnnotateFix.canApplyOn(declOwner)) {
                 final PsiAnnotation annotation = annotations[annotations.length - 1];
                 final String initializer = annotation.getParameterList().getText();
-                final AnnotateFix fix = new AnnotateFix(annotation.getQualifiedName(), initializer) {
-                  @Override
-                  @NotNull
-                  public String getName() {
-                    return initializer == null ? super.getName() : super.getName() + initializer;
-                  }
-                };
-                holder.registerProblem(expression, IntelliLangBundle.message("inspection.language.mismatch.description2", expected),
-                                       fix);
+                String fqn = Objects.requireNonNull(annotation.getQualifiedName());
+                final AnnotateFix fix = new AnnotateFix(fqn, initializer);
+                holder.registerProblem(expression, IntelliLangBundle.message("inspection.language.mismatch.description2", expected), fix);
               }
               else {
                 holder.registerProblem(expression, IntelliLangBundle.message("inspection.language.mismatch.description", expected));

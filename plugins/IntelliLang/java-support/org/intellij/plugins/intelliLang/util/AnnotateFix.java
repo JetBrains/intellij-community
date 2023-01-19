@@ -30,14 +30,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AnnotateFix implements LocalQuickFix {
+  @NotNull
   private final String myAnnotationName;
+
+  @Nullable
   private final String myArgList;
 
-  public AnnotateFix(String annotationClassname) {
+  public AnnotateFix(@NotNull String annotationClassname) {
     this(annotationClassname, null);
   }
 
-  public AnnotateFix(String annotationClassname, @Nullable String argList) {
+  public AnnotateFix(@NotNull String annotationClassname, @Nullable String argList) {
     myAnnotationName = annotationClassname;
     myArgList = argList;
   }
@@ -45,7 +48,11 @@ public class AnnotateFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return IntelliLangBundle.message("annotate.fix.family.name", StringUtil.getShortName(myAnnotationName));
+    if (myArgList == null) {
+      return IntelliLangBundle.message("annotate.fix.family.name", StringUtil.getShortName(myAnnotationName));
+    } else {
+      return IntelliLangBundle.message("annotate.fix.family.name", StringUtil.getShortName(myAnnotationName) + myArgList);
+    }
   }
 
   public static boolean canApplyOn(PsiModifierListOwner element) {

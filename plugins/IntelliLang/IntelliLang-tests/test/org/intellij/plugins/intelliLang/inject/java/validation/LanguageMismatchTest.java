@@ -64,7 +64,7 @@ public class LanguageMismatchTest extends LightJavaCodeInsightFixtureTestCase {
       @Language("JavaScript")
       String OTHER_JS_CODE = JS_<caret>CODE;
     }
-    """, "Annotate with @Language(\"JavaScript\")");
+    """, "Annotate with '@Language(\"JavaScript\")'");
   }
 
   public void testEmptyArrayConstant() {
