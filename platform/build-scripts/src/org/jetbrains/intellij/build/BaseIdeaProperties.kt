@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "BlockingMethodInNonBlockingContext")
 
 package org.jetbrains.intellij.build
@@ -29,6 +29,7 @@ private val BASE_CLASS_VERSIONS = persistentHashMapOf(
   // JAR contains class files for Java 1.8 and 11 (several modules packed into it)
   "lib/util.jar!/com/intellij/serialization/" to "1.8",
   "lib/util_rt.jar" to "1.7",
+  "lib/util-8.jar" to "1.8",
   "lib/external-system-rt.jar" to "1.7",
   "plugins/java-coverage/lib/java-coverage-rt.jar" to "1.7",
   "plugins/junit/lib/junit-rt.jar" to "1.7",

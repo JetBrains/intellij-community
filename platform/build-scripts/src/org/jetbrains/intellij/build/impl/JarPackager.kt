@@ -52,7 +52,6 @@ private val libsThatUsedInJps = java.util.Set.of(
   "netty-buffer",
   "netty-codec-http",
   "netty-handler-proxy",
-  "fastutil-min",
   "gson",
   "Log4J",
   "Slf4j",
