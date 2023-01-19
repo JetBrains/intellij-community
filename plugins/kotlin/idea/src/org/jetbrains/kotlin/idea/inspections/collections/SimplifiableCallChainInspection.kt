@@ -16,13 +16,12 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
+import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getType
-import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.builtIns
@@ -48,7 +47,7 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                     ) return@check false
                 }
                 if (conversion.replacement in listOf("maxBy", "minBy", "minByOrNull", "maxByOrNull")) {
-                    val functionalArgumentReturnType = firstResolvedCall.lastFunctionalArgumentReturnType(context) ?: return@check false
+                    val functionalArgumentReturnType = firstResolvedCall.lastFunctionalArgument(context)?.returnType ?: return@check false
                     if (functionalArgumentReturnType.isNullable()) return@check false
                 }
                 if (conversion.removeNotNullAssertion &&
@@ -60,11 +59,16 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                 }
 
                 if (conversion.firstName == "map" && conversion.secondName == "sum" && conversion.replacement == "sumOf") {
-                    val type = firstResolvedCall.lastFunctionalArgumentReturnType(context) ?: return@check false
-                    if (!KotlinBuiltIns.isInt(type) && !KotlinBuiltIns.isLong(type) &&
+                    val lastFunctionalArgument = firstResolvedCall.lastFunctionalArgument(context) ?: return@check false
+                    val type = lastFunctionalArgument.returnType ?: return@check false
+                    val isInt = KotlinBuiltIns.isInt(type)
+                    if (!isInt && !KotlinBuiltIns.isLong(type) &&
                         !KotlinBuiltIns.isUInt(type) && !KotlinBuiltIns.isULong(type) &&
                         !KotlinBuiltIns.isDouble(type)
                     ) return@check false
+                    if (isInt && lastFunctionalArgument.isLambda && lastFunctionalArgument.lastStatement.isLiteralValue()) {
+                        return@check false
+                    }
                 }
                 return@check conversion.enableSuspendFunctionCall || !containsSuspendFunctionCall(firstResolvedCall, context)
             } ?: return
@@ -97,22 +101,45 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
         })
     }
 
-    private fun ResolvedCall<*>.lastFunctionalArgumentReturnType(context: BindingContext): KotlinType? {
+    private class FunctionalArgument(val isLambda: Boolean, val returnType: KotlinType?, val lastStatement: KtExpression?)
+
+    private fun ResolvedCall<*>.lastFunctionalArgument(context: BindingContext): FunctionalArgument? {
         val argument = valueArguments.entries.lastOrNull()?.value?.arguments?.firstOrNull()
         return when (val argumentExpression = argument?.getArgumentExpression()) {
             is KtLambdaExpression -> {
-                val functionLiteral = argumentExpression.functionLiteral
-                val body = argumentExpression.bodyExpression
-                val lastStatementType = body?.statements?.lastOrNull()?.getType(context)
-                val returnedTypes = body
-                    ?.collectDescendantsOfType<KtReturnExpression> { it.getTargetFunction(context) == functionLiteral }
-                    ?.mapNotNull { it.returnedExpression?.getType(context) }
-                    .orEmpty()
-                val types = listOfNotNull(lastStatementType) + returnedTypes
-                types.firstOrNull { it.isNullable() } ?: types.firstOrNull()
+                val lastStatement = argumentExpression.bodyExpression?.lastBlockStatementOrThis()
+                FunctionalArgument(
+                    isLambda = true,
+                    returnType = lastStatement?.getType(context),
+                    lastStatement = lastStatement
+                )
             }
-            is KtNamedFunction -> argumentExpression.typeReference?.let { context[BindingContext.TYPE, it] }
+
+            is KtNamedFunction -> {
+                FunctionalArgument(
+                    isLambda = false,
+                    returnType = argumentExpression.typeReference?.let { context[BindingContext.TYPE, it] },
+                    lastStatement = argumentExpression.lastBlockStatementOrThis()
+                )
+            }
+
             else -> null
+        }
+    }
+
+    private fun KtExpression?.isLiteralValue(): Boolean {
+        return this != null && when (val expr = KtPsiUtil.safeDeparenthesize(this)) {
+            is KtBinaryExpression -> expr.left.isLiteralValue() && expr.right.isLiteralValue()
+
+            is KtIfExpression -> expr.then?.lastBlockStatementOrThis().isLiteralValue() &&
+                    expr.`else`?.lastBlockStatementOrThis().isLiteralValue()
+
+            is KtWhenExpression -> expr.entries.all { it.expression?.lastBlockStatementOrThis().isLiteralValue() }
+
+            is KtTryExpression -> expr.tryBlock.lastBlockStatementOrThis().isLiteralValue() &&
+                    expr.catchClauses.all { c -> c.catchBody?.lastBlockStatementOrThis().isLiteralValue() }
+
+            else -> expr is KtConstantExpression
         }
     }
 
