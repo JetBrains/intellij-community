@@ -315,6 +315,7 @@ fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
             scope.hasKotlinJvmRuntime(module.project)
                     || runReadAction { hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, KotlinJavaScriptLibraryKind)) }
                     || hasKotlinCommonRuntimeInScope(scope)
+                    || hasKotlinJsRuntimeInScope(module)
                     || hasKotlinNativeRuntimeInScope(module)
         })
     }
@@ -333,7 +334,7 @@ fun hasKotlinJvmRuntimeInScope(module: Module): Boolean {
     }
 }
 
-fun hasKotlinJsRuntimeInScope(module: Module): Boolean {
+fun hasKotlinJsLegacyRuntimeInScope(module: Module): Boolean {
     return syncNonBlockingReadAction(module.project) {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
         runReadAction {
@@ -346,10 +347,22 @@ fun hasKotlinCommonRuntimeInScope(scope: GlobalSearchScope): Boolean {
     return IdeVirtualFileFinder(scope).hasMetadataPackage(StandardNames.BUILT_INS_PACKAGE_FQ_NAME)
 }
 
+fun hasKotlinJsRuntimeInScope(module: Module): Boolean {
+    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_JS_FQ_NAME, KotlinJavaScriptLibraryKind)
+}
+
 fun hasKotlinNativeRuntimeInScope(module: Module): Boolean {
+    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_NATIVE_FQ_NAME, KotlinNativeLibraryKind)
+}
+
+fun hasKotlinPlatformRuntimeInScope(
+    module: Module,
+    fqName: FqName,
+    libraryKind: PersistentLibraryKind<*>
+    ): Boolean {
     return module.project.runReadActionInSmartMode {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
-        KlibMetaFileIndex.hasSomethingInPackage(KOTLIN_NATIVE_FQ_NAME, LibraryKindSearchScope(module, scope, KotlinNativeLibraryKind))
+        KlibMetaFileIndex.hasSomethingInPackage(fqName, LibraryKindSearchScope(module, scope, libraryKind))
     }
 }
 
