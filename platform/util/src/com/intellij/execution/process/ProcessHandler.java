@@ -22,6 +22,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -178,7 +179,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   }
 
   protected List<ProcessListener> getListeners() {
-    return myListeners;
+    return Collections.unmodifiableList(myListeners);
   }
 
   protected void notifyProcessDetached() {
