@@ -414,7 +414,7 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
           parameterInfo.suggestedName,
           VariableKind.PARAMETER,
           parameterInfo.type,
-          context = body.sourcePsi
+          context = context ?: body.sourcePsi
         ) ?: return null
         parameter.nameIdentifier?.replace(psiFactory.createIdentifier(name))
 
@@ -432,8 +432,9 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
       lambda.parameterList.firstChild.delete()
       lambda.parameterList.lastChild.delete()
     }
-
-    val normalizedBody = when (val bodyPsi = body.sourcePsi) {
+   
+    val normalizedBody = JavaULambdaExpression.unwrapImplicitBody(body)?.copy() ?:  // reuse existing lambda body
+    when (val bodyPsi = body.sourcePsi) {
       is PsiExpression -> bodyPsi
       is PsiCodeBlock -> normalizeBlockForLambda(bodyPsi)
       is PsiBlockStatement -> normalizeBlockForLambda(bodyPsi.codeBlock)

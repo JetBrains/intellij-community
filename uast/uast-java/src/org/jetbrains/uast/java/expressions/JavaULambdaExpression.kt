@@ -40,6 +40,17 @@ class JavaULambdaExpression(
     }
   }
 
+  companion object {
+    internal fun unwrapImplicitBody(uExpression: UExpression): PsiExpression? =
+      uExpression
+        .asSafely<JavaImplicitUBlockExpression>()
+        ?.expressions
+        ?.firstOrNull()
+        ?.asSafely<JavaImplicitUReturnExpression>()
+        ?.returnExpression
+        ?.sourcePsi
+        ?.asSafely<PsiExpression>()
+  }
 }
 
 private fun wrapLambdaBody(parent: JavaULambdaExpression, b: PsiExpression): UBlockExpression =
