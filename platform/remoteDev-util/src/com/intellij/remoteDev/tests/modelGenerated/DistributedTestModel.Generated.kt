@@ -52,7 +52,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = 1821782107515716912L
+        const val serializationHash = -603340022673479212L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -162,8 +162,8 @@ data class RdAgentId (
  */
 class RdTestSession private constructor(
     val agentId: RdAgentId,
-    val testClassName: String?,
-    val testMethodName: String?,
+    val testClassName: String,
+    val testMethodName: String,
     val traceCategories: List<String>,
     private val _ready: RdProperty<Boolean?>,
     private val _sendException: RdSignal<RdTestSessionException>,
@@ -181,8 +181,8 @@ class RdTestSession private constructor(
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdTestSession  {
             val _id = RdId.read(buffer)
             val agentId = RdAgentId.read(ctx, buffer)
-            val testClassName = buffer.readNullable { buffer.readString() }
-            val testMethodName = buffer.readNullable { buffer.readString() }
+            val testClassName = buffer.readString()
+            val testMethodName = buffer.readString()
             val traceCategories = buffer.readList { buffer.readString() }
             val _ready = RdProperty.read(ctx, buffer, __BoolNullableSerializer)
             val _sendException = RdSignal.read(ctx, buffer, RdTestSessionException)
@@ -196,8 +196,8 @@ class RdTestSession private constructor(
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSession)  {
             value.rdid.write(buffer)
             RdAgentId.write(ctx, buffer, value.agentId)
-            buffer.writeNullable(value.testClassName) { buffer.writeString(it) }
-            buffer.writeNullable(value.testMethodName) { buffer.writeString(it) }
+            buffer.writeString(value.testClassName)
+            buffer.writeString(value.testMethodName)
             buffer.writeList(value.traceCategories) { v -> buffer.writeString(v) }
             RdProperty.write(ctx, buffer, value._ready)
             RdSignal.write(ctx, buffer, value._sendException)
@@ -239,8 +239,8 @@ class RdTestSession private constructor(
     //secondary constructor
     constructor(
         agentId: RdAgentId,
-        testClassName: String?,
-        testMethodName: String?,
+        testClassName: String,
+        testMethodName: String,
         traceCategories: List<String>
     ) : this(
         agentId,
