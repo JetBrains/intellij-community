@@ -8,25 +8,10 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
-import java.lang.management.ManagementFactory
-import javax.management.MBeanServer
-import javax.management.ObjectName
 
 class KotlinDslScriptTaskModelBuilder : AbstractModelBuilderService() {
     override fun canBuild(modelName: String): Boolean {
         return KotlinDslScriptAdditionalTask::class.java.name == modelName
-    }
-
-    private fun reportFUSMetricByJMX(method: String, type: String, metricName: String, value: Any, subprojectName: String?, weight: Long?) {
-        val name = "org.jetbrains.kotlin.gradle.plugin.statistics:type=StatsService"
-        val beanName = ObjectName(name)
-        val mbs: MBeanServer = ManagementFactory.getPlatformMBeanServer()
-         mbs.invoke(
-                beanName,
-                method,
-                arrayOf(metricName, value, subprojectName, weight),
-                arrayOf("java.lang.String", type, "java.lang.String", "java.lang.Long")
-            )
     }
 
     override fun buildAll(modelName: String, project: Project, context: ModelBuilderContext): Any? {
@@ -36,7 +21,6 @@ class KotlinDslScriptTaskModelBuilder : AbstractModelBuilderService() {
             val tasks = HashSet(startParameter.taskNames)
             tasks.add(PREPARATION_TASK_NAME)
             startParameter.setTaskNames(tasks)
-            reportFUSMetricByJMX("reportBoolean", "boolean", "BUILD_PREPARE_KOTLIN_BUILD_SCRIPT_MODEL", true, null, null)
         }
         return null
     }
