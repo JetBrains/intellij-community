@@ -138,7 +138,11 @@ private class RootsChangeWatcher(private val project: Project) {
                                                             virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(event.path)), false)
         is VFilePropertyChangeEvent, is VFileMoveEvent -> {
           if (event is VFilePropertyChangeEvent) propertyChanged(event)
-          val (oldUrl, newUrl) = getUrls(event) ?: continue
+          val (oldUrl, newUrl) = when (event) {
+            is VFilePropertyChangeEvent -> VfsUtilCore.pathToUrl(event.oldPath) to VfsUtilCore.pathToUrl(event.newPath)
+            is VFileMoveEvent -> VfsUtilCore.pathToUrl(event.oldPath) to VfsUtilCore.pathToUrl(event.newPath)
+            else -> continue
+          }
           if (oldUrl != newUrl) {
             calculateEntityChangesIfNeeded(entityChanges, entityStorage, virtualFileManager.fromUrl(oldUrl), true)
             calculateEntityChangesIfNeeded(entityChanges, entityStorage, virtualFileManager.fromUrl(newUrl), false)
@@ -188,20 +192,23 @@ private class RootsChangeWatcher(private val project: Project) {
     }
 
     val affectedEntities = mutableListOf<EntityWithVirtualFileUrl>()
-    calculateAffectedEntities(storage, virtualFileUrl, affectedEntities)
-    if (allRootsWereRemoved) {
-      entityChanges.addFileToInvalidate(virtualFileUrl.virtualFile)
-    }
-    virtualFileUrl.subTreeFileUrls.forEach { fileUrl -> 
-      if (calculateAffectedEntities(storage, fileUrl, affectedEntities) && allRootsWereRemoved) {
-        entityChanges.addFileToInvalidate(fileUrl.virtualFile)
-      }
+    collectAffectedEntities(virtualFileUrl, storage, affectedEntities, allRootsWereRemoved, entityChanges)
+    virtualFileUrl.subTreeFileUrls.forEach { fileUrl ->
+      collectAffectedEntities(fileUrl, storage, affectedEntities, allRootsWereRemoved, entityChanges)
     }
 
     val indexingServiceEx = EntityIndexingServiceEx.getInstanceEx()
     if (affectedEntities.any { it.propertyName != "entitySource" && indexingServiceEx.shouldCauseRescan(it.entity, project) }
         || virtualFileUrl.url in projectFilePaths) {
       entityChanges.addAffectedEntities(affectedEntities.map { it.entity.createReference() }, allRootsWereRemoved)
+    }
+  }
+
+  private fun collectAffectedEntities(url: VirtualFileUrl, storage: EntityStorage, affectedEntities: MutableList<EntityWithVirtualFileUrl>,
+                                      allRootsWereRemoved: Boolean, entityChanges: EntityChangeStorage) {
+    val hasEntities = calculateAffectedEntities(storage, url, affectedEntities)
+    if (hasEntities && allRootsWereRemoved) {
+      entityChanges.addFileToInvalidate(url.virtualFile)
     }
   }
 
@@ -293,23 +300,6 @@ private class RootsChangeWatcher(private val project: Project) {
 
   private fun String.isImlFile() = Files.getFileExtension(this) == ModuleFileType.DEFAULT_EXTENSION
 
-  /** Update stored urls after folder movement */
-  private fun getUrls(event: VFileEvent): Pair<String, String>? {
-    val oldUrl: String
-    val newUrl: String
-    when (event) {
-      is VFilePropertyChangeEvent -> {
-        oldUrl = VfsUtilCore.pathToUrl(event.oldPath)
-        newUrl = VfsUtilCore.pathToUrl(event.newPath)
-      }
-      is VFileMoveEvent -> {
-        oldUrl = VfsUtilCore.pathToUrl(event.oldPath)
-        newUrl = VfsUtilCore.pathToUrl(event.newPath)
-      }
-      else -> return null
-    }
-    return oldUrl to newUrl
-  }
 }
 
 private class EntityChangeStorage {
