@@ -121,7 +121,7 @@ public class LanguageMismatch extends LocalInspectionTool {
                 final PsiAnnotation annotation = annotations[annotations.length - 1];
                 final String initializer = annotation.getParameterList().getText();
                 String fqn = Objects.requireNonNull(annotation.getQualifiedName());
-                final AnnotateFix fix = new AnnotateFix(fqn, initializer);
+                final AnnotateFix fix = AnnotateFix.create(expression, fqn, initializer);
                 holder.registerProblem(expression, IntelliLangBundle.message("inspection.language.mismatch.description2", expected), fix);
               }
               else {

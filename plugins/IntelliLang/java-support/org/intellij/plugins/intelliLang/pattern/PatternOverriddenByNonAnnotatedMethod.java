@@ -52,7 +52,7 @@ public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
             final String argList = annotationFromHierarchy[annotationFromHierarchy.length - 1].getParameterList().getText();
             holder.registerProblem(psiIdentifier,
                                    IntelliLangBundle.message("inspection.pattern.overridden.by.non.annotated.method.description"),
-                                   new AnnotateFix(Objects.requireNonNull(annotationClassname), argList));
+                                   AnnotateFix.create(method, Objects.requireNonNull(annotationClassname), argList));
           }
         }
       }

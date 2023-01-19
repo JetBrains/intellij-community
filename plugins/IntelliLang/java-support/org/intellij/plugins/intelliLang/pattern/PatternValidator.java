@@ -224,7 +224,7 @@ public class PatternValidator extends LocalInspectionTool {
           }
 
           final String classname = configuration.getAdvancedConfiguration().getSubstAnnotationPair().first;
-          quickFix = AnnotateFix.canApplyOn(owner) ? new AnnotateFix(classname) : new IntroduceVariableFix();
+          quickFix = AnnotateFix.canApplyOn(owner) ? AnnotateFix.create(e, classname) : new IntroduceVariableFix();
         }
         else {
           quickFix = new IntroduceVariableFix();
