@@ -32,11 +32,17 @@ open class GroupedComboBoxRenderer(val combo: ComboBox<out Item>) : GroupedEleme
 
   private lateinit var coloredComponent: SimpleColoredComponent
 
+  open val maxWidth: Int = -1
+
   override fun layout() {
     myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH)
     val centerComponent: JComponent = object : NonOpaquePanel(itemComponent) {
       override fun getPreferredSize(): Dimension {
-        return UIUtil.updateListRowHeight(super.getPreferredSize())
+        val dimension = UIUtil.updateListRowHeight(super.getPreferredSize())
+        return when (maxWidth) {
+          -1 -> dimension
+          else -> Dimension(maxWidth, dimension.height)
+        }
       }
     }
     myRendererComponent.add(centerComponent, BorderLayout.CENTER)
