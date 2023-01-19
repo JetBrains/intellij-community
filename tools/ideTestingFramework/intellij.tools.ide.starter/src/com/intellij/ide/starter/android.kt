@@ -141,7 +141,7 @@ fun IDETestContext.downloadAndroidPluginProject(): IDETestContext {
 
     val script = (projectHome / scriptName).toFile()
     assert(script.exists()) { "File $script does not exist" }
-    val scriptContent = script.readText()
+    val scriptContent = script.readText().replace("clone", "clone --depth 1")
     val commandLineArgs = scriptContent.split(" ")
     val adjustedCommandLineArgs = when (Git.getDefaultBranch) {
       "master" -> commandLineArgs
