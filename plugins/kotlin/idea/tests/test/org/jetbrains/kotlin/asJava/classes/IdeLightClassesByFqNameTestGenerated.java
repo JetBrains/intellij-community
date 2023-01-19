@@ -537,6 +537,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/JavaBetween.kt"));
         }
 
+        @TestMetadata("JavaClassWithAnnotation.kt")
+        public void testJavaClassWithAnnotation() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/JavaClassWithAnnotation.kt"));
+        }
+
         @TestMetadata("JvmNameOnMember.kt")
         public void testJvmNameOnMember() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/JvmNameOnMember.kt"));
