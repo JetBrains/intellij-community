@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.importing.workspaceModel
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
-import org.jetbrains.idea.maven.importing.workspaceModel.ContentRootEntityEx.getSourceRoots
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 
@@ -14,17 +13,11 @@ object ModuleEntityEx {
       .flatMap { it.getSourceRoots(includingTests) }
       .map { it.url }
       .map { it.url }
-}
 
-private object ContentRootEntityEx {
   fun ContentRootEntity.getSourceRoots(includingTests: Boolean): List<SourceRootEntity> =
-    if (includingTests) {
-      this.sourceRoots
-    }
-    else {
-      this.sourceRoots.filter {
-        it.rootType == JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID
-        || it.rootType == JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID
-      }
-    }
+    this.sourceRoots.filter { includingTests || !it.isTest() }
+
+  fun SourceRootEntity.isTest(): Boolean =
+    this.rootType == JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID
+    || this.rootType == JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID
 }
