@@ -15,11 +15,9 @@
  */
 package org.intellij.plugins.intelliLang.util;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,11 +52,6 @@ public class AnnotateFix implements LocalQuickFix {
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
      PsiElement element = descriptor.getPsiElement();
     if (!(element instanceof PsiModifierListOwner)) {
@@ -72,38 +65,33 @@ public class AnnotateFix implements LocalQuickFix {
     if (modifierList == null) {
       return;
     }
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) {
-      return;
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    try {
+      final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(myAnnotationName, modifierList.getResolveScope());
+      final InitializerRequirement requirement = InitializerRequirement.calcInitializerRequirement(psiClass);
+
+      final String argList;
+      if (myArgList == null) {
+        argList = switch (requirement) {
+          case VALUE_REQUIRED, OTHER_REQUIRED -> "(\"\")";
+          default -> "";
+        };
+      }
+      else {
+        argList = myArgList;
+      }
+
+      PsiAnnotation annotation = factory.createAnnotationFromText("@" + myAnnotationName + argList, modifierList);
+      annotation = (PsiAnnotation)modifierList.addBefore(annotation, modifierList.getFirstChild());
+      annotation = (PsiAnnotation)JavaCodeStyleManager.getInstance(project).shortenClassReferences(annotation);
+
+      final PsiAnnotationParameterList list = annotation.getParameterList();
+      if (requirement != InitializerRequirement.NONE_REQUIRED && myArgList == null) {
+        ((NavigationItem)list).navigate(true);
+      }
     }
-    WriteAction.run(() -> {
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-      try {
-        final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(myAnnotationName, modifierList.getResolveScope());
-        final InitializerRequirement requirement = InitializerRequirement.calcInitializerRequirement(psiClass);
-
-        final String argList;
-        if (myArgList == null) {
-          argList = switch (requirement) {
-            case VALUE_REQUIRED, OTHER_REQUIRED -> "(\"\")";
-            default -> "";
-          };
-        }
-        else {
-          argList = myArgList;
-        }
-
-        PsiAnnotation annotation = factory.createAnnotationFromText("@" + myAnnotationName + argList, modifierList);
-        annotation = (PsiAnnotation)modifierList.addBefore(annotation, modifierList.getFirstChild());
-        annotation = (PsiAnnotation)JavaCodeStyleManager.getInstance(project).shortenClassReferences(annotation);
-
-        final PsiAnnotationParameterList list = annotation.getParameterList();
-        if (requirement != InitializerRequirement.NONE_REQUIRED && myArgList == null) {
-          ((NavigationItem)list).navigate(true);
-        }
-      }
-      catch (IncorrectOperationException e) {
-        Logger.getInstance(getClass().getName()).error(e);
-      }
-    });
+    catch (IncorrectOperationException e) {
+      Logger.getInstance(getClass().getName()).error(e);
+    }
   }
 }
