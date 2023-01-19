@@ -489,6 +489,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       runConfigurators = false
       projectName = name
     }
+
     @Suppress("DEPRECATION")
     val project = runBlockingModalWithRawProgressReporter(
       owner = ModalTaskOwner.guess(),
@@ -697,7 +698,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       val openTimestamp = System.currentTimeMillis()
       @Suppress("DEPRECATION")
       project.coroutineScope?.launch {
-        notifyRecentManager(project, options, openTimestamp)
+        notifyRecentManager(project, openTimestamp)
       }
     }
 
@@ -710,12 +711,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return project
   }
 
-  private suspend fun notifyRecentManager(project: Project, options: OpenProjectTask, openTimestamp: Long) {
-    (RecentProjectsManager.getInstance() as? RecentProjectsManagerBase)?.projectOpened(
-      project = project,
-      recentProjectMetaInfo = ((options.implOptions as? OpenProjectImplOptions))?.recentProjectMetaInfo,
-      openTimestamp = openTimestamp,
-    )
+  private suspend fun notifyRecentManager(project: Project, openTimestamp: Long) {
+    RecentProjectsManagerBase.getInstanceEx().projectOpened(project, openTimestamp)
     dispatchEarlyNotifications()
   }
 

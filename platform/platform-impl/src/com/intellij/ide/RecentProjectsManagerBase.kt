@@ -15,7 +15,10 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -38,7 +41,10 @@ import com.intellij.util.SingleAlarm
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -313,26 +319,12 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     override fun onFrameActivated(frame: IdeFrame) = frame.notifyProjectActivation()
   }
 
-  suspend fun projectOpened(project: Project, recentProjectMetaInfo: RecentProjectMetaInfo?, openTimestamp: Long) {
-    if (LightEdit.owns(project)) {
-      return
-    }
-
-    if (recentProjectMetaInfo == null) {
-      projectOpened(project)
-    }
-    else {
-      synchronized(stateLock) {
-        recentProjectMetaInfo.projectOpenTimestamp = openTimestamp
-      }
-    }
-
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      updateSystemDockMenu()
-    }
+  @Internal
+  suspend fun projectOpened(project: Project) {
+    projectOpened(project, System.currentTimeMillis())
   }
 
-  fun projectOpened(project: Project) {
+  internal suspend fun projectOpened(project: Project, openTimestamp: Long) {
     if (LightEdit.owns(project)) {
       return
     }
@@ -343,10 +335,14 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       val info = markPathRecent(path = projectPath, project = project)
       info.opened = true
       info.displayName = getProjectDisplayName(project)
-      info.projectOpenTimestamp = System.currentTimeMillis()
+      info.projectOpenTimestamp = openTimestamp
 
       state.lastOpenedProject = projectPath
       state.validateRecentProjects(modCounter)
+    }
+
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      updateSystemDockMenu()
     }
   }
 
