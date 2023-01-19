@@ -212,6 +212,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.compactTreeIndents = value
     }
 
+  var uiDensity: UIDensity
+    get() = state.uiDensity
+    set(value) {
+      state.uiDensity = value
+    }
+
   var showMainToolbar: Boolean
     get() = if (RegistryManager.getInstance().`is`("ide.experimental.ui")) separateMainMenu else state.showMainToolbar
     set(value) {

@@ -127,7 +127,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private var preferredDarkLaf: LookAndFeelInfo? = null
   private val myStoredDefaults = HashMap<LafReference?, MutableMap<String, Any?>>()
   private val myLafComboBoxModel = SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> { LafComboBoxModel() }
-  private var myDensity = UIDensity.DEFAULT
   private val settingsToolbar: Lazy<ActionToolbar> = SynchronizedClearableLazy {
     val group = DefaultActionGroup(PreferredLafAction())
     val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, group, true)
@@ -648,6 +647,11 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     return false
   }
 
+  override fun applyDensity() {
+    setCurrentLookAndFeel(currentLookAndFeel!!)
+    updateUI()
+  }
+
   private fun applyDensity(defaults: UIDefaults) {
     // main toolbar
     defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.CurrentTheme.Toolbar.defaultExperimentalToolbarButtonSize())
@@ -670,7 +674,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     // toolwindows
     defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), JBUI.CurrentTheme.ToolWindow.defaultHeaderHeight())
     defaults.put(JBUI.CurrentTheme.ToolWindow.headerFontKey(), JBUI.CurrentTheme.ToolWindow.defaultHeaderFont())
-    if (density == UIDensity.COMPACT) {
+    if (UISettings.getInstance().uiDensity == UIDensity.COMPACT) {
       // main toolbar
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(34, 34))
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSizeKey(), 16)
@@ -885,16 +889,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
   override fun setPreferredLightLaf(value: LookAndFeelInfo) {
     preferredLightLaf = value
-  }
-
-  override fun getDensity() = myDensity
-
-  override fun setDensity(density: UIDensity) {
-    if (density != myDensity) {
-      myDensity = density
-      setCurrentLookAndFeel(currentLookAndFeel!!)
-      updateUI()
-    }
   }
 
   private inner class UiThemeEpListener : ExtensionPointListener<UIThemeProvider> {

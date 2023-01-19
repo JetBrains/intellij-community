@@ -3,6 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UIDensity
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareToggleAction
@@ -12,11 +13,12 @@ import com.intellij.openapi.project.DumbAwareToggleAction
  */
 abstract class SetDensityAction(val density: UIDensity): DumbAwareToggleAction() {
 
-  override fun isSelected(e: AnActionEvent) = LafManager.getInstance().density == density
+  override fun isSelected(e: AnActionEvent) = UISettings.getInstance().uiDensity == density
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (state && !isSelected(e)) {
-      LafManager.getInstance().density = density
+      UISettings.getInstance().uiDensity = density
+      LafManager.getInstance().applyDensity()
     }
   }
 
