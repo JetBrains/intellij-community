@@ -3,6 +3,7 @@ package org.jetbrains.plugins.textmate.configuration;
 import com.intellij.CommonBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.progress.ProgressManager;
@@ -25,7 +26,6 @@ import org.jetbrains.plugins.textmate.bundles.TextMateBundleReader;
 import javax.swing.*;
 import java.util.*;
 
-import static com.intellij.openapi.fileChooser.FileChooserDescriptorFactory.createMultipleFoldersDescriptor;
 import static com.intellij.ui.ToolbarDecorator.createDecorator;
 import static org.jetbrains.plugins.textmate.TextMateServiceImpl.BUNDLED_BUNDLES_PATH;
 
@@ -99,7 +99,9 @@ public class TextMateBundlesListPanel implements Disposable {
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          FileChooserDialog fileChooser = FileChooserFactory.getInstance().createFileChooser(createMultipleFoldersDescriptor(), null, myBundlesList);
+          FileChooserDescriptor chooserDescriptor = new FileChooserDescriptor(true, true, false, false, false, true)
+            .withFileFilter(file -> false);
+          FileChooserDialog fileChooser = FileChooserFactory.getInstance().createFileChooser(chooserDescriptor, null, myBundlesList);
 
           VirtualFile fileToSelect = null;
           int itemsCount = myBundlesList.getItemsCount();
