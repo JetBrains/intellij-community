@@ -2,6 +2,8 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -36,7 +38,8 @@ import kotlin.system.measureTimeMillis
 
 object OrphanageWorkerEntitySource : EntitySource
 
-class Orphanage(private val project: Project) {
+@Service(Service.Level.PROJECT)
+class EntitiesOrphanage(private val project: Project) {
   val entityStorage: VersionedEntityStorageImpl = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
 
   @RequiresWriteLock
@@ -85,14 +88,16 @@ class Orphanage(private val project: Project) {
     val updateTimes = ArrayList<Long>()
     val use: Boolean
       get() = Registry.`is`("ide.workspace.model.separate.component.for.roots", false) || benchmarkMode
-    val log = logger<Orphanage>()
+    val log = logger<EntitiesOrphanage>()
+    
+    fun getInstance(project: Project) = project.service<EntitiesOrphanage>()
   }
 }
 
 class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
 
-    if (!Orphanage.use) return
+    if (!EntitiesOrphanage.use) return
     val adders: List<EntityAdder>
     val changedModules: List<ModuleEntity>
 
@@ -112,19 +117,19 @@ class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
     }
 
     if (adders.any { it.anyEntitiesToMove() }) {
-      if (Orphanage.benchmarkMode) Orphanage.preUpdateTimes += preUpdateTime
+      if (EntitiesOrphanage.benchmarkMode) EntitiesOrphanage.preUpdateTimes += preUpdateTime
       if (preUpdateTime > 1_000) log.warn("Orphanage preparation took $preUpdateTime ms")
 
       runLaterAndWrite {
         val updateTime = measureTimeMillis {
-          val orphanage = project.workspaceModel.orphanage.entityStorage.pointer.storage
+          val orphanage = EntitiesOrphanage.getInstance(project).entityStorage.pointer.storage
           val orphanModules = changedModules.mapNotNull {
             orphanage.resolve(it.symbolicId)
           }
           adders.forEach { it.collectOrphanRoots(orphanModules, true) }
 
           if (adders.any { it.anyUpdates() }) {
-            project.workspaceModel.orphanage.update {
+            EntitiesOrphanage.getInstance(project).update {
               adders.forEach { adder -> adder.cleanOrphanage(it) }
             }
             project.workspaceModel.updateProjectModel("Move orphan elements") { storage ->
@@ -132,7 +137,7 @@ class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
             }
           }
         }
-        if (Orphanage.benchmarkMode) Orphanage.updateTimes += updateTime
+        if (EntitiesOrphanage.benchmarkMode) EntitiesOrphanage.updateTimes += updateTime
         if (updateTime > 1_000) log.warn("Orphanage update took $preUpdateTime ms")
       }
     }
@@ -176,7 +181,7 @@ private class ContentRootAdder(private val project: Project) : EntityAdder {
   }
 
   override fun anyEntitiesToMove(): Boolean {
-    val orphanageSnapshot = project.workspaceModel.orphanage.entityStorage.pointer.storage
+    val orphanageSnapshot = EntitiesOrphanage.getInstance(project).entityStorage.pointer.storage
 
     return eventModules.isNotEmpty() && eventModules.any { orphanageSnapshot.resolve(it.symbolicId) != null }
   }
@@ -257,7 +262,7 @@ private class SourceRootAdder(private val project: Project) : EntityAdder {
   }
 
   override fun anyEntitiesToMove(): Boolean {
-    val orphanageSnapshot = project.workspaceModel.orphanage.entityStorage.pointer.storage
+    val orphanageSnapshot = EntitiesOrphanage.getInstance(project).entityStorage.pointer.storage
 
     return targetContentRoots.isNotEmpty()
            && targetContentRoots.any {
@@ -355,7 +360,7 @@ private class ExcludeRootAdder(private val project: Project) : EntityAdder {
   }
 
   override fun anyEntitiesToMove(): Boolean {
-    val orphanageSnapshot = project.workspaceModel.orphanage.entityStorage.pointer.storage
+    val orphanageSnapshot = EntitiesOrphanage.getInstance(project).entityStorage.pointer.storage
 
     return targetContentRoots.isNotEmpty()
            && targetContentRoots.any {

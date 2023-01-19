@@ -23,7 +23,7 @@ import kotlin.test.assertEquals
 
 @RunInEdt
 @TestApplication
-class OrphanageTest {
+class EntitiesOrphanageTest {
 
   @JvmField
   @RegisterExtension
@@ -34,7 +34,7 @@ class OrphanageTest {
 
   @BeforeEach
   fun setUp() {
-    Assumptions.assumeTrue(Orphanage.use)
+    Assumptions.assumeTrue(EntitiesOrphanage.use)
   }
 
   @ParameterizedTest
@@ -45,7 +45,7 @@ class OrphanageTest {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
-          projectModel.project.workspaceModel.orphanage.update { builder ->
+          EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
             builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
               this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
             }
@@ -74,7 +74,7 @@ class OrphanageTest {
       .entities(ModuleEntity::class.java).single().contentRoots.single()
     assertEquals(url, contentRoots.url)
 
-    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -86,7 +86,7 @@ class OrphanageTest {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
-          projectModel.project.workspaceModel.orphanage.update { builder ->
+          EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
             builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
               this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
             }
@@ -118,7 +118,7 @@ class OrphanageTest {
       .entities(ModuleEntity::class.java).single().contentRoots.single()
     assertEquals(url, contentRoots.url)
 
-    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -131,7 +131,7 @@ class OrphanageTest {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
-          projectModel.project.workspaceModel.orphanage.update { builder ->
+          EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
             builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
               this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
             }
@@ -162,7 +162,7 @@ class OrphanageTest {
       .entities(ModuleEntity::class.java).single().contentRoots
     assertEquals(2, contentRoots.size)
 
-    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -170,7 +170,7 @@ class OrphanageTest {
   fun `adding content root to removed module`() {
     val url = virtualFileManager.fromUrl("/123")
     runWriteAction {
-      projectModel.project.workspaceModel.orphanage.update { builder ->
+      EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
         builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
           this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
         }
@@ -192,7 +192,7 @@ class OrphanageTest {
       .entities(ModuleEntity::class.java)
     assertEquals(0, modules.toList().size)
 
-    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -204,7 +204,7 @@ class OrphanageTest {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
-          projectModel.project.workspaceModel.orphanage.update { builder ->
+          EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
             builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
               this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource))
             }
@@ -234,7 +234,7 @@ class OrphanageTest {
       .entities(ModuleEntity::class.java).single().contentRoots
     assertEquals(0, roots.toList().size)
 
-    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(1, orphanModules.size)
     assertEquals(1, orphanModules.single().contentRoots.size)
   }
@@ -247,7 +247,7 @@ class OrphanageTest {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
-          projectModel.project.workspaceModel.orphanage.update { builder ->
+          EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
             builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
               this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
             }
@@ -277,7 +277,7 @@ class OrphanageTest {
       .entities(ModuleEntity::class.java).single().contentRoots.single()
     assertEquals(url, contentRoots.url)
 
-    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -290,7 +290,7 @@ class OrphanageTest {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
-          projectModel.project.workspaceModel.orphanage.update { builder ->
+          EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
             builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
               this.contentRoots = listOf(
                 ContentRootEntity(url, emptyList(), MySource),
@@ -322,7 +322,7 @@ class OrphanageTest {
       .entities(ModuleEntity::class.java).single().contentRoots.single()
     assertEquals(url, contentRoots.url)
 
-    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(1, orphanModules.size)
     val remainedOrphanUrl = orphanModules.single().contentRoots.single().url
     assertEquals(url2, remainedOrphanUrl)
@@ -337,7 +337,7 @@ class OrphanageTest {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
-          projectModel.project.workspaceModel.orphanage.update { builder ->
+          EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
             builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
               this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
                 this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
@@ -370,7 +370,7 @@ class OrphanageTest {
       .entities(ModuleEntity::class.java).single().contentRoots.single().sourceRoots.single()
     assertEquals(sourceUrl, sourceRoots.url)
 
-    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -383,7 +383,7 @@ class OrphanageTest {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
-          projectModel.project.workspaceModel.orphanage.update { builder ->
+          EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
             builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
               this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
                 this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
@@ -418,7 +418,7 @@ class OrphanageTest {
       .entities(ModuleEntity::class.java).single().contentRoots.single().sourceRoots.single()
     assertEquals(sourceUrl, sourceRoot.url)
 
-    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -432,7 +432,7 @@ class OrphanageTest {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
-          projectModel.project.workspaceModel.orphanage.update { builder ->
+          EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
             builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
               this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
                 this.sourceRoots = listOf(SourceRootEntity(sourceUrl1, "", MySource))
@@ -467,7 +467,7 @@ class OrphanageTest {
       .entities(ModuleEntity::class.java).single().contentRoots.single().sourceRoots
     assertEquals(2, sourceRoots.size)
 
-    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -477,7 +477,7 @@ class OrphanageTest {
     val url = virtualFileManager.fromUrl("/123")
     val sourceUrl = virtualFileManager.fromUrl("/123/source1")
     runWriteAction {
-      projectModel.project.workspaceModel.orphanage.update { builder ->
+      EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
         builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
           this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
             this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
@@ -503,7 +503,7 @@ class OrphanageTest {
       .entities(ModuleEntity::class.java)
     assertEquals(0, modules.toList().size)
 
-    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -516,7 +516,7 @@ class OrphanageTest {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
-          projectModel.project.workspaceModel.orphanage.update { builder ->
+          EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
             builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
               this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
                 this.excludedUrls = listOf(ExcludeUrlEntity(excludeUrl, MySource))
@@ -549,7 +549,7 @@ class OrphanageTest {
       .entities(ModuleEntity::class.java).single().contentRoots.single().excludedUrls.single()
     assertEquals(excludeUrl, excludeUrls.url)
 
-    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -562,7 +562,7 @@ class OrphanageTest {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
-          projectModel.project.workspaceModel.orphanage.update { builder ->
+          EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
             builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
               this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
                 this.excludedUrls = listOf(ExcludeUrlEntity(excludeUrl, MySource))
@@ -597,7 +597,7 @@ class OrphanageTest {
       .entities(ModuleEntity::class.java).single().contentRoots.single().excludedUrls.single()
     assertEquals(excludeUrl, myExcludeUrl.url)
 
-    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -611,7 +611,7 @@ class OrphanageTest {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
-          projectModel.project.workspaceModel.orphanage.update { builder ->
+          EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
             builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
               this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
                 this.excludedUrls = listOf(ExcludeUrlEntity(excludeUrl1, MySource))
@@ -646,7 +646,7 @@ class OrphanageTest {
       .entities(ModuleEntity::class.java).single().contentRoots.single().excludedUrls
     assertEquals(2, excludedUrls.size)
 
-    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -656,7 +656,7 @@ class OrphanageTest {
     val url = virtualFileManager.fromUrl("/123")
     val excludeUrl = virtualFileManager.fromUrl("/123/source1")
     runWriteAction {
-      projectModel.project.workspaceModel.orphanage.update { builder ->
+      EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
         builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
           this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
             this.excludedUrls = listOf(ExcludeUrlEntity(excludeUrl, MySource))
@@ -682,7 +682,7 @@ class OrphanageTest {
       .entities(ModuleEntity::class.java)
     assertEquals(0, modules.toList().size)
 
-    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -696,7 +696,7 @@ class OrphanageTest {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
-          projectModel.project.workspaceModel.orphanage.update { builder ->
+          EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
             builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
               this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
                 this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
@@ -731,7 +731,7 @@ class OrphanageTest {
     assertEquals(excludeUrl, contentRoots.excludedUrls.single().url)
     assertEquals(sourceUrl, contentRoots.sourceRoots.single().url)
 
-    val orphanModules = projectModel.project.workspaceModel.orphanage.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(0, orphanModules.size)
   }
 }

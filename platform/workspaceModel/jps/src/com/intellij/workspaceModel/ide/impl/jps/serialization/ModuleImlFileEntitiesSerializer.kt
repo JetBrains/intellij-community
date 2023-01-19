@@ -83,7 +83,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           createFacetSerializer().loadFacetEntities(moduleLoadedInfo.moduleEntity, reader)
         }
 
-        if (Orphanage.use) {
+        if (EntitiesOrphanage.use) {
           // Load additional elements
           newModuleEntity = loadAdditionalContents(reader,
                                                    virtualFileManager,
@@ -111,7 +111,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                            true, moduleLibrariesCollector)
         }
 
-        if (Orphanage.use) {
+        if (EntitiesOrphanage.use) {
           moduleEntity = loadAdditionalContents(reader, virtualFileManager, moduleLoadedInfo.moduleEntity, exceptionsCollector)
         } else {
           moduleEntity = tmpModuleEntity
@@ -121,7 +121,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
         var tmpModule = localModule?.moduleEntity
 
-        if (Orphanage.use && tmpModule != null) {
+        if (EntitiesOrphanage.use && tmpModule != null) {
           tmpModule = loadAdditionalContents(reader, virtualFileManager, tmpModule, exceptionsCollector)
         }
         moduleEntity = tmpModule
@@ -605,7 +605,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       saveModuleEntities(module, entities, storage, writer)
     }
     else {
-      val targetComponent = if (Orphanage.use) ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME else MODULE_ROOT_MANAGER_COMPONENT_NAME
+      val targetComponent = if (EntitiesOrphanage.use) ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME else MODULE_ROOT_MANAGER_COMPONENT_NAME
       if (ContentRootEntity::class.java in entities || SourceRootEntity::class.java in entities || ExcludeUrlEntity::class.java in entities) {
         val contentEntities = entities[ContentRootEntity::class.java] as? List<ContentRootEntity> ?: emptyList()
         val sourceRootEntities = (entities[SourceRootEntity::class.java] as? List<SourceRootEntity>)?.toMutableSet() ?: mutableSetOf()
@@ -632,7 +632,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
               .forEach { (contentRoot, sourceRoots) ->
                 val contentRootTag = Element(CONTENT_TAG)
                 contentRootTag.setAttribute(URL_ATTRIBUTE, contentRoot.url.url)
-                if (Orphanage.use) {
+                if (EntitiesOrphanage.use) {
                   contentRootTag.setAttribute(DUMB_ATTRIBUTE, true.toString())
                 }
                 saveSourceRootEntities(sourceRoots, contentRootTag, contentRoot.getSourceRootsComparator())
@@ -647,7 +647,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           excludes.toSortedMap(compareBy { it.url }).forEach { (url, exclude) ->
             val contentRootTag = Element(CONTENT_TAG)
             contentRootTag.setAttribute(URL_ATTRIBUTE, url.url)
-            if (Orphanage.use) {
+            if (EntitiesOrphanage.use) {
               contentRootTag.setAttribute(DUMB_ATTRIBUTE, true.toString())
             }
             saveExcludeUrls(contentRootTag, exclude)
@@ -656,7 +656,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           }
         }
 
-        if (Orphanage.use) {
+        if (EntitiesOrphanage.use) {
           // Component to save additional roots before introducing AdditionalModuleElements.
           // It's not used for this function anymore and should be cleared
           writer.saveComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, null)
@@ -665,7 +665,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       else {
         writer.saveComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, null)
         writer.saveComponent(fileUrl.url, DEPRECATED_MODULE_MANAGER_COMPONENT_NAME, null)
-        if (Orphanage.use) {
+        if (EntitiesOrphanage.use) {
           writer.saveComponent(fileUrl.url, ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME, null)
         }
       }

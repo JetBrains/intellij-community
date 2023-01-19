@@ -134,7 +134,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
         // Update orphanage storage
         if (reloadingResult.orphanageBuilder.hasChanges()) {
-          project.workspaceModel.orphanage.update { it.addDiff(reloadingResult.orphanageBuilder) }
+          EntitiesOrphanage.getInstance(project).update { it.addDiff(reloadingResult.orphanageBuilder) }
         }
       }
     }
@@ -280,7 +280,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         }
         addUnloadedModuleEntities(unloadedBuilder)
 
-        project.workspaceModel.orphanage.update {
+        EntitiesOrphanage.getInstance(project).update {
           it.addDiff(projectEntities.orphanageBuilder)
         }
         childActivity?.end()

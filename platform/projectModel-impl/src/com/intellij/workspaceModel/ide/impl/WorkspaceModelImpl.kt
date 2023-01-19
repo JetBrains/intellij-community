@@ -37,7 +37,6 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
 
   final override val entityStorage: VersionedEntityStorageImpl
   private val unloadedEntitiesStorage: VersionedEntityStorageImpl
-  override val orphanage: Orphanage = Orphanage(project)
 
   override val currentSnapshot: EntityStorageSnapshot
     get() = entityStorage.current
