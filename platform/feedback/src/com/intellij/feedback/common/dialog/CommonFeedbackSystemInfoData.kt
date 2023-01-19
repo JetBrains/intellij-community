@@ -7,6 +7,8 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.internal.statistic.utils.platformPlugin
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginId
@@ -21,7 +23,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 /** This number should be increased when [CommonFeedbackSystemInfoData] fields changing */
-const val COMMON_FEEDBACK_SYSTEM_INFO_VERSION = 1
+const val COMMON_FEEDBACK_SYSTEM_INFO_VERSION = 2
 
 @Serializable
 data class CommonFeedbackSystemInfoData(
@@ -32,6 +34,7 @@ data class CommonFeedbackSystemInfoData(
   private val isEvaluationLicense: Boolean?,
   private val licenseRestrictions: List<String>,
   val runtimeVersion: String,
+  private val isInternalModeEnabled: Boolean,
   private val registry: List<String>,
   private val disabledBundledPlugins: List<String>,
   private val nonBundledPlugins: List<String>
@@ -46,6 +49,7 @@ data class CommonFeedbackSystemInfoData(
         getLicenseEvaluationInfo(),
         getLicenseRestrictionsInfo(),
         getRuntimeVersion(),
+        getIsInternalMode(),
         getRegistryKeys(),
         getDisabledPlugins(),
         getNonBundledPlugins()
@@ -87,6 +91,7 @@ data class CommonFeedbackSystemInfoData(
     }
 
     private fun getRuntimeVersion() = SystemInfo.JAVA_RUNTIME_VERSION + SystemInfo.OS_ARCH
+    private fun getIsInternalMode(): Boolean = ApplicationManager.getApplication().isInternal
     private fun getRegistryKeys(): List<String> = Registry.getAll().stream().filter { value: RegistryValue ->
       val pluginId: String? = value.pluginId
       val pluginInfo = if (pluginId != null) getPluginInfoById(PluginId.getId(pluginId)) else platformPlugin
@@ -124,6 +129,13 @@ data class CommonFeedbackSystemInfoData(
       true -> "True"
       false -> "False"
       null -> "No Info"
+    }
+  }
+
+  fun getIsInternalModeForDialog(): String {
+    return when (isInternalModeEnabled) {
+      true -> "True"
+      false -> "False"
     }
   }
 
@@ -175,6 +187,8 @@ data class CommonFeedbackSystemInfoData(
       appendLine(getLicenseRestrictionsForDialog())
       appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.runtime.version"))
       appendLine(runtimeVersion)
+      appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.internal.mode.enabled"))
+      appendLine(isInternalModeEnabled)
       appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.registry"))
       appendLine(getRegistryKeysForDialog())
       appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.disabled.plugins"))
