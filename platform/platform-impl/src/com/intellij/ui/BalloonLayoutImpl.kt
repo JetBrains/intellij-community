@@ -66,7 +66,7 @@ internal open class BalloonLayoutImpl(private val parent: JRootPane, insets: Ins
     layeredPane!!.addComponentListener(resizeListener)
   }
 
-  fun closeAll() {
+  override fun closeAll() {
     for (balloon in ArrayList(balloons)) {
       val layoutData = layoutData.get(balloon)
       if (layoutData != null) {
