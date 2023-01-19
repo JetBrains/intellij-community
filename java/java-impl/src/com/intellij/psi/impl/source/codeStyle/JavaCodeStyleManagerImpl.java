@@ -1174,10 +1174,13 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @Override
   @NotNull
   public SuggestedNameInfo suggestNames(@NotNull Collection<String> semanticNames, @NotNull VariableKind kind, @Nullable PsiType type) {
-    final Iterable<String> allSemanticNames = ContainerUtil.concat(
-      semanticNames,
-      suggestSemanticNamesByType(type, kind)
-    );
+    final Iterable<String> allSemanticNames;
+    if (kind == VariableKind.LOCAL_VARIABLE || !isEnum(type)) {
+      allSemanticNames = ContainerUtil.concat(semanticNames, suggestSemanticNamesByType(type, kind));
+    }
+    else {
+      allSemanticNames = ContainerUtil.concat(suggestSemanticNamesByType(type, kind), semanticNames);
+    }
 
     final Set<String> suggestions = new LinkedHashSet<>(getSuggestionsByNames(allSemanticNames, kind, true));
     final String propertyName = ContainerUtil.getFirstItem(semanticNames);
@@ -1192,6 +1195,12 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         JavaStatisticsManager.incVariableNameUseCount(name, kind, propertyName, type);
       }
     };
+  }
+
+  private static boolean isEnum(PsiType type) {
+    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    if (aClass == null) return false;
+    return aClass.isEnum();
   }
 
   @NonNls
