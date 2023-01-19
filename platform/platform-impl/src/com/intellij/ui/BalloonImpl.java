@@ -1050,16 +1050,25 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
   @Override
   public void hide(boolean ok) {
-    hideAndDispose(ok);
+    hideAndDispose(ok, false);
   }
 
   @Override
   public void dispose() {
-    hideAndDispose(false);
+    hideAndDispose(false, false);
   }
 
-  private void hideAndDispose(boolean ok) {
+  @Override
+  public void hideImmediately() {
+    setAnimationEnabled(false);
+    hideAndDispose(false, true);
+  }
+
+  private void hideAndDispose(boolean ok, boolean force) {
     if (isDisposed) {
+      if (force) {
+        disposeAnimationAndRemoveComponent();
+      }
       return;
     }
 
@@ -1098,20 +1107,25 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
         runAnimation(false, myLayeredPane, disposeRunnable);
       }
       else {
-        if (myAnimator != null) {
-          Disposer.dispose(myAnimator);
-        }
-        if (component != null) {
-          myLayeredPane.remove(component);
-          myLayeredPane.revalidate();
-          myLayeredPane.repaint();
-        }
+        disposeAnimationAndRemoveComponent();
         disposeRunnable.run();
       }
     }
 
     myVisible = false;
     myTracker = null;
+  }
+
+  private void disposeAnimationAndRemoveComponent() {
+    if (myAnimator != null) {
+      Disposer.dispose(myAnimator);
+    }
+    if (component != null) {
+      myLayeredPane.remove(component);
+      myLayeredPane.revalidate();
+      myLayeredPane.repaint();
+      component = null;
+    }
   }
 
   private void hideComboBoxPopups() {

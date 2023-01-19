@@ -59,7 +59,6 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.*
-import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.*
@@ -73,10 +72,10 @@ import java.awt.event.*
 import java.beans.PropertyChangeListener
 import java.lang.Runnable
 import java.util.*
-import java.util.concurrent.TimeUnit
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
+import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<ToolWindowManagerImpl>()
 
@@ -87,6 +86,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   val project: Project,
   @field:JvmField internal val isNewUi: Boolean,
   private val isEdtRequired: Boolean,
+  private val coroutineScope: CoroutineScope,
 ) : ToolWindowManagerEx(), Disposable {
   private val dispatcher = EventDispatcher.create(ToolWindowManagerListener::class.java)
 
@@ -119,7 +119,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   private val toolWindowSetInitializer = ToolWindowSetInitializer(project, this)
 
   @Suppress("TestOnlyProblems")
-  constructor(project: Project) : this(project, isNewUi = ExperimentalUI.isNewUI(), isEdtRequired = true)
+  constructor(project: Project, coroutineScope: CoroutineScope) : this(project, isNewUi = ExperimentalUI.isNewUI(), isEdtRequired = true, coroutineScope = coroutineScope)
 
   init {
     if (project.isDefault) {
@@ -495,8 +495,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-        @Suppress("DEPRECATION")
-        project.coroutineScope.launch(Dispatchers.EDT) {
+        coroutineScope.launch(Dispatchers.EDT) {
           focusManager.doWhenFocusSettlesDown(ExpirableRunnable.forProject(project) {
             if (!FileEditorManager.getInstance(project).hasOpenFiles()) {
               focusToolWindowByDefault()
@@ -1507,7 +1506,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     val balloon = balloonBuilder.createBalloon()
     if (balloon is BalloonImpl) {
       NotificationsManagerImpl.frameActivateBalloonListener(balloon) {
-        EdtExecutorService.getScheduledExecutorInstance().schedule({ balloon.setHideOnClickOutside(true) }, 100, TimeUnit.MILLISECONDS)
+        coroutineScope.launch {
+          delay(100.milliseconds)
+          withContext(Dispatchers.EDT) {
+            balloon.setHideOnClickOutside(true)
+          }
+        }
       }
     }
 
@@ -1521,6 +1525,15 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     return balloon
   }
 
+  @RequiresEdt
+  override fun closeBalloons() {
+    for (entry in idToEntry.values) {
+      entry.balloon?.let {
+        it.hideImmediately()
+      }
+    }
+  }
+
   override fun getToolWindowBalloon(id: String) = idToEntry.get(id)?.balloon
 
   override val isEditorComponentActive: Boolean
@@ -1528,7 +1541,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   @RequiresEdt
   fun setToolWindowAnchor(id: String, anchor: ToolWindowAnchor) {
-    setToolWindowAnchor(id, anchor, -1)
+    setToolWindowAnchor(id = id, anchor = anchor, order = -1)
   }
 
   // used by Rider

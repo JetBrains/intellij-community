@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "OVERRIDE_DEPRECATION")
 
 package com.intellij.ide
@@ -11,14 +11,12 @@ import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.idea.AppMode
+import com.intellij.notification.impl.NotificationsToolWindowFactory
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -30,7 +28,9 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
@@ -265,6 +265,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
   @TestOnly
   fun openProjectSync(projectFile: Path, openProjectOptions: OpenProjectTask): Project? {
+    @Suppress("RAW_RUN_BLOCKING")
     return runBlocking { openProject(projectFile, openProjectOptions) }
   }
 
@@ -290,7 +291,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     else {
       // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.
       // Reopening such a project should be similar to opening the dir first time (and trying to import known project formats)
-      // IDEA-144453 IDEA rejects opening recent project if there are no .idea subfolder
+      // IDEA-144453 IDEA rejects opening a recent project if there are no .idea subfolder
       // CPP-12106 Auto-load CMakeLists.txt on opening from Recent projects when .idea and cmake-build-debug were deleted
       return ProjectUtil.openOrImportAsync(projectFile, effectiveOptions)
     }
@@ -352,7 +353,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     override fun projectClosingBeforeSave(project: Project) {
       val app = ApplicationManagerEx.getApplicationEx()
       if (app.isExitInProgress) {
-        // appClosing updates project info (even more - on project closed full screen state maybe not correct)
+        // `appClosing` handler updates project info (even more - on `projectClosed` the full-screen state maybe not correct)
         return
       }
 
@@ -369,7 +370,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
     override fun projectClosed(project: Project) {
       if (ApplicationManagerEx.getApplicationEx().isExitInProgress) {
-        // appClosing updates project info (even more - on project closed full screen state maybe not correct)
+        // `appClosing` handler updates project info (even more - on `projectClosed` the full-screen state maybe not correct)
         return
       }
 
@@ -516,7 +517,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
           }
         }
 
-        // we open project windows in the order projects were opened historically (to preserve taskbar order)
+        // we open project windows in the order projects were opened historically (to preserve taskbar order),
         // but once the windows are created, we start project loading from the latest active project (and put its window at front)
         taskList.add(activeTask!!)
         taskList.reverse()
@@ -533,10 +534,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       }
       catch (e: Exception) {
         withContext(NonCancellable + Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          @Suppress("SSBasedInspection")
           (entry.second.frame as MyProjectUiFrameManager?)?.dispose()
           while (iterator.hasNext()) {
-            @Suppress("SSBasedInspection")
             (iterator.next().second.frame as MyProjectUiFrameManager?)?.dispose()
           }
         }
@@ -638,8 +637,18 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
         writeInfoFile(frameInfo, frame)
       }
 
-      if (workspaceId != null && ProjectSelfieUtil.isEnabled) {
-        ProjectSelfieUtil.takeProjectSelfie(frameHelper.frame.rootPane, workspaceId)
+      if (workspaceId != null) {
+        val selfieLocation = ProjectSelfieUtil.getSelfieLocation(workspaceId)
+        if (ProjectSelfieUtil.isEnabled) {
+          NotificationsToolWindowFactory.clearAll(project)
+          frameHelper.balloonLayout?.closeAll()
+          (project.serviceIfCreated<ToolWindowManager>() as? ToolWindowManagerEx)?.closeBalloons()
+
+          ProjectSelfieUtil.takeProjectSelfie(frameHelper.frame.rootPane, workspaceId, selfieLocation)
+        }
+        else {
+          Files.deleteIfExists(selfieLocation)
+        }
       }
     }.getOrLogException(LOG)
   }
@@ -755,7 +764,7 @@ int32 "extendedState"
 
     override fun projectFrameClosed() {
       // ProjectManagerListener.projectClosed cannot be used to call updateLastProjectPath,
-      // because called even if project closed on app exit
+      // because called even if a project closed on app exit
       getInstanceEx().updateLastProjectPath()
     }
   }
