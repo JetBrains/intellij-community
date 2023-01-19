@@ -652,6 +652,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     // main toolbar
     defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.CurrentTheme.Toolbar.defaultExperimentalToolbarButtonSize())
     defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSizeKey(), JBUI.CurrentTheme.Toolbar.defaultExperimentalToolbarButtonIconSize())
+    // minimize/maximize/close buttons size set by the theme
     // tool window stripes
     defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), JBUI.CurrentTheme.Toolbar.defaultStripeToolbarButtonSize())
     defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSizeKey(), JBUI.CurrentTheme.Toolbar.defaultStripeToolbarButtonIconSize())
@@ -673,6 +674,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       // main toolbar
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(34, 34))
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSizeKey(), 16)
+      defaults.put(JBUI.CurrentTheme.TitlePane.buttonPreferredSizeKey(), JBUI.size(44, 34))
       // tool window stripes
       defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), JBUI.size(32, 32))
       defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSizeKey(), 16)
