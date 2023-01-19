@@ -340,11 +340,16 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     }
   }
 
-  private static SelectablePanel unwrapRenderer(@NotNull JComponent renderer) {
+  private static SelectablePanel findSelectablePanel(@NotNull JComponent renderer) {
     Component result = renderer;
     while (result instanceof ExpandedItemRendererComponentWrapper) {
       result = ExpandedItemRendererComponentWrapper.unwrap(result);
     }
+
+    if (result instanceof GroupedElementsRenderer.MyComponent myComponent) {
+      result = myComponent.getRenderer().getItemComponent();
+    }
+
     return result instanceof SelectablePanel selectablePanel ? selectablePanel : null;
   }
 
@@ -364,7 +369,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       rendererAndBounds.getSecond().setSize(renderer.getSize());
     }
 
-    SelectablePanel selectablePanel = unwrapRenderer(renderer);
+    SelectablePanel selectablePanel = findSelectablePanel(renderer);
     int arc = selectablePanel == null ? borderArc : selectablePanel.getSelectionArc();
     transparentPopup = arc > 0;
     myKeyItemBounds = rendererAndBounds.second;

@@ -266,7 +266,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
         myNextStepLabel.setBorder(JBUI.Borders.emptyLeft(20));
       }
       else {
-        myComponent.setBackground(calcBackground(isSelected && isSelectable));
+        getItemComponent().setBackground(calcBackground(isSelected && isSelectable));
       }
       setForegroundSelected(myTextLabel, isSelected && isSelectable);
     }
@@ -277,13 +277,13 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     boolean hasNextIcon = myNextStepLabel.isVisible();
     boolean hasInlineButtons = updateExtraButtons(list, value, step, isSelected, hasNextIcon);
 
-    if (ExperimentalUI.isNewUI() && myComponent instanceof SelectablePanel) {
-      ((SelectablePanel)myComponent).setSelectionColor(isSelected && isSelectable ? UIUtil.getListSelectionBackground(true) : null);
+    if (ExperimentalUI.isNewUI() && getItemComponent() instanceof SelectablePanel selectablePanel) {
+      selectablePanel.setSelectionColor(isSelected && isSelectable ? UIUtil.getListSelectionBackground(true) : null);
 
       int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
       Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
       //noinspection UseDPIAwareBorders
-      myComponent.setBorder(
+      selectablePanel.setBorder(
         new EmptyBorder(0, innerInsets.left + leftRightInset, 0, hasNextIcon || hasInlineButtons ? leftRightInset : leftRightInset + leftRightInset));
     }
 
@@ -291,7 +291,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       Color bg = ((BaseListPopupStep<E>)step).getBackgroundFor(value);
       Color fg = ((BaseListPopupStep<E>)step).getForegroundFor(value);
       if (!isSelected && fg != null) myTextLabel.setForeground(fg);
-      if (!isSelected && bg != null) UIUtil.setBackgroundRecursively(myComponent, bg);
+      if (!isSelected && bg != null) UIUtil.setBackgroundRecursively(getItemComponent(), bg);
       if (bg != null && mySeparatorComponent.isVisible() && myCurrentIndex > 0) {
         E prevValue = list.getModel().getElementAt(myCurrentIndex - 1);
         // separator between 2 colored items shall get color too
@@ -364,8 +364,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       setForegroundSelected(myValueLabel, selected);
     }
 
-    if (ExperimentalUI.isNewUI() && myComponent instanceof SelectablePanel) {
-      ((SelectablePanel)myComponent).setSelectionColor(isSelected && isSelectable ? UIUtil.getListSelectionBackground(true) : null);
+    if (ExperimentalUI.isNewUI() && getItemComponent() instanceof SelectablePanel selectablePanel) {
+      selectablePanel.setSelectionColor(isSelected && isSelectable ? UIUtil.getListSelectionBackground(true) : null);
       setSelected(myMainPane, isSelected && isSelectable);
     }
   }

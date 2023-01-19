@@ -274,7 +274,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
         if (hasSeparator(value, index)) {
           setSeparatorFont(list.getFont());
         }
-        ((XDebuggerFrameListRenderer)myComponent).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        ((XDebuggerFrameListRenderer)getItemComponent()).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         return component;
       }
       else {

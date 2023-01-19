@@ -34,7 +34,7 @@ open class GroupedComboBoxRenderer(val combo: ComboBox<out Item>) : GroupedEleme
 
   override fun layout() {
     myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH)
-    val centerComponent: JComponent = object : NonOpaquePanel(myComponent) {
+    val centerComponent: JComponent = object : NonOpaquePanel(itemComponent) {
       override fun getPreferredSize(): Dimension {
         return UIUtil.updateListRowHeight(super.getPreferredSize())
       }
@@ -102,12 +102,12 @@ open class GroupedComboBoxRenderer(val combo: ComboBox<out Item>) : GroupedEleme
     if (index == -1) {
       // Element shown in the combo: no separator & no border
       mySeparatorComponent.isVisible = false
-      myComponent.border = JBUI.Borders.empty()
+      itemComponent.border = JBUI.Borders.empty()
     } else {
-      if (ExperimentalUI.isNewUI() && myComponent is SelectablePanel) {
-        PopupUtil.configListRendererFlexibleHeight(myComponent as SelectablePanel)
+      if (ExperimentalUI.isNewUI() && itemComponent is SelectablePanel) {
+        PopupUtil.configListRendererFlexibleHeight(itemComponent as SelectablePanel)
       } else {
-        myComponent.border = CompoundBorder(defaultItemComponentBorder, ComboBoxPopup.COMBO_ITEM_BORDER)
+        itemComponent.border = CompoundBorder(defaultItemComponentBorder, ComboBoxPopup.COMBO_ITEM_BORDER)
       }
     }
 
@@ -115,10 +115,10 @@ open class GroupedComboBoxRenderer(val combo: ComboBox<out Item>) : GroupedEleme
     AccessibleContextUtil.setDescription(myRendererComponent, coloredComponent)
 
     list?.let { myRendererComponent.background = it.background }
-    updateSelection(isSelected, myComponent, coloredComponent)
+    updateSelection(isSelected, itemComponent, coloredComponent)
 
-    if (ExperimentalUI.isNewUI() && myComponent is SelectablePanel) {
-      (myComponent as SelectablePanel).selectionColor = when (isSelected) {
+    if (ExperimentalUI.isNewUI() && itemComponent is SelectablePanel) {
+      (itemComponent as SelectablePanel).selectionColor = when (isSelected) {
         true -> JBUI.CurrentTheme.List.background(true, true)
         false -> null
       }
