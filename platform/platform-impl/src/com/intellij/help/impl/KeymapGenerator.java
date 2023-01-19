@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -16,10 +17,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -95,11 +98,13 @@ final class KeymapGenerator implements ApplicationStarter {
     }
     xml.append("</Keymaps>");
 
-    final File out = new File(args.size() >1 ? args.get(1) : PathManager.getHomePath() + File.separator + "AllKeymaps.xml");
+    final Path targetFilePath = Paths.get(args.size() > 1 ? args.get(1) : PathManager.getHomePath())
+      .resolve(
+        "keymap-%s.xml".formatted(ApplicationInfoEx.getInstanceEx().getApiVersionAsNumber().getProductCode().toLowerCase(Locale.ROOT)));
 
     try {
-      FileUtil.writeToFile(out, xml.toString());
-      LOG.info("Keymaps saved to: " + out.getAbsolutePath());
+      FileUtil.writeToFile(targetFilePath.toFile(), xml.toString());
+      LOG.info("Keymaps saved to: " + targetFilePath.toAbsolutePath().toString());
     }
     catch (IOException e) {
       LOG.error("Cannot save keymaps", e);
