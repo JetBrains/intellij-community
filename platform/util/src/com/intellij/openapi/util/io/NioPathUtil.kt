@@ -5,10 +5,7 @@ package com.intellij.openapi.util.io
 
 import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
 import java.io.IOException
-import java.nio.file.DirectoryStream
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
+import java.nio.file.*
 import kotlin.io.path.*
 
 
@@ -84,6 +81,15 @@ fun Path.deleteChildrenRecursively(relativePath: String, predicate: (Path) -> Bo
 
 fun String.toNioPath(): Path {
   return Paths.get(FileUtil.toSystemDependentName(this))
+}
+
+fun String.toNioPathOrNull(): Path? {
+  return try {
+    toNioPath()
+  }
+  catch (ex: InvalidPathException) {
+    null
+  }
 }
 
 fun String.getResolvedNioPath(relativePath: String): Path {
