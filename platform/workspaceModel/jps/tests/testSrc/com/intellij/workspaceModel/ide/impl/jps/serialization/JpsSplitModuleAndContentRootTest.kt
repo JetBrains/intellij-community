@@ -33,6 +33,7 @@ class JpsSplitModuleAndContentRootTest {
 
   @Before
   fun setUp() {
+    Assume.assumeTrue(Orphanage.use)
     virtualFileManager = IdeVirtualFileUrlManagerImpl()
   }
 
@@ -48,7 +49,6 @@ class JpsSplitModuleAndContentRootTest {
 
   @Test
   fun `add local content root via orphanage`() {
-    Assume.assumeTrue(Orphanage.use)
     checkSaveProjectAfterChange("after/addContentRootOrphanage", "after/addContentRootOrphanage", false) { builder, orphanage, configLocation ->
       assertTrue(builder.entities(ModuleEntity::class.java).toList().isEmpty())
       assertTrue(orphanage.entities(ModuleEntity::class.java).single().contentRoots.single().entitySource !is OrphanageWorkerEntitySource)
@@ -576,9 +576,25 @@ class JpsSplitModuleAndContentRootTest {
     }
   }
 
+  @Test
+  fun `load incorrect saved additional root`() {
+    checkSaveProjectAfterChange("before/loadIncorrectSavedAdditionalRoots", "after/loadIncorrectSavedAdditionalRoots", forceFilesRewrite = true) { builder, orphanage, configLocation ->
+      // Nothing
+    }
+  }
+
+  @Test
+  fun `load and remove additional root`() {
+    checkSaveProjectAfterChange("before/loadAndRemoveAdditionalRoot", "after/loadAndRemoveAdditionalRootY", forceFilesRewrite = true) { builder, orphanage, configLocation ->
+      val toRemove = builder.entities(ModuleEntity::class.java).single().contentRoots.filter { it.entitySource !is JpsImportedEntitySource }
+      toRemove.forEach { builder.removeEntity(it) }
+    }
+  }
+
   private fun checkSaveProjectAfterChange(dirBefore: String,
                                           dirAfter: String,
                                           externalStorage: Boolean = true,
+                                          forceFilesRewrite: Boolean = false,
                                           change: (MutableEntityStorage, MutableEntityStorage, JpsProjectConfigLocation) -> Unit) {
 
     val initialDir = PathManagerEx.findFileUnderCommunityHome(
@@ -588,7 +604,7 @@ class JpsSplitModuleAndContentRootTest {
     checkSaveProjectAfterChange(initialDir, dirAfter, { builder, orphanage, _, location -> change(builder, orphanage, location) },
                                 emptySet(),
                                 virtualFileManager, "serialization/splitModuleAndContentRoot", false,
-                                externalStorageConfigurationManager)
+                                externalStorageConfigurationManager, forceAllFilesRewrite = forceFilesRewrite)
   }
 
   companion object {
