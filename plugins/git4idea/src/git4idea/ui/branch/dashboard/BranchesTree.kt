@@ -316,8 +316,9 @@ internal class FilteringBranchesTree(
 
         val wordMatchers = hashSetOf<MinusculeMatcher>()
         for (word in StringUtil.split(text, " ")) {
+          val trimmedWord = word.trim() //otherwise Character.isSpaceChar would affect filtering
           wordMatchers.add(
-            FixingLayoutMatcher("*$word", NameUtil.MatchingCaseSensitivity.NONE, ""))
+            FixingLayoutMatcher("*$trimmedWord", NameUtil.MatchingCaseSensitivity.NONE, ""))
         }
 
         return wordMatchers
