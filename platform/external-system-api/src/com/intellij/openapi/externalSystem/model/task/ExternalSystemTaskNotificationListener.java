@@ -29,6 +29,9 @@ public interface ExternalSystemTaskNotificationListener extends EventListener {
   @Deprecated(forRemoval = true)
   void onStart(@NotNull ExternalSystemTaskId id);
 
+  default void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
+  }
+
   /**
    * Notifies about processing state change of task with the given id.
    *

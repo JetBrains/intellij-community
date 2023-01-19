@@ -42,6 +42,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.task.RunConfigurationTaskState;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.xdebugger.XDebugProcess;
@@ -302,6 +303,14 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
             processHandler.notifyTextAvailable(farewell + "\n", ProcessOutputTypes.SYSTEM);
             ExternalSystemRunConfiguration.foldGreetingOrFarewell(consoleView, farewell, false);
             processHandler.notifyProcessTerminated(0);
+          }
+
+          @Override
+          public void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
+            RunConfigurationTaskState taskState = myConfiguration.getUserData(RunConfigurationTaskState.getKEY());
+            if (taskState != null && consoleView != null) {
+              taskState.processExecutionResult(processHandler, consoleView);
+            }
           }
         };
         task.execute(taskListener);

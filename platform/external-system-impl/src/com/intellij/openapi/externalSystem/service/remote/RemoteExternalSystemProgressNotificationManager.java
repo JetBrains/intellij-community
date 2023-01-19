@@ -20,6 +20,10 @@ public interface RemoteExternalSystemProgressNotificationManager extends Remote 
     }
 
     @Override
+    public void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
+    }
+
+    @Override
     public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
     }
 
@@ -49,6 +53,8 @@ public interface RemoteExternalSystemProgressNotificationManager extends Remote 
   };
 
   void onStart(@NotNull ExternalSystemTaskId id, @NotNull String projectPath) throws RemoteException;
+
+  void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) throws RemoteException;
 
   void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) throws RemoteException;
 

@@ -13,7 +13,6 @@ import com.intellij.lang.LangCoreBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
-import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -47,7 +46,9 @@ import java.nio.file.Paths
 
 internal class GradleServerEnvironmentSetupImpl(private val project: Project,
                                                 private val classpathInferer: GradleServerClasspathInferer,
-                                                private val environmentConfigurationProvider: TargetEnvironmentConfigurationProvider) : GradleServerEnvironmentSetup, UserDataHolderBase() {
+                                                private val connection: TargetProjectConnection,
+                                                private val prepareTaskState: Boolean) : GradleServerEnvironmentSetup,
+                                                                                         UserDataHolderBase() {
   override val javaParameters = SimpleJavaParameters()
   override lateinit var environmentConfiguration: TargetEnvironmentConfiguration
   lateinit var targetEnvironment: TargetEnvironment
@@ -65,6 +66,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     progressIndicator.checkCanceled()
     initJavaParameters()
 
+    val environmentConfigurationProvider = connection.environmentConfigurationProvider
     this.environmentConfiguration = environmentConfigurationProvider.environmentConfiguration
     val targetPathMapper = environmentConfigurationProvider.pathMapper
 
@@ -95,6 +97,13 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     targetEnvironment = remoteEnvironment
     EP.forEachExtensionSafe {
       it.handleCreatedTargetEnvironment(remoteEnvironment, this, progressIndicator)
+    }
+    if (prepareTaskState) {
+      val taskStateInitScript = connection.parameters.taskState?.handleCreatedTargetEnvironment(remoteEnvironment, progressIndicator)
+      if (taskStateInitScript != null) {
+        targetBuildParametersBuilder.withInitScript("ijtgttaskstate", taskStateInitScript)
+      }
+      connection.taskListener?.onEnvironmentPrepared(connection.taskId!!)
     }
 
     progressIndicator.checkCanceled()
@@ -211,6 +220,9 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
 
     EP.forEachExtensionSafe {
       it.prepareTargetEnvironmentRequest(request, this, progressIndicator)
+    }
+    if (prepareTaskState) {
+      connection.parameters.taskState?.prepareTargetEnvironmentRequest(request, progressIndicator)
     }
     return targetArguments
   }

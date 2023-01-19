@@ -41,6 +41,13 @@ public abstract class ExternalSystemTaskNotificationListenerAdapter implements E
   }
 
   @Override
+  public void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
+    if (myDelegate != null) {
+      myDelegate.onEnvironmentPrepared(id);
+    }
+  }
+
+  @Override
   public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
     if (myDelegate != null) {
       myDelegate.onStatusChange(event);
