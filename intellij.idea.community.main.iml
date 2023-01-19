@@ -197,5 +197,7 @@
     <orderEntry type="module" module-name="intellij.performanceTesting" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.smart.update" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.analysis" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.html.tools" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.html.tools.tests" scope="TEST" />
   </component>
 </module>
