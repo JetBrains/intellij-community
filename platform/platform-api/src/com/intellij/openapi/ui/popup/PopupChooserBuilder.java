@@ -589,7 +589,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @Override
   public IPopupChooserBuilder<T> withHintUpdateSupply() {
-    HintUpdateSupply.installSimpleHintUpdateSupply(myChooserComponent.getComponent());
+    HintUpdateSupply.installDataContextHintUpdateSupply(myChooserComponent.getComponent());
     addCancelCallback(() -> {
       HintUpdateSupply.hideHint(myChooserComponent.getComponent());
       return true;
