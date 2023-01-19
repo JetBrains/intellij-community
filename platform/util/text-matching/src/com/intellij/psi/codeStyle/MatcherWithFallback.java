@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
@@ -7,11 +7,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class MatcherWithFallback extends MinusculeMatcher {
-  @NotNull
-  private final MinusculeMatcher myMainMatcher;
+  private final @NotNull MinusculeMatcher myMainMatcher;
 
-  @Nullable
-  private final MinusculeMatcher myFallbackMatcher;
+  private final @Nullable MinusculeMatcher myFallbackMatcher;
 
   MatcherWithFallback(@NotNull MinusculeMatcher mainMatcher,
                       @Nullable MinusculeMatcher fallbackMatcher) {
@@ -19,9 +17,8 @@ class MatcherWithFallback extends MinusculeMatcher {
     myFallbackMatcher = fallbackMatcher;
   }
 
-  @NotNull
   @Override
-  public String getPattern() {
+  public @NotNull String getPattern() {
     return myMainMatcher.getPattern();
   }
 
@@ -31,9 +28,8 @@ class MatcherWithFallback extends MinusculeMatcher {
            myFallbackMatcher != null && myFallbackMatcher.matches(name);
   }
 
-  @Nullable
   @Override
-  public FList<TextRange> matchingFragments(@NotNull String name) {
+  public @Nullable FList<TextRange> matchingFragments(@NotNull String name) {
     FList<TextRange> mainRanges = myMainMatcher.matchingFragments(name);
     boolean useMainRanges = mainRanges != null && !mainRanges.isEmpty() || myFallbackMatcher == null;
     return useMainRanges ? mainRanges : myFallbackMatcher.matchingFragments(name);
