@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -110,6 +111,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
         }
       }
 
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       String expectedFilePath = ObjectUtils.notNull(quickFix.getBasePath(), "") + "/" + AFTER_PREFIX + testName;
       quickFix.checkResultByFile("In file :" + expectedFilePath, expectedFilePath, false);
 
@@ -302,6 +304,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
           throw new RuntimeException(e);
         }
         LightQuickFixTestCase.this.invoke(action);
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
         Path path = Path.of(getTestDataPath(), previewFilePath);
         if (Files.exists(path)) {
           assertSameLinesWithFile(path.toString(), previewContent);
