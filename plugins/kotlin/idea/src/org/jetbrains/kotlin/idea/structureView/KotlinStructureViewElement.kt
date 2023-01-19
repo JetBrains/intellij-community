@@ -68,9 +68,8 @@ class KotlinStructureViewElement(
         val children = when (val element = element) {
             is KtFile -> {
                 val declarations = element.declarations
-                // it is a bit faster that `element.isScript()`
-                if (declarations.size == 1 && declarations[0] is KtScript) {
-                    declarations[0] as KtScript
+                if (element.isScript()) {
+                    (declarations.singleOrNull() as? KtScript) ?: element
                 } else {
                     element
                 }.declarations
