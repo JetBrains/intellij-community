@@ -342,7 +342,8 @@ internal fun checkSaveProjectAfterChange(originalProjectFile: File,
                                          virtualFileManager: VirtualFileUrlManager,
                                          testDir: String,
                                          checkConsistencyAfterLoading: Boolean = true,
-                                         externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null) {
+                                         externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null,
+                                         forceAllFilesRewrite: Boolean = false) {
   val projectData = copyAndLoadProject(originalProjectFile, virtualFileManager, unloadedModuleNames, checkConsistencyAfterLoading, externalStorageConfigurationManager)
   val builder = MutableEntityStorage.from(projectData.storage)
   val unloadedEntitiesBuilder = MutableEntityStorage.from(projectData.unloadedEntitiesStorage)
@@ -356,6 +357,9 @@ internal fun checkSaveProjectAfterChange(originalProjectFile: File,
         is EntityChange.Replaced -> listOf(change.oldEntity, change.newEntity)
       }
     }.map { it.entitySource }
+  }
+  if (forceAllFilesRewrite) {
+    changedSources.addAll(builder.entitiesBySource { true }.keys)
   }
   val writer = JpsFileContentWriterImpl(projectData.configLocation)
   projectData.serializers.saveEntities(builder.toSnapshot(), unloadedEntitiesBuilder.toSnapshot(), changedSources, writer)
