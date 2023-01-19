@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 fun <T, R> List<T>.map(transform: (T) -> R): List<R> {}
 
 class X {
