@@ -24,13 +24,8 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
   val resizableColumns: MutableSet<Int> by this.grid::resizableColumns
 
   private var defaultHorizontalAlign = HorizontalAlign.LEFT
-    private set
-
   private var defaultVerticalAlign = VerticalAlign.CENTER
-    private set
-
   private var defaultBaselineAlign = false
-    private set
 
   private var x = 0
   private var y = GRID_EMPTY
