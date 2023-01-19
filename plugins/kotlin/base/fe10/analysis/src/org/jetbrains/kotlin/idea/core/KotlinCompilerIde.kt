@@ -167,8 +167,9 @@ class KotlinCompilerIde(
             }
         } else JvmGeneratorExtensionsImpl(compilerConfiguration)
 
-        val stubSettings = JvmIrCodegenFactory.StubSettings(
+        val ideCodegenSettings = JvmIrCodegenFactory.IdeCodegenSettings(
           shouldStubAndNotLinkUnboundSymbols = shouldStubUnboundIrSymbols,
+          shouldDeduplicateBuiltInSymbols = shouldStubUnboundIrSymbols,
 
           // Because the file to compile may be contained in a "common" multiplatform module, an `expect` declaration doesn't necessarily
           // have an obvious associated `actual` symbol. `shouldStubOrphanedExpectSymbols` generates stubs for such `expect` declarations.
@@ -179,7 +180,7 @@ class KotlinCompilerIde(
           compilerConfiguration,
           PhaseConfig(jvmPhases),
           jvmGeneratorExtensions = jvmGeneratorExtensions,
-          stubSettings = stubSettings,
+          ideCodegenSettings = ideCodegenSettings,
         )
     }
 
