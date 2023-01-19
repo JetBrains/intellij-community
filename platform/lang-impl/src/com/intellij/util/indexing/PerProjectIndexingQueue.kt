@@ -203,28 +203,35 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
 
   fun flushNow() {
     val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles()
-    if (totalFiles > 0) {
-      UnindexedFilesIndexer(project, filesInQueue).queue(project)
+    try {
+      if (totalFiles > 0) {
+        UnindexedFilesIndexer(project, filesInQueue).queue(project)
+      }
+      else {
+        LOG.info("Finished for " + project.name + ". No files to index with loading content.")
+      }
+    } finally {
       currentLatch?.countDown()
-    }
-    else {
-      LOG.info("Finished for " + project.name + ". No files to index with loading content.")
     }
   }
 
   fun flushNowSync(projectIndexingHistory: ProjectIndexingHistoryImpl, indicator: ProgressIndicator) {
     val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles()
-    if (totalFiles > 0) {
-      UnindexedFilesIndexer(project, filesInQueue).indexFiles(projectIndexingHistory, indicator)
+    try {
+      if (totalFiles > 0) {
+        UnindexedFilesIndexer(project, filesInQueue).indexFiles(projectIndexingHistory, indicator)
+      }
+      else {
+        LOG.info("Finished for " + project.name + ". No files to index with loading content.")
+      }
+    } finally {
       currentLatch?.countDown()
-    }
-    else {
-      LOG.info("Finished for " + project.name + ". No files to index with loading content.")
     }
   }
 
   fun clear() {
-    getAndResetQueuedFiles()
+    val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles()
+    currentLatch?.countDown() // release DumbModeWhileScanning if it has already been queued or running
   }
 
   private fun getAndResetQueuedFiles(): Triple<ConcurrentMap<IndexableFilesIterator, Collection<VirtualFile>>, Int, CountDownLatch?> {
