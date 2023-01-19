@@ -6,8 +6,6 @@ import org.gradle.api.tasks.Exec
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheAwareImpl
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.createCachedArgsInfo
 import org.jetbrains.kotlin.idea.projectModel.*
-import org.jetbrains.kotlin.tooling.core.MutableExtras
-import org.jetbrains.kotlin.tooling.core.toMutableExtras
 import java.io.File
 
 class KotlinAndroidSourceSetInfoImpl(
@@ -33,12 +31,13 @@ class KotlinSourceSetImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) c
     override val allDependsOnSourceSets: Set<String>,
     override val additionalVisibleSourceSets: Set<String>,
     override val androidSourceSetInfo: KotlinAndroidSourceSetInfo?,
-    override val extras: MutableExtras,
     override val actualPlatforms: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
     override var isTestComponent: Boolean = false,
+    override val extras: IdeaKotlinExtras = IdeaKotlinExtras.empty(),
 ) : KotlinSourceSet {
 
     override val dependencies: Array<KotlinDependencyId> = regularDependencies + intransitiveDependencies
+
 
     @OptIn(KotlinGradlePluginVersionDependentApi::class)
     @Suppress("DEPRECATION")
@@ -53,7 +52,7 @@ class KotlinSourceSetImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) c
         allDependsOnSourceSets = kotlinSourceSet.allDependsOnSourceSets.toMutableSet(),
         additionalVisibleSourceSets = kotlinSourceSet.additionalVisibleSourceSets.toMutableSet(),
         androidSourceSetInfo = kotlinSourceSet.androidSourceSetInfo?.let(::KotlinAndroidSourceSetInfoImpl),
-        extras = kotlinSourceSet.extras.toMutableExtras(),
+        extras = IdeaKotlinExtras.copy(kotlinSourceSet.extras),
         actualPlatforms = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms),
         isTestComponent = kotlinSourceSet.isTestComponent
     )
@@ -143,7 +142,7 @@ data class KotlinCompilationImpl(
     override val kotlinTaskProperties: KotlinTaskProperties,
     override val nativeExtensions: KotlinNativeCompilationExtensions?,
     override val associateCompilations: Set<KotlinCompilationCoordinates>,
-    override val extras: MutableExtras
+    override val extras: IdeaKotlinExtras = IdeaKotlinExtras.empty()
 ) : KotlinCompilation {
 
     // create deep copy
@@ -159,7 +158,7 @@ data class KotlinCompilationImpl(
         kotlinTaskProperties = KotlinTaskPropertiesImpl(kotlinCompilation.kotlinTaskProperties),
         nativeExtensions = kotlinCompilation.nativeExtensions?.let(::KotlinNativeCompilationExtensionsImpl),
         associateCompilations = cloneCompilationCoordinatesWithCaching(kotlinCompilation.associateCompilations, cloningCache),
-        extras = kotlinCompilation.extras.toMutableExtras()
+        extras = IdeaKotlinExtras.copy(kotlinCompilation.extras)
     ) {
         disambiguationClassifier = kotlinCompilation.disambiguationClassifier
         platform = kotlinCompilation.platform
@@ -211,22 +210,22 @@ data class KotlinTargetImpl(
     override val nativeMainRunTasks: Collection<KotlinNativeMainRunTask>,
     override val jar: KotlinTargetJar?,
     override val konanArtifacts: List<KonanArtifactModel>,
-    override val extras: MutableExtras
+    override val extras: IdeaKotlinExtras
 ) : KotlinTarget {
     override fun toString() = name
 
     constructor(target: KotlinTarget, cloningCache: MutableMap<Any, Any>) : this(
-        target.name,
-        target.presetName,
-        target.disambiguationClassifier,
-        KotlinPlatform.byId(target.platform.id) ?: KotlinPlatform.COMMON,
-        target.compilations.map { initialCompilation ->
+      target.name,
+      target.presetName,
+      target.disambiguationClassifier,
+      KotlinPlatform.byId(target.platform.id) ?: KotlinPlatform.COMMON,
+      target.compilations.map { initialCompilation ->
             (cloningCache[initialCompilation] as? KotlinCompilation)
                 ?: KotlinCompilationImpl(initialCompilation, cloningCache).also {
                     cloningCache[initialCompilation] = it
                 }
         }.toList(),
-        target.testRunTasks.map { initialTestTask ->
+      target.testRunTasks.map { initialTestTask ->
             (cloningCache[initialTestTask] as? KotlinTestRunTask)
                 ?: KotlinTestRunTaskImpl(
                     initialTestTask.taskName,
@@ -235,7 +234,7 @@ data class KotlinTargetImpl(
                     cloningCache[initialTestTask] = it
                 }
         },
-        target.nativeMainRunTasks.map { initialTestTask ->
+      target.nativeMainRunTasks.map { initialTestTask ->
             (cloningCache[initialTestTask] as? KotlinNativeMainRunTask)
                 ?: KotlinNativeMainRunTaskImpl(
                     initialTestTask.taskName,
@@ -246,9 +245,9 @@ data class KotlinTargetImpl(
                     cloningCache[initialTestTask] = it
                 }
         },
-        KotlinTargetJarImpl(target.jar?.archiveFile),
-        target.konanArtifacts.map { KonanArtifactModelImpl(it) }.toList(),
-        target.extras.toMutableExtras()
+      KotlinTargetJarImpl(target.jar?.archiveFile),
+      target.konanArtifacts.map { KonanArtifactModelImpl(it) }.toList(),
+      IdeaKotlinExtras.copy(target.extras)
     )
 }
 

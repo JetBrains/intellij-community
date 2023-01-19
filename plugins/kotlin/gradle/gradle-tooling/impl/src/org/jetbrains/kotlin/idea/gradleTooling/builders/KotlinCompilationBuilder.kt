@@ -9,10 +9,10 @@ import org.jetbrains.kotlin.idea.gradleTooling.arguments.buildSerializedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinCompilationOutputReflection
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinCompilationReflection
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinNativeCompileReflection
+import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinExtras
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationOutput
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
-import org.jetbrains.kotlin.tooling.core.mutableExtrasOf
 import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
 
 class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: String?) :
@@ -56,7 +56,6 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
         }
 
         val serializedExtras = importingContext.importReflection?.resolveExtrasSerialized(origin.gradleCompilation)
-        val extras = if(serializedExtras != null) SerializedExtras.serializedExtrasOf(serializedExtras) else mutableExtrasOf()
 
         @Suppress("DEPRECATION_ERROR")
         return KotlinCompilationImpl(
@@ -71,7 +70,7 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             kotlinTaskProperties = kotlinTaskProperties,
             nativeExtensions = nativeExtensions,
             associateCompilations = associateCompilations.toSet(),
-            extras = extras
+            extras = IdeaKotlinExtras.from(serializedExtras)
         )
     }
 

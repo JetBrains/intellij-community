@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.gradle
 import org.gradle.internal.impldep.org.apache.commons.lang.math.RandomUtils
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.*
+import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinExtras
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.tooling.core.MutableExtras
 import org.jetbrains.kotlin.tooling.core.mutableExtrasOf
@@ -68,7 +69,7 @@ internal fun createKotlinSourceSet(
     additionalVisibleSourceSets = emptySet(),
     actualPlatforms = KotlinPlatformContainerImpl().apply { pushPlatforms(platforms) },
     androidSourceSetInfo = androidSourceSetInfo,
-    extras = extras
+    extras = IdeaKotlinExtras.wrap(extras)
 )
 
 @Suppress("DEPRECATION_ERROR")
@@ -98,7 +99,7 @@ internal fun createKotlinCompilation(
         kotlinTaskProperties = kotlinTaskProperties,
         nativeExtensions = nativeExtensions,
         associateCompilations = associateCompilations,
-        extras = extras
+        extras = IdeaKotlinExtras.wrap(extras)
     )
 }
 
@@ -157,6 +158,6 @@ internal fun createKotlinTarget(
         nativeMainRunTasks = emptyList(),
         jar = null,
         konanArtifacts = emptyList(),
-        extras = extras
+        extras = IdeaKotlinExtras.wrap(extras)
     )
 }
