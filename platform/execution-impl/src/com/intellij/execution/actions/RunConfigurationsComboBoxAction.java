@@ -542,7 +542,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       if (myConfiguration.isTemporary()) {
         String actionName = ExecutionBundle.message("choose.run.popup.save");
         String description = ExecutionBundle.message("choose.run.popup.save.description");
-        addAction(new AnAction(actionName, description, AllIcons.Actions.MenuSaveall) {
+        addAction(new AnAction(actionName, description, !ExperimentalUI.isNewUI() ? AllIcons.Actions.MenuSaveall : null) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             RunManager.getInstance(myProject).makeStable(myConfiguration);
@@ -552,7 +552,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
       String actionName = ExecutionBundle.message("choose.run.popup.delete");
       String description = ExecutionBundle.message("choose.run.popup.delete.description");
-      addAction(new AnAction(actionName, description, AllIcons.Actions.Cancel) {
+      addAction(new AnAction(actionName, description, !ExperimentalUI.isNewUI() ? AllIcons.Actions.Cancel : null) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           ChooseRunConfigurationPopup.deleteConfiguration(myProject, myConfiguration, null);

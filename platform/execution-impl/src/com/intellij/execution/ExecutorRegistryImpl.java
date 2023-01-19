@@ -691,7 +691,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         Presentation presentation = e.getPresentation();
         presentation.setText(ExecutionBundle.message("choose.run.popup.edit"));
         presentation.setDescription(ExecutionBundle.message("choose.run.popup.edit.description"));
-        presentation.setIcon(AllIcons.Actions.EditSource);
+        presentation.setIcon(!ExperimentalUI.isNewUI() ? AllIcons.Actions.EditSource : null);
       }
     }
 
