@@ -4,6 +4,7 @@ import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
+import org.jetbrains.plugins.textmate.bundles.TextMateBundleReader;
 import org.jetbrains.plugins.textmate.language.preferences.*;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.plist.PListValue;
@@ -90,6 +91,10 @@ public final class PreferencesReadUtil {
   private PreferencesReadUtil() {
   }
 
+  /**
+   * @deprecated use {@link TextMateBundleReader#readSnippets()} instead
+   */
+  @Deprecated
   @Nullable
   public static TextMateSnippet loadSnippet(@NotNull File snippetFile, @NotNull Plist plist, @NotNull Interner<CharSequence> interner) {
     return snippetFile.getName().endsWith("." + Constants.SUBLIME_SNIPPET_EXTENSION)

@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
+import org.jetbrains.plugins.textmate.bundles.TextMateBundleReader;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.preferences.PreferencesRegistry;
 import org.jetbrains.plugins.textmate.language.preferences.ShellVariablesRegistry;
@@ -24,10 +25,24 @@ public abstract class TextMateService {
   /**
    * Create bundle object from given directory.
    *
+   * @deprecated use {@link #readBundle(VirtualFile)} instead
+   * @return bundle object or {@code null} if directory doesn't exist or bundle type can't be defined
+   */
+  @Deprecated(forRemoval = true)
+  @Nullable
+  public Bundle createBundle(@NotNull VirtualFile directory) {
+    return null;
+  }
+
+  /**
+   * Create bundle object from given directory.
+   *
    * @return bundle object or {@code null} if directory doesn't exist or bundle type can't be defined
    */
   @Nullable
-  public abstract Bundle createBundle(@NotNull VirtualFile directory);
+  public TextMateBundleReader readBundle(@Nullable VirtualFile directory) {
+    return null;
+  }
 
   /**
    * Unregister all and register all enabled bundles in IDE {@link org.jetbrains.plugins.textmate.configuration.TextMateSettings.TextMateSettingsState#getBundles()}

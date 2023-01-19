@@ -15,6 +15,10 @@ import java.util.*;
 
 import static java.util.Collections.emptyList;
 
+/**
+ * @deprecated use `TextMateService#readBundle` or `TextMateBundleReader`
+ */
+@Deprecated
 public class Bundle {
   // all extensions should be lowercased
   @SuppressWarnings("SpellCheckingInspection") private static final FileFilter SYNTAX_FILES_FILTER = new BundleFilesFilter("tmlanguage", "plist", "tmlanguage.json");
@@ -34,20 +38,52 @@ public class Bundle {
     return myName;
   }
 
+  /**
+   * @deprecated use `TextMateService#readBundle#readGrammars` or `TextMateBundleReader`
+   */
+  @Deprecated
   public @NotNull Collection<File> getGrammarFiles() {
-    return getFilesInBundle(myType.getSyntaxesPath(), SYNTAX_FILES_FILTER);
+    switch (myType) {
+      case TEXTMATE -> {
+        return getFilesInBundle("Syntaxes", SYNTAX_FILES_FILTER);
+      }
+      case SUBLIME -> {
+        return getFilesInBundle("", SYNTAX_FILES_FILTER);
+      }
+    }
+    throw new IllegalArgumentException("Only textmate and sublime bundles are supported. Use TextMateBundleReader instead.");
   }
 
+  /**
+   * @deprecated use `TextMateService#readBundle#readPreferences` or `TextMateBundleReader`
+   */
+  @Deprecated
   public @NotNull Collection<File> getPreferenceFiles() {
-    return getFilesInBundle(myType.getPreferencesPath(), PREFERENCE_FILES_FILTER);
+    switch (myType) {
+      case TEXTMATE -> {
+        return getFilesInBundle("Preferences", PREFERENCE_FILES_FILTER);
+      }
+      case SUBLIME -> {
+        return getFilesInBundle("", PREFERENCE_FILES_FILTER);
+      }
+    }
+    throw new IllegalArgumentException("Only textmate and sublime bundles are supported. Use TextMateBundleReader instead.");
   }
 
+  /**
+   * @deprecated use `TextMateService#readBundle#readSnippets` or `TextMateBundleReader`
+   */
+  @Deprecated
   public @NotNull Collection<File> getSnippetFiles() {
-    return getFilesInBundle(myType.getSnippetsPath(), new BundleFilesFilter(myType.getSnippetFileExtensions()));
-  }
-
-  public @NotNull BundleType getType() {
-    return myType;
+    switch (myType) {
+      case TEXTMATE -> {
+        return getFilesInBundle("Snippets", new BundleFilesFilter(Constants.TEXTMATE_SNIPPET_EXTENSION, "plist"));
+      }
+      case SUBLIME -> {
+        return emptyList();
+      }
+    }
+    throw new IllegalArgumentException("Only textmate and sublime bundles are supported. Use TextMateBundleReader instead.");
   }
 
   private @NotNull Collection<File> getFilesInBundle(@NotNull String path, @Nullable FileFilter filter) {
@@ -80,10 +116,18 @@ public class Bundle {
   }
 
 
+  /**
+   * @deprecated use `TextMateService#readBundle#readGrammars` or `TextMateBundleReader`
+   */
+  @Deprecated
   public Collection<String> getExtensions(@NotNull File file, @NotNull Plist plist) {
     return plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList()).getStringArray();
   }
 
+  /**
+   * @deprecated use `TextMateService#readBundle#readPreferences` or `TextMateBundleReader`
+   */
+  @Deprecated
   public List<Map.Entry<String, Plist>> loadPreferenceFile(@NotNull File file, @NotNull PlistReader plistReader) throws IOException {
     return Collections.singletonList(PreferencesReadUtil.retrieveSettingsPlist(plistReader.read(file)));
   }
