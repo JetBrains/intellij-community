@@ -205,7 +205,8 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
       return
     }
 
-    if (cachedStatuses.get(file) == null) {
+    if (file.fileSystem !is NonPhysicalFileSystem
+        && cachedStatuses.get(file) == null) {
       return
     }
 
@@ -222,7 +223,8 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
     }
     val updatedFiles = ArrayList<VirtualFile>()
     for (file in toRefresh) {
-      val wasUpdated = updateFileStatusFor(file)
+      val wasUpdated = file.fileSystem is NonPhysicalFileSystem
+                       || updateFileStatusFor(file)
       if (wasUpdated) {
         updatedFiles.add(file)
       }
