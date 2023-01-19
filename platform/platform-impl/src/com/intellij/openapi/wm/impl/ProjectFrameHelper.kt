@@ -37,7 +37,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 import java.awt.Window
 import java.awt.event.ComponentAdapter
@@ -61,8 +60,8 @@ open class ProjectFrameHelper internal constructor(
   private var currentFile: Path? = null
   private var project: Project? = null
 
-  @get:ApiStatus.Internal
-  val rootPane: IdeRootPane
+  @JvmField
+  internal val rootPane: IdeRootPane
 
   private var balloonLayout: BalloonLayout? = null
   private val frameDecorator: IdeFrameDecorator?

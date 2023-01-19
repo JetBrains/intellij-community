@@ -361,7 +361,7 @@ private fun CoroutineScope.initFrame(deferredProjectFrameHelper: Deferred<Projec
       }
     }
     val frameHelper = deferredProjectFrameHelper.await()
-    toolWindowManager.init(frameHelper = frameHelper, reopeningEditorsJob = reopeningEditorJob, taskListDeferred = taskListDeferred)
+    toolWindowManager.init(frameHelper = frameHelper, reopeningEditorJob = reopeningEditorJob, taskListDeferred = taskListDeferred)
   }
 
   launch {
