@@ -84,7 +84,7 @@ internal open class UpdateIdeFromSourcesAction
       }
     }
 
-    fun error(@NlsContexts.DialogMessage message : String) {
+    fun error(message : @NlsContexts.DialogMessage String) {
       Messages.showErrorDialog(project, message, CommonBundle.getErrorTitle())
     }
 
