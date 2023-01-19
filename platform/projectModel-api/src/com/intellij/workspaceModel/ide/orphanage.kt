@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -30,6 +31,8 @@ class Orphanage(private val project: Project) {
 
     val newStorage: EntityStorageSnapshot = builder.toSnapshot()
     entityStorage.replace(newStorage, emptyMap(), {}, {})
+
+    log.info("Update orphanage. ${changes[ModuleEntity::class.java]?.size} modules added")
   }
 
   private fun checkIfParentsAlreadyExist(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
@@ -55,6 +58,7 @@ class Orphanage(private val project: Project) {
 
   companion object {
     val use: Boolean by lazy { Registry.`is`("ide.workspace.model.separate.component.for.roots", false) }
+    val log = logger<Orphanage>()
   }
 }
 
@@ -164,6 +168,7 @@ private class ContentRootAdder(private val project: Project) : EntityAdder {
   }
 
   override fun addToBuilder(builder: MutableEntityStorage) {
+    log.info("Move content roots for ${updates.size} modules from orphanage to storage")
     updates.forEach { (snapshotModule, rootsToAdd) ->
       builder.modifyEntity(snapshotModule) {
         this.contentRoots += rootsToAdd
@@ -189,6 +194,10 @@ private class ContentRootAdder(private val project: Project) : EntityAdder {
         val notedModule = builder.resolve(module.symbolicId) ?: return@forEach
         builder.removeEntity(notedModule)
       }
+  }
+
+  companion object {
+    val log = logger<ContentRootAdder>()
   }
 }
 
@@ -249,6 +258,7 @@ private class SourceRootAdder(private val project: Project) : EntityAdder {
   }
 
   override fun addToBuilder(builder: MutableEntityStorage) {
+    log.info("Move source roots for ${updates.size} modules from orphanage to storage")
     updates.forEach { (snapshotModule, rootsToAdd) ->
       rootsToAdd.forEach { (root, sources) ->
         val contentRoot = snapshotModule.contentRoots.find { it.url == root }!!
@@ -286,6 +296,10 @@ private class SourceRootAdder(private val project: Project) : EntityAdder {
         val notedModule = builder.resolve(module.symbolicId) ?: return@forEach
         builder.removeEntity(notedModule)
       }
+  }
+
+  companion object {
+    val log = logger<SourceRootAdder>()
   }
 }
 
@@ -346,7 +360,7 @@ private class ExcludeRootAdder(private val project: Project) : EntityAdder {
   }
 
   override fun addToBuilder(builder: MutableEntityStorage) {
-
+    log.info("Move exclude roots for ${updates.size} modules from orphanage to storage")
     updates.forEach { (snapshotModule, rootsToAdd) ->
       rootsToAdd.forEach { (root, excludes) ->
         val contentRoot = snapshotModule.contentRoots.find { it.url == root }!!
@@ -384,5 +398,9 @@ private class ExcludeRootAdder(private val project: Project) : EntityAdder {
         val notedModule = builder.resolve(module.symbolicId) ?: return@forEach
         builder.removeEntity(notedModule)
       }
+  }
+
+  companion object {
+    val log = logger<ExcludeRootAdder>()
   }
 }
