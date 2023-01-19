@@ -31,5 +31,8 @@ data class TestResultEntity(
   val buildType: String,
 
   @JsonProperty("build_status_message")
-  val buildStatusMessage: String
+  val buildStatusMessage: String,
+
+  @JsonProperty("is_muted")
+  val isMuted: Boolean,
 )

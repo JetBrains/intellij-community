@@ -192,7 +192,7 @@ class TeamCityClient(
     do {
       val fullUrl = restUri
         .resolve("testOccurrences?locator=build:(id:$buildId),count:$countOfTestsOnPage,start:$startPosition" +
-                 "&includePersonal=true&fields=testOccurrence(id,name,status,duration,runOrder)")
+                 "&includePersonal=true&fields=testOccurrence(id,name,status,duration,runOrder,currentlyMuted)")
 
       val rawData = Cache.get(fullUrl) { get(fullUrl).toString() }
 
