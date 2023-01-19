@@ -11,6 +11,22 @@ import org.jetbrains.kotlin.test.TestMetadata
 @TestMetadata("testData/inspections/dfa")
 class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testAlwaysZero() = doTest()
+    @Suppress("ClassExplicitlyAnnotation")
+    fun testAnnotationInJava() {
+        myFixture.addClass("""
+            import java.lang.annotation.Annotation;
+
+            @interface Storage {}
+
+            public class FileStorageAnnotation implements Storage {
+                @Override
+                public Class<? extends Annotation> annotationType() {
+                    throw new UnsupportedOperationException("Method annotationType not implemented in " + getClass());
+                }
+            }
+        """.trimIndent())
+        doTest()
+    }
     fun testAnyType() = doTest()
     fun testArrays() = doTest()
     fun testBoolean() = doTest()
