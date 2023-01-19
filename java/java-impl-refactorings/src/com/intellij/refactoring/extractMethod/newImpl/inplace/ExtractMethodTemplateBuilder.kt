@@ -9,20 +9,21 @@ import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler
+import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
-import com.intellij.refactoring.suggested.range
-import com.intellij.refactoring.util.CommonRefactoringUtil
 
 data class ExtractMethodTemplateBuilder(
   private val editor: Editor,
@@ -32,7 +33,7 @@ data class ExtractMethodTemplateBuilder(
   private val validator: (TextRange) -> Boolean = { true },
   private val onBroken: () -> Unit = {},
   private val onSuccess: () -> Unit = {},
-  private val disposable: Disposable = Disposable { },
+  private val disposable: Disposable = Disposer.newDisposable(),
   private val restartHandler: Class<out RefactoringActionHandler>? = null
 ){
 
@@ -86,44 +87,15 @@ data class ExtractMethodTemplateBuilder(
       setupImaginaryInplaceRenamer(templateState, restartHandler)
       Disposer.register(templateState) { SuggestedRefactoringProvider.getInstance(project).reset() }
       DaemonCodeAnalyzer.getInstance(project).disableUpdateByTimer(templateState)
-
-      val methodMarker = document.createRangeMarker(methodIdentifier).apply { isGreedyToRight = true }
-      val callMarker = document.createRangeMarker(callIdentifier).apply { isGreedyToRight = true }
-      fun setMethodName(text: String) {
-        WriteCommandAction.writeCommandAction(project).run<Throwable> {
-          callMarker.range?.also { range ->
-            editor.document.replaceString(range.startOffset, range.endOffset, text)
-          }
-          methodMarker.range?.also { range ->
-            editor.document.replaceString(range.startOffset, range.endOffset, text)
-          }
-          PsiDocumentManager.getInstance(project).commitDocument(editor.document)
-        }
+      setTemplateValidator(templateState) { state ->
+        val variableRange = state.currentVariableRange ?: return@setTemplateValidator false
+        validator.invoke(variableRange)
       }
-
-      var shouldDispose = true
-      Disposer.register(templateState) {
-        if (shouldDispose) Disposer.dispose(disposable)
-      }
+      Disposer.register(templateState, disposable)
       templateState.addTemplateStateListener(object: TemplateEditingAdapter(){
         override fun templateFinished(template: Template, brokenOff: Boolean) {
-          val methodRange = methodMarker.range
-          val callRange = callMarker.range
-          if (brokenOff || methodRange == null || callRange == null){
+          if (brokenOff){
             onBroken.invoke()
-            return
-          }
-          val isValid = try {
-            validator.invoke(callRange)
-          } catch (e: CommonRefactoringUtil.RefactoringErrorHintException){
-            false
-          }
-          if (!isValid) {
-            shouldDispose = false
-            val modifiedText = document.getText(callRange)
-            setMethodName(defaultText)
-            createTemplate(file, methodIdentifier, callIdentifier)
-            setMethodName(modifiedText)
             return
           }
           onSuccess.invoke()
@@ -161,5 +133,18 @@ data class ExtractMethodTemplateBuilder(
       listOf(editor.caretModel.offset)
     }
     return editorOffsets.all { it in templateRange }
+  }
+
+  private fun setTemplateValidator(templateState: TemplateState, validator: (TemplateState) -> Boolean){
+    val manager = EditorActionManager.getInstance()
+    val actionName = "NextTemplateVariable"
+    val defaultHandler = manager.getActionHandler(actionName)
+    Disposer.register(templateState) { manager.setActionHandler(actionName, defaultHandler) }
+    manager.setActionHandler(actionName, object : EditorActionHandler() {
+      override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
+        if (!validator.invoke(templateState)) return
+        defaultHandler.execute(editor, caret, dataContext)
+      }
+    })
   }
 }

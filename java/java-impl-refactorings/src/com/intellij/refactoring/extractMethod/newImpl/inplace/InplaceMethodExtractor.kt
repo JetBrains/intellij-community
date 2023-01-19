@@ -114,7 +114,10 @@ class InplaceMethodExtractor(private val editor: Editor,
         .withValidation { variableRange ->
           val errorMessage = getIdentifierError(file, variableRange)
           if (errorMessage != null) {
-            CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, ExtractMethodHandler.getRefactoringName(), null)
+            try {
+              CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, ExtractMethodHandler.getRefactoringName(), null)
+            }
+            catch (ignore: CommonRefactoringUtil.RefactoringErrorHintException) {}
           }
           errorMessage == null
         }
