@@ -4,8 +4,8 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntityBase
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.serialization.facet.FacetState
@@ -28,7 +28,7 @@ import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
  */
 @ApiStatus.Internal
 @ApiStatus.OverrideOnly
-interface CustomFacetRelatedEntitySerializer<T: FacetEntityBase> {
+interface CustomFacetRelatedEntitySerializer<T: ModuleSettingsBase> {
   /**
    * Declare class for the main entity associated with [com.intellij.facet.Facet].
    */
@@ -63,12 +63,12 @@ interface CustomFacetRelatedEntitySerializer<T: FacetEntityBase> {
   fun serializeIntoXml(entity: T): Element
 
   companion object {
-    val EP_NAME: ExtensionPointName<CustomFacetRelatedEntitySerializer<FacetEntityBase>> =
+    val EP_NAME: ExtensionPointName<CustomFacetRelatedEntitySerializer<ModuleSettingsBase>> =
       ExtensionPointName.create("com.intellij.workspaceModel.customFacetRelatedEntitySerializer")
   }
 }
 
-interface FacetEntityBaseSerializer<T: FacetEntityBase> : CustomFacetRelatedEntitySerializer<T> {
+interface ModuleSettingsBaseSerializer<T: ModuleSettingsBase> : CustomFacetRelatedEntitySerializer<T> {
   override fun createFacetStateFromEntities(entities: List<T>, storeExternally: Boolean): List<FacetState> {
     return entities.map { settingsEntity ->
       val state = FacetState().apply {

@@ -23,8 +23,8 @@ import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntityBase
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
 
 class FacetEntityChangeListener(private val project: Project): Disposable {
 
@@ -36,7 +36,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
 
       val facetType = facetBridgeContributor.rootEntityType
       changes[facetType]?.asSequence()?.filterIsInstance<EntityChange.Added<*>>()?.forEach perFacet@ { facetChange ->
-        fun createBridge(entity: FacetEntityBase): Facet<*> {
+        fun createBridge(entity: ModuleSettingsBase): Facet<*> {
           val existingFacetBridge = builder.facetMapping().getDataByEntity(entity)
           if (existingFacetBridge != null) return existingFacetBridge
 
@@ -52,7 +52,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
           return newFacetBridge
         }
 
-        createBridge(facetChange.newEntity as FacetEntityBase)
+        createBridge(facetChange.newEntity as ModuleSettingsBase)
       }
     }
   }
@@ -75,7 +75,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
     }
   }
 
-  private fun processBeforeChangeEvents(event: VersionedStorageChange, workspaceFacetContributor: WorkspaceFacetContributor<FacetEntityBase>) {
+  private fun processBeforeChangeEvents(event: VersionedStorageChange, workspaceFacetContributor: WorkspaceFacetContributor<ModuleSettingsBase>) {
     event.getChanges(workspaceFacetContributor.rootEntityType).forEach { change ->
       when (change) {
         is EntityChange.Added -> {
@@ -97,8 +97,8 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
     }
   }
 
-  private fun processChangeEvents(event: VersionedStorageChange, workspaceFacetContributor: WorkspaceFacetContributor<FacetEntityBase>) {
-    val changedFacets = mutableMapOf<Facet<*>, FacetEntityBase>()
+  private fun processChangeEvents(event: VersionedStorageChange, workspaceFacetContributor: WorkspaceFacetContributor<ModuleSettingsBase>) {
+    val changedFacets = mutableMapOf<Facet<*>, ModuleSettingsBase>()
 
     event.getChanges(workspaceFacetContributor.rootEntityType).forEach { change ->
       when (change) {
@@ -165,7 +165,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
             if (!removedFacets.contains(rootEntity)) {
               val facet = event.storageBefore.facetMapping().getDataByEntity(rootEntity) ?: error("Facet should be available")
               val actualRootElement = event.storageAfter.facetMapping().getEntities(facet).single()
-              changedFacets[facet] = actualRootElement as FacetEntityBase
+              changedFacets[facet] = actualRootElement as ModuleSettingsBase
             }
           }
           is EntityChange.Replaced -> {
@@ -190,7 +190,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
       // If this change is performed in FacetManagerBridge.facetConfigurationChanged,
       // FacetConfiguration is already updated and there is no need to update it again
       if (facetConfigurationXml != JDOMUtil.write(rootElement)) {
-        (facet as? FacetBridge<FacetEntityBase>)?.updateFacetConfiguration(rootEntity) ?:
+        (facet as? FacetBridge<ModuleSettingsBase>)?.updateFacetConfiguration(rootEntity) ?:
         FacetUtil.loadFacetConfiguration(facet.configuration, rootElement)
         publisher.fireFacetConfigurationChanged(facet)
       }

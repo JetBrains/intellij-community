@@ -7,7 +7,7 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 
-interface FacetEntity: FacetEntityBase {
+interface FacetEntity: ModuleSettingsBase {
   val module: ModuleEntity
   val facetType: @NonNls String
   val configurationXmlTag: @NonNls String?
@@ -19,7 +19,7 @@ interface FacetEntity: FacetEntityBase {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : FacetEntity, FacetEntityBase.Builder<FacetEntity>, WorkspaceEntity.Builder<FacetEntity>, ObjBuilder<FacetEntity> {
+  interface Builder : FacetEntity, ModuleSettingsBase.Builder<FacetEntity>, WorkspaceEntity.Builder<FacetEntity>, ObjBuilder<FacetEntity> {
     override var entitySource: EntitySource
     override var name: String
     override var moduleId: ModuleId
@@ -29,7 +29,7 @@ interface FacetEntity: FacetEntityBase {
     override var underlyingFacet: FacetEntity?
   }
 
-  companion object : Type<FacetEntity, Builder>(FacetEntityBase) {
+  companion object : Type<FacetEntity, Builder>(ModuleSettingsBase) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

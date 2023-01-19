@@ -4,8 +4,8 @@ import com.intellij.facet.Facet
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntityBase
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 @ApiStatus.OverrideOnly
-interface WorkspaceFacetContributor<T: FacetEntityBase> {
+interface WorkspaceFacetContributor<T: ModuleSettingsBase> {
   /**
    * Declare class for the main entity associated with [com.intellij.facet.Facet].
    */
@@ -68,6 +68,6 @@ interface WorkspaceFacetContributor<T: FacetEntityBase> {
   }
 
   companion object {
-    val EP_NAME: ExtensionPointName<WorkspaceFacetContributor<FacetEntityBase>> = ExtensionPointName.create("com.intellij.workspaceModel.facetContributor")
+    val EP_NAME: ExtensionPointName<WorkspaceFacetContributor<ModuleSettingsBase>> = ExtensionPointName.create("com.intellij.workspaceModel.facetContributor")
   }
 }

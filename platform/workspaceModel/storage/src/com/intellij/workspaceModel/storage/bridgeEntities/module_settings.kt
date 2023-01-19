@@ -11,23 +11,23 @@ import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
 
 @Abstract
-interface FacetEntityBase : WorkspaceEntityWithSymbolicId {
+interface ModuleSettingsBase : WorkspaceEntityWithSymbolicId {
   val name: @NlsSafe String
   val moduleId: ModuleId
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : FacetEntityBase> : FacetEntityBase, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
+  interface Builder<T : ModuleSettingsBase> : ModuleSettingsBase, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
     override var entitySource: EntitySource
     override var name: String
     override var moduleId: ModuleId
   }
 
-  companion object : Type<FacetEntityBase, Builder<FacetEntityBase>>() {
+  companion object : Type<ModuleSettingsBase, Builder<ModuleSettingsBase>>() {
     operator fun invoke(name: String,
                         moduleId: ModuleId,
                         entitySource: EntitySource,
-                        init: (Builder<FacetEntityBase>.() -> Unit)? = null): FacetEntityBase {
+                        init: (Builder<ModuleSettingsBase>.() -> Unit)? = null): ModuleSettingsBase {
       val builder = builder()
       builder.name = name
       builder.moduleId = moduleId

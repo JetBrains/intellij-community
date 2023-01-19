@@ -24,8 +24,8 @@ import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import com.intellij.workspaceModel.ide.toExternalSource
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntityBase
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
 import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import org.jetbrains.jps.model.serialization.facet.FacetState
 
@@ -215,8 +215,8 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     super.facetsChanged()
   }
 
-  fun checkConsistency(facetRelatedEntities: List<FacetEntityBase>,
-                       entityTypeToFacetContributor: Map<Class<FacetEntityBase>, WorkspaceFacetContributor<FacetEntityBase>>) {
+  fun checkConsistency(facetRelatedEntities: List<ModuleSettingsBase>,
+                       entityTypeToFacetContributor: Map<Class<ModuleSettingsBase>, WorkspaceFacetContributor<ModuleSettingsBase>>) {
     val facetEntitiesSet = facetRelatedEntities.toSet()
     for (entity in facetRelatedEntities) {
       val facet = facetMapping().getDataByEntity(entity)

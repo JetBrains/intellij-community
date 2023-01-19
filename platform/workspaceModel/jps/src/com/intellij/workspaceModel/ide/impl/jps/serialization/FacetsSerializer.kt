@@ -8,9 +8,9 @@ import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntityBase
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetsOrderEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
 import com.intellij.workspaceModel.storage.bridgeEntities.facetOrder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
@@ -66,7 +66,7 @@ internal class FacetsSerializer(private val imlFileUrl: VirtualFileUrl, private 
       .mapNotNull { entitySerializer ->
         val entitiesToSave = affectedEntities[entitySerializer.rootEntityType]?.filter { entitySourceFilter.invoke(it.entitySource) }
                              ?: return@mapNotNull null
-        entitySerializer.createFacetStateFromEntities(entitiesToSave.map { it as FacetEntityBase }, externalStorage)
+        entitySerializer.createFacetStateFromEntities(entitiesToSave.map { it as ModuleSettingsBase }, externalStorage)
       }.flatten()
 
     if (facetStatesFromEP.isEmpty()) {

@@ -109,7 +109,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   }
 
   override fun getNewName(facet: Facet<*>): String {
-    val entity = diff.facetMapping().getEntities(facet).single() as FacetEntityBase
+    val entity = diff.facetMapping().getEntities(facet).single() as ModuleSettingsBase
     return entity.name
   }
 

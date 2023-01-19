@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
@@ -99,10 +98,10 @@ open class FacetEntityImpl(val dataSource: FacetEntityData) : FacetEntity, Works
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
       if (!getEntityData().isNameInitialized()) {
-        error("Field FacetEntityBase#name should be initialized")
+        error("Field ModuleSettingsBase#name should be initialized")
       }
       if (!getEntityData().isModuleIdInitialized()) {
-        error("Field FacetEntityBase#moduleId should be initialized")
+        error("Field ModuleSettingsBase#moduleId should be initialized")
       }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
