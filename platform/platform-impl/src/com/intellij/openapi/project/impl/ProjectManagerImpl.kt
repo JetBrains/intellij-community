@@ -46,8 +46,6 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.*
-import com.intellij.openapi.project.ex.LowLevelProjectOpenProcessor
-import com.intellij.openapi.project.ex.PerProjectInstancePaths
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl.Companion.preloadServicesAndCreateComponents
@@ -69,7 +67,6 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
-import com.intellij.util.Restarter
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
@@ -86,9 +83,6 @@ import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
-import kotlin.io.path.div
-import kotlin.io.path.exists
-import kotlin.io.path.writeText
 
 @Suppress("OVERRIDE_DEPRECATION")
 @Internal
@@ -96,9 +90,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   companion object {
     @TestOnly
     @JvmStatic
-    fun isLight(project: Project): Boolean {
-      return project is ProjectEx && project.isLight
-    }
+    fun isLight(project: Project): Boolean = project is ProjectEx && project.isLight
 
     internal suspend fun dispatchEarlyNotifications() {
       val notificationManager = NotificationsManager.getNotificationsManager() as NotificationsManagerImpl
@@ -547,35 +539,20 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     if (ApplicationManagerEx.isInIntegrationTest()) {
-      // write current PID to file to kill process if it hangs
+      // write current PID to file to kill the process if it hangs
       if (IS_CHILD_PROCESS) {
         val pid = ProcessHandle.current().pid()
-        val pidsFile = PathManager.getSystemDir() / "pids.txt"
-        pidsFile.writeText(pid.toString())
-      }
-    }
-
-    if (shouldOpenInChildProcess(projectStoreBaseDir)) {
-      openInChildProcess(projectStoreBaseDir)
-      if (!IS_CHILD_PROCESS) {
-        withContext(Dispatchers.EDT) {
-          ApplicationManagerEx.getApplicationEx().exit(true, true)
-        }
-      }
-      else {
-        return null
-      }
-    }
-    else if (IS_PER_PROJECT_INSTANCE_ENABLED) {
-      LowLevelProjectOpenProcessor.EP_NAME.extensions.forEach {
-        if (it.beforeProjectOpened(projectStoreBaseDir) == LowLevelProjectOpenProcessor.PrepareProjectResult.CANCEL) {
-          LOG.info("Project opening preparation has been cancelled")
-          activity.end()
-          throw ProcessCanceledException()
+        @Suppress("SpellCheckingInspection")
+        val file = PathManager.getSystemDir().resolve("pids.txt")
+        withContext(Dispatchers.IO) {
+          Files.writeString(file, pid.toString())
         }
       }
     }
 
+    if (checkChildProcess(projectStoreBaseDir, activity)) {
+      return null
+    }
 
     if (!options.forceOpenInNewFrame) {
       val openProjects = openProjects
@@ -614,7 +591,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     var result: Project? = null
     var projectOpenActivity: Activity? = null
     try {
-      frameAllocator.run { saveTemplateJob, initFrame ->
+      frameAllocator.run { saveTemplateJob, rawProjectDeferred ->
         activity.end()
         val initFrameEarly = !options.isNewProject && options.beforeOpen == null && options.project == null
         val project = when {
@@ -624,7 +601,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
                                                     saveTemplateJob = saveTemplateJob)
           else -> prepareProject(options = options,
                                  projectStoreBaseDir = projectStoreBaseDir,
-                                 initFrame = initFrame.takeIf { initFrameEarly })
+                                 rawProjectDeferred = rawProjectDeferred.takeIf { initFrameEarly })
         }
         result = project
         // must be under try-catch to dispose project on beforeOpen or preparedToOpen callback failures
@@ -653,7 +630,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         // Project is loaded and is initialized, project services and components can be accessed.
         // But start-up and post start-up activities are not yet executed.
         if (!initFrameEarly) {
-          initFrame(project)
+          rawProjectDeferred?.complete(project)
         }
 
         projectOpenActivity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity("project opening") else null
@@ -842,7 +819,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   private suspend fun prepareProject(options: OpenProjectTask,
                                      projectStoreBaseDir: Path,
-                                     initFrame: ((project: Project) -> Unit)?): Project {
+                                     rawProjectDeferred: CompletableDeferred<Project>?): Project {
     var conversionResult: ConversionResult? = null
     if (options.runConversionBeforeOpen) {
       val conversionService = ConversionService.getInstance()
@@ -866,7 +843,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
                 isRefreshVfsNeeded = options.isRefreshVfsNeeded,
                 preloadServices = options.preloadServices,
                 template = null,
-                initFrame = initFrame,
+                rawProjectDeferred = rawProjectDeferred,
                 isTrustCheckNeeded = true)
 
     if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
@@ -1169,7 +1146,7 @@ private suspend fun initProject(file: Path,
                                 preloadServices: Boolean,
                                 template: Project?,
                                 isTrustCheckNeeded: Boolean,
-                                initFrame: ((project: Project) -> Unit)? = null) {
+                                rawProjectDeferred: CompletableDeferred<Project>? = null) {
   LOG.assertTrue(!project.isDefault)
 
   try {
@@ -1189,15 +1166,14 @@ private suspend fun initProject(file: Path,
     coroutineContext.ensureActive()
     project.componentStore.setPath(file, isRefreshVfsNeeded, template)
 
+    rawProjectDeferred?.complete(project)
+
     coroutineScope {
       val isTrusted = async { !isTrustCheckNeeded || checkOldTrustedStateAndMigrate(project, file) }
 
       projectInitListeners {
         it.execute(project)
       }
-
-      // yes, before preloadServicesAndCreateComponents
-      initFrame?.invoke(project)
 
       preloadServicesAndCreateComponents(project, preloadServices)
 
@@ -1221,6 +1197,22 @@ private suspend fun initProject(file: Path,
     throw initThrowable
   }
 }
+
+internal suspend inline fun projectInitListeners(crossinline executor: suspend (ProjectServiceContainerInitializedListener) -> Unit) {
+  val extensionArea = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
+  val ep = extensionArea
+    .getExtensionPoint<ProjectServiceContainerInitializedListener>("com.intellij.projectServiceContainerInitializedListener")
+  for (adapter in ep.sortedAdapters) {
+    val pluginDescriptor = adapter.pluginDescriptor
+    if (!isCorePlugin(pluginDescriptor)) {
+      LOG.error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
+      continue
+    }
+
+    executor(adapter.createInstance(ep.componentManager) ?: continue)
+  }
+}
+
 
 @Suppress("DuplicatedCode")
 private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
@@ -1266,29 +1258,6 @@ private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
 
 private inline fun createActivity(project: ProjectImpl, message: () -> String): Activity? {
   return if (!StartUpMeasurer.isEnabled() || project.isDefault) null else StartUpMeasurer.startActivity(message(), ActivityCategory.DEFAULT)
-}
-
-internal suspend inline fun projectInitListeners(crossinline executor: suspend (ProjectServiceContainerInitializedListener) -> Unit) {
-  val extensionArea = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
-  val ep = extensionArea
-    .getExtensionPoint<ProjectServiceContainerInitializedListener>("com.intellij.projectServiceContainerInitializedListener")
-  for (adapter in ep.sortedAdapters) {
-    val pluginDescriptor = adapter.pluginDescriptor
-    if (!isCorePlugin(pluginDescriptor)) {
-      LOG.error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
-      continue
-    }
-
-    try {
-      executor(adapter.createInstance(ep.componentManager) ?: continue)
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-    }
-  }
 }
 
 internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {
@@ -1359,123 +1328,4 @@ private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
     IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
     IdeBundle.message("untrusted.project.open.dialog.cancel.button")
   )
-}
-
-private suspend fun shouldOpenInChildProcess(projectStoreBaseDir: Path): Boolean {
-  if (!ProjectManagerEx.IS_PER_PROJECT_INSTANCE_READY) {
-    return false
-  }
-
-  if (!ApplicationManager.getApplication().isHeadlessEnvironment &&
-      java.lang.Boolean.getBoolean("ide.per.project.instance.debug")) {
-    withContext(Dispatchers.EDT) {
-      @Suppress("HardCodedStringLiteral")
-      Messages.showMessageDialog(
-        null,
-        "Start `Remote JVM Debug` configuration now",
-        "Debugger Guard",
-        null
-      )
-    }
-  }
-
-  val sameSystemPath = withContext(Dispatchers.IO) {
-    val childSystemPath = PerProjectInstancePaths(projectStoreBaseDir).getSystemDir()
-    childSystemPath.exists() && Files.isSameFile(PathManager.getSystemDir(), childSystemPath)
-  }
-
-  if (sameSystemPath) {
-    return false
-  }
-
-  return LowLevelProjectOpenProcessor.EP_NAME.extensions.any { it.shouldOpenInNewProcess(projectStoreBaseDir) }
-}
-
-private fun isEmpty(path: Path): Boolean {
-  if (Files.isDirectory(path)) {
-    Files.list(path).use { entries -> return !entries.findFirst().isPresent }
-  }
-  return false
-}
-
-private fun setConfigImportOptionForPerProject(projectStoreBaseDir: Path) {
-  val currentConfigDir = PathManager.getConfigDir()
-  val newConfigDir = PerProjectInstancePaths(projectStoreBaseDir).getConfigDir()
-
-  // do not copy config if it already exists
-  if (Files.isDirectory(newConfigDir) && !isEmpty(newConfigDir)) return
-
-  CustomConfigMigrationOption.MigrateFromCustomPlace(currentConfigDir).writeConfigMarkerFile(newConfigDir)
-}
-
-private suspend fun openInChildProcess(projectStoreBaseDir: Path) {
-  try {
-    withContext(Dispatchers.IO) {
-      setConfigImportOptionForPerProject(projectStoreBaseDir)
-      ProcessBuilder(openProjectInstanceCommand(projectStoreBaseDir))
-        .redirectErrorStream(true)
-        .redirectOutput(ProcessBuilder.Redirect.appendTo(PathManager.getLogDir().resolve("idea.log").toFile()))
-        .start()
-        .also {
-          LOG.info("Child process started, PID: ${it.pid()}")
-        }
-    }
-  }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: Exception) {
-    LOG.error(e)
-  }
-}
-
-private fun openProjectInstanceArgs(projectStoreBaseDir: Path): List<String> {
-  val instancePaths = PerProjectInstancePaths(projectStoreBaseDir)
-
-  return buildList {
-    addAll(mapOf(
-      PathManager.PROPERTY_SYSTEM_PATH to instancePaths.getSystemDir(),
-      PathManager.PROPERTY_CONFIG_PATH to instancePaths.getConfigDir(),
-      PathManager.PROPERTY_LOG_PATH to instancePaths.getLogDir(),
-      PathManager.PROPERTY_PLUGINS_PATH to PathManager.getPluginsDir(),
-      ProjectManagerEx.PER_PROJECT_OPTION_NAME to ProjectManagerEx.PerProjectState.ENABLED
-    ).map { (key, value) ->
-      "-D$key=$value"
-    }.toTypedArray())
-
-    if (ApplicationManagerEx.isInIntegrationTest()) {
-      val customTestScriptPath = PerProjectInstancePaths(projectStoreBaseDir).getSystemDir() / VMOptions.TEST_SCRIPT_FILE_NAME
-      add("-Dtestscript.filename=${customTestScriptPath}")
-    }
-  }
-}
-
-private fun macOpenProjectInstanceCommand(projectStoreBaseDir: Path): List<String> {
-  return buildList {
-    add("open")
-    add("-n")
-    add(Restarter.getIdeStarter().toString())
-    add("--args")
-    addAll(openProjectInstanceArgs(projectStoreBaseDir))
-    add(projectStoreBaseDir.toString())
-  }
-}
-
-private fun linuxOpenProjectInstanceCommand(projectStoreBaseDir: Path): List<String> {
-  return buildList {
-    add(Restarter.getIdeStarter().toString())
-    addAll(openProjectInstanceArgs(projectStoreBaseDir))
-    add(projectStoreBaseDir.toString())
-  }
-}
-
-private fun openProjectInstanceCommand(projectStoreBaseDir: Path): List<String> {
-  if (SystemInfo.isMac) {
-    return macOpenProjectInstanceCommand(projectStoreBaseDir)
-  }
-  if (SystemInfo.isLinux) {
-    return linuxOpenProjectInstanceCommand(projectStoreBaseDir)
-  }
-
-  return emptyList()
 }

@@ -5,7 +5,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Query
-import com.intellij.workspaceModel.core.fileIndex.*
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -63,7 +66,7 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   /**
    * Initialize the index data if it isn't done yet.
    */
-  fun ensureInitialized()
+  suspend fun ensureInitialized()
 
   /**
    * There may be thousands of file sets in index, so visiting them all is generally discouraged.
@@ -73,7 +76,7 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
 
   companion object {
     @JvmField
-    val IS_ENABLED: Boolean = Registry.`is`("platform.projectModel.workspace.model.file.index")
+    val IS_ENABLED: Boolean = Registry.`is`("platform.projectModel.workspace.model.file.index", true)
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty", "PrivatePropertyName")
 
 package com.intellij.openapi.fileEditor.impl
@@ -287,17 +287,16 @@ open class EditorsSplitters internal constructor(
   }
 
   suspend fun restoreEditors(onStartup: Boolean) {
-    restoreEditors(state = state.getAndSet(null) ?: return, onStartup = onStartup, anyEditorOpened = null)
+    restoreEditors(state = state.getAndSet(null) ?: return, onStartup = onStartup)
   }
 
   @Internal
-  suspend fun restoreEditors(state: EditorSplitterState, onStartup: Boolean, anyEditorOpened: CompletableDeferred<Unit>?) {
+  suspend fun restoreEditors(state: EditorSplitterState, onStartup: Boolean) {
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
-    val component = UiBuilder(this, anyEditorOpened).process(
+    val component = UiBuilder(this).process(
       state = state,
-      context = if (anyEditorOpened == null && componentCount > 0) getComponent(0) as JPanel else null,
+      context = if (!onStartup && componentCount > 0) getComponent(0) as JPanel else null,
     )
-    anyEditorOpened?.complete(Unit)
     withContext(Dispatchers.EDT) {
       runActivity("editor reopening post-processing") {
         component.isFocusable = false
@@ -901,7 +900,7 @@ class EditorSplitterState(element: Element) {
   }
 }
 
-private class UiBuilder(private val splitters: EditorsSplitters, private val firstEditorOpened: CompletableDeferred<Unit>? = null) {
+private class UiBuilder(private val splitters: EditorsSplitters) {
   suspend fun process(state: EditorSplitterState, context: JPanel?): JPanel {
     if (state.firstSplitter != null && state.secondSplitter != null) {
       return processSplitter(state, context)
@@ -1001,7 +1000,6 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val fir
         }
         finally {
           file.putUserData(OPENED_IN_BULK, null)
-          firstEditorOpened?.complete(Unit)
         }
         activity.end()
       }

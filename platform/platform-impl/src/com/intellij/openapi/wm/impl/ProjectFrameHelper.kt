@@ -420,4 +420,7 @@ open class ProjectFrameHelper internal constructor(
       RecentProjectsManager.getInstance().setActivationTimestamp(project = it, timestamp = currentTimeMillis)
     }
   }
+
+  internal val isTabbedWindow: Boolean
+    get() = frameDecorator?.isTabbedWindow ?: false
 }

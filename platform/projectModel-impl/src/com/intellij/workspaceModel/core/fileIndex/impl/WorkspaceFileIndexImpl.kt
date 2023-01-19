@@ -5,6 +5,7 @@ import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.model.ModelBranch
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider
@@ -84,8 +85,10 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     }
   }
 
-  override fun ensureInitialized() {
-    getOrCreateMainIndexData()
+  override suspend fun ensureInitialized() {
+    readAction {
+      getOrCreateMainIndexData()
+    }
   }
 
   override fun <D : WorkspaceFileSetData> findFileSetWithCustomData(file: VirtualFile,

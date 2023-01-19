@@ -6,9 +6,6 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
@@ -48,11 +45,15 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
         workspaceModel.ignoreCache() // sets `WorkspaceModelImpl#loadedFromCache` to `false`
         project.putUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES, true)
       }
-      loadModules(project, activity, null, null, workspaceModel.loadedFromCache)
+      loadModules(project = project,
+                  activity = activity,
+                  targetBuilder = null,
+                  targetUnloadedEntitiesBuilder = null,
+                  loadedFromCache = workspaceModel.loadedFromCache)
       if (GlobalLibraryTableBridge.isEnabled()) {
         withContext(Dispatchers.EDT) {
-          runWriteAction {
-            GlobalWorkspaceModel.getInstance().applyStateToProject(project)
+          ApplicationManager.getApplication().runWriteAction {
+            GlobalWorkspaceModel.getInstance().applyStateToProject(project, workspaceModel)
           }
         }
       }
@@ -62,8 +63,11 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
       val activity = StartUpMeasurer.startActivity("modules loading without cache")
       val projectEntities = projectModelSynchronizer.loadProjectToEmptyStorage(project)
 
-
-      loadModules(project, activity, projectEntities?.builder, projectEntities?.unloadedEntitiesBuilder, workspaceModel.loadedFromCache)
+      loadModules(project = project,
+                  activity = activity,
+                  targetBuilder = projectEntities?.builder,
+                  targetUnloadedEntitiesBuilder = projectEntities?.unloadedEntitiesBuilder,
+                  loadedFromCache = workspaceModel.loadedFromCache)
       if (projectEntities?.builder != null) {
         WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
       }
@@ -73,7 +77,7 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
 
     runActivity("tracked libraries setup") {
       // required for setupTrackedLibrariesAndJdks - make sure that it is created to avoid blocking of EDT
-      val jdkTableDeferred = (ApplicationManager.getApplication() as ComponentManagerEx).getServiceAsync(ProjectJdkTable::class.java)
+      val jdkTableDeferred = ApplicationManager.getApplication().serviceAsync<ProjectJdkTable>()
       val projectRootManager = project.serviceAsync<ProjectRootManager>().await() as ProjectRootManagerBridge
       jdkTableDeferred.join()
       withContext(Dispatchers.EDT) {
@@ -84,9 +88,7 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
     }
     if (WorkspaceFileIndexEx.IS_ENABLED) {
       runActivity("workspace file index initialization") {
-        readAction {
-          (WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx).ensureInitialized()
-        }
+        (project.serviceAsync<WorkspaceFileIndex>().await() as WorkspaceFileIndexEx).ensureInitialized()
       }
     }
     WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
 import com.intellij.diagnostic.*
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.RecentProjectsManagerBase
@@ -39,6 +40,7 @@ import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.toolWindow.computeToolWindowBeans
 import com.intellij.ui.ScreenUtil
+import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
@@ -51,12 +53,13 @@ import javax.swing.JFrame
 import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 
-private typealias FrameAllocatorTask<T> = suspend CoroutineScope.(saveTemplateJob: Job?, initFrame: (project: Project) -> Unit) -> T
+private typealias FrameAllocatorTask<T> = suspend CoroutineScope.(saveTemplateJob: Job?,
+                                                                  rawProjectDeferred: CompletableDeferred<Project>?) -> T
 
 internal open class ProjectFrameAllocator(private val options: OpenProjectTask) {
   open suspend fun <T : Any> run(task: FrameAllocatorTask<T>): T {
     return coroutineScope {
-      task(saveTemplateAsync(options)) {}
+      task(saveTemplateAsync(options), null)
     }
   }
 
@@ -129,40 +132,36 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
       val anyEditorOpened = CompletableDeferred<Unit>()
       try {
         val startOfWaitingForReadyFrame = AtomicLong(-1)
-        val result = task(saveTemplateDeferred) { project ->
+        val rawProjectDeferred = CompletableDeferred<Project>()
+        launch {
+          val project = rawProjectDeferred.await()
           launchAndMeasure("fileEditorProvider preloading", Dispatchers.IO) {
             FileEditorProvider.EP_FILE_EDITOR_PROVIDER.extensionList
           }
 
-          async(CoroutineName("init project frame and restore editors")) {
-            launch(CoroutineName("assign project to frame")) {
-              val windowManager = ApplicationManager.getApplication().serviceAsync<WindowManager>().await() as WindowManagerImpl
-              val frameHelper = deferredProjectFrameHelper.await()
-              withContext(Dispatchers.EDT) {
-                runActivity("project frame assigning") {
-                  windowManager.assignFrame(frameHelper, project)
-                  frameHelper.setProject(project)
-                }
+          launch(CoroutineName("assign project to frame")) {
+            val windowManager = ApplicationManager.getApplication().serviceAsync<WindowManager>().await() as WindowManagerImpl
+            val frameHelper = deferredProjectFrameHelper.await()
+            withContext(Dispatchers.EDT) {
+              runActivity("project frame assigning") {
+                windowManager.assignFrame(frameHelper, project)
+                frameHelper.setProject(project)
               }
             }
+          }
 
-            val reopeningEditorJob = launch(CoroutineName("restoreEditors")) {
-              restoreEditors(project = project, deferredProjectFrameHelper = deferredProjectFrameHelper, anyEditorOpened = anyEditorOpened)
-            }
-            reopeningEditorJob.invokeOnCompletion {
-              // make sure that anyEditorOpened is completed even if some error occurred
-              anyEditorOpened.complete(Unit)
-            }
+          val reopeningEditorJob = launch(CoroutineName("restoreEditors")) {
+            restoreEditors(project = project, deferredProjectFrameHelper = deferredProjectFrameHelper, anyEditorOpened = anyEditorOpened)
+          }
 
-            launch(CoroutineName("initFrame")) {
-              initFrame(deferredProjectFrameHelper = deferredProjectFrameHelper,
-                        project = project,
-                        reopeningEditorJob = reopeningEditorJob,
-                        deferredToolbarActionGroups = deferredToolbarActionGroups)
-            }
-
-            reopeningEditorJob
-          }.invokeOnCompletion {
+          launch(CoroutineName("initFrame")) {
+            initFrame(deferredProjectFrameHelper = deferredProjectFrameHelper,
+                      project = project,
+                      reopeningEditorJob = reopeningEditorJob,
+                      deferredToolbarActionGroups = deferredToolbarActionGroups)
+          }
+        }
+          .invokeOnCompletion {
             // make sure that anyEditorOpened is completed even if some error occurred
             try {
               anyEditorOpened.complete(Unit)
@@ -174,7 +173,8 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
               }
             }
           }
-        }
+
+        val result = task(saveTemplateDeferred, rawProjectDeferred)
         startOfWaitingForReadyFrame.set(System.nanoTime())
         result
       }
@@ -313,14 +313,12 @@ private suspend fun restoreEditors(project: Project,
       frameHelper.rootPane.getToolWindowPane().setDocumentComponent(editorComponent)
     }
 
-    if (editorState == null) {
-      anyEditorOpened.complete(Unit)
-    }
-    else {
+    if (editorState != null) {
       runActivity(StartUpMeasurer.Activities.EDITOR_RESTORING) {
-        editorComponent.restoreEditors(state = editorState, onStartup = true, anyEditorOpened = anyEditorOpened)
+        editorComponent.restoreEditors(state = editorState, onStartup = true)
       }
     }
+    anyEditorOpened.complete(Unit)
     frameHelper
   }
 
@@ -337,6 +335,10 @@ private suspend fun restoreEditors(project: Project,
 
       frameHelper.postInit()
       hasOpenFiles
+    }
+
+    project.getUserData(ProjectImpl.CREATION_TIME)?.let { startTime ->
+      LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime), frameHelper.isTabbedWindow)
     }
 
     if (!hasOpenFiles && !isNotificationSilentMode(project)) {

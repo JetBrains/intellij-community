@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -10,7 +10,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.GlobalWorkspaceModelCache
+import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
@@ -136,16 +139,23 @@ class GlobalWorkspaceModel: Disposable {
     GlobalLibraryTableBridge.getInstance().handleChangedEvents(change)
     globalWorkspaceModelCache?.scheduleCacheSave()
     isFromGlobalWorkspaceModel = true
-    ProjectManager.getInstance().openProjects.forEach(::applyStateToProject)
+    ProjectManager.getInstance().openProjects.forEach { project ->
+      if (!project.isDisposed) {
+        applyStateToProject(project, WorkspaceModel.getInstance(project))
+      }
+    }
     isFromGlobalWorkspaceModel = false
   }
 
-  fun applyStateToProject(targetProject: Project) {
+  fun applyStateToProject(targetProject: Project, workspaceModel: WorkspaceModel) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
-    if (targetProject.isDefault || targetProject.isDisposed || targetProject === filteredProject) return
+    if (targetProject === filteredProject) {
+      return
+    }
+
     LOG.info("Sync global entities with project: ${targetProject.name}")
-    WorkspaceModel.getInstance(targetProject).updateProjectModel("Apply entities from global storage") { builder ->
+    workspaceModel.updateProjectModel("Apply entities from global storage") { builder ->
       builder.replaceBySource(globalEntitiesFilter, entityStorage.current)
     }
   }
