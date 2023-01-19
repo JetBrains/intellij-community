@@ -934,6 +934,10 @@ public final class JBUI {
         return 20;
       }
 
+      public static int burgerMenuButtonIconSize() {
+        return 20;
+      }
+
       public static @NotNull Dimension stripeToolbarButtonSize() {
         return size(stripeToolbarButtonSizeKey(), defaultStripeToolbarButtonSize());
       }

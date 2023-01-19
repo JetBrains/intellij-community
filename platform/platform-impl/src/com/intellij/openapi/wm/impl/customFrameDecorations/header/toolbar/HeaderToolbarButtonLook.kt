@@ -21,7 +21,9 @@ private val lightThemeDarkHeaderDisableFilter: () -> RGBImageFilter =  {
   if (isDarkHeader()) UIUtil.GrayFilter(-70, -70, 100) else UIUtil.getGrayFilter()
 }
 
-internal class HeaderToolbarButtonLook : IdeaActionButtonLook() {
+internal class HeaderToolbarButtonLook(
+  private val iconSize: () -> Int = { JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSize() }
+) : IdeaActionButtonLook() {
 
   override fun getStateBackground(component: JComponent, state: Int): Color = when (state) {
     ActionButtonComponent.NORMAL -> component.background
@@ -59,7 +61,7 @@ internal class HeaderToolbarButtonLook : IdeaActionButtonLook() {
 
   private fun scaleIcon(icon: Icon) : Icon {
     if (icon is ScalableIcon) {
-      return IconLoader.loadCustomVersionOrScale(icon, JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSize())
+      return IconLoader.loadCustomVersionOrScale(icon, iconSize())
     }
 
     return icon
