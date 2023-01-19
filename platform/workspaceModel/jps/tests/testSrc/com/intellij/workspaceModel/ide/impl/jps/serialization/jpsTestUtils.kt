@@ -116,7 +116,9 @@ internal fun loadProject(configLocation: JpsProjectConfigLocation,
 fun JpsProjectSerializersImpl.saveAllEntities(storage: EntityStorage, configLocation: JpsProjectConfigLocation) {
   val writer = JpsFileContentWriterImpl(configLocation)
   saveAllEntities(storage, writer)
-  writer.writeFiles()
+  val modulePathMapping = this.moduleSerializers.keys.filterIsInstance<ExternalModuleImlFileEntitiesSerializer>()
+    .associate { it.fileUrl.url to it.modulePath.path }
+  writer.writeFiles(modulePathMapping)
 }
 
 internal fun assertDirectoryMatches(actualDir: File, expectedDir: File, filesToIgnore: Set<String>, componentsToIgnore: List<String>) {
@@ -246,11 +248,11 @@ internal class JpsFileContentWriterImpl(private val configLocation: JpsProjectCo
                                              null).replacePathMap
   }
 
-  internal fun writeFiles() {
+  internal fun writeFiles(modulePathMapping: Map<String, String>) {
     urlToComponents.forEach { (url, newComponents) ->
       val components = HashMap(newComponents)
       val file = JpsPathUtil.urlToFile(url)
-      val replaceMacroMap = getReplacePathMacroMap(url)
+      val replaceMacroMap = getReplacePathMacroMap(modulePathMapping[url] ?: url)
       val newRootElement = when {
         isModuleFile(file) -> Element("module")
         FileUtil.filesEqual(File(JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString), ".idea"), file.parentFile.parentFile) -> null
@@ -357,7 +359,9 @@ internal fun checkSaveProjectAfterChange(originalProjectFile: File,
   }
   val writer = JpsFileContentWriterImpl(projectData.configLocation)
   projectData.serializers.saveEntities(builder.toSnapshot(), unloadedEntitiesBuilder.toSnapshot(), changedSources, writer)
-  writer.writeFiles()
+  val modulePathMapping = projectData.serializers.moduleSerializers.keys.filterIsInstance<ExternalModuleImlFileEntitiesSerializer>()
+    .associate { it.fileUrl.url to it.modulePath.path }
+  writer.writeFiles(modulePathMapping)
   if (checkConsistencyAfterLoading) {
     projectData.serializers.checkConsistency(projectData.configLocation, builder.toSnapshot(), unloadedEntitiesBuilder.toSnapshot(), virtualFileManager)
   }

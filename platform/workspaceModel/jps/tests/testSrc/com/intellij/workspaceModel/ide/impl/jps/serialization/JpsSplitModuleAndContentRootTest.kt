@@ -329,7 +329,7 @@ class JpsSplitModuleAndContentRootTest {
 
   @Test
   fun `load external content root`() {
-    checkSaveProjectAfterChange("after/addExternalContentRootLoading", "after/addExternalContentRootLoading") { builder, _, configLocation ->
+    checkSaveProjectAfterChange("after/addExternalContentRoot", "after/addExternalContentRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRoots = moduleEntity.contentRoots
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
@@ -339,7 +339,7 @@ class JpsSplitModuleAndContentRootTest {
 
   @Test
   fun `load mixed content root`() {
-    checkSaveProjectAfterChange("after/addMixedContentRootLoading", "after/addMixedContentRootLoading") { builder, _, configLocation ->
+    checkSaveProjectAfterChange("after/addMixedContentRoot", "after/addMixedContentRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRoots = moduleEntity.contentRoots
       assertEquals(2, contentRoots.size)
@@ -375,8 +375,8 @@ class JpsSplitModuleAndContentRootTest {
 
   @Test
   fun `load multiple source root`() {
-    checkSaveProjectAfterChange("after/addMultipleCustomSourceRootLoading",
-                                "after/addMultipleCustomSourceRootLoading") { builder, _, configLocation ->
+    checkSaveProjectAfterChange("after/addMultipleCustomSourceRoot",
+                                "after/addMultipleCustomSourceRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRootEntity = moduleEntity.contentRoots.single()
       val sourceRoots = contentRootEntity.sourceRoots
@@ -389,8 +389,8 @@ class JpsSplitModuleAndContentRootTest {
 
   @Test
   fun `load external source root`() {
-    checkSaveProjectAfterChange("after/addExternalCustomSourceRootLoading",
-                                "after/addExternalCustomSourceRootLoading") { builder, _, configLocation ->
+    checkSaveProjectAfterChange("after/addExternalCustomSourceRoot",
+                                "after/addExternalCustomSourceRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRootEntity = moduleEntity.contentRoots.single()
       val sourceRoot = contentRootEntity.sourceRoots.single()
@@ -402,8 +402,8 @@ class JpsSplitModuleAndContentRootTest {
 
   @Test
   fun `load mixed source root`() {
-    checkSaveProjectAfterChange("after/addMixedCustomSourceRootLoading",
-                                "after/addMixedCustomSourceRootLoading") { builder, _, configLocation ->
+    checkSaveProjectAfterChange("after/addMixedCustomSourceRoot",
+                                "after/addMixedCustomSourceRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRootEntity = moduleEntity.contentRoots.single()
       val sourceRoots = contentRootEntity.sourceRoots
@@ -417,7 +417,7 @@ class JpsSplitModuleAndContentRootTest {
 
   @Test
   fun `load separate exclude roots`() {
-    checkSaveProjectAfterChange("after/addExcludeRootLoading", "after/addExcludeRootLoading") { builder, _, configLocation ->
+    checkSaveProjectAfterChange("after/addExcludeRoot", "after/addExcludeRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRootEntity = moduleEntity.contentRoots.single()
       val exclude = contentRootEntity.excludedUrls.single()
@@ -429,7 +429,7 @@ class JpsSplitModuleAndContentRootTest {
 
   @Test
   fun `load multiple local exclude`() {
-    checkSaveProjectAfterChange("after/addMultipleExcludeRootLoading", "after/addMultipleExcludeRootLoading") { builder, _, configLocation ->
+    checkSaveProjectAfterChange("after/addMultipleExcludeRoot", "after/addMultipleExcludeRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRootEntity = moduleEntity.contentRoots.single()
       val exclude = contentRootEntity.excludedUrls
@@ -441,8 +441,8 @@ class JpsSplitModuleAndContentRootTest {
 
   @Test
   fun `load multiple local exclude to multiple content roots`() {
-    checkSaveProjectAfterChange("after/addExcludeRootsToMultipleContentRootsLoading",
-                                "after/addExcludeRootsToMultipleContentRootsLoading") { builder, _, configLocation ->
+    checkSaveProjectAfterChange("after/addExcludeRootsToMultipleContentRoots",
+                                "after/addExcludeRootsToMultipleContentRoots") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRoots = moduleEntity.contentRoots
       val exclude = contentRoots.flatMap { it.excludedUrls }
@@ -456,7 +456,7 @@ class JpsSplitModuleAndContentRootTest {
 
   @Test
   fun `load external exclude`() {
-    checkSaveProjectAfterChange("after/addExternalExcludeRootLoading", "after/addExternalExcludeRootLoading") { builder, _, configLocation ->
+    checkSaveProjectAfterChange("after/addExternalExcludeRoot", "after/addExternalExcludeRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRootEntity = moduleEntity.contentRoots.single()
       val exclude = contentRootEntity.excludedUrls.single()
@@ -468,7 +468,7 @@ class JpsSplitModuleAndContentRootTest {
 
   @Test
   fun `load mixed exclude`() {
-    checkSaveProjectAfterChange("after/addMixedExcludeRootLoading", "after/addMixedExcludeRootLoading") { builder, _, configLocation ->
+    checkSaveProjectAfterChange("after/addMixedExcludeRoot", "after/addMixedExcludeRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRootEntity = moduleEntity.contentRoots.single()
       val exclude = contentRootEntity.excludedUrls
