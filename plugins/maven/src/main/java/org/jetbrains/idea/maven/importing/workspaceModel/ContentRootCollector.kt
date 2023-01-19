@@ -7,9 +7,6 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
-private const val DEFAULT_ANNOTATION_PATH_OUTPUT = "target/generated-sources/annotations"
-private const val DEFAULT_TEST_ANNOTATION_OUTPUT = "target/generated-test-sources/test-annotations"
-
 object ContentRootCollector {
   fun collect(folders: List<ImportedFolder>): Collection<ContentRootResult> {
     class ContentRootWithFolders(val path: String, val folders: MutableList<ImportedFolder> = mutableListOf())
@@ -62,7 +59,7 @@ object ContentRootCollector {
         }
         else if (prev is GeneratedSourceFolder && curr is UserOrGeneratedSourceFolder) {
           // prefer generated folder to annotations subfolder
-          if (curr.path.endsWith(DEFAULT_ANNOTATION_PATH_OUTPUT) || curr.path.endsWith(DEFAULT_TEST_ANNOTATION_OUTPUT)) {
+          if (curr.isAnnotationFolder) {
             return@forEach
           }
           // don't add generated folder when there are sub source folder
@@ -128,7 +125,7 @@ object ContentRootCollector {
     }
   }
 
-  abstract class UserOrGeneratedSourceFolder(path: String, val type: JpsModuleSourceRootType<*>, rank: Int) : ImportedFolder(path, rank) {
+  abstract class UserOrGeneratedSourceFolder(path: String, val type: JpsModuleSourceRootType<*>, rank: Int, internal var isAnnotationFolder: Boolean = false) : ImportedFolder(path, rank) {
     override fun compareTo(other: ImportedFolder): Int {
       val result = super.compareTo(other)
       if (result != 0 || other !is UserOrGeneratedSourceFolder) return result
