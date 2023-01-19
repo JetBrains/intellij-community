@@ -7,6 +7,7 @@ import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereEle
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifier
@@ -55,6 +56,8 @@ class SearchEverywhereJavaClassFeaturesProvider : SearchEverywhereElementFeature
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?): List<EventPair<*>> {
     val psiClass = (getPsiElement(element) as? PsiClass) ?: return emptyList()
+
+    if (DumbService.isDumb(psiClass.project)) return emptyList()
 
     return buildList {
       add(IS_INTERFACE_KEY.with(psiClass.isInterface))
