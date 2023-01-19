@@ -35,12 +35,6 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
     }
     myPresentableName = CommandLineUtil.extractPresentableName(StringUtil.notNullize(commandLine));
     myWaitFor = new ProcessWaitFor(process, this, myPresentableName);
-    addProcessListener(new ProcessListener() {
-      @Override
-      public void processTerminated(@NotNull ProcessEvent event) {
-        closeStreams();
-      }
-    });
   }
 
   @NotNull
@@ -65,6 +59,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
 
   protected void onOSProcessTerminated(final int exitCode) {
     notifyProcessTerminated(exitCode);
+    closeStreams();
   }
 
   protected void doDestroyProcess() {
