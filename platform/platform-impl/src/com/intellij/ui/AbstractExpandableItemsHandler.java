@@ -401,6 +401,9 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       height += borderSize * 2;
       if (selectablePanel != null) {
         width -= selectablePanel.getSelectionInsets().right;
+        if (width <= 0) {
+          return null;
+        }
       }
       myImage = UIUtil.createImage(myComponent, width, height, BufferedImage.TYPE_INT_ARGB);
       g = myImage.createGraphics();
