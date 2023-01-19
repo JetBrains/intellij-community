@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.components.*
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -198,6 +199,8 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
   }
 }
 
+private val recentLimit: Int get() = AdvancedSettings.getInt("ide.max.recent.run.configurations")
+
 internal fun createRunConfigurationsActionGroup(project: Project, addHeader: Boolean = true): ActionGroup {
   val actions = DefaultActionGroup()
   val registry = ExecutorRegistry.getInstance()
@@ -212,7 +215,7 @@ internal fun createRunConfigurationsActionGroup(project: Project, addHeader: Boo
     }
   }
   actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
-  RunConfigurationStartHistory.getInstance(project).history().forEach { conf ->
+  RunConfigurationStartHistory.getInstance(project).history().take(recentLimit).forEach { conf ->
     val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project)
     actions.add(actionGroupWithInlineActions)
   }
@@ -844,7 +847,7 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
   }
 
   fun register(setting: RunnerAndConfigurationSettings) {
-    _state = State(_state.history.take(30).toMutableList().apply {
+    _state = State(_state.history.take(recentLimit*2).toMutableList().apply {
       add(0, Element(setting.uniqueID))
     }.toMutableSet())
   }
