@@ -89,7 +89,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
 
     assertTrue(
       "Attribute just inserted must exist",
-      insertedRecord.existsInStorage(attributesStorage)
+      attributes.existsInStorage(insertedRecord, attributesStorage)
     );
 
     assertArrayEquals(
@@ -223,7 +223,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
     for (final AttributeRecord attributeRecord : insertedRecords) {
       assertTrue(
         attributeRecord + " must exist",
-        attributeRecord.existsInStorage(attributesStorage)
+        attributes.existsInStorage(attributeRecord, attributesStorage)
       );
       assertArrayEquals(
         attributeRecord.attributeBytes(),
@@ -300,7 +300,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
     for (AttributeRecord insertedRecord : insertedRecords) {
       assertTrue(
         insertedRecord + " must exist",
-        insertedRecord.existsInStorage(attributesStorage)
+        attributes.existsInStorage(insertedRecord, attributesStorage)
       );
     }
 
@@ -311,15 +311,15 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
     for (AttributeRecord attributeRecord : records) {
       assertFalse(
         attributeRecord + " must NOT exist after being deleted",
-        attributeRecord.existsInStorage(attributesStorage)
+        attributes.existsInStorage(attributeRecord, attributesStorage)
       );
     }
   }
 
   @Test
   public void manyAttributesInserted_AndUpdatedOneByOne_CouldBeReadBackAsIs() throws IOException {
-    //Here we check behaviour of attribute which size crosses INLINE_ATTRIBUTE_MAX_SIZE border up/down
-    // -> attribute will change storage format on size change, so lets check this:
+    //Here we check the behaviour of attribute which size crosses INLINE_ATTRIBUTE_MAX_SIZE border up/down
+    // -> attribute will change storage format on size change, so let's check this:
     final int maxAttributeValueSize = INLINE_ATTRIBUTE_SMALLER_THAN * 3;
     final int differentAttributesCount = 1024;
     final Random rnd = ThreadLocalRandom.current();
@@ -334,7 +334,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
       records[i] = attributes.insertOrUpdateRecord(records[i], attributesStorage);
       assertTrue(
         records[i] + " must exist after insert",
-        records[i].existsInStorage(attributesStorage)
+        attributes.existsInStorage(records[i], attributesStorage)
       );
     }
 
@@ -351,9 +351,10 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
       }
       records[i] = attributes.insertOrUpdateRecord(record, attributesStorage);
     }
+    attributes.updateAttributeRecordIds(records);
 
     for (int i = 0; i < records.length; i++) {
-      AttributeRecord record = records[i];
+      final AttributeRecord record = records[i];
       assertArrayEquals(
         "[" + i + "]" + record + " value must be read",
         record.attributeBytes(),
@@ -376,7 +377,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
     for (final AttributeRecord insertedRecord : insertedRecords) {
       assertTrue(
         "Attribute just inserted must exist",
-        insertedRecord.existsInStorage(attributesStorage)
+        attributes.existsInStorage(insertedRecord, attributesStorage)
       );
       assertArrayEquals(
         insertedRecord + " value must be read",
@@ -413,10 +414,12 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
     final int[] fileIds = rnd.ints()
       .filter(id -> id > 0)
       .limit(size / 2)
+      .distinct()
       .toArray();
     final int[] attributeIds = rnd.ints(0, AttributesStorageOverBlobStorage.MAX_ATTRIBUTE_ID + 1)
       .filter(id -> id > 0)
       .limit(differentAttributesCount)
+      .distinct()
       .toArray();
 
     return Stream.generate(() -> {
@@ -562,6 +565,9 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
         record.attributeBytes,
         record.attributeBytesLength
       );
+      if (newAttributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+        throw new AssertionError("updateAttribute return 0: " + record);
+      }
       fileIdToAttributeRecordId.put(record.fileId, newAttributeRecordId);
       return record.withAttributesRecordId(newAttributeRecordId);
     }
@@ -572,7 +578,22 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
       for (int i = 0; i < records.length; i++) {
         updatedRecords[i] = insertOrUpdateRecord(records[i], attributesStorage);
       }
+      updateAttributeRecordIds(updatedRecords);
       return updatedRecords;
+    }
+
+    public void updateAttributeRecordIds(final AttributeRecord[] updatedRecords) {
+      //attribute record id (directory record) could be changed (record relocated) because of later
+      // appended attributes. Here we scan all attribute records, and ensure all records with the same
+      // fileId have the same attributeRecordId -- most recent one, stored in fileIdToAttributeRecordId
+      // mapping
+      for (int i = 0; i < updatedRecords.length; i++) {
+        final AttributeRecord updatedRecord = updatedRecords[i];
+        final int mostRecentAttributeRecordId = fileIdToAttributeRecordId.get(updatedRecord.fileId);
+        if (updatedRecord.attributesRecordId != mostRecentAttributeRecordId) {
+          updatedRecords[i] = updatedRecord.withAttributesRecordId(mostRecentAttributeRecordId);
+        }
+      }
     }
 
     public boolean deleteRecord(final AttributeRecord record,
@@ -587,6 +608,15 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
       );
       fileIdToAttributeRecordId.put(record.fileId, NON_EXISTENT_ATTR_RECORD_ID);
       return deleted;
+    }
+
+    public boolean existsInStorage(final AttributeRecord record,
+                                   final AttributesStorageOverBlobStorage storage) throws IOException {
+      final int attributeRecordId = fileIdToAttributeRecordId.getOrDefault(record.fileId, NON_EXISTENT_ATTR_RECORD_ID);
+      if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+        return false; //already deleted, do nothing
+      }
+      return storage.hasAttribute(attributeRecordId, record.fileId, record.attributeId);
     }
   }
 
