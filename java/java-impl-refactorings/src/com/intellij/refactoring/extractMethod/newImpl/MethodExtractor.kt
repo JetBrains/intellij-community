@@ -7,6 +7,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -77,6 +78,10 @@ class MethodExtractor {
         findAllOptionsToExtract(elements)
       }
       return selectOptionWithTargetClass(editor, allOptionsToExtract)
+    }
+    catch (e: ExtractMultipleVariablesException) {
+      invokeLater { ObjectBuilder.run(e.variables, e.scope) }
+      return null
     }
     catch (e: ExtractException) {
       val message = JavaRefactoringBundle.message("extract.method.error.prefix") + " " + (e.message ?: "")

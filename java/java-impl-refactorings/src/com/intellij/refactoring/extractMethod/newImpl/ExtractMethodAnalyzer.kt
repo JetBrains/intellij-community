@@ -40,14 +40,14 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
   val flowOutput = findFlowOutput(analyzer)
                    ?: throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.exits"), elements.first())
 
-  val variableData = findVariableData(analyzer, analyzer.findOutputVariables())
+  val outVariables = analyzer.findOutputVariables()
+  if (outVariables.size >= 2 && canExtractStatementsFromScope(flowOutput.statements, elements)) {
+    throw ExtractMultipleVariablesException(outVariables, elements)
+  }
+
+  val variableData = findVariableData(analyzer, outVariables)
 
   val expression = elements.singleOrNull() as? PsiExpression
-
-
-  fun canExtractStatementsFromScope(statements: List<PsiStatement>, scope: List<PsiElement>): Boolean {
-    return ExtractMethodHelper.areSemanticallySame(statements) && !haveReferenceToScope(statements, scope)
-  }
 
   val dataOutput = when {
     expression != null  -> ExpressionOutput(getExpressionType(expression), null, listOf(expression), CodeFragmentAnalyzer.inferNullability(listOf(expression)))
@@ -108,6 +108,10 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
   extractOptions = extractOptions.copy(inputParameters = foldedParameters)
 
   return ExtractMethodPipeline.withDefaultStatic(extractOptions)
+}
+
+private fun canExtractStatementsFromScope(statements: List<PsiStatement>, scope: List<PsiElement>): Boolean {
+  return ExtractMethodHelper.areSemanticallySame(statements) && !haveReferenceToScope(statements, scope)
 }
 
 private fun normalizeDataOutput(dataOutput: DataOutput, flowOutput: FlowOutput, elements: List<PsiElement>, reservedNames: List<String>): DataOutput {
