@@ -1079,4 +1079,10 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   }
 
 
+  public void testForeachPatternInside() {
+    doMethodTest(
+      "for (Rec(): foo)",
+      "for (Rec() : foo)");
+  }
+
 }
